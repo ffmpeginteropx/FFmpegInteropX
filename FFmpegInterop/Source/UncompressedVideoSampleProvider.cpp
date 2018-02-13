@@ -20,6 +20,7 @@
 #include "UncompressedVideoSampleProvider.h"
 #include "NativeBufferFactory.h"
 #include <mfapi.h>
+#include "VideoEffectFactory.h"
 
 extern "C"
 {
@@ -36,7 +37,7 @@ UncompressedVideoSampleProvider::UncompressedVideoSampleProvider(
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
 	int streamIndex)
-	: UncompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex)
+	: UncompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, new VideoEffectFactory(avCodecCtx))
 {
 	if (config->IsFrameGrabber)
 	{
