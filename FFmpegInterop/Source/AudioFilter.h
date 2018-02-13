@@ -22,7 +22,6 @@ extern "C"
 #include <libswresample/swresample.h>
 }
 
-using namespace nSettingsHelpers;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Playback;
 using namespace Windows::Foundation;
