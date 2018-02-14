@@ -19,7 +19,6 @@ namespace FFmpegInterop
 		AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;
 		AbstractEffectFactory* m_effectFactory;
-		std::mutex lock_mutex;
 
 		~UncompressedFrameProvider() {
 			delete filter;
@@ -28,8 +27,6 @@ namespace FFmpegInterop
 
 	internal:
 
-
-
 		UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, AbstractEffectFactory* p_effectFactory)
 		{
 			m_pAvCodecCtx = p_pAvCodecCtx;
@@ -37,32 +34,16 @@ namespace FFmpegInterop
 			m_effectFactory = p_effectFactory;
 		}
 
-
-
 		void UpdateFilter(IVectorView<AvEffectDefinition^>^ effects)
 		{
-			lock_mutex.lock();
-
-			
-				int64 inChannelLayout = m_pAvCodecCtx->channel_layout ? m_pAvCodecCtx->channel_layout : av_get_default_channel_layout(m_pAvCodecCtx->channels);
-
-				delete filter;
-				filter = m_effectFactory->CreateEffect(effects);
-				
-			lock_mutex.unlock();
-
+			delete filter;
+			filter = m_effectFactory->CreateEffect(effects);
 		}
-
-
 
 		void DisableFilter()
 		{
-			lock_mutex.lock();
-
 			delete filter;
 			filter = nullptr;
-			lock_mutex.unlock();
-
 		}
 
 		HRESULT GetFrameFromCodec(AVFrame *avFrame)
@@ -70,18 +51,20 @@ namespace FFmpegInterop
 			HRESULT hr = avcodec_receive_frame(m_pAvCodecCtx, avFrame);
 			if (SUCCEEDED(hr))
 			{
-				lock_mutex.lock();
-				if (filter) {
+				if (filter) 
+				{
 					hr = filter->AddFrame(avFrame);
 					if (SUCCEEDED(hr))
 					{
 						hr = filter->GetFrame(avFrame);
 					}
+					if (FAILED(hr))
+					{
+						av_frame_unref(avFrame);
+					}
 				}
-				lock_mutex.unlock();
 			}
 			return hr;
-
 		}
 	};
 

@@ -16,7 +16,11 @@ public:
 	IAvEffect* CreateEffect(IVectorView<AvEffectDefinition^>^ definitions) override
 	{
 		AudioFilter* filter = new AudioFilter(InputContext);
-		auto hr = filter->AllocResources(definitions);
+		auto hr = filter ? S_OK : E_OUTOFMEMORY;
+		if (SUCCEEDED(hr))
+		{
+			hr = filter->AllocResources(definitions);
+		}
 		if (SUCCEEDED(hr))
 		{
 			return filter;

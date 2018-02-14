@@ -6,13 +6,6 @@ namespace FFmpegInterop
 	public ref class AvEffectDefinition sealed
 	{
 		String ^filterName, ^configString;
-		~AvEffectDefinition()
-		{
-			delete filterName;
-			delete configString;
-		}
-
-
 
 	public:
 		AvEffectDefinition(String^ _filterName, String^ _configString)
@@ -23,20 +16,12 @@ namespace FFmpegInterop
 
 		property String^ FilterName
 		{
-
-		public: String ^ get()
-		{
-			return filterName;
+			String^ get() { return filterName; }
 		}
-		}
-
 
 		property String^ Configuration
 		{
-		public: String ^ get()
-		{
-			return configString;
-		}
+			String^ get() { return configString; }
 		}
 	};
 }

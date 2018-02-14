@@ -628,29 +628,35 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 	return hr;
 }
 
-
-
-void FFmpegInterop::FFmpegInteropMSS::SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects)
+void FFmpegInteropMSS::SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects)
 {
+	mutexGuard.lock();
 	audioSampleProvider->SetFilters(audioEffects);
+	mutexGuard.unlock();
 }
 
-void FFmpegInterop::FFmpegInteropMSS::SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects)
+void FFmpegInteropMSS::SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects)
 {
+	mutexGuard.lock();
 	videoSampleProvider->SetFilters(videoEffects);
+	mutexGuard.unlock();
 }
 
-void FFmpegInterop::FFmpegInteropMSS::DisableAudioEffects()
+void FFmpegInteropMSS::DisableAudioEffects()
 {
+	mutexGuard.lock();
 	audioSampleProvider->DisableFilters();
+	mutexGuard.unlock();
 }
 
-void FFmpegInterop::FFmpegInteropMSS::DisableVideoEffects()
+void FFmpegInteropMSS::DisableVideoEffects()
 {
+	mutexGuard.lock();
 	videoSampleProvider->DisableFilters();
+	mutexGuard.unlock();
 }
 
-MediaThumbnailData ^ FFmpegInterop::FFmpegInteropMSS::ExtractThumbnail()
+MediaThumbnailData ^ FFmpegInteropMSS::ExtractThumbnail()
 {
 	if (thumbnailStreamIndex != AVERROR_STREAM_NOT_FOUND)
 	{
