@@ -100,8 +100,8 @@ class AudioFilter : public IAvEffect
 
 		}
 
-		AVFilters.push_back(aResampler);
-		AVFilterContexts.push_back(aResampler_ctx);
+		//AVFilters.push_back(aResampler);
+		//AVFilterContexts.push_back(aResampler_ctx);
 
 		AVFilters.push_back(AVSink);
 		AVFilterContexts.push_back(avSink_ctx);
@@ -235,7 +235,7 @@ class AudioFilter : public IAvEffect
 			hr = AllocSink();
 			if (SUCCEEDED(hr))
 			{
-				hr = AllocResampler();
+				//hr = AllocResampler();
 			}
 		}
 
