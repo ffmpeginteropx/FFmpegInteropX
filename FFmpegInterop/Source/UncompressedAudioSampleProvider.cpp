@@ -75,7 +75,11 @@ HRESULT UncompressedAudioSampleProvider::CheckResampling(AVFrame* inputFrame)
 	{
 		if (m_pSwrCtx)
 		{
+
 			swr_free(&m_pSwrCtx);
+			m_resampler_inputRate = AV_NOPTS_VALUE;
+			m_resampler_inputFormat = AV_SAMPLE_FMT_NONE;
+
 		}
 		// Set up resampler to convert to output format and channel layout.
 		m_pSwrCtx = swr_alloc_set_opts(
@@ -98,6 +102,7 @@ HRESULT UncompressedAudioSampleProvider::CheckResampling(AVFrame* inputFrame)
 		{
 			if (swr_init(m_pSwrCtx) < 0)
 			{
+
 				hr = E_FAIL;
 			}
 
