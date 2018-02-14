@@ -3,7 +3,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <mutex>
 #include "IAvEffect.h"
 #include "AvEffectDefinition.h"
 #include <sstream>
@@ -208,7 +207,7 @@ class AudioFilter : public IAvEffect
 
 		std::stringstream resamplerConfigString;
 
-		resamplerConfigString << "osf=" << av_get_sample_fmt_name(inputCodecCtx->sample_fmt)<<":";
+		resamplerConfigString << "osf=" << av_get_sample_fmt_name(inputCodecCtx->sample_fmt) << ":";
 		resamplerConfigString << "ocl=" << channel_layout_name << ":";
 		resamplerConfigString << "osr=" << inputCodecCtx->sample_rate;
 
@@ -280,9 +279,14 @@ public:
 
 	~AudioFilter()
 	{
+		
+
+
+
+		avfilter_graph_free(&this->graph);
+
 		AVFilters.clear();
 		AVFilterContexts.clear();
-		avfilter_graph_free(&this->graph);
 	}
 
 

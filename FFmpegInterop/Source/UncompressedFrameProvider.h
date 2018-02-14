@@ -19,7 +19,6 @@ namespace FFmpegInterop
 		AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;
 		AbstractEffectFactory* m_effectFactory;
-		boolean m_PresetFilterPending;
 		std::mutex lock_mutex;
 
 		~UncompressedFrameProvider() {
@@ -44,14 +43,12 @@ namespace FFmpegInterop
 		{
 			lock_mutex.lock();
 
-			//if (m_PresetFilterPending)
-			{
+			
 				int64 inChannelLayout = m_pAvCodecCtx->channel_layout ? m_pAvCodecCtx->channel_layout : av_get_default_channel_layout(m_pAvCodecCtx->channels);
 
 				delete filter;
 				filter = m_effectFactory->CreateEffect(effects);
-				m_PresetFilterPending = false;
-			}
+				
 			lock_mutex.unlock();
 
 		}
