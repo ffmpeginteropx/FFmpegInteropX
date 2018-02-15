@@ -45,6 +45,8 @@ class AudioFilter : public IAvEffect
 	std::vector<AVFilter*> AVFilters;
 	std::vector<AVFilterContext*> AVFilterContexts;
 	char channel_layout_name[256];
+	long long inChannelLayout;
+	int nb_channels;
 
 	HRESULT init_filter_graph(IVectorView<AvEffectDefinition^>^ effects)
 	{
@@ -100,8 +102,6 @@ class AudioFilter : public IAvEffect
 
 		}
 
-		//AVFilters.push_back(aResampler);
-		//AVFilterContexts.push_back(aResampler_ctx);
 
 		AVFilters.push_back(AVSink);
 		AVFilterContexts.push_back(avSink_ctx);
@@ -190,7 +190,7 @@ class AudioFilter : public IAvEffect
 
 	}
 
-
+	/*exampler for creating an aresample filter. Not actually used*/
 	HRESULT AllocResampler()
 	{
 		aResampler = avfilter_get_by_name("aresample");
@@ -223,9 +223,7 @@ class AudioFilter : public IAvEffect
 
 	}
 
-	///There are 3 mandatory filters: the source, the sink, and a resampler filter.
-	///some filters under specific parameters will cause audio clipping and force the resampling of data under high formats
-	///like S16->S32. The resampler puts the data into its original format of the given avCodecCtx.
+	///There are 2 mandatory filters: the source, the sink.
 	HRESULT AlocSourceAndSync()
 	{
 		//AVFilterContext *abuffer_ctx;
@@ -233,10 +231,7 @@ class AudioFilter : public IAvEffect
 		if (SUCCEEDED(hr))
 		{
 			hr = AllocSink();
-			if (SUCCEEDED(hr))
-			{
-				//hr = AllocResampler();
-			}
+
 		}
 
 		return hr;
@@ -264,22 +259,24 @@ class AudioFilter : public IAvEffect
 
 public:
 
-	AudioFilter(AVCodecContext *m_inputCodecCtx)
+	AudioFilter(AVCodecContext *m_inputCodecCtx, long long p_inChannelLayout, int p_nb_channels)
 	{
 		avfilter_register_all();
+		inChannelLayout = p_inChannelLayout;
+		nb_channels = p_nb_channels;
 		this->inputCodecCtx = m_inputCodecCtx;
 	}
 
 	HRESULT AllocResources(IVectorView<AvEffectDefinition^>^ effects)
 	{
-		av_get_channel_layout_string(channel_layout_name, sizeof(channel_layout_name), inputCodecCtx->channels, inputCodecCtx->channel_layout);
+		av_get_channel_layout_string(channel_layout_name, sizeof(channel_layout_name), nb_channels, inChannelLayout);
 		return init_filter_graph(effects);
 	}
 
 
 	~AudioFilter()
 	{
-		
+
 
 
 

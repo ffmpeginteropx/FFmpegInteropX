@@ -35,8 +35,7 @@ namespace FFmpegInterop
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			FFmpegInteropConfig^ config,
-			int streamIndex,
-			AbstractEffectFactory* effectFactory
+			int streamIndex
 		);
 		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration) override;
 		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) { return E_FAIL; }; // must be overridden by specific decoders
@@ -49,10 +48,10 @@ namespace FFmpegInterop
 		{
 			frameProvider->DisableFilter();
 		}
+		UncompressedFrameProvider ^ frameProvider;
 
 	private:
 		int64 m_nextFramePts;
-		UncompressedFrameProvider^ frameProvider;
 	};
 }
 

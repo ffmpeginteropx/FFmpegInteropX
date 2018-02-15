@@ -26,11 +26,10 @@ UncompressedSampleProvider::UncompressedSampleProvider(
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
-	int streamIndex,
-	AbstractEffectFactory* effectFactory
+	int streamIndex
 ): MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex)
 {
-	frameProvider = ref new UncompressedFrameProvider(avFormatCtx, avCodecCtx, effectFactory);
+	
 }
 
 HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration)

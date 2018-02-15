@@ -47,7 +47,8 @@ namespace FFmpegInterop
 		SwrContext* m_pSwrCtx;
 		AVSampleFormat m_outputSampleFormat;
 		AVSampleFormat m_resampler_inputFormat;
-		int m_resampler_inputRate;
+		int m_resampler_inputRate, channels;
+		int64 outChannelLayout, inChannelLayout;
 	};
 }
 
