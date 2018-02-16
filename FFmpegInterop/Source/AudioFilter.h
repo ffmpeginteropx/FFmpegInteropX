@@ -256,8 +256,8 @@ namespace FFmpegInterop {
 			return S_OK;
 		}
 
-	private:
-		 ~AudioFilter()
+	public:
+		 virtual ~AudioFilter()
 		{
 			avfilter_graph_free(&this->graph);
 
