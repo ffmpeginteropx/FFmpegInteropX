@@ -32,7 +32,6 @@ namespace FFmpegInterop
 			}
 			else
 			{
-				delete filter;
 				return nullptr;
 			}
 

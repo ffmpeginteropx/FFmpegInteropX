@@ -20,11 +20,6 @@ namespace FFmpegInterop
 		AVCodecContext* m_pAvCodecCtx;
 		AbstractEffectFactory^ m_effectFactory;
 
-		~UncompressedFrameProvider() {
-			delete filter;
-			delete m_effectFactory;
-		}
-
 	internal:
 
 		UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, AbstractEffectFactory^ p_effectFactory)
@@ -36,13 +31,11 @@ namespace FFmpegInterop
 
 		void UpdateFilter(IVectorView<AvEffectDefinition^>^ effects)
 		{
-			delete filter;
 			filter = m_effectFactory->CreateEffect(effects);
 		}
 
 		void DisableFilter()
 		{
-			delete filter;
 			filter = nullptr;
 		}
 
