@@ -47,6 +47,7 @@ static int lock_manager(void **mtx, enum AVLockOp op);
 
 // Flag for ffmpeg global setup
 static bool isRegistered = false;
+std::mutex isRegisteredMutex;
 
 // Initialize an FFmpegInteropObject
 FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig)
@@ -58,9 +59,14 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig)
 {
 	if (!isRegistered)
 	{
-		av_register_all();
-		av_lockmgr_register(lock_manager);
-		isRegistered = true;
+		isRegisteredMutex.lock();
+		if (!isRegistered)
+		{
+			av_register_all();
+			av_lockmgr_register(lock_manager);
+			isRegistered = true;
+		}
+		isRegisteredMutex.unlock();
 	}
 }
 
