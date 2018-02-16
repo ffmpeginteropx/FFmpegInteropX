@@ -1,22 +1,24 @@
 #pragma once
 #include "AbstractEffectFactory.h"
 
-
-class VideoEffectFactory : public AbstractEffectFactory
+namespace FFmpegInterop
 {
-	AVCodecContext* InputContext;
-
-public:
-
-	VideoEffectFactory(AVCodecContext* input_ctx)
+	ref class VideoEffectFactory : public AbstractEffectFactory
 	{
-		InputContext = input_ctx;
-	}
+		AVCodecContext* InputContext;
 
-	IAvEffect* CreateEffect(IVectorView<AvEffectDefinition^>^ definitions) override
-	{
-		//implement this when someone has ideas
-		return NULL;
+	internal:
 
-	}
-};
+		VideoEffectFactory(AVCodecContext* input_ctx)
+		{
+			InputContext = input_ctx;
+		}
+
+		IAvEffect^ CreateEffect(IVectorView<AvEffectDefinition^>^ definitions) override
+		{
+			//implement this when someone has ideas
+			return nullptr;
+
+		}
+	};
+}

@@ -111,7 +111,7 @@ else
 
 DecoderWidth = width;
 DecoderHeight = height;
-UncompressedSampleProvider::frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, new VideoEffectFactory(m_pAvCodecCtx));
+UncompressedSampleProvider::frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx));
 }
 
 HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired()

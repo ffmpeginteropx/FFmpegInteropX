@@ -3,12 +3,14 @@
 #include "IAvEffect.h"
 
 using namespace Windows::Foundation::Collections;
-using namespace FFmpegInterop;
 
-class AbstractEffectFactory
-{
-public:
-	virtual IAvEffect* CreateEffect(IVectorView<AvEffectDefinition^>^ definitions) = 0;
-};
+
+namespace FFmpegInterop {
+	ref class AbstractEffectFactory abstract
+	{
+	internal:
+		virtual IAvEffect^ CreateEffect(IVectorView<AvEffectDefinition^>^ definitions) abstract;
+	};
+}
 
 

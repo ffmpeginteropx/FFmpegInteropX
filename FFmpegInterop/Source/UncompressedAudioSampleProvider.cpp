@@ -57,7 +57,7 @@ HRESULT UncompressedAudioSampleProvider::AllocateResources()
 			(inSampleFormat == AV_SAMPLE_FMT_FLT || inSampleFormat == AV_SAMPLE_FMT_FLTP) ? AV_SAMPLE_FMT_FLT :
 			AV_SAMPLE_FMT_S16;
 	
-		frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, new AudioEffectFactory(m_pAvCodecCtx, inChannelLayout, inChannels));
+		frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new AudioEffectFactory(m_pAvCodecCtx, inChannelLayout, inChannels));
 	
 		needsUpdateResampler = inSampleFormat != outSampleFormat || inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate;
 	}

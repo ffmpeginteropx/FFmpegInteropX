@@ -15,10 +15,10 @@ namespace FFmpegInterop
 {
 	ref class UncompressedFrameProvider sealed
 	{
-		IAvEffect* filter;
+		IAvEffect^ filter;
 		AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;
-		AbstractEffectFactory* m_effectFactory;
+		AbstractEffectFactory^ m_effectFactory;
 
 		~UncompressedFrameProvider() {
 			delete filter;
@@ -27,7 +27,7 @@ namespace FFmpegInterop
 
 	internal:
 
-		UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, AbstractEffectFactory* p_effectFactory)
+		UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, AbstractEffectFactory^ p_effectFactory)
 		{
 			m_pAvCodecCtx = p_pAvCodecCtx;
 			m_pAvFormatCtx = p_pAvFormatCtx;
