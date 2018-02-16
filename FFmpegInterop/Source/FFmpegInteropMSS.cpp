@@ -734,10 +734,12 @@ HRESULT FFmpegInteropMSS::CreateAudioStreamDescriptor()
 	}
 	else
 	{
+		auto channels = avAudioCodecCtx->profile == FF_PROFILE_AAC_HE_V2 && avAudioCodecCtx->channels == 1 ? 2 : avAudioCodecCtx->channels;
+
 		// We try to preserve source format
 		if (avAudioCodecCtx->sample_fmt == AV_SAMPLE_FMT_S32 || avAudioCodecCtx->sample_fmt == AV_SAMPLE_FMT_S32P)
 		{
-			audioStreamDescriptor = ref new AudioStreamDescriptor(AudioEncodingProperties::CreatePcm(avAudioCodecCtx->sample_rate, avAudioCodecCtx->channels, 32));
+			audioStreamDescriptor = ref new AudioStreamDescriptor(AudioEncodingProperties::CreatePcm(avAudioCodecCtx->sample_rate, channels, 32));
 		}
 		else if (avAudioCodecCtx->sample_fmt == AV_SAMPLE_FMT_FLT || avAudioCodecCtx->sample_fmt == AV_SAMPLE_FMT_FLTP)
 		{
@@ -745,14 +747,14 @@ HRESULT FFmpegInteropMSS::CreateAudioStreamDescriptor()
 			properties->Subtype = MediaEncodingSubtypes::Float;
 			properties->BitsPerSample = 32;
 			properties->SampleRate = avAudioCodecCtx->sample_rate;
-			properties->ChannelCount = avAudioCodecCtx->channels;
-			properties->Bitrate = properties->BitsPerSample * properties->SampleRate * properties->ChannelCount;
+			properties->ChannelCount = channels;
+			properties->Bitrate = properties->BitsPerSample * properties->SampleRate * channels;
 			audioStreamDescriptor = ref new AudioStreamDescriptor(properties);
 		}
 		else
 		{
 			// Use S16 for all other cases
-			audioStreamDescriptor = ref new AudioStreamDescriptor(AudioEncodingProperties::CreatePcm(avAudioCodecCtx->sample_rate, avAudioCodecCtx->channels, 16));
+			audioStreamDescriptor = ref new AudioStreamDescriptor(AudioEncodingProperties::CreatePcm(avAudioCodecCtx->sample_rate, channels, 16));
 		}
 		audioSampleProvider = ref new UncompressedAudioSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config, audioStreamIndex);
 	}
