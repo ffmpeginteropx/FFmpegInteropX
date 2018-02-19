@@ -22,6 +22,7 @@
 #include "FFmpegReader.h"
 
 using namespace FFmpegInterop;
+using namespace Windows::Media::MediaProperties;
 
 MediaSampleProvider::MediaSampleProvider(
 	FFmpegReader^ reader,
@@ -32,20 +33,20 @@ MediaSampleProvider::MediaSampleProvider(
 	: m_pReader(reader)
 	, m_pAvFormatCtx(avFormatCtx)
 	, m_pAvCodecCtx(avCodecCtx)
+	, m_pAvStream(avFormatCtx->streams[streamIndex])
 	, m_isEnabled(true)
 	, m_config(config)
 	, m_streamIndex(streamIndex)
 {
 	DebugMessage(L"MediaSampleProvider\n");
-
 	if (m_pAvFormatCtx->start_time != 0)
 	{
-		auto streamStartTime = (long long)(av_q2d(m_pAvFormatCtx->streams[m_streamIndex]->time_base) * m_pAvFormatCtx->streams[m_streamIndex]->start_time * 1000000);
+		auto streamStartTime = (long long)(av_q2d(m_pAvStream->time_base) * m_pAvStream->start_time * 1000000);
 
 		if (m_pAvFormatCtx->start_time == streamStartTime)
 		{
 			// calculate more precise start time
-			m_startOffset = (long long)(av_q2d(m_pAvFormatCtx->streams[m_streamIndex]->time_base) * m_pAvFormatCtx->streams[m_streamIndex]->start_time * 10000000);
+			m_startOffset = (long long)(av_q2d(m_pAvStream->time_base) * m_pAvStream->start_time * 10000000);
 		}
 		else
 		{
@@ -57,15 +58,15 @@ MediaSampleProvider::MediaSampleProvider(
 	m_nextPacketPts = m_pAvFormatCtx->streams[m_streamIndex]->start_time;
 }
 
-HRESULT MediaSampleProvider::AllocateResources()
-{
-	DebugMessage(L"AllocateResources\n");
-	return S_OK;
-}
-
 MediaSampleProvider::~MediaSampleProvider()
 {
 	DebugMessage(L"~MediaSampleProvider\n");
+}
+
+HRESULT MediaSampleProvider::Initialize()
+{
+	m_streamDescriptor = CreateStreamDescriptor();
+	return m_streamDescriptor ? S_OK : E_FAIL;
 }
 
 MediaStreamSample^ MediaSampleProvider::GetNextSample()
@@ -85,8 +86,8 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 
 		if (hr == S_OK)
 		{
-			pts = LONGLONG(av_q2d(m_pAvFormatCtx->streams[m_streamIndex]->time_base) * 10000000 * pts) - m_startOffset;
-			dur = LONGLONG(av_q2d(m_pAvFormatCtx->streams[m_streamIndex]->time_base) * 10000000 * dur);
+			pts = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * pts) - m_startOffset;
+			dur = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * dur);
 
 			sample = MediaStreamSample::CreateFromBuffer(buffer, { pts });
 			sample->Duration = { dur };
@@ -199,6 +200,49 @@ void MediaSampleProvider::DisableStream()
 	DebugMessage(L"DisableStream\n");
 	Flush();
 	m_isEnabled = false;
+}
+
+void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoProperties, bool isCompressedFormat)
+{
+	if (isCompressedFormat)
+	{
+		videoProperties->Width = m_pAvCodecCtx->width;
+		videoProperties->Height = m_pAvCodecCtx->height;
+		videoProperties->ProfileId = m_pAvCodecCtx->profile;
+	}
+
+	// set video rotation
+	bool rotateVideo = false;
+	int rotationAngle;
+	AVDictionaryEntry *rotate_tag = av_dict_get(m_pAvStream->metadata, "rotate", NULL, 0);
+	if (rotate_tag != NULL)
+	{
+		rotateVideo = true;
+		rotationAngle = atoi(rotate_tag->value);
+	}
+	else
+	{
+		rotateVideo = false;
+	}
+	if (rotateVideo)
+	{
+		Platform::Guid MF_MT_VIDEO_ROTATION(0xC380465D, 0x2271, 0x428C, 0x9B, 0x83, 0xEC, 0xEA, 0x3B, 0x4A, 0x85, 0xC1);
+		videoProperties->Properties->Insert(MF_MT_VIDEO_ROTATION, (uint32)rotationAngle);
+	}
+
+	// Detect the correct framerate
+	if (m_pAvCodecCtx->framerate.num != 0 || m_pAvCodecCtx->framerate.den != 1)
+	{
+		videoProperties->FrameRate->Numerator = m_pAvCodecCtx->framerate.num;
+		videoProperties->FrameRate->Denominator = m_pAvCodecCtx->framerate.den;
+	}
+	else if (m_pAvStream->avg_frame_rate.num != 0 || m_pAvStream->avg_frame_rate.den != 0)
+	{
+		videoProperties->FrameRate->Numerator = m_pAvStream->avg_frame_rate.num;
+		videoProperties->FrameRate->Denominator = m_pAvStream->avg_frame_rate.den;
+	}
+
+	videoProperties->Bitrate = (unsigned int)m_pAvCodecCtx->bit_rate;
 }
 
 void free_buffer(void *lpVoid)
