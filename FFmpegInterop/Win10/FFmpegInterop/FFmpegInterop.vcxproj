@@ -271,7 +271,10 @@
     <ClInclude Include="..\..\Source\NativeBuffer.h" />
     <ClInclude Include="..\..\Source\NativeBufferFactory.h" />
     <ClInclude Include="..\..\Source\StreamInfo.h" />
-    <ClInclude Include="..\..\Source\SubtitlesProvider.h" />
+    <ClInclude Include="..\..\Source\SubtitleProvider.h" />
+    <ClInclude Include="..\..\Source\SubtitleProviderBitmap.h" />
+    <ClInclude Include="..\..\Source\SubtitleProviderSrt.h" />
+    <ClInclude Include="..\..\Source\SubtitleProviderSsaAss.h" />
     <ClInclude Include="..\..\Source\UncompressedAudioSampleProvider.h" />
     <ClInclude Include="..\..\Source\UncompressedFrameProvider.h" />
     <ClInclude Include="..\..\Source\UncompressedSampleProvider.h" />

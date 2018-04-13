@@ -24,11 +24,13 @@
 #include "HEVCSampleProvider.h"
 #include "UncompressedAudioSampleProvider.h"
 #include "UncompressedVideoSampleProvider.h"
+#include "SubtitleProviderSrt.h"
+#include "SubtitleProviderSsaAss.h"
+#include "SubtitleProviderBitmap.h"
 #include "CritSec.h"
 #include "shcore.h"
 #include <mfapi.h>
 #include <dshow.h>
-#include "SubtitlesProvider.h"
 #include "LanguageTagConverter.h"
 
 extern "C"
@@ -613,16 +615,16 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 
 				auto isDefault = index == subtitleStreamIndex;
 				auto info = ref new SubtitleStreamInfo(stream->Name, stream->Language, stream->CodecName,
-					isDefault, (avStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED, ((SubtitlesProvider^)stream)->SubtitleTrack);
+					isDefault, (avStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED, ((SubtitleProvider^)stream)->SubtitleTrack);
 				if (isDefault)
 				{
 					subtitleStrInfos->InsertAt(0, info);
-					subtitleStreams.insert(subtitleStreams.begin(), (SubtitlesProvider^)stream);
+					subtitleStreams.insert(subtitleStreams.begin(), (SubtitleProvider^)stream);
 				}
 				else
 				{
 					subtitleStrInfos->Append(info);
-					subtitleStreams.push_back((SubtitlesProvider^)stream);
+					subtitleStreams.push_back((SubtitleProvider^)stream);
 				}
 			}
 		}
@@ -697,10 +699,10 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 	return hr;
 }
 
-SubtitlesProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avStream, int index)
+SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avStream, int index)
 {
 	HRESULT hr = S_OK;
-	SubtitlesProvider^ avSubsStream = nullptr;
+	SubtitleProvider^ avSubsStream = nullptr;
 	auto avSubsCodec = avcodec_find_decoder(avStream->codecpar->codec_id);
 	if (avSubsCodec)
 	{
@@ -731,11 +733,19 @@ SubtitlesProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avS
 					if (avSubsCodecCtx->codec_id == AV_CODEC_ID_SUBRIP ||
 						avSubsCodecCtx->codec_id == AV_CODEC_ID_SRT ||
 						avSubsCodecCtx->codec_id == AV_CODEC_ID_TEXT ||
-						avSubsCodecCtx->codec_id == AV_CODEC_ID_WEBVTT ||
+						avSubsCodecCtx->codec_id == AV_CODEC_ID_WEBVTT)
+					{
+						avSubsStream = ref new SubtitleProviderSrt(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
+					}
+					else if(
 						avSubsCodecCtx->codec_id == AV_CODEC_ID_ASS ||
 						avSubsCodecCtx->codec_id == AV_CODEC_ID_SSA)
 					{
-						avSubsStream = ref new SubtitlesProvider(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
+						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
+					}
+					else if (avSubsCodecCtx->codec_id == AV_CODEC_ID_DVD_SUBTITLE)
+					{
+						avSubsStream = ref new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
 					}
 					else
 					{

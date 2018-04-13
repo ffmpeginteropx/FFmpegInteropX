@@ -54,8 +54,11 @@
     <ClInclude Include="..\..\Source\VideoEffectFactory.h" />
     <ClInclude Include="..\..\Source\StreamInfo.h" />
     <ClInclude Include="..\..\Source\FrameGrabber.h" />
-    <ClInclude Include="..\..\Source\SubtitlesProvider.h" />
     <ClInclude Include="..\..\Source\LanguageTagConverter.h" />
+    <ClInclude Include="..\..\Source\SubtitleProvider.h" />
+    <ClInclude Include="..\..\Source\SubtitleProviderSrt.h" />
+    <ClInclude Include="..\..\Source\SubtitleProviderSsaAss.h" />
+    <ClInclude Include="..\..\Source\SubtitleProviderBitmap.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\BuildFFmpeg.bat">
