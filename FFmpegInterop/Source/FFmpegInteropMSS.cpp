@@ -740,15 +740,14 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 						avSubsCodecCtx->codec_id == AV_CODEC_ID_TEXT ||
 						avSubsCodecCtx->codec_id == AV_CODEC_ID_WEBVTT)
 					{
+						//TODO remove srt provider if ass parsing is robuse
 						avSubsStream = ref new SubtitleProviderSrt(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
 					}
-					else if(
-						avSubsCodecCtx->codec_id == AV_CODEC_ID_ASS ||
-						avSubsCodecCtx->codec_id == AV_CODEC_ID_SSA)
+					else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
 					{
 						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
 					}
-					else if (avSubsCodecCtx->codec_id == AV_CODEC_ID_DVD_SUBTITLE)
+					else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
 					{
 						avSubsStream = ref new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
 					}
