@@ -24,14 +24,26 @@ namespace FFmpegInterop
 			{
 				position.X = 0;
 				position.Y = 0;
-				position.Unit = TimedTextUnit::Pixels;
+				position.Unit = TimedTextUnit::Percentage;
 
-				extent.Width = 720;
-				extent.Height = 576;
-				extent.Unit = TimedTextUnit::Pixels;
+				extent.Width = 100;
+				extent.Height = 100;
+				extent.Unit = TimedTextUnit::Percentage;
+
+				width = m_pAvCodecCtx->width;
+				height = m_pAvCodecCtx->height;
 			}
 
 			return hr;
+		}
+
+		virtual void NotifyVideoFrameSize(int width, int height) override
+		{
+			if (this->width == 0 || this->height == 0)
+			{
+				this->width = width;
+				this->height = height;
+			}
 		}
 
 		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) override
@@ -39,6 +51,12 @@ namespace FFmpegInterop
 			// only decode image subtitles if the stream is selected
 			if (!IsEnabled)
 			{
+				return nullptr;
+			}
+
+			if (width <= 0 || height <= 0)
+			{
+				OutputDebugString(L"Error: No subtitle size received.");
 				return nullptr;
 			}
 
@@ -55,7 +73,7 @@ namespace FFmpegInterop
 
 				using namespace Windows::Graphics::Imaging;
 
-				auto bitmap = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, 720, 576, BitmapAlphaMode::Premultiplied);
+				auto bitmap = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, width, height, BitmapAlphaMode::Premultiplied);
 				{
 					auto buffer = bitmap->LockBuffer(BitmapBufferAccessMode::Write);
 					auto reference = buffer->CreateReference();
@@ -71,9 +89,16 @@ namespace FFmpegInterop
 
 					auto plane = buffer->GetPlaneDescription(0);
 
-					for (int i = 0; i < subtitle.num_rects; i++)
+					for (unsigned int i = 0; i < subtitle.num_rects; i++)
 					{
 						auto rect = subtitle.rects[i];
+
+						if (rect->x + rect->w > width || rect->y + rect->h > height)
+						{
+							OutputDebugString(L"Error: Unexpected subtitle size.");
+							avsubtitle_free(&subtitle);
+							return nullptr;
+						}
 
 						for (int y = 0; y < rect->h; y++)
 						{
@@ -83,22 +108,17 @@ namespace FFmpegInterop
 								auto color = inPointer[0];
 								if (color < rect->nb_colors)
 								{
-									auto rgba = color == 0 ? 0 : ((uint32*)rect->data[1])[color] | 0x000000FF;
-								
+									auto rgba = ((uint32*)rect->data[1])[color];
 									auto outPointer = pixels + plane.StartIndex + plane.Stride * (y + rect->y) + 4 * (x + rect->x);
 									((uint32*)outPointer)[0] = rgba;
 								}
 								else
 								{
-									//illegal color value
+									OutputDebugString(L"Error: Illegal subtitle color.");
 								}
 							}
 						}
 					}
-
-					bufferByteAccess = nullptr;
-					delete reference;
-					delete buffer;
 				}
 
 				ImageCue^ cue = ref new ImageCue();
@@ -112,7 +132,7 @@ namespace FFmpegInterop
 			}
 			else
 			{
-				//log
+				OutputDebugString(L"Failed to decode subtitle.");
 			}
 
 			return nullptr;

@@ -37,6 +37,10 @@ namespace FFmpegInterop
 			return S_OK;
 		}
 
+		virtual void NotifyVideoFrameSize(int width, int height)
+		{
+		}
+
 		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) = 0;
 
 		virtual void QueuePacket(AVPacket *packet) override

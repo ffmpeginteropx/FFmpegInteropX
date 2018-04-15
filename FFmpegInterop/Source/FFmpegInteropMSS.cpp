@@ -607,12 +607,9 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 		}
 		else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE)
 		{
-
-
 			stream = CreateSubtitleSampleProvider(avStream, index);
 			if (stream)
 			{
-
 				auto isDefault = index == subtitleStreamIndex;
 				auto info = ref new SubtitleStreamInfo(stream->Name, stream->Language, stream->CodecName,
 					isDefault, (avStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED, ((SubtitleProvider^)stream)->SubtitleTrack);
@@ -639,6 +636,14 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 
 	audioStreamInfos = audioStrInfos->GetView();
 	subtitleStreamInfos = subtitleStrInfos->GetView();
+
+	if (videoStream)
+	{
+		for each (auto stream in subtitleStreams)
+		{
+			stream->NotifyVideoFrameSize(videoStream->m_pAvCodecCtx->width, videoStream->m_pAvCodecCtx->height);
+		}
+	}
 
 	if (videoStream && currentAudioStream)
 	{
