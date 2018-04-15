@@ -19,7 +19,7 @@ namespace FFmpegInterop
 		{
 		}
 
-		virtual IMediaCue^ CreateCue(AVPacket* packet) override
+		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) override
 		{
 			auto str = utf8_to_wstring(std::string((char*)packet->data, packet->size));
 

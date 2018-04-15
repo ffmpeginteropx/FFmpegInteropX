@@ -31,7 +31,7 @@ namespace FFmpegInterop
 			return ref new Platform::String(input.c_str(), (unsigned int)input.length());
 		}
 
-		virtual IMediaCue^ CreateCue(AVPacket* packet) override
+		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) override
 		{
 			auto str = utf8_to_wstring(std::string((char*)packet->data, packet->size));
 

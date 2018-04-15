@@ -33,10 +33,11 @@ namespace FFmpegInterop
 			SubtitleTrack = ref new TimedMetadataTrack(Name, Language, timedMetadataKind);
 			SubtitleTrack->Label = Name != nullptr ? Name : Language;
 			cueExitedToken = SubtitleTrack->CueExited += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueExited);
+			trackFailedToken = SubtitleTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTrackFailed);
 			return S_OK;
 		}
 
-		virtual IMediaCue^ CreateCue(AVPacket* packet) = 0;
+		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) = 0;
 
 		virtual void QueuePacket(AVPacket *packet) override
 		{
@@ -50,16 +51,16 @@ namespace FFmpegInterop
 				return;
 			}
 
-			auto cue = CreateCue(packet);
+			TimeSpan position;
+			TimeSpan duration;
+
+			position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
+			duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
+
+			auto cue = CreateCue(packet, &position, &duration);
 			if (cue)
 			{
 				addedCues[packet->pos] = packet->pos;
-
-				TimeSpan position;
-				TimeSpan duration;
-
-				position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
-				duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
 
 				cue->StartTime = position;
 				cue->Duration = duration;
@@ -143,12 +144,17 @@ namespace FFmpegInterop
 			mutex.unlock();
 		}
 
+		void OnTrackFailed(TimedMetadataTrack ^sender, TimedMetadataTrackFailedEventArgs ^args)
+		{
+			OutputDebugString(L"Subtitle track error.");
+		}
 
 		std::mutex mutex;
 		std::vector<IMediaCue^> pendingCues;
 		std::map<int64,int64> addedCues;
 		int64 maxCuePosition;
 		EventRegistrationToken cueExitedToken;
+		EventRegistrationToken trackFailedToken;
 		TimedMetadataKind timedMetadataKind;
 
 	public:
@@ -157,11 +163,14 @@ namespace FFmpegInterop
 			if (SubtitleTrack)
 			{
 				SubtitleTrack->CueExited -= cueExitedToken;
+				SubtitleTrack->TrackFailed -= trackFailedToken;
 				SubtitleTrack = nullptr;
 			}
 		}
-	};
+};
 
 }
+
+
 
 
