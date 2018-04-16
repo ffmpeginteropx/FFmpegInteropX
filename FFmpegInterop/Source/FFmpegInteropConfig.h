@@ -66,8 +66,8 @@ namespace FFmpegInterop
 
 			SubtitleStyle->FontFamily = "default";
 			TimedTextDouble fontSize;
-			fontSize.Unit = TimedTextUnit::Percentage;
-			fontSize.Value = 100;
+			fontSize.Unit = TimedTextUnit::Pixels;
+			fontSize.Value = 44;
 			SubtitleStyle->FontSize = fontSize;
 			SubtitleStyle->LineAlignment = TimedTextLineAlignment::Center;
 			SubtitleStyle->FontStyle = TimedTextFontStyle::Normal;
@@ -77,10 +77,10 @@ namespace FFmpegInterop
 			//OutlineRadius = new TimedTextDouble { Unit = TimedTextUnit.Percentage, Value = 10 },
 			TimedTextDouble outlineThickness;
 			outlineThickness.Unit = TimedTextUnit::Percentage;
-			outlineThickness.Value = 3;
+			outlineThickness.Value = 3.5;
 			SubtitleStyle->OutlineThickness = outlineThickness;
 			SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
-			SubtitleStyle->OutlineColor = Windows::UI::Colors::Black;
+			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };
 		};
 
 		property bool PassthroughAudioMP3;

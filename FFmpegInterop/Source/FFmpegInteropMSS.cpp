@@ -24,7 +24,6 @@
 #include "HEVCSampleProvider.h"
 #include "UncompressedAudioSampleProvider.h"
 #include "UncompressedVideoSampleProvider.h"
-#include "SubtitleProviderSrt.h"
 #include "SubtitleProviderSsaAss.h"
 #include "SubtitleProviderBitmap.h"
 #include "CritSec.h"
@@ -735,15 +734,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 				}
 				else
 				{
-					if (avSubsCodecCtx->codec_id == AV_CODEC_ID_SUBRIP ||
-						avSubsCodecCtx->codec_id == AV_CODEC_ID_SRT ||
-						avSubsCodecCtx->codec_id == AV_CODEC_ID_TEXT ||
-						avSubsCodecCtx->codec_id == AV_CODEC_ID_WEBVTT)
-					{
-						//TODO remove srt provider if ass parsing is robuse
-						avSubsStream = ref new SubtitleProviderSrt(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
-					}
-					else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
+					if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
 					{
 						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
 					}

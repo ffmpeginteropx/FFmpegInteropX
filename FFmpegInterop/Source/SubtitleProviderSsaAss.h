@@ -19,16 +19,37 @@ namespace FFmpegInterop
 		{
 		}
 
-		// convert UTF-8 string to wstring
-		std::wstring utf8_to_wstring(const std::string& str)
+		virtual HRESULT Initialize() override
 		{
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-			return myconv.from_bytes(str);
-		}
+			auto hr = SubtitleProvider::Initialize();
+			if (SUCCEEDED(hr))
+			{
+				ssaVersion = 4;
+				if (m_pAvCodecCtx->extradata && m_pAvCodecCtx->extradata_size > 0)
+				{
+					auto str = std::string((char*)m_pAvCodecCtx->extradata);
+					auto versionIndex = str.find("ScriptType: v");
+					if (versionIndex >= 0 && versionIndex + 13 < str.length())
+					{
+						auto version = str.at(versionIndex + 13) - '0';
+						if (version > 0 && version < 9)
+						{
+							ssaVersion = version;
+						}
+					}
+				}
 
-		Platform::String ^ convertFromString(const std::wstring & input)
-		{
-			return ref new Platform::String(input.c_str(), (unsigned int)input.length());
+				if (ssaVersion >= 3)
+				{
+					textIndex = 9;
+				}
+				else
+				{
+					textIndex = 8;
+				}
+			}
+
+			return hr;
 		}
 
 		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) override
@@ -39,25 +60,51 @@ namespace FFmpegInterop
 			if (result > 0 && gotSubtitle && subtitle.num_rects > 0)
 			{
 				auto str = utf8_to_wstring(std::string(subtitle.rects[0]->ass));
-
-				// TODO we could parse style definitions from extradata and forward bold and italic
-
-				// strip effects from string
-				while (true)
+				
+				int lastComma = -1;
+				for (int i = 0; i < textIndex; i++)
 				{
-					auto nextEffect = str.find('{');
-					if (nextEffect >= 0)
+					auto nextComma = str.find(',', lastComma + 1);
+					if (nextComma >= 0)
 					{
-						auto endEffect = str.find('}', nextEffect);
-						if (endEffect > nextEffect)
+						lastComma = nextComma;
+					}
+					else
+					{
+						// this should not happen. still we try to be graceful. let's use what we found.
+						break;
+					}
+				}
+
+				if (lastComma > 0 && lastComma < (int)str.length() - 1)
+				{
+					// get actual text
+					str = str.substr(lastComma + 1);
+
+					find_and_replace(str, L"\\N", L"\n");
+					str.erase(str.find_last_not_of(L" \n\r") + 1);
+
+					// strip effects from string
+					while (true)
+					{
+						auto nextEffect = str.find('{');
+						if (nextEffect >= 0)
 						{
-							if (endEffect < str.length() - 1)
+							auto endEffect = str.find('}', nextEffect);
+							if (endEffect > nextEffect)
 							{
-								str = str.substr(0, nextEffect).append(str.substr(endEffect + 1));
+								if (endEffect < str.length() - 1)
+								{
+									str = str.substr(0, nextEffect).append(str.substr(endEffect + 1));
+								}
+								else
+								{
+									str = str.substr(0, nextEffect);
+								}
 							}
 							else
 							{
-								str = str.substr(0, nextEffect);
+								break;
 							}
 						}
 						else
@@ -65,17 +112,9 @@ namespace FFmpegInterop
 							break;
 						}
 					}
-					else
-					{
-						break;
-					}
-				}
 
-				// TODO we need to parse header to find out how many commas to skip. Acutal text could contain commas as well!
-				auto lastComma = str.find_last_of(',');
-				if (lastComma > 0 && lastComma < str.length() - 1)
-				{
-					str = str.substr(lastComma + 1);
+					// TODO we could parse style definitions from extradata and/or effect and use at least bold and italic
+					
 					auto timedText = convertFromString(str);
 
 					TimedTextCue^ cue = ref new TimedTextCue();
@@ -93,5 +132,18 @@ namespace FFmpegInterop
 			return nullptr;
 		}
 
+		void find_and_replace(std::wstring& source, std::wstring const& find, std::wstring const& replace)
+		{
+			for (std::wstring::size_type i = 0; (i = source.find(find, i)) != std::wstring::npos;)
+			{
+				source.replace(i, find.length(), replace);
+				i += replace.length();
+			}
+		}
+
+
+	private:
+		int ssaVersion;
+		int textIndex;
 	};
 }
