@@ -32,6 +32,7 @@ namespace FFmpegInterop
 
 			AutoSelectForcedSubtitles = true;
 			UseAntiFlickerForSubtitles = true;
+			OverrideSubtitleStyles = false;
 
 			SubtitleRegion = ref new TimedTextRegion();
 
@@ -109,6 +110,7 @@ namespace FFmpegInterop
 		property TimedTextStyle^ SubtitleStyle;
 		property bool AutoSelectForcedSubtitles;
 		property bool UseAntiFlickerForSubtitles;
+		property bool OverrideSubtitleStyles;
 
 	internal:
 		property bool IsFrameGrabber;
