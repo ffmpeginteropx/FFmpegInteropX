@@ -170,7 +170,7 @@ namespace FFmpegInterop
 					auto timedText = convertFromString(str);
 
 					TimedTextCue^ cue = ref new TimedTextCue();
-					if (style)
+					if (!m_config->OverrideSubtitleStyles && style)
 					{
 						cue->CueRegion = style->Region;
 						cue->CueStyle = style->Style;
@@ -276,7 +276,7 @@ namespace FFmpegInterop
 						padding.Start = 0;
 						if (width > 0 && height > 0)
 						{
-							//padding.Start = (double)marginL * 100 / width;
+							padding.Start = (double)marginL * 100 / width;
 							padding.End = (double)marginR * 100 / width;
 							padding.After = (double)marginV * 100 / height;
 						}
@@ -411,7 +411,7 @@ namespace FFmpegInterop
 						padding.Start = 0;
 						if (width > 0 && height > 0)
 						{
-							//padding.Start = (double)marginL * 100 / width;
+							padding.Start = (double)marginL * 100 / width;
 							padding.End = (double)marginR * 100 / width;
 							padding.After = (double)marginV * 100 / height;
 						}
