@@ -102,13 +102,13 @@ namespace FFmpegInterop
 					{
 						if (i == styleIndex)
 						{
-							startStyle = nextComma + 1;
+							startStyle = (int)nextComma + 1;
 						}
 						else if (i == styleIndex + 1)
 						{
-							endStyle = nextComma;
+							endStyle = (int)nextComma;
 						}
-						lastComma = nextComma;
+						lastComma = (int)nextComma;
 					}
 					else
 					{
@@ -205,7 +205,7 @@ namespace FFmpegInterop
 					[V4+ Styles]
 					Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 					*/
-					const size_t MAX_STYLE_NAME_CHARS = 256;
+					const unsigned int MAX_STYLE_NAME_CHARS = 256;
 					char name[MAX_STYLE_NAME_CHARS];
 					char font[MAX_STYLE_NAME_CHARS];
 					int size, color, secondaryColor, outlineColor, backColor;
@@ -346,7 +346,7 @@ namespace FFmpegInterop
 					[V4 Styles]
 					Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, TertiaryColour, BackColour, Bold, Italic, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, AlphaLevel, Encoding
 					*/
-					const size_t MAX_STYLE_NAME_CHARS = 256;
+					const unsigned int MAX_STYLE_NAME_CHARS = 256;
 					char name[MAX_STYLE_NAME_CHARS];
 					char font[MAX_STYLE_NAME_CHARS];
 					int size, color, secondaryColor, outlineColor, backColor;
