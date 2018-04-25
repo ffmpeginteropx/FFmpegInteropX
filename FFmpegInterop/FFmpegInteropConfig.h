@@ -99,6 +99,9 @@ namespace FFmpegInterop
 			DefaultAudioStreamName = "Audio Stream";
 			DefaultSubtitleStreamName = "Subtitle";
 			DefaultExternalSubtitleStreamName = "External Subtitle";
+
+			AttachmentCacheFolderName = "FFmpegAttachmentCache";
+			UseEmbeddedSubtitleFonts = true;
 		};
 
 		property bool PassthroughAudioMP3;
@@ -153,6 +156,9 @@ namespace FFmpegInterop
 		property String^ DefaultAudioStreamName;
 		property String^ DefaultSubtitleStreamName;
 		property String^ DefaultExternalSubtitleStreamName;
+
+		property bool UseEmbeddedSubtitleFonts;
+		property String^ AttachmentCacheFolderName;
 
 		/*Used when the duration of a timed metadata cue could not be resolved*/
 		property TimeSpan DefaultTimedMetadataCueDuration;

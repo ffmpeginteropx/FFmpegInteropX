@@ -15,9 +15,11 @@ namespace FFmpegInterop
 			AVCodecContext* avCodecCtx,
 			FFmpegInteropConfig^ config,
 			int index,
-			CoreDispatcher^ dispatcher)
+			CoreDispatcher^ dispatcher,
+			AttachedFileHelper^ attachedFileHelper)
 			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::Subtitle, dispatcher)
 		{
+			this->attachedFileHelper = attachedFileHelper;
 		}
 
 		virtual HRESULT Initialize() override
@@ -740,5 +742,6 @@ namespace FFmpegInterop
 		int height;
 		const int styleIndex = 2;
 		std::map<String^, SsaStyleDefinition^> styles;
+		AttachedFileHelper^ attachedFileHelper;
 	};
 }

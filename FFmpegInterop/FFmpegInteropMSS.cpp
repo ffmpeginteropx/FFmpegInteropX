@@ -732,6 +732,19 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 				}
 			}
 		}
+		else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_ATTACHMENT)
+		{
+			auto fileName = av_dict_get(avStream->metadata, "filename", NULL, 0);
+			auto mimetype = av_dict_get(avStream->metadata, "mimetype", NULL, 0);
+			if (fileName && avStream->codecpar->extradata && avStream->codecpar->extradata_size > 0)
+			{
+				auto name = ConvertString(fileName->value);
+				auto mime = mimetype ? ConvertString(mimetype->value) : "";
+
+				auto file = ref new AttachedFile(name, mime, avStream);
+				attachedFileHelper->AddAttachedFile(file);
+			}
+		}
 
 		sampleProviders.push_back(stream);
 	}
@@ -865,7 +878,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 				{
 					if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
 					{
-						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, dispatcher);
+						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, dispatcher, attachedFileHelper);
 					}
 					else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
 					{

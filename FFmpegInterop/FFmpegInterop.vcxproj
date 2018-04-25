@@ -325,6 +325,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AbstractEffectFactory.h" />
+    <ClInclude Include="AttachedFile.h" />
+    <ClInclude Include="AttachedFileHelper.h" />
     <ClInclude Include="AudioEffectFactory.h" />
     <ClInclude Include="AudioFilter.h" />
     <ClInclude Include="AvEffectDefinition.h" />

@@ -145,6 +145,12 @@
     <ClInclude Include="CharacterEncoding.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="AttachedFile.h">
+      <Filter>Subtitles</Filter>
+    </ClInclude>
+    <ClInclude Include="AttachedFileHelper.h">
+      <Filter>Subtitles</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">
