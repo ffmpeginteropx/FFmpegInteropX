@@ -295,7 +295,10 @@ namespace FFmpegInterop
 						fontSize.Value = size;
 						SubtitleStyle->FontSize = fontSize;
 						SubtitleStyle->LineAlignment = horizontalAlignment;
-						SubtitleStyle->FontStyle = italic ? TimedTextFontStyle::Italic : TimedTextFontStyle::Normal;
+						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))
+						{
+							SubtitleStyle->FontStyle = italic ? TimedTextFontStyle::Italic : TimedTextFontStyle::Normal;
+						}
 						SubtitleStyle->FontWeight = bold ? TimedTextWeight::Bold : TimedTextWeight::Normal;
 						SubtitleStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
 						SubtitleStyle->Background = Windows::UI::Colors::Transparent; //ColorFromArgb(backColor);
@@ -430,7 +433,10 @@ namespace FFmpegInterop
 						fontSize.Value = size;
 						SubtitleStyle->FontSize = fontSize;
 						SubtitleStyle->LineAlignment = horizontalAlignment;
-						SubtitleStyle->FontStyle = italic ? TimedTextFontStyle::Italic : TimedTextFontStyle::Normal;
+						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))
+						{
+							SubtitleStyle->FontStyle = italic ? TimedTextFontStyle::Italic : TimedTextFontStyle::Normal;
+						}
 						SubtitleStyle->FontWeight = bold ? TimedTextWeight::Bold : TimedTextWeight::Normal;
 						SubtitleStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
 						SubtitleStyle->Background = Windows::UI::Colors::Transparent; //ColorFromArgb(backColor);

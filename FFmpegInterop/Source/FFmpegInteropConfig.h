@@ -71,7 +71,10 @@ namespace FFmpegInterop
 			fontSize.Value = 44;
 			SubtitleStyle->FontSize = fontSize;
 			SubtitleStyle->LineAlignment = TimedTextLineAlignment::Center;
-			SubtitleStyle->FontStyle = TimedTextFontStyle::Normal;
+			if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))
+			{
+				SubtitleStyle->FontStyle = TimedTextFontStyle::Normal;
+			}
 			SubtitleStyle->FontWeight = TimedTextWeight::Normal;
 			SubtitleStyle->Foreground = Windows::UI::Colors::White;
 			SubtitleStyle->Background = Windows::UI::Colors::Transparent;
