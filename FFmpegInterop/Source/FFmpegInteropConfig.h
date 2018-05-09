@@ -31,6 +31,8 @@ namespace FFmpegInterop
 			FFmpegOptions = ref new PropertySet();
 
 			AutoSelectForcedSubtitles = true;
+			UseAntiFlickerForSubtitles = true;
+			OverrideSubtitleStyles = false;
 
 			SubtitleRegion = ref new TimedTextRegion();
 
@@ -65,21 +67,24 @@ namespace FFmpegInterop
 
 			SubtitleStyle->FontFamily = "default";
 			TimedTextDouble fontSize;
-			fontSize.Unit = TimedTextUnit::Percentage;
-			fontSize.Value = 100;
+			fontSize.Unit = TimedTextUnit::Pixels;
+			fontSize.Value = 44;
 			SubtitleStyle->FontSize = fontSize;
 			SubtitleStyle->LineAlignment = TimedTextLineAlignment::Center;
-			SubtitleStyle->FontStyle = TimedTextFontStyle::Normal;
+			if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))
+			{
+				SubtitleStyle->FontStyle = TimedTextFontStyle::Normal;
+			}
 			SubtitleStyle->FontWeight = TimedTextWeight::Normal;
 			SubtitleStyle->Foreground = Windows::UI::Colors::White;
 			SubtitleStyle->Background = Windows::UI::Colors::Transparent;
 			//OutlineRadius = new TimedTextDouble { Unit = TimedTextUnit.Percentage, Value = 10 },
 			TimedTextDouble outlineThickness;
 			outlineThickness.Unit = TimedTextUnit::Percentage;
-			outlineThickness.Value = 3;
+			outlineThickness.Value = 3.5;
 			SubtitleStyle->OutlineThickness = outlineThickness;
 			SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
-			SubtitleStyle->OutlineColor = Windows::UI::Colors::Black;
+			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };
 		};
 
 		property bool PassthroughAudioMP3;
@@ -107,6 +112,8 @@ namespace FFmpegInterop
 		property TimedTextRegion^ SubtitleRegion;
 		property TimedTextStyle^ SubtitleStyle;
 		property bool AutoSelectForcedSubtitles;
+		property bool UseAntiFlickerForSubtitles;
+		property bool OverrideSubtitleStyles;
 
 	internal:
 		property bool IsFrameGrabber;

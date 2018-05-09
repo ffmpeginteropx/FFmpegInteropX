@@ -24,11 +24,12 @@
 #include "HEVCSampleProvider.h"
 #include "UncompressedAudioSampleProvider.h"
 #include "UncompressedVideoSampleProvider.h"
+#include "SubtitleProviderSsaAss.h"
+#include "SubtitleProviderBitmap.h"
 #include "CritSec.h"
 #include "shcore.h"
 #include <mfapi.h>
 #include <dshow.h>
-#include "SubtitlesProvider.h"
 #include "LanguageTagConverter.h"
 
 extern "C"
@@ -605,24 +606,21 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 		}
 		else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE)
 		{
-
-
 			stream = CreateSubtitleSampleProvider(avStream, index);
 			if (stream)
 			{
-
 				auto isDefault = index == subtitleStreamIndex;
 				auto info = ref new SubtitleStreamInfo(stream->Name, stream->Language, stream->CodecName,
-					isDefault, (avStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED, ((SubtitlesProvider^)stream)->SubtitleTrack);
+					isDefault, (avStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED, ((SubtitleProvider^)stream)->SubtitleTrack);
 				if (isDefault)
 				{
 					subtitleStrInfos->InsertAt(0, info);
-					subtitleStreams.insert(subtitleStreams.begin(), (SubtitlesProvider^)stream);
+					subtitleStreams.insert(subtitleStreams.begin(), (SubtitleProvider^)stream);
 				}
 				else
 				{
 					subtitleStrInfos->Append(info);
-					subtitleStreams.push_back((SubtitlesProvider^)stream);
+					subtitleStreams.push_back((SubtitleProvider^)stream);
 				}
 			}
 		}
@@ -637,6 +635,14 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 
 	audioStreamInfos = audioStrInfos->GetView();
 	subtitleStreamInfos = subtitleStrInfos->GetView();
+
+	if (videoStream)
+	{
+		for each (auto stream in subtitleStreams)
+		{
+			stream->NotifyVideoFrameSize(videoStream->m_pAvCodecCtx->width, videoStream->m_pAvCodecCtx->height);
+		}
+	}
 
 	if (videoStream && currentAudioStream)
 	{
@@ -697,10 +703,10 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 	return hr;
 }
 
-SubtitlesProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avStream, int index)
+SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avStream, int index)
 {
 	HRESULT hr = S_OK;
-	SubtitlesProvider^ avSubsStream = nullptr;
+	SubtitleProvider^ avSubsStream = nullptr;
 	auto avSubsCodec = avcodec_find_decoder(avStream->codecpar->codec_id);
 	if (avSubsCodec)
 	{
@@ -728,14 +734,13 @@ SubtitlesProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avS
 				}
 				else
 				{
-					if (avSubsCodecCtx->codec_id == AV_CODEC_ID_SUBRIP ||
-						avSubsCodecCtx->codec_id == AV_CODEC_ID_SRT ||
-						avSubsCodecCtx->codec_id == AV_CODEC_ID_TEXT ||
-						avSubsCodecCtx->codec_id == AV_CODEC_ID_WEBVTT ||
-						avSubsCodecCtx->codec_id == AV_CODEC_ID_ASS ||
-						avSubsCodecCtx->codec_id == AV_CODEC_ID_SSA)
+					if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
 					{
-						avSubsStream = ref new SubtitlesProvider(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
+						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
+					}
+					else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
+					{
+						avSubsStream = ref new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
 					}
 					else
 					{
