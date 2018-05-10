@@ -82,7 +82,7 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVFrame* frame)
 {
 	HRESULT hr = S_OK;
 
-	auto channels = av_frame_get_channels(frame);
+	auto channels = frame->channels;
 	bool hasFormatChanged = channels != inChannels || frame->sample_rate != inSampleRate || frame->format != inSampleFormat;
 	if (hasFormatChanged)
 	{
@@ -163,9 +163,9 @@ UncompressedAudioSampleProvider::~UncompressedAudioSampleProvider()
 HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
 {
 	HRESULT hr = S_OK;
-	
+
 	hr = CheckFormatChanged(avFrame);
-	
+
 	if (SUCCEEDED(hr))
 	{
 		if (m_pSwrCtx)
