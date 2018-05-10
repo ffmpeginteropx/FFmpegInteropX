@@ -138,8 +138,8 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
 		videoProperties->Properties->Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, ref new Array<uint8_t>((byte*)&area, sizeof(MFVideoArea)));
 	}
 
-	if (m_pAvCodecCtx->sample_aspect_ratio.num > 0 && 
-		m_pAvCodecCtx->sample_aspect_ratio.den > 0 && 
+	if (m_pAvCodecCtx->sample_aspect_ratio.num > 0 &&
+		m_pAvCodecCtx->sample_aspect_ratio.den > 0 &&
 		m_pAvCodecCtx->sample_aspect_ratio.num != m_pAvCodecCtx->sample_aspect_ratio.den)
 	{
 		videoProperties->PixelAspectRatio->Numerator = m_pAvCodecCtx->sample_aspect_ratio.num;
@@ -251,7 +251,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 	if (hr == S_OK)
 	{
 		// Try to get the best effort timestamp for the frame.
-		framePts = av_frame_get_best_effort_timestamp(avFrame);
+		framePts = avFrame->best_effort_timestamp;
 		m_interlaced_frame = avFrame->interlaced_frame == 1;
 		m_top_field_first = avFrame->top_field_first == 1;
 		m_chroma_location = avFrame->chroma_location;
