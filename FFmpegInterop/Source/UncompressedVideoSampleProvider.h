@@ -35,6 +35,7 @@ namespace FFmpegInterop
 		virtual void Flush() override
 		{
 			hasFirstInterlacedFrame = false;
+			UncompressedSampleProvider::Flush();
 		}
 
 	internal:
