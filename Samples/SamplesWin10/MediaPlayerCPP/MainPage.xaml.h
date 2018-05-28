@@ -40,6 +40,8 @@ namespace MediaPlayerCPP
 		void MediaFailed(Platform::Object^ sender, Windows::UI::Xaml::ExceptionRoutedEventArgs^ e);
 		void ExtractFrame(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void DisplayErrorMessage(Platform::String^ message);
+		void Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void OnButtonPressed(Windows::Media::SystemMediaTransportControls ^sender, Windows::Media::SystemMediaTransportControlsButtonPressedEventArgs ^args);
 
 		Windows::Storage::StorageFile^ currentFile;
 		FFmpegInterop::FFmpegInteropMSS^ FFmpegMSS;

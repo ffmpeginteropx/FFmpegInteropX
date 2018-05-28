@@ -54,6 +54,16 @@ MainPage::MainPage()
 	Splitter->IsPaneOpen = true;
 }
 
+void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	auto controls = Windows::Media::SystemMediaTransportControls::GetForCurrentView();
+	controls->ButtonPressed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::SystemMediaTransportControls ^, Windows::Media::SystemMediaTransportControlsButtonPressedEventArgs ^>(this, &MediaPlayerCPP::MainPage::OnButtonPressed);
+}
+
+void MediaPlayerCPP::MainPage::OnButtonPressed(Windows::Media::SystemMediaTransportControls ^sender, Windows::Media::SystemMediaTransportControlsButtonPressedEventArgs ^args)
+{
+}
+
 void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	FileOpenPicker^ filePicker = ref new FileOpenPicker();
@@ -88,6 +98,11 @@ void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::Routed
 
 							// Close control panel after file open
 							Splitter->IsPaneOpen = false;
+						
+							auto controls = Windows::Media::SystemMediaTransportControls::GetForCurrentView();
+							controls->IsPlayEnabled = true;
+							controls->IsPauseEnabled = true;
+							controls->PlaybackStatus = Windows::Media::MediaPlaybackStatus::Playing;
 						}
 						else
 						{
@@ -218,3 +233,4 @@ void MainPage::DisplayErrorMessage(Platform::String^ message)
 	auto errorDialog = ref new MessageDialog(message);
 	errorDialog->ShowAsync();
 }
+
