@@ -56,11 +56,8 @@ HRESULT CompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int6
 		hr = CreateBufferFromPacket(avPacket, pBuffer);
 	}
 
-	if (avPacket)
-	{
-		av_packet_free(&avPacket);
-	}
-
+	av_packet_free(&avPacket);
+	
 	return hr;
 }
 
