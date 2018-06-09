@@ -181,10 +181,7 @@ HRESULT UncompressedSampleProvider::FeedPacketToDecoder()
 		}
 	}
 
-	if (avPacket)
-	{
-		av_packet_free(&avPacket);
-	}
+	av_packet_free(&avPacket);
 
 	return hr;
 }
