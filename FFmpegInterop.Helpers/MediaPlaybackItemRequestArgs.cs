@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Media.Playback;
 using Windows.Foundation;
+using System.Threading;
 
 namespace FFmpegInterop.Helpers
 {
@@ -22,23 +23,29 @@ namespace FFmpegInterop.Helpers
             private set;
         }
 
-        public Deferral Deferal
-        {
-            get;
-            private set;
-        }
+        MediaPlaybackItemRequestDeferal Deferal;
+
+
+
 
         public MediaPlaybackItemRequestArgs(MediaPlaybackItemRequestType type)
         {
             this.RequestType = type;
-            this.Deferal = new Deferral(() =>
-            {//no-op yet });
-            });
+
 
         }
 
-    }
+        internal void SetDeferal(MediaPlaybackItemRequestDeferal deferal)
+        {
+            Deferal = deferal;
+        }
 
+        public MediaPlaybackItemRequestDeferal GetDeferal()
+        {
+            Deferal.Reset();
+            return Deferal;
+        }
+    }
 
     public enum MediaPlaybackItemRequestType
     {

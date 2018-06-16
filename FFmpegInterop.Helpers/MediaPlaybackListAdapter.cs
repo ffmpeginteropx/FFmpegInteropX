@@ -27,91 +27,100 @@ namespace FFmpegInterop.Helpers
             private set;
         } = new MediaPlaybackList();
 
-        AutoResetEvent nextItemSignal = new AutoResetEvent(false);
 
-        public int CurrentIndex
+        public MediaPlayer Player
         {
             get;
             private set;
         }
 
-        public int? NextIndex
+        AutoResetEvent nextItemSignal = new AutoResetEvent(false);
+
+
+
+
+
+        public MediaPlaybackListAdapter(MediaPlaybackItem firstItemToPlay)
         {
-            get
+            AllocResources(firstItemToPlay);
+        }
+
+
+        public MediaPlaybackListAdapter(MediaPlaybackItem firstItemToPlay, MediaPlaybackItem gaplessPlaybackItem)
+        {
+            AllocResources(firstItemToPlay, gaplessPlaybackItem);
+        }
+
+        private void AllocResources(params MediaPlaybackItem[] items)
+        {
+            PlaybackList.ItemOpened += PlaybackList_ItemOpened;
+
+            foreach (var i in items)
             {
-                if (CurrentIndex < itemsInternal.Count)
-                    return CurrentIndex + 1;
-                else return null;
+                PlaybackList.Items.Add(i);
             }
         }
 
-        public int? PreviousIndex
+
+        /// <summary>
+        /// ask for the next item, if needed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        private async void PlaybackList_ItemOpened(MediaPlaybackList sender, MediaPlaybackItemOpenedEventArgs args)
         {
-            get
+            //if you have just 1 item in queue, you will need the 2nd
+            if (sender.Items.Count < 2)
             {
-                if (CurrentIndex > 0)
-                    return CurrentIndex - 1;
-                else return null;
+                await AddItemAtTheEndOfList();
+            }
+            else
+            {
+                //if we are playign the second item, remove the first item, and add a new one
+                if (sender.CurrentItemIndex == 1)
+                {
+                    RemoveFirstItem();
+                    await AddItemAtTheEndOfList();
+                }
             }
         }
 
-        List<IFfmpegInteropBuilder> itemsInternal = new List<IFfmpegInteropBuilder>();
-        public IEnumerable<IFfmpegInteropBuilder> Items
+        private void RemoveFirstItem()
         {
-            get
-            {
-                return itemsInternal.AsEnumerable();
-            }
-        }
-
-        public MediaPlaybackListAdapter(IEnumerable<IFfmpegInteropBuilder> items)
-        {
-            if (items == null) throw new ArgumentNullException("items");
-            AllocResources(items);
-        }
-
-        private void AllocResources(IEnumerable<IFfmpegInteropBuilder> items)
-        {
-            itemsInternal.AddRange(items);
+            PlaybackList.Items[0].Source.Dispose();
+            PlaybackList.Items.RemoveAt(0);
         }
 
 
 
+        /// <summary>
+        /// occurs when the media playback list needs a new "next item". Send a null item to mark the end of the list.
+        /// </summary>
+        public event EventHandler<MediaPlaybackItemRequestArgs> PlaybackItemRequest;
 
         /// <summary>
         /// Stops playback of current item, disposes it, clears the MediaPlaybackList, adds firstItem to item and then starts playback
         /// </summary>
         /// <param name="firstItem"></param>
-        public IAsyncAction Reset(IEnumerable<IFfmpegInteropBuilder> items)
+        public void Reset(IEnumerable<MediaPlaybackItem> items)
         {
             if (!items.Any()) throw new ArgumentException();
-            return ResetInternal(items).AsAsyncAction();
+            ResetInternal(items);
         }
 
 
 
-        private async Task ResetInternal(IEnumerable<IFfmpegInteropBuilder> items)
+        private void ResetInternal(IEnumerable<MediaPlaybackItem> items)
         {
             //copy the old items temporarily
             var oldItems = PlaybackList.Items.ToList();
             //add the new items to the list
             PlaybackList.Items.Clear();
-            CurrentIndex = 0;
-            itemsInternal.ForEach((x) => x.Dispose());
-
-            itemsInternal.Clear();
-            itemsInternal.AddRange(items);
-
-            oldItems.ForEach((x) => { x.Source.Dispose(); });
-
-            var newItem = await FetchItemAtIndex(CurrentIndex);
-            PlaybackList.Items.Add(newItem);
-
-            if (NextIndex.HasValue)
+            foreach (var i in items)
             {
-                //fetch the next item as well
-                await AddItemAtTheEndOfList(NextIndex.Value);
+                PlaybackList.Items.Add(i);
             }
+            oldItems.ForEach((x) => { x.Source.Dispose(); });
         }
 
         /// <summary>
@@ -119,86 +128,48 @@ namespace FFmpegInterop.Helpers
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        private async Task AddItemAtTheEndOfList(int index)
+        private async Task AddItemAtTheEndOfList()
         {
-            var newItem = await FetchItemAtIndex(index);
-            PlaybackList.Items.Add(newItem);
+            var newItem = await FetchNextItem(MediaPlaybackItemRequestType.NextItem);
+            if (newItem != null)
+                PlaybackList.Items.Add(newItem);
             nextItemSignal.Set();
-
         }
+
+
 
         /// <summary>
         /// Skips to the next item in the list. If the item is not yet loaded, it will wait for it to load
         /// </summary>
-        public IAsyncAction SkipNext()
+        public IAsyncAction MoveToNextItem()
         {
             return Task.Run(async () =>
             {
                 if (PlaybackList.Items.Count == 2)
                 {
-                    await SafeMoveNext();
+                    SafeMoveNext();
+                    await AddItemAtTheEndOfList();
                 }
                 else
                 {
+                    await AddItemAtTheEndOfList();
+                    SafeMoveNext();
                     //no next item
-                    if (NextIndex.HasValue)
-                    {
-                        //there is one available, so fetch it. Should wait for pending operations, though
-                        nextItemSignal.WaitOne();
-                        if (PlaybackList.Items.Count == 2)
-                        {
-                            await SafeMoveNext();
-                        }
-                        else
-                        {
-                            //TODO: next item could not be fetched
-                        }
-                    }
-                    else
-                    {
-                        //there is no next item. There are several possible cases here:
-                        //The index is at the end of a 1item list, which is also the item being played.
-                        //the index is at the end of a multiple items list, should we loop over or stop?
-
-                        if (PlaybackList.AutoRepeatEnabled)
-                        {
-                            await AddItemAtTheEndOfList(0);
-                        }
-                        else
-                        {
-                            //see above
-                        }
-                    }
+                    await AddItemAtTheEndOfList();
                 }
             }).AsAsyncAction();
         }
 
-        private async Task SafeMoveNext()
+
+
+
+        private void SafeMoveNext()
         {
             //move to the next item
             PlaybackList.MoveNext();
-            PlaybackList.Items[0].Source.Dispose();
-            PlaybackList.Items.RemoveAt(0);
-
+            RemoveFirstItem();
             //CurrentIndex now points to old item
-            itemsInternal[CurrentIndex].Reset();
-            CurrentIndex += 1;
-            if (NextIndex.HasValue)
-            {
-                await AddItemAtTheEndOfList(NextIndex.Value);
-            }
-            else
-            {
-                //we are now playing the last item in the list
-                if (PlaybackList.AutoRepeatEnabled)
-                {
-                    await AddItemAtTheEndOfList(0);
-                }
-                else
-                {
-                    //see above
-                }
-            }
+
         }
 
         /// <summary>
@@ -210,18 +181,19 @@ namespace FFmpegInterop.Helpers
         /// </summary>
         public void SkipPrevious(MediaPlaybackItem previousItem)
         {
+
         }
 
-        private async Task<MediaPlaybackItem> FetchItemAtIndex(int startIndex)
+        private Task<MediaPlaybackItem> FetchNextItem(MediaPlaybackItemRequestType type)
         {
-            if (startIndex >= itemsInternal.Count)
+            return Task.Run(async () =>
             {
-                return null;
-            }
-            var builder = itemsInternal[startIndex];
-            MediaPlaybackItem returnValue = await builder.OpenFFmpegAsync();
+                MediaPlaybackItemRequestArgs request = new MediaPlaybackItemRequestArgs(type);
+                await MediaPlaybackItemRequestDeferal.RunOnDeferal(
+                     new Action<MediaPlaybackItemRequestArgs>((p) => { this.PlaybackItemRequest?.Invoke(this, p); }), request);
 
-            return returnValue;
+                return request.RequestItem;
+            });
         }
 
         public void Dispose()

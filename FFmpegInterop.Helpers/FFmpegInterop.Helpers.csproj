@@ -111,6 +111,7 @@
     <Compile Include="FFmpegInteropUriBuilder.cs" />
     <Compile Include="IFfmpegInteropBuilder.cs" />
     <Compile Include="MediaPlaybackItemRequestArgs.cs" />
+    <Compile Include="MediaPlaybackItemRequestDeferal.cs" />
     <Compile Include="MediaPlaybackListAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
