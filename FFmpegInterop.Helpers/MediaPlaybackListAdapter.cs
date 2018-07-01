@@ -35,55 +35,53 @@ namespace FFmpegInterop.Helpers
         }
 
         AutoResetEvent nextItemSignal = new AutoResetEvent(false);
+        int currentIndex = -1;
+
+        IMediaPlaybackItemProvider playbackItemProvider;
 
 
-
-
-
-        public MediaPlaybackListAdapter(MediaPlaybackItem firstItemToPlay)
+        public MediaPlaybackListAdapter(IMediaPlaybackItemProvider provider, MediaPlaybackItem firstItemToPlay)
         {
-            AllocResources(firstItemToPlay);
+            AllocResources(provider, firstItemToPlay);
         }
 
 
-        public MediaPlaybackListAdapter(MediaPlaybackItem firstItemToPlay, MediaPlaybackItem gaplessPlaybackItem)
+        public MediaPlaybackListAdapter(IMediaPlaybackItemProvider provider, MediaPlaybackItem firstItemToPlay, MediaPlaybackItem gaplessPlaybackItem)
         {
-            AllocResources(firstItemToPlay, gaplessPlaybackItem);
+            AllocResources(provider, firstItemToPlay, gaplessPlaybackItem);
         }
 
-        private void AllocResources(params MediaPlaybackItem[] items)
+        private void AllocResources(IMediaPlaybackItemProvider provider, params MediaPlaybackItem[] items)
         {
-            PlaybackList.ItemOpened += PlaybackList_ItemOpened;
-
+            PlaybackList.CurrentItemChanged += PlaybackList_CurrentItemChanged; ;
+            playbackItemProvider = provider;
             foreach (var i in items)
             {
                 PlaybackList.Items.Add(i);
             }
         }
 
-
-        /// <summary>
-        /// ask for the next item, if needed
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="args"></param>
-        private async void PlaybackList_ItemOpened(MediaPlaybackList sender, MediaPlaybackItemOpenedEventArgs args)
+        private async void PlaybackList_CurrentItemChanged(MediaPlaybackList sender, CurrentMediaPlaybackItemChangedEventArgs args)
         {
-            //if you have just 1 item in queue, you will need the 2nd
+            currentIndex++;
             if (sender.Items.Count < 2)
             {
                 await AddItemAtTheEndOfList();
             }
             else
             {
-                //if we are playign the second item, remove the first item, and add a new one
-                if (sender.CurrentItemIndex == 1)
+                //there was an item opened
+                if (currentIndex == 1)
                 {
                     RemoveFirstItem();
                     await AddItemAtTheEndOfList();
+                    currentIndex = 0;
                 }
             }
+
         }
+
+
 
         private void RemoveFirstItem()
         {
@@ -96,7 +94,7 @@ namespace FFmpegInterop.Helpers
         /// <summary>
         /// occurs when the media playback list needs a new "next item". Send a null item to mark the end of the list.
         /// </summary>
-        public event EventHandler<MediaPlaybackItemRequestArgs> PlaybackItemRequest;
+        public event EventHandler<MediaPlaybackItemRequestOperation> PlaybackItemRequest;
 
         /// <summary>
         /// Stops playback of current item, disposes it, clears the MediaPlaybackList, adds firstItem to item and then starts playback
@@ -184,16 +182,9 @@ namespace FFmpegInterop.Helpers
 
         }
 
-        private Task<MediaPlaybackItem> FetchNextItem(MediaPlaybackItemRequestType type)
+        private async Task<MediaPlaybackItem> FetchNextItem(MediaPlaybackItemRequestType type)
         {
-            return Task.Run(async () =>
-            {
-                MediaPlaybackItemRequestArgs request = new MediaPlaybackItemRequestArgs(type);
-                await MediaPlaybackItemRequestDeferal.RunOnDeferal(
-                     new Action<MediaPlaybackItemRequestArgs>((p) => { this.PlaybackItemRequest?.Invoke(this, p); }), request);
-
-                return request.RequestItem;
-            });
+            return await playbackItemProvider.GetPlaybackItem();
         }
 
         public void Dispose()

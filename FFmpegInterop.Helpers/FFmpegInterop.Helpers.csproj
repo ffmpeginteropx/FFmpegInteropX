@@ -110,6 +110,7 @@
     <Compile Include="FFmpegInteropStreamBuilder.cs" />
     <Compile Include="FFmpegInteropUriBuilder.cs" />
     <Compile Include="IFfmpegInteropBuilder.cs" />
+    <Compile Include="IMediaPlaybackItemProvider.cs" />
     <Compile Include="MediaPlaybackItemRequestArgs.cs" />
     <Compile Include="MediaPlaybackItemRequestDeferal.cs" />
     <Compile Include="MediaPlaybackListAdapter.cs" />

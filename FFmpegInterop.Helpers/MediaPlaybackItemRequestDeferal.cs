@@ -8,39 +8,43 @@ using Windows.Foundation;
 
 namespace FFmpegInterop.Helpers
 {
-    public sealed class MediaPlaybackItemRequestDeferal
+    public sealed class MediaPlaybackItemRequestOperation
     {
-        ManualResetEvent _event = new ManualResetEvent(true);
-
-        public void Complete()
+        internal TaskCompletionSource<bool> m_tcsDeferalCompleted
         {
-            _event.Set();
+            get;
+            private set;
+        }
+        public MediaPlaybackItemRequestArgs Args { get; private set; }
+
+        Deferral m_deferral;
+
+        public Deferral GetDeferal()
+        {
+            return m_deferral;
         }
 
-        public void WaitOnDeferal()
-        {
-            _event.WaitOne();
-        }
+        private Action<MediaPlaybackItemRequestArgs> m_playbackItemRequest;
 
-        internal void Reset()
-        {
-            _event.Reset();
-        }
 
-        internal static async Task RunOnDeferal(Action<MediaPlaybackItemRequestArgs> action, MediaPlaybackItemRequestArgs param)
+        internal MediaPlaybackItemRequestOperation(Action<MediaPlaybackItemRequestArgs> playbackItemRequest, MediaPlaybackItemRequestArgs args)
         {
-            MediaPlaybackItemRequestDeferal deferal = new MediaPlaybackItemRequestDeferal();
-            param.SetDeferal(deferal);
-            var runner = Task.Run(() => { action(param); });
-            var watchDog = Task.Run(() =>
+            m_deferral = new Deferral(() =>
             {
-                while (!runner.IsCompleted)
-                {
-                    deferal.WaitOnDeferal();
-                }
+                m_tcsDeferalCompleted.SetResult(true);
             });
-            
-            await Task.WhenAll(runner, watchDog);
+
+            m_playbackItemRequest = playbackItemRequest;
+            Args = args;
         }
+
+
+
+        internal Task<bool> Run()
+        {
+            m_playbackItemRequest(Args);
+            return m_tcsDeferalCompleted.Task;
+        }
+
     }
 }

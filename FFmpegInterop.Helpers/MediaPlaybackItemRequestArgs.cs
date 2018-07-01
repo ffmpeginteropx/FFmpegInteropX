@@ -23,28 +23,14 @@ namespace FFmpegInterop.Helpers
             private set;
         }
 
-        MediaPlaybackItemRequestDeferal Deferal;
-
-
+        MediaPlaybackItemRequestOperation Deferal;
 
 
         public MediaPlaybackItemRequestArgs(MediaPlaybackItemRequestType type)
         {
             this.RequestType = type;
-
-
         }
 
-        internal void SetDeferal(MediaPlaybackItemRequestDeferal deferal)
-        {
-            Deferal = deferal;
-        }
-
-        public MediaPlaybackItemRequestDeferal GetDeferal()
-        {
-            Deferal.Reset();
-            return Deferal;
-        }
     }
 
     public enum MediaPlaybackItemRequestType
