@@ -9,11 +9,11 @@ FFmpegInterop is an open-source project that aims to provide an easy way to use 
 One of the advantages of this approach is that audio and video synchronization is handled by the Windows media pipeline. You can also use the Windows built-in audio and video decoders which allows for better power consumption mobile devices.
 
 ## Building FFmpegUniversalSDK with Visual Studio 2017
-- Please read [FFmpegUniversal/README.md](FFmpegUniversal/README.md).
+- Please naviagate [https://github.com/M2Team/FFmpegUniversal](https://github.com/M2Team/FFmpegUniversal).
 
 ## Building FFmpegInterop library build output
 
-If you use the build scripts or follow the Wiki instructions as is you should find the appropriate builds of FFmpeg libraries in the `ffmpeg/Build/<platform\>/<architecture\>` folders.
+If you use the build scripts or follow the Wiki instructions as is you should find the appropriate builds of FFmpeg libraries in the `FFmpegUniversal/FFmpegUniversalSDK/<architecture\>` folders.
 
 Simply open one of the Microsoft Visual Studio solution file (e.g. FFmpegWin10.sln), set one of the MediaPlayer as StartUp project, and run. FFmpegInterop should build cleanly giving you the interop object as well as the selected sample MediaPlayer (C++, C# or JS) that show how to connect the MediaStreamSource to a MediaElement or Video tag for playback.
 
