@@ -8,52 +8,8 @@ FFmpegInterop is an open-source project that aims to provide an easy way to use 
 
 One of the advantages of this approach is that audio and video synchronization is handled by the Windows media pipeline. You can also use the Windows built-in audio and video decoders which allows for better power consumption mobile devices.
 
-## Getting the sources
-
-Getting a compatible build of FFmpeg is required for this to work.
-
-You can simply use the embedded git submodule that points to the latest tested release of FFmpeg.
-
-	git clone --recursive git://github.com/microsoft/FFmpegInterop.git
-
-Alternatively, you can get the code for [FFmpeg on Github](http://github.com/FFmpeg) yourself by cloning [git://source.ffmpeg.org/ffmpeg.git](git://source.ffmpeg.org/ffmpeg.git) and replace existing default `ffmpeg` folder with it.
-
-	git clone git://github.com/microsoft/FFmpegInterop.git
-	cd FFmpegInterop
-	git clone git://source.ffmpeg.org/ffmpeg.git
-
-Your `FFmpegInterop` folder should look as follows
-
-	FFmpegInterop\
-	    ffmpeg\                - ffmpeg source code from the latest release in git://github.com/FFmpeg/FFmpeg.git
-	    FFmpegInterop\         - FFmpegInterop WinRT component
-	    Samples\               - Sample Media Player applications in C++, C#, and JavaScript
-	    Tests\                 - Unit tests for FFmpegInterop
-	    BuildFFmpeg.bat        - Helper script to build FFmpeg libraries as described in https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT
-	    BuildFFmpeg_VS2017.bat - Experimental build file for Visual Studio 2017
-	    FFmpegConfig.sh        - Internal script that contains FFmpeg configure options
-	    FFmpegWin8.1.sln       - Microsoft Visual Studio 2013 solution file for Windows 8.1 and Windows Phone 8.1 apps development
-	    FFmpegWin10.sln        - Microsoft Visual Studio 2015 solution file for Windows 10 apps development
-	    LICENSE
-	    README.md
-
-## Installing ffmpeg build tools
-
-Now that you have the FFmpeg source code, you can follow the instructions on how to [build FFmpeg for WinRT](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT) apps. Follow the setup instruction very carefuly to avoid build issues.
-
-## Building ffmpeg with Visual Studio 2015
-
-After completing the setup as instructed, you can invoke `BuildFFmpeg.bat` script to build or do it manually using the instructions in the compilation guide.
-
-	BuildFFmpeg.bat win10                     - Build for Windows 10 ARM, x64, and x86
-	BuildFFmpeg.bat phone8.1 ARM              - Build for Windows Phone 8.1 ARM only
-	BuildFFmpeg.bat win8.1 x86 x64            - Build for Windows 8.1 x86 and x64 only
-	BuildFFmpeg.bat phone8.1 win10 ARM        - Build for Windows 10 and Windows Phone 8.1 ARM only
-	BuildFFmpeg.bat win8.1 phone8.1 win10     - Build all architecture for all target platform
-
-## Building ffmpeg with Visual Studio 2017
-
-You can also try the (experimental) Visual Studio 2017 build script "BuildFFmpeg_VS2017.bat". Just run the build script without any arguments. It builds all Windows 10 versions of ffmpeg (x86, x64 and ARM). It will not build any Windows (Phone) 8.x version. If you have Visual Studio 2015 installed as well, please use the BuildFFmpeg.bat file, as some people reported problems when having both installed.
+## Building FFmpegUniversalSDK with Visual Studio 2017
+- Please read [FFmpegUniversal/README.md](FFmpegUniversal/README.md).
 
 ## Building FFmpegInterop library build output
 
