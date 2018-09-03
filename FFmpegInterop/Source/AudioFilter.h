@@ -16,9 +16,8 @@ extern "C"
 #include "libavutil/samplefmt.h"
 #include "libavfilter/buffersink.h"
 #include "libavfilter/buffersrc.h"
-#include <libavfilter/avfiltergraph.h>
-#include <libavfilter/avfilter.h>
-#include <libswresample/swresample.h>
+#include "libavfilter/avfilter.h"
+#include "libswresample/swresample.h"
 }
 
 using namespace Windows::Foundation::Collections;
@@ -32,17 +31,17 @@ using namespace Windows::Storage;
 namespace FFmpegInterop {
 	ref class AudioFilter : public IAvEffect
 	{
-		AVFilter  *AVSource;
-		AVFilter  *AVSink;
+		const AVFilter  *AVSource;
+		const AVFilter  *AVSink;
 
 		AVFilterContext *aResampler_ctx;
-		AVFilter        *aResampler;
+		const AVFilter        *aResampler;
 		AVFilterGraph	*graph;
 		AVFilterContext *avSource_ctx, *avSink_ctx;
 
 		AVCodecContext *inputCodecCtx;
 
-		std::vector<AVFilter*> AVFilters;
+		std::vector<const AVFilter*> AVFilters;
 		std::vector<AVFilterContext*> AVFilterContexts;
 		char channel_layout_name[256];
 		long long inChannelLayout;
@@ -78,7 +77,7 @@ namespace FFmpegInterop {
 				auto c_configString = configString->c_str();
 
 				AVFilterContext* ctx;
-				AVFilter* filter;
+				const AVFilter* filter;
 
 				filter = avfilter_get_by_name(c_effectName);
 				ctx = avfilter_graph_alloc_filter(graph, filter, c_configString);
@@ -270,7 +269,6 @@ namespace FFmpegInterop {
 
 		AudioFilter(AVCodecContext *m_inputCodecCtx, long long p_inChannelLayout, int p_nb_channels)
 		{
-			avfilter_register_all();
 			inChannelLayout = p_inChannelLayout;
 			nb_channels = p_nb_channels;
 			this->inputCodecCtx = m_inputCodecCtx;
