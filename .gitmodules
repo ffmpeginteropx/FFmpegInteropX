@@ -1,0 +1,3 @@
+[submodule "FFmpegUniversal"]
+	path = FFmpegUniversal
+	url = https://github.com/M2Team/FFmpegUniversal
