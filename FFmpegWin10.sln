@@ -16,13 +16,7 @@ Project("{262852C6-CD72-467D-83FE-5EEB1973A190}") = "MediaPlayerJS", "Samples\Sa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "Tests\Win10\UnitTest\UnitTest.csproj", "{F1ECBD62-71FE-47FB-B588-1E331A375B59}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFmpegUniversalSDK", "FFmpegUniversal\FFmpegUniversalSDK\FFmpegUniversalSDK.vcxitems", "{B4F7B4B6-D656-4FB5-A988-C62B38A3540C}"
-EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		FFmpegUniversal\FFmpegUniversalSDK\FFmpegUniversalSDK.vcxitems*{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}*SharedItemsImports = 4
-		FFmpegUniversal\FFmpegUniversalSDK\FFmpegUniversalSDK.vcxitems*{b4f7b4b6-d656-4fb5-a988-c62b38a3540c}*SharedItemsImports = 9
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
 		Debug|x64 = Debug|x64
