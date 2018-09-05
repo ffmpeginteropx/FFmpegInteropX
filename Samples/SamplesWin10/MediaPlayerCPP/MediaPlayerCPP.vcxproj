@@ -161,10 +161,17 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>	
-	<None Include="$(SolutionDir)FFmpegUniversal\FFmpegUniversalSDK\$(Platform)\FFmpegUniversal.dll">
+    <None Include="$(SolutionDir)FFmpegInterop.pfx" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Platform)' == 'Win32'">
+   <None Include="$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\x86\Redist\FFmpegUniversal.dll">
       <DeploymentContent>true</DeploymentContent>
     </None>
-    <None Include="$(SolutionDir)FFmpegInterop.pfx" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Platform)' != 'Win32'">
+   <None Include="$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\$(Platform)\Redist\FFmpegUniversal.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png" />

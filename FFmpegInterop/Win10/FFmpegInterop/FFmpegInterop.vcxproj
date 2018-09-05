@@ -99,21 +99,33 @@
   <PropertyGroup />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <GenerateManifest>false</GenerateManifest>
+    <IncludePath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\x86\Include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\x86\Lib\;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <GenerateManifest>false</GenerateManifest>
+    <IncludePath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\x86\Include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\x86\Lib\;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <GenerateManifest>false</GenerateManifest>
+    <IncludePath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\$(Platform)\Include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\$(Platform)\Lib\;$(VC_LibraryPath_ARM);$(WindowsSDK_LibraryPath_ARM);$(NETFXKitsDir)Lib\um\arm</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <GenerateManifest>false</GenerateManifest>
+    <IncludePath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\$(Platform)\Include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\$(Platform)\Lib\;$(VC_LibraryPath_ARM);$(WindowsSDK_LibraryPath_ARM);$(NETFXKitsDir)Lib\um\arm</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <GenerateManifest>false</GenerateManifest>
+    <IncludePath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\$(Platform)\Include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\$(Platform)\Lib\;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <GenerateManifest>false</GenerateManifest>
+    <IncludePath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\$(Platform)\Include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\$(Platform)\Lib\;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -129,7 +141,6 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>FFmpegUniversal.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)FFmpegUniversal\FFmpegUniversalSDK\$(Platform)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
@@ -149,7 +160,6 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>FFmpegUniversal.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)FFmpegUniversal\FFmpegUniversalSDK\$(Platform)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
@@ -169,7 +179,6 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>FFmpegUniversal.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)FFmpegUniversal\FFmpegUniversalSDK\$(Platform)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
@@ -189,7 +198,6 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>FFmpegUniversal.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)FFmpegUniversal\FFmpegUniversalSDK\$(Platform)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
@@ -209,7 +217,6 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>FFmpegUniversal.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)FFmpegUniversal\FFmpegUniversalSDK\$(Platform)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
@@ -229,7 +236,6 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>FFmpegUniversal.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)FFmpegUniversal\FFmpegUniversalSDK\$(Platform)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>

@@ -131,11 +131,8 @@
     <Content Include="$(SolutionDir)\Tests\TestFiles\test.txt" />
     <Content Include="$(SolutionDir)\Tests\TestFiles\silence with album art.mp3" />
   </ItemGroup>
-  <ItemGroup Condition="'$(Platform)' == 'x86'">
-   <Content Include="$(SolutionDir)FFmpegUniversal\FFmpegUniversalSDK\Win32\FFmpegUniversal.dll" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(Platform)' != 'x86'">
-   <Content Include="$(SolutionDir)FFmpegUniversal\FFmpegUniversalSDK\$(Platform)\FFmpegUniversal.dll" />
+  <ItemGroup>
+   <Content Include="$(SolutionDir)FFmpegUniversal\Output\FFmpegUniversal\$(Platform)\Redist\FFmpegUniversal.dll" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\FFmpegInterop\Win10\FFmpegInterop\FFmpegInterop.vcxproj">
