@@ -23,7 +23,7 @@ namespace UnitTest
             files.Add("ms-appx:///noise.ogg");
         }
 
-        public IAsyncOperation<MediaPlaybackItem> GetPlaybackItem()
+        public IAsyncOperation<FFmpegInteropMSS> GetNextItemAsync()
         {
             var returnValue = CreateMediaPlaybackItem(files[currentIndex]).AsAsyncOperation();
             currentIndex++;
@@ -32,7 +32,7 @@ namespace UnitTest
         }
 
 
-        internal static async Task<MediaPlaybackItem> CreateMediaPlaybackItem(string url)
+        internal static async Task<FFmpegInteropMSS> CreateMediaPlaybackItem(string url)
         {
             var uri = new Uri(url);
             var file = await StorageFile.GetFileFromApplicationUriAsync(uri);
@@ -40,7 +40,8 @@ namespace UnitTest
 
             // CreateFFmpegInteropMSSFromUri should return null if uri is blank with default parameter
             FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(stream);
-            return FFmpegMSS.CreateMediaPlaybackItem();
+            FFmpegMSS.CreateMediaPlaybackItem();
+            return FFmpegMSS;
         }
     }
 }

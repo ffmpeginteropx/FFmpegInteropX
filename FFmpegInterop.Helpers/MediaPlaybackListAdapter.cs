@@ -1,207 +1,225 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.Media;
-using Windows.Media.Playback;
-using Windows.Media.Core;
-using Windows.Foundation;
 using System.Threading;
+using System.Threading.Tasks;
+using Windows.Foundation;
+using Windows.Media.Playback;
 
 namespace FFmpegInterop.Helpers
 {
-    /// <summary>
-    /// A memory efficient adapter for enabling gapless playback using FFmpegInterop. It works by storing just 2 MediaPlaybackItems in memory
-    /// and requesting new ones when necessary
-    /// </summary>
     public sealed class MediaPlaybackListAdapter : IDisposable
     {
-        /// <summary>
-        /// The MediaPlaybackList wrapped in the adapter. Use this setter only to consume along with the MediaPlayer. 
-        /// DO NOT call any methods on it
-        /// </summary>
-        public MediaPlaybackList PlaybackList
-        {
-            get;
-            private set;
-        } = new MediaPlaybackList();
 
-
-        public MediaPlayer Player
+        public IMediaPlaybackItemProvider PlaybackItemsProvider
         {
             get;
             private set;
         }
 
-        AutoResetEvent nextItemSignal = new AutoResetEvent(false);
-        int currentIndex = -1;
-
-        IMediaPlaybackItemProvider playbackItemProvider;
-
-
-        public MediaPlaybackListAdapter(IMediaPlaybackItemProvider provider, MediaPlaybackItem firstItemToPlay)
+        public MediaPlayer CurrentPlayer
         {
-            AllocResources(provider, firstItemToPlay);
+            get;
+            private set;
         }
 
+        List<FFmpegInteropMSS> ActiveInteropMss = new List<FFmpegInteropMSS>();
+        IAsyncOperation<FFmpegInteropMSS> currentFetchOperation = null;
 
-        public MediaPlaybackListAdapter(IMediaPlaybackItemProvider provider, MediaPlaybackItem firstItemToPlay, MediaPlaybackItem gaplessPlaybackItem)
+
+        MediaPlaybackList PlaybackList;
+        bool mediaEnded = false;
+        bool sequenceEnded = false;
+        AutoResetEvent _lock = new AutoResetEvent(false);
+        AutoResetEvent _methodLock = new AutoResetEvent(true);
+
+        public event EventHandler<CurrentMediaPlaybackItemChangedEventArgs> CurrentPlaybackItemChanged;
+
+        public MediaPlaybackListAdapter(IMediaPlaybackItemProvider provider, MediaPlayer player)
         {
-            AllocResources(provider, firstItemToPlay, gaplessPlaybackItem);
+            AllocResources(provider, player, null);
         }
 
-        private void AllocResources(IMediaPlaybackItemProvider provider, params MediaPlaybackItem[] items)
+        public MediaPlaybackListAdapter(IMediaPlaybackItemProvider provider, MediaPlayer player, IEnumerable<MediaPlaybackItem> initialItems)
         {
-            PlaybackList.CurrentItemChanged += PlaybackList_CurrentItemChanged; ;
-            playbackItemProvider = provider;
-            foreach (var i in items)
-            {
-                PlaybackList.Items.Add(i);
-            }
+            AllocResources(provider, player, initialItems);
         }
 
-        private async void PlaybackList_CurrentItemChanged(MediaPlaybackList sender, CurrentMediaPlaybackItemChangedEventArgs args)
-        {
-            currentIndex++;
-            if (sender.Items.Count < 2)
-            {
-                await AddItemAtTheEndOfList();
-            }
-            else
-            {
-                //there was an item opened
-                if (currentIndex == 1)
-                {
-                    RemoveFirstItem();
-                    await AddItemAtTheEndOfList();
-                    currentIndex = 0;
-                }
-            }
-
-        }
-
-
-
-        private void RemoveFirstItem()
-        {
-            PlaybackList.Items[0].Source.Dispose();
-            PlaybackList.Items.RemoveAt(0);
-        }
-
-
-
-        /// <summary>
-        /// occurs when the media playback list needs a new "next item". Send a null item to mark the end of the list.
-        /// </summary>
-        public event EventHandler<MediaPlaybackItemRequestOperation> PlaybackItemRequest;
-
-        /// <summary>
-        /// Stops playback of current item, disposes it, clears the MediaPlaybackList, adds firstItem to item and then starts playback
-        /// </summary>
-        /// <param name="firstItem"></param>
-        public void Reset(IEnumerable<MediaPlaybackItem> items)
-        {
-            if (!items.Any()) throw new ArgumentException();
-            ResetInternal(items);
-        }
-
-
-
-        private void ResetInternal(IEnumerable<MediaPlaybackItem> items)
-        {
-            //copy the old items temporarily
-            var oldItems = PlaybackList.Items.ToList();
-            //add the new items to the list
-            PlaybackList.Items.Clear();
-            foreach (var i in items)
-            {
-                PlaybackList.Items.Add(i);
-            }
-            oldItems.ForEach((x) => { x.Source.Dispose(); });
-        }
-
-        /// <summary>
-        /// adds the item obtained from itemsInternal at the given index
-        /// </summary>
-        /// <param name="index"></param>
-        /// <returns></returns>
-        private async Task AddItemAtTheEndOfList()
-        {
-            var newItem = await FetchNextItem(MediaPlaybackItemRequestType.NextItem);
-            if (newItem != null)
-                PlaybackList.Items.Add(newItem);
-            nextItemSignal.Set();
-        }
-
-
-
-        /// <summary>
-        /// Skips to the next item in the list. If the item is not yet loaded, it will wait for it to load
-        /// </summary>
-        public IAsyncAction MoveToNextItem()
+        public IAsyncAction Start()
         {
             return Task.Run(async () =>
             {
-                if (PlaybackList.Items.Count == 2)
+                _methodLock.WaitOne();
+                try
                 {
-                    SafeMoveNext();
-                    await AddItemAtTheEndOfList();
+                    if (PlaybackList.Items.Count == 0)
+                    {
+                        var item = await PlaybackItemsProvider.GetNextItemAsync();
+                        AddItemToPlaybackList(item);
+                    }
+
+                    CurrentPlayer.Source = PlaybackList;
+                    _lock.Set();
                 }
-                else
+                finally
                 {
-                    await AddItemAtTheEndOfList();
-                    SafeMoveNext();
-                    //no next item
-                    await AddItemAtTheEndOfList();
+                    _methodLock.Set();
                 }
             }).AsAsyncAction();
         }
 
-
-
-
-        private void SafeMoveNext()
-        {
-            //move to the next item
-            PlaybackList.MoveNext();
-            RemoveFirstItem();
-            //CurrentIndex now points to old item
-
-        }
-
         /// <summary>
-        /// Skips to the previous item, provided as param to this method. The current item will become the next item
-        /// before call: currentitem (playing), nextItem  (gapless)
-        /// after call: previousItem (playing), currentItem (gapless), nextItem (disposed)
-        /// 
-        /// This method is essentially Reset(MediaPlaybackItem, MediaPlaybackItem)
+        /// moves to the next media playback item. Calling applications should handle the logic for fetching the next item.
         /// </summary>
-        public void SkipPrevious(MediaPlaybackItem previousItem)
+        /// <returns>true if moving is allowed, false if the media playback items provider is empty</returns>
+        public IAsyncOperation<bool> MoveNext()
         {
+            return Task.Run(async () =>
+            {
+                _methodLock.WaitOne();
 
+                if (sequenceEnded)
+                {
+                    return false;
+                }
+
+                try
+                {
+                    if (CurrentPlayer.Source != PlaybackList)
+                    {
+                        throw new InvalidOperationException("Call start first");
+                    }
+                    //if there is only 1 item in the list, or if we are at the end of the list, fetch the next one
+                    if (PlaybackList.Items.Count == 1 || PlaybackList.CurrentItemIndex == PlaybackList.Items.Count - 1)
+                    {
+                        var item = await PlaybackItemsProvider.GetNextItemAsync();
+                        AddItemToPlaybackList(item);
+                    }
+
+                    PlaybackList.MoveNext();
+                    return true;
+                }
+                finally
+                {
+                    _methodLock.Set();
+                }
+            }).AsAsyncOperation<bool>();
         }
 
-        private async Task<MediaPlaybackItem> FetchNextItem(MediaPlaybackItemRequestType type)
+        public void SetVideoEffects(IReadOnlyList<AvEffectDefinition> videoEffects)
         {
-            return await playbackItemProvider.GetPlaybackItem();
+            foreach (var interop in ActiveInteropMss)
+            {
+                interop.SetVideoEffects(videoEffects);
+            }
+        }
+
+        public void SetAudioEffects(IReadOnlyList<AvEffectDefinition> audioEffects)
+        {
+            foreach (var interop in ActiveInteropMss)
+            {
+                interop.SetAudioEffects(audioEffects);
+            }
+        }
+
+        public void RemoveAudioEffects()
+        {
+            foreach (var interop in ActiveInteropMss)
+            {
+                interop.DisableAudioEffects();
+            }
+        }
+
+        public void RemoveVideoEffects()
+        {
+            foreach (var interop in ActiveInteropMss)
+            {
+                interop.DisableVideoEffects();
+            }
+        }
+
+        private void AllocResources(IMediaPlaybackItemProvider provider, MediaPlayer player, IEnumerable<MediaPlaybackItem> initialItems)
+        {
+            this.PlaybackItemsProvider = provider ?? throw new ArgumentNullException("provider cannot be null");
+            this.CurrentPlayer = player ?? throw new ArgumentNullException("player cannot be null");
+            PlaybackList = new MediaPlaybackList();
+            PlaybackList.CurrentItemChanged += PlaybackList_CurrentItemChanged;
+            if (initialItems != null)
+            {
+                foreach (var item in initialItems)
+                {
+                    PlaybackList.Items.Add(item);
+                }
+            }
+
+            CurrentPlayer.MediaOpened += CurrentPlayer_MediaOpened;
+            CurrentPlayer.MediaEnded += CurrentPlayer_MediaEnded;
+        }
+
+        private void CurrentPlayer_MediaEnded(MediaPlayer sender, object args)
+        {
+            mediaEnded = true;
+        }
+
+        private void CurrentPlayer_MediaOpened(MediaPlayer sender, object args)
+        {
+            mediaEnded = false;
+        }
+
+        private async void PlaybackList_CurrentItemChanged(MediaPlaybackList sender, CurrentMediaPlaybackItemChangedEventArgs args)
+        {
+            ///forward the event on a background thread.
+            Task.Run(() => { this.CurrentPlaybackItemChanged?.Invoke(sender, args); });
+
+            //ask for the next item
+
+            if (_lock.WaitOne(TimeSpan.FromMilliseconds(1)))
+            {
+                if (!sequenceEnded)
+                {
+                    var item = await PlaybackItemsProvider.GetNextItemAsync();
+
+                    System.Diagnostics.Debug.WriteLine(sender.Items.Count);
+                    AddItemToPlaybackList(item);
+                    System.Diagnostics.Debug.WriteLine(sender.Items.Count);
+
+                    if (mediaEnded)
+                    {
+                        sender.MoveTo((uint)sender.Items.Count - 1);
+                        CurrentPlayer.Play();
+                        mediaEnded = false;
+                    }
+                }
+                _lock.Set();
+            }
+        }
+
+        private void AddItemToPlaybackList(FFmpegInteropMSS item)
+        {
+            if (item != null)
+            {
+                if (item.PlaybackItem == null)
+                {
+                    throw new InvalidOperationException("ffmpeg interop object must have a properly initialized media playback item");
+                }
+
+                PlaybackList.Items.Add(item.PlaybackItem);
+                ActiveInteropMss.Add(item);
+            }
+            else
+            {
+                sequenceEnded = true;
+            }
         }
 
         public void Dispose()
         {
-
-            //copy the old items temporarily
-            var oldItems = PlaybackList.Items.ToList();
-
-            foreach (var old in oldItems)
-            {
-                old.Source.Dispose();
-            }
-
-            oldItems.Clear();
+            CurrentPlayer.Source = null;
             PlaybackList.Items.Clear();
-            PlaybackList = null;
-
+            foreach (var item in ActiveInteropMss)
+            {
+                item.PlaybackItem.Source.Dispose();
+                item.Dispose();
+            }
         }
     }
 }
