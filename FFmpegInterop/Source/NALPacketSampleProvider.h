@@ -40,8 +40,12 @@ namespace FFmpegInterop
 		virtual HRESULT GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, int length);
 		virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer^* pBuffer);
 		virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter^ dataWriter);
+		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat) override;
 
 	private:
-		bool m_bHasSentExtradata;
+		HRESULT CreateExtradataFromPacket(AVPacket* avPacket);
+		IBuffer^ extradata;
+		bool hasSentExtradata;
+		bool repeatExtradata;
 	};
 }

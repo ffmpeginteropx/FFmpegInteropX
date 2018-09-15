@@ -39,7 +39,8 @@ NALPacketSampleProvider::~NALPacketSampleProvider()
 void NALPacketSampleProvider::Flush()
 {
 	CompressedSampleProvider::Flush();
-	m_bHasSentExtradata = false;
+	hasSentExtradata = false;
+	extradata = nullptr;
 }
 
 HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer)
@@ -47,30 +48,17 @@ HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuf
 	HRESULT hr = S_OK;
 	DataWriter^ dataWriter = nullptr;
 
-	// On first frame, write the SPS and PPS
-	if (!m_bHasSentExtradata)
-	{
-		dataWriter = ref new DataWriter();
-		hr = GetSPSAndPPSBuffer(dataWriter, m_pAvCodecCtx->extradata, m_pAvCodecCtx->extradata_size);
-		m_bHasSentExtradata = true;
-	}
+	hr = CreateExtradataFromPacket(avPacket);
 
 	if (SUCCEEDED(hr))
 	{
-		// Check for extradata changes during playback
-		for (int i = 0; i < avPacket->side_data_elems; i++)
+		// Write latest extradata, if required
+		if (!hasSentExtradata || repeatExtradata)
 		{
-			if (avPacket->side_data[i].type == AV_PKT_DATA_NEW_EXTRADATA)
-			{
-				if (dataWriter == nullptr)
-				{
-					dataWriter = ref new DataWriter();
-				}
-				hr = GetSPSAndPPSBuffer(dataWriter, avPacket->side_data[i].data, avPacket->side_data[i].size);
-				break;
-			}
+			dataWriter = ref new DataWriter();
+			dataWriter->WriteBuffer(extradata);
+			hasSentExtradata = true;
 		}
-
 	}
 
 	if (SUCCEEDED(hr))
@@ -90,6 +78,33 @@ HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuf
 				*pBuffer = dataWriter->DetachBuffer();
 			}
 		}
+	}
+
+	return hr;
+}
+
+HRESULT NALPacketSampleProvider::CreateExtradataFromPacket(AVPacket* avPacket)
+{
+	HRESULT hr = S_OK;
+	
+	// Check for extradata changes during playback
+	for (int i = 0; i < avPacket->side_data_elems; i++)
+	{
+		if (avPacket->side_data[i].type == AV_PKT_DATA_NEW_EXTRADATA)
+		{
+			auto dataWriter = ref new DataWriter();
+			hr = GetSPSAndPPSBuffer(dataWriter, avPacket->side_data[i].data, avPacket->side_data[i].size);
+			extradata = dataWriter->DetachBuffer();
+			break;
+		}
+	}
+
+	// Use codec extradata otherwise
+	if (!extradata)
+	{
+		auto dataWriter = ref new DataWriter();
+		hr = GetSPSAndPPSBuffer(dataWriter, m_pAvCodecCtx->extradata, m_pAvCodecCtx->extradata_size);
+		extradata = dataWriter->DetachBuffer();
 	}
 
 	return hr;
@@ -120,6 +135,14 @@ HRESULT NALPacketSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket
 	auto aBuffer = Platform::ArrayReference<uint8_t>(avPacket->data, avPacket->size);
 	dataWriter->WriteBytes(aBuffer);
 	return S_OK;
+}
+
+void NALPacketSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperties ^ videoEncodingProperties, bool isCompressedFormat)
+{
+	MediaSampleProvider::SetCommonVideoEncodingProperties(videoEncodingProperties, isCompressedFormat);
+
+	// if we did not get frame rate, we need to send extradata with each packet
+	repeatExtradata = videoEncodingProperties->FrameRate->Denominator == 0 || videoEncodingProperties->FrameRate->Numerator == 0;
 }
 
 HRESULT NALPacketSampleProvider::WriteNALPacket(AVPacket* avPacket, IBuffer^* pBuffer)
