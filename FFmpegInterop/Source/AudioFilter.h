@@ -16,7 +16,6 @@ extern "C"
 #include "libavutil/samplefmt.h"
 #include "libavfilter/buffersink.h"
 #include "libavfilter/buffersrc.h"
-#include <libavfilter/avfiltergraph.h>
 #include <libavfilter/avfilter.h>
 #include <libswresample/swresample.h>
 }
