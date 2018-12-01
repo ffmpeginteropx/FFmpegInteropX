@@ -1,24 +1,39 @@
-# FFmpegInterop library for Windows
+# FFmpegInterop-lukasf library for Windows
 
-#### This project is licensed from Microsoft under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0)
+#### This project is licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0)
 
-## Welcome to FFmpegInterop library for Windows.
+## Welcome to FFmpegInterop-lukasf
 
-FFmpegInterop is an open-source project that aims to provide an easy way to use FFmpeg in Windows 10, Windows 8.1, and Windows Phone 8.1 applications for playback of a variety of media contents. FFmpegInterop implements a [MediaStreamSource](https://msdn.microsoft.com/en-us/library/windows/apps/windows.media.core.mediastreamsource.aspx) which leverages FFmpeg to process media and uses the Windows media pipeline for playback.
+FFmpegInterop is an open-source project that aims to provide an easy way to use FFmpeg in Windows 10 Store Apps. This allows you to decode a lot of formats that are not natively supported on Windows 10.
 
-One of the advantages of this approach is that audio and video synchronization is handled by the Windows media pipeline. You can also use the Windows built-in audio and video decoders which allows for better power consumption mobile devices.
+FFmpegInterop-lukasf is a much improved fork of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
+
+Some of the important improvements:
+
+- Multiple audio stream support
+- Subtitle support
+- Audio effects (special thanks to [mcosmin222](https://github.com/mcosmin222)!)
+- Stream information retrieval (name, language, format, etc)
+- Passthrough of HEVC video for hardware decoding
+- Major performance improvements (zero-copy data handling in all important areas)
+- Frame grabber support
+- Lots of bug fixes
+
+Other changes:
+- Support for Windows 8.x and Windows Phone 8.x has been dropped
+- Visual Studio 2015 support has been dropped
 
 ## Getting the sources
 
-Getting a compatible build of FFmpeg is required for this to work.
+Getting a compatible UWP build of FFmpeg is required for this to work.
 
 You can simply use the embedded git submodule that points to the latest tested release of FFmpeg.
 
-	git clone --recursive git://github.com/microsoft/FFmpegInterop.git
+	git clone --recursive git://github.com/lukasf/FFmpegInterop.git
 
 Alternatively, you can get the code for [FFmpeg on Github](http://github.com/FFmpeg) yourself by cloning [git://source.ffmpeg.org/ffmpeg.git](git://source.ffmpeg.org/ffmpeg.git) and replace existing default `ffmpeg` folder with it.
 
-	git clone git://github.com/microsoft/FFmpegInterop.git
+	git clone git://github.com/lukasf/FFmpegInterop.git
 	cd FFmpegInterop
 	git clone git://source.ffmpeg.org/ffmpeg.git
 
@@ -39,11 +54,17 @@ Your `FFmpegInterop` folder should look as follows
 
 ## Installing ffmpeg build tools
 
-Now that you have the FFmpeg source code, you can follow the instructions on how to [build FFmpeg for WinRT](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT) apps. Follow the setup instruction very carefuly to avoid build issues.
+Now that you have the FFmpeg source code, you can follow the instructions on how to [build FFmpeg for WinRT](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT) apps. *Follow the setup instruction very carefully to avoid build issues!! Be very careful not to miss a single step. If you have problems building ffmpeg, go through these steps again, since chances are high that you missed some detail.*
+
+## Building ffmpeg with Visual Studio 2017
+
+After installing the ffmpeg build tools, you can invoke `BuildFFmpeg_VS2017.bat` from a normal cmd prompt. It builds all Windows 10 versions of ffmpeg (x86, x64 and ARM). 
+
+Please note: If you have Visual Studio 2015 installed as well, please try the Visual Studio 2015 build file (see below). Some people reported problems when having both installed and running the VS2017 file.
 
 ## Building ffmpeg with Visual Studio 2015
 
-After completing the setup as instructed, you can invoke `BuildFFmpeg.bat` script to build or do it manually using the instructions in the compilation guide.
+After installing the ffmpeg build tools, you can invoke the `BuildFFmpeg.bat` script.
 
 	BuildFFmpeg.bat win10                     - Build for Windows 10 ARM, x64, and x86
 	BuildFFmpeg.bat phone8.1 ARM              - Build for Windows Phone 8.1 ARM only
@@ -51,27 +72,52 @@ After completing the setup as instructed, you can invoke `BuildFFmpeg.bat` scrip
 	BuildFFmpeg.bat phone8.1 win10 ARM        - Build for Windows 10 and Windows Phone 8.1 ARM only
 	BuildFFmpeg.bat win8.1 phone8.1 win10     - Build all architecture for all target platform
 
-## Building ffmpeg with Visual Studio 2017
-
-You can also try the (experimental) Visual Studio 2017 build script "BuildFFmpeg_VS2017.bat". Just run the build script without any arguments. It builds all Windows 10 versions of ffmpeg (x86, x64 and ARM). It will not build any Windows (Phone) 8.x version. If you have Visual Studio 2015 installed as well, please use the BuildFFmpeg.bat file, as some people reported problems when having both installed.
+Alternatively, you can build the ffmpeg dlls manually using the instructions in the [ffmpeg compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT).
 
 ## Building FFmpegInterop library build output
 
-If you use the build scripts or follow the Wiki instructions as is you should find the appropriate builds of FFmpeg libraries in the `ffmpeg/Build/<platform\>/<architecture\>` folders.
+After building ffmpeg with the steps above, you should find the ffmpeg libraries in the `ffmpeg/Build/<platform\>/<architecture\>` folders.
 
-Simply open one of the Microsoft Visual Studio solution file (e.g. FFmpegWin10.sln), set one of the MediaPlayer as StartUp project, and run. FFmpegInterop should build cleanly giving you the interop object as well as the selected sample MediaPlayer (C++, C# or JS) that show how to connect the MediaStreamSource to a MediaElement or Video tag for playback.
+Now you can build the FFmpegInterop library. 
+
+Simply open the Visual Studio solution file `FFmpegWin10.sln`, set one of the MediaPlayer[CS/CPP/JS] sample projects as StartUp project, and run. FFmpegInterop should build cleanly giving you the interop object as well as the selected sample MediaPlayer (C++, C# or JS) that show how to connect the MediaStreamSource to a MediaElement or Video tag for playback.
 
 ### Using the FFmpegInterop object
 
 Using the **FFmpegInterop** object is fairly straightforward and can be observed from the sample applications provided.
 
-1. Get a stream for the media you want to playback.
-2. Create a new FFmpegInteropObject using FFmpegInteropMSS.CreateFFmpegInteropMSSFromStream() passing it the stream and whether you want to force the decoding of the media (if you don't force decoding of the media, the MediaStreamSource will try to pass the compressed data for playback, this is currently enabled for mp3, aac and h.264 media).
-3. Get the MediaStreamSource from the Interop object by invoking GetMediaStreamSource()
-4. Assign the MediaStreamSource to your MediaElement or VideoTag for playback.
+1. Get an IRandomAccessStream for the media you want to playback.
+2. Create a new FFmpegInteropObject using FFmpegInteropMSS.CreateFromStreamAsync() passing it the stream and optionally a config class instance.
+3. Get the MediaPlaybackItem from the Interop object by invoking CreateMediaPlaybackItem()
+4. Assign the MediaPlaybackItem to your MediaPlayer, MediaElement or VideoTag for playback.
 
-	##### You can try to use the method FFmepgInteropMSS.CreateFFmpegInteropMSSFromUri to create a MediaStreamSource on a streaming source (shoutcast for example).
+You can use FFmepgInteropMSS.CreateFromUri to create a MediaStreamSource on a streaming source (shoutcast for example).
 
-This project is in an early stage and we look forward to engaging with the community and hearing your feedback to figure out where we can take this project.
+You can use FFmpegInterop.GetMediaStreamSource() to get the MediaStreamSource like in the original version of the library. But when using MediaStreamSource, you won't get subtitles. Subtitle support requires using the MediaPlaybackItem!
 
-### The Windows OSS Team.
+
+## Integrating FFmpegInterop-lukasf into your app solution
+
+If you want to integrate FFmpegInterop into your app, you can just add the project file (`FFmpegInterop\Win10\FFmpegInterop\FFmpegInterop.vcxproj`) to your app solution as an existing project and add a reference from your main app project to FFmpegInterop. The FFmpegInterop project does not have to be in your app's solution folder. 
+
+Additionally, your app must reference the ffmpeg dll files for the platform you are building. Best is to manually edit your app's project file. This allows you to refer the dlls built for the current platform using $BuildPlatform parameter.
+
+For a C# project, you can do it like this:
+
+```
+  <ItemGroup>
+    <Content Include="$(SolutionDir)..\FFmpegInterop-lukasf\ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
+  </ItemGroup>
+```
+
+This assumes that the FFmpegInterop-lukasf folder is located next to your solution folder and the ffmpeg build output folder contains exclusively the latest ffmpeg dlls. Paths might be different on your folder setup. For CPP and JS this can be done similarly, check the samples for reference.
+
+## Credits / contributors
+
+- [lukasf](https://github.com/lukasf)
+- [mcosmin222](https://github.com/mcosmin222)
+- [MouriNaruto](https://github.com/MouriNaruto)
+
+Thank you also to Microsoft and the team who developed the original library!
+
+## Your feedback is appreciated!
