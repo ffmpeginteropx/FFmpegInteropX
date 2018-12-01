@@ -143,5 +143,8 @@
     <None Include="..\..\..\FFmpegConfig.sh">
       <Filter>Build</Filter>
     </None>
+    <None Include="..\..\..\README.md">
+      <Filter>Build</Filter>
+    </None>
   </ItemGroup>
 </Project>
