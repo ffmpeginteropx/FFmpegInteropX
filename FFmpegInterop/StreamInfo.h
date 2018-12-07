@@ -139,4 +139,24 @@ namespace FFmpegInterop
 		TimedMetadataTrack^ track;
 		bool isExternal;
 	};
+
+	public ref class ChapterInfo sealed
+	{
+	public:
+		ChapterInfo(String^ title, TimeSpan startTime, TimeSpan duration)
+		{
+			this->title = title;
+			this->startTime = startTime;
+			this->duration = duration;
+		}
+
+		property String^ Title { String^ get() { return title; } }
+		property TimeSpan StartTime { TimeSpan get() { return startTime; } }
+		property TimeSpan Duration { TimeSpan get() { return duration; } }
+
+	private:
+		String^ title;
+		TimeSpan startTime;
+		TimeSpan duration;
+	};
 }

@@ -261,6 +261,21 @@ MediaSource^ FFmpegInteropMSS::CreateMediaSource()
 			source->ExternalTimedMetadataTracks->Append(subtitleInfo->SubtitleTrack);
 		}
 	}
+
+	if (chapterInfos->Size > 0)
+	{
+		auto track = ref new TimedMetadataTrack("Chapters", "", TimedMetadataKind::Chapter);
+		for each (auto chapter in chapterInfos)
+		{
+			auto cue = ref new ChapterCue();
+			cue->Title = chapter->Title;
+			cue->StartTime = chapter->StartTime;
+			cue->Duration = chapter->Duration;
+			track->AddCue(cue);
+		}
+		source->ExternalTimedMetadataTracks->Append(track);
+	}
+
 	return source;
 }
 
@@ -842,6 +857,26 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 					mss->AddStreamDescriptor(stream->StreamDescriptor);
 				}
 			}
+
+			auto chapters = ref new Vector<ChapterInfo^>();
+			if (avFormatCtx->chapters && avFormatCtx->nb_chapters > 1)
+			{
+				for (size_t i = 0; i < avFormatCtx->nb_chapters; i++)
+				{
+					auto chapter = avFormatCtx->chapters[i];
+					auto entry = av_dict_get(chapter->metadata, "title", NULL, AV_DICT_IGNORE_SUFFIX);
+					if (entry)
+					{
+						auto title = ConvertString(entry->value);
+						TimeSpan start;
+						start.Duration = (long long)((chapter->start / (double)chapter->time_base.den) * chapter->time_base.num * 10000000);
+						TimeSpan duration;
+						duration.Duration = (long long)(((chapter->end - chapter->start) / (double)chapter->time_base.den) * chapter->time_base.num * 10000000);
+						chapters->Append(ref new ChapterInfo(title, start, duration));
+					}
+				}
+			}
+			chapterInfos = chapters->GetView();
 		}
 
 		if (SUCCEEDED(hr))
