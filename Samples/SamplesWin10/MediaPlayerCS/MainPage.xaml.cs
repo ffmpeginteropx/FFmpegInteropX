@@ -55,6 +55,9 @@ namespace MediaPlayerCS
 
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
+
+            // optionally check for recommended ffmpeg version
+            FFmpegVersionInfo.CheckRecommendedVersion();
         }
 
         public FFmpegInteropConfig Config { get; set; }

@@ -259,6 +259,7 @@
     <ClInclude Include="..\..\Source\FFmpegInteropLogging.h" />
     <ClInclude Include="..\..\Source\FFmpegInteropMSS.h" />
     <ClInclude Include="..\..\Source\FFmpegReader.h" />
+    <ClInclude Include="..\..\Source\FFmpegVersionInfo.h" />
     <ClInclude Include="..\..\Source\FrameGrabber.h" />
     <ClInclude Include="..\..\Source\H264AVCSampleProvider.h" />
     <ClInclude Include="..\..\Source\IAvEffect.h" />

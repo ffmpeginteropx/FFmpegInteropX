@@ -7,6 +7,7 @@ if [ "$1" == "Win10" ]; then
     if [ "$2" == "x86" ]; then
         echo "Make Win10 x86"
         pushd $DIR/ffmpeg
+		rm -rf Build/Windows10/x86
         rm -rf Output/Windows10/x86
         mkdir -p Output/Windows10/x86
         cd Output/Windows10/x86
@@ -34,6 +35,7 @@ if [ "$1" == "Win10" ]; then
     elif [ "$2" == "x64" ]; then
         echo "Make Win10 x64"
         pushd $DIR/ffmpeg
+        rm -rf Build/Windows10/x64
         rm -rf Output/Windows10/x64
         mkdir -p Output/Windows10/x64
         cd Output/Windows10/x64
@@ -61,6 +63,7 @@ if [ "$1" == "Win10" ]; then
     elif [ "$2" == "ARM" ]; then
         echo "Make Win10 ARM"
         pushd $DIR/ffmpeg
+        rm -rf Build/Windows10/ARM
         rm -rf Output/Windows10/ARM
         mkdir -p Output/Windows10/ARM
         cd Output/Windows10/ARM
