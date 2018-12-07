@@ -23,6 +23,16 @@ Other changes:
 - Support for Windows 8.x and Windows Phone 8.x has been dropped
 - Visual Studio 2015 support has been dropped
 
+## FFmpeg Version
+
+Recommended: **FFmpeg 4.1**
+
+Minimum: **FFmpeg 4.0**
+
+An exception will be thrown if FFmpegInterop is used with anything lower than the minimum version. The recommended version has been tested and is what we currently recommend to use with FFmpegInterop-lukasf/master.
+
+A legacy branch exists which tagets **FFmpeg 3.4.2**.
+
 ## Getting the sources
 
 Getting a compatible UWP build of FFmpeg is required for this to work.
