@@ -113,6 +113,58 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 	mutexGuard.unlock();
 }
 
+String^ FFmpegInteropMSS::FFmpegVersion::get()
+{
+	auto version = av_version_info();
+	if (version && version[0] == 'n')
+	{
+		version = version++;
+	}
+	return ConvertString(version);
+}
+
+void CheckFFmpegVersion(String^ current, String^ min)
+{
+	int v1, v2, v3, min1, min2, min3;
+
+	auto countV = swscanf_s(current->Data(),
+		L"%i.%i.%i",
+		&v1, &v2, &v3);
+
+	auto countMin = swscanf_s(min->Data(),
+		L"%i.%i.%i",
+		&min1, &min2, &min3);
+
+	if (countV == 2)
+	{
+		v3 = 0;
+	}
+
+	if (countMin == 2)
+	{
+		min3 = 0;
+	}
+
+	if (countV < 2 || countMin < 2)
+	{
+		throw ref new COMException(E_UNEXPECTED);
+	}
+	else if (min1 > v1 || (min1 == v1 && min2 > v2) || (min1 == v1 && min2 == v2 && min3 > v3))
+	{
+		throw ref new COMException(E_FAIL);
+	}
+}
+
+void FFmpegInteropMSS::CheckFFmpegMinimumVersion()
+{
+	CheckFFmpegVersion(FFmpegInteropMSS::FFmpegVersion, FFmpegInteropMSS::FFmpegMinimumVersion);
+}
+
+void FFmpegInteropMSS::CheckFFmpegRecommendedVersion()
+{
+	CheckFFmpegVersion(FFmpegInteropMSS::FFmpegVersion, FFmpegInteropMSS::FFmpegRecommendedVersion);
+}
+
 IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromStreamAsync(IRandomAccessStream^ stream, FFmpegInteropConfig^ config)
 {
 	return create_async([stream, config]
