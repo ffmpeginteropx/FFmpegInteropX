@@ -58,6 +58,7 @@
     <ClInclude Include="..\..\Source\SubtitleProvider.h" />
     <ClInclude Include="..\..\Source\SubtitleProviderSsaAss.h" />
     <ClInclude Include="..\..\Source\SubtitleProviderBitmap.h" />
+    <ClInclude Include="..\..\Source\FFmpegVersionInfo.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\BuildFFmpeg.bat">

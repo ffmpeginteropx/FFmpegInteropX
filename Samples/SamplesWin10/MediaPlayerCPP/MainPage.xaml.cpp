@@ -53,7 +53,8 @@ MainPage::MainPage()
 	// Show the control panel on startup so user can start opening media
 	Splitter->IsPaneOpen = true;
 
-	FFmpegInteropMSS::CheckFFmpegMinimumVersion();
+	// optionally check for recommended ffmpeg version
+	//FFmpegVersionInfo::CheckRecommendedVersion();
 }
 
 void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)

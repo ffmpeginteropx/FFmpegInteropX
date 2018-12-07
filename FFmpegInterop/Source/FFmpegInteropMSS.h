@@ -54,13 +54,6 @@ namespace FFmpegInterop
 		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromUriAsync(String^ uri, FFmpegInteropConfig^ config);
 		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromUriAsync(String^ uri) { return CreateFromUriAsync(uri, ref new FFmpegInteropConfig()); }
 
-		static property String^ FFmpegMinimumVersion { String^ get() { return "4.0"; } };
-		static property String^ FFmpegRecommendedVersion { String^ get() { return "4.1"; } };
-		static property String^ FFmpegVersion { String^ get(); };
-
-		static void CheckFFmpegMinimumVersion();
-		static void CheckFFmpegRecommendedVersion();
-
 		[WFM::Deprecated("Use the CreateFromStreamAsync method.", WFM::DeprecationType::Deprecate, 0x0)]
 		static FFmpegInteropMSS^ CreateFFmpegInteropMSSFromStream(IRandomAccessStream^ stream, bool forceAudioDecode, bool forceVideoDecode, PropertySet^ ffmpegOptions, MediaStreamSource^ mss);
 		[WFM::Deprecated("Use the CreateFromStreamAsync method.", WFM::DeprecationType::Deprecate, 0x0)]
