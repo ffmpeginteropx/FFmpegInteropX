@@ -33,6 +33,8 @@ An exception will be thrown if FFmpegInterop is used with anything lower than th
 
 A legacy branch exists which tagets **FFmpeg 3.4.2**.
 
+**Hint:** To update the ffmpeg submodule to the recommended version (after pulling latest FFmpegInterop), use the following command in git bash from FFmpegInterop folder: `git submodule update`. Then rebuild ffmpeg and FFmpegInterop.
+
 ## Getting the sources
 
 Getting a compatible UWP build of FFmpeg is required for this to work.
@@ -54,11 +56,10 @@ Your `FFmpegInterop` folder should look as follows
 	    FFmpegInterop\         - FFmpegInterop WinRT component
 	    Samples\               - Sample Media Player applications in C++, C#, and JavaScript
 	    Tests\                 - Unit tests for FFmpegInterop
-	    BuildFFmpeg.bat        - Helper script to build FFmpeg libraries as described in https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT
-	    BuildFFmpeg_VS2017.bat - Experimental build file for Visual Studio 2017
+	    BuildFFmpeg.bat        - FFmpeg build file for Visual Studio 2015
+	    BuildFFmpeg_VS2017.bat - FFmpeg build file for Visual Studio 2017
 	    FFmpegConfig.sh        - Internal script that contains FFmpeg configure options
-	    FFmpegWin8.1.sln       - Microsoft Visual Studio 2013 solution file for Windows 8.1 and Windows Phone 8.1 apps development
-	    FFmpegWin10.sln        - Microsoft Visual Studio 2015 solution file for Windows 10 apps development
+	    FFmpegWin10.sln        - Microsoft Visual Studio 2017 solution file for Windows 10 apps development
 	    LICENSE
 	    README.md
 
@@ -94,17 +95,20 @@ Simply open the Visual Studio solution file `FFmpegWin10.sln`, set one of the Me
 
 ### Using the FFmpegInterop object
 
-Using the **FFmpegInterop** object is fairly straightforward and can be observed from the sample applications provided.
+Using the **FFmpegInteropMSS** object is fairly straightforward and can be observed from the sample applications provided.
 
-1. Get an IRandomAccessStream for the media you want to playback.
-2. Create a new FFmpegInteropObject using FFmpegInteropMSS.CreateFromStreamAsync() passing it the stream and optionally a config class instance.
-3. Get the MediaPlaybackItem from the Interop object by invoking CreateMediaPlaybackItem()
-4. Assign the MediaPlaybackItem to your MediaPlayer, MediaElement or VideoTag for playback.
+1. Get an `IRandomAccessStream` for the media you want to playback.
+2. Create a new `FFmpegInteropMSS` object using `FFmpegInteropMSS.CreateFromStreamAsync()` passing it the stream and optionally a config class instance.
+3. Get the MediaPlaybackItem from the Interop object by invoking `CreateMediaPlaybackItem()`
+4. Assign the MediaPlaybackItem to your MediaPlayer or MediaElement for playback.
 
-You can use FFmepgInteropMSS.CreateFromUri to create a MediaStreamSource on a streaming source (shoutcast for example).
+Use `FFmepgInteropMSS.CreateFromUriAsync()` to create a MediaStreamSource on a streaming source (shoutcast for example).
 
-You can use FFmpegInterop.GetMediaStreamSource() to get the MediaStreamSource like in the original version of the library. But when using MediaStreamSource, you won't get subtitles. Subtitle support requires using the MediaPlaybackItem!
+You can use `FFmpegInteropMSS.GetMediaStreamSource()` to get the MediaStreamSource like in the original version of the library. But when using MediaStreamSource, you won't get subtitles. Subtitle support requires using the MediaPlaybackItem!
 
+You can add a call to `FFmpegVersionInfo.CheckRecommendedVersion()` in your app startup code. This will raise an exception if you are using the lib with a version lower than the recommended version. This can help remind you to update ffmpeg after you updated FFmpegInterop.
+
+Call `FrameGrabber.CreateFromStreamAsync()` to grab one or more frames from a video file.
 
 ## Integrating FFmpegInterop into your app solution
 
