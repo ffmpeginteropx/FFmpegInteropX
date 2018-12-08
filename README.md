@@ -126,6 +126,10 @@ For a C# project, you can do it like this:
 
 This assumes that the FFmpegInterop-lukasf folder is located next to your solution folder and the ffmpeg build output folder contains exclusively the latest ffmpeg dlls. Paths might be different on your folder setup. For CPP and JS this can be done similarly, check the samples for reference.
 
+## FFmpegUniversal
+
+A branch exists which makes FFmpegInterop compatible with FFmpegUniversal builds. It is a project which merges the individual ffmpeg dlls into one single file. This can make deployment easier. Check [FFmpegUniversal](https://github.com/M2Team/FFmpegUniversal) for more details.
+
 ## Credits / contributors
 
 - [lukasf](https://github.com/lukasf)
