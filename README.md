@@ -4,11 +4,11 @@
 
 ## Welcome to FFmpegInterop-lukasf
 
-FFmpegInterop is an open-source project that aims to provide an easy way to use FFmpeg in Windows 10 Store Apps. This allows you to decode a lot of formats that are not natively supported on Windows 10.
+FFmpegInterop is an open-source project that aims to provide an easy way to use **FFmpeg** in **Windows 10 UWP Apps**. This allows you to decode a lot of formats that are not natively supported on Windows 10.
 
-FFmpegInterop-lukasf is a much improved fork of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
+FFmpegInterop-lukasf is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
 
-Some of the important improvements:
+**Some of the important improvements:**
 
 - Multiple audio stream support
 - Subtitle support
@@ -17,9 +17,10 @@ Some of the important improvements:
 - Passthrough of HEVC video for hardware decoding
 - Major performance improvements (zero-copy data handling in all important areas)
 - Frame grabber support
+- API improvements
 - Lots of bug fixes
 
-Other changes:
+**Other changes:**
 - Support for Windows 8.x and Windows Phone 8.x has been dropped
 - Visual Studio 2015 support has been dropped
 
