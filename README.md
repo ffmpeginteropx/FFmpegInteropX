@@ -54,12 +54,12 @@ Your `FFmpegInterop` folder should look as follows
 	FFmpegInterop\
 	    ffmpeg\                - ffmpeg source code from the latest release in git://github.com/FFmpeg/FFmpeg.git
 	    FFmpegInterop\         - FFmpegInterop WinRT component
-	    Samples\               - Sample Media Player applications in C++, C#, and JavaScript
+	    Samples\               - Sample Media Player applications in C++ and C#
 	    Tests\                 - Unit tests for FFmpegInterop
-	    BuildFFmpeg.bat        - FFmpeg build file for Visual Studio 2015
+	    BuildFFmpeg_VS2015.bat - FFmpeg build file for Visual Studio 2015
 	    BuildFFmpeg_VS2017.bat - FFmpeg build file for Visual Studio 2017
 	    FFmpegConfig.sh        - Internal script that contains FFmpeg configure options
-	    FFmpegWin10.sln        - Microsoft Visual Studio 2017 solution file for Windows 10 apps development
+	    FFmpegInterop.sln      - Microsoft Visual Studio 2017 solution file for Windows 10 apps development
 	    LICENSE
 	    README.md
 
@@ -75,13 +75,13 @@ Please note: If you have Visual Studio 2015 installed as well, please try the Vi
 
 ## Building ffmpeg with Visual Studio 2015
 
-After installing the ffmpeg build tools, you can invoke the `BuildFFmpeg.bat` script.
+After installing the ffmpeg build tools, you can invoke the `BuildFFmpeg_VS2015.bat` script.
 
-	BuildFFmpeg.bat win10                     - Build for Windows 10 ARM, x64, and x86
-	BuildFFmpeg.bat phone8.1 ARM              - Build for Windows Phone 8.1 ARM only
-	BuildFFmpeg.bat win8.1 x86 x64            - Build for Windows 8.1 x86 and x64 only
-	BuildFFmpeg.bat phone8.1 win10 ARM        - Build for Windows 10 and Windows Phone 8.1 ARM only
-	BuildFFmpeg.bat win8.1 phone8.1 win10     - Build all architecture for all target platform
+	BuildFFmpeg_VS2015.bat win10                     - Build for Windows 10 ARM, x64, and x86
+	BuildFFmpeg_VS2015.bat phone8.1 ARM              - Build for Windows Phone 8.1 ARM only
+	BuildFFmpeg_VS2015.bat win8.1 x86 x64            - Build for Windows 8.1 x86 and x64 only
+	BuildFFmpeg_VS2015.bat phone8.1 win10 ARM        - Build for Windows 10 and Windows Phone 8.1 ARM only
+	BuildFFmpeg_VS2015.bat win8.1 phone8.1 win10     - Build all architecture for all target platform
 
 Alternatively, you can build the ffmpeg dlls manually using the instructions in the [ffmpeg compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT).
 
@@ -91,7 +91,7 @@ After building ffmpeg with the steps above, you should find the ffmpeg libraries
 
 Now you can build the FFmpegInterop library. 
 
-Simply open the Visual Studio solution file `FFmpegWin10.sln`, set one of the MediaPlayer[CS/CPP/JS] sample projects as StartUp project, and run. FFmpegInterop should build cleanly giving you the interop object as well as the selected sample MediaPlayer (C++, C# or JS) that show how to connect the MediaStreamSource to a MediaElement or Video tag for playback.
+Simply open the Visual Studio solution file `FFmpegInterop.sln`, set one of the MediaPlayer[CS/CPP/JS] sample projects as StartUp project, and run. FFmpegInterop should build cleanly giving you the interop object as well as the selected sample MediaPlayer (C++, C# or JS) that show how to connect the MediaStreamSource to a MediaElement or Video tag for playback.
 
 ### Using the FFmpegInterop object
 
@@ -124,7 +124,7 @@ For a C# project, you can do it like this:
   </ItemGroup>
 ```
 
-This assumes that the FFmpegInterop-lukasf folder is located next to your solution folder and the ffmpeg build output folder contains exclusively the latest ffmpeg dlls. Paths might be different on your folder setup. For CPP and JS this can be done similarly, check the samples for reference.
+This assumes that the FFmpegInterop folder is located next to your solution folder and the ffmpeg build output folder contains exclusively the latest ffmpeg dlls. Paths might be different on your folder setup. For CPP and JS this can be done similarly, check the samples for reference.
 
 ## FFmpegUniversal
 
