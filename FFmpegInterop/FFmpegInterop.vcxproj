@@ -125,14 +125,14 @@
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>28204;4635</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
@@ -147,14 +147,14 @@
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>28204;4635</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
@@ -169,14 +169,14 @@
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>28204;4635</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
@@ -191,14 +191,14 @@
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>28204;4635</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
@@ -213,14 +213,14 @@
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>28204;4635</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
@@ -235,68 +235,68 @@
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>28204;4635</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\ffmpeg\Build\Windows10\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
     </Xdcmake>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Source\AbstractEffectFactory.h" />
-    <ClInclude Include="..\..\Source\AudioEffectFactory.h" />
-    <ClInclude Include="..\..\Source\AudioFilter.h" />
-    <ClInclude Include="..\..\Source\AvEffectDefinition.h" />
-    <ClInclude Include="..\..\Source\CompressedSampleProvider.h" />
-    <ClInclude Include="..\..\Source\CritSec.h" />
-    <ClInclude Include="..\..\Source\FFmpegInteropConfig.h" />
-    <ClInclude Include="..\..\Source\FFmpegInteropLogging.h" />
-    <ClInclude Include="..\..\Source\FFmpegInteropMSS.h" />
-    <ClInclude Include="..\..\Source\FFmpegReader.h" />
-    <ClInclude Include="..\..\Source\FFmpegVersionInfo.h" />
-    <ClInclude Include="..\..\Source\FrameGrabber.h" />
-    <ClInclude Include="..\..\Source\H264AVCSampleProvider.h" />
-    <ClInclude Include="..\..\Source\IAvEffect.h" />
-    <ClInclude Include="..\..\Source\LanguageTagConverter.h" />
-    <ClInclude Include="..\..\Source\NALPacketSampleProvider.h" />
-    <ClInclude Include="..\..\Source\HEVCSampleProvider.h" />
-    <ClInclude Include="..\..\Source\ILogProvider.h" />
-    <ClInclude Include="..\..\Source\MediaSampleProvider.h" />
-    <ClInclude Include="..\..\Source\MediaThumbnailData.h" />
-    <ClInclude Include="..\..\Source\NativeBuffer.h" />
-    <ClInclude Include="..\..\Source\NativeBufferFactory.h" />
-    <ClInclude Include="..\..\Source\StreamInfo.h" />
-    <ClInclude Include="..\..\Source\SubtitleProvider.h" />
-    <ClInclude Include="..\..\Source\SubtitleProviderBitmap.h" />
-    <ClInclude Include="..\..\Source\SubtitleProviderSsaAss.h" />
-    <ClInclude Include="..\..\Source\UncompressedAudioSampleProvider.h" />
-    <ClInclude Include="..\..\Source\UncompressedFrameProvider.h" />
-    <ClInclude Include="..\..\Source\UncompressedSampleProvider.h" />
-    <ClInclude Include="..\..\Source\UncompressedVideoSampleProvider.h" />
-    <ClInclude Include="..\..\Source\VideoEffectFactory.h" />
-    <ClInclude Include="..\..\Source\VideoFrame.h" />
+    <ClInclude Include="AbstractEffectFactory.h" />
+    <ClInclude Include="AudioEffectFactory.h" />
+    <ClInclude Include="AudioFilter.h" />
+    <ClInclude Include="AvEffectDefinition.h" />
+    <ClInclude Include="CompressedSampleProvider.h" />
+    <ClInclude Include="CritSec.h" />
+    <ClInclude Include="FFmpegInteropConfig.h" />
+    <ClInclude Include="FFmpegInteropLogging.h" />
+    <ClInclude Include="FFmpegInteropMSS.h" />
+    <ClInclude Include="FFmpegReader.h" />
+    <ClInclude Include="FFmpegVersionInfo.h" />
+    <ClInclude Include="FrameGrabber.h" />
+    <ClInclude Include="H264AVCSampleProvider.h" />
+    <ClInclude Include="IAvEffect.h" />
+    <ClInclude Include="LanguageTagConverter.h" />
+    <ClInclude Include="NALPacketSampleProvider.h" />
+    <ClInclude Include="HEVCSampleProvider.h" />
+    <ClInclude Include="ILogProvider.h" />
+    <ClInclude Include="MediaSampleProvider.h" />
+    <ClInclude Include="MediaThumbnailData.h" />
+    <ClInclude Include="NativeBuffer.h" />
+    <ClInclude Include="NativeBufferFactory.h" />
+    <ClInclude Include="StreamInfo.h" />
+    <ClInclude Include="SubtitleProvider.h" />
+    <ClInclude Include="SubtitleProviderBitmap.h" />
+    <ClInclude Include="SubtitleProviderSsaAss.h" />
+    <ClInclude Include="UncompressedAudioSampleProvider.h" />
+    <ClInclude Include="UncompressedFrameProvider.h" />
+    <ClInclude Include="UncompressedSampleProvider.h" />
+    <ClInclude Include="UncompressedVideoSampleProvider.h" />
+    <ClInclude Include="VideoEffectFactory.h" />
+    <ClInclude Include="VideoFrame.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Source\CompressedSampleProvider.cpp" />
-    <ClCompile Include="..\..\Source\FFmpegInteropLogging.cpp" />
-    <ClCompile Include="..\..\Source\FFmpegInteropMSS.cpp" />
-    <ClCompile Include="..\..\Source\FFmpegReader.cpp" />
-    <ClCompile Include="..\..\Source\FrameGrabber.cpp" />
-    <ClCompile Include="..\..\Source\H264AVCSampleProvider.cpp" />
-    <ClCompile Include="..\..\Source\NALPacketSampleProvider.cpp" />
-    <ClCompile Include="..\..\Source\HEVCSampleProvider.cpp" />
-    <ClCompile Include="..\..\Source\MediaSampleProvider.cpp" />
-    <ClCompile Include="..\..\Source\NativeBufferFactory.cpp" />
-    <ClCompile Include="..\..\Source\UncompressedAudioSampleProvider.cpp" />
-    <ClCompile Include="..\..\Source\UncompressedSampleProvider.cpp" />
-    <ClCompile Include="..\..\Source\UncompressedVideoSampleProvider.cpp" />
+    <ClCompile Include="CompressedSampleProvider.cpp" />
+    <ClCompile Include="FFmpegInteropLogging.cpp" />
+    <ClCompile Include="FFmpegInteropMSS.cpp" />
+    <ClCompile Include="FFmpegReader.cpp" />
+    <ClCompile Include="FrameGrabber.cpp" />
+    <ClCompile Include="H264AVCSampleProvider.cpp" />
+    <ClCompile Include="NALPacketSampleProvider.cpp" />
+    <ClCompile Include="HEVCSampleProvider.cpp" />
+    <ClCompile Include="MediaSampleProvider.cpp" />
+    <ClCompile Include="NativeBufferFactory.cpp" />
+    <ClCompile Include="UncompressedAudioSampleProvider.cpp" />
+    <ClCompile Include="UncompressedSampleProvider.cpp" />
+    <ClCompile Include="UncompressedVideoSampleProvider.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -307,7 +307,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\BuildFFmpeg.bat" />
+    <None Include="..\..\..\BuildFFmpeg_VS2015.bat" />
     <None Include="..\..\..\BuildFFmpeg_VS2017.bat" />
     <None Include="..\..\..\FFmpegConfig.sh" />
     <None Include="..\..\..\README.md" />
