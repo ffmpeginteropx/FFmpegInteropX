@@ -1,7 +1,6 @@
-﻿<!--
 //*****************************************************************************
 //
-//	Copyright 2015 Microsoft Corporation
+//	Copyright 2017 Microsoft Corporation
 //
 //	Licensed under the Apache License, Version 2.0 (the "License");
 //	you may not use this file except in compliance with the License.
@@ -16,11 +15,44 @@
 //	limitations under the License.
 //
 //*****************************************************************************
--->
 
-<Application
-    x:Class="MediaPlayerCPP.App"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:MediaPlayerCPP">
-</Application>
+#pragma once
+using namespace Platform;
+using namespace Windows::Storage::Streams;
+
+namespace FFmpegInterop
+{
+	public ref class MediaThumbnailData sealed
+	{
+		IBuffer^ _buffer;
+		String^ _extension;
+
+	public:
+
+		property IBuffer^ Buffer
+		{
+			IBuffer^ get()
+			{
+				return _buffer;
+			}
+		}
+		property String^ Extension
+		{
+			String^ get()
+			{
+				return _extension;
+			}
+		}
+
+		MediaThumbnailData(IBuffer^ buffer, String^ extension)
+		{
+			this->_buffer = buffer;
+			this->_extension = extension;
+		}
+	private: ~MediaThumbnailData()
+		{
+			delete _buffer;
+			delete _extension;
+		}
+	};
+}
