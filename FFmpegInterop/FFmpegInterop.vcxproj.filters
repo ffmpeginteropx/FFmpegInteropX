@@ -135,15 +135,17 @@
     <ClInclude Include="FFmpegVersionInfo.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\BuildFFmpeg_VS2017.bat">
+    <None Include="..\BuildFFmpeg_VS2017.bat">
       <Filter>Build</Filter>
     </None>
-    <None Include="..\..\..\FFmpegConfig.sh">
+    <None Include="..\FFmpegConfig.sh">
       <Filter>Build</Filter>
     </None>
-    <None Include="..\..\..\README.md">
+    <None Include="..\README.md">
       <Filter>Build</Filter>
     </None>
-    <None Include="..\..\..\BuildFFmpeg_VS2015.bat" />
+    <None Include="..\BuildFFmpeg_VS2015.bat">
+      <Filter>Build</Filter>
+    </None>
   </ItemGroup>
 </Project>
