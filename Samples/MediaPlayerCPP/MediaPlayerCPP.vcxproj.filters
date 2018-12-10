@@ -51,6 +51,13 @@
   <ItemGroup>
     <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
     <None Include="$(SolutionDir)FFmpegInterop.pfx" />
+    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
+    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
+    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
+    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
+    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
+    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
+    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="MainPage.xaml" />
