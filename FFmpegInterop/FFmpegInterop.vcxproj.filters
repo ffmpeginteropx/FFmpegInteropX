@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>65247ed4-8bf5-4cae-b754-fa343845bdc7</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Build">
+      <UniqueIdentifier>{44fda9a6-fa53-47ae-8634-4e7c973b0598}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SampleProviders">
+      <UniqueIdentifier>{1057291d-6780-414d-a50a-9bd4c53c5faa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Effects">
+      <UniqueIdentifier>{d04c577f-ab8c-4919-8a81-653153bcd28a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Subtitles">
+      <UniqueIdentifier>{9e185fcc-5029-47e7-8d3a-ba43f26bb0f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Helpers">
+      <UniqueIdentifier>{cba53c0e-fc61-41d0-92a8-92da386261d7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="FFmpegInteropMSS.cpp" />
+    <ClCompile Include="FFmpegReader.cpp" />
+    <ClCompile Include="FFmpegInteropLogging.cpp" />
+    <ClCompile Include="FrameGrabber.cpp" />
+    <ClCompile Include="CompressedSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="H264AVCSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="HEVCSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="MediaSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="NALPacketSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="UncompressedAudioSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="UncompressedSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="UncompressedVideoSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="NativeBufferFactory.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="FFmpegInteropMSS.h" />
+    <ClInclude Include="FFmpegReader.h" />
+    <ClInclude Include="ILogProvider.h" />
+    <ClInclude Include="FFmpegInteropLogging.h" />
+    <ClInclude Include="MediaThumbnailData.h" />
+    <ClInclude Include="VideoFrame.h" />
+    <ClInclude Include="FFmpegInteropConfig.h" />
+    <ClInclude Include="StreamInfo.h" />
+    <ClInclude Include="FrameGrabber.h" />
+    <ClInclude Include="AbstractEffectFactory.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioEffectFactory.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioFilter.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="AvEffectDefinition.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="IAvEffect.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoEffectFactory.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="CompressedSampleProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="H264AVCSampleProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="HEVCSampleProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaSampleProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="NALPacketSampleProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="UncompressedAudioSampleProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="UncompressedFrameProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="UncompressedSampleProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="UncompressedVideoSampleProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="SubtitleProvider.h">
+      <Filter>Subtitles</Filter>
+    </ClInclude>
+    <ClInclude Include="SubtitleProviderBitmap.h">
+      <Filter>Subtitles</Filter>
+    </ClInclude>
+    <ClInclude Include="SubtitleProviderSsaAss.h">
+      <Filter>Subtitles</Filter>
+    </ClInclude>
+    <ClInclude Include="NativeBuffer.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="NativeBufferFactory.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="CritSec.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="LanguageTagConverter.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="FFmpegVersionInfo.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\BuildFFmpeg_VS2017.bat">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\FFmpegConfig.sh">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\README.md">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\BuildFFmpeg_VS2015.bat">
+      <Filter>Build</Filter>
+    </None>
+  </ItemGroup>
+</Project>
