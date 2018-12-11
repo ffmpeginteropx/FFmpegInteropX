@@ -66,10 +66,12 @@ if %PROCESSOR_ARCHITECTURE%==x86 (
     set Comp_x86=x86 uwp 10.0.15063.0
     set Comp_x64=x86_amd64 uwp 10.0.15063.0
     set Comp_ARM=x86_arm uwp 10.0.15063.0
+    set Comp_ARM64=x86_arm64 uwp 10.0.15063.0
 ) else (
     set Comp_x86=amd64_x86 uwp 10.0.15063.0
     set Comp_x64=amd64 uwp 10.0.15063.0
     set Comp_ARM=amd64_arm uwp 10.0.15063.0
+    set Comp_ARM64=amd64_arm64 uwp 10.0.15063.0
 )
 
 :: Export full current PATH from environment into MSYS2
@@ -145,6 +147,17 @@ call "%VSLATESTDIR%\VC\Auxiliary\Build\vcvarsall.bat" %Comp_ARM%
 
 %MSYS2_BIN% --login -x %~dp0FFmpegConfig.sh Win10 ARM
 for /r %~dp0\ffmpeg\Output\Windows10\ARM %%f in (*.pdb) do @copy "%%f" %~dp0\ffmpeg\Build\Windows10\ARM\bin
+endlocal
+
+:Win10ARM64
+echo Building FFmpeg for Windows 10 apps ARM64...
+echo:
+
+setlocal
+call "%VSLATESTDIR%\VC\Auxiliary\Build\vcvarsall.bat" %Comp_ARM64%
+
+%MSYS2_BIN% --login -x %~dp0FFmpegConfig.sh Win10 ARM64
+for /r %~dp0\ffmpeg\Output\Windows10\ARM64 %%f in (*.pdb) do @copy "%%f" %~dp0\ffmpeg\Build\Windows10\ARM64\bin
 endlocal
 
 :Cleanup

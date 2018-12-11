@@ -91,6 +91,36 @@ if [ "$1" == "Win10" ]; then
         make install
         popd
 
+    elif [ "$2" == "ARM64" ]; then
+        echo "Make Win10 ARM64"
+        pushd $DIR/ffmpeg
+        rm -rf Build/Windows10/ARM64
+        rm -rf Output/Windows10/ARM64
+        mkdir -p Output/Windows10/ARM64
+        cd Output/Windows10/ARM64
+        ../../../configure \
+        --toolchain=msvc \
+        --disable-programs \
+        --disable-d3d11va \
+        --disable-dxva2 \
+		--disable-encoders \
+		--disable-devices \
+		--disable-hwaccels \
+        --disable-doc \
+        --arch=arm64 \
+        --cpu=armv7 \
+        --enable-thumb \
+        --enable-shared \
+        --enable-cross-compile \
+        --enable-debug \
+        --target-os=win32 \
+        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP" \
+        --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
+        --prefix=../../../Build/Windows10/ARM64
+        make -j8
+        make install
+        popd
+
     fi
 
 elif [ "$1" == "Win8.1" ]; then
