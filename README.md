@@ -70,9 +70,11 @@ Now that you have the FFmpeg source code, you can follow the instructions on how
 
 ## Building ffmpeg with Visual Studio 2017
 
-After installing the ffmpeg build tools, you can invoke `BuildFFmpeg_VS2017.bat` from a normal cmd prompt. It builds all Windows 10 versions of ffmpeg (x86, x64 and ARM). 
+After installing the ffmpeg build tools, you can invoke `BuildFFmpeg_VS2017.bat` from a normal cmd prompt. It builds all Windows 10 versions of ffmpeg (x86, x64, ARM and ARM64). 
 
-Please note: If you have Visual Studio 2015 installed as well, please try the Visual Studio 2015 build file (see below). Some people reported problems when having both installed and running the VS2017 file.
+Note: You need Visual Studio 2017 15.9.0 or higher to build the ARM64 version of ffmpeg!
+
+Note: If you have Visual Studio 2015 installed as well, please try the Visual Studio 2015 build file (see below). Some people reported problems when having both installed and running the VS2017 file.
 
 ## Building ffmpeg with Visual Studio 2015
 
