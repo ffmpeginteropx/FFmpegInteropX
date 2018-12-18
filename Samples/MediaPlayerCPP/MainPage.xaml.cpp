@@ -92,25 +92,18 @@ void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::Routed
 					create_task(FFmpegInteropMSS::CreateFromStreamAsync(readStream, Config)).then([this](FFmpegInteropMSS^ result)
 					{
 						FFmpegMSS = result;
-						auto playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
+						playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
-						if (playbackItem)
-						{
-							// Pass MediaPlaybackItem to Media Element
-							mediaElement->SetPlaybackSource(playbackItem);
+						// Pass MediaPlaybackItem to Media Element
+						mediaElement->SetPlaybackSource(playbackItem);
 
-							// Close control panel after file open
-							Splitter->IsPaneOpen = false;
-						
-							auto controls = Windows::Media::SystemMediaTransportControls::GetForCurrentView();
-							controls->IsPlayEnabled = true;
-							controls->IsPauseEnabled = true;
-							controls->PlaybackStatus = Windows::Media::MediaPlaybackStatus::Playing;
-						}
-						else
-						{
-							DisplayErrorMessage("Cannot open media");
-						}
+						// Close control panel after file open
+						Splitter->IsPaneOpen = false;
+
+						auto controls = Windows::Media::SystemMediaTransportControls::GetForCurrentView();
+						controls->IsPlayEnabled = true;
+						controls->IsPauseEnabled = true;
+						controls->PlaybackStatus = Windows::Media::MediaPlaybackStatus::Playing;
 					});
 				}
 				catch (Exception^ ex)
@@ -145,20 +138,13 @@ void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::K
 			create_task(FFmpegInteropMSS::CreateFromUriAsync(uri, Config)).then([this](FFmpegInteropMSS^ result)
 			{
 				FFmpegMSS = result;
-				auto playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
+				playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
-				if (playbackItem)
-				{
-					// Pass MediaPlaybackItem to Media Element
-					mediaElement->SetPlaybackSource(playbackItem);
+				// Pass MediaPlaybackItem to Media Element
+				mediaElement->SetPlaybackSource(playbackItem);
 
-					// Close control panel after opening media
-					Splitter->IsPaneOpen = false;
-				}
-				else
-				{
-					DisplayErrorMessage("Cannot open media");
-				}
+				// Close control panel after opening media
+				Splitter->IsPaneOpen = false;
 			});
 		}
 		catch (Exception^ ex)
@@ -222,6 +208,51 @@ void MainPage::ExtractFrame(Platform::Object^ sender, Windows::UI::Xaml::RoutedE
 				DisplayErrorMessage(ex->Message);
 			}
 		});
+	}
+}
+
+void MediaPlayerCPP::MainPage::LoadSubtitleFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	if (playbackItem == nullptr)
+	{
+		DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
+	}
+	else
+	{
+		FileOpenPicker^ filePicker = ref new FileOpenPicker();
+		filePicker->ViewMode = PickerViewMode::Thumbnail;
+		filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
+		filePicker->FileTypeFilter->Append("*");
+
+		// Show file picker so user can select a file
+		create_task(filePicker->PickSingleFileAsync()).then([this](StorageFile^ file)
+		{
+			if (file != nullptr)
+			{
+				// Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
+				create_task(file->OpenAsync(FileAccessMode::Read)).then([this, file](task<IRandomAccessStream^> stream)
+				{
+					auto track = TimedTextSource::CreateFromStream(stream.get());
+					playbackItem->Source->ExternalTimedTextSources->Append(track);
+					track->Resolved += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedTextSource ^, Windows::Media::Core::TimedTextSourceResolveResultEventArgs ^>(this, &MediaPlayerCPP::MainPage::OnResolved);
+				});
+			}
+		});
+	}
+}
+
+void MediaPlayerCPP::MainPage::OnResolved(Windows::Media::Core::TimedTextSource ^sender, Windows::Media::Core::TimedTextSourceResolveResultEventArgs ^args)
+{
+	// you can rename and pre-select the loaded subtitle track(s) if you like
+	if (args->Tracks->Size > 0)
+	{
+		auto first = args->Tracks->GetAt(0);
+		first->Label = "External";
+		unsigned int index;
+		if (playbackItem->TimedMetadataTracks->IndexOf(first, &index))
+		{
+			playbackItem->TimedMetadataTracks->SetPresentationMode(index, Windows::Media::Playback::TimedMetadataTrackPresentationMode::PlatformPresented);
+		}
 	}
 }
 

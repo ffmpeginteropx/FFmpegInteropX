@@ -113,6 +113,12 @@ You can add a call to `FFmpegVersionInfo.CheckRecommendedVersion()` in your app 
 
 Call `FrameGrabber.CreateFromStreamAsync()` to grab one or more frames from a video file.
 
+### Subtitle Support
+
+FFmpegInterop will automatically load and use all embedded subtitles, supporting all formats through ffmpeg. You have to use the MediaPlaybackItem returned from the MSS object. Then subtitles can be selected from MediaElement's transport controls. 
+
+You can also add external subtitle files to a MediaPlaybackitem by using UWP APIs. See the sample apps for reference. External subtitles are limited to the formats understood by UWP, as they are currently not parsed through ffmpeg.
+
 ## Integrating FFmpegInterop into your app solution
 
 If you want to integrate FFmpegInterop into your app, you can just add the project file (`FFmpegInterop\Win10\FFmpegInterop\FFmpegInterop.vcxproj`) to your app solution as an existing project and add a reference from your main app project to FFmpegInterop. The FFmpegInterop project does not have to be in your app's solution folder. 

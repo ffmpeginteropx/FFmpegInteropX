@@ -19,12 +19,7 @@
 using FFmpegInterop;
 
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
@@ -34,11 +29,7 @@ using Windows.System;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
 
 namespace MediaPlayerCS
 {
@@ -46,6 +37,7 @@ namespace MediaPlayerCS
     {
         private FFmpegInteropMSS FFmpegMSS;
         private StorageFile currentFile;
+        private MediaPlaybackItem playbackItem;
 
         public MainPage()
         {
@@ -84,19 +76,13 @@ namespace MediaPlayerCS
                 {
                     // Instantiate FFmpegInteropMSS using the opened local file stream
                     FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, Config);
-                    var source = FFmpegMSS.CreateMediaPlaybackItem();
-                    if (source != null)
-                    {
-                        // Pass MediaStreamSource to Media Element
-                        mediaElement.SetPlaybackSource(source);
+                    playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
 
-                        // Close control panel after file open
-                        Splitter.IsPaneOpen = false;
-                    }
-                    else
-                    {
-                        DisplayErrorMessage("Cannot open media");
-                    }
+                    // Pass MediaStreamSource to Media Element
+                    mediaElement.SetPlaybackSource(playbackItem);
+
+                    // Close control panel after file open
+                    Splitter.IsPaneOpen = false;
                 }
                 catch (Exception ex)
                 {
@@ -127,26 +113,13 @@ namespace MediaPlayerCS
                     // Instantiate FFmpegInteropMSS using the URI
                     mediaElement.Stop();
                     FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync(uri, Config);
-                    if (FFmpegMSS != null)
-                    {
-                        var source = FFmpegMSS.CreateMediaPlaybackItem();
-                        if (source != null)
-                        {
-                            // Pass MediaStreamSource to Media Element
-                            mediaElement.SetPlaybackSource(source);
+                    var source = FFmpegMSS.CreateMediaPlaybackItem();
 
-                            // Close control panel after opening media
-                            Splitter.IsPaneOpen = false;
-                        }
-                        else
-                        {
-                            DisplayErrorMessage("Cannot open media");
-                        }
-                    }
-                    else
-                    {
-                        DisplayErrorMessage("Cannot open media");
-                    }
+                    // Pass MediaStreamSource to Media Element
+                    mediaElement.SetPlaybackSource(source);
+
+                    // Close control panel after opening media
+                    Splitter.IsPaneOpen = false;
                 }
                 catch (Exception ex)
                 {
@@ -195,6 +168,46 @@ namespace MediaPlayerCS
             }
         }
 
+        private async void LoadSubtitleFile(object sender, RoutedEventArgs e)
+        {
+            if (playbackItem != null)
+            {
+                FileOpenPicker filePicker = new FileOpenPicker();
+                filePicker.ViewMode = PickerViewMode.Thumbnail;
+                filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+                filePicker.FileTypeFilter.Add("*");
+
+                // Show file picker so user can select a file
+                StorageFile file = await filePicker.PickSingleFileAsync();
+
+                if (file != null)
+                {
+                    var track = TimedTextSource.CreateFromStream(await file.OpenReadAsync());
+                    playbackItem.Source.ExternalTimedTextSources.Add(track);
+                    track.Resolved += Track_Resolved;
+                }
+            }
+            else
+            {
+                DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
+            }
+        }
+
+        private void Track_Resolved(TimedTextSource sender, TimedTextSourceResolveResultEventArgs args)
+        {
+            // you can rename and pre-select the loaded subtitle track(s) if you like
+            var first = args.Tracks.FirstOrDefault();
+            if (first != null)
+            {
+                first.Label = "External";
+                var index = playbackItem.TimedMetadataTracks.ToList().IndexOf(first);
+                if (index >= 0)
+                {
+                    playbackItem.TimedMetadataTracks.SetPresentationMode((uint)index, TimedMetadataTrackPresentationMode.PlatformPresented);
+                }
+            }
+        }
+
         private void MediaFailed(object sender, ExceptionRoutedEventArgs e)
         {
             DisplayErrorMessage(e.ErrorMessage);
@@ -206,5 +219,6 @@ namespace MediaPlayerCS
             var errorDialog = new MessageDialog(message);
             var x = await errorDialog.ShowAsync();
         }
+
     }
 }

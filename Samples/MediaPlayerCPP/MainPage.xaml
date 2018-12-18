@@ -49,6 +49,9 @@
 
                     <Button Content="Extract Frame" Click="ExtractFrame" Margin="0,20,10,10" />
                     <ToggleSwitch x:Name="grabFrameExactSeek" Header="Exact Seek for Extract Frame" OffContent="OFF" OnContent="ON" IsOn="True"/>
+
+                    <Button Content="Load External Subtitle File" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
+                    
                 </StackPanel>
             </SplitView.Pane>
 
