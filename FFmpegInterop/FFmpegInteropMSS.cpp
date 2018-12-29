@@ -340,7 +340,17 @@ void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 			index++;
 		}
 	}
+
+
+	for each(auto subtitleInfo in SubtitleStreams)
+	{
+		if (subtitleInfo->IsExternal) {
+
+			playbackitem->Source->ExternalTimedMetadataTracks->Append(subtitleInfo->SubtitleTrack);
+		}
+	}
 }
+
 
 void FFmpegInterop::FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args)
 {

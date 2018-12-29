@@ -39,6 +39,12 @@ namespace MediaPlayerCS
         private StorageFile currentFile;
         private MediaPlaybackItem playbackItem;
 
+        public bool AutoCreatePlaybackItem
+        {
+            get;
+            set;
+        } = true;
+
         public MainPage()
         {
             Config = new FFmpegInteropConfig();
@@ -50,7 +56,9 @@ namespace MediaPlayerCS
 
             // optionally check for recommended ffmpeg version
             FFmpegVersionInfo.CheckRecommendedVersion();
+
         }
+
 
         public FFmpegInteropConfig Config { get; set; }
 
@@ -77,13 +85,10 @@ namespace MediaPlayerCS
                     // Instantiate FFmpegInteropMSS using the opened local file stream
 
                     FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, Config);
-                    playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
-
-                    // Pass MediaStreamSource to Media Element
-                    mediaElement.SetPlaybackSource(playbackItem);
-
-                    // Close control panel after file open
-                    Splitter.IsPaneOpen = false;
+                    if (AutoCreatePlaybackItem)
+                    {
+                        CreatePlaybackItemAndStartPlaybackInternal();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -92,12 +97,18 @@ namespace MediaPlayerCS
             }
         }
 
-        private bool fileIsSubtitle(StorageFile path)
+        private void CreatePlaybackItemAndStartPlaybackInternal()
         {
-            string[] subtitleExt = new string[] { ".srt", ".sub", ".ttml", ".vtt" };
-            var ext = path.FileType;
-            return subtitleExt.Contains(ext.ToLowerInvariant());
+            playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
+
+            // Pass MediaStreamSource to Media Element
+            mediaElement.SetPlaybackSource(playbackItem);
+
+            // Close control panel after file open
+            Splitter.IsPaneOpen = false;
         }
+
+     
 
         private async void URIBoxKeyUp(object sender, KeyRoutedEventArgs e)
         {
@@ -244,14 +255,26 @@ namespace MediaPlayerCS
                 {
                     var stream = await file.OpenReadAsync();
                     await FFmpegMSS.ParseExternalSubtitleStream(stream);
-                    var info = FFmpegMSS.SubtitleStreams.FirstOrDefault(x => x.IsExternal);
-                    var track = info.SubtitleTrack;
-                    System.Diagnostics.Debug.WriteLine(track.Cues.Count);
+                   
                 }
             }
             else
             {
                 DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
+            }
+        }
+
+        private void CreatePlaybackItemAndStartPlayback(object sender, RoutedEventArgs e)
+        {
+            if (playbackItem == null)
+            {
+                CreatePlaybackItemAndStartPlaybackInternal();
+                var tracks = playbackItem.TimedMetadataTracks.Count;
+            }
+            else
+            {
+                DisplayErrorMessage("Playback item already created.");
+
             }
         }
     }
