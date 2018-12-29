@@ -75,6 +75,7 @@ namespace MediaPlayerCS
                 try
                 {
                     // Instantiate FFmpegInteropMSS using the opened local file stream
+
                     FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, Config);
                     playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
 
@@ -91,6 +92,13 @@ namespace MediaPlayerCS
             }
         }
 
+        private bool fileIsSubtitle(StorageFile path)
+        {
+            string[] subtitleExt = new string[] { ".srt", ".sub", ".ttml", ".vtt" };
+            var ext = path.FileType;
+            return subtitleExt.Contains(ext.ToLowerInvariant());
+        }
+
         private async void URIBoxKeyUp(object sender, KeyRoutedEventArgs e)
         {
             var textBox = sender as TextBox;
@@ -105,7 +113,7 @@ namespace MediaPlayerCS
                 try
                 {
                     // Set FFmpeg specific options. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
-                    
+
                     // Below are some sample options that you can set to configure RTSP streaming
                     // Config.FFmpegOptions.Add("rtsp_flags", "prefer_tcp");
                     // Config.FFmpegOptions.Add("stimeout", 100000);
@@ -220,5 +228,31 @@ namespace MediaPlayerCS
             var x = await errorDialog.ShowAsync();
         }
 
+        private async void LoadSubtitleFileFFmpeg(object sender, RoutedEventArgs e)
+        {
+            if (FFmpegMSS != null)
+            {
+                FileOpenPicker filePicker = new FileOpenPicker();
+                filePicker.ViewMode = PickerViewMode.Thumbnail;
+                filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+                filePicker.FileTypeFilter.Add("*");
+
+                // Show file picker so user can select a file
+                StorageFile file = await filePicker.PickSingleFileAsync();
+
+                if (file != null)
+                {
+                    var stream = await file.OpenReadAsync();
+                    await FFmpegMSS.ParseExternalSubtitleStream(stream);
+                    var info = FFmpegMSS.SubtitleStreams.FirstOrDefault(x => x.IsExternal);
+                    var track = info.SubtitleTrack;
+                    System.Diagnostics.Debug.WriteLine(track.Cues.Count);
+                }
+            }
+            else
+            {
+                DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
+            }
+        }
     }
 }

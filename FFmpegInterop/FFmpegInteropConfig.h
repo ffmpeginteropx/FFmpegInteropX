@@ -117,5 +117,6 @@ namespace FFmpegInterop
 
 	internal:
 		property bool IsFrameGrabber;
+		property bool IsExternalSubtitleParser;
 	};
 }

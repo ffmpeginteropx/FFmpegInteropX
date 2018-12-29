@@ -27,14 +27,14 @@
 #include "AvEffectDefinition.h"
 #include "StreamInfo.h"
 #include "SubtitleProvider.h"
-
+#include <collection.h>
 
 using namespace Platform;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
 using namespace Windows::Media::Playback;
-
+using namespace Platform::Collections;
 namespace WFM = Windows::Foundation::Metadata;
 
 extern "C"
@@ -77,6 +77,8 @@ namespace FFmpegInterop
 		MediaPlaybackItem^ CreateMediaPlaybackItem();
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime);
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime, TimeSpan durationLimit);
+
+		IAsyncAction^ ParseExternalSubtitleStream(IRandomAccessStream^ stream);
 
 		virtual ~FFmpegInteropMSS();
 
@@ -177,6 +179,9 @@ namespace FFmpegInterop
 
 
 	internal:
+		FFmpegReader^ m_pReader;
+
+
 
 		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss);
 		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config);
@@ -201,7 +206,10 @@ namespace FFmpegInterop
 		EventRegistrationToken sampleRequestedToken;
 		EventRegistrationToken switchStreamRequestedToken;
 		MediaPlaybackItem^ playbackItem;
-
+		Vector<AudioStreamInfo^>^ audioStrInfos;
+		Vector<SubtitleStreamInfo^>^ subtitleStrInfos;
+		static FFmpegInteropMSS^ createFromStreamInternal(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss);
+	
 		FFmpegInteropConfig ^ config;
 		std::vector<MediaSampleProvider^> sampleProviders;
 		std::vector<MediaSampleProvider^> audioStreams;
@@ -225,7 +233,6 @@ namespace FFmpegInterop
 		TimeSpan mediaDuration;
 		IStream* fileStreamData;
 		unsigned char* fileStreamBuffer;
-		FFmpegReader^ m_pReader;
 		bool isFirstSeek;
 	};
 
