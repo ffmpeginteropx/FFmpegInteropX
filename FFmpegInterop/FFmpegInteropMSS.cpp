@@ -32,7 +32,6 @@
 #include <dshow.h>
 #include "LanguageTagConverter.h"
 #include "FFmpegVersionInfo.h"
-#include "ExternalSubtitleProviderSsaAss.h"
 #include "collection.h"
 #include <ppl.h>
 
