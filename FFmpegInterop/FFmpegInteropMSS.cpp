@@ -297,7 +297,7 @@ MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem(TimeSpan startTime,
 	}
 }
 
-IAsyncAction^ FFmpegInterop::FFmpegInteropMSS::ParseExternalSubtitleStream(IRandomAccessStream ^ stream)
+IAsyncAction^ FFmpegInterop::FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ stream)
 {
 	return create_async([this, stream]
 	{
@@ -310,15 +310,32 @@ IAsyncAction^ FFmpegInterop::FFmpegInteropMSS::ParseExternalSubtitleStream(IRand
 		{
 			Concurrency::interruption_point();
 		}
-		for each(auto externalSubtitle in externalSubsParser->SubtitleStreams)
+		mutexGuard.lock();
+		try
 		{
-			subtitleStrInfos->Append(externalSubtitle);
-			if (this->PlaybackItem != nullptr)
+			int subtitleTracksCount = 1;
+
+			for each(auto externalSubtitle in externalSubsParser->SubtitleStreams)
 			{
-				PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
+				subtitleStrInfos->Append(externalSubtitle);
+
+				if (this->PlaybackItem != nullptr)
+				{
+					PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
+				}
+
+				subtitleTracksCount++;
 			}
+
+			//delete externalSubsParser;
+			subtitleStreamInfos = subtitleStrInfos->GetView();
 		}
-		subtitleStreamInfos = subtitleStrInfos->GetView();
+		catch (...)
+		{
+			mutexGuard.unlock();
+			throw;
+		}
+		mutexGuard.unlock();
 	});
 }
 
@@ -690,7 +707,7 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 		mss = ref new MediaStreamSource(videoStream->StreamDescriptor);
 		videoStream->EnableStream();
 	}
-	else if (subtitleStreams.size() == 0)
+	else if (subtitleStreams.size() == 0 || !config->IsExternalSubtitleParser)
 	{
 		//only fail if there are no media streams (audio, video, or subtitle)
 		hr = E_FAIL;

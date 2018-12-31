@@ -254,7 +254,7 @@ namespace MediaPlayerCS
                 if (file != null)
                 {
                     var stream = await file.OpenReadAsync();
-                    await FFmpegMSS.ParseExternalSubtitleStream(stream);
+                    await FFmpegMSS.AddExternalSubtitleAsync(stream);
                    
                 }
             }
