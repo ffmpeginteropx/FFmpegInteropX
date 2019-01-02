@@ -11,7 +11,7 @@ FFmpegInterop-lukasf is a much **improved fork** of the original [Microsoft proj
 **Some of the important improvements:**
 
 - Multiple audio stream support
-- Subtitle support
+- Subtitle support, including external subtitle files
 - Audio effects (special thanks to [mcosmin222](https://github.com/mcosmin222)!)
 - Stream information retrieval (name, language, format, etc)
 - Passthrough of HEVC video for hardware decoding
@@ -117,11 +117,13 @@ Call `FrameGrabber.CreateFromStreamAsync()` to grab one or more frames from a vi
 
 FFmpegInterop will automatically load and use all embedded subtitles, supporting all formats through ffmpeg. You have to use the MediaPlaybackItem returned from the MSS object. Then subtitles can be selected from MediaElement's transport controls. 
 
-You can also add external subtitle files to a MediaPlaybackitem by using UWP APIs. See the sample apps for reference. External subtitles are limited to the formats understood by UWP, as they are currently not parsed through ffmpeg.
+You can also add external subtitle files by using `FFmpegInteropMSS.AddExternalSubtitleAsync()`, even during playback. See the sample apps for reference. All ffmpeg subtitle formats are supported as external files, except for the two-file "sub/idx" (DVD) format. 
+
+Some external text subtitle files are stored with ANSI encoding instead of UTF8 (which is required by ffmpeg). FFmpegInterop can do an automatic conversion to UTF8. This is enabled by default in the config class and will use the system's active codepage by default. You can change the behavior by changing `AutoCorrectAnsiSubtitles` and `AnsiSubtitleCodepage` parameters in the config class. Codepage 0 is the system's active codepage.
 
 ## Integrating FFmpegInterop into your app solution
 
-If you want to integrate FFmpegInterop into your app, you can just add the project file (`FFmpegInterop\Win10\FFmpegInterop\FFmpegInterop.vcxproj`) to your app solution as an existing project and add a reference from your main app project to FFmpegInterop. The FFmpegInterop project does not have to be in your app's solution folder. 
+If you want to integrate FFmpegInterop into your app, you can just add the project file (`FFmpegInterop\FFmpegInterop.vcxproj`) to your app solution as an existing project and add a reference from your main app project to FFmpegInterop. The FFmpegInterop project does not have to be in your app's solution folder. 
 
 Additionally, your app must reference the ffmpeg dll files for the platform you are building. Best is to manually edit your app's project file. This allows you to refer the dlls built for the current platform using $BuildPlatform parameter.
 
