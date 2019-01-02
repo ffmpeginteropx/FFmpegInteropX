@@ -185,9 +185,6 @@ namespace FFmpegInterop
 
 
 	internal:
-		FFmpegReader^ m_pReader;
-
-
 
 		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss);
 		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config);
@@ -201,6 +198,7 @@ namespace FFmpegInterop
 			}
 		}
 
+		FFmpegReader^ m_pReader;
 		AVDictionary * avDict;
 		AVIOContext* avIOCtx;
 		AVFormatContext* avFormatCtx;
@@ -216,7 +214,6 @@ namespace FFmpegInterop
 		MediaPlaybackItem^ playbackItem;
 		Vector<AudioStreamInfo^>^ audioStrInfos;
 		Vector<SubtitleStreamInfo^>^ subtitleStrInfos;
-		static FFmpegInteropMSS^ createFromStreamInternal(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss);
 	
 		FFmpegInteropConfig ^ config;
 		std::vector<MediaSampleProvider^> sampleProviders;

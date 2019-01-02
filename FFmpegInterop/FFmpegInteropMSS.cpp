@@ -125,7 +125,7 @@ IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromStreamAsync(IRan
 {
 	return create_async([stream, config]
 	{
-		return createFromStreamInternal(stream, config, nullptr);
+		return CreateFromStream(stream, config, nullptr);
 	});
 };
 
@@ -297,14 +297,14 @@ MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem(TimeSpan startTime,
 	}
 }
 
-IAsyncAction^ FFmpegInterop::FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ stream)
+IAsyncAction^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ stream)
 {
 	return create_async([this, stream]
 	{
 		auto config = ref new FFmpegInteropConfig();
 		config->IsExternalSubtitleParser = true;
 
-		auto externalSubsParser = FFmpegInteropMSS::createFromStreamInternal(stream, config, nullptr);
+		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr);
 		int readResult = 0;
 		while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
 		{
@@ -369,7 +369,7 @@ void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 }
 
 
-void FFmpegInterop::FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args)
+void FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args)
 {
 	mutexGuard.lock();
 	int index = 0;
@@ -391,7 +391,7 @@ void FFmpegInterop::FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTim
 	mutexGuard.unlock();
 }
 
-void FFmpegInterop::FFmpegInteropMSS::OnAudioTracksChanged(MediaPlaybackItem ^sender, IVectorChangedEventArgs ^args)
+void FFmpegInteropMSS::OnAudioTracksChanged(MediaPlaybackItem ^sender, IVectorChangedEventArgs ^args)
 {
 	mutexGuard.lock();
 	if (sender->AudioTracks->Size == AudioStreams->Size)
@@ -1277,16 +1277,6 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position)
 	}
 
 	return hr;
-}
-
-FFmpegInteropMSS ^ FFmpegInterop::FFmpegInteropMSS::createFromStreamInternal(IRandomAccessStream ^ stream, FFmpegInteropConfig ^ config, MediaStreamSource ^ mss)
-{
-	auto result = CreateFromStream(stream, config, mss);
-	if (result == nullptr)
-	{
-		throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
-	}
-	return result;
 }
 
 // Static function to read file stream and pass data to FFmpeg. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
