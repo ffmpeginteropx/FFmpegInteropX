@@ -44,6 +44,12 @@ extern "C"
 
 namespace FFmpegInterop
 {
+	enum ByteOrderMark
+	{
+		Unchecked,
+		Unknown,
+		UTF8
+	};
 
 	public ref class FFmpegInteropMSS sealed
 	{
@@ -198,6 +204,8 @@ namespace FFmpegInterop
 		AVDictionary * avDict;
 		AVIOContext* avIOCtx;
 		AVFormatContext* avFormatCtx;
+		IStream* fileStreamData;
+		ByteOrderMark streamByteOrderMark;
 
 	private:
 
@@ -231,7 +239,6 @@ namespace FFmpegInterop
 		String^ videoCodecName;
 		String^ audioCodecName;
 		TimeSpan mediaDuration;
-		IStream* fileStreamData;
 		unsigned char* fileStreamBuffer;
 		bool isFirstSeek;
 	};

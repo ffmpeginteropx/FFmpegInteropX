@@ -494,7 +494,7 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream, M
 
 	if (SUCCEEDED(hr))
 	{
-		avIOCtx = avio_alloc_context(fileStreamBuffer, config->StreamBufferSize, 0, fileStreamData, FileStreamRead, 0, FileStreamSeek);
+		avIOCtx = avio_alloc_context(fileStreamBuffer, config->StreamBufferSize, 0, (void*)this, FileStreamRead, 0, FileStreamSeek);
 		if (avIOCtx == nullptr)
 		{
 			hr = E_OUTOFMEMORY;
@@ -785,7 +785,9 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 				{
 					if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
 					{
-						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
+						// only convert subtitle encoding for pure text subtitle files
+						bool convertToUtf8 = avFormatCtx->nb_streams == 1 && streamByteOrderMark == ByteOrderMark::Unknown;
+						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, convertToUtf8);
 					}
 					else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
 					{
@@ -1290,13 +1292,34 @@ FFmpegInteropMSS ^ FFmpegInterop::FFmpegInteropMSS::createFromStreamInternal(IRa
 // Static function to read file stream and pass data to FFmpeg. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
 static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
 {
-	IStream* pStream = reinterpret_cast<IStream*>(ptr);
+	FFmpegInteropMSS^ mss = reinterpret_cast<FFmpegInteropMSS^>(ptr);
 	ULONG bytesRead = 0;
-	HRESULT hr = pStream->Read(buf, bufSize, &bytesRead);
+	HRESULT hr = mss->fileStreamData->Read(buf, bufSize, &bytesRead);
 
 	if (FAILED(hr))
 	{
 		return -1;
+	}
+
+	// Check beginning of file for BOM on first read
+	if (mss->streamByteOrderMark == ByteOrderMark::Unchecked)
+	{
+		if (bytesRead >= 4)
+		{
+			auto bom = ((uint32 *)buf)[0];
+			if ((bom & 0x00FFFFFF) == 0x00BFBBEF)
+			{
+				mss->streamByteOrderMark = ByteOrderMark::UTF8;
+			}
+			else
+			{
+				mss->streamByteOrderMark = ByteOrderMark::Unknown;
+			}
+		}
+		else
+		{
+			mss->streamByteOrderMark = ByteOrderMark::Unknown;
+		}
 	}
 
 	// If we succeed but don't have any bytes, assume end of file
@@ -1311,12 +1334,12 @@ static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
 // Static function to seek in file stream. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
 static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence)
 {
-	IStream* pStream = reinterpret_cast<IStream*>(ptr);
+	FFmpegInteropMSS^ mss = reinterpret_cast<FFmpegInteropMSS^>(ptr);
 	if (whence == AVSEEK_SIZE)
 	{
 		// get stream size
 		STATSTG status;
-		if (FAILED(pStream->Stat(&status, STATFLAG_NONAME)))
+		if (FAILED(mss->fileStreamData->Stat(&status, STATFLAG_NONAME)))
 		{
 			return -1;
 		}
@@ -1328,7 +1351,7 @@ static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence)
 		in.QuadPart = pos;
 		ULARGE_INTEGER out = { 0 };
 
-		if (FAILED(pStream->Seek(in, whence, &out)))
+		if (FAILED(mss->fileStreamData->Seek(in, whence, &out)))
 		{
 			return -1;
 		}

@@ -85,6 +85,9 @@ namespace FFmpegInterop
 			SubtitleStyle->OutlineThickness = outlineThickness;
 			SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
 			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };
+
+			AutoCorrectAnsiSubtitles = true;
+			AnsiSubtitleCodepage = 0; // CP_ACP = system default = 0;
 		};
 
 		property bool PassthroughAudioMP3;
@@ -114,6 +117,8 @@ namespace FFmpegInterop
 		property bool AutoSelectForcedSubtitles;
 		property bool UseAntiFlickerForSubtitles;
 		property bool OverrideSubtitleStyles;
+		property bool AutoCorrectAnsiSubtitles;
+		property int AnsiSubtitleCodepage;
 
 	internal:
 		property bool IsFrameGrabber;

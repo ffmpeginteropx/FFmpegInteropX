@@ -243,24 +243,47 @@ namespace MediaPlayerCS
         {
             if (FFmpegMSS != null)
             {
-                FileOpenPicker filePicker = new FileOpenPicker();
-                filePicker.ViewMode = PickerViewMode.Thumbnail;
-                filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
-                filePicker.FileTypeFilter.Add("*");
-
-                // Show file picker so user can select a file
-                StorageFile file = await filePicker.PickSingleFileAsync();
-
-                if (file != null)
+                try
                 {
-                    var stream = await file.OpenReadAsync();
-                    await FFmpegMSS.AddExternalSubtitleAsync(stream);
-                   
+                    FileOpenPicker filePicker = new FileOpenPicker();
+                    filePicker.ViewMode = PickerViewMode.Thumbnail;
+                    filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+                    filePicker.FileTypeFilter.Add("*");
+
+                    // Show file picker so user can select a file
+                    StorageFile file = await filePicker.PickSingleFileAsync();
+
+                    if (file != null)
+                    {
+                        playbackItem.TimedMetadataTracksChanged += PlaybackItem_TimedMetadataTracksChanged;
+                        var stream = await file.OpenReadAsync();
+                        await FFmpegMSS.AddExternalSubtitleAsync(stream);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DisplayErrorMessage(ex.ToString());
                 }
             }
             else
             {
                 DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
+            }
+        }
+
+        private void PlaybackItem_TimedMetadataTracksChanged(MediaPlaybackItem sender, Windows.Foundation.Collections.IVectorChangedEventArgs args)
+        {
+            sender.TimedMetadataTracksChanged -= PlaybackItem_TimedMetadataTracksChanged;
+            if (args.CollectionChange == Windows.Foundation.Collections.CollectionChange.ItemInserted)
+            {
+                // unselect other subs
+                for (uint i = 0; i < sender.TimedMetadataTracks.Count; i++)
+                {
+                    sender.TimedMetadataTracks.SetPresentationMode(i, TimedMetadataTrackPresentationMode.Disabled);
+                }
+
+                // pre-select added subtitle
+                sender.TimedMetadataTracks.SetPresentationMode(args.Index, TimedMetadataTrackPresentationMode.PlatformPresented);
             }
         }
 
