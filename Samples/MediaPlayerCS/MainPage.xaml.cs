@@ -257,7 +257,7 @@ namespace MediaPlayerCS
                     {
                         playbackItem.TimedMetadataTracksChanged += PlaybackItem_TimedMetadataTracksChanged;
                         var stream = await file.OpenReadAsync();
-                        await FFmpegMSS.AddExternalSubtitleAsync(stream);
+                        await FFmpegMSS.AddExternalSubtitleAsync(stream, file.Name);
                     }
                 }
                 catch (Exception ex)

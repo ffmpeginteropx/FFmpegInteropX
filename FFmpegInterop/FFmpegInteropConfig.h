@@ -1,5 +1,6 @@
 #pragma once
 
+using namespace Platform;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
 
@@ -88,6 +89,10 @@ namespace FFmpegInterop
 
 			AutoCorrectAnsiSubtitles = true;
 			AnsiSubtitleCodepage = 0; // CP_ACP = system default = 0;
+
+			DefaultAudioStreamName = "Audio Stream";
+			DefaultSubtitleStreamName = "Subtitle";
+			DefaultExternalSubtitleStreamName = "External Subtitle";
 		};
 
 		property bool PassthroughAudioMP3;
@@ -119,6 +124,10 @@ namespace FFmpegInterop
 		property bool OverrideSubtitleStyles;
 		property bool AutoCorrectAnsiSubtitles;
 		property int AnsiSubtitleCodepage;
+
+		property String^ DefaultAudioStreamName;
+		property String^ DefaultSubtitleStreamName;
+		property String^ DefaultExternalSubtitleStreamName;
 
 	internal:
 		property bool IsFrameGrabber;

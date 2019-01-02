@@ -297,12 +297,13 @@ MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem(TimeSpan startTime,
 	}
 }
 
-IAsyncAction^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ stream)
+IAsyncAction^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ stream, String^ streamName)
 {
-	return create_async([this, stream]
+	return create_async([this, stream, streamName]
 	{
 		auto config = ref new FFmpegInteropConfig();
 		config->IsExternalSubtitleParser = true;
+		config->DefaultSubtitleStreamName = streamName;
 
 		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr);
 		int readResult = 0;
