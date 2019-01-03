@@ -59,8 +59,15 @@ namespace FFmpegInterop
 			TimeSpan duration;
 
 			position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
-			duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
-
+			//LRC and SAMI subtitles last line reports -1 duration, so set it to the end of stream
+			if (packet->duration == -1 && m_config->IsExternalSubtitleParser)
+			{
+				duration.Duration = m_config->StreamTimeDuration - position.Duration;
+			}
+			else
+			{
+				duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
+			}
 			auto cue = CreateCue(packet, &position, &duration);
 			if (cue)
 			{
@@ -155,14 +162,14 @@ namespace FFmpegInterop
 
 		std::mutex mutex;
 		std::vector<IMediaCue^> pendingCues;
-		std::map<int64,int64> addedCues;
+		std::map<int64, int64> addedCues;
 		int64 maxCuePosition;
 		EventRegistrationToken cueExitedToken;
 		EventRegistrationToken trackFailedToken;
 		TimedMetadataKind timedMetadataKind;
 
 	public:
-		virtual ~SubtitleProvider() 
+		virtual ~SubtitleProvider()
 		{
 			if (SubtitleTrack)
 			{
@@ -171,7 +178,7 @@ namespace FFmpegInterop
 				SubtitleTrack = nullptr;
 			}
 		}
-};
+	};
 
 }
 

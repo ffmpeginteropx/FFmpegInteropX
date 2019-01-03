@@ -93,6 +93,10 @@ namespace FFmpegInterop
 			DefaultAudioStreamName = "Audio Stream";
 			DefaultSubtitleStreamName = "Subtitle";
 			DefaultExternalSubtitleStreamName = "External Subtitle";
+
+			StreamTimeDuration = 864000000000;//1 day in ticks
+
+
 		};
 
 		property bool PassthroughAudioMP3;
@@ -128,6 +132,9 @@ namespace FFmpegInterop
 		property String^ DefaultAudioStreamName;
 		property String^ DefaultSubtitleStreamName;
 		property String^ DefaultExternalSubtitleStreamName;
+
+		/*Used to pass the length of a target stream to external subtitles. Not useful for anything else*/
+		property long long StreamTimeDuration;
 
 	internal:
 		property bool IsFrameGrabber;

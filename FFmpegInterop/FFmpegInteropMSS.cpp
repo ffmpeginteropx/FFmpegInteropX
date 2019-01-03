@@ -304,7 +304,10 @@ IAsyncAction^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ s
 		auto config = ref new FFmpegInteropConfig();
 		config->IsExternalSubtitleParser = true;
 		config->DefaultSubtitleStreamName = streamName;
-
+		if (this->Duration.Duration > 0)
+		{
+			config->StreamTimeDuration = this->Duration.Duration;
+		}
 		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr);
 		int readResult = 0;
 		while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
