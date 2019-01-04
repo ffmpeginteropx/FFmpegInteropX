@@ -194,6 +194,10 @@ namespace FFmpegInterop
 					return cue;
 				}
 			}
+			else if (result <= 0)
+			{
+				OutputDebugString(L"Failed to decode subtitle.");
+			}
 
 			return nullptr;
 		}

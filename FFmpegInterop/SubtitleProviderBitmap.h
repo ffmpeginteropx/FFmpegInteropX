@@ -130,7 +130,7 @@ namespace FFmpegInterop
 
 				return cue;
 			}
-			else
+			else if (result <= 0)
 			{
 				OutputDebugString(L"Failed to decode subtitle.");
 			}

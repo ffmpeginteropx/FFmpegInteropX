@@ -60,7 +60,7 @@ namespace FFmpegInterop
 
 			position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
 			//LRC and SAMI subtitles last line reports -1 duration, so set it to the end of stream
-			if (packet->duration == -1 && m_config->IsExternalSubtitleParser)
+			if (packet->duration < 0 && m_config->IsExternalSubtitleParser)
 			{
 				duration.Duration = m_config->StreamTimeDuration - position.Duration;
 			}
@@ -69,7 +69,7 @@ namespace FFmpegInterop
 				duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
 			}
 			auto cue = CreateCue(packet, &position, &duration);
-			if (cue)
+			if (cue && position.Duration > 0)
 			{
 				addedCues[packet->pos] = packet->pos;
 

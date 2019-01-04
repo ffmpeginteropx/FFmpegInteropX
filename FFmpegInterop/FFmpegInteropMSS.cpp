@@ -309,26 +309,38 @@ IAsyncAction^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ s
 			config->StreamTimeDuration = this->Duration.Duration;
 		}
 		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr);
-		int readResult = 0;
-		while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
+		if (externalSubsParser->SubtitleStreams->Size > 0)
 		{
-			Concurrency::interruption_point();
+			int readResult = 0;
+			while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
+			{
+				Concurrency::interruption_point();
+			}
 		}
+
 		mutexGuard.lock();
 		try
 		{
-			int subtitleTracksCount = 1;
+			int subtitleTracksCount = 0;
 
 			for each(auto externalSubtitle in externalSubsParser->SubtitleStreams)
 			{
-				subtitleStrInfos->Append(externalSubtitle);
-
-				if (this->PlaybackItem != nullptr)
+				if (externalSubtitle->SubtitleTrack->Cues->Size > 0)
 				{
-					PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
+					subtitleStrInfos->Append(externalSubtitle);
+
+					if (this->PlaybackItem != nullptr)
+					{
+						PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
+					}
 				}
 
 				subtitleTracksCount++;
+			}
+
+			if (subtitleTracksCount == 0)
+			{
+				throw ref new InvalidArgumentException("No subtitles found in file.");
 			}
 
 			//delete externalSubsParser;
@@ -599,7 +611,11 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 		}
 	}
 
-
+	// do not use start time for pure subtitle files
+	if (config->IsExternalSubtitleParser && avFormatCtx->nb_streams == 1)
+	{
+		avFormatCtx->start_time = AV_NOPTS_VALUE;
+	}
 
 	AVCodec* avVideoCodec;
 	auto videoStreamIndex = av_find_best_stream(avFormatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &avVideoCodec, 0);
@@ -672,6 +688,12 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 				{
 					subtitleStrInfos->Append(info);
 					subtitleStreams.push_back((SubtitleProvider^)stream);
+				}
+
+				// enable all subtitle streams for external subtitle parsing
+				if (config->IsExternalSubtitleParser)
+				{
+					((SubtitleProvider^)stream)->EnableStream();
 				}
 			}
 		}
