@@ -62,7 +62,10 @@ namespace FFmpegInterop
 			//LRC and SAMI subtitles last line reports -1 duration, so set it to the end of stream
 			if (packet->duration < 0 && m_config->IsExternalSubtitleParser)
 			{
-				duration.Duration = m_config->StreamTimeDuration - position.Duration;
+				if (m_config->StreamTimeDuration > position.Duration)
+				{
+					duration.Duration = m_config->StreamTimeDuration - position.Duration;
+				}
 			}
 			else
 			{
