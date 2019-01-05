@@ -66,6 +66,11 @@ namespace FFmpegInterop
 				{
 					duration.Duration = m_config->StreamTimeDuration - position.Duration;
 				}
+				else
+				{
+					//duration can't be computed, use default duration
+					duration.Duration = m_config->DefaultTimedMetadataCueDuration;
+				}
 			}
 			else
 			{

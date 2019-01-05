@@ -95,7 +95,7 @@ namespace FFmpegInterop
 			DefaultExternalSubtitleStreamName = "External Subtitle";
 
 			StreamTimeDuration = 864000000000;//1 day in ticks
-
+			DefaultTimedMetadataCueDuration = 600000000;//1 minute
 
 		};
 
@@ -111,11 +111,13 @@ namespace FFmpegInterop
 		property bool VideoOutputAllowBgra8;
 		property bool VideoOutputAllowNv12;
 
+		/*The maximum number of broken frames to skill in a stream before stopping decoding*/
 		property unsigned int SkipErrors;
 
 		property unsigned int MaxVideoThreads;
 		property unsigned int MaxAudioThreads;
 
+		/*The maximum supported playback rate. This is set on the media stream source itself. Does not modify what the transport control default UI shows as available playback speeds. Custom UI necessary*/
 		property double MaxSupportedPlaybackRate;
 		property unsigned int StreamBufferSize;
 
@@ -126,7 +128,9 @@ namespace FFmpegInterop
 		property bool AutoSelectForcedSubtitles;
 		property bool UseAntiFlickerForSubtitles;
 		property bool OverrideSubtitleStyles;
+		/*Used to force conversion of ANSII encoded subtitles to Unicode.*/
 		property bool AutoCorrectAnsiSubtitles;
+		/*The code page used to decode ANSII encoded subtitles. By default, the active windows codepage is used*/
 		property int AnsiSubtitleCodepage;
 
 		property String^ DefaultAudioStreamName;
@@ -135,9 +139,12 @@ namespace FFmpegInterop
 
 		/*Used to pass the length of a target stream to external subtitles. Not useful for anything else*/
 		property long long StreamTimeDuration;
-
+		/*Used when the duration of a timed metadata cue could not be resolved*/
+		property long long DefaultTimedMetadataCueDuration;
 	internal:
+		/*Internal use:determines if a FFmpegInteropInstance is in frame grabber mode. This mode is used to grab frames from a video stream.*/
 		property bool IsFrameGrabber;
+		/*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
 		property bool IsExternalSubtitleParser;
 	};
 }
