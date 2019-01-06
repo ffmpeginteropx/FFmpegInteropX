@@ -333,9 +333,8 @@ IAsyncAction^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ s
 					{
 						PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
 					}
+					subtitleTracksCount++;
 				}
-
-				subtitleTracksCount++;
 			}
 
 			if (subtitleTracksCount == 0)

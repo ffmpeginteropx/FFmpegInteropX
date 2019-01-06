@@ -89,6 +89,10 @@ namespace MediaPlayerCS
                     {
                         CreatePlaybackItemAndStartPlaybackInternal();
                     }
+                    else
+                    {
+                        playbackItem = null;
+                    }
                 }
                 catch (Exception ex)
                 {

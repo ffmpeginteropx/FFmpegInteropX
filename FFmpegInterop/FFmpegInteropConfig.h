@@ -137,8 +137,6 @@ namespace FFmpegInterop
 		property String^ DefaultSubtitleStreamName;
 		property String^ DefaultExternalSubtitleStreamName;
 
-		/*Used to pass the length of a target stream to external subtitles. Not useful for anything else*/
-		property long long StreamTimeDuration;
 		/*Used when the duration of a timed metadata cue could not be resolved*/
 		property long long DefaultTimedMetadataCueDuration;
 	internal:
@@ -146,5 +144,7 @@ namespace FFmpegInterop
 		property bool IsFrameGrabber;
 		/*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
 		property bool IsExternalSubtitleParser;
+		/*Used to pass the length of a target stream to external subtitles. Not useful for anything else*/
+		property long long StreamTimeDuration;
 	};
 }

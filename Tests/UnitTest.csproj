@@ -121,6 +121,10 @@
     <None Include="$(SolutionDir)FFmpegInterop.pfx" />
     <Content Include="TestFiles\ExternalSubtitles\subtitle.lrc" />
     <Content Include="TestFiles\ExternalSubtitles\MicroDVD.sub" />
+    <None Include="TestFiles\ExternalSubtitles\BluRay_PGS.sup" />
+    <None Include="TestFiles\ExternalSubtitles\SSA_ASS.ass" />
+    <None Include="TestFiles\ExternalSubtitles\SubRipText.srt" />
+    <None Include="TestFiles\ExternalSubtitles\WebVTT.vtt" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Properties\UnitTestApp.rd.xml" />
