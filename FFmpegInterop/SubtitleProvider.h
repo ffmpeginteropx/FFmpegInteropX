@@ -49,7 +49,7 @@ namespace FFmpegInterop
 			{
 				maxCuePosition = packet->pos;
 			}
-			else if (addedCues.find(packet->pos) != addedCues.end())
+			else if (addedCues.find(packet->pos) != addedCues.end() && !m_config->IsExternalSubtitleParser)
 			{
 				av_packet_free(&packet);
 				return;
@@ -77,7 +77,7 @@ namespace FFmpegInterop
 				duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
 			}
 			auto cue = CreateCue(packet, &position, &duration);
-			if (cue && position.Duration > 0)
+			if (cue && position.Duration >= 0 && duration.Duration > 0)
 			{
 				addedCues[packet->pos] = packet->pos;
 
