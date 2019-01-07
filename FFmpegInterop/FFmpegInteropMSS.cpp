@@ -297,10 +297,11 @@ MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem(TimeSpan startTime,
 	}
 }
 
-IAsyncAction^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ stream, String^ streamName)
+IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ stream, String^ streamName)
 {
 	return create_async([this, stream, streamName]
 	{
+
 		auto config = ref new FFmpegInteropConfig();
 		config->IsExternalSubtitleParser = true;
 		config->DefaultSubtitleStreamName = streamName;
@@ -317,6 +318,7 @@ IAsyncAction^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ s
 				Concurrency::interruption_point();
 			}
 		}
+
 
 		mutexGuard.lock();
 		try
@@ -350,7 +352,9 @@ IAsyncAction^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ s
 			mutexGuard.unlock();
 			throw;
 		}
+
 		mutexGuard.unlock();
+		return externalSubsParser->SubtitleStreams;
 	});
 }
 

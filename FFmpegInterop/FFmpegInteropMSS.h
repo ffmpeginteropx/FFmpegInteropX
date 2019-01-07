@@ -84,8 +84,8 @@ namespace FFmpegInterop
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime);
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime, TimeSpan durationLimit);
 
-		IAsyncAction^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName);
-		IAsyncAction^ AddExternalSubtitleAsync(IRandomAccessStream^ stream)
+		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName);
+		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream)
 		{
 			return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName);
 		};
