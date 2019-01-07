@@ -122,8 +122,10 @@
     <Content Include="TestFiles\ExternalSubtitles\subtitle.lrc" />
     <Content Include="TestFiles\ExternalSubtitles\MicroDVD.sub" />
     <None Include="TestFiles\ExternalSubtitles\BluRay_PGS.sup" />
+    <Content Include="TestFiles\ExternalSubtitles\sami.sami" />
     <None Include="TestFiles\ExternalSubtitles\SSA_ASS.ass" />
     <None Include="TestFiles\ExternalSubtitles\SubRipText.srt" />
+    <Content Include="TestFiles\ExternalSubtitles\SubViewer.sub" />
     <None Include="TestFiles\ExternalSubtitles\WebVTT.vtt" />
   </ItemGroup>
   <ItemGroup>
