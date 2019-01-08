@@ -146,5 +146,8 @@ namespace FFmpegInterop
 		property bool IsExternalSubtitleParser;
 		/*Used to pass the length of a target stream to external subtitles. Not useful for anything else*/
 		property long long StreamTimeDuration;
+		/*Used to pass additional, specific options to external sub parsers*/
+		property PropertySet^ AdditionalFFmpegOptions;
+
 	};
 }

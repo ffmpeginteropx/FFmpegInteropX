@@ -309,6 +309,12 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		{
 			config->StreamTimeDuration = this->Duration.Duration;
 		}
+		if (VideoDescriptor)
+		{
+			config->AdditionalFFmpegOptions = ref new PropertySet();
+			config->AdditionalFFmpegOptions->Insert("subfps", 
+				VideoDescriptor->EncodingProperties->FrameRate->Numerator.ToString() + "/" + VideoDescriptor->EncodingProperties->FrameRate->Denominator.ToString());
+		}
 		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr);
 		if (externalSubsParser->SubtitleStreams->Size > 0)
 		{
@@ -533,6 +539,12 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream, M
 	{
 		// Populate AVDictionary avDict based on PropertySet ffmpegOptions. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
 		hr = ParseOptions(config->FFmpegOptions);
+	}
+
+	if (SUCCEEDED(hr))
+	{
+		// Populate AVDictionary avDict based on additional ffmpegOptions. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
+		hr = ParseOptions(config->AdditionalFFmpegOptions);
 	}
 
 	if (SUCCEEDED(hr))
