@@ -174,24 +174,26 @@ namespace FFmpegInterop
 
 					
 					auto timedText = convertFromString(str);
-
-					TimedTextCue^ cue = ref new TimedTextCue();
-					if (!m_config->OverrideSubtitleStyles && style)
+					if (timedText->Length() > 0)
 					{
-						cue->CueRegion = style->Region;
-						cue->CueStyle = style->Style;
-					}
-					else
-					{
-						cue->CueRegion = m_config->SubtitleRegion;
-						cue->CueStyle = m_config->SubtitleStyle;
-					}
+						TimedTextCue^ cue = ref new TimedTextCue();
+						if (!m_config->OverrideSubtitleStyles && style)
+						{
+							cue->CueRegion = style->Region;
+							cue->CueStyle = style->Style;
+						}
+						else
+						{
+							cue->CueRegion = m_config->SubtitleRegion;
+							cue->CueStyle = m_config->SubtitleStyle;
+						}
 
-					TimedTextLine^ textLine = ref new TimedTextLine();
-					textLine->Text = timedText;
-					cue->Lines->Append(textLine);
+						TimedTextLine^ textLine = ref new TimedTextLine();
+						textLine->Text = timedText;
+						cue->Lines->Append(textLine);
 
-					return cue;
+						return cue;
+					}
 				}
 			}
 			else if (result <= 0)

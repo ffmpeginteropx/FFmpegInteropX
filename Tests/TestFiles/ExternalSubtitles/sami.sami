@@ -36,6 +36,9 @@
 </SYNC>
 
 <SYNC Start=1000>
+  <P Class=ENUSCC ID=Source />
+  <P Class=FRFRCC ID=Source />
+  
   <P Class=ENUSCC>SAMI 1000 text</P>
   <P Class=FRFRCC>French SAMI 1000 text</P>
 </SYNC>
@@ -49,6 +52,8 @@
   <P Class=ENUSCC>SAMI 3000 text</P>
   <P Class=FRFRCC>French SAMI 3000 text</P>
 </SYNC>
+  
+<SYNC Start=5000 />
 
 </BODY>
 </SAMI>

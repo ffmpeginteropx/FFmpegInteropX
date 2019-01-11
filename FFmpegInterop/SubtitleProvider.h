@@ -107,10 +107,6 @@ namespace FFmpegInterop
 					durationFixedCue = cue;
 				}
 			}
-			else
-			{
-				OutputDebugString(L"Failed to create subtitle cue.");
-			}
 
 			av_packet_free(&packet);
 		}
