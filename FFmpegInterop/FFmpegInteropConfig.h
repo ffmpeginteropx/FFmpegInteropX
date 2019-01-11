@@ -1,6 +1,7 @@
 #pragma once
 
 using namespace Platform;
+using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
 
@@ -94,9 +95,8 @@ namespace FFmpegInterop
 			DefaultSubtitleStreamName = "Subtitle";
 			DefaultExternalSubtitleStreamName = "External Subtitle";
 
-			StreamTimeDuration = 864000000000;//1 day in ticks
-			DefaultTimedMetadataCueDuration = 600000000;//1 minute
-
+			StreamTimeDuration = { 864000000000 };//1 day in ticks
+			DefaultTimedMetadataCueDuration = { 30000000 };//3 seconds
 		};
 
 		property bool PassthroughAudioMP3;
@@ -138,14 +138,14 @@ namespace FFmpegInterop
 		property String^ DefaultExternalSubtitleStreamName;
 
 		/*Used when the duration of a timed metadata cue could not be resolved*/
-		property long long DefaultTimedMetadataCueDuration;
+		property TimeSpan DefaultTimedMetadataCueDuration;
 	internal:
 		/*Internal use:determines if a FFmpegInteropInstance is in frame grabber mode. This mode is used to grab frames from a video stream.*/
 		property bool IsFrameGrabber;
 		/*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
 		property bool IsExternalSubtitleParser;
 		/*Used to pass the length of a target stream to external subtitles. Not useful for anything else*/
-		property long long StreamTimeDuration;
+		property TimeSpan StreamTimeDuration;
 		/*Used to pass additional, specific options to external sub parsers*/
 		property PropertySet^ AdditionalFFmpegOptions;
 

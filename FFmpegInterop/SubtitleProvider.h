@@ -57,20 +57,22 @@ namespace FFmpegInterop
 
 			TimeSpan position;
 			TimeSpan duration;
+			bool isDurationFixed = false;
 
 			position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
 			//LRC and SAMI subtitles last line reports -1 duration, so set it to the end of stream
 			if (packet->duration < 0 && m_config->IsExternalSubtitleParser)
 			{
-				if (m_config->StreamTimeDuration > position.Duration)
+				if (m_config->StreamTimeDuration.Duration > position.Duration)
 				{
-					duration.Duration = m_config->StreamTimeDuration - position.Duration;
+					duration.Duration = m_config->StreamTimeDuration.Duration - position.Duration;
 				}
 				else
 				{
 					//duration can't be computed, use default duration
-					duration.Duration = m_config->DefaultTimedMetadataCueDuration;
+					duration.Duration = m_config->DefaultTimedMetadataCueDuration.Duration;
 				}
+				isDurationFixed = true;
 			}
 			else
 			{
@@ -84,6 +86,26 @@ namespace FFmpegInterop
 				cue->StartTime = position;
 				cue->Duration = duration;
 				AddCue(cue);
+
+				// only last cue should be fixed to stream time. inbetween fixed cues should be default (3 seconds) duration max.
+				if (durationFixedCue)
+				{
+					TimeSpan maxDuration;
+					maxDuration.Duration = cue->StartTime.Duration - durationFixedCue->StartTime.Duration;
+					if (maxDuration.Duration <= 0 || maxDuration.Duration > m_config->DefaultTimedMetadataCueDuration.Duration)
+					{
+						maxDuration = m_config->DefaultTimedMetadataCueDuration;
+					}
+
+					durationFixedCue->Duration = m_config->DefaultTimedMetadataCueDuration;
+					durationFixedCue = nullptr;
+				}
+
+				// remember this cue if we fixed it's duration
+				if (isDurationFixed)
+				{
+					durationFixedCue = cue;
+				}
 			}
 			else
 			{
@@ -175,6 +197,7 @@ namespace FFmpegInterop
 		EventRegistrationToken cueExitedToken;
 		EventRegistrationToken trackFailedToken;
 		TimedMetadataKind timedMetadataKind;
+		IMediaCue^ durationFixedCue;
 
 	public:
 		virtual ~SubtitleProvider()

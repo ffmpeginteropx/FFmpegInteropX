@@ -307,7 +307,7 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		config->DefaultSubtitleStreamName = streamName;
 		if (this->Duration.Duration > 0)
 		{
-			config->StreamTimeDuration = this->Duration.Duration;
+			config->StreamTimeDuration = this->Duration;
 		}
 		if (VideoDescriptor)
 		{
