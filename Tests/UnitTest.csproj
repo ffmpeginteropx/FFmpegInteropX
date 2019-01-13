@@ -96,9 +96,7 @@
     <SDKReference Include="TestPlatform.Universal, Version=$(UnitTestPlatformVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Constants.cs">
-      <Link>Constants.cs</Link>
-    </Compile>
+    <Compile Include="Constants.cs" />
     <Compile Include="ExternalSubtitles.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnitTestApp.xaml.cs">
