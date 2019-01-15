@@ -37,7 +37,7 @@ namespace FFmpegInterop
 			return S_OK;
 		}
 
-		virtual void NotifyVideoFrameSize(int width, int height)
+		virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio)
 		{
 		}
 

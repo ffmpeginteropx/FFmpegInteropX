@@ -29,20 +29,22 @@ namespace FFmpegInterop
 				extent.Width = 100;
 				extent.Height = 100;
 				extent.Unit = TimedTextUnit::Percentage;
-
-				width = m_pAvCodecCtx->width;
-				height = m_pAvCodecCtx->height;
 			}
 
 			return hr;
 		}
 
-		virtual void NotifyVideoFrameSize(int width, int height) override
+		virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio) override
 		{
-			if (this->width == 0 || this->height == 0)
+			videoWidth = width;
+			videoHeight = height;
+			if (isnormal(aspectRatio) && aspectRatio > 0)
 			{
-				this->width = width;
-				this->height = height;
+				videoAspectRatio = aspectRatio;
+			}
+			else
+			{
+				videoAspectRatio = (double)width / height;
 			}
 		}
 
@@ -54,81 +56,95 @@ namespace FFmpegInterop
 				return nullptr;
 			}
 
-			if (width <= 0 || height <= 0)
-			{
-				OutputDebugString(L"Error: No subtitle size received.");
-				return nullptr;
-			}
-
 			AVSubtitle subtitle;
 			int gotSubtitle = 0;
 			auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
 			if (result > 0 && gotSubtitle)
 			{
-				if (subtitle.start_display_time > 0)
+				if (infiniteDurationCue)
 				{
-					position->Duration += 10000 * subtitle.start_display_time;
-				}
-				duration->Duration = 10000 * subtitle.end_display_time;
-
-				using namespace Windows::Graphics::Imaging;
-
-				auto bitmap = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, width, height, BitmapAlphaMode::Premultiplied);
-				{
-					auto buffer = bitmap->LockBuffer(BitmapBufferAccessMode::Write);
-					auto reference = buffer->CreateReference();
-
-					// Query the IBufferByteAccess interface.  
-					Microsoft::WRL::ComPtr<Windows::Foundation::IMemoryBufferByteAccess> bufferByteAccess;
-					reinterpret_cast<IInspectable*>(reference)->QueryInterface(IID_PPV_ARGS(&bufferByteAccess));
-
-					// Retrieve the buffer data.  
-					byte* pixels = nullptr;
-					unsigned int capacity;
-					bufferByteAccess->GetBuffer(&pixels, &capacity);
-
-					auto plane = buffer->GetPlaneDescription(0);
-
-					for (unsigned int i = 0; i < subtitle.num_rects; i++)
+					TimeSpan dur;
+					dur.Duration = position->Duration - infiniteDurationCue->StartTime.Duration;
+					if (dur.Duration < 0)
 					{
-						auto rect = subtitle.rects[i];
+						dur.Duration = 30000000; //TODO improve with default duration from config, once other PR is merged
+					}
+					infiniteDurationCue->Duration = dur;
+					infiniteDurationCue = nullptr;
+				}
 
-						if (rect->x + rect->w > width || rect->y + rect->h > height)
-						{
-							OutputDebugString(L"Error: Unexpected subtitle size.");
-							avsubtitle_free(&subtitle);
-							return nullptr;
-						}
+				int width, height, offsetY;
+				if (subtitle.num_rects > 0 && CheckSize(subtitle, width, height, offsetY))
+				{
+					if (subtitle.start_display_time > 0)
+					{
+						position->Duration += 10000 * subtitle.start_display_time;
+					}
+					duration->Duration = 10000 * subtitle.end_display_time;
 
-						for (int y = 0; y < rect->h; y++)
+					using namespace Windows::Graphics::Imaging;
+
+					auto bitmap = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, width, height, BitmapAlphaMode::Straight);
+					{
+						auto buffer = bitmap->LockBuffer(BitmapBufferAccessMode::Write);
+						auto reference = buffer->CreateReference();
+
+						// Query the IBufferByteAccess interface.  
+						Microsoft::WRL::ComPtr<Windows::Foundation::IMemoryBufferByteAccess> bufferByteAccess;
+						reinterpret_cast<IInspectable*>(reference)->QueryInterface(IID_PPV_ARGS(&bufferByteAccess));
+
+						// Retrieve the buffer data.  
+						byte* pixels = nullptr;
+						unsigned int capacity;
+						bufferByteAccess->GetBuffer(&pixels, &capacity);
+
+						auto plane = buffer->GetPlaneDescription(0);
+
+						for (unsigned int i = 0; i < subtitle.num_rects; i++)
 						{
-							for (int x = 0; x < rect->w; x++)
+							auto rect = subtitle.rects[i];
+
+							for (int y = 0; y < rect->h; y++)
 							{
-								auto inPointer = rect->data[0] + y * rect->linesize[0] + x;
-								auto color = inPointer[0];
-								if (color < rect->nb_colors)
+								for (int x = 0; x < rect->w; x++)
 								{
-									auto rgba = ((uint32*)rect->data[1])[color];
-									auto outPointer = pixels + plane.StartIndex + plane.Stride * (y + rect->y) + 4 * (x + rect->x);
-									((uint32*)outPointer)[0] = rgba;
-								}
-								else
-								{
-									OutputDebugString(L"Error: Illegal subtitle color.");
+									auto inPointer = rect->data[0] + y * rect->linesize[0] + x;
+									auto color = inPointer[0];
+									if (color < rect->nb_colors)
+									{
+										auto rgba = ((uint32*)rect->data[1])[color];
+										auto outPointer = pixels + plane.StartIndex + plane.Stride * ((y + rect->y) - offsetY) + 4 * (x + rect->x);
+										((uint32*)outPointer)[0] = rgba;
+									}
+									else
+									{
+										OutputDebugString(L"Error: Illegal subtitle color.");
+									}
 								}
 							}
 						}
 					}
+
+					ImageCue^ cue = ref new ImageCue();
+					cue->SoftwareBitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8, BitmapAlphaMode::Premultiplied);
+					cue->Position = this->position;
+					cue->Extent = extent;
+
+					if (subtitle.end_display_time = 0xFFFFFFFF)
+					{
+						infiniteDurationCue = cue;
+					}
+
+					avsubtitle_free(&subtitle);
+
+					return cue;
+				}
+				else if (subtitle.num_rects > 0)
+				{
+					OutputDebugString(L"Error: Invalid subtitle size received.");
 				}
 
-				ImageCue^ cue = ref new ImageCue();
-				cue->SoftwareBitmap = bitmap;
-				cue->Position = this->position;
-				cue->Extent = extent;
-
 				avsubtitle_free(&subtitle);
-
-				return cue;
 			}
 			else
 			{
@@ -138,11 +154,96 @@ namespace FFmpegInterop
 			return nullptr;
 		}
 
+	public:
+
+		void Flush() override
+		{
+			SubtitleProvider::Flush();
+
+			if (infiniteDurationCue)
+			{
+				//TODO improve
+				infiniteDurationCue->Duration = { 30000000 };
+				infiniteDurationCue = nullptr;
+			}
+		}
+
 	private:
-		int width;
-		int height;
-		uint32 palette[16];
+
+		bool CheckSize(AVSubtitle& subtitle, int& width, int& height, int& offsetY)
+		{
+			if (!hasSize)
+			{
+				subtitleWidth = m_pAvCodecCtx->width;
+				subtitleHeight = m_pAvCodecCtx->height;
+
+				if (subtitleWidth <= 0 || subtitleHeight <= 0)
+				{
+					return false;
+				}
+
+				if (subtitleWidth != videoWidth || subtitleHeight != videoHeight || (videoAspectRatio > 0 && videoAspectRatio != 1))
+				{
+					auto height = (int)(subtitleWidth / videoAspectRatio);
+					if (height < subtitleHeight)
+					{
+						optimalHeight = height;
+					}
+				}
+
+				hasSize = true;
+			}
+
+			width = subtitleWidth;
+			height = subtitleHeight;
+			offsetY = 0;
+
+			if (optimalHeight)
+			{
+				int offset = (subtitleHeight - optimalHeight) / 2;
+				for (unsigned int i = 0; i < subtitle.num_rects; i++)
+				{
+					auto rect = subtitle.rects[i];
+
+					if (rect->y < offset || rect->y - offset + rect->h >= optimalHeight)
+					{
+						// does not fit into optimal size. disable from now on.
+						optimalHeight = 0;
+						break;
+					}
+				}
+
+				if (optimalHeight != 0)
+				{
+					height = optimalHeight;
+					offsetY = offset;
+				}
+			}
+
+			for (unsigned int i = 0; i < subtitle.num_rects; i++)
+			{
+				auto rect = subtitle.rects[i];
+				if (rect->y < offsetY || rect->y - offsetY + rect->h >= height ||
+					rect->x < 0 || rect->x >= width)
+				{
+					// invalid size
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+	private:
+		int videoWidth;
+		int videoHeight;
+		double videoAspectRatio;
+		bool hasSize;
+		int subtitleWidth;
+		int subtitleHeight;
+		int optimalHeight;
 		TimedTextSize extent;
 		TimedTextPoint position;
+		ImageCue^ infiniteDurationCue;
 	};
 }
