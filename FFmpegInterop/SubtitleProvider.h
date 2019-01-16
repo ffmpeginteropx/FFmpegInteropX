@@ -131,7 +131,7 @@ namespace FFmpegInterop
 			try
 			{
 				// to avoid flicker, we try to add new cues only after active cues are finished
-				if (m_config->UseAntiFlickerForSubtitles && SubtitleTrack->ActiveCues->Size > 0)
+				if (!m_config->IsExternalSubtitleParser && m_config->UseAntiFlickerForSubtitles && SubtitleTrack->ActiveCues->Size > 0)
 				{
 					bool addToPending = true;
 					for each (auto active in SubtitleTrack->ActiveCues)

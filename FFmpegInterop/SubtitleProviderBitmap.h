@@ -55,8 +55,6 @@ namespace FFmpegInterop
 			auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
 			if (result > 0 && gotSubtitle)
 			{
-				OutputDebugString((L"Got Subtitle: " + (position->Duration / 10000000).ToString())->Data());
-
 				if (subtitle.num_rects <= 0)
 				{
 					for each (auto cue in SubtitleTrack->ActiveCues)
