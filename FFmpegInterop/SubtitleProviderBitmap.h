@@ -22,13 +22,7 @@ namespace FFmpegInterop
 			auto hr = SubtitleProvider::Initialize();
 			if (SUCCEEDED(hr))
 			{
-				position.X = 0;
-				position.Y = 0;
-				position.Unit = TimedTextUnit::Percentage;
-
-				extent.Width = 100;
-				extent.Height = 100;
-				extent.Unit = TimedTextUnit::Percentage;
+				SubtitleTrack->CueEntered += ref new TypedEventHandler<TimedMetadataTrack ^, MediaCueEventArgs ^>(this, &SubtitleProviderBitmap::OnCueEntered);
 			}
 
 			return hr;
@@ -61,20 +55,32 @@ namespace FFmpegInterop
 			auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
 			if (result > 0 && gotSubtitle)
 			{
-				if (infiniteDurationCue)
+				OutputDebugString((L"Got Subtitle: " + (position->Duration / 10000000).ToString())->Data());
+
+				if (subtitle.num_rects <= 0)
 				{
-					TimeSpan dur;
-					dur.Duration = position->Duration - infiniteDurationCue->StartTime.Duration;
-					if (dur.Duration < 0)
+					for each (auto cue in SubtitleTrack->ActiveCues)
 					{
-						dur.Duration = 30000000; //TODO improve with default duration from config, once other PR is merged
+						SubtitleTrack->RemoveCue(cue);
 					}
-					infiniteDurationCue->Duration = dur;
-					infiniteDurationCue = nullptr;
 				}
 
-				int width, height, offsetY;
-				if (subtitle.num_rects > 0 && CheckSize(subtitle, width, height, offsetY))
+				//if (infiniteDurationCue)
+				//{
+				//	TimeSpan dur;
+				//	dur.Duration = position->Duration - infiniteDurationCue->StartTime.Duration;
+				//	if (dur.Duration < 0)
+				//	{
+				//		dur.Duration = 30000000; //TODO improve with default duration from config, once other PR is merged
+				//	}
+				//	infiniteDurationCue->Duration = dur;
+				//	infiniteDurationCue = nullptr;
+				//}
+
+				int width, height, offsetX, offsetY;
+				TimedTextSize cueSize;
+				TimedTextPoint cuePosition;
+				if (subtitle.num_rects > 0 && CheckSize(subtitle, width, height, offsetX, offsetY, cueSize, cuePosition))
 				{
 					if (subtitle.start_display_time > 0)
 					{
@@ -113,7 +119,7 @@ namespace FFmpegInterop
 									if (color < rect->nb_colors)
 									{
 										auto rgba = ((uint32*)rect->data[1])[color];
-										auto outPointer = pixels + plane.StartIndex + plane.Stride * ((y + rect->y) - offsetY) + 4 * (x + rect->x);
+										auto outPointer = pixels + plane.StartIndex + plane.Stride * ((y + rect->y) - offsetY) + 4 * ((x + rect->x) - offsetX);
 										((uint32*)outPointer)[0] = rgba;
 									}
 									else
@@ -127,8 +133,8 @@ namespace FFmpegInterop
 
 					ImageCue^ cue = ref new ImageCue();
 					cue->SoftwareBitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8, BitmapAlphaMode::Premultiplied);
-					cue->Position = this->position;
-					cue->Extent = extent;
+					cue->Position = cuePosition;
+					cue->Extent = cueSize;
 
 					if (subtitle.end_display_time = 0xFFFFFFFF)
 					{
@@ -162,76 +168,104 @@ namespace FFmpegInterop
 
 			if (infiniteDurationCue)
 			{
-				//TODO improve
-				infiniteDurationCue->Duration = { 30000000 };
-				infiniteDurationCue = nullptr;
+				SubtitleTrack->RemoveCue(infiniteDurationCue);
 			}
 		}
 
 	private:
 
-		bool CheckSize(AVSubtitle& subtitle, int& width, int& height, int& offsetY)
+		bool CheckSize(AVSubtitle& subtitle, int& width, int& height, int& offsetX, int& offsetY, TimedTextSize& cueSize, TimedTextPoint& cuePosition)
 		{
-			if (!hasSize)
+			if (!GetInitialSize())
 			{
-				subtitleWidth = m_pAvCodecCtx->width;
-				subtitleHeight = m_pAvCodecCtx->height;
-
-				if (subtitleWidth <= 0 || subtitleHeight <= 0)
-				{
-					return false;
-				}
-
-				if (subtitleWidth != videoWidth || subtitleHeight != videoHeight || (videoAspectRatio > 0 && videoAspectRatio != 1))
-				{
-					auto height = (int)(subtitleWidth / videoAspectRatio);
-					if (height < subtitleHeight)
-					{
-						optimalHeight = height;
-					}
-				}
-
-				hasSize = true;
+				return false;
 			}
 
-			width = subtitleWidth;
-			height = subtitleHeight;
-			offsetY = 0;
-
-			if (optimalHeight)
-			{
-				int offset = (subtitleHeight - optimalHeight) / 2;
-				for (unsigned int i = 0; i < subtitle.num_rects; i++)
-				{
-					auto rect = subtitle.rects[i];
-
-					if (rect->y < offset || rect->y - offset + rect->h >= optimalHeight)
-					{
-						// does not fit into optimal size. disable from now on.
-						optimalHeight = 0;
-						break;
-					}
-				}
-
-				if (optimalHeight != 0)
-				{
-					height = optimalHeight;
-					offsetY = offset;
-				}
-			}
-
+			// get actual extent of subtitle rects
+			int minX = subtitleWidth, minY = subtitleHeight, maxW = 0, maxH = 0;
 			for (unsigned int i = 0; i < subtitle.num_rects; i++)
 			{
 				auto rect = subtitle.rects[i];
-				if (rect->y < offsetY || rect->y - offsetY + rect->h >= height ||
-					rect->x < 0 || rect->x >= width)
+				minX = min(minX, rect->x);
+				minY = min(minY, rect->y);
+				maxW = max(maxW, rect->x + rect->w);
+				maxH = max(maxH, rect->y + rect->h);
+			}
+
+			// sanity check
+			if (minX < 0 || minY < 0 || maxW > subtitleWidth || maxH > subtitleHeight)
+			{
+				return false;
+			}
+
+			offsetX = minX;
+			offsetY = minY;
+			width = maxW - minX;
+			height = maxH - minY;
+
+			// try to fit into actual video frame aspect ratio, if aspect of sub is different from video
+			int heightOffset = 0;
+			int targetHeight = subtitleHeight;
+			if (optimalHeight)
+			{
+				heightOffset = (subtitleHeight - optimalHeight) / 2;
+				targetHeight = optimalHeight;
+
+				// if subtitle does not fit into optimal height, fall back to normal height
+				if (maxH > optimalHeight + heightOffset || minY < heightOffset)
 				{
-					// invalid size
-					return false;
+					optimalHeight = 0;
+					heightOffset = 0;
+					targetHeight = subtitleHeight;
 				}
 			}
 
+			cueSize.Unit = TimedTextUnit::Percentage;
+			cueSize.Width = (double)width * 100 / subtitleWidth;
+			cueSize.Height = (double)height * 100 / targetHeight;
+
+			// for some reason, all bitmap cues are moved down by 5% by uwp. we need to compensate for that.
+			cuePosition.Unit = TimedTextUnit::Percentage;
+			cuePosition.X = (double)offsetX * 100 / subtitleWidth;
+			cuePosition.Y = ((double)(offsetY - heightOffset) * 100 / targetHeight) - 5;
+
 			return true;
+		}
+
+		bool GetInitialSize()
+		{
+			if (!hasSize)
+			{
+				// initially get size information
+				subtitleWidth = m_pAvCodecCtx->width;
+				subtitleHeight = m_pAvCodecCtx->height;
+
+				if (subtitleWidth > 0 && subtitleHeight > 0)
+				{
+					if (subtitleWidth != videoWidth || subtitleHeight != videoHeight || (videoAspectRatio > 0 && videoAspectRatio != 1))
+					{
+						auto height = (int)(subtitleWidth / videoAspectRatio);
+						if (height < subtitleHeight)
+						{
+							optimalHeight = height;
+						}
+					}
+
+					hasSize = true;
+				}
+			}
+			return hasSize;
+		}
+
+		void OnCueEntered(TimedMetadataTrack ^sender, MediaCueEventArgs ^args)
+		{
+			for each (auto cue in sender->ActiveCues)
+			{
+				if (cue != args->Cue)
+				{
+					sender->RemoveCue(cue);
+				}
+			}
 		}
 
 	private:
@@ -242,8 +276,6 @@ namespace FFmpegInterop
 		int subtitleWidth;
 		int subtitleHeight;
 		int optimalHeight;
-		TimedTextSize extent;
-		TimedTextPoint position;
 		ImageCue^ infiniteDurationCue;
 	};
 }
