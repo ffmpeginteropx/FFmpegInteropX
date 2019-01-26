@@ -151,19 +151,19 @@ md %libs%\include
 rd /S /Q %libs%\build
 md %libs%\build
 
-msbuild zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libzlib\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libzlib\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.lib %libs%\lib\zlib.lib
 copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.pdb %libs%\lib\zlib.pdb
 
-msbuild bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libbz2\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libbz2\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.lib  %libs%\lib\bz2.lib
 copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.pdb  %libs%\lib\bz2.pdb
 
-msbuild libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libiconv\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libiconv\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.lib  %libs%\lib\iconv.lib
@@ -199,19 +199,19 @@ md %libs%\include
 rd /S /Q %libs%\build
 md %libs%\build
 
-msbuild zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libzlib\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libzlib\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.lib %libs%\lib\zlib.lib
 copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.pdb %libs%\lib\zlib.pdb
 
-msbuild bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libbz2\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libbz2\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.lib  %libs%\lib\bz2.lib
 copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.pdb  %libs%\lib\bz2.pdb
 
-msbuild libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libiconv\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libiconv\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.lib  %libs%\lib\iconv.lib
@@ -247,19 +247,19 @@ md %libs%\include
 rd /S /Q %libs%\build
 md %libs%\build
 
-msbuild zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libzlib\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libzlib\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.lib %libs%\lib\zlib.lib
 copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.pdb %libs%\lib\zlib.pdb
 
-msbuild bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libbz2\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libbz2\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.lib  %libs%\lib\bz2.lib
 copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.pdb  %libs%\lib\bz2.pdb
 
-msbuild libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libiconv\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libiconv\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.lib  %libs%\lib\iconv.lib
@@ -295,19 +295,19 @@ md %libs%\include
 rd /S /Q %libs%\build
 md %libs%\build
 
-msbuild zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libzlib\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libzlib\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.lib %libs%\lib\zlib.lib
 copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.pdb %libs%\lib\zlib.pdb
 
-msbuild bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libbz2\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libbz2\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.lib  %libs%\lib\bz2.lib
 copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.pdb  %libs%\lib\bz2.pdb
 
-msbuild libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+msbuild Libs\libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
 for /r %libs%\build\libiconv\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
 for /r %libs%\build\libiconv\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
 copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.lib  %libs%\lib\iconv.lib
