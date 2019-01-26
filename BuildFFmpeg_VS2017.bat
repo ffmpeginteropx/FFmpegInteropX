@@ -1,4 +1,5 @@
 @setlocal
+@pushd %~dp0
 @echo off
 
 :: Checking that we are running from a clean non-dev cmd
@@ -115,50 +116,226 @@ goto Cleanup
 :: Build and deploy Windows 10 library
 :Win10
 
+set OnePlatform=1
+
+if "%1" == "" (
+    echo:
+	echo Building FFmpeg for all platforms
+	set OnePlatform=0
+	goto Win10x86
+)
+if %1 == x86 goto Win10x86
+if %1 == x64 goto Win10x64
+if %1 == ARM goto Win10ARM
+if %1 == ARM64 goto Win10ARM64
+
+echo Invalid argument: %1
+goto Cleanup
+
 
 :Win10x86
+echo:
 echo Building FFmpeg for Windows 10 apps x86...
 echo:
 
 setlocal
 call "%VSLATESTDIR%\VC\Auxiliary\Build\vcvarsall.bat" %Comp_x86%
 
-%MSYS2_BIN% --login -x %~dp0FFmpegConfig.sh Win10 x86
-for /r %~dp0\ffmpeg\Output\Windows10\x86 %%f in (*.pdb) do @copy "%%f" %~dp0\ffmpeg\Build\Windows10\x86\bin
+set ARCH=x86
+
+:: Build libs
+set libs=Libs\Build\%ARCH%
+md %libs%\lib
+md %libs%\licenses
+md %libs%\include
+rd /S /Q %libs%\build
+md %libs%\build
+
+msbuild zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libzlib\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libzlib\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.lib %libs%\lib\zlib.lib
+copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.pdb %libs%\lib\zlib.pdb
+
+msbuild bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libbz2\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libbz2\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.lib  %libs%\lib\bz2.lib
+copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.pdb  %libs%\lib\bz2.pdb
+
+msbuild libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libiconv\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libiconv\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.lib  %libs%\lib\iconv.lib
+copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.pdb  %libs%\lib\iconv.pdb
+
+set LIB=%LIB%;%~dp0%libs%\lib
+set INCLUDE=%INCLUDE%;%~dp0%libs%\include
+
+:: Build ffmpeg
+%MSYS2_BIN% --login -x "%~dp0FFmpegConfig.sh" Win10 %ARCH% || goto error
+for /r ffmpeg\Output\Windows10\%ARCH% %%f in (*.pdb) do copy /Y "%%f" ffmpeg\Build\Windows10\%ARCH%\bin\
 endlocal
 
+if %OnePlatform% == 1 goto Cleanup
+
+
+
 :Win10x64
+echo:
 echo Building FFmpeg for Windows 10 apps x64...
 echo:
 
 setlocal
 call "%VSLATESTDIR%\VC\Auxiliary\Build\vcvarsall.bat" %Comp_x64%
 
-%MSYS2_BIN% --login -x %~dp0FFmpegConfig.sh Win10 x64
-for /r %~dp0\ffmpeg\Output\Windows10\x64 %%f in (*.pdb) do @copy "%%f" %~dp0\ffmpeg\Build\Windows10\x64\bin
+set ARCH=x64
+
+:: Build libs
+set libs=Libs\Build\%ARCH%
+md %libs%\lib
+md %libs%\licenses
+md %libs%\include
+rd /S /Q %libs%\build
+md %libs%\build
+
+msbuild zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libzlib\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libzlib\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.lib %libs%\lib\zlib.lib
+copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.pdb %libs%\lib\zlib.pdb
+
+msbuild bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libbz2\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libbz2\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.lib  %libs%\lib\bz2.lib
+copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.pdb  %libs%\lib\bz2.pdb
+
+msbuild libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libiconv\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libiconv\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.lib  %libs%\lib\iconv.lib
+copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.pdb  %libs%\lib\iconv.pdb
+
+set LIB=%LIB%;%~dp0%libs%\lib
+set INCLUDE=%INCLUDE%;%~dp0%libs%\include
+
+:: Build ffmpeg
+%MSYS2_BIN% --login -x "%~dp0FFmpegConfig.sh" Win10 %ARCH% || goto error
+for /r ffmpeg\Output\Windows10\%ARCH% %%f in (*.pdb) do copy /Y "%%f" ffmpeg\Build\Windows10\%ARCH%\bin\
 endlocal
 
+if %OnePlatform% == 1 goto Cleanup
+
+
+
 :Win10ARM
+echo:
 echo Building FFmpeg for Windows 10 apps ARM...
 echo:
 
 setlocal
 call "%VSLATESTDIR%\VC\Auxiliary\Build\vcvarsall.bat" %Comp_ARM%
 
-%MSYS2_BIN% --login -x %~dp0FFmpegConfig.sh Win10 ARM
-for /r %~dp0\ffmpeg\Output\Windows10\ARM %%f in (*.pdb) do @copy "%%f" %~dp0\ffmpeg\Build\Windows10\ARM\bin
+set ARCH=ARM
+
+:: Build libs
+set libs=Libs\Build\%ARCH%
+md %libs%\lib
+md %libs%\licenses
+md %libs%\include
+rd /S /Q %libs%\build
+md %libs%\build
+
+msbuild zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libzlib\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libzlib\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.lib %libs%\lib\zlib.lib
+copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.pdb %libs%\lib\zlib.pdb
+
+msbuild bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libbz2\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libbz2\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.lib  %libs%\lib\bz2.lib
+copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.pdb  %libs%\lib\bz2.pdb
+
+msbuild libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libiconv\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libiconv\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.lib  %libs%\lib\iconv.lib
+copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.pdb  %libs%\lib\iconv.pdb
+
+set LIB=%LIB%;%~dp0%libs%\lib
+set INCLUDE=%INCLUDE%;%~dp0%libs%\include
+
+:: Build ffmpeg
+%MSYS2_BIN% --login -x "%~dp0FFmpegConfig.sh" Win10 %ARCH% || goto error
+for /r ffmpeg\Output\Windows10\%ARCH% %%f in (*.pdb) do copy /Y "%%f" ffmpeg\Build\Windows10\%ARCH%\bin\
 endlocal
 
+if %OnePlatform% == 1 goto Cleanup
+
+
+
 :Win10ARM64
+echo:
 echo Building FFmpeg for Windows 10 apps ARM64...
 echo:
 
 setlocal
 call "%VSLATESTDIR%\VC\Auxiliary\Build\vcvarsall.bat" %Comp_ARM64%
 
-%MSYS2_BIN% --login -x %~dp0FFmpegConfig.sh Win10 ARM64
-for /r %~dp0\ffmpeg\Output\Windows10\ARM64 %%f in (*.pdb) do @copy "%%f" %~dp0\ffmpeg\Build\Windows10\ARM64\bin
+set ARCH=ARM64
+
+:: Build libs
+set libs=Libs\Build\%ARCH%
+md %libs%\lib
+md %libs%\licenses
+md %libs%\include
+rd /S /Q %libs%\build
+md %libs%\build
+
+msbuild zlib\SMP\libzlib.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libzlib\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libzlib\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.lib %libs%\lib\zlib.lib
+copy /Y %libs%\build\libzlib\lib\%ARCH%\libzlib_winrt.pdb %libs%\lib\zlib.pdb
+
+msbuild bzip2\SMP\libbz2.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libbz2\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libbz2\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.lib  %libs%\lib\bz2.lib
+copy /Y %libs%\build\libbz2\lib\%ARCH%\libbz2_winrt.pdb  %libs%\lib\bz2.pdb
+
+msbuild libiconv\SMP\libiconv.vcxproj -p:OutDir="%~dp0%libs%\build\\";Configuration=ReleaseWinRT;Platform=%ARCH% || goto error
+for /r %libs%\build\libiconv\include %%f in (*.h) do copy /Y "%%f" %libs%\include\
+for /r %libs%\build\libiconv\licenses %%f in (*.*) do copy /Y "%%f" %libs%\licenses\
+copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.lib  %libs%\lib\iconv.lib
+copy /Y %libs%\build\libiconv\lib\%ARCH%\libiconv_winrt.pdb  %libs%\lib\iconv.pdb
+
+set LIB=%LIB%;%~dp0%libs%\lib
+set INCLUDE=%INCLUDE%;%~dp0%libs%\include
+
+:: Build ffmpeg
+%MSYS2_BIN% --login -x "%~dp0FFmpegConfig.sh" Win10 %ARCH% || goto error
+for /r ffmpeg\Output\Windows10\%ARCH% %%f in (*.pdb) do copy /Y "%%f" ffmpeg\Build\Windows10\%ARCH%\bin\
 endlocal
 
+if %OnePlatform% == 1 goto Cleanup
+
+
+
+if %errorlevel% == 0 goto Cleanup
+
+
+:error
+echo:
+echo Build failed with error %errorlevel%.
+popd
+endlocal
+exit /b
+
+
 :Cleanup
+@popd
 @endlocal

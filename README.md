@@ -18,11 +18,17 @@ FFmpegInterop-lukasf is a much **improved fork** of the original [Microsoft proj
 - Major performance improvements (zero-copy data handling in all important areas)
 - Frame grabber support
 - API improvements
+- Include zlib and bzlib libraries into ffmpeg for full MKV subtitle support
+- Include iconv for character encoding conversion
 - Lots of bug fixes
 
 **Other changes:**
 - Support for Windows 8.x and Windows Phone 8.x has been dropped
 - Visual Studio 2015 support has been dropped
+
+**Prerequisites:**
+-  Visual Studio 2017
+-  Windows 10 SDK 15063
 
 ## FFmpeg Version
 
@@ -53,9 +59,13 @@ Alternatively, you can get the code for [FFmpeg on Github](http://github.com/FFm
 Your `FFmpegInterop` folder should look as follows
 
 	FFmpegInterop\
+	    bzip2\                 - bzip2 (bzliib) compression library
 	    ffmpeg\                - ffmpeg source code from the latest release in git://github.com/FFmpeg/FFmpeg.git
 	    FFmpegInterop\         - FFmpegInterop WinRT component
+	    iconv\                 - iconv library for character encoding conversion
 	    Samples\               - Sample Media Player applications in C++ and C#
+	    Tests\                 - Unit tests for FFmpegInterop
+	    zlib\                  - zlib compression library
 	    Tests\                 - Unit tests for FFmpegInterop
 	    BuildFFmpeg_VS2015.bat - FFmpeg build file for Visual Studio 2015
 	    BuildFFmpeg_VS2017.bat - FFmpeg build file for Visual Studio 2017
