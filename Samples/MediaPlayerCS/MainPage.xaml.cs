@@ -112,7 +112,7 @@ namespace MediaPlayerCS
             Splitter.IsPaneOpen = false;
         }
 
-     
+
 
         private async void URIBoxKeyUp(object sender, KeyRoutedEventArgs e)
         {
@@ -257,9 +257,12 @@ namespace MediaPlayerCS
                     // Show file picker so user can select a file
                     StorageFile file = await filePicker.PickSingleFileAsync();
 
-                    if (file != null)
+                    if (playbackItem != null)
                     {
                         playbackItem.TimedMetadataTracksChanged += PlaybackItem_TimedMetadataTracksChanged;
+                    }
+                    if (file != null)
+                    {
                         var stream = await file.OpenReadAsync();
                         await FFmpegMSS.AddExternalSubtitleAsync(stream, file.Name);
                     }
