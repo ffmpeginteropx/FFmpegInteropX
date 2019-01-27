@@ -309,9 +309,11 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		{
 			config->StreamTimeDuration = this->Duration;
 		}
+		config->AdditionalFFmpegOptions = ref new PropertySet();
+		OutputDebugString(GetACP().ToString()->Data());
+		config->AdditionalFFmpegOptions->Insert("sub_charenc", "CP"+ config->AnsiSubtitleCodepage);
 		if (VideoDescriptor)
 		{
-			config->AdditionalFFmpegOptions = ref new PropertySet();
 			config->AdditionalFFmpegOptions->Insert("subfps", 
 				VideoDescriptor->EncodingProperties->FrameRate->Numerator.ToString() + "/" + VideoDescriptor->EncodingProperties->FrameRate->Denominator.ToString());
 		}

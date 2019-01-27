@@ -495,23 +495,25 @@ namespace FFmpegInterop
 
 		void ConvertEncoding(AVPacket* packet)
 		{
-			int size_needed = MultiByteToWideChar(m_config->AnsiSubtitleCodepage, 0, (const char*)packet->data, packet->size, NULL, 0);
-			std::wstring wstr(size_needed, 0);
-			int result = MultiByteToWideChar(m_config->AnsiSubtitleCodepage, 0, (const char*)packet->data, packet->size, &wstr[0], size_needed);
-			if (result != 0)
-			{
-				int size_out = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], size_needed, NULL, 0, NULL, NULL);
-				auto buffer = av_buffer_allocz(size_out + 1); // alloc 1 more byte for 0 terminated string!
-				if (buffer)
+			if (this->m_config->AutoCorrectAnsiSubtitles) {
+				int size_needed = MultiByteToWideChar(m_config->AnsiSubtitleCodepage, 0, (const char*)packet->data, packet->size, NULL, 0);
+				std::wstring wstr(size_needed, 0);
+				int result = MultiByteToWideChar(m_config->AnsiSubtitleCodepage, 0, (const char*)packet->data, packet->size, &wstr[0], size_needed);
+				if (result != 0)
 				{
-					result = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], size_needed, (LPSTR)buffer->data, size_out, NULL, NULL);
-					if (result != 0)
+					int size_out = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], size_needed, NULL, 0, NULL, NULL);
+					auto buffer = av_buffer_allocz(size_out + 1); // alloc 1 more byte for 0 terminated string!
+					if (buffer)
 					{
-						// conversion successful. replace packet buffer with newly created buffer.
-						av_buffer_unref(&packet->buf);
-						packet->buf = buffer;
-						packet->data = buffer->data;
-						packet->size = buffer->size;
+						result = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], size_needed, (LPSTR)buffer->data, size_out, NULL, NULL);
+						if (result != 0)
+						{
+							// conversion successful. replace packet buffer with newly created buffer.
+							av_buffer_unref(&packet->buf);
+							packet->buf = buffer;
+							packet->data = buffer->data;
+							packet->size = buffer->size;
+						}
 					}
 				}
 			}
