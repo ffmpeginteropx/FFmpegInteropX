@@ -303,22 +303,22 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 	return create_async([this, stream, streamName]
 	{
 
-		auto config = ref new FFmpegInteropConfig();
-		config->IsExternalSubtitleParser = true;
-		config->DefaultSubtitleStreamName = streamName;
+		auto subConfig = ref new FFmpegInteropConfig();
+		subConfig->IsExternalSubtitleParser = true;
+		subConfig->DefaultSubtitleStreamName = streamName;
 		if (this->Duration.Duration > 0)
 		{
-			config->StreamTimeDuration = this->Duration;
+			subConfig->StreamTimeDuration = this->Duration;
 		}
-				
+		subConfig->AnsiSubtitleCodepage = this->config->AnsiSubtitleCodepage;
 		if (VideoDescriptor)
 		{
-			config->AdditionalFFmpegSubtitleOptions = ref new PropertySet();
+			subConfig->AdditionalFFmpegSubtitleOptions = ref new PropertySet();
 
-			config->AdditionalFFmpegSubtitleOptions->Insert("subfps",
+			subConfig->AdditionalFFmpegSubtitleOptions->Insert("subfps",
 				VideoDescriptor->EncodingProperties->FrameRate->Numerator.ToString() + "/" + VideoDescriptor->EncodingProperties->FrameRate->Denominator.ToString());
 		}
-		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr);
+		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, subConfig, nullptr);
 
 		if (externalSubsParser->SubtitleStreams->Size > 0)
 		{
