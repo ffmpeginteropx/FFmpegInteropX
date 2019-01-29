@@ -1,4 +1,5 @@
 #pragma once
+#include <EncodingTables.h>
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -89,7 +90,7 @@ namespace FFmpegInterop
 			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };
 
 			AutoCorrectAnsiSubtitles = false;
-			AnsiSubtitleCodepage = 0; // CP_ACP = system default = 0;
+			AnsiSubtitleCodepage = EncodingTable::GetCurrentSystemDefault(); // leave null for using system default
 
 			DefaultAudioStreamName = "Audio Stream";
 			DefaultSubtitleStreamName = "Subtitle";
@@ -131,7 +132,7 @@ namespace FFmpegInterop
 		/*Used to force conversion of ANSII encoded subtitles to Unicode.*/
 		property bool AutoCorrectAnsiSubtitles;
 		/*The code page used to decode ANSII encoded subtitles. By default, the active windows codepage is used*/
-		property int AnsiSubtitleCodepage;
+		property EncodingTable^ AnsiSubtitleCodepage;
 
 		property String^ DefaultAudioStreamName;
 		property String^ DefaultSubtitleStreamName;
@@ -147,7 +148,7 @@ namespace FFmpegInterop
 		/*Used to pass the length of a target stream to external subtitles. Not useful for anything else*/
 		property TimeSpan StreamTimeDuration;
 		/*Used to pass additional, specific options to external sub parsers*/
-		property PropertySet^ AdditionalFFmpegOptions;
+		property PropertySet^ AdditionalFFmpegSubtitleOptions;
 
 	};
 }

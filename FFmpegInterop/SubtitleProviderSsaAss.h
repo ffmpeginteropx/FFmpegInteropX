@@ -496,9 +496,9 @@ namespace FFmpegInterop
 		void ConvertEncoding(AVPacket* packet)
 		{
 			if (this->m_config->AutoCorrectAnsiSubtitles) {
-				int size_needed = MultiByteToWideChar(m_config->AnsiSubtitleCodepage, 0, (const char*)packet->data, packet->size, NULL, 0);
+				int size_needed = MultiByteToWideChar(m_config->AnsiSubtitleCodepage->WindowsEncodingTable, 0, (const char*)packet->data, packet->size, NULL, 0);
 				std::wstring wstr(size_needed, 0);
-				int result = MultiByteToWideChar(m_config->AnsiSubtitleCodepage, 0, (const char*)packet->data, packet->size, &wstr[0], size_needed);
+				int result = MultiByteToWideChar(m_config->AnsiSubtitleCodepage->WindowsEncodingTable, 0, (const char*)packet->data, packet->size, &wstr[0], size_needed);
 				if (result != 0)
 				{
 					int size_out = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], size_needed, NULL, 0, NULL, NULL);
