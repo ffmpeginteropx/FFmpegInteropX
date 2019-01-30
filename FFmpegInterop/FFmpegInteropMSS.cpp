@@ -1016,7 +1016,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 	MediaSampleProvider^ videoSampleProvider;
 	VideoEncodingProperties^ videoProperties;
 
-	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 && config->PassthroughVideoH264 && !config->IsFrameGrabber && (avVideoCodecCtx->profile <= 100 || config->PassthroughVideoH264Hi10P))
+	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 && config->PassthroughVideoH264 && !config->IsFrameGrabber && (avVideoCodecCtx->profile <= FF_PROFILE_H264_HIGH || config->PassthroughVideoH264Hi10P))
 	{
 		auto videoProperties = VideoEncodingProperties::CreateH264();
 
@@ -1031,8 +1031,9 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 		}
 	}
 #if _WIN32_WINNT >= 0x0A00 // only compile if platform toolset is Windows 10 or higher
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC && config->PassthroughVideoHEVC && !config->IsFrameGrabber &&
-		Windows::Foundation::Metadata::ApiInformation::IsMethodPresent("Windows.Media.MediaProperties.VideoEncodingProperties", "CreateHevc"))
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC && config->PassthroughVideoHEVC && !config->IsFrameGrabber 
+		&& Windows::Foundation::Metadata::ApiInformation::IsMethodPresent("Windows.Media.MediaProperties.VideoEncodingProperties", "CreateHevc")
+		&& (avVideoCodecCtx->profile <= FF_PROFILE_HEVC_MAIN || config->PassthroughVideoHEVCMain10P))
 	{
 		auto videoProperties = VideoEncodingProperties::CreateHevc();
 
