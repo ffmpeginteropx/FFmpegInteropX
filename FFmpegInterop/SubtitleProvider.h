@@ -32,8 +32,10 @@ namespace FFmpegInterop
 			InitializeNameLanguageCodec();
 			SubtitleTrack = ref new TimedMetadataTrack(Name, Language, timedMetadataKind);
 			SubtitleTrack->Label = Name != nullptr ? Name : Language;
-			cueExitedToken = SubtitleTrack->CueExited += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueExited);
-			trackFailedToken = SubtitleTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTrackFailed);
+			if (!m_config->IsExternalSubtitleParser) {
+				cueExitedToken = SubtitleTrack->CueExited += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueExited);
+				trackFailedToken = SubtitleTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTrackFailed);
+			}
 			return S_OK;
 		}
 
@@ -153,7 +155,36 @@ namespace FFmpegInterop
 				}
 				else
 				{
-					SubtitleTrack->AddCue(cue);
+					if (Windows::Foundation::Metadata::ApiInformation::IsApiContractPresent("Windows.Phone.PhoneContract", 1, 0)) 
+					{
+						/*This is a fix only to work around a bug in windows phones: when 2 different cues have the exact same start position and length, the runtime panics and throws an exception
+						The problem has only been observed in external subtitles so far, and only on phones. Might also be present on ARM64 devices*/
+						bool individualCue = true;
+						if (this->timedMetadataKind == TimedMetadataKind::Subtitle) {
+							for (int i = SubtitleTrack->Cues->Size - 1; i >= 0; i--)
+							{
+								auto existingSub = (TimedTextCue^)SubtitleTrack->Cues->GetAt(i);
+
+								if (existingSub->StartTime.Duration == cue->StartTime.Duration && existingSub->Duration.Duration == cue->Duration.Duration)
+								{
+									individualCue = false;
+									auto timedTextCue = (TimedTextCue^)cue;
+									for each(auto l in timedTextCue->Lines)
+									{
+										existingSub->Lines->Append(l);
+									}
+								}
+
+								break;
+							}
+						}
+						if (individualCue)
+							SubtitleTrack->AddCue(cue);
+					}
+					else
+					{
+						SubtitleTrack->AddCue(cue);
+					}
 				}
 			}
 			catch (...)

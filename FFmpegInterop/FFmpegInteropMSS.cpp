@@ -241,6 +241,12 @@ MediaSource^ FFmpegInteropMSS::CreateMediaSource()
 	{
 		source->ExternalTimedMetadataTracks->Append(stream->SubtitleTrack);
 	}
+	for each(auto subtitleInfo in SubtitleStreams)
+	{
+		if (subtitleInfo->IsExternal) {
+			source->ExternalTimedMetadataTracks->Append(subtitleInfo->SubtitleTrack);
+		}
+	}
 	return source;
 }
 
@@ -388,13 +394,7 @@ void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 	}
 
 
-	for each(auto subtitleInfo in SubtitleStreams)
-	{
-		if (subtitleInfo->IsExternal) {
-
-			playbackitem->Source->ExternalTimedMetadataTracks->Append(subtitleInfo->SubtitleTrack);
-		}
-	}
+	
 }
 
 
