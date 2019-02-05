@@ -90,7 +90,7 @@ namespace FFmpegInterop
 			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };
 
 			AutoCorrectAnsiSubtitles = false;
-			AnsiSubtitleCodepage = EncodingTable::GetCurrentSystemDefault(); // leave null for using system default
+			AnsiSubtitleCodepage = EncodingTable::GetCurrentSystemDefault(); // leave null for skiping charset conversion
 
 			DefaultAudioStreamName = "Audio Stream";
 			DefaultSubtitleStreamName = "Subtitle";
