@@ -57,23 +57,22 @@ namespace FFmpegInterop
 			{
 				if (subtitle.num_rects <= 0)
 				{
-					for each (auto cue in SubtitleTrack->ActiveCues)
-					{
-						SubtitleTrack->RemoveCue(cue);
-					}
-				}
+					// inserty dummy cue
+					auto bitmap = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, 16, 16, BitmapAlphaMode::Straight);
 
-				//if (infiniteDurationCue)
-				//{
-				//	TimeSpan dur;
-				//	dur.Duration = position->Duration - infiniteDurationCue->StartTime.Duration;
-				//	if (dur.Duration < 0)
-				//	{
-				//		dur.Duration = 30000000; //TODO improve with default duration from config, once other PR is merged
-				//	}
-				//	infiniteDurationCue->Duration = dur;
-				//	infiniteDurationCue = nullptr;
-				//}
+					ImageCue^ cue = ref new ImageCue();
+					cue->SoftwareBitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8, BitmapAlphaMode::Premultiplied);
+					TimedTextSize cueSize;
+					TimedTextPoint cuePosition;
+					cueSize.Width = 16;
+					cueSize.Height = 16;
+					cue->Position = cuePosition;
+					cue->Extent = cueSize;
+
+					avsubtitle_free(&subtitle);
+
+					return cue;
+				}
 
 				int width, height, offsetX, offsetY;
 				TimedTextSize cueSize;
@@ -134,11 +133,6 @@ namespace FFmpegInterop
 					cue->Position = cuePosition;
 					cue->Extent = cueSize;
 
-					if (subtitle.end_display_time = 0xFFFFFFFF)
-					{
-						infiniteDurationCue = cue;
-					}
-
 					avsubtitle_free(&subtitle);
 
 					return cue;
@@ -164,9 +158,15 @@ namespace FFmpegInterop
 		{
 			SubtitleProvider::Flush();
 
-			if (infiniteDurationCue)
+			std::vector<IMediaCue^> remove;
+			for each (auto cue in SubtitleTrack->Cues)
 			{
-				SubtitleTrack->RemoveCue(infiniteDurationCue);
+				remove.push_back(cue);
+			}
+
+			for each (auto cue in remove)
+			{
+				SubtitleTrack->RemoveCue(cue);
 			}
 		}
 
@@ -257,12 +257,19 @@ namespace FFmpegInterop
 
 		void OnCueEntered(TimedMetadataTrack ^sender, MediaCueEventArgs ^args)
 		{
-			for each (auto cue in sender->ActiveCues)
+			auto newCue = args->Cue;
+			std::vector<IMediaCue^> remove;
+			for each (auto cue in sender->Cues)
 			{
-				if (cue != args->Cue)
+				if (cue != newCue && cue->StartTime.Duration < newCue->StartTime.Duration)
 				{
-					sender->RemoveCue(cue);
+					remove.push_back(cue);
 				}
+			}
+
+			for each (auto cue in remove)
+			{
+				sender->RemoveCue(cue);
 			}
 		}
 
@@ -274,6 +281,5 @@ namespace FFmpegInterop
 		int subtitleWidth;
 		int subtitleHeight;
 		int optimalHeight;
-		ImageCue^ infiniteDurationCue;
 	};
 }

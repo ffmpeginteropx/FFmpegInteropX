@@ -173,8 +173,7 @@ namespace FFmpegInterop
 					SubtitleTrack->AddCue(cue);
 				}
 
-				SubtitleTrack->RemoveCue(args->Cue);
-				delete args->Cue;
+				//SubtitleTrack->RemoveCue(args->Cue); // todo re-enable
 			}
 			catch (...)
 			{
