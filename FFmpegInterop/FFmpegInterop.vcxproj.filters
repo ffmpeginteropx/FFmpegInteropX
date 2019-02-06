@@ -54,6 +54,9 @@
     <ClCompile Include="NativeBufferFactory.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="EncodingTables.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -133,6 +136,9 @@
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="FFmpegVersionInfo.h" />
+    <ClInclude Include="EncodingTables.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">

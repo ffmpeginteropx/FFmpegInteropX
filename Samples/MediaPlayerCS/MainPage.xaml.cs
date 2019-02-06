@@ -19,6 +19,7 @@
 using FFmpegInterop;
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Windows.Media.Core;
 using Windows.Media.Playback;
@@ -38,6 +39,7 @@ namespace MediaPlayerCS
         private FFmpegInteropMSS FFmpegMSS;
         private StorageFile currentFile;
         private MediaPlaybackItem playbackItem;
+        List<AnsiEncodingItem> cbItemsSource = new List<AnsiEncodingItem>();
 
         public bool AutoCreatePlaybackItem
         {
@@ -56,9 +58,39 @@ namespace MediaPlayerCS
 
             // optionally check for recommended ffmpeg version
             FFmpegVersionInfo.CheckRecommendedVersion();
-
+            cbEncodings.SelectionChanged += CbEncodings_SelectionChanged;
+            PrepareEncodingTables();
         }
 
+        private void CbEncodings_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cbEncodings.SelectedIndex >= 0)
+            {
+                Config.AnsiSubtitleCodepage = cbItemsSource[cbEncodings.SelectedIndex].FFTable;
+            }
+            else
+            {
+                Config.AnsiSubtitleCodepage = null;
+            }
+        }
+
+        public void PrepareEncodingTables()
+        {
+            var fftables = FFmpegInterop.EncodingTable.GetTables().OrderBy(x=>x.WindowsEncodingTable);
+            foreach (var t in fftables)
+            {
+                try
+                {
+                    cbItemsSource.Add(new AnsiEncodingItem(t));
+                }
+                catch
+                {
+
+                }
+            }
+
+            cbEncodings.ItemsSource = cbItemsSource;
+        }
 
         public FFmpegInteropConfig Config { get; set; }
 
@@ -112,7 +144,7 @@ namespace MediaPlayerCS
             Splitter.IsPaneOpen = false;
         }
 
-     
+
 
         private async void URIBoxKeyUp(object sender, KeyRoutedEventArgs e)
         {
@@ -257,9 +289,12 @@ namespace MediaPlayerCS
                     // Show file picker so user can select a file
                     StorageFile file = await filePicker.PickSingleFileAsync();
 
-                    if (file != null)
+                    if (playbackItem != null)
                     {
                         playbackItem.TimedMetadataTracksChanged += PlaybackItem_TimedMetadataTracksChanged;
+                    }
+                    if (file != null)
+                    {
                         var stream = await file.OpenReadAsync();
                         await FFmpegMSS.AddExternalSubtitleAsync(stream, file.Name);
                     }

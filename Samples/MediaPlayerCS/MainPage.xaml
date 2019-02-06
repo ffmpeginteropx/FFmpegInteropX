@@ -53,6 +53,10 @@
                         <Button Content="Extract Frame" Click="ExtractFrame"  Margin="0,20,10,10" />
                         <ToggleSwitch x:Name="grabFrameExactSeek" Header="Exact Seek for Extract Frame" OffContent="OFF" OnContent="ON" IsOn="True"/>
 
+                        <ComboBox x:Name="cbEncodings" PlaceholderText="Select ANSI encoding">
+                           
+                        </ComboBox>
+
                         <Button Content="Load External Subtitle File (winAPI)" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
                         <Button Content="Load External Subtitle File (ffmpeg)" Click="LoadSubtitleFileFFmpeg"  Margin="0,20,10,10" />
 

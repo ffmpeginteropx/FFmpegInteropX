@@ -208,6 +208,7 @@ namespace FFmpegInterop
 		AVFormatContext* avFormatCtx;
 		IStream* fileStreamData;
 		ByteOrderMark streamByteOrderMark;
+		FFmpegInteropConfig ^ config;
 
 	private:
 
@@ -219,7 +220,6 @@ namespace FFmpegInterop
 		Vector<AudioStreamInfo^>^ audioStrInfos;
 		Vector<SubtitleStreamInfo^>^ subtitleStrInfos;
 	
-		FFmpegInteropConfig ^ config;
 		std::vector<MediaSampleProvider^> sampleProviders;
 		std::vector<MediaSampleProvider^> audioStreams;
 		std::vector<SubtitleProvider^> subtitleStreams;

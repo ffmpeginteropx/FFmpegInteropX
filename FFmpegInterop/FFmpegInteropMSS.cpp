@@ -38,6 +38,7 @@
 extern "C"
 {
 #include <libavutil/imgutils.h>
+#include <libavutil/opt.h>
 }
 
 using namespace concurrency;
@@ -240,6 +241,12 @@ MediaSource^ FFmpegInteropMSS::CreateMediaSource()
 	{
 		source->ExternalTimedMetadataTracks->Append(stream->SubtitleTrack);
 	}
+	for each(auto subtitleInfo in SubtitleStreams)
+	{
+		if (subtitleInfo->IsExternal) {
+			source->ExternalTimedMetadataTracks->Append(subtitleInfo->SubtitleTrack);
+		}
+	}
 	return source;
 }
 
@@ -302,20 +309,23 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 	return create_async([this, stream, streamName]
 	{
 
-		auto config = ref new FFmpegInteropConfig();
-		config->IsExternalSubtitleParser = true;
-		config->DefaultSubtitleStreamName = streamName;
+		auto subConfig = ref new FFmpegInteropConfig();
+		subConfig->IsExternalSubtitleParser = true;
+		subConfig->DefaultSubtitleStreamName = streamName;
 		if (this->Duration.Duration > 0)
 		{
-			config->StreamTimeDuration = this->Duration;
+			subConfig->StreamTimeDuration = this->Duration;
 		}
+		subConfig->AnsiSubtitleCodepage = this->config->AnsiSubtitleCodepage;
 		if (VideoDescriptor)
 		{
-			config->AdditionalFFmpegOptions = ref new PropertySet();
-			config->AdditionalFFmpegOptions->Insert("subfps", 
+			subConfig->AdditionalFFmpegSubtitleOptions = ref new PropertySet();
+
+			subConfig->AdditionalFFmpegSubtitleOptions->Insert("subfps",
 				VideoDescriptor->EncodingProperties->FrameRate->Numerator.ToString() + "/" + VideoDescriptor->EncodingProperties->FrameRate->Denominator.ToString());
 		}
-		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr);
+		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, subConfig, nullptr);
+
 		if (externalSubsParser->SubtitleStreams->Size > 0)
 		{
 			int readResult = 0;
@@ -384,13 +394,7 @@ void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 	}
 
 
-	for each(auto subtitleInfo in SubtitleStreams)
-	{
-		if (subtitleInfo->IsExternal) {
-
-			playbackitem->Source->ExternalTimedMetadataTracks->Append(subtitleInfo->SubtitleTrack);
-		}
-	}
+	
 }
 
 
@@ -541,10 +545,11 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream, M
 		hr = ParseOptions(config->FFmpegOptions);
 	}
 
+
 	if (SUCCEEDED(hr))
 	{
 		// Populate AVDictionary avDict based on additional ffmpegOptions. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
-		hr = ParseOptions(config->AdditionalFFmpegOptions);
+		hr = ParseOptions(config->AdditionalFFmpegSubtitleOptions);
 	}
 
 	if (SUCCEEDED(hr))
@@ -564,6 +569,7 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream, M
 		{
 			DebugMessage(L"Invalid FFmpeg option(s)");
 			av_dict_free(&avDict);
+
 			avDict = nullptr;
 		}
 	}
@@ -573,7 +579,7 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream, M
 		this->mss = mss;
 		hr = InitFFmpegContext();
 	}
-
+		
 	return hr;
 }
 
@@ -807,6 +813,23 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 		{
 			DebugMessage(L"Could not allocate a decoding context\n");
 			hr = E_OUTOFMEMORY;
+		}
+		//inject custom properties
+		if (config->AnsiSubtitleCodepage != nullptr)
+		{
+			String^ key = config->AnsiSubtitleCodepage->Name;
+			std::wstring keyW(key->Begin());
+			std::string keyA(keyW.begin(), keyW.end());
+			const char* keyChar = keyA.c_str();
+
+			if (av_opt_set(avSubsCodecCtx, "sub_charenc", keyChar, AV_OPT_SEARCH_CHILDREN) < 0)
+			{
+				DebugMessage(L"Could not set sub_charenc on subtitle provider\n");
+			}
+			if (av_opt_set_int(avSubsCodecCtx, "sub_charenc_mode", FF_SUB_CHARENC_MODE_PRE_DECODER, AV_OPT_SEARCH_CHILDREN) < 0)
+			{
+				DebugMessage(L"Could not set sub_charenc_mode on subtitle provider\n");
+			}
 		}
 
 		if (SUCCEEDED(hr))
