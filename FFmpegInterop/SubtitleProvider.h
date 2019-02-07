@@ -47,9 +47,9 @@ namespace FFmpegInterop
 			SubtitleTrack = ref new TimedMetadataTrack(Name, Language, timedMetadataKind);
 			SubtitleTrack->Label = Name != nullptr ? Name : Language;
 			if (!m_config->IsExternalSubtitleParser) {
-				cueExitedToken = referenceTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnRefCueEntered);
-				//cueExitedToken = SubtitleTrack->CueExited += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueExited);
-				//trackFailedToken = SubtitleTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTrackFailed);
+				cueEnteredToken = referenceTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnRefCueEntered);
+				cueExitedToken = referenceTrack->CueExited += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueExited);
+				trackFailedToken = referenceTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTrackFailed);
 			}
 			return S_OK;
 		}
@@ -148,10 +148,10 @@ namespace FFmpegInterop
 			try
 			{
 				// to avoid flicker, we try to add new cues only after active cues are finished
-			/*	if (!m_config->IsExternalSubtitleParser && m_config->UseAntiFlickerForSubtitles && SubtitleTrack->ActiveCues->Size > 0)
+				if (!m_config->IsExternalSubtitleParser && m_config->UseAntiFlickerForSubtitles && referenceTrack->ActiveCues->Size > 0)
 				{
 					bool addToPending = true;
-					for each (auto active in SubtitleTrack->ActiveCues)
+					for each (auto active in referenceTrack->ActiveCues)
 					{
 						if (active->StartTime.Duration + active->Duration.Duration > cue->StartTime.Duration)
 						{
@@ -161,16 +161,14 @@ namespace FFmpegInterop
 					}
 					if (addToPending)
 					{
-						pendingCues.push_back(cue);
+						pendingCues.push_back(ref new ReferenceCue(cue));
 					}
 					else
 					{
-						SubtitleTrack->AddCue(cue);
+						referenceTrack->AddCue(ref new ReferenceCue(cue));
 					}
 				}
-				else*/
-
-				if (Windows::Foundation::Metadata::ApiInformation::IsApiContractPresent("Windows.Phone.PhoneContract", 1, 0))
+				else if (Windows::Foundation::Metadata::ApiInformation::IsApiContractPresent("Windows.Phone.PhoneContract", 1, 0))
 				{
 					/*This is a fix only to work around a bug in windows phones: when 2 different cues have the exact same start position and length, the runtime panics and throws an exception
 					The problem has only been observed in external subtitles so far, and only on phones. Might also be present on ARM64 devices*/
@@ -227,7 +225,8 @@ namespace FFmpegInterop
 		void OnRefCueEntered(TimedMetadataTrack ^sender, MediaCueEventArgs ^args)
 		{
 			mutex.lock();
-			try {
+			try
+			{
 				//remove all cues from subtitle track
 				while (SubtitleTrack->Cues->Size > 0)
 				{
@@ -251,7 +250,7 @@ namespace FFmpegInterop
 			{
 				for each (auto cue in pendingCues)
 				{
-					SubtitleTrack->AddCue(cue);
+					referenceTrack->AddCue(cue);
 				}
 
 				//SubtitleTrack->RemoveCue(args->Cue); // todo re-enable
@@ -275,6 +274,7 @@ namespace FFmpegInterop
 		int64 maxCuePosition;
 		EventRegistrationToken cueExitedToken;
 		EventRegistrationToken trackFailedToken;
+		EventRegistrationToken cueEnteredToken;
 		TimedMetadataKind timedMetadataKind;
 		IMediaCue^ durationFixedCue;
 
@@ -287,7 +287,9 @@ namespace FFmpegInterop
 			}
 			if (referenceTrack)
 			{
-				referenceTrack->CueEntered -= cueExitedToken;
+				referenceTrack->CueEntered -= cueEnteredToken;
+				referenceTrack->CueExited -= cueExitedToken;
+				referenceTrack->TrackFailed -= trackFailedToken;
 				referenceTrack = nullptr;
 			}
 		}
