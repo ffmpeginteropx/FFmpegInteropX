@@ -230,7 +230,7 @@ namespace FFmpegInterop {
 
 		static EncodingTable^ GetCurrentSystemDefault()
 		{
-			return internalMap->GetAt(0);
+			return GetTables()->GetAt(0);
 		}
 	};
 }
