@@ -12,6 +12,14 @@ namespace FFmpegInterop {
 		{
 
 		}
+
+		ReferenceCue(IMediaCue^ other)
+		{
+			this->CueRef = other;
+			this->Duration = other->Duration;
+			this->Id = other->Id;
+			this->StartTime = other->StartTime;
+		}
 	public:
 		virtual ~ReferenceCue()
 		{

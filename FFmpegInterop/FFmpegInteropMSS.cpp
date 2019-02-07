@@ -239,7 +239,11 @@ MediaSource^ FFmpegInteropMSS::CreateMediaSource()
 	MediaSource^ source = MediaSource::CreateFromMediaStreamSource(mss);
 	for each (auto stream in subtitleStreams)
 	{
-		source->ExternalTimedMetadataTracks->Append(stream->SubtitleTrack);
+		for each(auto track in stream->GetMetadataTracks())
+		{
+			source->ExternalTimedMetadataTracks->Append(track);
+
+		}
 	}
 	for each(auto subtitleInfo in SubtitleStreams)
 	{
@@ -389,12 +393,22 @@ void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 				playbackitem->TimedMetadataTracks->SetPresentationMode(index, TimedMetadataTrackPresentationMode::PlatformPresented);
 				break;
 			}
+
+			index++;
+		}
+		index = 0;
+		for each(auto track in playbackItem->TimedMetadataTracks)
+		{
+			if (track->TimedMetadataKind == TimedMetadataKind::Custom)
+			{
+				playbackitem->TimedMetadataTracks->SetPresentationMode(index, TimedMetadataTrackPresentationMode::Hidden);
+			}
 			index++;
 		}
 	}
 
 
-	
+
 }
 
 
@@ -579,7 +593,7 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream, M
 		this->mss = mss;
 		hr = InitFFmpegContext();
 	}
-		
+
 	return hr;
 }
 

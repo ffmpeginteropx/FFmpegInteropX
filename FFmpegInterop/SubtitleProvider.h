@@ -6,6 +6,7 @@
 #include "CompressedSampleProvider.h"
 #include "StreamInfo.h"
 #include "NativeBufferFactory.h"
+#include <ReferenceCue.h>
 
 
 namespace FFmpegInterop
@@ -29,7 +30,7 @@ namespace FFmpegInterop
 		property TimedMetadataTrack^ SubtitleTrack;
 
 
-		virtual IVectorView<TimedMetadataTrack^>^ GetMetadataTracks() override
+		virtual IVectorView<TimedMetadataTrack^>^ GetMetadataTracks()
 		{
 			Vector<TimedMetadataTrack^>^ tracks = ref new Vector<TimedMetadataTrack^>();
 			tracks->Append(SubtitleTrack);
@@ -46,8 +47,9 @@ namespace FFmpegInterop
 			SubtitleTrack = ref new TimedMetadataTrack(Name, Language, timedMetadataKind);
 			SubtitleTrack->Label = Name != nullptr ? Name : Language;
 			if (!m_config->IsExternalSubtitleParser) {
-				cueExitedToken = SubtitleTrack->CueExited += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueExited);
-				trackFailedToken = SubtitleTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTrackFailed);
+				cueExitedToken = referenceTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnRefCueEntered);
+				//cueExitedToken = SubtitleTrack->CueExited += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueExited);
+				//trackFailedToken = SubtitleTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTrackFailed);
 			}
 			return S_OK;
 		}
@@ -146,7 +148,7 @@ namespace FFmpegInterop
 			try
 			{
 				// to avoid flicker, we try to add new cues only after active cues are finished
-				if (!m_config->IsExternalSubtitleParser && m_config->UseAntiFlickerForSubtitles && SubtitleTrack->ActiveCues->Size > 0)
+			/*	if (!m_config->IsExternalSubtitleParser && m_config->UseAntiFlickerForSubtitles && SubtitleTrack->ActiveCues->Size > 0)
 				{
 					bool addToPending = true;
 					for each (auto active in SubtitleTrack->ActiveCues)
@@ -166,43 +168,78 @@ namespace FFmpegInterop
 						SubtitleTrack->AddCue(cue);
 					}
 				}
-				else
+				else*/
+
+				if (Windows::Foundation::Metadata::ApiInformation::IsApiContractPresent("Windows.Phone.PhoneContract", 1, 0))
 				{
-					if (Windows::Foundation::Metadata::ApiInformation::IsApiContractPresent("Windows.Phone.PhoneContract", 1, 0))
-					{
-						/*This is a fix only to work around a bug in windows phones: when 2 different cues have the exact same start position and length, the runtime panics and throws an exception
-						The problem has only been observed in external subtitles so far, and only on phones. Might also be present on ARM64 devices*/
-						bool individualCue = true;
-						if (this->timedMetadataKind == TimedMetadataKind::Subtitle) {
-							for (int i = SubtitleTrack->Cues->Size - 1; i >= 0; i--)
+					/*This is a fix only to work around a bug in windows phones: when 2 different cues have the exact same start position and length, the runtime panics and throws an exception
+					The problem has only been observed in external subtitles so far, and only on phones. Might also be present on ARM64 devices*/
+					bool individualCue = true;
+					if (this->timedMetadataKind == TimedMetadataKind::Subtitle) {
+						for (int i = SubtitleTrack->Cues->Size - 1; i >= 0; i--)
+						{
+							auto existingSub = (TimedTextCue^)SubtitleTrack->Cues->GetAt(i);
+
+							if (existingSub->StartTime.Duration == cue->StartTime.Duration && existingSub->Duration.Duration == cue->Duration.Duration)
 							{
-								auto existingSub = (TimedTextCue^)SubtitleTrack->Cues->GetAt(i);
-
-								if (existingSub->StartTime.Duration == cue->StartTime.Duration && existingSub->Duration.Duration == cue->Duration.Duration)
+								individualCue = false;
+								auto timedTextCue = (TimedTextCue^)cue;
+								for each(auto l in timedTextCue->Lines)
 								{
-									individualCue = false;
-									auto timedTextCue = (TimedTextCue^)cue;
-									for each(auto l in timedTextCue->Lines)
-									{
-										existingSub->Lines->Append(l);
-									}
+									existingSub->Lines->Append(l);
 								}
-
-								break;
 							}
+
+							break;
 						}
-						if (individualCue)
-							SubtitleTrack->AddCue(cue);
 					}
-					else
+					if (individualCue)
 					{
-						SubtitleTrack->AddCue(cue);
+						DispatchCueToTrack(cue);
 					}
 				}
+				else
+				{
+					DispatchCueToTrack(cue);
+				}
+
 			}
+
 			catch (...)
 			{
 				OutputDebugString(L"Failed to add subtitle cue.");
+			}
+			mutex.unlock();
+		}
+
+		void DispatchCueToTrack(IMediaCue^ cue)
+		{
+			if (!m_config->IsExternalSubtitleParser)
+			{
+				referenceTrack->AddCue(ref new ReferenceCue(cue));
+			}
+			else
+			{
+				SubtitleTrack->AddCue(cue);
+			}
+		}
+
+		void OnRefCueEntered(TimedMetadataTrack ^sender, MediaCueEventArgs ^args)
+		{
+			mutex.lock();
+			try {
+				//remove all cues from subtitle track
+				while (SubtitleTrack->Cues->Size > 0)
+				{
+					auto c = SubtitleTrack->Cues->GetAt(0);
+					SubtitleTrack->RemoveCue(c);
+				}
+
+				auto refCue = (ReferenceCue^)args->Cue;
+				SubtitleTrack->AddCue(refCue->CueRef);
+			}
+			catch (...)
+			{
 			}
 			mutex.unlock();
 		}
@@ -246,9 +283,12 @@ namespace FFmpegInterop
 		{
 			if (SubtitleTrack)
 			{
-				SubtitleTrack->CueExited -= cueExitedToken;
-				SubtitleTrack->TrackFailed -= trackFailedToken;
 				SubtitleTrack = nullptr;
+			}
+			if (referenceTrack)
+			{
+				referenceTrack->CueEntered -= cueExitedToken;
+				referenceTrack = nullptr;
 			}
 		}
 	};

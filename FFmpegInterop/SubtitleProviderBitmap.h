@@ -2,7 +2,6 @@
 
 #include "SubtitleProvider.h"
 #include <MemoryBuffer.h>
-#include <ReferenceCue.h>
 
 namespace FFmpegInterop
 {
