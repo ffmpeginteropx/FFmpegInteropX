@@ -347,6 +347,7 @@
     <ClInclude Include="MediaThumbnailData.h" />
     <ClInclude Include="NativeBuffer.h" />
     <ClInclude Include="NativeBufferFactory.h" />
+    <ClInclude Include="ReferenceCue.h" />
     <ClInclude Include="StreamInfo.h" />
     <ClInclude Include="SubtitleProvider.h" />
     <ClInclude Include="SubtitleProviderBitmap.h" />

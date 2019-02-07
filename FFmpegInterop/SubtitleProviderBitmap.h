@@ -2,11 +2,13 @@
 
 #include "SubtitleProvider.h"
 #include <MemoryBuffer.h>
+#include <ReferenceCue.h>
 
 namespace FFmpegInterop
 {
 	ref class SubtitleProviderBitmap : SubtitleProvider
 	{
+
 	internal:
 		SubtitleProviderBitmap(FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
@@ -27,6 +29,9 @@ namespace FFmpegInterop
 
 			return hr;
 		}
+
+
+	
 
 		virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio) override
 		{

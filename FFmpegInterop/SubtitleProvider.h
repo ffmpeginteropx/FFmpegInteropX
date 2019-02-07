@@ -12,6 +12,9 @@ namespace FFmpegInterop
 {
 	ref class SubtitleProvider abstract : CompressedSampleProvider
 	{
+		TimedMetadataTrack^ referenceTrack;
+
+
 	internal:
 		SubtitleProvider(FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
@@ -23,13 +26,23 @@ namespace FFmpegInterop
 		{
 			this->timedMetadataKind = timedMetadataKind;
 		}
-
 		property TimedMetadataTrack^ SubtitleTrack;
+
+
+		virtual IVectorView<TimedMetadataTrack^>^ GetMetadataTracks() override
+		{
+			Vector<TimedMetadataTrack^>^ tracks = ref new Vector<TimedMetadataTrack^>();
+			tracks->Append(SubtitleTrack);
+			tracks->Append(referenceTrack);
+			return tracks->GetView();
+		}
 
 
 		virtual HRESULT Initialize() override
 		{
 			InitializeNameLanguageCodec();
+			referenceTrack = ref new TimedMetadataTrack("subtitleReferenceTrack", "", TimedMetadataKind::Custom);
+
 			SubtitleTrack = ref new TimedMetadataTrack(Name, Language, timedMetadataKind);
 			SubtitleTrack->Label = Name != nullptr ? Name : Language;
 			if (!m_config->IsExternalSubtitleParser) {
@@ -155,7 +168,7 @@ namespace FFmpegInterop
 				}
 				else
 				{
-					if (Windows::Foundation::Metadata::ApiInformation::IsApiContractPresent("Windows.Phone.PhoneContract", 1, 0)) 
+					if (Windows::Foundation::Metadata::ApiInformation::IsApiContractPresent("Windows.Phone.PhoneContract", 1, 0))
 					{
 						/*This is a fix only to work around a bug in windows phones: when 2 different cues have the exact same start position and length, the runtime panics and throws an exception
 						The problem has only been observed in external subtitles so far, and only on phones. Might also be present on ARM64 devices*/
