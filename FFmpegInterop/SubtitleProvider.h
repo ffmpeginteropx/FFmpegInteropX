@@ -38,10 +38,13 @@ namespace FFmpegInterop
 
 			SubtitleTrack = ref new TimedMetadataTrack(Name, Language, timedMetadataKind);
 			SubtitleTrack->Label = Name != nullptr ? Name : Language;
-
+			
 			if (!m_config->IsExternalSubtitleParser)
 			{
-				SubtitleTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueEntered);
+				if (timedMetadataKind == TimedMetadataKind::ImageSubtitle)
+				{
+					SubtitleTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueEntered);
+				}
 				SubtitleTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTrackFailed);
 			}
 
@@ -113,7 +116,7 @@ namespace FFmpegInterop
 						{
 							auto existingSub = (TimedTextCue^)SubtitleTrack->Cues->GetAt(i);
 
-							if (existingSub->StartTime.Duration == cue->StartTime.Duration && existingSub->Duration.Duration == cue->Duration.Duration)
+							if (existingSub->StartTime == cue->StartTime && existingSub->Duration == cue->Duration)
 							{
 								individualCue = false;
 								auto timedTextCue = (TimedTextCue^)cue;
@@ -192,7 +195,7 @@ namespace FFmpegInterop
 				std::vector<IMediaCue^> remove;
 				for each (auto cue in SubtitleTrack->Cues)
 				{
-					if (cue->StartTime.Duration + cue->Duration.Duration < args->Cue->StartTime.Duration)
+					if (cue->StartTime + cue->Duration < args->Cue->StartTime)
 					{
 						remove.push_back(cue);
 					}
@@ -218,9 +221,7 @@ namespace FFmpegInterop
 				if (timer == nullptr)
 				{
 					timer = ref new Windows::UI::Xaml::DispatcherTimer();
-					TimeSpan interval;
-					interval.Duration = 10000;
-					timer->Interval = interval;
+					timer->Interval = ToTimeSpan(10000);
 					timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &FFmpegInterop::SubtitleProvider::OnTick);
 				}
 				timer->Start();

@@ -142,6 +142,9 @@
     <ClInclude Include="ReferenceCue.h">
       <Filter>Subtitles</Filter>
     </ClInclude>
+    <ClInclude Include="TimeSpanHelpers.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">

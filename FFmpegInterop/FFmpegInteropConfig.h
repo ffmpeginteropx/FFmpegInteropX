@@ -1,5 +1,6 @@
 #pragma once
 #include <EncodingTables.h>
+#include "TimeSpanHelpers.h"
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -96,8 +97,8 @@ namespace FFmpegInterop
 			DefaultSubtitleStreamName = "Subtitle";
 			DefaultExternalSubtitleStreamName = "External Subtitle";
 
-			StreamTimeDuration = { 864000000000 };//1 day in ticks
-			DefaultTimedMetadataCueDuration = { 30000000 };//3 seconds
+			StreamTimeDuration = ToTimeSpan(864000000000);//1 day in ticks
+			DefaultTimedMetadataCueDuration = ToTimeSpan(30000000);//3 seconds
 		};
 
 		property bool PassthroughAudioMP3;
