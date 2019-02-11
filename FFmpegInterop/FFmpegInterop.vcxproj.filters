@@ -139,7 +139,9 @@
     <ClInclude Include="EncodingTables.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="ReferenceCue.h" />
+    <ClInclude Include="ReferenceCue.h">
+      <Filter>Subtitles</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">

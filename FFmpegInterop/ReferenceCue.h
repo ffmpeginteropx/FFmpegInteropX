@@ -20,11 +20,7 @@ namespace FFmpegInterop {
 			this->Id = other->Id;
 			this->StartTime = other->StartTime;
 		}
-	public:
-		virtual ~ReferenceCue()
-		{
-			CueRef = nullptr;
-		}
+
 	public:
 		virtual property String^ Id;
 

@@ -60,10 +60,11 @@ std::mutex isRegisteredMutex;
 std::map<String^, LanguageEntry^> LanguageTagConverter::map;
 
 // Initialize an FFmpegInteropObject
-FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig)
+FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispatcher^ dispatcher)
 	: config(interopConfig)
 	, thumbnailStreamIndex(AVERROR_STREAM_NOT_FOUND)
 	, isFirstSeek(true)
+	, dispatcher(dispatcher)
 {
 	if (!isRegistered)
 	{
@@ -124,17 +125,19 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 
 IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromStreamAsync(IRandomAccessStream^ stream, FFmpegInteropConfig^ config)
 {
-	return create_async([stream, config]
+	auto dispatcher = Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Dispatcher;
+	return create_async([stream, config, dispatcher]
 	{
-		return CreateFromStream(stream, config, nullptr);
+		return CreateFromStream(stream, config, nullptr, dispatcher);
 	});
 };
 
 IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromUriAsync(String^ uri, FFmpegInteropConfig^ config)
 {
-	return create_async([uri, config]
+	auto dispatcher = Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Dispatcher;
+	return create_async([uri, config, dispatcher]
 	{
-		auto result = CreateFromUri(uri, config);
+		auto result = CreateFromUri(uri, config, dispatcher);
 		if (result == nullptr)
 		{
 			throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
@@ -143,9 +146,9 @@ IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromUriAsync(String^
 	});
 };
 
-FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss)
+FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher)
 {
-	auto interopMSS = ref new FFmpegInteropMSS(config);
+	auto interopMSS = ref new FFmpegInteropMSS(config, dispatcher);
 	auto hr = interopMSS->CreateMediaStreamSource(stream, mss);
 	if (!SUCCEEDED(hr))
 	{
@@ -154,9 +157,9 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromStream(IRandomAccessStream^ stream
 	return interopMSS;
 }
 
-FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromUri(String^ uri, FFmpegInteropConfig^ config)
+FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher)
 {
-	auto interopMSS = ref new FFmpegInteropMSS(config);
+	auto interopMSS = ref new FFmpegInteropMSS(config, dispatcher);
 	auto hr = interopMSS->CreateMediaStreamSource(uri);
 	if (!SUCCEEDED(hr))
 	{
@@ -179,7 +182,8 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromStream(IRandomAcce
 	}
 	try
 	{
-		return CreateFromStream(stream, config, nullptr);
+		auto dispatcher = Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Dispatcher;
+		return CreateFromStream(stream, config, nullptr, dispatcher);
 	}
 	catch (...)
 	{
@@ -213,7 +217,8 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromUri(String^ uri, b
 	}
 	try
 	{
-		return CreateFromUri(uri, config);
+		auto dispatcher = Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Dispatcher;
+		return CreateFromUri(uri, config, dispatcher);
 	}
 	catch (...)
 	{
@@ -239,11 +244,7 @@ MediaSource^ FFmpegInteropMSS::CreateMediaSource()
 	MediaSource^ source = MediaSource::CreateFromMediaStreamSource(mss);
 	for each (auto stream in subtitleStreams)
 	{
-		for each(auto track in stream->GetMetadataTracks())
-		{
-			source->ExternalTimedMetadataTracks->Append(track);
-
-		}
+		source->ExternalTimedMetadataTracks->Append(stream->SubtitleTrack);
 	}
 	for each(auto subtitleInfo in SubtitleStreams)
 	{
@@ -328,7 +329,7 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 			subConfig->AdditionalFFmpegSubtitleOptions->Insert("subfps",
 				VideoDescriptor->EncodingProperties->FrameRate->Numerator.ToString() + "/" + VideoDescriptor->EncodingProperties->FrameRate->Denominator.ToString());
 		}
-		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, subConfig, nullptr);
+		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, subConfig, nullptr, nullptr);
 
 		if (externalSubsParser->SubtitleStreams->Size > 0)
 		{
@@ -396,21 +397,8 @@ void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 
 			index++;
 		}
-		index = 0;
-		for each(auto track in playbackItem->TimedMetadataTracks)
-		{
-			if (track->TimedMetadataKind == TimedMetadataKind::Custom)
-			{
-				playbackitem->TimedMetadataTracks->SetPresentationMode(index, TimedMetadataTrackPresentationMode::Hidden);
-			}
-			index++;
-		}
 	}
-
-
-
 }
-
 
 void FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args)
 {
@@ -866,11 +854,11 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 					{
 						// only convert subtitle encoding for pure text subtitle files
 						bool convertToUtf8 = avFormatCtx->nb_streams == 1 && streamByteOrderMark == ByteOrderMark::Unknown;
-						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, convertToUtf8);
+						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, dispatcher, convertToUtf8);
 					}
 					else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
 					{
-						avSubsStream = ref new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
+						avSubsStream = ref new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, dispatcher);
 					}
 					else
 					{
@@ -1337,16 +1325,13 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position)
 		}
 		else
 		{
-			// Flush the AudioSampleProvider
-			if (currentAudioStream != nullptr)
+			// Flush all active streams
+			for each (auto stream in sampleProviders)
 			{
-				currentAudioStream->Flush();
-			}
-
-			// Flush the VideoSampleProvider
-			if (videoStream != nullptr)
-			{
-				videoStream->Flush();
+				if (stream->IsEnabled)
+				{
+					stream->Flush();
+				}
 			}
 		}
 	}

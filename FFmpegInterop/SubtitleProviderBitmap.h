@@ -13,24 +13,11 @@ namespace FFmpegInterop
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			FFmpegInteropConfig^ config,
-			int index)
-			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::ImageSubtitle)
+			int index,
+			CoreDispatcher^ dispatcher)
+			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::ImageSubtitle, dispatcher)
 		{
 		}
-
-		virtual HRESULT Initialize() override
-		{
-			auto hr = SubtitleProvider::Initialize();
-			if (SUCCEEDED(hr))
-			{
-				SubtitleTrack->CueEntered += ref new TypedEventHandler<TimedMetadataTrack ^, MediaCueEventArgs ^>(this, &SubtitleProviderBitmap::OnCueEntered);
-			}
-
-			return hr;
-		}
-
-
-	
 
 		virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio) override
 		{
@@ -59,20 +46,22 @@ namespace FFmpegInterop
 			auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
 			if (result > 0 && gotSubtitle)
 			{
+				if (subtitle.start_display_time > 0)
+				{
+					position->Duration += (long long)10000 * subtitle.start_display_time;
+				}
+				duration->Duration = (long long)10000 * subtitle.end_display_time;
+
 				if (subtitle.num_rects <= 0)
 				{
+					if (!dummyBitmap)
+					{
+						dummyBitmap = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, 16, 16, BitmapAlphaMode::Premultiplied);
+					}
+
 					// inserty dummy cue
-					auto bitmap = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, 16, 16, BitmapAlphaMode::Straight);
-
 					ImageCue^ cue = ref new ImageCue();
-					cue->SoftwareBitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8, BitmapAlphaMode::Premultiplied);
-					TimedTextSize cueSize;
-					TimedTextPoint cuePosition;
-					cueSize.Width = 16;
-					cueSize.Height = 16;
-					cue->Position = cuePosition;
-					cue->Extent = cueSize;
-
+					cue->SoftwareBitmap = dummyBitmap;
 					avsubtitle_free(&subtitle);
 
 					return cue;
@@ -83,12 +72,6 @@ namespace FFmpegInterop
 				TimedTextPoint cuePosition;
 				if (subtitle.num_rects > 0 && CheckSize(subtitle, width, height, offsetX, offsetY, cueSize, cuePosition))
 				{
-					if (subtitle.start_display_time > 0)
-					{
-						position->Duration += 10000 * subtitle.start_display_time;
-					}
-					duration->Duration = 10000 * subtitle.end_display_time;
-
 					using namespace Windows::Graphics::Imaging;
 
 					auto bitmap = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, width, height, BitmapAlphaMode::Straight);
@@ -154,24 +137,6 @@ namespace FFmpegInterop
 			}
 
 			return nullptr;
-		}
-
-	public:
-
-		void Flush() override
-		{
-			SubtitleProvider::Flush();
-
-			std::vector<IMediaCue^> remove;
-			for each (auto cue in SubtitleTrack->Cues)
-			{
-				remove.push_back(cue);
-			}
-
-			for each (auto cue in remove)
-			{
-				SubtitleTrack->RemoveCue(cue);
-			}
 		}
 
 	private:
@@ -259,24 +224,6 @@ namespace FFmpegInterop
 			return hasSize;
 		}
 
-		void OnCueEntered(TimedMetadataTrack ^sender, MediaCueEventArgs ^args)
-		{
-			auto newCue = args->Cue;
-			std::vector<IMediaCue^> remove;
-			for each (auto cue in sender->Cues)
-			{
-				if (cue != newCue && cue->StartTime.Duration < newCue->StartTime.Duration)
-				{
-					remove.push_back(cue);
-				}
-			}
-
-			for each (auto cue in remove)
-			{
-				sender->RemoveCue(cue);
-			}
-		}
-
 	private:
 		int videoWidth;
 		int videoHeight;
@@ -285,5 +232,7 @@ namespace FFmpegInterop
 		int subtitleWidth;
 		int subtitleHeight;
 		int optimalHeight;
+		SoftwareBitmap^ dummyBitmap;
+
 	};
 }

@@ -15,8 +15,9 @@ namespace FFmpegInterop
 			AVCodecContext* avCodecCtx,
 			FFmpegInteropConfig^ config,
 			int index,
+			CoreDispatcher^ dispatcher,
 			bool convertToUtf8)
-			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::Subtitle)
+			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::Subtitle, dispatcher)
 		{
 			this->convertToUtf8 = convertToUtf8;
 		}

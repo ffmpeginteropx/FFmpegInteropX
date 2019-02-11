@@ -35,6 +35,7 @@ using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
 using namespace Windows::Media::Playback;
 using namespace Platform::Collections;
+using namespace Windows::UI::Core;
 namespace WFM = Windows::Foundation::Metadata;
 
 extern "C"
@@ -168,7 +169,7 @@ namespace FFmpegInterop
 
 
 	private:
-		FFmpegInteropMSS(FFmpegInteropConfig^ config);
+		FFmpegInteropMSS(FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 
 		HRESULT CreateMediaStreamSource(IRandomAccessStream^ stream, MediaStreamSource^ mss);
 		HRESULT CreateMediaStreamSource(String^ uri);
@@ -190,8 +191,8 @@ namespace FFmpegInterop
 
 	internal:
 
-		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss);
-		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config);
+		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);
+		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 		HRESULT Seek(TimeSpan position);
 
 		property MediaSampleProvider^ VideoSampleProvider
@@ -236,6 +237,7 @@ namespace FFmpegInterop
 		IVectorView<SubtitleStreamInfo^>^ subtitleStreamInfos;
 
 		std::recursive_mutex mutexGuard;
+		CoreDispatcher^ dispatcher;
 
 		String^ videoCodecName;
 		String^ audioCodecName;
