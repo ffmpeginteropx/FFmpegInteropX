@@ -852,9 +852,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 				{
 					if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
 					{
-						// only convert subtitle encoding for pure text subtitle files
-						bool convertToUtf8 = avFormatCtx->nb_streams == 1 && streamByteOrderMark == ByteOrderMark::Unknown;
-						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, dispatcher, convertToUtf8);
+						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, dispatcher);
 					}
 					else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
 					{
@@ -1328,9 +1326,12 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position)
 			// Flush all active streams
 			for each (auto stream in sampleProviders)
 			{
-				if (stream->IsEnabled)
+				if (stream)
 				{
-					stream->Flush();
+					if (stream->IsEnabled)
+					{
+						stream->Flush();
+					}
 				}
 			}
 		}
@@ -1353,27 +1354,6 @@ static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
 	if (FAILED(hr))
 	{
 		return -1;
-	}
-
-	// Check beginning of file for BOM on first read
-	if (mss->streamByteOrderMark == ByteOrderMark::Unchecked)
-	{
-		if (bytesRead >= 4)
-		{
-			auto bom = ((uint32 *)buf)[0];
-			if ((bom & 0x00FFFFFF) == 0x00BFBBEF)
-			{
-				mss->streamByteOrderMark = ByteOrderMark::UTF8;
-			}
-			else
-			{
-				mss->streamByteOrderMark = ByteOrderMark::Unknown;
-			}
-		}
-		else
-		{
-			mss->streamByteOrderMark = ByteOrderMark::Unknown;
-		}
 	}
 
 	// If we succeed but don't have any bytes, assume end of file

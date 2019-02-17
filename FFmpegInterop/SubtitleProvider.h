@@ -72,7 +72,7 @@ namespace FFmpegInterop
 				auto cue = CreateCue(packet, &position, &duration);
 				if (cue && position.Duration >= 0)
 				{
-					if (duration.Duration <= 0)
+					if (duration.Duration < 0)
 					{
 						duration.Duration = InfiniteDuration;
 					}
@@ -81,7 +81,29 @@ namespace FFmpegInterop
 					cue->Duration = duration;
 					AddCue(cue);
 
-					isPreviousCueInfiniteDuration = duration.Duration >= InfiniteDuration;
+					if (!m_config->IsExternalSubtitleParser)
+					{
+						isPreviousCueInfiniteDuration = duration.Duration >= InfiniteDuration;
+					}
+					else
+					{
+						// fixup infinite duration cues for external subs
+						if (isPreviousCueInfiniteDuration)
+						{
+							infiniteDurationCue->Duration = cue->StartTime - infiniteDurationCue->StartTime;
+						}
+
+						if (duration.Duration >= InfiniteDuration)
+						{
+							isPreviousCueInfiniteDuration = true;
+							infiniteDurationCue = cue;
+						}
+						else
+						{
+							isPreviousCueInfiniteDuration = false;
+							infiniteDurationCue = nullptr;
+						}
+					}
 				}
 			}
 			av_packet_free(&packet);
@@ -111,7 +133,8 @@ namespace FFmpegInterop
 					/*This is a fix only to work around a bug in windows phones: when 2 different cues have the exact same start position and length, the runtime panics and throws an exception
 					The problem has only been observed in external subtitles so far, and only on phones. Might also be present on ARM64 devices*/
 					bool individualCue = true;
-					if (this->timedMetadataKind == TimedMetadataKind::Subtitle) {
+					if (this->timedMetadataKind == TimedMetadataKind::Subtitle) 
+					{
 						for (int i = SubtitleTrack->Cues->Size - 1; i >= 0; i--)
 						{
 							auto existingSub = (TimedTextCue^)SubtitleTrack->Cues->GetAt(i);
@@ -331,10 +354,11 @@ namespace FFmpegInterop
 		Windows::UI::Core::CoreDispatcher^ dispatcher;
 		Windows::UI::Xaml::DispatcherTimer^ timer;
 		bool isPreviousCueInfiniteDuration;
+		IMediaCue^ infiniteDurationCue;
 		TimedMetadataTrack^ referenceTrack;
 		const long long InfiniteDuration = ((long long)0xFFFFFFFF) * 10000;
 
-};
+	};
 }
 
 

@@ -15,11 +15,9 @@ namespace FFmpegInterop
 			AVCodecContext* avCodecCtx,
 			FFmpegInteropConfig^ config,
 			int index,
-			CoreDispatcher^ dispatcher,
-			bool convertToUtf8)
+			CoreDispatcher^ dispatcher)
 			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::Subtitle, dispatcher)
 		{
-			this->convertToUtf8 = convertToUtf8;
 		}
 
 		virtual HRESULT Initialize() override
@@ -89,10 +87,6 @@ namespace FFmpegInterop
 		{
 			AVSubtitle subtitle;
 			int gotSubtitle = 0;
-			if (convertToUtf8)
-			{
-				ConvertEncoding(packet);
-			}
 			auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
 			if (result > 0 && gotSubtitle && subtitle.num_rects > 0)
 			{
@@ -494,32 +488,6 @@ namespace FFmpegInterop
 			}
 		}
 
-		void ConvertEncoding(AVPacket* packet)
-		{
-			if (this->m_config->AutoCorrectAnsiSubtitles) {
-				int size_needed = MultiByteToWideChar(m_config->AnsiSubtitleCodepage->WindowsEncodingTable, 0, (const char*)packet->data, packet->size, NULL, 0);
-				std::wstring wstr(size_needed, 0);
-				int result = MultiByteToWideChar(m_config->AnsiSubtitleCodepage->WindowsEncodingTable, 0, (const char*)packet->data, packet->size, &wstr[0], size_needed);
-				if (result != 0)
-				{
-					int size_out = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], size_needed, NULL, 0, NULL, NULL);
-					auto buffer = av_buffer_allocz(size_out + 1); // alloc 1 more byte for 0 terminated string!
-					if (buffer)
-					{
-						result = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], size_needed, (LPSTR)buffer->data, size_out, NULL, NULL);
-						if (result != 0)
-						{
-							// conversion successful. replace packet buffer with newly created buffer.
-							av_buffer_unref(&packet->buf);
-							packet->buf = buffer;
-							packet->data = buffer->data;
-							packet->size = buffer->size;
-						}
-					}
-				}
-			}
-		}
-
 		ref class SsaStyleDefinition
 		{
 		public:
@@ -536,6 +504,5 @@ namespace FFmpegInterop
 		int height;
 		const int styleIndex = 2;
 		std::map<String^, SsaStyleDefinition^> styles;
-		bool convertToUtf8;
 	};
 }
