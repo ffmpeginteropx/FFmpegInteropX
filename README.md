@@ -1,12 +1,12 @@
-# FFmpegInterop library for Windows
+# FFmpegInteropX library for Windows
 
 #### This project is licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0)
 
-## Welcome to FFmpegInterop-lukasf
+## Welcome to FFmpegInteropX
 
-FFmpegInterop is an open-source project that aims to provide an easy way to use **FFmpeg** in **Windows 10 UWP Apps**. This allows you to decode a lot of formats that are not natively supported on Windows 10.
+FFmpegInteropX is an open-source project that aims to provide an easy way to use **FFmpeg** in **Windows 10 UWP Apps**. This allows you to decode a lot of formats that are not natively supported on Windows 10.
 
-FFmpegInterop-lukasf is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
+FFmpegInteropX is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
 
 **Some of the important improvements:**
 
@@ -27,8 +27,19 @@ FFmpegInterop-lukasf is a much **improved fork** of the original [Microsoft proj
 - Visual Studio 2015 support has been dropped
 
 **Prerequisites:**
--  Visual Studio 2017
--  Windows 10 SDK 15063
+
+- Visual Studio 2017 15.9.x
+
+- Optional components from Visual Studio Installer:
+
+  - Universal Windows Platform tools
+  - VC++ 2017 version 15.9 v14.16 latest v141 tools
+  - Win 10 SDK (10.0.15063.0) for uwp: c#, vb, js
+  - Win 10 SDK (10.0.15063.0) for uwp: c++
+  - Visual C++ compilers and libraries for ARM64
+  - Visual C++ compilers and libraries for ARM
+  - C++ UWP tools for ARM64
+  - C++ runtime for uwp
 
 ## FFmpeg Version
 
@@ -36,7 +47,7 @@ Recommended: **FFmpeg 4.1**
 
 Minimum: **FFmpeg 4.0**
 
-An exception will be thrown if FFmpegInterop is used with anything lower than the minimum version. The recommended version has been tested and is what we currently recommend to use with FFmpegInterop-lukasf/master.
+An exception will be thrown if FFmpegInterop is used with anything lower than the minimum version. The recommended version has been tested and is what we currently recommend to use with FFmpegInteropX.
 
 A legacy branch exists which tagets **FFmpeg 3.4.2**.
 
@@ -44,30 +55,34 @@ A legacy branch exists which tagets **FFmpeg 3.4.2**.
 
 ## Getting the sources
 
-Getting a compatible UWP build of FFmpeg is required for this to work.
+FFmpegInteropX uses the following git submodules:
 
-You can simply use the embedded git submodule that points to the latest tested release of FFmpeg.
+- ffmpeg
+- Libs\bzlib2
+- Libs\iconv
+- Libs\zlib
+
+Please use clone recursive, to get the exact verion of the libs that is required for use with FFmpegInteropX.
 
 	git clone --recursive git://github.com/lukasf/FFmpegInterop.git
 
-Alternatively, you can get the code for [FFmpeg on Github](http://github.com/FFmpeg) yourself by cloning [git://source.ffmpeg.org/ffmpeg.git](git://source.ffmpeg.org/ffmpeg.git) and replace existing default `ffmpeg` folder with it.
+If you forgot to clone recursive, or if one of the library folders is empty, use these commands from FFmpegInteropX folder:
 
-	git clone git://github.com/lukasf/FFmpegInterop.git
-	cd FFmpegInterop
-	git clone git://source.ffmpeg.org/ffmpeg.git
+	git submodule init
+    git submodule update
 
-Your `FFmpegInterop` folder should look as follows
+Please do not use later versions of FFmpeg (e.g. master branch) with FFmpegInteropX. This could lead to various problems, ranging from build issues to runtime issues.
 
-	FFmpegInterop\
-	    bzip2\                 - bzip2 (bzliib) compression library
+Your `FFmpegInteropX` folder should look as follows
+
+	FFmpegInteropX\
 	    ffmpeg\                - ffmpeg source code from the latest release in git://github.com/FFmpeg/FFmpeg.git
 	    FFmpegInterop\         - FFmpegInterop WinRT component
-	    iconv\                 - iconv library for character encoding conversion
+	    Libs\bzip2\            - bzip2 (bzliib) compression library
+	    Libs\iconv\            - iconv library for character encoding conversion
+	    Libs\zlib\             - zlib compression library
 	    Samples\               - Sample Media Player applications in C++ and C#
 	    Tests\                 - Unit tests for FFmpegInterop
-	    zlib\                  - zlib compression library
-	    Tests\                 - Unit tests for FFmpegInterop
-	    BuildFFmpeg_VS2015.bat - FFmpeg build file for Visual Studio 2015
 	    BuildFFmpeg_VS2017.bat - FFmpeg build file for Visual Studio 2017
 	    FFmpegConfig.sh        - Internal script that contains FFmpeg configure options
 	    FFmpegInterop.sln      - Microsoft Visual Studio 2017 solution file for Windows 10 apps development
@@ -84,21 +99,7 @@ After installing the ffmpeg build tools, you can invoke `BuildFFmpeg_VS2017.bat`
 
 Note: You need Visual Studio 2017 15.9.0 or higher to build the ARM64 version of ffmpeg!
 
-Note: If you have Visual Studio 2015 installed as well, please try the Visual Studio 2015 build file (see below). Some people reported problems when having both installed and running the VS2017 file.
-
-## Building ffmpeg with Visual Studio 2015
-
-After installing the ffmpeg build tools, you can invoke the `BuildFFmpeg_VS2015.bat` script.
-
-	BuildFFmpeg_VS2015.bat win10                     - Build for Windows 10 ARM, x64, and x86
-	BuildFFmpeg_VS2015.bat phone8.1 ARM              - Build for Windows Phone 8.1 ARM only
-	BuildFFmpeg_VS2015.bat win8.1 x86 x64            - Build for Windows 8.1 x86 and x64 only
-	BuildFFmpeg_VS2015.bat phone8.1 win10 ARM        - Build for Windows 10 and Windows Phone 8.1 ARM only
-	BuildFFmpeg_VS2015.bat win8.1 phone8.1 win10     - Build all architecture for all target platform
-
-Alternatively, you can build the ffmpeg dlls manually using the instructions in the [ffmpeg compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT).
-
-## Building FFmpegInterop library
+## Building the FFmpegInterop library
 
 After building ffmpeg with the steps above, you should find the ffmpeg libraries in the `ffmpeg/Build/<platform\>/<architecture\>` folders.
 
@@ -106,7 +107,7 @@ Now you can build the FFmpegInterop library.
 
 Simply open the Visual Studio solution file `FFmpegInterop.sln`, set one of the MediaPlayer[CS/CPP/JS] sample projects as StartUp project, and run. FFmpegInterop should build cleanly giving you the interop object as well as the selected sample MediaPlayer (C++, C# or JS) that show how to connect the MediaStreamSource to a MediaElement or Video tag for playback.
 
-### Using the FFmpegInterop object
+### Using the FFmpegInteropMSS object
 
 Using the **FFmpegInteropMSS** object is fairly straightforward and can be observed from the sample applications provided.
 
@@ -114,6 +115,8 @@ Using the **FFmpegInteropMSS** object is fairly straightforward and can be obser
 2. Create a new `FFmpegInteropMSS` object using `FFmpegInteropMSS.CreateFromStreamAsync()` passing it the stream and optionally a config class instance.
 3. Get the MediaPlaybackItem from the Interop object by invoking `CreateMediaPlaybackItem()`
 4. Assign the MediaPlaybackItem to your MediaPlayer or MediaElement for playback.
+
+**Important:** Store the FFmpegInteropMSS instance e.g. in a local field, as long as playback is running. If the object is collected by the GC during playback, playback will stop with an error.
 
 Use `FFmepgInteropMSS.CreateFromUriAsync()` to create a MediaStreamSource on a streaming source (shoutcast for example).
 
