@@ -43,10 +43,14 @@ namespace MediaPlayerCPP
 		void Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void OnButtonPressed(Windows::Media::SystemMediaTransportControls ^sender, Windows::Media::SystemMediaTransportControlsButtonPressedEventArgs ^args);
 		void LoadSubtitleFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void LoadSubtitleFileFFmpeg(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void OnResolved(Windows::Media::Core::TimedTextSource ^sender, Windows::Media::Core::TimedTextSourceResolveResultEventArgs ^args);
+		void OnTimedMetadataTracksChanged(Windows::Media::Playback::MediaPlaybackItem ^sender, Windows::Foundation::Collections::IVectorChangedEventArgs ^args);
 
 		Windows::Storage::StorageFile^ currentFile;
 		FFmpegInterop::FFmpegInteropMSS^ FFmpegMSS;
 		Windows::Media::Playback::MediaPlaybackItem^ playbackItem;
+		Windows::Foundation::EventRegistrationToken timedMetadataTracksChangedToken;
+		void CbEncodings_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e);
 	};
 }

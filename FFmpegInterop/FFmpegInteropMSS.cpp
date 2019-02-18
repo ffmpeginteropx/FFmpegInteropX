@@ -321,7 +321,13 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		{
 			subConfig->StreamTimeDuration = this->Duration;
 		}
-		subConfig->AnsiSubtitleCodepage = this->config->AnsiSubtitleCodepage;
+		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
+		subConfig->AnsiSubtitleEncoding = this->config->AnsiSubtitleEncoding;
+		subConfig->OverrideSubtitleStyles = this->config->OverrideSubtitleStyles;
+		subConfig->SubtitleRegion = this->config->SubtitleRegion;
+		subConfig->SubtitleStyle = this->config->SubtitleStyle;
+		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
+
 		if (VideoDescriptor)
 		{
 			subConfig->AdditionalFFmpegSubtitleOptions = ref new PropertySet();
@@ -816,10 +822,11 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 			DebugMessage(L"Could not allocate a decoding context\n");
 			hr = E_OUTOFMEMORY;
 		}
+
 		//inject custom properties
-		if (config->AutoCorrectAnsiSubtitles)
+		if (config->AutoCorrectAnsiSubtitles && streamByteOrderMark != ByteOrderMark::UTF8)
 		{
-			String^ key = config->AnsiSubtitleCodepage->Name;
+			String^ key = config->AnsiSubtitleEncoding->Name;
 			std::wstring keyW(key->Begin());
 			std::string keyA(keyW.begin(), keyW.end());
 			const char* keyChar = keyA.c_str();
@@ -828,7 +835,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 			{
 				DebugMessage(L"Could not set sub_charenc on subtitle provider\n");
 			}
-			if (av_opt_set_int(avSubsCodecCtx, "sub_charenc_mode", FF_SUB_CHARENC_MODE_PRE_DECODER, AV_OPT_SEARCH_CHILDREN) < 0)
+			if (av_opt_set_int(avSubsCodecCtx, "sub_charenc_mode", FF_SUB_CHARENC_MODE_AUTOMATIC, AV_OPT_SEARCH_CHILDREN) < 0)
 			{
 				DebugMessage(L"Could not set sub_charenc_mode on subtitle provider\n");
 			}
@@ -1354,6 +1361,27 @@ static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
 	if (FAILED(hr))
 	{
 		return -1;
+	}
+
+	// Check beginning of file for BOM on first read
+	if (mss->streamByteOrderMark == ByteOrderMark::Unchecked)
+	{
+		if (bytesRead >= 4)
+		{
+			auto bom = ((uint32 *)buf)[0];
+			if ((bom & 0x00FFFFFF) == 0x00BFBBEF)
+			{
+				mss->streamByteOrderMark = ByteOrderMark::UTF8;
+			}
+			else
+			{
+				mss->streamByteOrderMark = ByteOrderMark::Unknown;
+			}
+		}
+		else
+		{
+			mss->streamByteOrderMark = ByteOrderMark::Unknown;
+		}
 	}
 
 	// If we succeed but don't have any bytes, assume end of file

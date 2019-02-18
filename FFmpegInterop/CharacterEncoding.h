@@ -10,10 +10,12 @@ using namespace Windows::Media::Core;
 
 
 namespace FFmpegInterop {
+
+	[Windows::UI::Xaml::Data::Bindable]
 	public ref class CharacterEncoding sealed
 	{
 		String^ name, ^description;
-		int win_charEncoding;
+		int codePage;
 		static Platform::Collections::Vector<CharacterEncoding^>^ internalMap;
 
 
@@ -34,24 +36,24 @@ namespace FFmpegInterop {
 			}
 		}
 
-		property int WindowsCharacterEncoding
+		property int WindowsCodePage
 		{
 			int get()
 			{
-				return win_charEncoding;
+				return codePage;
 			}
 		}
 	internal:
-		CharacterEncoding(int p_windowsTable, String^ p_name, String^ p_description)
+		CharacterEncoding(int p_codePage, String^ p_name, String^ p_description)
 		{
-			win_charEncoding = p_windowsTable;
+			codePage = p_codePage;
 			name = p_name;
 			description = p_description;
 		}
 
 
 	public:
-		static IVectorView<CharacterEncoding^>^ GetTables()
+		static IVectorView<CharacterEncoding^>^ GetCharacterEncodings()
 		{
 			if (internalMap == nullptr) {
 				//populate and create the vector.
@@ -228,9 +230,9 @@ namespace FFmpegInterop {
 
 		}
 
-		static CharacterEncoding^ GetCurrentSystemDefault()
+		static CharacterEncoding^ GetSystemDefault()
 		{
-			return GetTables()->GetAt(0);
+			return GetCharacterEncodings()->GetAt(0);
 		}
 	};
 }

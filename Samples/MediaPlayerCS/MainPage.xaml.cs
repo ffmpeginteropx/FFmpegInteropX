@@ -39,7 +39,6 @@ namespace MediaPlayerCS
         private FFmpegInteropMSS FFmpegMSS;
         private StorageFile currentFile;
         private MediaPlaybackItem playbackItem;
-        List<AnsiEncodingItem> cbItemsSource = new List<AnsiEncodingItem>();
 
         public bool AutoCreatePlaybackItem
         {
@@ -58,38 +57,9 @@ namespace MediaPlayerCS
 
             // optionally check for recommended ffmpeg version
             FFmpegVersionInfo.CheckRecommendedVersion();
-            cbEncodings.SelectionChanged += CbEncodings_SelectionChanged;
-            PrepareEncodingTables();
-        }
 
-        private void CbEncodings_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (cbEncodings.SelectedIndex >= 0)
-            {
-                Config.AnsiSubtitleCodepage = cbItemsSource[cbEncodings.SelectedIndex].FFTable;
-            }
-            else
-            {
-                Config.AnsiSubtitleCodepage = null;
-            }
-        }
-
-        public void PrepareEncodingTables()
-        {
-            var fftables = FFmpegInterop.CharacterEncoding.GetTables().OrderBy(x => x.WindowsCharacterEncoding);
-            foreach (var t in fftables)
-            {
-                try
-                {
-                    cbItemsSource.Add(new AnsiEncodingItem(t));
-                }
-                catch
-                {
-
-                }
-            }
-
-            cbEncodings.ItemsSource = cbItemsSource;
+            // populate character encodings
+            cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
         }
 
         public FFmpegInteropConfig Config { get; set; }
@@ -275,6 +245,14 @@ namespace MediaPlayerCS
             var x = await errorDialog.ShowAsync();
         }
 
+        private void CbEncodings_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cbEncodings.SelectedItem != null)
+            {
+                Config.AnsiSubtitleEncoding = (CharacterEncoding)cbEncodings.SelectedItem;
+            }
+        }
+
         private async void LoadSubtitleFileFFmpeg(object sender, RoutedEventArgs e)
         {
             if (FFmpegMSS != null)
@@ -312,9 +290,10 @@ namespace MediaPlayerCS
 
         private void PlaybackItem_TimedMetadataTracksChanged(MediaPlaybackItem sender, Windows.Foundation.Collections.IVectorChangedEventArgs args)
         {
-            sender.TimedMetadataTracksChanged -= PlaybackItem_TimedMetadataTracksChanged;
             if (args.CollectionChange == Windows.Foundation.Collections.CollectionChange.ItemInserted)
             {
+                sender.TimedMetadataTracksChanged -= PlaybackItem_TimedMetadataTracksChanged;
+             
                 // unselect other subs
                 for (uint i = 0; i < sender.TimedMetadataTracks.Count; i++)
                 {

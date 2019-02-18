@@ -35,7 +35,6 @@ namespace FFmpegInterop
 			FFmpegOptions = ref new PropertySet();
 
 			AutoSelectForcedSubtitles = true;
-			UseAntiFlickerForSubtitles = true;
 			OverrideSubtitleStyles = false;
 
 			SubtitleRegion = ref new TimedTextRegion();
@@ -91,7 +90,7 @@ namespace FFmpegInterop
 			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };
 
 			AutoCorrectAnsiSubtitles = true;
-			AnsiSubtitleCodepage = CharacterEncoding::GetCurrentSystemDefault();
+			AnsiSubtitleEncoding = CharacterEncoding::GetSystemDefault();
 
 			DefaultAudioStreamName = "Audio Stream";
 			DefaultSubtitleStreamName = "Subtitle";
@@ -128,17 +127,16 @@ namespace FFmpegInterop
 		property TimedTextRegion^ SubtitleRegion;
 		property TimedTextStyle^ SubtitleStyle;
 		property bool AutoSelectForcedSubtitles;
-		property bool UseAntiFlickerForSubtitles;
 		property bool OverrideSubtitleStyles;
 		/*Used to force conversion of ANSII encoded subtitles to Unicode.*/
 		property bool AutoCorrectAnsiSubtitles;
 		/*The code page used to decode ANSII encoded subtitles. By default, the active windows codepage is used*/
-		property CharacterEncoding^ AnsiSubtitleCodepage
+		property CharacterEncoding^ AnsiSubtitleEncoding
 		{
 			void set(CharacterEncoding^ value)
 			{
 				if (value == nullptr)
-					throw ref new NullReferenceException();
+					throw ref new InvalidArgumentException();
 				m_CharacterEncoding = value;
 			}
 			CharacterEncoding^ get()

@@ -45,6 +45,13 @@ extern "C"
 
 namespace FFmpegInterop
 {
+	enum ByteOrderMark
+	{
+		Unchecked,
+		Unknown,
+		UTF8
+	};
+
 	public ref class FFmpegInteropMSS sealed
 	{
 	public:
@@ -201,6 +208,7 @@ namespace FFmpegInterop
 		AVIOContext* avIOCtx;
 		AVFormatContext* avFormatCtx;
 		IStream* fileStreamData;
+		ByteOrderMark streamByteOrderMark;
 		FFmpegInteropConfig ^ config;
 
 	private:
