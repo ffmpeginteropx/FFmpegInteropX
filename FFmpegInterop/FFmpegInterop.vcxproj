@@ -388,7 +388,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\BuildFFmpeg_VS2015.bat" />
     <None Include="..\BuildFFmpeg_VS2017.bat" />
     <None Include="..\FFmpegConfig.sh" />
     <None Include="..\README.md" />

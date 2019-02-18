@@ -156,8 +156,5 @@
     <None Include="..\README.md">
       <Filter>Build</Filter>
     </None>
-    <None Include="..\BuildFFmpeg_VS2015.bat">
-      <Filter>Build</Filter>
-    </None>
   </ItemGroup>
 </Project>
