@@ -414,7 +414,8 @@ void FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrack
 	{
 		if (stream->SubtitleTrack == args->Track)
 		{
-			if (args->NewPresentationMode == TimedMetadataTrackPresentationMode::Disabled)
+			auto mode = args->NewPresentationMode;
+			if (mode == TimedMetadataTrackPresentationMode::Disabled || mode == TimedMetadataTrackPresentationMode::Hidden)
 			{
 				stream->DisableStream();
 			}
@@ -824,7 +825,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 		}
 
 		//inject custom properties
-		if (config->AutoCorrectAnsiSubtitles && streamByteOrderMark != ByteOrderMark::UTF8)
+		if (config->AutoCorrectAnsiSubtitles && config->IsExternalSubtitleParser && streamByteOrderMark != ByteOrderMark::UTF8)
 		{
 			String^ key = config->AnsiSubtitleEncoding->Name;
 			std::wstring keyW(key->Begin());
