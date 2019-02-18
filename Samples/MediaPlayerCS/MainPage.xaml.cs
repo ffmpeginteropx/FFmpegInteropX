@@ -76,7 +76,7 @@ namespace MediaPlayerCS
 
         public void PrepareEncodingTables()
         {
-            var fftables = FFmpegInterop.EncodingTable.GetTables().OrderBy(x=>x.WindowsEncodingTable);
+            var fftables = FFmpegInterop.CharacterEncoding.GetTables().OrderBy(x => x.WindowsCharacterEncoding);
             foreach (var t in fftables)
             {
                 try

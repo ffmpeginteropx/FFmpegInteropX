@@ -817,7 +817,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 			hr = E_OUTOFMEMORY;
 		}
 		//inject custom properties
-		if (config->AnsiSubtitleCodepage != nullptr)
+		if (config->AutoCorrectAnsiSubtitles)
 		{
 			String^ key = config->AnsiSubtitleCodepage->Name;
 			std::wstring keyW(key->Begin());

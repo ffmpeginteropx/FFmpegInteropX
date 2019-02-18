@@ -1,5 +1,5 @@
 #pragma once
-#include <EncodingTables.h>
+#include <CharacterEncoding.h>
 #include "TimeSpanHelpers.h"
 
 using namespace Platform;
@@ -90,8 +90,8 @@ namespace FFmpegInterop
 			SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
 			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };
 
-			AutoCorrectAnsiSubtitles = false;
-			AnsiSubtitleCodepage = EncodingTable::GetCurrentSystemDefault(); // leave null for skiping charset conversion
+			AutoCorrectAnsiSubtitles = true;
+			AnsiSubtitleCodepage = CharacterEncoding::GetCurrentSystemDefault();
 
 			DefaultAudioStreamName = "Audio Stream";
 			DefaultSubtitleStreamName = "Subtitle";
@@ -133,7 +133,19 @@ namespace FFmpegInterop
 		/*Used to force conversion of ANSII encoded subtitles to Unicode.*/
 		property bool AutoCorrectAnsiSubtitles;
 		/*The code page used to decode ANSII encoded subtitles. By default, the active windows codepage is used*/
-		property EncodingTable^ AnsiSubtitleCodepage;
+		property CharacterEncoding^ AnsiSubtitleCodepage
+		{
+			void set(CharacterEncoding^ value)
+			{
+				if (value == nullptr)
+					throw ref new NullReferenceException();
+				m_CharacterEncoding = value;
+			}
+			CharacterEncoding^ get()
+			{
+				return m_CharacterEncoding;
+			}
+		}
 
 		property String^ DefaultAudioStreamName;
 		property String^ DefaultSubtitleStreamName;
@@ -150,6 +162,9 @@ namespace FFmpegInterop
 		property TimeSpan StreamTimeDuration;
 		/*Used to pass additional, specific options to external sub parsers*/
 		property PropertySet^ AdditionalFFmpegSubtitleOptions;
+
+	private:
+		CharacterEncoding^ m_CharacterEncoding;
 
 	};
 }

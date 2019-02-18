@@ -54,7 +54,7 @@
     <ClCompile Include="NativeBufferFactory.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="EncodingTables.cpp">
+    <ClCompile Include="CharacterEncoding.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
@@ -136,13 +136,13 @@
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="FFmpegVersionInfo.h" />
-    <ClInclude Include="EncodingTables.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
     <ClInclude Include="ReferenceCue.h">
       <Filter>Subtitles</Filter>
     </ClInclude>
     <ClInclude Include="TimeSpanHelpers.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="CharacterEncoding.h">
       <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>

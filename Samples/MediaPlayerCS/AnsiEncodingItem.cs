@@ -9,21 +9,21 @@ namespace MediaPlayerCS
 {
     public class AnsiEncodingItem
     {
-        public EncodingTable FFTable
+        public CharacterEncoding FFTable
         {
             get;
             private set;
         }
 
 
-        public AnsiEncodingItem(EncodingTable table)
+        public AnsiEncodingItem(CharacterEncoding table)
         {
             this.FFTable = table;
         }
 
         public override string ToString()
         {
-            return FFTable.Name + " | " + FFTable.WindowsEncodingTable;
+            return FFTable.Name + " | " + FFTable.WindowsCharacterEncoding;
         }
     }
 }

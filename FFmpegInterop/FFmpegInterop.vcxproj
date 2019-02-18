@@ -330,7 +330,7 @@
     <ClInclude Include="AvEffectDefinition.h" />
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
-    <ClInclude Include="EncodingTables.h" />
+    <ClInclude Include="CharacterEncoding.h" />
     <ClInclude Include="FFmpegInteropConfig.h" />
     <ClInclude Include="FFmpegInteropLogging.h" />
     <ClInclude Include="FFmpegInteropMSS.h" />
@@ -363,7 +363,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CompressedSampleProvider.cpp" />
-    <ClCompile Include="EncodingTables.cpp" />
+    <ClCompile Include="CharacterEncoding.cpp" />
     <ClCompile Include="FFmpegInteropLogging.cpp" />
     <ClCompile Include="FFmpegInteropMSS.cpp" />
     <ClCompile Include="FFmpegReader.cpp" />
