@@ -16,6 +16,10 @@ namespace FFmpegInterop
 			PassthroughVideoH264 = true;
 			PassthroughVideoH264Hi10P = false; // neither Windows codecs nor known HW decoders support Hi10P
 			PassthroughVideoHEVC = true;
+			PassthroughVideoWMV3 = true;
+			PassthroughVideoVC1 = true;
+			PassthroughVideoMPEG2 = false; // requires "MPEG-2 Video Extensions"
+			PassthroughVideoVP9 = false; // requires "VP9 Video Extensions"
 
 			VideoOutputAllowIyuv = false;
 			VideoOutputAllow10bit = false;
@@ -93,6 +97,10 @@ namespace FFmpegInterop
 		property bool PassthroughVideoH264;
 		property bool PassthroughVideoH264Hi10P;
 		property bool PassthroughVideoHEVC;
+		property bool PassthroughVideoWMV3;
+		property bool PassthroughVideoVC1;
+		property bool PassthroughVideoMPEG2;
+		property bool PassthroughVideoVP9;
 
 		property bool VideoOutputAllowIyuv;
 		property bool VideoOutputAllow10bit;
