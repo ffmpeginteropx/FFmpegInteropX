@@ -85,11 +85,15 @@ namespace FFmpegInterop
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime);
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime, TimeSpan durationLimit);
 
-		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName);
+		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName, CharacterEncoding^ charEncoding);
+		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName)
+		{
+			return AddExternalSubtitleAsync(stream, streamName, config->AnsiSubtitleEncoding);
+		}
 		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream)
 		{
-			return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName);
-		};
+			return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName, config->AnsiSubtitleEncoding);
+		}
 
 		virtual ~FFmpegInteropMSS();
 
@@ -220,7 +224,7 @@ namespace FFmpegInterop
 		MediaPlaybackItem^ playbackItem;
 		Vector<AudioStreamInfo^>^ audioStrInfos;
 		Vector<SubtitleStreamInfo^>^ subtitleStrInfos;
-	
+
 		std::vector<MediaSampleProvider^> sampleProviders;
 		std::vector<MediaSampleProvider^> audioStreams;
 		std::vector<SubtitleProvider^> subtitleStreams;
