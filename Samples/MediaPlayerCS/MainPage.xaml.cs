@@ -220,5 +220,16 @@ namespace MediaPlayerCS
             var x = await errorDialog.ShowAsync();
         }
 
+        private void PassthroughVideo_Toggled(object sender, RoutedEventArgs e)
+        {
+            var passthrough = PassthroughVideo.IsOn;
+            Config.PassthroughVideoH264 = passthrough;
+            Config.PassthroughVideoH264Hi10P = passthrough;
+            Config.PassthroughVideoHEVC = passthrough;
+            Config.PassthroughVideoMPEG2 = passthrough;
+            Config.PassthroughVideoVC1 = passthrough;
+            Config.PassthroughVideoVP9 = passthrough;
+            Config.PassthroughVideoWMV3 = passthrough;
+        }
     }
 }

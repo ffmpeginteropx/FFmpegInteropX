@@ -268,3 +268,14 @@ void MainPage::DisplayErrorMessage(Platform::String^ message)
 	errorDialog->ShowAsync();
 }
 
+void MediaPlayerCPP::MainPage::PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	auto passthrough = PassthroughVideo->IsOn;
+	Config->PassthroughVideoH264 = passthrough;
+	Config->PassthroughVideoH264Hi10P = passthrough;
+	Config->PassthroughVideoHEVC = passthrough;
+	Config->PassthroughVideoMPEG2 = passthrough;
+	Config->PassthroughVideoVC1 = passthrough;
+	Config->PassthroughVideoVP9 = passthrough;
+	Config->PassthroughVideoWMV3 = passthrough;
+}

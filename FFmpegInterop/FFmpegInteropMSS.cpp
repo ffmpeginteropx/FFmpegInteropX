@@ -1030,7 +1030,6 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 		}
 	}
-#if _WIN32_WINNT >= 0x0A00 // only compile if platform toolset is Windows 10 or higher
 	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC && config->PassthroughVideoHEVC && !config->IsFrameGrabber &&
 		Windows::Foundation::Metadata::ApiInformation::IsMethodPresent("Windows.Media.MediaProperties.VideoEncodingProperties", "CreateHevc"))
 	{
@@ -1047,7 +1046,6 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 		}
 	}
-#endif
 	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3 && config->PassthroughVideoWMV3 && !config->IsFrameGrabber && avVideoCodecCtx->extradata_size > 0)
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
@@ -1073,7 +1071,8 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 
 		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 	}
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP9 && config->PassthroughVideoVP9 && !config->IsFrameGrabber)
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP9 && config->PassthroughVideoVP9 && !config->IsFrameGrabber &&
+		Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.MediaProperties.MediaEncodingSubtypes", "Vp9"))
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
 		videoProperties->Subtype = MediaEncodingSubtypes::Vp9;

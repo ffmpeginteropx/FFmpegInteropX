@@ -44,6 +44,7 @@ namespace MediaPlayerCPP
 		void OnButtonPressed(Windows::Media::SystemMediaTransportControls ^sender, Windows::Media::SystemMediaTransportControlsButtonPressedEventArgs ^args);
 		void LoadSubtitleFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void OnResolved(Windows::Media::Core::TimedTextSource ^sender, Windows::Media::Core::TimedTextSourceResolveResultEventArgs ^args);
+		void PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 
 		Windows::Storage::StorageFile^ currentFile;
 		FFmpegInterop::FFmpegInteropMSS^ FFmpegMSS;
