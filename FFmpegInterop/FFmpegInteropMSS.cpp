@@ -309,9 +309,9 @@ MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem(TimeSpan startTime,
 	}
 }
 
-IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ stream, String^ streamName, CharacterEncoding^ charEncoding)
+IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ stream, String^ streamName)
 {
-	return create_async([this, stream, streamName, charEncoding]
+	return create_async([this, stream, streamName]
 	{
 
 		auto subConfig = ref new FFmpegInteropConfig();
@@ -322,7 +322,7 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 			subConfig->StreamTimeDuration = this->Duration;
 		}
 		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
-		subConfig->AnsiSubtitleEncoding = charEncoding;
+		subConfig->AnsiSubtitleEncoding = this->config->AnsiSubtitleEncoding;
 		subConfig->OverrideSubtitleStyles = this->config->OverrideSubtitleStyles;
 		subConfig->SubtitleRegion = this->config->SubtitleRegion;
 		subConfig->SubtitleStyle = this->config->SubtitleStyle;

@@ -85,19 +85,24 @@ namespace FFmpegInterop
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime);
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime, TimeSpan durationLimit);
 
-		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName, CharacterEncoding^ charEncoding);
-		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName)
-		{
-			return AddExternalSubtitleAsync(stream, streamName, config->AnsiSubtitleEncoding);
-		}
+		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName);
+
 		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream)
 		{
-			return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName, config->AnsiSubtitleEncoding);
+			return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName);
 		}
 
 		virtual ~FFmpegInteropMSS();
 
 		// Properties
+
+		property FFmpegInteropConfig^ Configuration
+		{
+			FFmpegInteropConfig^ get()
+			{
+				return config;
+			}
+		}
 
 		property TimeSpan Duration
 		{
