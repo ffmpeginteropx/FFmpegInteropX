@@ -253,6 +253,8 @@ namespace FFmpegInterop
 		TimeSpan mediaDuration;
 		unsigned char* fileStreamBuffer;
 		bool isFirstSeek;
+
+		static CoreDispatcher^ GetCurrentDispatcher();
 	};
 
 }

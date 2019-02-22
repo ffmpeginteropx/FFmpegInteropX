@@ -48,6 +48,7 @@ using namespace Platform::Collections;
 using namespace Windows::Storage::Streams;
 using namespace Windows::Media::MediaProperties;
 using namespace Windows::Foundation::Collections;
+using namespace Windows::ApplicationModel::Core;
 
 // Static functions passed to FFmpeg
 static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize);
@@ -125,7 +126,7 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 
 IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromStreamAsync(IRandomAccessStream^ stream, FFmpegInteropConfig^ config)
 {
-	auto dispatcher = Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Dispatcher;
+	auto dispatcher = GetCurrentDispatcher();
 	return create_async([stream, config, dispatcher]
 	{
 		return CreateFromStream(stream, config, nullptr, dispatcher);
@@ -134,7 +135,7 @@ IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromStreamAsync(IRan
 
 IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromUriAsync(String^ uri, FFmpegInteropConfig^ config)
 {
-	auto dispatcher = Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Dispatcher;
+	auto dispatcher = GetCurrentDispatcher();
 	return create_async([uri, config, dispatcher]
 	{
 		auto result = CreateFromUri(uri, config, dispatcher);
@@ -182,7 +183,7 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromStream(IRandomAcce
 	}
 	try
 	{
-		auto dispatcher = Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Dispatcher;
+		auto dispatcher = GetCurrentDispatcher();
 		return CreateFromStream(stream, config, nullptr, dispatcher);
 	}
 	catch (...)
@@ -217,7 +218,7 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromUri(String^ uri, b
 	}
 	try
 	{
-		auto dispatcher = Windows::ApplicationModel::Core::CoreApplication::GetCurrentView()->Dispatcher;
+		auto dispatcher = GetCurrentDispatcher();
 		return CreateFromUri(uri, config, dispatcher);
 	}
 	catch (...)
@@ -1350,6 +1351,21 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position)
 	}
 
 	return hr;
+}
+
+CoreDispatcher ^ FFmpegInterop::FFmpegInteropMSS::GetCurrentDispatcher()
+{
+	//try get the current view
+	auto wnd = CoreApplication::GetCurrentView();
+	if (wnd == nullptr)
+	{
+		wnd = CoreApplication::MainView;
+	}
+	if (wnd != nullptr)
+		return wnd->Dispatcher;
+
+	return nullptr;
+
 }
 
 // Static function to read file stream and pass data to FFmpeg. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
