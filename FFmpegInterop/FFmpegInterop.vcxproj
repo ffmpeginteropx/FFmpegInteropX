@@ -328,6 +328,7 @@
     <ClInclude Include="AudioEffectFactory.h" />
     <ClInclude Include="AudioFilter.h" />
     <ClInclude Include="AvEffectDefinition.h" />
+    <ClInclude Include="CodecChecker.h" />
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
     <ClInclude Include="FFmpegInteropConfig.h" />
@@ -359,6 +360,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CodecChecker.cpp" />
     <ClCompile Include="CompressedSampleProvider.cpp" />
     <ClCompile Include="FFmpegInteropLogging.cpp" />
     <ClCompile Include="FFmpegInteropMSS.cpp" />
