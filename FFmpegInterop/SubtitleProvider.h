@@ -251,6 +251,10 @@ namespace FFmpegInterop
 					timer->Start();
 				}));
 			}
+			else
+			{
+				OnTick(nullptr, nullptr);
+			}
 		}
 
 		void OnTick(Platform::Object ^sender, Platform::Object ^args)
