@@ -14,7 +14,12 @@ FFmpegInterop-lukasf is a much **improved fork** of the original [Microsoft proj
 - Subtitle support
 - Audio effects (special thanks to [mcosmin222](https://github.com/mcosmin222)!)
 - Stream information retrieval (name, language, format, etc)
-- Passthrough of HEVC video for hardware decoding
+- Passthrough of the following video formats for hardware decoding
+  - HEVC
+  - VC1 (Used in VC1 Advanced Profile)
+  - WMV3 (Used in WMV9 and VC1 Simple and Main Profile)
+  - MPEG2 (Requires "MPEG-2 Video Extensions" from Windows Store)
+  - VP9 (Requires "VP9 Video Extensions" from Windows Store)
 - Major performance improvements (zero-copy data handling in all important areas)
 - Frame grabber support
 - API improvements
