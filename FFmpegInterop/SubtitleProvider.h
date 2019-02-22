@@ -32,6 +32,8 @@ namespace FFmpegInterop
 
 		property TimedMetadataTrack^ SubtitleTrack;
 
+		property MediaPlaybackItem^ PlaybackItem;
+
 		virtual HRESULT Initialize() override
 		{
 			InitializeNameLanguageCodec();
@@ -41,7 +43,8 @@ namespace FFmpegInterop
 			
 			if (!m_config->IsExternalSubtitleParser)
 			{
-				if (timedMetadataKind == TimedMetadataKind::ImageSubtitle)
+				if (Windows::Foundation::Metadata::ApiInformation::IsEnumNamedValuePresent("Windows.Media.Core.TimedMetadataKind", "ImageSubtitle") && 
+					timedMetadataKind == TimedMetadataKind::ImageSubtitle)
 				{
 					SubtitleTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueEntered);
 				}
@@ -295,8 +298,8 @@ namespace FFmpegInterop
 				referenceTrack = ref new TimedMetadataTrack("ReferenceTrack_" + Name, "", TimedMetadataKind::Custom);
 				referenceTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnRefCueEntered);
 
-				SubtitleTrack->PlaybackItem->TimedMetadataTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem ^, Windows::Foundation::Collections::IVectorChangedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTimedMetadataTracksChanged);
-				SubtitleTrack->PlaybackItem->Source->ExternalTimedMetadataTracks->Append(referenceTrack);
+				PlaybackItem->TimedMetadataTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem ^, Windows::Foundation::Collections::IVectorChangedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTimedMetadataTracksChanged);
+				PlaybackItem->Source->ExternalTimedMetadataTracks->Append(referenceTrack);
 			}
 		}
 
@@ -306,7 +309,7 @@ namespace FFmpegInterop
 			if (args->CollectionChange == CollectionChange::ItemInserted &&
 				sender->TimedMetadataTracks->GetAt(args->Index) == referenceTrack)
 			{
-				SubtitleTrack->PlaybackItem->TimedMetadataTracks->SetPresentationMode(
+				PlaybackItem->TimedMetadataTracks->SetPresentationMode(
 					args->Index, Windows::Media::Playback::TimedMetadataTrackPresentationMode::Hidden);
 			}
 		}

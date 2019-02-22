@@ -320,8 +320,15 @@ namespace FFmpegInterop
 						SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
 						SubtitleStyle->OutlineColor = ColorFromArgb(outlineColor << 8 | 0x000000FF);
 
-						SubtitleStyle->IsUnderlineEnabled = underline;
-						SubtitleStyle->IsLineThroughEnabled = strikeout;
+						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsUnderlineEnabled"))
+						{
+							SubtitleStyle->IsUnderlineEnabled = underline;
+						}
+
+						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsLineThroughEnabled"))
+						{
+							SubtitleStyle->IsLineThroughEnabled = strikeout;
+						}
 
 						auto style = ref new SsaStyleDefinition();
 						style->Name = ConvertString(name);
