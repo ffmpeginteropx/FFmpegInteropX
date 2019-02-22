@@ -43,7 +43,7 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 
 ## FFmpeg Version
 
-Recommended: **FFmpeg 4.1**
+Recommended: **FFmpeg 4.1.1**
 
 Minimum: **FFmpeg 4.0**
 
@@ -132,7 +132,9 @@ FFmpegInterop will automatically load and use all embedded subtitles, supporting
 
 You can also add external subtitle files by using `FFmpegInteropMSS.AddExternalSubtitleAsync()`, even during playback. See the sample apps for reference. All ffmpeg subtitle formats are supported as external files, except for the two-file "sub/idx" (DVD) format. 
 
-Some external text subtitle files are stored with ANSI encoding instead of UTF8 (which is required by ffmpeg). FFmpegInterop can do an automatic conversion to UTF8. This is enabled by default in the config class and will use the system's active codepage by default. You can change the behavior by changing `AutoCorrectAnsiSubtitles` and `AnsiSubtitleCodepage` parameters in the config class. Codepage 0 is the system's active codepage.
+Some external text subtitle files are stored with ANSI encoding instead of UTF8 (which is required by ffmpeg). FFmpegInterop can do an automatic conversion to UTF8. This is enabled by default in the config class and will use the system's active codepage by default. You can change the behavior by changing `AutoCorrectAnsiSubtitles` and `AnsiSubtitleEncoding` parameters in the config class. Codepage 0 is the system's active codepage.
+
+Note: If your app uses multiple windows using CoreApplication.CreateNewView(), then you must create the FFmpegInteropMSS object on the thread of the window where the video is to be shown. Otherwise, subtitles will flicker.
 
 ## Integrating FFmpegInterop into your app solution
 
