@@ -9,6 +9,7 @@
 #include <ReferenceCue.h>
 
 using namespace Windows::UI::Core;
+using namespace Windows::Media::Playback;
 
 namespace FFmpegInterop
 {
