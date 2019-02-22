@@ -171,6 +171,10 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromStream(IRandomAcce
 	config->PassthroughVideoH264 = !forceVideoDecode;
 	config->PassthroughVideoH264Hi10P = !forceVideoDecode;
 	config->PassthroughVideoHEVC = !forceVideoDecode;
+	config->PassthroughVideoMPEG2 = !forceVideoDecode;
+	config->PassthroughVideoVC1 = !forceVideoDecode;
+	config->PassthroughVideoVP9 = !forceVideoDecode;
+	config->PassthroughVideoWMV3 = !forceVideoDecode;
 	if (ffmpegOptions != nullptr)
 	{
 		config->FFmpegOptions = ffmpegOptions;
@@ -204,7 +208,11 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromUri(String^ uri, b
 	config->PassthroughAudioMP3 = !forceAudioDecode;
 	config->PassthroughVideoH264 = !forceVideoDecode;
 	config->PassthroughVideoH264Hi10P = !forceVideoDecode;
-	config->PassthroughVideoHEVC = !forceVideoDecode;
+	config->PassthroughVideoHEVC = !forceVideoDecode;	
+	config->PassthroughVideoMPEG2 = !forceVideoDecode;
+	config->PassthroughVideoVC1 = !forceVideoDecode;
+	config->PassthroughVideoVP9 = !forceVideoDecode;
+	config->PassthroughVideoWMV3 = !forceVideoDecode;
 	if (ffmpegOptions != nullptr)
 	{
 		config->FFmpegOptions = ffmpegOptions;
