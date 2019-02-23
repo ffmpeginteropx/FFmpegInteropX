@@ -1363,16 +1363,22 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position)
 
 CoreDispatcher ^ FFmpegInterop::FFmpegInteropMSS::GetCurrentDispatcher()
 {
-	//try get the current view
-	auto wnd = CoreApplication::GetCurrentView();
-	if (wnd == nullptr)
-	{
-		wnd = CoreApplication::MainView;
-	}
-	if (wnd != nullptr)
-		return wnd->Dispatcher;
+	try {
+		//try get the current view
+		auto wnd = CoreWindow::GetForCurrentThread();
+		if (wnd == nullptr)
+		{
+			wnd = CoreApplication::MainView->CoreWindow;
+		}
+		if (wnd != nullptr)
+			return wnd->Dispatcher;
 
-	return nullptr;
+		return nullptr;
+	}
+	catch (...)
+	{
+		return nullptr;
+	}
 
 }
 
