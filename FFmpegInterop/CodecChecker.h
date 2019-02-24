@@ -80,25 +80,25 @@ namespace FFmpegInterop
 
 					if (SUCCEEDED(hr))
 					{
-						if (CheckHWProfile(profile, hasHardwareAccelerationH264, D3D11_DECODER_PROFILE_H264_VLD_FGT)) continue;
-						if (CheckHWProfile(profile, hasHardwareAccelerationH264, D3D11_DECODER_PROFILE_H264_VLD_NOFGT)) continue;
-						if (CheckHWProfile(profile, hasHardwareAccelerationH264, D3D11_DECODER_PROFILE_H264_VLD_WITHFMOASO_NOFGT)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationH264, D3D11_DECODER_PROFILE_H264_VLD_FGT)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationH264, D3D11_DECODER_PROFILE_H264_VLD_NOFGT)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationH264, D3D11_DECODER_PROFILE_H264_VLD_WITHFMOASO_NOFGT)) continue;
 
-						if (CheckHWProfile(profile, hasHardwareAccelerationHEVC, D3D11_DECODER_PROFILE_HEVC_VLD_MAIN)) continue;
-						if (CheckHWProfile(profile, hasHardwareAccelerationHEVC, D3D11_DECODER_PROFILE_HEVC_VLD_MAIN10)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationHEVC, D3D11_DECODER_PROFILE_HEVC_VLD_MAIN)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationHEVC, D3D11_DECODER_PROFILE_HEVC_VLD_MAIN10)) continue;
 
-						if (CheckHWProfile(profile, hasHardwareAccelerationHEVCMain10, D3D11_DECODER_PROFILE_HEVC_VLD_MAIN10)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationHEVCMain10, D3D11_DECODER_PROFILE_HEVC_VLD_MAIN10)) continue;
 
-						if (CheckHWProfile(profile, hasHardwareAccelerationMPEG2, D3D11_DECODER_PROFILE_MPEG2_VLD)) continue;
-						if (CheckHWProfile(profile, hasHardwareAccelerationMPEG2, D3D11_DECODER_PROFILE_MPEG2and1_VLD)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationMPEG2, D3D11_DECODER_PROFILE_MPEG2_VLD)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationMPEG2, D3D11_DECODER_PROFILE_MPEG2and1_VLD)) continue;
 
-						if (CheckHWProfile(profile, hasHardwareAccelerationVC1, D3D11_DECODER_PROFILE_VC1_VLD)) hasHardwareAccelerationWMV3 = true; continue;
-						if (CheckHWProfile(profile, hasHardwareAccelerationVC1, D3D11_DECODER_PROFILE_VC1_D2010)) hasHardwareAccelerationWMV3 = true; continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationVC1, D3D11_DECODER_PROFILE_VC1_VLD)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationVC1, D3D11_DECODER_PROFILE_VC1_D2010)) continue;
 
-						if (CheckHWProfile(profile, hasHardwareAccelerationVP9, D3D11_DECODER_PROFILE_VP9_VLD_PROFILE0)) continue;
-						if (CheckHWProfile(profile, hasHardwareAccelerationVP9, D3D11_DECODER_PROFILE_VP9_VLD_10BIT_PROFILE2)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationVP9, D3D11_DECODER_PROFILE_VP9_VLD_PROFILE0)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationVP9, D3D11_DECODER_PROFILE_VP9_VLD_10BIT_PROFILE2)) continue;
 
-						if (CheckHWProfile(profile, hasHardwareAccelerationVP910Bit, D3D11_DECODER_PROFILE_VP9_VLD_10BIT_PROFILE2)) continue;
+						if (CheckHWProfile(profile, videoDevice, hasHardwareAccelerationVP910Bit, D3D11_DECODER_PROFILE_VP9_VLD_10BIT_PROFILE2)) continue;
 					}
 				}
 			}
@@ -169,10 +169,22 @@ namespace FFmpegInterop
 			return false;
 		}
 
-		inline static bool CheckHWProfile(GUID profile, bool& hasHardwareAcceleration, GUID hardwareAccelerationProfile)
+		inline static bool CheckHWProfile(GUID profile, ID3D11VideoDevice* videoDevice, bool& hasHardwareAcceleration, GUID hardwareAccelerationProfile)
 		{
 			if (!hasHardwareAcceleration && profile == hardwareAccelerationProfile)
 			{
+				UINT count;
+				D3D11_VIDEO_DECODER_DESC desc;
+				D3D11_VIDEO_DECODER_CONFIG config;
+				desc.Guid = profile;
+				desc.OutputFormat = DXGI_FORMAT_NV12;
+				desc.SampleWidth = 8192;
+				desc.SampleHeight = 4320;
+				videoDevice->GetVideoDecoderConfigCount(&desc, &count);
+				if (count > 0)
+				{
+					videoDevice->GetVideoDecoderConfig(&desc, 0, &config);
+				}
 				hasHardwareAcceleration = true;
 				return true;
 			}
