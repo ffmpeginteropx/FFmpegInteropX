@@ -819,6 +819,10 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateAudioStream(AVStream * avStream, in
 				{
 					hr = E_FAIL;
 				}
+				else if (avAudioCodecCtx->sample_fmt == AV_SAMPLE_FMT_NONE)
+				{
+					hr = E_FAIL;
+				}
 				else
 				{
 					// Detect audio format and create audio stream descriptor accordingly
@@ -881,6 +885,10 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream * avStream, in
 			}
 
 			if (avcodec_open2(avVideoCodecCtx, avVideoCodec, NULL) < 0)
+			{
+				hr = E_FAIL;
+			}
+			else if (avVideoCodecCtx->pix_fmt == AV_PIX_FMT_NONE)
 			{
 				hr = E_FAIL;
 			}
