@@ -95,8 +95,6 @@ namespace FFmpegInterop
 			DefaultAudioStreamName = "Audio Stream";
 			DefaultSubtitleStreamName = "Subtitle";
 			DefaultExternalSubtitleStreamName = "External Subtitle";
-
-			DefaultTimedMetadataCueDuration = ToTimeSpan(30000000);//3 seconds
 		};
 
 		property bool PassthroughAudioMP3;
@@ -111,7 +109,7 @@ namespace FFmpegInterop
 		property bool VideoOutputAllowBgra8;
 		property bool VideoOutputAllowNv12;
 
-		/*The maximum number of broken frames to skill in a stream before stopping decoding*/
+		/*The maximum number of broken frames to skipp in a stream before stopping decoding*/
 		property unsigned int SkipErrors;
 
 		property unsigned int MaxVideoThreads;

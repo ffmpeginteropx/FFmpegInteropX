@@ -138,12 +138,7 @@ IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromUriAsync(String^
 	auto dispatcher = GetCurrentDispatcher();
 	return create_async([uri, config, dispatcher]
 	{
-		auto result = CreateFromUri(uri, config, dispatcher);
-		if (result == nullptr)
-		{
-			throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
-		}
-		return result;
+		return CreateFromUri(uri, config, dispatcher);
 	});
 };
 
