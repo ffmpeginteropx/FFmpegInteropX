@@ -172,6 +172,10 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromStream(IRandomAcce
 	config->PassthroughVideoH264 = !forceVideoDecode;
 	config->PassthroughVideoH264Hi10P = !forceVideoDecode;
 	config->PassthroughVideoHEVC = !forceVideoDecode;
+	config->PassthroughVideoMPEG2 = !forceVideoDecode;
+	config->PassthroughVideoVC1 = !forceVideoDecode;
+	config->PassthroughVideoVP9 = !forceVideoDecode;
+	config->PassthroughVideoWMV3 = !forceVideoDecode;
 	if (ffmpegOptions != nullptr)
 	{
 		config->FFmpegOptions = ffmpegOptions;
@@ -206,7 +210,11 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromUri(String^ uri, b
 	config->PassthroughAudioMP3 = !forceAudioDecode;
 	config->PassthroughVideoH264 = !forceVideoDecode;
 	config->PassthroughVideoH264Hi10P = !forceVideoDecode;
-	config->PassthroughVideoHEVC = !forceVideoDecode;
+	config->PassthroughVideoHEVC = !forceVideoDecode;	
+	config->PassthroughVideoMPEG2 = !forceVideoDecode;
+	config->PassthroughVideoVC1 = !forceVideoDecode;
+	config->PassthroughVideoVP9 = !forceVideoDecode;
+	config->PassthroughVideoWMV3 = !forceVideoDecode;
 	if (ffmpegOptions != nullptr)
 	{
 		config->FFmpegOptions = ffmpegOptions;
@@ -1152,7 +1160,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 {
 	MediaSampleProvider^ videoSampleProvider;
 	VideoEncodingProperties^ videoProperties;
-
+	
 	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 && config->PassthroughVideoH264 && !config->IsFrameGrabber && (avVideoCodecCtx->profile <= 100 || config->PassthroughVideoH264Hi10P))
 	{
 		auto videoProperties = VideoEncodingProperties::CreateH264();
@@ -1167,7 +1175,6 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 		}
 	}
-#if _WIN32_WINNT >= 0x0A00 // only compile if platform toolset is Windows 10 or higher
 	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC && config->PassthroughVideoHEVC && !config->IsFrameGrabber &&
 		Windows::Foundation::Metadata::ApiInformation::IsMethodPresent("Windows.Media.MediaProperties.VideoEncodingProperties", "CreateHevc"))
 	{
@@ -1184,7 +1191,39 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 		}
 	}
-#endif
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3 && config->PassthroughVideoWMV3 && !config->IsFrameGrabber && avVideoCodecCtx->extradata_size > 0)
+	{
+		auto videoProperties = ref new VideoEncodingProperties();
+		videoProperties->Subtype = MediaEncodingSubtypes::Wmv3;
+
+		auto extradata = Platform::ArrayReference<uint8_t>(avVideoCodecCtx->extradata, avVideoCodecCtx->extradata_size);
+		videoProperties->SetFormatUserData(extradata);
+		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+	}
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VC1 && config->PassthroughVideoVC1 && !config->IsFrameGrabber && avVideoCodecCtx->extradata_size > 0)
+	{
+		auto videoProperties = ref new VideoEncodingProperties();
+		videoProperties->Subtype = MediaEncodingSubtypes::Wvc1;
+		
+		auto extradata = Platform::ArrayReference<uint8_t>(avVideoCodecCtx->extradata, avVideoCodecCtx->extradata_size);
+		videoProperties->SetFormatUserData(extradata);
+		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+	}
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_MPEG2VIDEO && config->PassthroughVideoMPEG2 && !config->IsFrameGrabber)
+	{
+		auto videoProperties = ref new VideoEncodingProperties();
+		videoProperties->Subtype = MediaEncodingSubtypes::Mpeg2;
+
+		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+	}
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP9 && config->PassthroughVideoVP9 && !config->IsFrameGrabber &&
+		Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.MediaProperties.MediaEncodingSubtypes", "Vp9"))
+	{
+		auto videoProperties = ref new VideoEncodingProperties();
+		videoProperties->Subtype = MediaEncodingSubtypes::Vp9;
+
+		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+	}
 	else
 	{
 		videoSampleProvider = ref new UncompressedVideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index);

@@ -313,6 +313,19 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
 		videoProperties->ProfileId = m_pAvCodecCtx->profile;
 	}
 
+	if (m_pAvCodecCtx->sample_aspect_ratio.num > 0 &&
+		m_pAvCodecCtx->sample_aspect_ratio.den > 0 &&
+		m_pAvCodecCtx->sample_aspect_ratio.num != m_pAvCodecCtx->sample_aspect_ratio.den)
+	{
+		videoProperties->PixelAspectRatio->Numerator = m_pAvCodecCtx->sample_aspect_ratio.num;
+		videoProperties->PixelAspectRatio->Denominator = m_pAvCodecCtx->sample_aspect_ratio.den;
+	}
+	else
+	{
+		videoProperties->PixelAspectRatio->Numerator = 1;
+		videoProperties->PixelAspectRatio->Denominator = 1;
+	}
+
 	// set video rotation
 	bool rotateVideo = false;
 	int rotationAngle;
