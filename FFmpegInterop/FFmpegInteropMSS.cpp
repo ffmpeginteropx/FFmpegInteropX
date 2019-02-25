@@ -318,10 +318,7 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		auto subConfig = ref new FFmpegInteropConfig();
 		subConfig->IsExternalSubtitleParser = true;
 		subConfig->DefaultSubtitleStreamName = streamName;
-		if (this->Duration.Duration > 0)
-		{
-			subConfig->StreamTimeDuration = this->Duration;
-		}
+		
 		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
 		subConfig->AnsiSubtitleEncoding = this->config->AnsiSubtitleEncoding;
 		subConfig->OverrideSubtitleStyles = this->config->OverrideSubtitleStyles;
@@ -372,7 +369,6 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 				throw ref new InvalidArgumentException("No subtitles found in file.");
 			}
 
-			//delete externalSubsParser;
 			subtitleStreamInfos = subtitleStrInfos->GetView();
 		}
 		catch (...)

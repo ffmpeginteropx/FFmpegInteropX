@@ -96,7 +96,6 @@ namespace FFmpegInterop
 			DefaultSubtitleStreamName = "Subtitle";
 			DefaultExternalSubtitleStreamName = "External Subtitle";
 
-			StreamTimeDuration = ToTimeSpan(864000000000);//1 day in ticks
 			DefaultTimedMetadataCueDuration = ToTimeSpan(30000000);//3 seconds
 		};
 
@@ -156,8 +155,7 @@ namespace FFmpegInterop
 		property bool IsFrameGrabber;
 		/*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
 		property bool IsExternalSubtitleParser;
-		/*Used to pass the length of a target stream to external subtitles. Not useful for anything else*/
-		property TimeSpan StreamTimeDuration;
+	
 		/*Used to pass additional, specific options to external sub parsers*/
 		property PropertySet^ AdditionalFFmpegSubtitleOptions;
 

@@ -8,10 +8,6 @@ namespace FFmpegInterop {
 	ref class ReferenceCue : IMediaCue
 	{
 	internal:
-		ReferenceCue()
-		{
-
-		}
 
 		ReferenceCue(IMediaCue^ other)
 		{
