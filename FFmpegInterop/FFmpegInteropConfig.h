@@ -1,5 +1,9 @@
 #pragma once
+#include <CharacterEncoding.h>
+#include "TimeSpanHelpers.h"
 
+using namespace Platform;
+using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
 
@@ -31,7 +35,6 @@ namespace FFmpegInterop
 			FFmpegOptions = ref new PropertySet();
 
 			AutoSelectForcedSubtitles = true;
-			UseAntiFlickerForSubtitles = true;
 			OverrideSubtitleStyles = false;
 
 			SubtitleRegion = ref new TimedTextRegion();
@@ -85,6 +88,13 @@ namespace FFmpegInterop
 			SubtitleStyle->OutlineThickness = outlineThickness;
 			SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
 			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };
+
+			AutoCorrectAnsiSubtitles = true;
+			AnsiSubtitleEncoding = CharacterEncoding::GetSystemDefault();
+
+			DefaultAudioStreamName = "Audio Stream";
+			DefaultSubtitleStreamName = "Subtitle";
+			DefaultExternalSubtitleStreamName = "External Subtitle";
 		};
 
 		property bool PassthroughAudioMP3;
@@ -99,11 +109,13 @@ namespace FFmpegInterop
 		property bool VideoOutputAllowBgra8;
 		property bool VideoOutputAllowNv12;
 
+		/*The maximum number of broken frames to skipp in a stream before stopping decoding*/
 		property unsigned int SkipErrors;
 
 		property unsigned int MaxVideoThreads;
 		property unsigned int MaxAudioThreads;
 
+		/*The maximum supported playback rate. This is set on the media stream source itself. Does not modify what the transport control default UI shows as available playback speeds. Custom UI necessary*/
 		property double MaxSupportedPlaybackRate;
 		property unsigned int StreamBufferSize;
 
@@ -112,10 +124,41 @@ namespace FFmpegInterop
 		property TimedTextRegion^ SubtitleRegion;
 		property TimedTextStyle^ SubtitleStyle;
 		property bool AutoSelectForcedSubtitles;
-		property bool UseAntiFlickerForSubtitles;
 		property bool OverrideSubtitleStyles;
+		/*Used to force conversion of ANSII encoded subtitles to Unicode.*/
+		property bool AutoCorrectAnsiSubtitles;
+		/*The code page used to decode ANSII encoded subtitles. By default, the active windows codepage is used*/
+		property CharacterEncoding^ AnsiSubtitleEncoding
+		{
+			void set(CharacterEncoding^ value)
+			{
+				if (value == nullptr)
+					throw ref new InvalidArgumentException();
+				m_CharacterEncoding = value;
+			}
+			CharacterEncoding^ get()
+			{
+				return m_CharacterEncoding;
+			}
+		}
 
+		property String^ DefaultAudioStreamName;
+		property String^ DefaultSubtitleStreamName;
+		property String^ DefaultExternalSubtitleStreamName;
+
+		/*Used when the duration of a timed metadata cue could not be resolved*/
+		property TimeSpan DefaultTimedMetadataCueDuration;
 	internal:
+		/*Internal use:determines if a FFmpegInteropInstance is in frame grabber mode. This mode is used to grab frames from a video stream.*/
 		property bool IsFrameGrabber;
+		/*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
+		property bool IsExternalSubtitleParser;
+	
+		/*Used to pass additional, specific options to external sub parsers*/
+		property PropertySet^ AdditionalFFmpegSubtitleOptions;
+
+	private:
+		CharacterEncoding^ m_CharacterEncoding;
+
 	};
 }

@@ -14,8 +14,9 @@ namespace FFmpegInterop
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			FFmpegInteropConfig^ config,
-			int index)
-			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::Subtitle)
+			int index,
+			CoreDispatcher^ dispatcher)
+			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::Subtitle, dispatcher)
 		{
 		}
 
@@ -168,25 +169,31 @@ namespace FFmpegInterop
 
 					
 					auto timedText = convertFromString(str);
-
-					TimedTextCue^ cue = ref new TimedTextCue();
-					if (!m_config->OverrideSubtitleStyles && style)
+					if (timedText->Length() > 0)
 					{
-						cue->CueRegion = style->Region;
-						cue->CueStyle = style->Style;
-					}
-					else
-					{
-						cue->CueRegion = m_config->SubtitleRegion;
-						cue->CueStyle = m_config->SubtitleStyle;
-					}
+						TimedTextCue^ cue = ref new TimedTextCue();
+						if (!m_config->OverrideSubtitleStyles && style)
+						{
+							cue->CueRegion = style->Region;
+							cue->CueStyle = style->Style;
+						}
+						else
+						{
+							cue->CueRegion = m_config->SubtitleRegion;
+							cue->CueStyle = m_config->SubtitleStyle;
+						}
 
-					TimedTextLine^ textLine = ref new TimedTextLine();
-					textLine->Text = timedText;
-					cue->Lines->Append(textLine);
+						TimedTextLine^ textLine = ref new TimedTextLine();
+						textLine->Text = timedText;
+						cue->Lines->Append(textLine);
 
-					return cue;
+						return cue;
+					}
 				}
+			}
+			else if (result <= 0)
+			{
+				OutputDebugString(L"Failed to decode subtitle.");
 			}
 
 			return nullptr;
@@ -313,8 +320,15 @@ namespace FFmpegInterop
 						SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
 						SubtitleStyle->OutlineColor = ColorFromArgb(outlineColor << 8 | 0x000000FF);
 
-						SubtitleStyle->IsUnderlineEnabled = underline;
-						SubtitleStyle->IsLineThroughEnabled = strikeout;
+						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsUnderlineEnabled"))
+						{
+							SubtitleStyle->IsUnderlineEnabled = underline;
+						}
+
+						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsLineThroughEnabled"))
+						{
+							SubtitleStyle->IsLineThroughEnabled = strikeout;
+						}
 
 						auto style = ref new SsaStyleDefinition();
 						style->Name = ConvertString(name);

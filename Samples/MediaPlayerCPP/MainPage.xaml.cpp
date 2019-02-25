@@ -32,6 +32,7 @@ using namespace Platform;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
+using namespace Windows::Media::Playback;
 using namespace Windows::Storage;
 using namespace Windows::Storage::Pickers;
 using namespace Windows::Storage::Streams;
@@ -54,7 +55,10 @@ MainPage::MainPage()
 	Splitter->IsPaneOpen = true;
 
 	// optionally check for recommended ffmpeg version
-	//FFmpegVersionInfo::CheckRecommendedVersion();
+	FFmpegVersionInfo::CheckRecommendedVersion();
+
+	// populate character encodings
+	cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
 }
 
 void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -241,7 +245,57 @@ void MediaPlayerCPP::MainPage::LoadSubtitleFile(Platform::Object^ sender, Window
 	}
 }
 
-void MediaPlayerCPP::MainPage::OnResolved(Windows::Media::Core::TimedTextSource ^sender, Windows::Media::Core::TimedTextSourceResolveResultEventArgs ^args)
+void MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	if (FFmpegMSS == nullptr)
+	{
+		DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
+	}
+	else
+	{
+		FileOpenPicker^ filePicker = ref new FileOpenPicker();
+		filePicker->ViewMode = PickerViewMode::Thumbnail;
+		filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
+		filePicker->FileTypeFilter->Append("*");
+
+		// Show file picker so user can select a file
+		create_task(filePicker->PickSingleFileAsync()).then([this](StorageFile^ file)
+		{
+			if (file != nullptr)
+			{
+				// Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
+				create_task(file->OpenAsync(FileAccessMode::Read)).then([this, file](task<IRandomAccessStream^> stream)
+				{
+					if (playbackItem != nullptr)
+					{
+						timedMetadataTracksChangedToken = playbackItem->TimedMetadataTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem ^, Windows::Foundation::Collections::IVectorChangedEventArgs ^>(this, &MediaPlayerCPP::MainPage::OnTimedMetadataTracksChanged);
+					}
+
+					this->FFmpegMSS->AddExternalSubtitleAsync(stream.get(), file->Name);
+				});
+			}
+		});
+	}
+}
+
+void MediaPlayerCPP::MainPage::OnTimedMetadataTracksChanged(MediaPlaybackItem ^sender, Windows::Foundation::Collections::IVectorChangedEventArgs ^args)
+{
+	if (args->CollectionChange == Windows::Foundation::Collections::CollectionChange::ItemInserted)
+	{
+		sender->TimedMetadataTracksChanged -= this->timedMetadataTracksChangedToken;
+
+		// unselect other subs
+		for (unsigned int i = 0; i < sender->TimedMetadataTracks->Size; i++)
+		{
+			sender->TimedMetadataTracks->SetPresentationMode(i, TimedMetadataTrackPresentationMode::Disabled);
+		}
+
+		// pre-select added subtitle
+		sender->TimedMetadataTracks->SetPresentationMode(args->Index, TimedMetadataTrackPresentationMode::PlatformPresented);
+	}
+}
+
+void MediaPlayerCPP::MainPage::OnResolved(TimedTextSource ^sender, TimedTextSourceResolveResultEventArgs ^args)
 {
 	// you can rename and pre-select the loaded subtitle track(s) if you like
 	if (args->Tracks->Size > 0)
@@ -268,3 +322,10 @@ void MainPage::DisplayErrorMessage(Platform::String^ message)
 	errorDialog->ShowAsync();
 }
 
+void MediaPlayerCPP::MainPage::CbEncodings_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e)
+{
+	if (cbEncodings->SelectedItem)
+	{
+		Config->AnsiSubtitleEncoding = static_cast<CharacterEncoding^>(cbEncodings->SelectedItem);
+	}
+}

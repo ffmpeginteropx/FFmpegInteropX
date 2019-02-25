@@ -50,8 +50,21 @@
                     <Button Content="Extract Frame" Click="ExtractFrame" Margin="0,20,10,10" />
                     <ToggleSwitch x:Name="grabFrameExactSeek" Header="Exact Seek for Extract Frame" OffContent="OFF" OnContent="ON" IsOn="True"/>
 
-                    <Button Content="Load External Subtitle File" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
-                    
+                    <ComboBox x:Name="cbEncodings" PlaceholderText="Select ANSI subtitle encoding" SelectionChanged="CbEncodings_SelectionChanged">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Description}" />
+                                    <TextBlock Text="-" Margin="10,0" />
+                                    <TextBlock Text="{Binding WindowsCodePage}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <Button Content="Load External Subtitle File (ffmpeg)" Click="LoadSubtitleFileFFmpeg"  Margin="0,20,10,10" />
+                    <Button Content="Load External Subtitle File (winAPI)" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
+
                 </StackPanel>
             </SplitView.Pane>
 

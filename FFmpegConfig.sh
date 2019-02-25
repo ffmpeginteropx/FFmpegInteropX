@@ -24,6 +24,9 @@ if [ "$1" == "Win10" ]; then
         --enable-shared \
         --enable-cross-compile \
         --enable-debug \
+        --enable-zlib \
+        --enable-bzlib \
+        --enable-iconv \
         --target-os=win32 \
         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
@@ -52,6 +55,9 @@ if [ "$1" == "Win10" ]; then
         --enable-shared \
         --enable-cross-compile \
         --enable-debug \
+        --enable-zlib \
+        --enable-bzlib \
+        --enable-iconv \
         --target-os=win32 \
         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
@@ -83,6 +89,9 @@ if [ "$1" == "Win10" ]; then
         --enable-shared \
         --enable-cross-compile \
         --enable-debug \
+        --enable-zlib \
+        --enable-bzlib \
+        --enable-iconv \
         --target-os=win32 \
         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
@@ -113,6 +122,9 @@ if [ "$1" == "Win10" ]; then
         --enable-shared \
         --enable-cross-compile \
         --enable-debug \
+        --enable-zlib \
+        --enable-bzlib \
+        --enable-iconv \
         --target-os=win32 \
         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \

@@ -1,36 +1,53 @@
-# FFmpegInterop library for Windows
+# FFmpegInteropX library for Windows
 
 #### This project is licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0)
 
-## Welcome to FFmpegInterop-lukasf
+## Welcome to FFmpegInteropX
 
-FFmpegInterop is an open-source project that aims to provide an easy way to use **FFmpeg** in **Windows 10 UWP Apps**. This allows you to decode a lot of formats that are not natively supported on Windows 10.
+FFmpegInteropX is an open-source project that aims to provide an easy way to use **FFmpeg** in **Windows 10 UWP Apps**. This allows you to decode a lot of formats that are not natively supported on Windows 10.
 
-FFmpegInterop-lukasf is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
+FFmpegInteropX is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
 
 **Some of the important improvements:**
 
 - Multiple audio stream support
-- Subtitle support
+- Subtitle support, including external subtitle files
 - Audio effects (special thanks to [mcosmin222](https://github.com/mcosmin222)!)
 - Stream information retrieval (name, language, format, etc)
 - Passthrough of HEVC video for hardware decoding
 - Major performance improvements (zero-copy data handling in all important areas)
 - Frame grabber support
 - API improvements
+- Include zlib and bzlib libraries into ffmpeg for full MKV subtitle support
+- Include iconv for character encoding conversion
 - Lots of bug fixes
 
 **Other changes:**
 - Support for Windows 8.x and Windows Phone 8.x has been dropped
 - Visual Studio 2015 support has been dropped
 
+**Prerequisites:**
+
+- Visual Studio 2017 15.9.x
+
+- Optional components from Visual Studio Installer:
+
+  - Universal Windows Platform tools
+  - VC++ 2017 version 15.9 v14.16 latest v141 tools
+  - Win 10 SDK (10.0.15063.0) for uwp: c#, vb, js
+  - Win 10 SDK (10.0.15063.0) for uwp: c++
+  - Visual C++ compilers and libraries for ARM64
+  - Visual C++ compilers and libraries for ARM
+  - C++ UWP tools for ARM64
+  - C++ runtime for uwp
+
 ## FFmpeg Version
 
-Recommended: **FFmpeg 4.1**
+Recommended: **FFmpeg 4.1.1**
 
 Minimum: **FFmpeg 4.0**
 
-An exception will be thrown if FFmpegInterop is used with anything lower than the minimum version. The recommended version has been tested and is what we currently recommend to use with FFmpegInterop-lukasf/master.
+An exception will be thrown if FFmpegInterop is used with anything lower than the minimum version. The recommended version has been tested and is what we currently recommend to use with FFmpegInteropX.
 
 A legacy branch exists which tagets **FFmpeg 3.4.2**.
 
@@ -38,26 +55,34 @@ A legacy branch exists which tagets **FFmpeg 3.4.2**.
 
 ## Getting the sources
 
-Getting a compatible UWP build of FFmpeg is required for this to work.
+FFmpegInteropX uses the following git submodules:
 
-You can simply use the embedded git submodule that points to the latest tested release of FFmpeg.
+- ffmpeg
+- Libs\bzlib2
+- Libs\iconv
+- Libs\zlib
+
+Please use clone recursive, to get the exact verion of the libs that is required for use with FFmpegInteropX.
 
 	git clone --recursive git://github.com/lukasf/FFmpegInterop.git
 
-Alternatively, you can get the code for [FFmpeg on Github](http://github.com/FFmpeg) yourself by cloning [git://source.ffmpeg.org/ffmpeg.git](git://source.ffmpeg.org/ffmpeg.git) and replace existing default `ffmpeg` folder with it.
+If you forgot to clone recursive, or if one of the library folders is empty, use these commands from FFmpegInteropX folder:
 
-	git clone git://github.com/lukasf/FFmpegInterop.git
-	cd FFmpegInterop
-	git clone git://source.ffmpeg.org/ffmpeg.git
+	git submodule init
+    git submodule update
 
-Your `FFmpegInterop` folder should look as follows
+Please do not use later versions of FFmpeg (e.g. master branch) with FFmpegInteropX. This could lead to various problems, ranging from build issues to runtime issues.
 
-	FFmpegInterop\
+Your `FFmpegInteropX` folder should look as follows
+
+	FFmpegInteropX\
 	    ffmpeg\                - ffmpeg source code from the latest release in git://github.com/FFmpeg/FFmpeg.git
 	    FFmpegInterop\         - FFmpegInterop WinRT component
+	    Libs\bzip2\            - bzip2 (bzliib) compression library
+	    Libs\iconv\            - iconv library for character encoding conversion
+	    Libs\zlib\             - zlib compression library
 	    Samples\               - Sample Media Player applications in C++ and C#
 	    Tests\                 - Unit tests for FFmpegInterop
-	    BuildFFmpeg_VS2015.bat - FFmpeg build file for Visual Studio 2015
 	    BuildFFmpeg_VS2017.bat - FFmpeg build file for Visual Studio 2017
 	    FFmpegConfig.sh        - Internal script that contains FFmpeg configure options
 	    FFmpegInterop.sln      - Microsoft Visual Studio 2017 solution file for Windows 10 apps development
@@ -74,21 +99,7 @@ After installing the ffmpeg build tools, you can invoke `BuildFFmpeg_VS2017.bat`
 
 Note: You need Visual Studio 2017 15.9.0 or higher to build the ARM64 version of ffmpeg!
 
-Note: If you have Visual Studio 2015 installed as well, please try the Visual Studio 2015 build file (see below). Some people reported problems when having both installed and running the VS2017 file.
-
-## Building ffmpeg with Visual Studio 2015
-
-After installing the ffmpeg build tools, you can invoke the `BuildFFmpeg_VS2015.bat` script.
-
-	BuildFFmpeg_VS2015.bat win10                     - Build for Windows 10 ARM, x64, and x86
-	BuildFFmpeg_VS2015.bat phone8.1 ARM              - Build for Windows Phone 8.1 ARM only
-	BuildFFmpeg_VS2015.bat win8.1 x86 x64            - Build for Windows 8.1 x86 and x64 only
-	BuildFFmpeg_VS2015.bat phone8.1 win10 ARM        - Build for Windows 10 and Windows Phone 8.1 ARM only
-	BuildFFmpeg_VS2015.bat win8.1 phone8.1 win10     - Build all architecture for all target platform
-
-Alternatively, you can build the ffmpeg dlls manually using the instructions in the [ffmpeg compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT).
-
-## Building FFmpegInterop library
+## Building the FFmpegInterop library
 
 After building ffmpeg with the steps above, you should find the ffmpeg libraries in the `ffmpeg/Build/<platform\>/<architecture\>` folders.
 
@@ -96,7 +107,7 @@ Now you can build the FFmpegInterop library.
 
 Simply open the Visual Studio solution file `FFmpegInterop.sln`, set one of the MediaPlayer[CS/CPP/JS] sample projects as StartUp project, and run. FFmpegInterop should build cleanly giving you the interop object as well as the selected sample MediaPlayer (C++, C# or JS) that show how to connect the MediaStreamSource to a MediaElement or Video tag for playback.
 
-### Using the FFmpegInterop object
+### Using the FFmpegInteropMSS object
 
 Using the **FFmpegInteropMSS** object is fairly straightforward and can be observed from the sample applications provided.
 
@@ -104,6 +115,8 @@ Using the **FFmpegInteropMSS** object is fairly straightforward and can be obser
 2. Create a new `FFmpegInteropMSS` object using `FFmpegInteropMSS.CreateFromStreamAsync()` passing it the stream and optionally a config class instance.
 3. Get the MediaPlaybackItem from the Interop object by invoking `CreateMediaPlaybackItem()`
 4. Assign the MediaPlaybackItem to your MediaPlayer or MediaElement for playback.
+
+**Important:** Store the FFmpegInteropMSS instance e.g. in a local field, as long as playback is running. If the object is collected by the GC during playback, playback will stop with an error.
 
 Use `FFmepgInteropMSS.CreateFromUriAsync()` to create a MediaStreamSource on a streaming source (shoutcast for example).
 
@@ -117,11 +130,15 @@ Call `FrameGrabber.CreateFromStreamAsync()` to grab one or more frames from a vi
 
 FFmpegInterop will automatically load and use all embedded subtitles, supporting all formats through ffmpeg. You have to use the MediaPlaybackItem returned from the MSS object. Then subtitles can be selected from MediaElement's transport controls. 
 
-You can also add external subtitle files to a MediaPlaybackitem by using UWP APIs. See the sample apps for reference. External subtitles are limited to the formats understood by UWP, as they are currently not parsed through ffmpeg.
+You can also add external subtitle files by using `FFmpegInteropMSS.AddExternalSubtitleAsync()`, even during playback. See the sample apps for reference. All ffmpeg subtitle formats are supported as external files, except for the two-file "sub/idx" (DVD) format. 
+
+Some external text subtitle files are stored with ANSI encoding instead of UTF8 (which is required by ffmpeg). FFmpegInterop can do an automatic conversion to UTF8. This is enabled by default in the config class and will use the system's active codepage by default. You can change the behavior by changing `AutoCorrectAnsiSubtitles` and `AnsiSubtitleEncoding` parameters in the config class. Codepage 0 is the system's active codepage.
+
+Note: If your app uses multiple windows using CoreApplication.CreateNewView(), then you must create the FFmpegInteropMSS object on the thread of the window where the video is to be shown. Otherwise, subtitles will flicker.
 
 ## Integrating FFmpegInterop into your app solution
 
-If you want to integrate FFmpegInterop into your app, you can just add the project file (`FFmpegInterop\Win10\FFmpegInterop\FFmpegInterop.vcxproj`) to your app solution as an existing project and add a reference from your main app project to FFmpegInterop. The FFmpegInterop project does not have to be in your app's solution folder. 
+If you want to integrate FFmpegInterop into your app, you can just add the project file (`FFmpegInterop\FFmpegInterop.vcxproj`) to your app solution as an existing project and add a reference from your main app project to FFmpegInterop. The FFmpegInterop project does not have to be in your app's solution folder. 
 
 Additionally, your app must reference the ffmpeg dll files for the platform you are building. Best is to manually edit your app's project file. This allows you to refer the dlls built for the current platform using $BuildPlatform parameter.
 
