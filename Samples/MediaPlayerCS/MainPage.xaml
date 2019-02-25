@@ -32,25 +32,43 @@
 
             <!-- Control panel -->
             <SplitView.Pane>
-                <StackPanel VerticalAlignment="Stretch" Margin="10, 50, 0, 0">
-                    <TextBlock x:Name="Header" Text="Open Local File or URI"/>
-                    <StackPanel Orientation="Horizontal">
-                        <AppBarButton Content="Open Local File" Icon="OpenFile" Margin="0, 10, 10, 0" Click="OpenLocalFile"/>
-                        <TextBox PlaceholderText="Enter URI and press Enter" InputScope="Url" Width="210" Height="30" KeyUp="URIBoxKeyUp"/>
-                    </StackPanel>
-                    <ToggleSwitch Header="Passthrough Audio MP3" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioMP3}"/>
-                    <ToggleSwitch Header="Passthrough Audio AAC" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioAAC}" Margin="0,0,0,20" />
+                <ScrollViewer>
+                    <StackPanel VerticalAlignment="Stretch" Margin="10, 50, 0, 0">
+                        <TextBlock x:Name="Header" Text="Open Local File or URI"/>
+                        <StackPanel Orientation="Horizontal">
+                            <AppBarButton Content="Open Local File" Icon="OpenFile" Margin="0, 10, 10, 0" Click="OpenLocalFile"/>
+                            <TextBox PlaceholderText="Enter URI and press Enter" InputScope="Url" Width="210" Height="30" KeyUp="URIBoxKeyUp"/>
+                        </StackPanel>
+                        <ToggleSwitch Header="Auto create playback item" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=AutoCreatePlaybackItem}"/>
+                        <Button Content="Start playback" Click="CreatePlaybackItemAndStartPlayback"  Margin="0,20,10,10" />
+
+                        <ToggleSwitch Header="Passthrough Audio MP3" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioMP3}"/>
+                        <ToggleSwitch Header="Passthrough Audio AAC" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioAAC}" Margin="0,0,0,20" />
 
                     <ToggleSwitch Header="Passthrough Video" OffContent="OFF" OnContent="ON" IsOn="True" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
 
                     <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.VideoOutputAllowIyuv}"/>
 
-                    <Button Content="Extract Frame" Click="ExtractFrame"  Margin="0,20,10,10" />
-                    <ToggleSwitch x:Name="grabFrameExactSeek" Header="Exact Seek for Extract Frame" OffContent="OFF" OnContent="ON" IsOn="True"/>
+                        <Button Content="Extract Frame" Click="ExtractFrame"  Margin="0,20,10,10" />
+                        <ToggleSwitch x:Name="grabFrameExactSeek" Header="Exact Seek for Extract Frame" OffContent="OFF" OnContent="ON" IsOn="True"/>
 
-                    <Button Content="Load External Subtitle File" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
+                        <ComboBox x:Name="cbEncodings" PlaceholderText="Select ANSI subtitle encoding" SelectionChanged="CbEncodings_SelectionChanged">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Description}" />
+                                        <TextBlock Text="-" Margin="10,0" />
+                                        <TextBlock Text="{Binding WindowsCodePage}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
 
-                </StackPanel>
+                        <Button Content="Load External Subtitle File (ffmpeg)" Click="LoadSubtitleFileFFmpeg"  Margin="0,20,10,10" />
+                        <Button Content="Load External Subtitle File (winAPI)" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
+
+                    </StackPanel>
+                </ScrollViewer>
             </SplitView.Pane>
 
             <!-- Main content -->

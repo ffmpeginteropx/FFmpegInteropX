@@ -27,14 +27,15 @@
 #include "AvEffectDefinition.h"
 #include "StreamInfo.h"
 #include "SubtitleProvider.h"
-
+#include <collection.h>
 
 using namespace Platform;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
 using namespace Windows::Media::Playback;
-
+using namespace Platform::Collections;
+using namespace Windows::UI::Core;
 namespace WFM = Windows::Foundation::Metadata;
 
 extern "C"
@@ -44,6 +45,12 @@ extern "C"
 
 namespace FFmpegInterop
 {
+	enum ByteOrderMark
+	{
+		Unchecked,
+		Unknown,
+		UTF8
+	};
 
 	public ref class FFmpegInteropMSS sealed
 	{
@@ -78,9 +85,24 @@ namespace FFmpegInterop
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime);
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime, TimeSpan durationLimit);
 
+		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName);
+
+		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream)
+		{
+			return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName);
+		}
+
 		virtual ~FFmpegInteropMSS();
 
 		// Properties
+
+		property FFmpegInteropConfig^ Configuration
+		{
+			FFmpegInteropConfig^ get()
+			{
+				return config;
+			}
+		}
 
 		property TimeSpan Duration
 		{
@@ -156,7 +178,7 @@ namespace FFmpegInterop
 
 
 	private:
-		FFmpegInteropMSS(FFmpegInteropConfig^ config);
+		FFmpegInteropMSS(FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 
 		HRESULT CreateMediaStreamSource(IRandomAccessStream^ stream, MediaStreamSource^ mss);
 		HRESULT CreateMediaStreamSource(String^ uri);
@@ -178,8 +200,8 @@ namespace FFmpegInterop
 
 	internal:
 
-		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss);
-		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config);
+		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);
+		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 		HRESULT Seek(TimeSpan position);
 
 		property MediaSampleProvider^ VideoSampleProvider
@@ -190,9 +212,13 @@ namespace FFmpegInterop
 			}
 		}
 
+		FFmpegReader^ m_pReader;
 		AVDictionary * avDict;
 		AVIOContext* avIOCtx;
 		AVFormatContext* avFormatCtx;
+		IStream* fileStreamData;
+		ByteOrderMark streamByteOrderMark;
+		FFmpegInteropConfig ^ config;
 
 	private:
 
@@ -201,8 +227,9 @@ namespace FFmpegInterop
 		EventRegistrationToken sampleRequestedToken;
 		EventRegistrationToken switchStreamRequestedToken;
 		MediaPlaybackItem^ playbackItem;
+		Vector<AudioStreamInfo^>^ audioStrInfos;
+		Vector<SubtitleStreamInfo^>^ subtitleStrInfos;
 
-		FFmpegInteropConfig ^ config;
 		std::vector<MediaSampleProvider^> sampleProviders;
 		std::vector<MediaSampleProvider^> audioStreams;
 		std::vector<SubtitleProvider^> subtitleStreams;
@@ -219,14 +246,15 @@ namespace FFmpegInterop
 		IVectorView<SubtitleStreamInfo^>^ subtitleStreamInfos;
 
 		std::recursive_mutex mutexGuard;
+		CoreDispatcher^ dispatcher;
 
 		String^ videoCodecName;
 		String^ audioCodecName;
 		TimeSpan mediaDuration;
-		IStream* fileStreamData;
 		unsigned char* fileStreamBuffer;
-		FFmpegReader^ m_pReader;
 		bool isFirstSeek;
+
+		static CoreDispatcher^ GetCurrentDispatcher();
 	};
 
 }

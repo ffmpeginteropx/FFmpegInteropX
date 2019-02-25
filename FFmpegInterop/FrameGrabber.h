@@ -43,7 +43,7 @@ namespace FFmpegInterop {
 				config->PassthroughVideoH264Hi10P = false;
 				config->PassthroughVideoHEVC = false;
 
-				auto result = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr);
+				auto result = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr, nullptr);
 				if (result == nullptr)
 				{
 					throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");

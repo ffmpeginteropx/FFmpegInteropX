@@ -97,7 +97,7 @@ namespace FFmpegInterop
 	public ref class SubtitleStreamInfo sealed : public IStreamInfo
 	{
 	public:
-		SubtitleStreamInfo(String^ name, String^ language, String^ codecName, bool isDefault, bool isForced, TimedMetadataTrack^ track)
+		SubtitleStreamInfo(String^ name, String^ language, String^ codecName, bool isDefault, bool isForced, TimedMetadataTrack^ track, bool isExternal)
 		{
 			this->name = name;
 			this->language = language;
@@ -105,6 +105,7 @@ namespace FFmpegInterop
 			this->isDefault = isDefault;
 			this->isForced = isForced;
 			this->track = track;
+			this->isExternal = isExternal;
 		}
 
 		virtual property String^ Name { String^ get() { return name; } }
@@ -113,6 +114,7 @@ namespace FFmpegInterop
 		virtual property int64 Bitrate { int64 get() { return 0; } }
 		virtual property bool IsDefault { bool get() { return isDefault; } }
 
+	    property bool IsExternal {bool get() { return isExternal; }}
 		property bool IsForced { bool get() { return isForced; } }
 
 		property TimedMetadataTrack^ SubtitleTrack
@@ -135,5 +137,6 @@ namespace FFmpegInterop
 		bool isDefault;
 		bool isForced;
 		TimedMetadataTrack^ track;
+		bool isExternal;
 	};
 }

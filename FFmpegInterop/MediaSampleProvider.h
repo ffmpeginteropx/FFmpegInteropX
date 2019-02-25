@@ -20,6 +20,7 @@
 #include <queue>
 #include "FFmpegInteropConfig.h"
 #include "AvEffectDefinition.h"
+#include "TimeSpanHelpers.h"
 
 extern "C"
 {

@@ -90,7 +90,7 @@ IMediaStreamDescriptor^ CompressedSampleProvider::CreateStreamDescriptor()
 	else
 	{
 		auto audioStreamDescriptor = ref new AudioStreamDescriptor(audioEncodingProperties);
-		if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.AudioStreamDescriptor", "MaxSupportedPlaybackRate"))
+		if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.AudioStreamDescriptor", "TrailingEncoderPadding"))
 		{
 			if (m_pAvStream->codecpar->initial_padding > 0)
 			{

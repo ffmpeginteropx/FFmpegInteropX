@@ -32,10 +32,13 @@
 #include <dshow.h>
 #include "LanguageTagConverter.h"
 #include "FFmpegVersionInfo.h"
+#include "collection.h"
+#include <ppl.h>
 
 extern "C"
 {
 #include <libavutil/imgutils.h>
+#include <libavutil/opt.h>
 }
 
 using namespace concurrency;
@@ -44,6 +47,8 @@ using namespace Platform;
 using namespace Platform::Collections;
 using namespace Windows::Storage::Streams;
 using namespace Windows::Media::MediaProperties;
+using namespace Windows::Foundation::Collections;
+using namespace Windows::ApplicationModel::Core;
 
 // Static functions passed to FFmpeg
 static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize);
@@ -56,10 +61,11 @@ std::mutex isRegisteredMutex;
 std::map<String^, LanguageEntry^> LanguageTagConverter::map;
 
 // Initialize an FFmpegInteropObject
-FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig)
+FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispatcher^ dispatcher)
 	: config(interopConfig)
 	, thumbnailStreamIndex(AVERROR_STREAM_NOT_FOUND)
 	, isFirstSeek(true)
+	, dispatcher(dispatcher)
 {
 	if (!isRegistered)
 	{
@@ -72,6 +78,9 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig)
 		}
 		isRegisteredMutex.unlock();
 	}
+
+	audioStrInfos = ref new Vector<AudioStreamInfo^>();
+	subtitleStrInfos = ref new Vector<SubtitleStreamInfo^>();
 }
 
 FFmpegInteropMSS::~FFmpegInteropMSS()
@@ -117,33 +126,25 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 
 IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromStreamAsync(IRandomAccessStream^ stream, FFmpegInteropConfig^ config)
 {
-	return create_async([stream, config]
+	auto dispatcher = GetCurrentDispatcher();
+	return create_async([stream, config, dispatcher]
 	{
-		auto result = CreateFromStream(stream, config, nullptr);
-		if (result == nullptr)
-		{
-			throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
-		}
-		return result;
+		return CreateFromStream(stream, config, nullptr, dispatcher);
 	});
 };
 
 IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromUriAsync(String^ uri, FFmpegInteropConfig^ config)
 {
-	return create_async([uri, config]
+	auto dispatcher = GetCurrentDispatcher();
+	return create_async([uri, config, dispatcher]
 	{
-		auto result = CreateFromUri(uri, config);
-		if (result == nullptr)
-		{
-			throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
-		}
-		return result;
+		return CreateFromUri(uri, config, dispatcher);
 	});
 };
 
-FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss)
+FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher)
 {
-	auto interopMSS = ref new FFmpegInteropMSS(config);
+	auto interopMSS = ref new FFmpegInteropMSS(config, dispatcher);
 	auto hr = interopMSS->CreateMediaStreamSource(stream, mss);
 	if (!SUCCEEDED(hr))
 	{
@@ -152,9 +153,9 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromStream(IRandomAccessStream^ stream
 	return interopMSS;
 }
 
-FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromUri(String^ uri, FFmpegInteropConfig^ config)
+FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher)
 {
-	auto interopMSS = ref new FFmpegInteropMSS(config);
+	auto interopMSS = ref new FFmpegInteropMSS(config, dispatcher);
 	auto hr = interopMSS->CreateMediaStreamSource(uri);
 	if (!SUCCEEDED(hr))
 	{
@@ -181,7 +182,8 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromStream(IRandomAcce
 	}
 	try
 	{
-		return CreateFromStream(stream, config, nullptr);
+		auto dispatcher = GetCurrentDispatcher();
+		return CreateFromStream(stream, config, nullptr, dispatcher);
 	}
 	catch (...)
 	{
@@ -219,7 +221,8 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromUri(String^ uri, b
 	}
 	try
 	{
-		return CreateFromUri(uri, config);
+		auto dispatcher = GetCurrentDispatcher();
+		return CreateFromUri(uri, config, dispatcher);
 	}
 	catch (...)
 	{
@@ -246,6 +249,12 @@ MediaSource^ FFmpegInteropMSS::CreateMediaSource()
 	for each (auto stream in subtitleStreams)
 	{
 		source->ExternalTimedMetadataTracks->Append(stream->SubtitleTrack);
+	}
+	for each(auto subtitleInfo in SubtitleStreams)
+	{
+		if (subtitleInfo->IsExternal) {
+			source->ExternalTimedMetadataTracks->Append(subtitleInfo->SubtitleTrack);
+		}
 	}
 	return source;
 }
@@ -304,6 +313,78 @@ MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem(TimeSpan startTime,
 	}
 }
 
+IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream ^ stream, String^ streamName)
+{
+	return create_async([this, stream, streamName]
+	{
+
+		auto subConfig = ref new FFmpegInteropConfig();
+		subConfig->IsExternalSubtitleParser = true;
+		subConfig->DefaultSubtitleStreamName = streamName;
+		
+		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
+		subConfig->AnsiSubtitleEncoding = this->config->AnsiSubtitleEncoding;
+		subConfig->OverrideSubtitleStyles = this->config->OverrideSubtitleStyles;
+		subConfig->SubtitleRegion = this->config->SubtitleRegion;
+		subConfig->SubtitleStyle = this->config->SubtitleStyle;
+		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
+
+		if (VideoDescriptor)
+		{
+			subConfig->AdditionalFFmpegSubtitleOptions = ref new PropertySet();
+
+			subConfig->AdditionalFFmpegSubtitleOptions->Insert("subfps",
+				VideoDescriptor->EncodingProperties->FrameRate->Numerator.ToString() + "/" + VideoDescriptor->EncodingProperties->FrameRate->Denominator.ToString());
+		}
+		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, subConfig, nullptr, nullptr);
+
+		if (externalSubsParser->SubtitleStreams->Size > 0)
+		{
+			int readResult = 0;
+			while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
+			{
+				Concurrency::interruption_point();
+			}
+		}
+
+
+		mutexGuard.lock();
+		try
+		{
+			int subtitleTracksCount = 0;
+
+			for each(auto externalSubtitle in externalSubsParser->SubtitleStreams)
+			{
+				if (externalSubtitle->SubtitleTrack->Cues->Size > 0)
+				{
+					subtitleStrInfos->Append(externalSubtitle);
+
+					if (this->PlaybackItem != nullptr)
+					{
+						PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
+					}
+					subtitleTracksCount++;
+				}
+			}
+
+			if (subtitleTracksCount == 0)
+			{
+				throw ref new InvalidArgumentException("No subtitles found in file.");
+			}
+
+			subtitleStreamInfos = subtitleStrInfos->GetView();
+		}
+		catch (...)
+		{
+			mutexGuard.unlock();
+			throw;
+		}
+
+		mutexGuard.unlock();
+		return externalSubsParser->SubtitleStreams;
+	});
+}
+
 void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 {
 	audioTracksChangedToken = playbackitem->AudioTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem ^, Windows::Foundation::Collections::IVectorChangedEventArgs ^>(this, &FFmpegInterop::FFmpegInteropMSS::OnAudioTracksChanged);
@@ -319,12 +400,18 @@ void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 				playbackitem->TimedMetadataTracks->SetPresentationMode(index, TimedMetadataTrackPresentationMode::PlatformPresented);
 				break;
 			}
+
 			index++;
 		}
 	}
+
+	for each (auto stream in subtitleStreams)
+	{
+		stream->PlaybackItem = playbackItem;
+	}
 }
 
-void FFmpegInterop::FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args)
+void FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args)
 {
 	mutexGuard.lock();
 	int index = 0;
@@ -332,7 +419,8 @@ void FFmpegInterop::FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTim
 	{
 		if (stream->SubtitleTrack == args->Track)
 		{
-			if (args->NewPresentationMode == TimedMetadataTrackPresentationMode::Disabled)
+			auto mode = args->NewPresentationMode;
+			if (mode == TimedMetadataTrackPresentationMode::Disabled || mode == TimedMetadataTrackPresentationMode::Hidden)
 			{
 				stream->DisableStream();
 			}
@@ -346,7 +434,7 @@ void FFmpegInterop::FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTim
 	mutexGuard.unlock();
 }
 
-void FFmpegInterop::FFmpegInteropMSS::OnAudioTracksChanged(MediaPlaybackItem ^sender, IVectorChangedEventArgs ^args)
+void FFmpegInteropMSS::OnAudioTracksChanged(MediaPlaybackItem ^sender, IVectorChangedEventArgs ^args)
 {
 	mutexGuard.lock();
 	if (sender->AudioTracks->Size == AudioStreams->Size)
@@ -449,7 +537,7 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream, M
 
 	if (SUCCEEDED(hr))
 	{
-		avIOCtx = avio_alloc_context(fileStreamBuffer, config->StreamBufferSize, 0, fileStreamData, FileStreamRead, 0, FileStreamSeek);
+		avIOCtx = avio_alloc_context(fileStreamBuffer, config->StreamBufferSize, 0, (void*)this, FileStreamRead, 0, FileStreamSeek);
 		if (avIOCtx == nullptr)
 		{
 			hr = E_OUTOFMEMORY;
@@ -471,6 +559,13 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream, M
 		hr = ParseOptions(config->FFmpegOptions);
 	}
 
+
+	if (SUCCEEDED(hr))
+	{
+		// Populate AVDictionary avDict based on additional ffmpegOptions. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
+		hr = ParseOptions(config->AdditionalFFmpegSubtitleOptions);
+	}
+
 	if (SUCCEEDED(hr))
 	{
 		avFormatCtx->pb = avIOCtx;
@@ -488,6 +583,7 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream, M
 		{
 			DebugMessage(L"Invalid FFmpeg option(s)");
 			av_dict_free(&avDict);
+
 			avDict = nullptr;
 		}
 	}
@@ -550,8 +646,11 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 		}
 	}
 
-	auto audioStrInfos = ref new Vector<AudioStreamInfo^>();
-	auto subtitleStrInfos = ref new Vector<SubtitleStreamInfo^>();
+	// do not use start time for pure subtitle files
+	if (config->IsExternalSubtitleParser && avFormatCtx->nb_streams == 1)
+	{
+		avFormatCtx->start_time = AV_NOPTS_VALUE;
+	}
 
 	AVCodec* avVideoCodec;
 	auto videoStreamIndex = av_find_best_stream(avFormatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &avVideoCodec, 0);
@@ -563,7 +662,7 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 		auto avStream = avFormatCtx->streams[index];
 		MediaSampleProvider^ stream;
 
-		if (avStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && !config->IsFrameGrabber)
+		if (avStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && !config->IsFrameGrabber && !config->IsExternalSubtitleParser)
 		{
 			stream = CreateAudioStream(avStream, index);
 			if (stream)
@@ -592,11 +691,11 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 				}
 			}
 		}
-		else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && avStream->disposition == AV_DISPOSITION_ATTACHED_PIC && thumbnailStreamIndex == AVERROR_STREAM_NOT_FOUND)
+		else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && avStream->disposition == AV_DISPOSITION_ATTACHED_PIC && thumbnailStreamIndex == AVERROR_STREAM_NOT_FOUND && !config->IsExternalSubtitleParser)
 		{
 			thumbnailStreamIndex = index;
 		}
-		else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && index == videoStreamIndex)
+		else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && index == videoStreamIndex && !config->IsExternalSubtitleParser)
 		{
 			videoStream = stream = CreateVideoStream(avStream, index);
 
@@ -614,7 +713,7 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 			{
 				auto isDefault = index == subtitleStreamIndex;
 				auto info = ref new SubtitleStreamInfo(stream->Name, stream->Language, stream->CodecName,
-					isDefault, (avStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED, ((SubtitleProvider^)stream)->SubtitleTrack);
+					isDefault, (avStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED, ((SubtitleProvider^)stream)->SubtitleTrack, config->IsExternalSubtitleParser);
 				if (isDefault)
 				{
 					subtitleStrInfos->InsertAt(0, info);
@@ -624,6 +723,12 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 				{
 					subtitleStrInfos->Append(info);
 					subtitleStreams.push_back((SubtitleProvider^)stream);
+				}
+
+				// enable all subtitle streams for external subtitle parsing
+				if (config->IsExternalSubtitleParser)
+				{
+					((SubtitleProvider^)stream)->EnableStream();
 				}
 			}
 		}
@@ -641,9 +746,10 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 
 	if (videoStream)
 	{
+		auto aspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
 		for each (auto stream in subtitleStreams)
 		{
-			stream->NotifyVideoFrameSize(videoStream->m_pAvCodecCtx->width, videoStream->m_pAvCodecCtx->height);
+			stream->NotifyVideoFrameSize(videoStream->m_pAvCodecCtx->width, videoStream->m_pAvCodecCtx->height, aspect);
 		}
 	}
 
@@ -663,46 +769,48 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 		mss = ref new MediaStreamSource(videoStream->StreamDescriptor);
 		videoStream->EnableStream();
 	}
-	else
+	else if (subtitleStreams.size() == 0 || !config->IsExternalSubtitleParser)
 	{
+		//only fail if there are no media streams (audio, video, or subtitle)
 		hr = E_FAIL;
 	}
-
-	if (SUCCEEDED(hr))
-	{
-		for each (auto stream in audioStreams)
+	//if the streams are subtitles only, there will be no media stream source
+	if (mss != nullptr) {
+		if (SUCCEEDED(hr))
 		{
-			if (stream != currentAudioStream)
+			for each (auto stream in audioStreams)
 			{
-				mss->AddStreamDescriptor(stream->StreamDescriptor);
+				if (stream != currentAudioStream)
+				{
+					mss->AddStreamDescriptor(stream->StreamDescriptor);
+				}
 			}
 		}
-	}
 
-	if (SUCCEEDED(hr))
-	{
-		// Convert media duration from AV_TIME_BASE to TimeSpan unit
-		mediaDuration = { LONGLONG(avFormatCtx->duration * 10000000 / double(AV_TIME_BASE)) };
-
-		TimeSpan buffer = { 0 };
-		mss->BufferTime = buffer;
-
-		if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.MediaStreamSource", "MaxSupportedPlaybackRate"))
+		if (SUCCEEDED(hr))
 		{
-			mss->MaxSupportedPlaybackRate = config->MaxSupportedPlaybackRate;
-		}
+			// Convert media duration from AV_TIME_BASE to TimeSpan unit
+			mediaDuration = { LONGLONG(avFormatCtx->duration * 10000000 / double(AV_TIME_BASE)) };
 
-		if (mediaDuration.Duration > 0)
-		{
-			mss->Duration = mediaDuration;
-			mss->CanSeek = true;
-		}
+			TimeSpan buffer = { 0 };
+			mss->BufferTime = buffer;
 
-		startingRequestedToken = mss->Starting += ref new TypedEventHandler<MediaStreamSource ^, MediaStreamSourceStartingEventArgs ^>(this, &FFmpegInteropMSS::OnStarting);
-		sampleRequestedToken = mss->SampleRequested += ref new TypedEventHandler<MediaStreamSource ^, MediaStreamSourceSampleRequestedEventArgs ^>(this, &FFmpegInteropMSS::OnSampleRequested);
-		switchStreamRequestedToken = mss->SwitchStreamsRequested += ref new TypedEventHandler<MediaStreamSource ^, MediaStreamSourceSwitchStreamsRequestedEventArgs ^>(this, &FFmpegInteropMSS::OnSwitchStreamsRequested);
+			if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.MediaStreamSource", "MaxSupportedPlaybackRate"))
+			{
+				mss->MaxSupportedPlaybackRate = config->MaxSupportedPlaybackRate;
+			}
+
+			if (mediaDuration.Duration > 0)
+			{
+				mss->Duration = mediaDuration;
+				mss->CanSeek = true;
+			}
+
+			startingRequestedToken = mss->Starting += ref new TypedEventHandler<MediaStreamSource ^, MediaStreamSourceStartingEventArgs ^>(this, &FFmpegInteropMSS::OnStarting);
+			sampleRequestedToken = mss->SampleRequested += ref new TypedEventHandler<MediaStreamSource ^, MediaStreamSourceSampleRequestedEventArgs ^>(this, &FFmpegInteropMSS::OnSampleRequested);
+			switchStreamRequestedToken = mss->SwitchStreamsRequested += ref new TypedEventHandler<MediaStreamSource ^, MediaStreamSourceSwitchStreamsRequestedEventArgs ^>(this, &FFmpegInteropMSS::OnSwitchStreamsRequested);
+		}
 	}
-
 	return hr;
 }
 
@@ -719,6 +827,24 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 		{
 			DebugMessage(L"Could not allocate a decoding context\n");
 			hr = E_OUTOFMEMORY;
+		}
+
+		//inject custom properties
+		if (config->AutoCorrectAnsiSubtitles && config->IsExternalSubtitleParser && streamByteOrderMark != ByteOrderMark::UTF8)
+		{
+			String^ key = config->AnsiSubtitleEncoding->Name;
+			std::wstring keyW(key->Begin());
+			std::string keyA(keyW.begin(), keyW.end());
+			const char* keyChar = keyA.c_str();
+
+			if (av_opt_set(avSubsCodecCtx, "sub_charenc", keyChar, AV_OPT_SEARCH_CHILDREN) < 0)
+			{
+				DebugMessage(L"Could not set sub_charenc on subtitle provider\n");
+			}
+			if (av_opt_set_int(avSubsCodecCtx, "sub_charenc_mode", FF_SUB_CHARENC_MODE_AUTOMATIC, AV_OPT_SEARCH_CHILDREN) < 0)
+			{
+				DebugMessage(L"Could not set sub_charenc_mode on subtitle provider\n");
+			}
 		}
 
 		if (SUCCEEDED(hr))
@@ -739,11 +865,14 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 				{
 					if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
 					{
-						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
+						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, dispatcher);
 					}
 					else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
 					{
-						avSubsStream = ref new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config, index);
+						if (Windows::Foundation::Metadata::ApiInformation::IsEnumNamedValuePresent("Windows.Media.Core.TimedMetadataKind", "ImageSubtitle"))
+						{
+							avSubsStream = ref new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, dispatcher);
+						}
 					}
 					else
 					{
@@ -827,6 +956,10 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateAudioStream(AVStream * avStream, in
 				{
 					hr = E_FAIL;
 				}
+				else if (avAudioCodecCtx->sample_fmt == AV_SAMPLE_FMT_NONE)
+				{
+					hr = E_FAIL;
+				}
 				else
 				{
 					// Detect audio format and create audio stream descriptor accordingly
@@ -889,6 +1022,10 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream * avStream, in
 			}
 
 			if (avcodec_open2(avVideoCodecCtx, avVideoCodec, NULL) < 0)
+			{
+				hr = E_FAIL;
+			}
+			else if (avVideoCodecCtx->pix_fmt == AV_PIX_FMT_NONE)
 			{
 				hr = E_FAIL;
 			}
@@ -1241,16 +1378,16 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position)
 		}
 		else
 		{
-			// Flush the AudioSampleProvider
-			if (currentAudioStream != nullptr)
+			// Flush all active streams
+			for each (auto stream in sampleProviders)
 			{
-				currentAudioStream->Flush();
-			}
-
-			// Flush the VideoSampleProvider
-			if (videoStream != nullptr)
-			{
-				videoStream->Flush();
+				if (stream)
+				{
+					if (stream->IsEnabled)
+					{
+						stream->Flush();
+					}
+				}
 			}
 		}
 	}
@@ -1262,16 +1399,58 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position)
 	return hr;
 }
 
+CoreDispatcher ^ FFmpegInterop::FFmpegInteropMSS::GetCurrentDispatcher()
+{
+	try {
+		//try get the current view
+		auto wnd = CoreWindow::GetForCurrentThread();
+		if (wnd == nullptr)
+		{
+			wnd = CoreApplication::MainView->CoreWindow;
+		}
+		if (wnd != nullptr)
+			return wnd->Dispatcher;
+
+		return nullptr;
+	}
+	catch (...)
+	{
+		return nullptr;
+	}
+
+}
+
 // Static function to read file stream and pass data to FFmpeg. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
 static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
 {
-	IStream* pStream = reinterpret_cast<IStream*>(ptr);
+	FFmpegInteropMSS^ mss = reinterpret_cast<FFmpegInteropMSS^>(ptr);
 	ULONG bytesRead = 0;
-	HRESULT hr = pStream->Read(buf, bufSize, &bytesRead);
+	HRESULT hr = mss->fileStreamData->Read(buf, bufSize, &bytesRead);
 
 	if (FAILED(hr))
 	{
 		return -1;
+	}
+
+	// Check beginning of file for BOM on first read
+	if (mss->streamByteOrderMark == ByteOrderMark::Unchecked)
+	{
+		if (bytesRead >= 4)
+		{
+			auto bom = ((uint32 *)buf)[0];
+			if ((bom & 0x00FFFFFF) == 0x00BFBBEF)
+			{
+				mss->streamByteOrderMark = ByteOrderMark::UTF8;
+			}
+			else
+			{
+				mss->streamByteOrderMark = ByteOrderMark::Unknown;
+			}
+		}
+		else
+		{
+			mss->streamByteOrderMark = ByteOrderMark::Unknown;
+		}
 	}
 
 	// If we succeed but don't have any bytes, assume end of file
@@ -1286,12 +1465,12 @@ static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
 // Static function to seek in file stream. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
 static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence)
 {
-	IStream* pStream = reinterpret_cast<IStream*>(ptr);
+	FFmpegInteropMSS^ mss = reinterpret_cast<FFmpegInteropMSS^>(ptr);
 	if (whence == AVSEEK_SIZE)
 	{
 		// get stream size
 		STATSTG status;
-		if (FAILED(pStream->Stat(&status, STATFLAG_NONAME)))
+		if (FAILED(mss->fileStreamData->Stat(&status, STATFLAG_NONAME)))
 		{
 			return -1;
 		}
@@ -1303,7 +1482,7 @@ static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence)
 		in.QuadPart = pos;
 		ULARGE_INTEGER out = { 0 };
 
-		if (FAILED(pStream->Seek(in, whence, &out)))
+		if (FAILED(mss->fileStreamData->Seek(in, whence, &out)))
 		{
 			return -1;
 		}

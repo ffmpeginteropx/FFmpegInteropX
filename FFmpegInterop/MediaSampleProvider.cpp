@@ -125,6 +125,35 @@ void FFmpegInterop::MediaSampleProvider::InitializeNameLanguageCodec()
 			{
 			}
 		}
+
+		if (!Name)
+		{
+			Name = Language;
+		}
+	}
+
+	if (!Name && (m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO || m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE))
+	{
+		int count = 0;
+		int number = 0;
+		for (unsigned int i = 0; i < m_pAvFormatCtx->nb_streams; i++)
+		{
+			if (m_pAvFormatCtx->streams[i]->codecpar->codec_type == m_pAvStream->codecpar->codec_type)
+			{
+				count++;
+				if (i == StreamIndex)
+				{
+					number = count;
+				}
+			}
+		}
+
+		String^ name = m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ? m_config->DefaultAudioStreamName : m_config->DefaultSubtitleStreamName;
+		if (count > 1)
+		{
+			name = name + " " + number.ToString();
+		}
+		Name = name;
 	}
 
 	auto codec = m_pAvCodecCtx->codec_descriptor->name;
