@@ -27,6 +27,7 @@
 #include "AvEffectDefinition.h"
 #include "StreamInfo.h"
 #include "SubtitleProvider.h"
+#include "CodecChecker.h"
 #include <collection.h>
 
 using namespace Platform;
@@ -196,6 +197,7 @@ namespace FFmpegInterop
 		void OnAudioTracksChanged(MediaPlaybackItem ^sender, IVectorChangedEventArgs ^args);
 		void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args);
 		void InitializePlaybackItem(MediaPlaybackItem^ playbackitem);
+		bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, bool manualStatus, int maxProfile, int maxLevel);
 
 
 	internal:

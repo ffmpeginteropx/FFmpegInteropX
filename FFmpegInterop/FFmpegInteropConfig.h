@@ -17,6 +17,8 @@ namespace FFmpegInterop
 			PassthroughAudioMP3 = false;
 			PassthroughAudioAAC = false;
 
+			AutoDetectHardwareAcceleration = true;
+
 			PassthroughVideoH264 = true;
 			PassthroughVideoH264Hi10P = false; // neither Windows codecs nor known HW decoders support Hi10P
 			PassthroughVideoHEVC = true;
@@ -103,6 +105,8 @@ namespace FFmpegInterop
 
 		property bool PassthroughAudioMP3;
 		property bool PassthroughAudioAAC;
+
+		property bool AutoDetectHardwareAcceleration;
 
 		property bool PassthroughVideoH264;
 		property bool PassthroughVideoH264Hi10P;

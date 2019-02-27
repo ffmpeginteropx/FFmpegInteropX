@@ -53,5 +53,6 @@ namespace MediaPlayerCPP
 		Windows::Media::Playback::MediaPlaybackItem^ playbackItem;
 		Windows::Foundation::EventRegistrationToken timedMetadataTracksChangedToken;
 		void CbEncodings_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e);
+		void AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 	};
 }

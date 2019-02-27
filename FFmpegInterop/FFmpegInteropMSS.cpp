@@ -411,6 +411,96 @@ void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 	}
 }
 
+bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, bool manualStatus, int maxProfile, int maxLevel)
+{
+	bool result = false;
+	if (!config->IsFrameGrabber)
+	{
+		if (config->AutoDetectHardwareAcceleration)
+		{
+			// auto detection
+			if (status->IsAvailable)
+			{
+				// check profile, if restricted
+				if (status->SupportedProfiles)
+				{
+					for each (auto profile in status->SupportedProfiles)
+					{
+						if (profile == avCodecCtx->profile)
+						{
+							result = true;
+							break;
+						}
+					}
+				}
+				else
+				{
+					result = true;
+				}
+
+				// check installation status of extension
+				if (avCodecCtx->codec_id == AV_CODEC_ID_MPEG2VIDEO)
+				{
+					result &= CodecChecker::CheckIsMpeg2VideoExtensionInstalled();
+				}
+				else if (avCodecCtx->codec_id == AV_CODEC_ID_VP9)
+				{
+					result &= CodecChecker::CheckIsVP9VideoExtensionInstalled();
+				}
+
+				// check max resolution
+				if (result && avCodecCtx->width > 0 && avCodecCtx->height > 0)
+				{
+					switch (status->VideoResolution)
+					{
+					case VideoResolution::SD:
+						result = avCodecCtx->width <= 720 && avCodecCtx->height <= 576;
+						break;
+					case VideoResolution::HD:
+						result = avCodecCtx->width <= 1280 && avCodecCtx->height <= 720;
+						break;
+					case VideoResolution::FullHD:
+						result = avCodecCtx->width <= 1920 && avCodecCtx->height <= 1088;
+						break;
+					case VideoResolution::UHD4K:
+						result = avCodecCtx->width <= 4096 && avCodecCtx->height <= 2160;
+						break;
+					case VideoResolution::UHD8K:
+						result = avCodecCtx->width <= 8192 && avCodecCtx->height <= 4320;
+						break;
+					default:
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			// manual settings
+			if (manualStatus)
+			{
+				// check profile, if restricted
+				if (maxProfile >= 0)
+				{
+					result = avCodecCtx->profile <= maxProfile;
+				}
+				else
+				{
+					result = true;
+				}
+			}
+		}
+
+		// check level, if restricted
+		if (result && maxLevel >= 0)
+		{
+			result = avCodecCtx->level <= maxLevel;
+		}
+	}
+
+	return result;
+}
+
 void FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args)
 {
 	mutexGuard.lock();
@@ -1161,7 +1251,13 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 	MediaSampleProvider^ videoSampleProvider;
 	VideoEncodingProperties^ videoProperties;
 	
-	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 && config->PassthroughVideoH264 && !config->IsFrameGrabber && (avVideoCodecCtx->profile <= 100 || config->PassthroughVideoH264Hi10P))
+	if (config->AutoDetectHardwareAcceleration)
+	{
+		CodecChecker::Initialize();
+	}
+
+	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationH264, config->PassthroughVideoH264, FF_PROFILE_H264_HIGH, 41))
 	{
 		auto videoProperties = VideoEncodingProperties::CreateH264();
 
@@ -1175,7 +1271,8 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 		}
 	}
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC && config->PassthroughVideoHEVC && !config->IsFrameGrabber &&
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC, config->PassthroughVideoHEVC, FF_PROFILE_HEVC_MAIN, 41) &&
 		Windows::Foundation::Metadata::ApiInformation::IsMethodPresent("Windows.Media.MediaProperties.VideoEncodingProperties", "CreateHevc"))
 	{
 		auto videoProperties = VideoEncodingProperties::CreateHevc();
@@ -1191,7 +1288,9 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 		}
 	}
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3 && config->PassthroughVideoWMV3 && !config->IsFrameGrabber && avVideoCodecCtx->extradata_size > 0)
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3 &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationWMV3, config->PassthroughVideoWMV3, -1, -1) && 
+		avVideoCodecCtx->extradata_size > 0)
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
 		videoProperties->Subtype = MediaEncodingSubtypes::Wmv3;
@@ -1200,7 +1299,9 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 		videoProperties->SetFormatUserData(extradata);
 		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 	}
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VC1 && config->PassthroughVideoVC1 && !config->IsFrameGrabber && avVideoCodecCtx->extradata_size > 0)
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VC1 &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVC1, config->PassthroughVideoVC1, -1, -1) && 
+		avVideoCodecCtx->extradata_size > 0)
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
 		videoProperties->Subtype = MediaEncodingSubtypes::Wvc1;
@@ -1209,14 +1310,16 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 		videoProperties->SetFormatUserData(extradata);
 		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 	}
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_MPEG2VIDEO && config->PassthroughVideoMPEG2 && !config->IsFrameGrabber)
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_MPEG2VIDEO &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationMPEG2, config->PassthroughVideoMPEG2, -1, -1))
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
 		videoProperties->Subtype = MediaEncodingSubtypes::Mpeg2;
 
 		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 	}
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP9 && config->PassthroughVideoVP9 && !config->IsFrameGrabber &&
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP9 &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP9, config->PassthroughVideoVP9 && !(avVideoCodecCtx->profile & 0x10), -1, -1) &&
 		Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.MediaProperties.MediaEncodingSubtypes", "Vp9"))
 	{
 		auto videoProperties = ref new VideoEncodingProperties();

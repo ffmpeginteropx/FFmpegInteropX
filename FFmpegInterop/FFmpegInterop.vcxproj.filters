@@ -57,6 +57,7 @@
     <ClCompile Include="CharacterEncoding.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="CodecChecker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -145,6 +146,7 @@
     <ClInclude Include="CharacterEncoding.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="CodecChecker.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">

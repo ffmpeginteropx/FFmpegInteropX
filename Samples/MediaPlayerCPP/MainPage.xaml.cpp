@@ -341,3 +341,9 @@ void MediaPlayerCPP::MainPage::PassthroughVideo_Toggled(Platform::Object^ sender
 	Config->PassthroughVideoVP9 = passthrough;
 	Config->PassthroughVideoWMV3 = passthrough;
 }
+
+
+void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	PassthroughVideo->IsEnabled = !AutoDetect->IsOn;
+}

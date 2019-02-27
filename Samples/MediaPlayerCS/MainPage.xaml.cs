@@ -330,5 +330,10 @@ namespace MediaPlayerCS
             Config.PassthroughVideoVP9 = passthrough;
             Config.PassthroughVideoWMV3 = passthrough;
         }
+
+        private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
+        {
+            PassthroughVideo.IsEnabled = !AutoDetect.IsOn;
+        }
     }
 }
