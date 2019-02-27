@@ -69,7 +69,7 @@ FFmpegInteropX uses the following git submodules:
 
 Please use clone recursive, to get the exact verion of the libs that is required for use with FFmpegInteropX.
 
-	git clone --recursive git://github.com/lukasf/FFmpegInterop.git
+	git clone --recursive https://github.com/ffmpeginteropx/FFmpegInteropX.git
 
 If you forgot to clone recursive, or if one of the library folders is empty, use these commands from FFmpegInteropX folder:
 
