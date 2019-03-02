@@ -135,6 +135,7 @@ namespace FFmpegInterop
 					str = str.substr(lastComma + 1);
 
 					find_and_replace(str, L"\\N", L"\n");
+					find_and_replace(str, L"\\h", L"\t");
 					str.erase(str.find_last_not_of(L" \n\r") + 1);
 
 					auto cueStyle = !m_config->OverrideSubtitleStyles && style ? style->Style : m_config->SubtitleStyle;
