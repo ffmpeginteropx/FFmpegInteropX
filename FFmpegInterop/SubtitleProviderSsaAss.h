@@ -137,13 +137,18 @@ namespace FFmpegInterop
 					find_and_replace(str, L"\\N", L"\n");
 					str.erase(str.find_last_not_of(L" \n\r") + 1);
 
-					// strip effects from string
-					// TODO we could parse effect and use at least bold and italic
-					bool hasStyleOverride = false;
-					bool isBold = false; 
-					bool isItalic = false; 
-					bool isUnderlined = false;
-					bool isLinethrough = false;
+					auto cueStyle = !m_config->OverrideSubtitleStyles && style ? style->Style : m_config->SubtitleStyle;
+					auto cueRegion = !m_config->OverrideSubtitleStyles && style ? style->Region : m_config->SubtitleRegion;
+
+					TimedTextCue^ cue = ref new TimedTextCue();
+					cue->CueRegion = cueRegion;
+					cue->CueStyle = cueStyle;
+
+					TimedTextLine^ textLine = ref new TimedTextLine();
+					cue->Lines->Append(textLine);
+
+					TimedTextStyle^ subStyle = nullptr;
+					TimedTextSubformat^ subFormat = nullptr;
 					while (true)
 					{
 						auto nextEffect = str.find('{');
@@ -153,26 +158,74 @@ namespace FFmpegInterop
 							if (endEffect != str.npos)
 							{
 								auto effect = str.substr(nextEffect, endEffect - nextEffect + 1);
-								if (effect.find(L"\\i1") != effect.npos)
+
+								// create a subformat with default style for beginning of text (UWP seems to need subformats for all text, if used)
+								if (nextEffect > 0 && subFormat == nullptr)
 								{
-									isItalic = true;
-									hasStyleOverride = true;
+									subFormat = ref new TimedTextSubformat();
+									subFormat->SubformatStyle = cueStyle;
+									subFormat->StartIndex = 0;
 								}
+							
+								// apply previous subformat, if any
+								if (subFormat != nullptr)
+								{
+									subFormat->Length = nextEffect - subFormat->StartIndex;
+									textLine->Subformats->Append(subFormat);
+								}
+
+								// create new subformat for following text
+								subStyle = subStyle != nullptr ? CopyStyle(subStyle) : CopyStyle(cueStyle);
+								subFormat = ref new TimedTextSubformat();
+								subFormat->SubformatStyle = subStyle;
+								subFormat->StartIndex = nextEffect;
+
 								if (effect.find(L"\\b1") != effect.npos)
 								{
-									isBold = true;
-									hasStyleOverride = true;
+									subStyle->FontWeight = TimedTextWeight::Bold;
 								}
-								if (effect.find(L"\\u1") != effect.npos)
+								else if (effect.find(L"\\b0") != effect.npos)
 								{
-									isUnderlined = true;
-									hasStyleOverride = true;
+									subStyle->FontWeight = TimedTextWeight::Normal;
 								}
-								if (effect.find(L"\\s1") != effect.npos)
+
+								if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))
 								{
-									isLinethrough = true;
-									hasStyleOverride = true;
+									if (effect.find(L"\\i1") != effect.npos)
+									{
+										subStyle->FontStyle = TimedTextFontStyle::Italic;
+									}
+									else if (effect.find(L"\\i0") != effect.npos)
+									{
+										subStyle->FontStyle = TimedTextFontStyle::Normal;
+									}
 								}
+
+								if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsUnderlineEnabled"))
+								{
+									if (effect.find(L"\\u1") != effect.npos)
+									{
+										subStyle->IsUnderlineEnabled = true;
+									}
+									else if (effect.find(L"\\u0") != effect.npos)
+									{
+										subStyle->IsUnderlineEnabled = false;
+									}
+								}
+
+								if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsLineThroughEnabled"))
+								{
+									if (effect.find(L"\\s1") != effect.npos)
+									{
+										subStyle->IsLineThroughEnabled = true;
+									}
+									else if (effect.find(L"\\s0") != effect.npos)
+									{
+										subStyle->IsLineThroughEnabled = false;
+									}
+								}
+
+								// strip effect from actual text
 								if (endEffect < str.length() - 1)
 								{
 									str = str.substr(0, nextEffect).append(str.substr(endEffect + 1));
@@ -193,39 +246,17 @@ namespace FFmpegInterop
 						}
 					}
 
-					auto cueStyle = !m_config->OverrideSubtitleStyles && style ? style->Style : m_config->SubtitleStyle;
-					auto cueRegion = !m_config->OverrideSubtitleStyles && style ? style->Region : m_config->SubtitleRegion;
-
-					if (hasStyleOverride)
+					// apply last subformat, if any
+					if (subFormat != nullptr)
 					{
-						cueStyle = CopyStyle(cueStyle);
-
-						cueStyle->FontWeight = isBold ? TimedTextWeight::Bold : TimedTextWeight::Normal;
-						
-						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))
-						{
-							cueStyle->FontStyle = isItalic ? TimedTextFontStyle::Italic : TimedTextFontStyle::Normal;
-						}
-						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsUnderlineEnabled"))
-						{
-							cueStyle->IsUnderlineEnabled = isUnderlined;
-						}
-						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsLineThroughEnabled"))
-						{
-							cueStyle->IsLineThroughEnabled = isLinethrough;
-						}
+						subFormat->Length = str.size() - subFormat->StartIndex;
+						textLine->Subformats->Append(subFormat);
 					}
-					
+				
 					auto timedText = convertFromString(str);
 					if (timedText->Length() > 0)
 					{
-						TimedTextCue^ cue = ref new TimedTextCue();
-						cue->CueRegion = cueRegion;
-						cue->CueStyle = cueStyle;
-
-						TimedTextLine^ textLine = ref new TimedTextLine();
 						textLine->Text = timedText;
-						cue->Lines->Append(textLine);
 
 						return cue;
 					}
