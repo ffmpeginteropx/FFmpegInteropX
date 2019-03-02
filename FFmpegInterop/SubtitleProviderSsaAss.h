@@ -139,6 +139,11 @@ namespace FFmpegInterop
 
 					// strip effects from string
 					// TODO we could parse effect and use at least bold and italic
+					bool hasStyleOverride = false;
+					bool isBold = false; 
+					bool isItalic = false; 
+					bool isUnderlined = false;
+					bool isLinethrough = false;
 					while (true)
 					{
 						auto nextEffect = str.find('{');
@@ -147,6 +152,27 @@ namespace FFmpegInterop
 							auto endEffect = str.find('}', nextEffect);
 							if (endEffect != str.npos)
 							{
+								auto effect = str.substr(nextEffect, endEffect - nextEffect + 1);
+								if (effect.find(L"\\i1") != effect.npos)
+								{
+									isItalic = true;
+									hasStyleOverride = true;
+								}
+								if (effect.find(L"\\b1") != effect.npos)
+								{
+									isBold = true;
+									hasStyleOverride = true;
+								}
+								if (effect.find(L"\\u1") != effect.npos)
+								{
+									isUnderlined = true;
+									hasStyleOverride = true;
+								}
+								if (effect.find(L"\\s1") != effect.npos)
+								{
+									isLinethrough = true;
+									hasStyleOverride = true;
+								}
 								if (endEffect < str.length() - 1)
 								{
 									str = str.substr(0, nextEffect).append(str.substr(endEffect + 1));
@@ -167,21 +193,35 @@ namespace FFmpegInterop
 						}
 					}
 
+					auto cueStyle = !m_config->OverrideSubtitleStyles && style ? style->Style : m_config->SubtitleStyle;
+					auto cueRegion = !m_config->OverrideSubtitleStyles && style ? style->Region : m_config->SubtitleRegion;
+
+					if (hasStyleOverride)
+					{
+						cueStyle = CopyStyle(cueStyle);
+
+						cueStyle->FontWeight = isBold ? TimedTextWeight::Bold : TimedTextWeight::Normal;
+						
+						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))
+						{
+							cueStyle->FontStyle = isItalic ? TimedTextFontStyle::Italic : TimedTextFontStyle::Normal;
+						}
+						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsUnderlineEnabled"))
+						{
+							cueStyle->IsUnderlineEnabled = isUnderlined;
+						}
+						if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsLineThroughEnabled"))
+						{
+							cueStyle->IsLineThroughEnabled = isLinethrough;
+						}
+					}
 					
 					auto timedText = convertFromString(str);
 					if (timedText->Length() > 0)
 					{
 						TimedTextCue^ cue = ref new TimedTextCue();
-						if (!m_config->OverrideSubtitleStyles && style)
-						{
-							cue->CueRegion = style->Region;
-							cue->CueStyle = style->Style;
-						}
-						else
-						{
-							cue->CueRegion = m_config->SubtitleRegion;
-							cue->CueStyle = m_config->SubtitleStyle;
-						}
+						cue->CueRegion = cueRegion;
+						cue->CueStyle = cueStyle;
 
 						TimedTextLine^ textLine = ref new TimedTextLine();
 						textLine->Text = timedText;
@@ -478,6 +518,52 @@ namespace FFmpegInterop
 					break;
 				}
 			}
+		}
+
+		TimedTextStyle^ CopyStyle(TimedTextStyle^ style)
+		{
+			auto copy = ref new TimedTextStyle();
+			copy->Background = style->Background;
+			copy->FlowDirection = style->FlowDirection;
+			copy->FontFamily = style->FontFamily;
+			copy->FontSize = style->FontSize;
+			copy->FontWeight = style->FontWeight;
+			copy->Foreground = style->Foreground;
+			copy->OutlineColor = style->OutlineColor;
+			copy->OutlineRadius = style->OutlineRadius;
+			copy->OutlineThickness = style->OutlineThickness;
+
+			if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))
+			{
+				copy->FontStyle = style->FontStyle;
+			}
+			if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsLineThroughEnabled"))
+			{
+				copy->IsLineThroughEnabled = style->IsLineThroughEnabled;
+			}
+			if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsUnderlineEnabled"))
+			{
+				copy->IsUnderlineEnabled = style->IsUnderlineEnabled;
+			}
+
+			return copy;
+		}
+
+		TimedTextRegion^ CopyRegion(TimedTextRegion^ region)
+		{
+			auto copy = ref new TimedTextRegion();
+			copy->Background = region->Background;
+			copy->DisplayAlignment = region->DisplayAlignment;
+			copy->Extent = region->Extent;
+			copy->IsOverflowClipped = region->IsOverflowClipped;
+			copy->LineHeight = region->LineHeight;
+			copy->Padding = region->Padding;
+			copy->Position = region->Position;
+			copy->ScrollMode = region->ScrollMode;
+			copy->TextWrapping = region->TextWrapping;
+			copy->WritingMode = region->WritingMode;
+			copy->ZIndex = region->ZIndex;
+			return copy;
 		}
 
 		Windows::UI::Color ColorFromArgb(int argb)
