@@ -199,7 +199,29 @@ namespace FFmpegInterop
 										subStyle->FontFamily = convertFromString(fnName);
 									}
 								}
-
+								auto fsIndex = effect.find(L"\\fs");
+								if (fsIndex != effect.npos)
+								{
+									auto fSize = effect.substr(fsIndex + 3);
+									auto bracIndex = fSize.find(L"}");
+									if (bracIndex != fSize.npos)
+									{
+										fSize = fSize.substr(0, bracIndex);
+										TimedTextDouble fontSize;
+										fontSize.Unit = TimedTextUnit::Pixels;
+										fontSize.Value = convertToDouble(convertFromString(fSize));
+										subStyle->FontSize = fontSize;
+									}
+									auto backIndex = fSize.find(L"\\");
+									if (backIndex != fSize.npos)
+									{
+										fSize = fSize.substr(0, backIndex);
+										TimedTextDouble fontSize;
+										fontSize.Unit = TimedTextUnit::Pixels;
+										fontSize.Value = convertToDouble(convertFromString(fSize));
+										subStyle->FontSize = fontSize;
+									}
+								}
 								if (effect.find(L"\\b1") != effect.npos)
 								{
 									subStyle->FontWeight = TimedTextWeight::Bold;

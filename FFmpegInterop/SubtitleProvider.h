@@ -125,6 +125,11 @@ namespace FFmpegInterop
 			return ref new Platform::String(input.c_str(), (unsigned int)input.length());
 		}
 
+		double convertToDouble(Platform::String^ str)
+		{
+			const wchar_t* begin = str->Data();
+			return std::wcstol(begin, nullptr, 10);
+		}
 	private:
 
 		void AddCue(IMediaCue^ cue)
