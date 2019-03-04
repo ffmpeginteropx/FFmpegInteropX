@@ -29,7 +29,7 @@ namespace FFmpegInterop
 				if (m_pAvCodecCtx->subtitle_header && m_pAvCodecCtx->subtitle_header_size > 0)
 				{
 					auto str = std::string((char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size);
-					auto versionIndex = str.find("ScriptType: v4.0.0+");
+					auto versionIndex = str.find("ScriptType: v4.00+");
 					if (versionIndex != str.npos)
 					{
 						isAss = true;
@@ -392,12 +392,16 @@ namespace FFmpegInterop
 					char font[MAX_STYLE_NAME_CHARS];
 					int size, color, secondaryColor, outlineColor, backColor;
 					int bold, italic, underline, strikeout;
-					int scaleX, scaleY, spacing, angle, borderStyle;
-					int outline, shadow, alignment;
-					int marginL, marginR, marginV, encoding;
+					float scaleX, scaleY, spacing, angle;
+					int borderStyle;
+					float outline;
+					int shadow, alignment;
+					float marginL, marginR, marginV;
+					int encoding;
 
+					// try with hex colors
 					auto count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-						"%[^,],%[^,],%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i",
+						"%[^,],%[^,],%i,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
 						name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
 						&size, &color, &secondaryColor, &outlineColor, &backColor,
 						&bold, &italic, &underline, &strikeout,
@@ -407,9 +411,9 @@ namespace FFmpegInterop
 
 					if (count == 3)
 					{
-						// try with hex colors
-						count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-							"%[^,],%[^,],%i,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i",
+						// try with decimal colors
+						auto count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
+							"%[^,],%[^,],%i,%i,%i,%i,%i,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
 							name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
 							&size, &color, &secondaryColor, &outlineColor, &backColor,
 							&bold, &italic, &underline, &strikeout,
@@ -486,11 +490,11 @@ namespace FFmpegInterop
 						SubtitleStyle->Background = Windows::UI::Colors::Transparent; //ColorFromArgb(backColor);
 						TimedTextDouble outlineRadius;
 						outlineRadius.Unit = TimedTextUnit::Percentage;
-						outlineRadius.Value = outline;
+						outlineRadius.Value = outline * 2;
 						SubtitleStyle->OutlineRadius = outlineRadius;
 						TimedTextDouble outlineThickness;
 						outlineThickness.Unit = TimedTextUnit::Percentage;
-						outlineThickness.Value = outline;
+						outlineThickness.Value = outline * 2;
 						SubtitleStyle->OutlineThickness = outlineThickness;
 						SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
 						SubtitleStyle->OutlineColor = ColorFromArgb(outlineColor << 8 | 0x000000FF);
@@ -540,11 +544,13 @@ namespace FFmpegInterop
 					char font[MAX_STYLE_NAME_CHARS];
 					int size, color, secondaryColor, outlineColor, backColor;
 					int bold, italic, borderstyle;
-					int outline, shadow, alignment;
-					int marginL, marginR, marginV, alpha, encoding;
+					float outline;
+					int shadow, alignment;
+					float marginL, marginR, marginV, alpha;
+					int encoding;
 
 					auto count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-						"%[^,],%[^,],%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i",
+						"%[^,],%[^,],%i,%i,%i,%i,%i,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
 						name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
 						&size, &color, &secondaryColor, &outlineColor, &backColor,
 						&bold, &italic, &borderstyle,
@@ -555,7 +561,7 @@ namespace FFmpegInterop
 					{
 						// try with hex colors
 						count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-							"%[^,],%[^,],%i,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i",
+							"%[^,],%[^,],%i,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
 							name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
 							&size, &color, &secondaryColor, &outlineColor, &backColor,
 							&bold, &italic, &borderstyle,
@@ -631,11 +637,11 @@ namespace FFmpegInterop
 						SubtitleStyle->Background = Windows::UI::Colors::Transparent; //ColorFromArgb(backColor);
 						TimedTextDouble outlineRadius;
 						outlineRadius.Unit = TimedTextUnit::Percentage;
-						outlineRadius.Value = outline;
+						outlineRadius.Value = outline * 2;
 						SubtitleStyle->OutlineRadius = outlineRadius;
 						TimedTextDouble outlineThickness;
 						outlineThickness.Unit = TimedTextUnit::Percentage;
-						outlineThickness.Value = outline;
+						outlineThickness.Value = outline * 2;
 						SubtitleStyle->OutlineThickness = outlineThickness;
 						SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
 						SubtitleStyle->OutlineColor = ColorFromArgb(outlineColor << 8 | 0x000000FF);
