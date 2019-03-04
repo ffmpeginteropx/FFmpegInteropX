@@ -181,6 +181,25 @@ namespace FFmpegInterop
 								subFormat->SubformatStyle = subStyle;
 								subFormat->StartIndex = nextEffect;
 
+								auto fnIndex = effect.find(L"\\fn");
+								if (fnIndex != effect.npos)
+								{
+									//{\fnArial} or {\fnArial\different effect}
+									auto fnName = effect.substr(fnIndex + 3);
+									auto bracIndex = fnName.find(L"}");
+									if (bracIndex != fnName.npos)
+									{
+										fnName = fnName.substr(0, bracIndex);
+										subStyle->FontFamily = convertFromString(fnName);
+									}
+									auto backIndex = fnName.find(L"\\");
+									if (backIndex != fnName.npos)
+									{
+										fnName = fnName.substr(0, backIndex);
+										subStyle->FontFamily = convertFromString(fnName);
+									}
+								}
+
 								if (effect.find(L"\\b1") != effect.npos)
 								{
 									subStyle->FontWeight = TimedTextWeight::Bold;
