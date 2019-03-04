@@ -88,7 +88,7 @@ namespace FFmpegInterop
 			//OutlineRadius = new TimedTextDouble { Unit = TimedTextUnit.Percentage, Value = 10 },
 			TimedTextDouble outlineThickness;
 			outlineThickness.Unit = TimedTextUnit::Percentage;
-			outlineThickness.Value = 3.5;
+			outlineThickness.Value = 4.5;
 			SubtitleStyle->OutlineThickness = outlineThickness;
 			SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
 			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };

@@ -259,6 +259,31 @@ namespace FFmpegInterop
 										subStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
 									}
 								}
+								auto fsecIndex = effect.find(L"\\3c");
+								if (fsecIndex != effect.npos)
+								{
+									auto fColor = effect.substr(fsecIndex + 3);
+									auto bracIndex = fColor.find(L"}");
+									if (bracIndex != fColor.npos)
+									{
+										fColor = fColor.substr(0, bracIndex);
+										find_and_replace(fColor, L"&", L"");
+										find_and_replace(fColor, L"H", L"");
+
+										int color = convertHexToInt(convertFromString(fColor));
+										subStyle->OutlineColor = ColorFromArgb(color << 8 | 0x000000FF);
+									}
+									auto backIndex = fColor.find(L"\\");
+									if (backIndex != fColor.npos)
+									{
+										fColor = fColor.substr(0, backIndex);
+										find_and_replace(fColor, L"&", L"");
+										find_and_replace(fColor, L"H", L"");
+
+										int color = convertHexToInt(convertFromString(fColor));
+										subStyle->OutlineColor = ColorFromArgb(color << 8 | 0x000000FF);
+									}
+								}
 								if (effect.find(L"\\b1") != effect.npos)
 								{
 									subStyle->FontWeight = TimedTextWeight::Bold;
