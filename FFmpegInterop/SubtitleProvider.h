@@ -135,10 +135,10 @@ namespace FFmpegInterop
 			const wchar_t* begin = str->Data();
 			return std::wcstol(begin, nullptr, 10);
 		}
-		int convertToInt(const std::wstring & str)
+		int convertHexToInt(Platform::String^ str)
 		{
-			int i = std::stoi(str);
-			return i;
+			const wchar_t* begin = str->Data();
+			return std::wcstol(begin, nullptr, 16);
 		}
 	private:
 

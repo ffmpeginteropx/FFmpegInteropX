@@ -245,8 +245,8 @@ namespace FFmpegInterop
 										find_and_replace(fColor, L"&", L"");
 										find_and_replace(fColor, L"H", L"");
 										
-										int color = convertToInt(FixColor(fColor));
-										subStyle->Foreground = ColorFromArgb(color);
+										int color = convertHexToInt(convertFromString(fColor));
+										subStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
 									}
 									auto backIndex = fColor.find(L"\\");
 									if (backIndex != fColor.npos)
@@ -254,8 +254,9 @@ namespace FFmpegInterop
 										fColor = fColor.substr(0, backIndex);
 										find_and_replace(fColor, L"&", L"");
 										find_and_replace(fColor, L"H", L""); 
-										int color = convertToInt(FixColor(fColor));
-										subStyle->Foreground = ColorFromArgb(color);
+										
+										int color = convertHexToInt(convertFromString(fColor));
+										subStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
 									}
 								}
 								if (effect.find(L"\\b1") != effect.npos)
@@ -679,22 +680,6 @@ namespace FFmpegInterop
 		{
 			auto result = *reinterpret_cast<Windows::UI::Color*>(&argb);
 			return result;
-		}
-		std::wstring FixColor(std::wstring input)
-		{
-			if (input.size() == 8)
-			{
-				input = input.substr(2);
-			}
-			auto output = input;
-			std::wstring sx = L"0x";// removing this, doesn't change anything
-			//\c&H<bb><gg><rr>&
-			// convert BGR to RGB
-			if (input.size() == 6)
-			{
-				output = sx.append(input.substr(4, 2).append(input.substr(2, 2)).append(input.substr(0, 2)));
-			}
-			return output;
 		}
 		void find_and_replace(std::wstring& source, std::wstring const& find, std::wstring const& replace)
 		{
