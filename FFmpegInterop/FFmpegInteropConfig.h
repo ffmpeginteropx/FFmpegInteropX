@@ -150,6 +150,23 @@ namespace FFmpegInterop
 			}
 		}
 
+		/*Gets the subtitle offset in ticks*/
+		property TimeSpan SubtitleSyncOffset
+		{
+			void set(TimeSpan value)
+			{
+				if (subtitleSyncOffsetTicks.Duration == 0)
+				{
+					subtitleSyncOffsetTicks = value;
+				}
+				else throw ref new InvalidArgumentException();
+			}
+			TimeSpan get()
+			{
+				return subtitleSyncOffsetTicks;
+			}
+		}
+
 		property String^ DefaultAudioStreamName;
 		property String^ DefaultSubtitleStreamName;
 		property String^ DefaultExternalSubtitleStreamName;
@@ -161,9 +178,11 @@ namespace FFmpegInterop
 		property bool IsFrameGrabber;
 		/*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
 		property bool IsExternalSubtitleParser;
-	
+
 		/*Used to pass additional, specific options to external sub parsers*/
 		property PropertySet^ AdditionalFFmpegSubtitleOptions;
+		TimeSpan subtitleSyncOffsetTicks = { 0 };
+
 
 	private:
 		CharacterEncoding^ m_CharacterEncoding;
