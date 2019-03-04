@@ -222,6 +222,42 @@ namespace FFmpegInterop
 										subStyle->FontSize = fontSize;
 									}
 								}
+								// \c&H<bb><gg><rr>&			primary fill color
+								// \1c&H<bb><gg><rr>&			primary fill color
+								// \2c&H<bb><gg><rr>&			secondary fill color
+								// \3c&H<bb><gg><rr>&			border color
+								// \4c&H<bb><gg><rr>&			shadow color
+								auto fcIndex = effect.find(L"\\c"); // \c and \1c are same and effect to primary color
+								auto fc1Index = effect.find(L"\\1c");
+								if (fcIndex != effect.npos || fc1Index != effect.npos)
+								{
+									//\c&HDD19C9&		color=> purple
+									auto fColor = effect;
+									if (fcIndex != effect.npos)// \c
+										fColor = fColor.substr(fcIndex + 2);
+
+									if (fc1Index != effect.npos)// \1c
+										fColor = fColor.substr(fc1Index + 3);
+									auto bracIndex = fColor.find(L"}");
+									if (bracIndex != fColor.npos)
+									{
+										fColor = fColor.substr(0, bracIndex);
+										find_and_replace(fColor, L"&", L"");
+										find_and_replace(fColor, L"H", L"");
+										
+										int color = convertToInt(FixColor(fColor));
+										subStyle->Foreground = ColorFromArgb(color);
+									}
+									auto backIndex = fColor.find(L"\\");
+									if (backIndex != fColor.npos)
+									{
+										fColor = fColor.substr(0, backIndex);
+										find_and_replace(fColor, L"&", L"");
+										find_and_replace(fColor, L"H", L""); 
+										int color = convertToInt(FixColor(fColor));
+										subStyle->Foreground = ColorFromArgb(color);
+									}
+								}
 								if (effect.find(L"\\b1") != effect.npos)
 								{
 									subStyle->FontWeight = TimedTextWeight::Bold;
@@ -644,7 +680,22 @@ namespace FFmpegInterop
 			auto result = *reinterpret_cast<Windows::UI::Color*>(&argb);
 			return result;
 		}
-
+		std::wstring FixColor(std::wstring input)
+		{
+			if (input.size() == 8)
+			{
+				input = input.substr(2);
+			}
+			auto output = input;
+			std::wstring sx = L"0x";// removing this, doesn't change anything
+			//\c&H<bb><gg><rr>&
+			// convert BGR to RGB
+			if (input.size() == 6)
+			{
+				output = sx.append(input.substr(4, 2).append(input.substr(2, 2)).append(input.substr(0, 2)));
+			}
+			return output;
+		}
 		void find_and_replace(std::wstring& source, std::wstring const& find, std::wstring const& replace)
 		{
 			for (std::wstring::size_type i = 0; (i = source.find(find, i)) != std::wstring::npos;)

@@ -130,6 +130,16 @@ namespace FFmpegInterop
 			const wchar_t* begin = str->Data();
 			return std::wcstol(begin, nullptr, 10);
 		}
+		int convertToInt(Platform::String^ str)
+		{
+			const wchar_t* begin = str->Data();
+			return std::wcstol(begin, nullptr, 10);
+		}
+		int convertToInt(const std::wstring & str)
+		{
+			int i = std::stoi(str);
+			return i;
+		}
 	private:
 
 		void AddCue(IMediaCue^ cue)
