@@ -185,43 +185,29 @@ namespace FFmpegInterop
 								if (fnIndex != effect.npos)
 								{
 									//{\fnArial} or {\fnArial\different effect}
-									auto fnName = effect.substr(fnIndex + 3);
-									auto bracIndex = fnName.find(L"}");
-									if (bracIndex != fnName.npos)
+									auto start = fnIndex + 3;
+									auto end = effect.find(L"\\", start);
+									if (end == effect.npos)
 									{
-										fnName = fnName.substr(0, bracIndex);
-										subStyle->FontFamily = convertFromString(fnName);
+										end = effect.find(L"}", start);
 									}
-									auto backIndex = fnName.find(L"\\");
-									if (backIndex != fnName.npos)
+									if (end != effect.npos)
 									{
-										fnName = fnName.substr(0, backIndex);
+										auto fnName = effect.substr(start, end - start);
 										subStyle->FontFamily = convertFromString(fnName);
 									}
 								}
+
 								auto fsIndex = effect.find(L"\\fs");
 								if (fsIndex != effect.npos)
 								{
-									auto fSize = effect.substr(fsIndex + 3);
-									auto bracIndex = fSize.find(L"}");
-									if (bracIndex != fSize.npos)
-									{
-										fSize = fSize.substr(0, bracIndex);
-										TimedTextDouble fontSize;
-										fontSize.Unit = TimedTextUnit::Pixels;
-										fontSize.Value = convertToDouble(convertFromString(fSize));
-										subStyle->FontSize = fontSize;
-									}
-									auto backIndex = fSize.find(L"\\");
-									if (backIndex != fSize.npos)
-									{
-										fSize = fSize.substr(0, backIndex);
-										TimedTextDouble fontSize;
-										fontSize.Unit = TimedTextUnit::Pixels;
-										fontSize.Value = convertToDouble(convertFromString(fSize));
-										subStyle->FontSize = fontSize;
-									}
+									auto size = parseInt(effect.substr(fsIndex + 3));
+									TimedTextDouble fontSize;
+									fontSize.Unit = TimedTextUnit::Pixels;
+									fontSize.Value = size;
+									subStyle->FontSize = fontSize;
 								}
+
 								// \c&H<bb><gg><rr>&			primary fill color
 								// \1c&H<bb><gg><rr>&			primary fill color
 								// \2c&H<bb><gg><rr>&			secondary fill color
@@ -231,59 +217,17 @@ namespace FFmpegInterop
 								auto fc1Index = effect.find(L"\\1c");
 								if (fcIndex != effect.npos || fc1Index != effect.npos)
 								{
-									//\c&HDD19C9&		color=> purple
-									auto fColor = effect;
-									if (fcIndex != effect.npos)// \c
-										fColor = fColor.substr(fcIndex + 2);
-
-									if (fc1Index != effect.npos)// \1c
-										fColor = fColor.substr(fc1Index + 3);
-									auto bracIndex = fColor.find(L"}");
-									if (bracIndex != fColor.npos)
-									{
-										fColor = fColor.substr(0, bracIndex);
-										find_and_replace(fColor, L"&", L"");
-										find_and_replace(fColor, L"H", L"");
-										
-										int color = convertHexToInt(convertFromString(fColor));
-										subStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
-									}
-									auto backIndex = fColor.find(L"\\");
-									if (backIndex != fColor.npos)
-									{
-										fColor = fColor.substr(0, backIndex);
-										find_and_replace(fColor, L"&", L"");
-										find_and_replace(fColor, L"H", L""); 
-										
-										int color = convertHexToInt(convertFromString(fColor));
-										subStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
-									}
+									auto index = fcIndex != effect.npos ? fcIndex + 4 : fc1Index + 5;
+									int color = parseHexInt(effect.substr(index));
+									subStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
 								}
 								auto fsecIndex = effect.find(L"\\3c");
 								if (fsecIndex != effect.npos)
 								{
-									auto fColor = effect.substr(fsecIndex + 3);
-									auto bracIndex = fColor.find(L"}");
-									if (bracIndex != fColor.npos)
-									{
-										fColor = fColor.substr(0, bracIndex);
-										find_and_replace(fColor, L"&", L"");
-										find_and_replace(fColor, L"H", L"");
-
-										int color = convertHexToInt(convertFromString(fColor));
-										subStyle->OutlineColor = ColorFromArgb(color << 8 | 0x000000FF);
-									}
-									auto backIndex = fColor.find(L"\\");
-									if (backIndex != fColor.npos)
-									{
-										fColor = fColor.substr(0, backIndex);
-										find_and_replace(fColor, L"&", L"");
-										find_and_replace(fColor, L"H", L"");
-
-										int color = convertHexToInt(convertFromString(fColor));
-										subStyle->OutlineColor = ColorFromArgb(color << 8 | 0x000000FF);
-									}
+									int color = parseHexInt(effect.substr(fsecIndex + 5));
+									subStyle->OutlineColor = ColorFromArgb(color << 8 | 0x000000FF);
 								}
+
 								if (effect.find(L"\\b1") != effect.npos)
 								{
 									subStyle->FontWeight = TimedTextWeight::Bold;

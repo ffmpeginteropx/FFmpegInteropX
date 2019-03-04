@@ -125,21 +125,16 @@ namespace FFmpegInterop
 			return ref new Platform::String(input.c_str(), (unsigned int)input.length());
 		}
 
-		double convertToDouble(Platform::String^ str)
+		int parseInt(std::wstring str)
 		{
-			const wchar_t* begin = str->Data();
-			return std::wcstol(begin, nullptr, 10);
-		}
-		int convertToInt(Platform::String^ str)
+			return std::stoi(str, nullptr, 10);
+		}		
+
+		int parseHexInt(std::wstring str)
 		{
-			const wchar_t* begin = str->Data();
-			return std::wcstol(begin, nullptr, 10);
+			return std::stoi(str, nullptr, 16);
 		}
-		int convertHexToInt(Platform::String^ str)
-		{
-			const wchar_t* begin = str->Data();
-			return std::wcstol(begin, nullptr, 16);
-		}
+
 	private:
 
 		void AddCue(IMediaCue^ cue)
