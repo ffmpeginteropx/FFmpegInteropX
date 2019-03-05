@@ -43,20 +43,15 @@
                         <Button Content="Start playback" Click="CreatePlaybackItemAndStartPlayback"  Margin="0,20,10,10" />
                         <StackPanel Orientation="Horizontal">
                             <ToggleSwitch Header="Passthrough MP3" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioMP3}"/>
-                            <ToggleSwitch Grid.Column="1" Header="Passthrough AAC" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioAAC}" Margin="0,0,0,20" />
+                            <ToggleSwitch Grid.Column="1" Header="Passthrough AAC" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioAAC}" Margin="0,0,0,0" />
                         </StackPanel>
                         <ToggleSwitch Header="Passthrough Video" OffContent="OFF" OnContent="ON" IsOn="True" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
 
                         <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.VideoOutputAllowIyuv}"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition></ColumnDefinition>
-                                <ColumnDefinition></ColumnDefinition>
-                            </Grid.ColumnDefinitions>
-
-                            <Button Content="Grab Frame" Click="ExtractFrame"  Margin="0,20,2,10" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Grab Frame" Click="ExtractFrame"  Margin="0,20,10,2" />
                             <ToggleSwitch Grid.Column="1" x:Name="grabFrameExactSeek" Header="Grab Frame Exact Seek" OffContent="OFF" OnContent="ON" IsOn="True"/>
-                        </Grid>
+                        </StackPanel>
                         <ComboBox x:Name="cbEncodings" PlaceholderText="Select ANSI subtitle encoding" SelectionChanged="CbEncodings_SelectionChanged">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>

@@ -331,23 +331,23 @@ namespace MediaPlayerCS
             Config.PassthroughVideoWMV3 = passthrough;
         }
 
-        private void DelaySubtitles(object sender, RoutedEventArgs e)
+        private async void DelaySubtitles(object sender, RoutedEventArgs e)
         {
             if (FFmpegMSS != null)
             {
                 var currentOffset = FFmpegMSS.Configuration.SubtitleSyncOffset;
                 var newOffset = FFmpegMSS.Configuration.SubtitleSyncOffset.Add(TimeSpan.FromSeconds(1));
-                FFmpegMSS.SetSubtitleOfset(newOffset);
+                await FFmpegMSS.SetSubtitleOfset(newOffset);
             }
         }
 
-        private void QuickenSubtitles(object sender, RoutedEventArgs e)
+        private async void QuickenSubtitles(object sender, RoutedEventArgs e)
         {
             if (FFmpegMSS != null)
             {
                 var currentOffset = FFmpegMSS.Configuration.SubtitleSyncOffset;
                 var newOffset = FFmpegMSS.Configuration.SubtitleSyncOffset.Subtract(TimeSpan.FromSeconds(1));
-                FFmpegMSS.SetSubtitleOfset(newOffset);
+                await FFmpegMSS.SetSubtitleOfset(newOffset);
             }
         }
     }

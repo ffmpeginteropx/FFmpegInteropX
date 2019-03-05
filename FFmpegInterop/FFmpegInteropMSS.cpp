@@ -1048,28 +1048,30 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream * avStream, in
 	return result;
 }
 
-void FFmpegInterop::FFmpegInteropMSS::SetSubtitleOfset(TimeSpan offset)
+IAsyncAction^ FFmpegInterop::FFmpegInteropMSS::SetSubtitleOfset(TimeSpan offset)
 {
-	Configuration->newSubtitleSyncOffset = offset;
-	if (dispatcher != nullptr) {
-		dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
-			ref new Windows::UI::Core::DispatchedHandler([this]
-		{
-			if (timer == nullptr)
-			{
-				timer = ref new Windows::UI::Xaml::DispatcherTimer();
-				timer->Interval = ToTimeSpan(10000);
-				timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &FFmpegInterop::FFmpegInteropMSS::OnTick);
-			}
-			timer->Start();
-		}));
-	}
-	else
+	return create_async([this, offset]
 	{
-		OnTick(nullptr, nullptr);
-	}
-
-
+		Configuration->newSubtitleSyncOffset = offset;
+		if (dispatcher != nullptr) {
+			dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
+				ref new Windows::UI::Core::DispatchedHandler([this]
+			{
+				if (timer == nullptr)
+				{
+					timer = ref new Windows::UI::Xaml::DispatcherTimer();
+					timer->Interval = ToTimeSpan(10000);
+					timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &FFmpegInterop::FFmpegInteropMSS::OnTick);
+				}
+				timer->Start();
+			}));
+		}
+		else
+		{
+			OnTick(nullptr, nullptr);
+		}
+		subtitleLock.WaitOne();
+	});
 }
 
 void FFmpegInterop::FFmpegInteropMSS::OnTick(Platform::Object ^ sender, Platform::Object ^ args)
@@ -1110,6 +1112,7 @@ void FFmpegInterop::FFmpegInteropMSS::OnTick(Platform::Object ^ sender, Platform
 
 	}
 	timer->Stop();
+	subtitleLock.Set();
 	mutexGuard.unlock();
 }
 
