@@ -210,7 +210,7 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromUri(String^ uri, b
 	config->PassthroughAudioMP3 = !forceAudioDecode;
 	config->PassthroughVideoH264 = !forceVideoDecode;
 	config->PassthroughVideoH264Hi10P = !forceVideoDecode;
-	config->PassthroughVideoHEVC = !forceVideoDecode;	
+	config->PassthroughVideoHEVC = !forceVideoDecode;
 	config->PassthroughVideoMPEG2 = !forceVideoDecode;
 	config->PassthroughVideoVC1 = !forceVideoDecode;
 	config->PassthroughVideoVP9 = !forceVideoDecode;
@@ -321,7 +321,7 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		auto subConfig = ref new FFmpegInteropConfig();
 		subConfig->IsExternalSubtitleParser = true;
 		subConfig->DefaultSubtitleStreamName = streamName;
-		
+
 		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
 		subConfig->AnsiSubtitleEncoding = this->config->AnsiSubtitleEncoding;
 		subConfig->OverrideSubtitleStyles = this->config->OverrideSubtitleStyles;
@@ -509,6 +509,8 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(String^ uri)
 
 	return hr;
 }
+
+
 
 HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream, MediaStreamSource^ mss)
 {
@@ -1046,6 +1048,70 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream * avStream, in
 	return result;
 }
 
+void FFmpegInterop::FFmpegInteropMSS::SetSubtitleOfset(TimeSpan offset)
+{
+	Configuration->newSubtitleSyncOffset = offset;
+	if (dispatcher != nullptr) {
+		dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
+			ref new Windows::UI::Core::DispatchedHandler([this]
+		{
+			if (timer == nullptr)
+			{
+				timer = ref new Windows::UI::Xaml::DispatcherTimer();
+				timer->Interval = ToTimeSpan(10000);
+				timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &FFmpegInterop::FFmpegInteropMSS::OnTick);
+			}
+			timer->Start();
+		}));
+	}
+	else
+	{
+		OnTick(nullptr, nullptr);
+	}
+
+
+}
+
+void FFmpegInterop::FFmpegInteropMSS::OnTick(Platform::Object ^ sender, Platform::Object ^ args)
+{
+	mutexGuard.lock();
+	try {
+		auto currentOffset = Configuration->SubtitleSyncOffset;
+		for each(auto subStream in SubtitleStreams)
+		{
+			if (subStream->IsExternal)
+			{
+				auto track = subStream->SubtitleTrack;
+				auto cues = to_vector(track->Cues);
+				while (track->Cues->Size > 0)
+				{
+					track->RemoveCue(track->Cues->GetAt(0));
+				}
+
+				for each(auto c in cues)
+				{
+					TimeSpan originalStartPosition = { c->StartTime.Duration - currentOffset.Duration };
+					TimeSpan newStartPosition = { originalStartPosition.Duration + Configuration->newSubtitleSyncOffset.Duration };
+					//start time cannot be negative.
+					if (newStartPosition.Duration < 0)
+					{
+						newStartPosition.Duration = 0;
+					}
+					c->StartTime = newStartPosition;
+					track->AddCue(c);
+				}
+			}
+		}
+
+		Configuration->SubtitleSyncOffset = Configuration->newSubtitleSyncOffset;
+	}
+	catch (...)
+	{
+
+	}
+	mutexGuard.unlock();
+}
+
 void FFmpegInteropMSS::SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects)
 {
 	mutexGuard.lock();
@@ -1160,7 +1226,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 {
 	MediaSampleProvider^ videoSampleProvider;
 	VideoEncodingProperties^ videoProperties;
-	
+
 	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 && config->PassthroughVideoH264 && !config->IsFrameGrabber && (avVideoCodecCtx->profile <= 100 || config->PassthroughVideoH264Hi10P))
 	{
 		auto videoProperties = VideoEncodingProperties::CreateH264();
@@ -1204,7 +1270,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
 		videoProperties->Subtype = MediaEncodingSubtypes::Wvc1;
-		
+
 		auto extradata = Platform::ArrayReference<uint8_t>(avVideoCodecCtx->extradata, avVideoCodecCtx->extradata_size);
 		videoProperties->SetFormatUserData(extradata);
 		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);

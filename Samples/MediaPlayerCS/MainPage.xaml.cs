@@ -293,7 +293,7 @@ namespace MediaPlayerCS
             if (args.CollectionChange == Windows.Foundation.Collections.CollectionChange.ItemInserted)
             {
                 sender.TimedMetadataTracksChanged -= PlaybackItem_TimedMetadataTracksChanged;
-             
+
                 // unselect other subs
                 for (uint i = 0; i < sender.TimedMetadataTracks.Count; i++)
                 {
@@ -329,6 +329,26 @@ namespace MediaPlayerCS
             Config.PassthroughVideoVC1 = passthrough;
             Config.PassthroughVideoVP9 = passthrough;
             Config.PassthroughVideoWMV3 = passthrough;
+        }
+
+        private void DelaySubtitles(object sender, RoutedEventArgs e)
+        {
+            if (FFmpegMSS != null)
+            {
+                var currentOffset = FFmpegMSS.Configuration.SubtitleSyncOffset;
+                var newOffset = FFmpegMSS.Configuration.SubtitleSyncOffset.Add(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleOfset(newOffset);
+            }
+        }
+
+        private void QuickenSubtitles(object sender, RoutedEventArgs e)
+        {
+            if (FFmpegMSS != null)
+            {
+                var currentOffset = FFmpegMSS.Configuration.SubtitleSyncOffset;
+                var newOffset = FFmpegMSS.Configuration.SubtitleSyncOffset.Subtract(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleOfset(newOffset);
+            }
         }
     }
 }

@@ -36,6 +36,7 @@ using namespace Windows::Media::Core;
 using namespace Windows::Media::Playback;
 using namespace Platform::Collections;
 using namespace Windows::UI::Core;
+using namespace Windows::UI::Xaml;
 namespace WFM = Windows::Foundation::Metadata;
 
 extern "C"
@@ -182,6 +183,7 @@ namespace FFmpegInterop
 	private:
 		FFmpegInteropMSS(FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 
+		void OnTick(Platform::Object ^sender, Platform::Object ^args);
 		HRESULT CreateMediaStreamSource(IRandomAccessStream^ stream, MediaStreamSource^ mss);
 		HRESULT CreateMediaStreamSource(String^ uri);
 		HRESULT InitFFmpegContext();
@@ -224,6 +226,7 @@ namespace FFmpegInterop
 
 	private:
 
+		DispatcherTimer^ timer;
 		MediaStreamSource ^ mss;
 		EventRegistrationToken startingRequestedToken;
 		EventRegistrationToken sampleRequestedToken;
