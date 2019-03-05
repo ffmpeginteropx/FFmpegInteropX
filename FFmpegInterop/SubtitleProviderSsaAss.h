@@ -201,7 +201,7 @@ namespace FFmpegInterop
 								auto fsIndex = effect.find(L"\\fs");
 								if (fsIndex != effect.npos)
 								{
-									auto size = parseInt(effect.substr(fsIndex + 3));
+									auto size = parseDouble(effect.substr(fsIndex + 3));
 									TimedTextDouble fontSize;
 									fontSize.Unit = TimedTextUnit::Pixels;
 									fontSize.Value = size;
