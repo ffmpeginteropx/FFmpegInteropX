@@ -29,6 +29,7 @@
 #include "SubtitleProvider.h"
 #include <collection.h>
 #include <AutoResetEvent.h>
+#include "ExternalSubtitleProvider.h"
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -76,7 +77,7 @@ namespace FFmpegInterop
 		static FFmpegInteropMSS^ CreateFFmpegInteropMSSFromUri(String^ uri, bool forceAudioDecode, bool forceVideoDecode);
 
 		/*Sets subtitle start position offset. use negative values to speed them up, positive values to delay them*/
-		IAsyncAction^ SetSubtitleOfset(TimeSpan offset);
+		void SetSubtitleOfset(TimeSpan offset);
 
 		void SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects);
 		void SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects);
@@ -130,6 +131,8 @@ namespace FFmpegInterop
 		{
 			IVectorView<SubtitleStreamInfo^>^ get() { return subtitleStreamInfos; }
 		}
+
+	
 
 		property bool HasThumbnail
 		{
@@ -250,6 +253,7 @@ namespace FFmpegInterop
 		VideoStreamInfo^ videoStreamInfo;
 		IVectorView<AudioStreamInfo^>^ audioStreamInfos;
 		IVectorView<SubtitleStreamInfo^>^ subtitleStreamInfos;
+		Vector<ExternalSubtitleProvider^>^ externalSubtitleStreams;
 
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher^ dispatcher;

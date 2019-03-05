@@ -56,7 +56,7 @@ namespace MediaPlayerCS
             Splitter.IsPaneOpen = true;
 
             // optionally check for recommended ffmpeg version
-            FFmpegVersionInfo.CheckRecommendedVersion();
+            //FFmpegVersionInfo.CheckRecommendedVersion();
 
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
@@ -331,23 +331,28 @@ namespace MediaPlayerCS
             Config.PassthroughVideoWMV3 = passthrough;
         }
 
-        private async void DelaySubtitles(object sender, RoutedEventArgs e)
+        private void DelaySubtitles(object sender, RoutedEventArgs e)
         {
             if (FFmpegMSS != null)
             {
                 var currentOffset = FFmpegMSS.Configuration.SubtitleSyncOffset;
                 var newOffset = FFmpegMSS.Configuration.SubtitleSyncOffset.Add(TimeSpan.FromSeconds(1));
-                await FFmpegMSS.SetSubtitleOfset(newOffset);
+                subtitleOffset.Text = newOffset.TotalSeconds.ToString();
+                FFmpegMSS.SetSubtitleOfset(newOffset);
+
             }
         }
 
-        private async void QuickenSubtitles(object sender, RoutedEventArgs e)
+        private void QuickenSubtitles(object sender, RoutedEventArgs e)
         {
             if (FFmpegMSS != null)
             {
                 var currentOffset = FFmpegMSS.Configuration.SubtitleSyncOffset;
                 var newOffset = FFmpegMSS.Configuration.SubtitleSyncOffset.Subtract(TimeSpan.FromSeconds(1));
-                await FFmpegMSS.SetSubtitleOfset(newOffset);
+                subtitleOffset.Text = newOffset.TotalSeconds.ToString();
+
+                FFmpegMSS.SetSubtitleOfset(newOffset);
+
             }
         }
     }

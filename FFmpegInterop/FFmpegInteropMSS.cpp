@@ -81,6 +81,7 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispa
 
 	audioStrInfos = ref new Vector<AudioStreamInfo^>();
 	subtitleStrInfos = ref new Vector<SubtitleStreamInfo^>();
+	externalSubtitleStreams = ref new Vector<ExternalSubtitleProvider^>();
 }
 
 FFmpegInteropMSS::~FFmpegInteropMSS()
@@ -358,7 +359,7 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 				if (externalSubtitle->SubtitleTrack->Cues->Size > 0)
 				{
 					subtitleStrInfos->Append(externalSubtitle);
-
+					this->externalSubtitleStreams->Append(ref new ExternalSubtitleProvider(this->dispatcher, externalSubtitle));
 					if (this->PlaybackItem != nullptr)
 					{
 						PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
@@ -1048,73 +1049,26 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream * avStream, in
 	return result;
 }
 
-IAsyncAction^ FFmpegInterop::FFmpegInteropMSS::SetSubtitleOfset(TimeSpan offset)
+void FFmpegInterop::FFmpegInteropMSS::SetSubtitleOfset(TimeSpan offset)
 {
-	return create_async([this, offset]
-	{
-		Configuration->newSubtitleSyncOffset = offset;
-		if (dispatcher != nullptr) {
-			dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
-				ref new Windows::UI::Core::DispatchedHandler([this]
-			{
-				if (timer == nullptr)
-				{
-					timer = ref new Windows::UI::Xaml::DispatcherTimer();
-					timer->Interval = ToTimeSpan(10000);
-					timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &FFmpegInterop::FFmpegInteropMSS::OnTick);
-				}
-				timer->Start();
-			}));
-		}
-		else
-		{
-			OnTick(nullptr, nullptr);
-		}
-		subtitleLock.WaitOne();
-	});
-}
 
-void FFmpegInterop::FFmpegInteropMSS::OnTick(Platform::Object ^ sender, Platform::Object ^ args)
-{
 	mutexGuard.lock();
-	try {
-		auto currentOffset = Configuration->SubtitleSyncOffset;
-		for each(auto subStream in SubtitleStreams)
-		{
-			if (subStream->IsExternal)
-			{
-				auto track = subStream->SubtitleTrack;
-				auto cues = to_vector(track->Cues);
-				while (track->Cues->Size > 0)
-				{
-					track->RemoveCue(track->Cues->GetAt(0));
-				}
-
-				for each(auto c in cues)
-				{
-					TimeSpan originalStartPosition = { c->StartTime.Duration - currentOffset.Duration };
-					TimeSpan newStartPosition = { originalStartPosition.Duration + Configuration->newSubtitleSyncOffset.Duration };
-					//start time cannot be negative.
-					if (newStartPosition.Duration < 0)
-					{
-						newStartPosition.Duration = 0;
-					}
-					c->StartTime = newStartPosition;
-					track->AddCue(c);
-				}
-			}
-		}
-
-		Configuration->subtitleSyncOffset = Configuration->newSubtitleSyncOffset;
-	}
-	catch (...)
+	for each(auto internalStream in subtitleStreams)
 	{
-
+		internalStream->AdditionalStreamSampleOffset = offset;
 	}
-	timer->Stop();
-	subtitleLock.Set();
+	for each(auto extSub in externalSubtitleStreams)
+	{
+		extSub->SetSubtitleOffset(offset, Configuration->SubtitleSyncOffset);
+	}
+
+	Configuration->subtitleSyncOffset = offset;
 	mutexGuard.unlock();
+
+
 }
+
+
 
 void FFmpegInteropMSS::SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects)
 {

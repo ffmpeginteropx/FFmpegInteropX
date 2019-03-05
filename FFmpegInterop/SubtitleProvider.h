@@ -31,6 +31,8 @@ namespace FFmpegInterop
 			this->dispatcher = dispatcher;
 		}
 
+		property TimeSpan AdditionalStreamSampleOffset;
+
 		property TimedMetadataTrack^ SubtitleTrack;
 
 		property MediaPlaybackItem^ PlaybackItem;
@@ -41,10 +43,10 @@ namespace FFmpegInterop
 
 			SubtitleTrack = ref new TimedMetadataTrack(Name, Language, timedMetadataKind);
 			SubtitleTrack->Label = Name != nullptr ? Name : Language;
-			
+
 			if (!m_config->IsExternalSubtitleParser)
 			{
-				if (Windows::Foundation::Metadata::ApiInformation::IsEnumNamedValuePresent("Windows.Media.Core.TimedMetadataKind", "ImageSubtitle") && 
+				if (Windows::Foundation::Metadata::ApiInformation::IsEnumNamedValuePresent("Windows.Media.Core.TimedMetadataKind", "ImageSubtitle") &&
 					timedMetadataKind == TimedMetadataKind::ImageSubtitle)
 				{
 					SubtitleTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueEntered);
@@ -70,7 +72,7 @@ namespace FFmpegInterop
 				TimeSpan duration;
 				bool isDurationFixed = false;
 
-				position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
+				position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset + AdditionalStreamSampleOffset.Duration;
 				duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
 
 				auto cue = CreateCue(packet, &position, &duration);
@@ -137,7 +139,7 @@ namespace FFmpegInterop
 					/*This is a fix only to work around a bug in windows phones: when 2 different cues have the exact same start position and length, the runtime panics and throws an exception
 					The problem has only been observed in external subtitles so far, and only on phones. Might also be present on ARM64 devices*/
 					bool individualCue = true;
-					if (this->timedMetadataKind == TimedMetadataKind::Subtitle) 
+					if (this->timedMetadataKind == TimedMetadataKind::Subtitle)
 					{
 						for (int i = SubtitleTrack->Cues->Size - 1; i >= 0; i--)
 						{
