@@ -132,7 +132,7 @@ namespace FFmpegInterop
 
 		double parseDouble(std::wstring str)
 		{
-			return std::stoi(str, nullptr, 10);
+			return std::stod(str);
 		}
 
 		int parseHexInt(std::wstring str)

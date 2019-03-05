@@ -184,7 +184,6 @@ namespace FFmpegInterop
 								auto fnIndex = effect.find(L"\\fn");
 								if (fnIndex != effect.npos)
 								{
-									//{\fnArial} or {\fnArial\different effect}
 									auto start = fnIndex + 3;
 									auto end = effect.find(L"\\", start);
 									if (end == effect.npos)
