@@ -1103,12 +1103,13 @@ void FFmpegInterop::FFmpegInteropMSS::OnTick(Platform::Object ^ sender, Platform
 			}
 		}
 
-		Configuration->SubtitleSyncOffset = Configuration->newSubtitleSyncOffset;
+		Configuration->subtitleSyncOffset = Configuration->newSubtitleSyncOffset;
 	}
 	catch (...)
 	{
 
 	}
+	timer->Stop();
 	mutexGuard.unlock();
 }
 
