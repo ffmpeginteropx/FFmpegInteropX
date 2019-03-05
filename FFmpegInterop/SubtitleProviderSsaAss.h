@@ -150,6 +150,8 @@ namespace FFmpegInterop
 
 					TimedTextStyle^ subStyle = nullptr;
 					TimedTextSubformat^ subFormat = nullptr;
+					TimedTextRegion^ subRegion = nullptr;
+					TimedTextStyle^ subCueStyle = nullptr;
 					while (true)
 					{
 						auto nextEffect = str.find('{');
@@ -226,7 +228,18 @@ namespace FFmpegInterop
 									int color = parseHexInt(effect.substr(fsecIndex + 5));
 									subStyle->OutlineColor = ColorFromArgb(color << 8 | 0x000000FF);
 								}
-
+								auto alignmentIndex = effect.find(L"\\a");
+								if (alignmentIndex != effect.npos && effect.find(L"\\alpha") == effect.npos)
+								{
+									auto an = effect.find(L"\\an"); // legacy alignment, but I think we should support it
+									auto index = an != effect.npos ? an + 3 : alignmentIndex + 2;
+									auto alignment = parseInt(effect.substr(index));
+									
+									subRegion = subRegion != nullptr ? CopyRegion(subRegion) : CopyRegion(cueRegion);
+									subRegion->DisplayAlignment = GetVerticalAlignment(alignment);
+									subCueStyle = subCueStyle != nullptr ? CopyStyle(subCueStyle) : CopyStyle(cueStyle);
+									subCueStyle->LineAlignment = GetHorizontalAlignment(alignment);
+								}
 								if (effect.find(L"\\b1") != effect.npos)
 								{
 									subStyle->FontWeight = TimedTextWeight::Bold;
@@ -299,7 +312,14 @@ namespace FFmpegInterop
 						subFormat->Length = str.size() - subFormat->StartIndex;
 						textLine->Subformats->Append(subFormat);
 					}
-				
+					if (subRegion != nullptr)
+					{
+						cue->CueRegion = subRegion;
+					}
+					if (subCueStyle != nullptr)
+					{
+						cue->CueStyle = subCueStyle;
+					}
 					auto timedText = convertFromString(str);
 					if (timedText->Length() > 0)
 					{
@@ -367,15 +387,9 @@ namespace FFmpegInterop
 
 					if (count == 23)
 					{
-						auto verticalAlignment =
-							alignment <= 3 ? TimedTextDisplayAlignment::After :
-							alignment <= 6 ? TimedTextDisplayAlignment::Center :
-							TimedTextDisplayAlignment::Before;
+						auto verticalAlignment = GetVerticalAlignment(alignment);
 
-						auto horizontalAlignment =
-							alignment == 2 || alignment == 5 || alignment == 8 ? TimedTextLineAlignment::Center :
-							alignment == 1 || alignment == 4 || alignment == 7 ? TimedTextLineAlignment::Start :
-							TimedTextLineAlignment::End;
+						auto horizontalAlignment = GetHorizontalAlignment(alignment);
 
 						auto SubtitleRegion = ref new TimedTextRegion();
 
@@ -514,15 +528,9 @@ namespace FFmpegInterop
 
 					if (count == 18)
 					{
-						auto verticalAlignment =
-							alignment <= 3 ? TimedTextDisplayAlignment::After :
-							alignment <= 7 ? TimedTextDisplayAlignment::Center :
-							TimedTextDisplayAlignment::Before;
+						auto verticalAlignment = GetVerticalAlignment(alignment);
 
-						auto horizontalAlignment =
-							alignment == 2 || alignment == 6 || alignment == 10 ? TimedTextLineAlignment::Center :
-							alignment == 1 || alignment == 5 || alignment == 9 ? TimedTextLineAlignment::Start :
-							TimedTextLineAlignment::End;
+						auto horizontalAlignment = GetHorizontalAlignment(alignment);
 
 						auto SubtitleRegion = ref new TimedTextRegion();
 
@@ -648,6 +656,56 @@ namespace FFmpegInterop
 			copy->WritingMode = region->WritingMode;
 			copy->ZIndex = region->ZIndex;
 			return copy;
+		}
+
+		TimedTextDisplayAlignment GetVerticalAlignment(int alignment, TimedTextDisplayAlignment defaultAlignment = TimedTextDisplayAlignment::Before)
+		{
+			// 1 2 3	bottom left center right
+			// 4 5 8	top left
+			// 6		top center
+			// 7		top right
+			// 9		center left
+			// 10		center center
+			// 11		center right
+			if (isAss)
+			{
+				return alignment <= 3 ? TimedTextDisplayAlignment::After :
+					alignment >= 9 ? TimedTextDisplayAlignment::Center :
+					defaultAlignment;
+			}
+			else if (ssaVersion == 4)
+			{
+				return alignment <= 3 ? TimedTextDisplayAlignment::After :
+					alignment <= 6 ? TimedTextDisplayAlignment::Center :
+					defaultAlignment;
+			}
+			else
+				return defaultAlignment;
+		}
+
+		TimedTextLineAlignment GetHorizontalAlignment(int alignment, TimedTextLineAlignment defaultAlignment = TimedTextLineAlignment::End)
+		{
+			// 1 2 3	bottom left center right
+			// 4 5 8	top left
+			// 6		top center
+			// 7		top right
+			// 9		center left
+			// 10		center center
+			// 11		center right
+			if (isAss)
+			{
+				return alignment == 2 || alignment == 6 || alignment == 10 ? TimedTextLineAlignment::Center :
+					alignment == 1 || alignment == 4 || alignment == 5 || alignment == 8 || alignment == 9 ? TimedTextLineAlignment::Start :
+					defaultAlignment;
+			}
+			else if (ssaVersion == 4)
+			{
+				return alignment == 2 || alignment == 5 || alignment == 8 ? TimedTextLineAlignment::Center :
+					alignment == 1 || alignment == 4 || alignment == 7 ? TimedTextLineAlignment::Start :
+					defaultAlignment;
+			}
+			else
+				return defaultAlignment;
 		}
 
 		Windows::UI::Color ColorFromArgb(int argb)
