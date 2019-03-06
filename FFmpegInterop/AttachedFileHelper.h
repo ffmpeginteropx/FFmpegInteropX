@@ -17,55 +17,57 @@ namespace FFmpegInterop
 {
 	ref class AttachedFileHelper sealed
 	{
-	public:
+	internal:
 
 		AttachedFileHelper(FFmpegInteropConfig^ config)
 		{
 			this->config = config;
 		}
 
+		property Vector<AttachedFile^>^ AttachedFiles { Vector<AttachedFile^>^ get() { return attachedFiles; } }
+		property String^ InstanceId { String^ get() { return instanceId; } }
+
 		void AddAttachedFile(AttachedFile^ file)
 		{
-			attachedFiles.push_back(file);
-			files[file->Name] = file;
+			attachedFiles->Append(file);
 		}
 
-		void EnsureIsValidFile(AttachedFile^ file)
+		IAsyncOperation<StorageFile^>^ ExtractFile(AttachedFile^ attachment)
 		{
-			if (files.find(file->Name) == files.end() || files[file->Name] != file)
+			auto result = extractedFiles.find(attachment->Name);
+			if (result != extractedFiles.end())
 			{
-				throw ref new InvalidArgumentException("The attachment is not part of this ffmpeg instance.");
-			}
-		}
-
-		IAsyncOperation<bool>^ EnsureFileExtracted(String^ fileName)
-		{
-			if (files.find(fileName) == files.end())
-			{
-				return create_async([] { return false; });
-			}
-			else if (extractedFiles.find(fileName) != extractedFiles.end())
-			{
-				return create_async([] { return true; });
+				return create_async([result] { return result->second; });
 			}
 			else
 			{
-				AttachedFile^ attachment = files.at(fileName);
-				return create_async([this, fileName, attachment]
+				return create_async([this, attachment]
 				{
 					return create_task(ApplicationData::Current->TemporaryFolder->CreateFolderAsync(
-						config->AttachmentCacheFolderName, CreationCollisionOption::OpenIfExists)).then([this, fileName, attachment](task<StorageFolder^> t)
+						config->AttachmentCacheFolderName, CreationCollisionOption::OpenIfExists)).then([this, attachment](task<StorageFolder^> t)
 					{
 						auto folder = t.get();
-						return create_task(folder->CreateFileAsync(
-							fileName, CreationCollisionOption::ReplaceExisting)).then([this, fileName, attachment](task<StorageFile^> t)
+						if (this->instanceId == nullptr)
 						{
-							auto file = t.get();
-							return create_task(FileIO::WriteBufferAsync(file, attachment->GetBuffer())).then([this, fileName, attachment](task<void> t)
+							GUID gdn;
+							CoCreateGuid(&gdn);
+							Guid gd(gdn);
+							instanceId = gd.ToString();
+						}
+						return create_task(folder->CreateFolderAsync(
+							instanceId, CreationCollisionOption::OpenIfExists)).then([this, attachment](task<StorageFolder^> t)
+						{
+							auto instanceFolder = t.get();
+							return create_task(instanceFolder->CreateFileAsync(
+								attachment->Name, CreationCollisionOption::ReplaceExisting)).then([this, attachment](task<StorageFile^> t)
 							{
-								t.wait();
-								extractedFiles[fileName] = attachment;
-								return true;
+								auto file = t.get();
+								return create_task(FileIO::WriteBufferAsync(file, attachment->GetBuffer())).then([this, file, attachment](task<void> t)
+								{
+									t.wait();
+									extractedFiles[attachment->Name] = file;
+									return file;
+								});
 							});
 						});
 					});
@@ -74,10 +76,10 @@ namespace FFmpegInterop
 		};
 
 	private:
-		std::map<String^, AttachedFile^> files;
-		std::map<String^, AttachedFile^> extractedFiles;
-		std::vector<AttachedFile^> attachedFiles;
+		std::map<String^, StorageFile^> extractedFiles;
+		Vector<AttachedFile^>^ attachedFiles = ref new Vector<AttachedFile^>();
 		FFmpegInteropConfig^ config;
+		String^ instanceId;
 	};
 
 }

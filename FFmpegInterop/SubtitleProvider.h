@@ -140,6 +140,11 @@ namespace FFmpegInterop
 			return std::stoi(str, nullptr, 16);
 		}
 
+		bool startsWith(std::wstring str, std::wstring prefix)
+		{
+			return str.compare(0, prefix.size(), prefix) == 0;
+		}
+
 	private:
 
 		void AddCue(IMediaCue^ cue)

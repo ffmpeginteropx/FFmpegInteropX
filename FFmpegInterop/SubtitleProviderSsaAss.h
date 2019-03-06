@@ -125,9 +125,10 @@ namespace FFmpegInterop
 				if (!hasError && startStyle > 0 && endStyle > 0)
 				{
 					auto styleName = convertFromString(str.substr(startStyle, endStyle - startStyle));
-					if (styles.find(styleName) != styles.end())
+					auto result = styles.find(styleName);
+					if (result != styles.end())
 					{
-						style = styles[styleName];
+						style = result->second;
 					}
 				}
 
@@ -160,10 +161,8 @@ namespace FFmpegInterop
 						if (nextEffect != str.npos)
 						{
 							auto endEffect = str.find('}', nextEffect);
-							if (endEffect != str.npos)
+							if (endEffect != str.npos && endEffect - nextEffect > 2)
 							{
-								auto effect = str.substr(nextEffect, endEffect - nextEffect + 1);
-
 								// create a subformat with default style for beginning of text (UWP seems to need subformats for all text, if used)
 								if (nextEffect > 0 && subFormat == nullptr)
 								{
@@ -185,105 +184,123 @@ namespace FFmpegInterop
 								subFormat->SubformatStyle = subStyle;
 								subFormat->StartIndex = nextEffect;
 
-								auto fnIndex = effect.find(L"\\fn");
-								if (fnIndex != effect.npos)
+								auto effectContent = str[nextEffect+1] == L'\\' ? str.substr(nextEffect + 2, endEffect - nextEffect - 2) : str.substr(nextEffect + 1, endEffect - nextEffect - 1);
+								std::vector<std::wstring> tags;
+								auto start = 0U;
+								auto end = effectContent.find(L"\\");
+								while (end != std::string::npos)
 								{
-									auto start = fnIndex + 3;
-									auto end = effect.find(L"\\", start);
-									if (end == effect.npos)
-									{
-										end = effect.find(L"}", start);
-									}
-									if (end != effect.npos)
-									{
-										auto fnName = effect.substr(start, end - start);
-										subStyle->FontFamily = convertFromString(fnName);
-									}
+									tags.push_back(effectContent.substr(start, end - start));
+									start = end + 1;
+									end = effectContent.find(L"\\", start);
 								}
+								tags.push_back(effectContent.substr(start, end));
 
-								auto fsIndex = effect.find(L"\\fs");
-								if (fsIndex != effect.npos)
+								for each (auto tag in tags)
 								{
-									auto size = parseDouble(effect.substr(fsIndex + 3));
-									TimedTextDouble fontSize;
-									fontSize.Unit = TimedTextUnit::Pixels;
-									fontSize.Value = size;
-									subStyle->FontSize = fontSize;
-								}
+									try
+									{
+										if (startsWith(tag, L"fn"))
+										{
+											auto fnName = tag.substr(2);
+											subStyle->FontFamily = GetFontFamily(fnName);
+										}
+										else if (startsWith(tag, L"fs"))
+										{
+											auto size = parseDouble(tag.substr(2));
+											TimedTextDouble fontSize;
+											fontSize.Unit = TimedTextUnit::Pixels;
+											fontSize.Value = size;
+											subStyle->FontSize = fontSize;
+										}
+										else if (startsWith(tag, L"c"))
+										{
+											int color = parseHexInt(tag.substr(3, 6));
+											subStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
+										}
+										else if (startsWith(tag, L"1c"))
+										{
+											int color = parseHexInt(tag.substr(4, 6));
+											subStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
+										}
+										else if (startsWith(tag, L"3c"))
+										{
+											int color = parseHexInt(tag.substr(4, 6));
+											subStyle->OutlineColor = ColorFromArgb(color << 8 | 0x000000FF);
+										}
+										else if (startsWith(tag, L"alpha"))
+										{
+										}
+										else if (startsWith(tag, L"an"))
+										{
+											// legacy alignment, but I think we should support it
+											auto alignment = parseInt(tag.substr(2));
 
-								// \c&H<bb><gg><rr>&			primary fill color
-								// \1c&H<bb><gg><rr>&			primary fill color
-								// \2c&H<bb><gg><rr>&			secondary fill color
-								// \3c&H<bb><gg><rr>&			border color
-								// \4c&H<bb><gg><rr>&			shadow color
-								auto fcIndex = effect.find(L"\\c"); // \c and \1c are same and effect to primary color
-								auto fc1Index = effect.find(L"\\1c");
-								if (fcIndex != effect.npos || fc1Index != effect.npos)
-								{
-									auto index = fcIndex != effect.npos ? fcIndex + 4 : fc1Index + 5;
-									int color = parseHexInt(effect.substr(index));
-									subStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
-								}
-								auto fsecIndex = effect.find(L"\\3c");
-								if (fsecIndex != effect.npos)
-								{
-									int color = parseHexInt(effect.substr(fsecIndex + 5));
-									subStyle->OutlineColor = ColorFromArgb(color << 8 | 0x000000FF);
-								}
-								auto alignmentIndex = effect.find(L"\\a");
-								if (alignmentIndex != effect.npos && effect.find(L"\\alpha") == effect.npos)
-								{
-									auto an = effect.find(L"\\an"); // legacy alignment, but I think we should support it
-									auto index = an != effect.npos ? an + 3 : alignmentIndex + 2;
-									auto alignment = parseInt(effect.substr(index));
-									
-									subRegion = subRegion != nullptr ? CopyRegion(subRegion) : CopyRegion(cueRegion);
-									subRegion->DisplayAlignment = GetVerticalAlignment(alignment);
-									subCueStyle = subCueStyle != nullptr ? CopyStyle(subCueStyle) : CopyStyle(cueStyle);
-									subCueStyle->LineAlignment = GetHorizontalAlignment(alignment);
-								}
-								if (effect.find(L"\\b1") != effect.npos)
-								{
-									subStyle->FontWeight = TimedTextWeight::Bold;
-								}
-								else if (effect.find(L"\\b0") != effect.npos)
-								{
-									subStyle->FontWeight = TimedTextWeight::Normal;
-								}
+											subRegion = subRegion != nullptr ? CopyRegion(subRegion) : CopyRegion(cueRegion);
+											subRegion->DisplayAlignment = GetVerticalAlignment(alignment);
+											subCueStyle = subCueStyle != nullptr ? CopyStyle(subCueStyle) : CopyStyle(cueStyle);
+											subCueStyle->LineAlignment = GetHorizontalAlignment(alignment);
+										}
+										else if (startsWith(tag, L"a"))
+										{
+											auto alignment = parseInt(tag.substr(1));
 
-								if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))
-								{
-									if (effect.find(L"\\i1") != effect.npos)
-									{
-										subStyle->FontStyle = TimedTextFontStyle::Italic;
+											subRegion = subRegion != nullptr ? CopyRegion(subRegion) : CopyRegion(cueRegion);
+											subRegion->DisplayAlignment = GetVerticalAlignment(alignment);
+											subCueStyle = subCueStyle != nullptr ? CopyStyle(subCueStyle) : CopyStyle(cueStyle);
+											subCueStyle->LineAlignment = GetHorizontalAlignment(alignment);
+										}
+										else if (tag.compare(L"b0") == 0)
+										{
+											subStyle->FontWeight = TimedTextWeight::Normal;
+										}
+										else if (tag.compare(L"b1") == 0)
+										{
+											subStyle->FontWeight = TimedTextWeight::Bold;
+										}
+										else if (tag.compare(L"i0") == 0 && WFM::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))
+										{
+											subStyle->FontStyle = TimedTextFontStyle::Normal;
+										}
+										else if (tag.compare(L"i1") == 0 && WFM::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))
+										{
+											subStyle->FontStyle = TimedTextFontStyle::Italic;
+										}
+										else if (tag.compare(L"u0") == 0 && WFM::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsUnderlineEnabled"))
+										{
+											subStyle->IsUnderlineEnabled = false;
+										}
+										else if (tag.compare(L"u1") == 0 && WFM::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsUnderlineEnabled"))
+										{
+											subStyle->IsUnderlineEnabled = true;
+										}
+										else if (tag.compare(L"s0") == 0 && WFM::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsLineThroughEnabled"))
+										{
+											subStyle->IsLineThroughEnabled = false;
+										}
+										else if (tag.compare(L"s1") == 0 && WFM::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsLineThroughEnabled"))
+										{
+											subStyle->IsLineThroughEnabled = true;
+										}
+										else if (startsWith(tag, L"fn"))
+										{
+											auto fnName = tag.substr(2);
+											subStyle->FontFamily = convertFromString(fnName);
+										}
+										else if (startsWith(tag, L"fn"))
+										{
+											auto fnName = tag.substr(2);
+											subStyle->FontFamily = convertFromString(fnName);
+										}
+										else if (startsWith(tag, L"fn"))
+										{
+											auto fnName = tag.substr(2);
+											subStyle->FontFamily = convertFromString(fnName);
+										}
 									}
-									else if (effect.find(L"\\i0") != effect.npos)
+									catch (...)
 									{
-										subStyle->FontStyle = TimedTextFontStyle::Normal;
-									}
-								}
-
-								if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsUnderlineEnabled"))
-								{
-									if (effect.find(L"\\u1") != effect.npos)
-									{
-										subStyle->IsUnderlineEnabled = true;
-									}
-									else if (effect.find(L"\\u0") != effect.npos)
-									{
-										subStyle->IsUnderlineEnabled = false;
-									}
-								}
-
-								if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "IsLineThroughEnabled"))
-								{
-									if (effect.find(L"\\s1") != effect.npos)
-									{
-										subStyle->IsLineThroughEnabled = true;
-									}
-									else if (effect.find(L"\\s0") != effect.npos)
-									{
-										subStyle->IsLineThroughEnabled = false;
+										OutputDebugString(L"Failed to parse tag: ");
 									}
 								}
 
@@ -435,7 +452,7 @@ namespace FFmpegInterop
 
 						auto SubtitleStyle = ref new TimedTextStyle();
 
-						SubtitleStyle->FontFamily = ConvertString(font);
+						SubtitleStyle->FontFamily = GetFontFamily(font);
 						TimedTextDouble fontSize;
 						fontSize.Unit = TimedTextUnit::Pixels;
 						fontSize.Value = size;
@@ -470,7 +487,8 @@ namespace FFmpegInterop
 						}
 
 						auto style = ref new SsaStyleDefinition();
-						style->Name = ConvertString(name);
+						auto wname = utf8_to_wstring(std::string(name));
+						style->Name = convertFromString(wname);
 						style->Region = SubtitleRegion;
 						style->Style = SubtitleStyle;
 
@@ -577,7 +595,7 @@ namespace FFmpegInterop
 
 						auto SubtitleStyle = ref new TimedTextStyle();
 
-						SubtitleStyle->FontFamily = ConvertString(font);
+						SubtitleStyle->FontFamily = GetFontFamily(font);
 						TimedTextDouble fontSize;
 						fontSize.Unit = TimedTextUnit::Pixels;
 						fontSize.Value = size;
@@ -602,7 +620,8 @@ namespace FFmpegInterop
 						SubtitleStyle->OutlineColor = ColorFromArgb(outlineColor << 8 | 0x000000FF);
 
 						auto style = ref new SsaStyleDefinition();
-						style->Name = ConvertString(name);
+						auto wname = utf8_to_wstring(std::string(name));
+						style->Name = convertFromString(wname);
 						style->Region = SubtitleRegion;
 						style->Style = SubtitleStyle;
 
@@ -712,11 +731,71 @@ namespace FFmpegInterop
 				return defaultAlignment;
 		}
 
+		String^ GetFontFamily(char* str)
+		{
+			auto wstr = utf8_to_wstring(std::string(str));
+			return GetFontFamily(wstr);
+		}
+
+		String^ GetFontFamily(std::wstring str)
+		{
+			str = trim(str);
+
+			auto existing = fonts.find(str);
+			if (existing != fonts.end())
+			{
+				return existing->second;
+			}
+
+			String^ result;
+
+			if (m_config->UseEmbeddedSubtitleFonts)
+			{
+				try
+				{
+					for each (auto attachment in attachedFileHelper->AttachedFiles)
+					{
+						std::wstring mime(attachment->MimeType->Data());
+						if (mime.find(L"font") != mime.npos)
+						{
+							auto file = create_task(attachedFileHelper->ExtractFile(attachment)).get();
+							auto names = ref new Vector<String^>();
+							names->Append("System.Title");
+							auto properties = create_task(file->Properties->RetrievePropertiesAsync(names)).get();
+							auto title = dynamic_cast<String^>(properties->Lookup("System.Title"));
+							if (title != nullptr)
+							{
+								auto fontFamily = std::wstring(title->Data());
+								if (str.compare(fontFamily) == 0)
+								{
+									result = "ms-appdata:///temp/" + m_config->AttachmentCacheFolderName + "/" + attachedFileHelper->InstanceId + "/" + attachment->Name + "#" + convertFromString(str);
+									break;
+								}
+							}
+						}
+					}
+				}
+				catch (...)
+				{
+				}
+			}
+
+			if (!result)
+			{
+				result = convertFromString(str);
+			}
+
+			fonts[str] = result;
+
+			return result;
+		}
+
 		Windows::UI::Color ColorFromArgb(int argb)
 		{
 			auto result = *reinterpret_cast<Windows::UI::Color*>(&argb);
 			return result;
 		}
+
 		void find_and_replace(std::wstring& source, std::wstring const& find, std::wstring const& replace)
 		{
 			for (std::wstring::size_type i = 0; (i = source.find(find, i)) != std::wstring::npos;)
@@ -724,6 +803,26 @@ namespace FFmpegInterop
 				source.replace(i, find.length(), replace);
 				i += replace.length();
 			}
+		}
+
+		// trim from left
+		inline std::wstring& ltrim(std::wstring& s, const wchar_t* t = L" \t\n\r\f\v")
+		{
+			s.erase(0, s.find_first_not_of(t));
+			return s;
+		}
+
+		// trim from right
+		inline std::wstring& rtrim(std::wstring& s, const wchar_t* t = L" \t\n\r\f\v")
+		{
+			s.erase(s.find_last_not_of(t) + 1);
+			return s;
+		}
+
+		// trim from left & right
+		inline std::wstring& trim(std::wstring& s, const wchar_t* t = L" \t\n\r\f\v")
+		{
+			return ltrim(rtrim(s, t), t);
 		}
 
 		ref class SsaStyleDefinition
@@ -742,6 +841,7 @@ namespace FFmpegInterop
 		int height;
 		const int styleIndex = 2;
 		std::map<String^, SsaStyleDefinition^> styles;
+		std::map<std::wstring, String^> fonts;
 		AttachedFileHelper^ attachedFileHelper;
 	};
 }

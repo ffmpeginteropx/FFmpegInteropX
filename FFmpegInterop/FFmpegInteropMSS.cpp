@@ -657,6 +657,27 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 	auto audioStreamIndex = av_find_best_stream(avFormatCtx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
 	auto subtitleStreamIndex = av_find_best_stream(avFormatCtx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0);
 
+	attachedFileHelper = ref new AttachedFileHelper(config);
+
+	// first parse attached files, so they are available for subtitle streams during initialize
+	for (unsigned int index = 0; index < avFormatCtx->nb_streams; index++)
+	{
+		auto avStream = avFormatCtx->streams[index];
+		if (avStream->codecpar->codec_type == AVMEDIA_TYPE_ATTACHMENT)
+		{
+			auto fileName = av_dict_get(avStream->metadata, "filename", NULL, 0);
+			auto mimetype = av_dict_get(avStream->metadata, "mimetype", NULL, 0);
+			if (fileName && avStream->codecpar->extradata && avStream->codecpar->extradata_size > 0)
+			{
+				auto name = ConvertString(fileName->value);
+				auto mime = mimetype ? ConvertString(mimetype->value) : "";
+
+				auto file = ref new AttachedFile(name, mime, avStream);
+				attachedFileHelper->AddAttachedFile(file);
+			}
+		}
+	}
+
 	for (unsigned int index = 0; index < avFormatCtx->nb_streams; index++)
 	{
 		auto avStream = avFormatCtx->streams[index];
@@ -730,19 +751,6 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 				{
 					((SubtitleProvider^)stream)->EnableStream();
 				}
-			}
-		}
-		else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_ATTACHMENT)
-		{
-			auto fileName = av_dict_get(avStream->metadata, "filename", NULL, 0);
-			auto mimetype = av_dict_get(avStream->metadata, "mimetype", NULL, 0);
-			if (fileName && avStream->codecpar->extradata && avStream->codecpar->extradata_size > 0)
-			{
-				auto name = ConvertString(fileName->value);
-				auto mime = mimetype ? ConvertString(mimetype->value) : "";
-
-				auto file = ref new AttachedFile(name, mime, avStream);
-				attachedFileHelper->AddAttachedFile(file);
 			}
 		}
 
