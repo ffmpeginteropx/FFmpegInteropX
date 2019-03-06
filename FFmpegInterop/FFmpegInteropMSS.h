@@ -132,7 +132,7 @@ namespace FFmpegInterop
 			IVectorView<SubtitleStreamInfo^>^ get() { return subtitleStreamInfos; }
 		}
 
-	
+
 
 		property bool HasThumbnail
 		{
@@ -182,12 +182,12 @@ namespace FFmpegInterop
 				return playbackItem;
 			}
 		}
+		property TimeSpan SubtitleOffset;
 
 
 	private:
 		FFmpegInteropMSS(FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 
-		void OnTick(Platform::Object ^sender, Platform::Object ^args);
 		HRESULT CreateMediaStreamSource(IRandomAccessStream^ stream, MediaStreamSource^ mss);
 		HRESULT CreateMediaStreamSource(String^ uri);
 		HRESULT InitFFmpegContext();
@@ -207,7 +207,6 @@ namespace FFmpegInterop
 
 
 	internal:
-
 		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);
 		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 		HRESULT Seek(TimeSpan position);
@@ -255,9 +254,10 @@ namespace FFmpegInterop
 		IVectorView<SubtitleStreamInfo^>^ subtitleStreamInfos;
 		Vector<ExternalSubtitleProvider^>^ externalSubtitleStreams;
 
+		std::recursive_mutex subtitlesGuard;
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher^ dispatcher;
-		AutoResetEvent subtitleLock;
+		
 
 		String^ videoCodecName;
 		String^ audioCodecName;

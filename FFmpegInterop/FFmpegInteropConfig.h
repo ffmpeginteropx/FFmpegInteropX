@@ -151,21 +151,8 @@ namespace FFmpegInterop
 		}
 
 		/*Gets the subtitle offset in ticks*/
-		property TimeSpan SubtitleSyncOffset
-		{
-			void set(TimeSpan value)
-			{
-				if (subtitleSyncOffset.Duration == 0)
-				{
-					subtitleSyncOffset = value;
-				}
-				else throw ref new InvalidArgumentException();
-			}
-			TimeSpan get()
-			{
-				return subtitleSyncOffset;
-			}
-		}
+		property TimeSpan DefaultSubtitleSyncOffset;
+		
 
 		property String^ DefaultAudioStreamName;
 		property String^ DefaultSubtitleStreamName;
@@ -181,8 +168,7 @@ namespace FFmpegInterop
 
 		/*Used to pass additional, specific options to external sub parsers*/
 		property PropertySet^ AdditionalFFmpegSubtitleOptions;
-		TimeSpan subtitleSyncOffset = { 0 };
-		TimeSpan newSubtitleSyncOffset = { 0 };
+		
 
 	private:
 		CharacterEncoding^ m_CharacterEncoding;

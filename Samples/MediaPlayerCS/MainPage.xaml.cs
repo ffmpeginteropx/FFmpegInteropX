@@ -335,8 +335,8 @@ namespace MediaPlayerCS
         {
             if (FFmpegMSS != null)
             {
-                var currentOffset = FFmpegMSS.Configuration.SubtitleSyncOffset;
-                var newOffset = FFmpegMSS.Configuration.SubtitleSyncOffset.Add(TimeSpan.FromSeconds(1));
+                var currentOffset = FFmpegMSS.SubtitleOffset;
+                var newOffset = FFmpegMSS.SubtitleOffset.Add(TimeSpan.FromSeconds(1));
                 subtitleOffset.Text = newOffset.TotalSeconds.ToString();
                 FFmpegMSS.SetSubtitleOfset(newOffset);
 
@@ -347,8 +347,8 @@ namespace MediaPlayerCS
         {
             if (FFmpegMSS != null)
             {
-                var currentOffset = FFmpegMSS.Configuration.SubtitleSyncOffset;
-                var newOffset = FFmpegMSS.Configuration.SubtitleSyncOffset.Subtract(TimeSpan.FromSeconds(1));
+                var currentOffset = FFmpegMSS.SubtitleOffset;
+                var newOffset = FFmpegMSS.SubtitleOffset.Subtract(TimeSpan.FromSeconds(1));
                 subtitleOffset.Text = newOffset.TotalSeconds.ToString();
 
                 FFmpegMSS.SetSubtitleOfset(newOffset);

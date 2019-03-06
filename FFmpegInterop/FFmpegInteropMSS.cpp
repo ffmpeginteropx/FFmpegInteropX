@@ -76,9 +76,10 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispa
 			isRegistered = true;
 			FFmpegVersionInfo::CheckMinimumVersion();
 		}
+
 		isRegisteredMutex.unlock();
 	}
-
+	SubtitleOffset = config->DefaultSubtitleSyncOffset;
 	audioStrInfos = ref new Vector<AudioStreamInfo^>();
 	subtitleStrInfos = ref new Vector<SubtitleStreamInfo^>();
 	externalSubtitleStreams = ref new Vector<ExternalSubtitleProvider^>();
@@ -318,11 +319,11 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 {
 	return create_async([this, stream, streamName]
 	{
-
+		subtitlesGuard.lock();
 		auto subConfig = ref new FFmpegInteropConfig();
 		subConfig->IsExternalSubtitleParser = true;
 		subConfig->DefaultSubtitleStreamName = streamName;
-
+		subConfig->DefaultSubtitleSyncOffset = this->SubtitleOffset;
 		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
 		subConfig->AnsiSubtitleEncoding = this->config->AnsiSubtitleEncoding;
 		subConfig->OverrideSubtitleStyles = this->config->OverrideSubtitleStyles;
@@ -378,9 +379,10 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		catch (...)
 		{
 			mutexGuard.unlock();
+			subtitlesGuard.unlock();
 			throw;
 		}
-
+		subtitlesGuard.unlock();
 		mutexGuard.unlock();
 		return externalSubsParser->SubtitleStreams;
 	});
@@ -510,8 +512,6 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(String^ uri)
 
 	return hr;
 }
-
-
 
 HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream, MediaStreamSource^ mss)
 {
@@ -887,6 +887,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 
 		if (SUCCEEDED(hr))
 		{
+			avSubsStream->AdditionalStreamSampleOffset = SubtitleOffset;
 			hr = avSubsStream->Initialize();
 		}
 
@@ -1052,18 +1053,18 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream * avStream, in
 void FFmpegInterop::FFmpegInteropMSS::SetSubtitleOfset(TimeSpan offset)
 {
 
-	mutexGuard.lock();
+	subtitlesGuard.unlock();
 	for each(auto internalStream in subtitleStreams)
 	{
 		internalStream->AdditionalStreamSampleOffset = offset;
 	}
 	for each(auto extSub in externalSubtitleStreams)
 	{
-		extSub->SetSubtitleOffset(offset, Configuration->SubtitleSyncOffset);
+		extSub->SetSubtitleOffset(offset, SubtitleOffset);
 	}
 
-	Configuration->subtitleSyncOffset = offset;
-	mutexGuard.unlock();
+	SubtitleOffset = offset;
+	subtitlesGuard.unlock();
 
 
 }
