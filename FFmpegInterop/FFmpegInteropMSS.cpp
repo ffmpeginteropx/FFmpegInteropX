@@ -660,20 +660,23 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 	attachedFileHelper = ref new AttachedFileHelper(config);
 
 	// first parse attached files, so they are available for subtitle streams during initialize
-	for (unsigned int index = 0; index < avFormatCtx->nb_streams; index++)
+	if (config->UseEmbeddedSubtitleFonts)
 	{
-		auto avStream = avFormatCtx->streams[index];
-		if (avStream->codecpar->codec_type == AVMEDIA_TYPE_ATTACHMENT)
+		for (unsigned int index = 0; index < avFormatCtx->nb_streams; index++)
 		{
-			auto fileName = av_dict_get(avStream->metadata, "filename", NULL, 0);
-			auto mimetype = av_dict_get(avStream->metadata, "mimetype", NULL, 0);
-			if (fileName && avStream->codecpar->extradata && avStream->codecpar->extradata_size > 0)
+			auto avStream = avFormatCtx->streams[index];
+			if (avStream->codecpar->codec_type == AVMEDIA_TYPE_ATTACHMENT)
 			{
-				auto name = ConvertString(fileName->value);
-				auto mime = mimetype ? ConvertString(mimetype->value) : "";
+				auto fileName = av_dict_get(avStream->metadata, "filename", NULL, 0);
+				auto mimetype = av_dict_get(avStream->metadata, "mimetype", NULL, 0);
+				if (fileName && avStream->codecpar->extradata && avStream->codecpar->extradata_size > 0)
+				{
+					auto name = ConvertString(fileName->value);
+					auto mime = mimetype ? ConvertString(mimetype->value) : "";
 
-				auto file = ref new AttachedFile(name, mime, avStream);
-				attachedFileHelper->AddAttachedFile(file);
+					auto file = ref new AttachedFile(name, mime, avStream);
+					attachedFileHelper->AddAttachedFile(file);
+				}
 			}
 		}
 	}
