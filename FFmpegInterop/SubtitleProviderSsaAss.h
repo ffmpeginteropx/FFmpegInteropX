@@ -96,6 +96,16 @@ namespace FFmpegInterop
 			return hr;
 		}
 
+		virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio) override
+		{
+			// todo check if this is a good idea...
+			if (this->width == 0 || this->height == 0)
+			{
+				this->width = width;
+				this->height = height;
+			}
+		}
+
 		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) override
 		{
 			AVSubtitle subtitle;
@@ -195,6 +205,9 @@ namespace FFmpegInterop
 								subFormat->SubformatStyle = subStyle;
 								subFormat->StartIndex = nextEffect;
 
+								bool hasPosition = false;
+								double posX, posY;
+
 								auto effectContent = str[nextEffect+1] == L'\\' ? str.substr(nextEffect + 2, endEffect - nextEffect - 2) : str.substr(nextEffect + 1, endEffect - nextEffect - 1);
 								std::vector<std::wstring> tags;
 								auto start = 0U;
@@ -247,6 +260,8 @@ namespace FFmpegInterop
 											if (!subRegion) subRegion = CopyRegion(cueRegion);
 											subRegion->DisplayAlignment = GetVerticalAlignment(alignment, true);
 											subStyle->LineAlignment = GetHorizontalAlignment(alignment, true);
+											cue->CueStyle = CopyStyle(cueStyle);
+											cue->CueStyle->LineAlignment = subStyle->LineAlignment;
 										}
 										else if (startsWith(tag, L"a"))
 										{
@@ -256,6 +271,16 @@ namespace FFmpegInterop
 											if (!subRegion) subRegion = CopyRegion(cueRegion);
 											subRegion->DisplayAlignment = GetVerticalAlignment(alignment, false);
 											subStyle->LineAlignment = GetHorizontalAlignment(alignment, false);
+											cue->CueStyle = CopyStyle(cueStyle);
+											cue->CueStyle->LineAlignment = subStyle->LineAlignment;
+										} 
+										else if (startsWith(tag, L"pos"))
+										{
+											size_t numDigits;
+											posX = std::stod(tag.substr(4), &numDigits);
+											posY = std::stod(tag.substr(5 + numDigits), nullptr);
+											if (!subRegion) subRegion = CopyRegion(cueRegion);
+											hasPosition = true;
 										}
 										else if (tag.compare(L"b0") == 0)
 										{
@@ -289,26 +314,101 @@ namespace FFmpegInterop
 										{
 											subStyle->IsLineThroughEnabled = true;
 										}
-										else if (startsWith(tag, L"fn"))
-										{
-											auto fnName = tag.substr(2);
-											subStyle->FontFamily = convertFromString(fnName);
-										}
-										else if (startsWith(tag, L"fn"))
-										{
-											auto fnName = tag.substr(2);
-											subStyle->FontFamily = convertFromString(fnName);
-										}
-										else if (startsWith(tag, L"fn"))
-										{
-											auto fnName = tag.substr(2);
-											subStyle->FontFamily = convertFromString(fnName);
-										}
 									}
 									catch (...)
 									{
 										OutputDebugString(L"Failed to parse tag: ");
 									}
+								}
+
+								if (hasPosition && width > 0 && height > 0)
+								{
+									double x = min(posX / width, 1);
+									double y = min(posY / height, 1);
+									
+									TimedTextPadding padding;
+									padding.Unit = TimedTextUnit::Percentage;
+
+									/*
+									switch (subRegion->DisplayAlignment)
+									{
+									case TimedTextDisplayAlignment::Before:
+										padding.Before = y * 100;
+										break;
+									case TimedTextDisplayAlignment::After:
+										padding.After = (1.0 - y) * 100;
+										break;
+									case TimedTextDisplayAlignment::Center:
+										padding.Before = max(y - 0.1, 0) * 100;
+										padding.After = min(1.0 - y - 0.1, 1) * 100;
+										break;
+									default:
+										break;
+									}
+
+									switch (subStyle->LineAlignment)
+									{
+									case TimedTextLineAlignment::Start:
+										padding.Start = x * 100;
+										break;
+									case TimedTextLineAlignment::End:
+										padding.End = (1.0 - x) * 100;
+										break;
+									case TimedTextLineAlignment::Center:
+										padding.Start = max(x - 0.1, 0) * 100;
+										padding.End = min(1.0 - x - 0.1, 1) * 100;
+										break;
+									default:
+										break;
+									}
+									*/
+
+									TimedTextSize extent;
+									TimedTextPoint position;
+									extent.Unit = TimedTextUnit::Percentage;
+									position.Unit = TimedTextUnit::Percentage;
+
+									double size;
+
+									switch (subRegion->DisplayAlignment)
+									{
+									case TimedTextDisplayAlignment::Before:
+										position.Y = y * 100;
+										extent.Height = (1.0 - y) * 100;
+										break;
+									case TimedTextDisplayAlignment::After:
+										extent.Height = y * 100;
+										break;
+									case TimedTextDisplayAlignment::Center:
+										size = min(y, 1 - y);
+										position.Y = (y - size) * 100;
+										extent.Height = (size * 2) * 100;
+										break;
+									default:
+										break;
+									}
+
+									switch (subStyle->LineAlignment)
+									{
+									case TimedTextLineAlignment::Start:
+										position.X = x * 100;
+										extent.Width = (1.0 - x) * 100;
+										break;
+									case TimedTextLineAlignment::End:
+										extent.Width = x * 100;
+										break;
+									case TimedTextLineAlignment::Center:
+										size = min(x, 1 - x);
+										position.X = (x - size) * 100;
+										extent.Height = (size * 2) * 100;
+										break;
+									default:
+										break;
+									}
+									subRegion->Position = position;
+									subRegion->Extent = extent;
+
+									subRegion->Padding = padding;
 								}
 
 								// strip effect from actual text
@@ -607,7 +707,7 @@ namespace FFmpegInterop
 			copy->Extent = region->Extent;
 			copy->IsOverflowClipped = region->IsOverflowClipped;
 			copy->LineHeight = region->LineHeight;
-			copy->Name = region->Name;
+			copy->Name = region->Name + " Copy " + regionIndex++;
 			copy->Padding = region->Padding;
 			copy->Position = region->Position;
 			copy->ScrollMode = region->ScrollMode;
@@ -779,6 +879,7 @@ namespace FFmpegInterop
 		int textIndex;
 		int width;
 		int height;
+		int regionIndex = 1;
 		const int styleIndex = 2;
 		std::map<String^, SsaStyleDefinition^> styles;
 		std::map<std::wstring, String^> fonts;
