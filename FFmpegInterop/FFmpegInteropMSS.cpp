@@ -340,6 +340,16 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 
 		if (externalSubsParser->SubtitleStreams->Size > 0)
 		{
+			if (VideoDescriptor)
+			{
+				auto pixelAspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
+				auto videoAspect = ((double)videoStream->m_pAvCodecCtx->width / videoStream->m_pAvCodecCtx->height) / pixelAspect;
+				for each (auto stream in externalSubsParser->subtitleStreams)
+				{
+					stream->NotifyVideoFrameSize(videoStream->m_pAvCodecCtx->width, videoStream->m_pAvCodecCtx->height, videoAspect);
+				}
+			}
+
 			int readResult = 0;
 			while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
 			{
@@ -770,10 +780,11 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 
 	if (videoStream)
 	{
-		auto aspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
+		auto pixelAspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
+		auto videoAspect = ((double)videoStream->m_pAvCodecCtx->width / videoStream->m_pAvCodecCtx->height) / pixelAspect;
 		for each (auto stream in subtitleStreams)
 		{
-			stream->NotifyVideoFrameSize(videoStream->m_pAvCodecCtx->width, videoStream->m_pAvCodecCtx->height, aspect);
+			stream->NotifyVideoFrameSize(videoStream->m_pAvCodecCtx->width, videoStream->m_pAvCodecCtx->height, videoAspect);
 		}
 	}
 

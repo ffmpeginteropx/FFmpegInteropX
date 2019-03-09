@@ -22,11 +22,11 @@ namespace FFmpegInterop
 			this->attachedFileHelper = attachedFileHelper;
 		}
 
-		virtual HRESULT Initialize() override
+		void ParseHeaders()
 		{
-			auto hr = SubtitleProvider::Initialize();
-			if (SUCCEEDED(hr))
+			if (!hasParsedHeaders)
 			{
+				hasParsedHeaders = true;
 				ssaVersion = 4;
 				if (m_pAvCodecCtx->subtitle_header && m_pAvCodecCtx->subtitle_header_size > 0)
 				{
@@ -49,16 +49,34 @@ namespace FFmpegInterop
 						}
 					}
 					
+					int w, h;
 					auto resx = str.find("\nPlayResX: ");
 					auto resy = str.find("\nPlayResY: ");
-					if (resx != str.npos && resy != str.npos)
+					if (resx != str.npos && sscanf_s((char*)m_pAvCodecCtx->subtitle_header + resx, "\nPlayResX: %i\n", &w) == 1)
 					{
-						int w, h;
-						if (sscanf_s((char*)m_pAvCodecCtx->subtitle_header + resx, "\nPlayResX: %i\n", &w) == 1 &&
-							sscanf_s((char*)m_pAvCodecCtx->subtitle_header + resy, "\nPlayResY: %i\n", &h) == 1)
+						width = w;
+					}
+
+					if (resy != str.npos && sscanf_s((char*)m_pAvCodecCtx->subtitle_header + resy, "\nPlayResY: %i\n", &h) == 1)
+					{
+						height = h;
+					}
+
+					if (videoWidth > 0 && videoHeight > 0 && videoAspectRatio > 0)
+					{
+						if (width == 0 && height == 0)
 						{
-							width = w;
-							height = h;
+							// todo check if this is a good idea...
+							width = videoWidth;
+							height = videoHeight;
+						}
+						else if (width == 0)
+						{
+							width = (int)(height * videoAspectRatio);
+						}
+						else if (height == 0)
+						{
+							height = (int)(width / videoAspectRatio);
 						}
 					}
 
@@ -92,22 +110,19 @@ namespace FFmpegInterop
 					textIndex = 8;
 				}
 			}
-
-			return hr;
 		}
 
 		virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio) override
 		{
-			// todo check if this is a good idea...
-			if (this->width == 0 || this->height == 0)
-			{
-				this->width = width;
-				this->height = height;
-			}
+			videoAspectRatio = aspectRatio;
+			videoWidth = width;
+			videoHeight = height;
 		}
 
 		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) override
 		{
+			ParseHeaders();
+
 			AVSubtitle subtitle;
 			int gotSubtitle = 0;
 			auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
@@ -206,7 +221,7 @@ namespace FFmpegInterop
 								subFormat->StartIndex = nextEffect;
 
 								bool hasPosition = false;
-								double posX, posY;
+								double posX = 0, posY = 0;
 
 								auto effectContent = str[nextEffect+1] == L'\\' ? str.substr(nextEffect + 2, endEffect - nextEffect - 2) : str.substr(nextEffect + 1, endEffect - nextEffect - 1);
 								std::vector<std::wstring> tags;
@@ -237,20 +252,35 @@ namespace FFmpegInterop
 										else if (startsWith(tag, L"c"))
 										{
 											int color = parseHexInt(tag.substr(3, 6));
-											subStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
+											subStyle->Foreground = ColorFromArgb(color << 8 | subStyle->Foreground.A);
 										}
 										else if (startsWith(tag, L"1c"))
 										{
 											int color = parseHexInt(tag.substr(4, 6));
-											subStyle->Foreground = ColorFromArgb(color << 8 | 0x000000FF);
+											subStyle->Foreground = ColorFromArgb(color << 8 | subStyle->Foreground.A);
 										}
 										else if (startsWith(tag, L"3c"))
 										{
 											int color = parseHexInt(tag.substr(4, 6));
-											subStyle->OutlineColor = ColorFromArgb(color << 8 | 0x000000FF);
+											subStyle->OutlineColor = ColorFromArgb(color << 8 | subStyle->OutlineColor.A);
 										}
 										else if (startsWith(tag, L"alpha"))
 										{
+											auto alpha = parseHexInt(tag.substr(7));
+											auto color = subStyle->Foreground;
+											subStyle->Foreground = ColorFromArgb(alpha, color.R, color.G, color.B);
+										}
+										else if (startsWith(tag, L"1a"))
+										{
+											auto alpha = parseHexInt(tag.substr(4));
+											auto color = subStyle->Foreground;
+											subStyle->Foreground = ColorFromArgb(alpha, color.R, color.G, color.B);
+										}
+										else if (startsWith(tag, L"3a"))
+										{
+											auto alpha = parseHexInt(tag.substr(4));
+											auto color = subStyle->OutlineColor;
+											subStyle->OutlineColor = ColorFromArgb(alpha, color.R, color.G, color.B);
 										}
 										else if (startsWith(tag, L"an"))
 										{
@@ -273,7 +303,7 @@ namespace FFmpegInterop
 											subStyle->LineAlignment = GetHorizontalAlignment(alignment, false);
 											cue->CueStyle = CopyStyle(cueStyle);
 											cue->CueStyle->LineAlignment = subStyle->LineAlignment;
-										} 
+										}
 										else if (startsWith(tag, L"pos"))
 										{
 											size_t numDigits;
@@ -281,6 +311,16 @@ namespace FFmpegInterop
 											posY = std::stod(tag.substr(5 + numDigits), nullptr);
 											if (!subRegion) subRegion = CopyRegion(cueRegion);
 											hasPosition = true;
+										}
+										else if (startsWith(tag, L"bord"))
+										{
+											auto border = std::stod(tag.substr(4));
+											auto outline = subStyle->OutlineThickness;
+											outline.Value = border;
+											subStyle->OutlineThickness = outline;
+											auto outlineRadius = subStyle->OutlineRadius;
+											outlineRadius.Value = border;
+											subStyle->OutlineRadius = outlineRadius;
 										}
 										else if (tag.compare(L"b0") == 0)
 										{
@@ -400,7 +440,7 @@ namespace FFmpegInterop
 									case TimedTextLineAlignment::Center:
 										size = min(x, 1 - x);
 										position.X = (x - size) * 100;
-										extent.Height = (size * 2) * 100;
+										extent.Width = (size * 2) * 100;
 										break;
 									default:
 										break;
@@ -639,11 +679,11 @@ namespace FFmpegInterop
 			SubtitleStyle->Background = Windows::UI::Colors::Transparent; //ColorFromArgb(backColor);
 			TimedTextDouble outlineRadius;
 			outlineRadius.Unit = TimedTextUnit::Percentage;
-			outlineRadius.Value = outline * 2;
+			outlineRadius.Value = outline;
 			SubtitleStyle->OutlineRadius = outlineRadius;
 			TimedTextDouble outlineThickness;
 			outlineThickness.Unit = TimedTextUnit::Percentage;
-			outlineThickness.Value = outline * 2;
+			outlineThickness.Value = outline;
 			SubtitleStyle->OutlineThickness = outlineThickness;
 			SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
 			SubtitleStyle->OutlineColor = ColorFromArgb(outlineColor << 8 | 0x000000FF);
@@ -826,7 +866,14 @@ namespace FFmpegInterop
 		{
 			TimedTextDouble size;
 			size.Unit = TimedTextUnit::Pixels;
-			size.Value = fontSize * 0.666;
+			size.Value = fontSize;
+
+			// scale to actual video resolution
+			if (videoWidth > 0 && width > 0)
+			{
+				size.Value *= ((double)videoWidth / width);
+			}
+
 			return size;
 		}
 
@@ -834,6 +881,16 @@ namespace FFmpegInterop
 		{
 			auto result = *reinterpret_cast<Windows::UI::Color*>(&argb);
 			return result;
+		}
+
+		Windows::UI::Color ColorFromArgb(int a, int r, int g, int b)
+		{
+			Windows::UI::Color color;
+			color.A = a;
+			color.R = r;
+			color.G = g;
+			color.B = b;
+			return color;
 		}
 
 		void find_and_replace(std::wstring& source, std::wstring const& find, std::wstring const& replace)
@@ -874,11 +931,15 @@ namespace FFmpegInterop
 		};
 
 	private:
+		bool hasParsedHeaders;
 		bool isAss;
 		int ssaVersion;
 		int textIndex;
 		int width;
 		int height;
+		double videoAspectRatio;
+		int videoWidth;
+		int videoHeight;
 		int regionIndex = 1;
 		const int styleIndex = 2;
 		std::map<String^, SsaStyleDefinition^> styles;
