@@ -45,9 +45,9 @@
                         <ToggleSwitch Header="Passthrough Audio MP3" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioMP3}"/>
                         <ToggleSwitch Header="Passthrough Audio AAC" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioAAC}" Margin="0,0,0,20" />
 
-                    <ToggleSwitch Header="Passthrough Video" OffContent="OFF" OnContent="ON" IsOn="True" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
+                        <ToggleSwitch Header="Passthrough Video" OffContent="OFF" OnContent="ON" IsOn="True" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
 
-                    <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.VideoOutputAllowIyuv}"/>
+                        <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.VideoOutputAllowIyuv}"/>
 
                         <Button Content="Extract Frame" Click="ExtractFrame"  Margin="0,20,10,10" />
                         <ToggleSwitch x:Name="grabFrameExactSeek" Header="Exact Seek for Extract Frame" OffContent="OFF" OnContent="ON" IsOn="True"/>
@@ -66,6 +66,12 @@
 
                         <Button Content="Load External Subtitle File (ffmpeg)" Click="LoadSubtitleFileFFmpeg"  Margin="0,20,10,10" />
                         <Button Content="Load External Subtitle File (winAPI)" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
+
+                        <TextBlock Text="Filters..."/>
+                        <StackPanel Orientation="Horizontal">
+                            <AppBarButton Icon="Accept" Click="AddTestFilter" Label="Add filter"/>
+                            <AppBarButton Icon="Remove" Click="RemoveTestFilter"  Label="Remove filter"/>
+                        </StackPanel>
 
                     </StackPanel>
                 </ScrollViewer>
