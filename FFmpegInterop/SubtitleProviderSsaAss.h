@@ -657,8 +657,7 @@ namespace FFmpegInterop
 			{
 				padding.Start = (double)marginL * 100 / width;
 				padding.End = (double)marginR * 100 / width;
-				auto mV = (double)marginV * 100 / height;
-				padding.After = mV > 5 ? mV : 5;
+				padding.After = (double)marginV * 100 / height;
 			}
 			else
 			{
