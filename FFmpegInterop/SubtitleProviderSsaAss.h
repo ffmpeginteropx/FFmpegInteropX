@@ -680,11 +680,11 @@ namespace FFmpegInterop
 			SubtitleStyle->Background = Windows::UI::Colors::Transparent; //ColorFromArgb(backColor);
 			TimedTextDouble outlineRadius;
 			outlineRadius.Unit = TimedTextUnit::Percentage;
-			outlineRadius.Value = outline * 1.3;
+			outlineRadius.Value = outline * 1.4;
 			SubtitleStyle->OutlineRadius = outlineRadius;
 			TimedTextDouble outlineThickness;
 			outlineThickness.Unit = TimedTextUnit::Percentage;
-			outlineThickness.Value = outline * 1.3;
+			outlineThickness.Value = outline * 1.4;
 			SubtitleStyle->OutlineThickness = outlineThickness;
 			SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
 			SubtitleStyle->OutlineColor = ColorFromArgb(outlineColor << 8 | 0x000000FF);
