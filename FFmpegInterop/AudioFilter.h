@@ -153,7 +153,7 @@ namespace FFmpegInterop {
 				return AVERROR(ENOMEM);
 			}
 			/* Set the filter options through the AVOptions API. */
-			
+
 			auto hr = av_opt_set_q(avSource_ctx, "time_base", inputCodecCtx->time_base, AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set_int(avSource_ctx, "sample_rate", inputCodecCtx->sample_rate, AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set(avSource_ctx, "sample_fmt", av_get_sample_fmt_name(inputCodecCtx->sample_fmt), AV_OPT_SEARCH_CHILDREN);
@@ -272,7 +272,7 @@ namespace FFmpegInterop {
 		}
 
 		HRESULT AllocResources(IVectorView<AvEffectDefinition^>^ effects)
-		{		
+		{
 			av_get_channel_layout_string(channel_layout_name, sizeof(channel_layout_name), nb_channels, inChannelLayout);
 			return init_filter_graph(effects);
 		}
@@ -285,8 +285,7 @@ namespace FFmpegInterop {
 		HRESULT AddFrame(AVFrame *avFrame) override
 		{
 			auto hr = av_buffersrc_add_frame(avSource_ctx, avFrame);
-			char error[250];
-			av_strerror(hr, error, 250 * sizeof(char));
+
 			return hr;
 		}
 
