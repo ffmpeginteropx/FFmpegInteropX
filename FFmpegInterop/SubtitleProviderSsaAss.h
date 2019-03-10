@@ -175,7 +175,7 @@ namespace FFmpegInterop
 
 					find_and_replace(str, L"\\n", L"\r\n");
 					find_and_replace(str, L"\\N", L"\r\n");
-					find_and_replace(str, L"\\h", L"\t");
+					find_and_replace(str, L"\\h", L" ");
 					str.erase(str.find_last_not_of(L" \n\r") + 1);
 
 					auto cueStyle = !m_config->OverrideSubtitleStyles && style ? style->Style : m_config->SubtitleStyle;
