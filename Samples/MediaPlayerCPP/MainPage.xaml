@@ -62,7 +62,12 @@
 
                     <Button Content="Load External Subtitle File (ffmpeg)" Click="LoadSubtitleFileFFmpeg"  Margin="0,20,10,10" />
                     <Button Content="Load External Subtitle File (winAPI)" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
-
+                 
+                    <TextBlock Text="Filters..."/>
+                    <StackPanel Orientation="Horizontal">
+                        <AppBarButton Icon="Accept" Click="AddTestFilter" Label="Add filter"/>
+                        <AppBarButton Icon="Remove" Click="RemoveTestFilter"  Label="Remove filter"/>
+                    </StackPanel>
                 </StackPanel>
             </SplitView.Pane>
 

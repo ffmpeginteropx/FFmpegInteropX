@@ -153,17 +153,14 @@ namespace FFmpegInterop {
 				return AVERROR(ENOMEM);
 			}
 			/* Set the filter options through the AVOptions API. */
-			av_opt_set(avSource_ctx, "channel_layout", channel_layout_name, AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(avSource_ctx, "sample_fmt", av_get_sample_fmt_name(inputCodecCtx->sample_fmt), AV_OPT_SEARCH_CHILDREN);
 
+			auto hr = av_opt_set_q(avSource_ctx, "time_base", inputCodecCtx->time_base, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_int(avSource_ctx, "sample_rate", inputCodecCtx->sample_rate, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set(avSource_ctx, "sample_fmt", av_get_sample_fmt_name(inputCodecCtx->sample_fmt), AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set(avSource_ctx, "channel_layout", channel_layout_name, AV_OPT_SEARCH_CHILDREN);
 
+			hr = av_opt_set_int(avSource_ctx, "channels", inputCodecCtx->channels, AV_OPT_SEARCH_CHILDREN);
 
-			AVRational relational;
-			relational.den = 1;
-			relational.den = inputCodecCtx->sample_rate;
-
-			av_opt_set_q(avSource_ctx, "time_base", relational, AV_OPT_SEARCH_CHILDREN);
-			av_opt_set_int(avSource_ctx, "sample_rate", inputCodecCtx->sample_rate, AV_OPT_SEARCH_CHILDREN);
 			/* Now initialize the filter; we pass NULL options, since we have already
 			* set all the options above. */
 			err = avfilter_init_str(avSource_ctx, NULL);
@@ -256,7 +253,7 @@ namespace FFmpegInterop {
 		}
 
 	public:
-		 virtual ~AudioFilter()
+		virtual ~AudioFilter()
 		{
 			avfilter_graph_free(&this->graph);
 
@@ -287,7 +284,9 @@ namespace FFmpegInterop {
 
 		HRESULT AddFrame(AVFrame *avFrame) override
 		{
-			return av_buffersrc_add_frame(avSource_ctx, avFrame);
+			auto hr = av_buffersrc_add_frame(avSource_ctx, avFrame);
+
+			return hr;
 		}
 
 		HRESULT GetFrame(AVFrame *avFrame) override

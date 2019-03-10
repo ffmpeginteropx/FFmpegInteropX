@@ -56,7 +56,7 @@ namespace MediaPlayerCS
             Splitter.IsPaneOpen = true;
 
             // optionally check for recommended ffmpeg version
-            FFmpegVersionInfo.CheckRecommendedVersion();
+            //FFmpegVersionInfo.CheckRecommendedVersion();
 
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
@@ -293,7 +293,7 @@ namespace MediaPlayerCS
             if (args.CollectionChange == Windows.Foundation.Collections.CollectionChange.ItemInserted)
             {
                 sender.TimedMetadataTracksChanged -= PlaybackItem_TimedMetadataTracksChanged;
-             
+
                 // unselect other subs
                 for (uint i = 0; i < sender.TimedMetadataTracks.Count; i++)
                 {
@@ -329,6 +329,23 @@ namespace MediaPlayerCS
             Config.PassthroughVideoVC1 = passthrough;
             Config.PassthroughVideoVP9 = passthrough;
             Config.PassthroughVideoWMV3 = passthrough;
+        }
+
+        private void AddTestFilter(object sender, RoutedEventArgs e)
+        {
+            if (FFmpegMSS != null)
+            {
+                FFmpegMSS.SetAudioEffects(new AvEffectDefinition[] { new AvEffectDefinition("aecho", "0.8:0.9:1000|1800:0.3|0.25") });
+            }
+
+        }
+
+        private void RemoveTestFilter(object sender, RoutedEventArgs e)
+        {
+            if (FFmpegMSS != null)
+            {
+                FFmpegMSS.DisableAudioEffects();
+            }
         }
     }
 }
