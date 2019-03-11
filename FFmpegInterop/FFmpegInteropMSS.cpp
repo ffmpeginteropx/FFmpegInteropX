@@ -319,7 +319,6 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 {
 	return create_async([this, stream, streamName]
 	{
-		subtitlesGuard.lock();
 		auto subConfig = ref new FFmpegInteropConfig();
 		subConfig->IsExternalSubtitleParser = true;
 		subConfig->DefaultSubtitleStreamName = streamName;
@@ -359,8 +358,14 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 			{
 				if (externalSubtitle->SubtitleTrack->Cues->Size > 0)
 				{
+					auto externalSubtitleProvider = ref new ExternalSubtitleProvider(this->dispatcher, externalSubtitle, subConfig->DefaultSubtitleSyncOffset);
+					if (SubtitleOffset.Duration != subConfig->DefaultSubtitleSyncOffset.Duration)
+					{
+						externalSubtitleProvider->SetSubtitleDelay(SubtitleOffset);
+					}
+
 					subtitleStrInfos->Append(externalSubtitle);
-					this->externalSubtitleStreams->Append(ref new ExternalSubtitleProvider(this->dispatcher, externalSubtitle));
+					this->externalSubtitleStreams->Append(externalSubtitleProvider);
 					if (this->PlaybackItem != nullptr)
 					{
 						PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
@@ -379,10 +384,8 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		catch (...)
 		{
 			mutexGuard.unlock();
-			subtitlesGuard.unlock();
 			throw;
 		}
-		subtitlesGuard.unlock();
 		mutexGuard.unlock();
 		return externalSubsParser->SubtitleStreams;
 	});
@@ -1050,23 +1053,26 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream * avStream, in
 	return result;
 }
 
-void FFmpegInterop::FFmpegInteropMSS::SetSubtitleOfset(TimeSpan offset)
+void FFmpegInteropMSS::SetSubtitleOfset(TimeSpan offset)
 {
-
-	subtitlesGuard.unlock();
-	for each(auto internalStream in subtitleStreams)
+	mutexGuard.lock();
+	try
 	{
-		internalStream->AdditionalStreamSampleOffset = offset;
+		SubtitleOffset = offset;
+		
+		for each(auto internalStream in subtitleStreams)
+		{
+			internalStream->AdditionalStreamSampleOffset = offset;
+		}
+		for each(auto extSub in externalSubtitleStreams)
+		{
+			extSub->SetSubtitleDelay(offset);
+		}
 	}
-	for each(auto extSub in externalSubtitleStreams)
+	catch (...)
 	{
-		extSub->SetSubtitleOffset(offset, SubtitleOffset);
 	}
-
-	SubtitleOffset = offset;
-	subtitlesGuard.unlock();
-
-
+	mutexGuard.unlock();
 }
 
 

@@ -229,7 +229,6 @@ namespace FFmpegInterop
 
 	private:
 
-		DispatcherTimer^ timer;
 		MediaStreamSource ^ mss;
 		EventRegistrationToken startingRequestedToken;
 		EventRegistrationToken sampleRequestedToken;
@@ -254,7 +253,6 @@ namespace FFmpegInterop
 		IVectorView<SubtitleStreamInfo^>^ subtitleStreamInfos;
 		Vector<ExternalSubtitleProvider^>^ externalSubtitleStreams;
 
-		std::recursive_mutex subtitlesGuard;
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher^ dispatcher;
 		

@@ -20,7 +20,7 @@ namespace FFmpegInterop {
 		SubtitleStreamInfo^ externalStream;
 
 		recursive_mutex mutex;
-		TimeSpan oldOffset, newOffset;
+		TimeSpan currentDelay, newDelay;
 	internal:
 
 		property CoreDispatcher^ Dispatcher;
@@ -32,17 +32,17 @@ namespace FFmpegInterop {
 			}
 		}
 
-		ExternalSubtitleProvider(CoreDispatcher^ p_dispatcher, SubtitleStreamInfo^ p_externalStream)
+		ExternalSubtitleProvider(CoreDispatcher^ p_dispatcher, SubtitleStreamInfo^ p_externalStream, TimeSpan p_delay)
 		{
 			this->Dispatcher = p_dispatcher;
 			this->externalStream = p_externalStream;
+			this->currentDelay = p_delay;
 		}
 
-		void SetSubtitleOffset(TimeSpan newOffset, TimeSpan currentOffset)
+		void SetSubtitleDelay(TimeSpan delay)
 		{
 			mutex.lock();
-			this->newOffset = newOffset;
-			this->oldOffset = currentOffset;
+			newDelay = delay;
 			try {
 				if (Dispatcher != nullptr) {
 					Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
@@ -85,8 +85,8 @@ namespace FFmpegInterop {
 
 				for each(auto c in cues)
 				{
-					TimeSpan originalStartPosition = { c->StartTime.Duration - oldOffset.Duration };
-					TimeSpan newStartPosition = { originalStartPosition.Duration + newOffset.Duration };
+					TimeSpan originalStartPosition = { c->StartTime.Duration - currentDelay.Duration };
+					TimeSpan newStartPosition = { originalStartPosition.Duration + newDelay.Duration };
 					//start time cannot be negative.
 					if (newStartPosition.Duration < 0)
 					{
@@ -100,6 +100,7 @@ namespace FFmpegInterop {
 			{
 
 			}
+			currentDelay = newDelay;
 			mutex.unlock();
 		}
 
