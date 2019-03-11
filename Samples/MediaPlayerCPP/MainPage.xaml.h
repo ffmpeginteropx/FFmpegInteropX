@@ -57,5 +57,6 @@ namespace MediaPlayerCPP
 		void RemoveTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void DelaySubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void QuickenSubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 	};
 }

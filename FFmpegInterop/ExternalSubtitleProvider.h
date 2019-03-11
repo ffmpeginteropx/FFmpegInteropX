@@ -21,6 +21,7 @@ namespace FFmpegInterop {
 
 		recursive_mutex mutex;
 		TimeSpan currentDelay, newDelay;
+		vector<pair<IMediaCue^, long long>> negativePositionCues;
 	internal:
 
 		property CoreDispatcher^ Dispatcher;
@@ -83,18 +84,43 @@ namespace FFmpegInterop {
 					track->RemoveCue(track->Cues->GetAt(0));
 				}
 
+				vector<pair<IMediaCue^, long long>> newNegativePositionCues;
+
 				for each(auto c in cues)
 				{
-					TimeSpan originalStartPosition = { c->StartTime.Duration - currentDelay.Duration };
+					TimeSpan cStartTime = c->StartTime;
+
+					//check to see if this cue had negative duration
+					if (c->StartTime.Duration == 0)
+					{
+						int lookupIndex = -1;
+						for (int i = 0; i < negativePositionCues.size(); i++)
+						{
+							auto element = negativePositionCues.at(i);
+							if (c == element.first)
+							{
+								cStartTime.Duration = element.second;
+								lookupIndex = i;
+								break;
+							}
+						}
+					}
+
+					TimeSpan originalStartPosition = { cStartTime.Duration - currentDelay.Duration };
 					TimeSpan newStartPosition = { originalStartPosition.Duration + newDelay.Duration };
 					//start time cannot be negative.
 					if (newStartPosition.Duration < 0)
 					{
+						newNegativePositionCues.emplace_back(c, newStartPosition.Duration);
 						newStartPosition.Duration = 0;
 					}
+
 					c->StartTime = newStartPosition;
 					track->AddCue(c);
 				}
+				negativePositionCues.erase(negativePositionCues.begin(), negativePositionCues.end());
+
+				negativePositionCues = newNegativePositionCues;
 			}
 			catch (...)
 			{
@@ -102,6 +128,11 @@ namespace FFmpegInterop {
 			}
 			currentDelay = newDelay;
 			mutex.unlock();
+		}
+	public:
+		virtual ~ExternalSubtitleProvider()
+		{
+			negativePositionCues.erase(negativePositionCues.begin(), negativePositionCues.end());
 		}
 
 	};

@@ -57,7 +57,7 @@ namespace MediaPlayerCS
 
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
-
+           
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
         }
@@ -106,7 +106,7 @@ namespace MediaPlayerCS
         private void CreatePlaybackItemAndStartPlaybackInternal()
         {
             playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
-
+            
             // Pass MediaStreamSource to Media Element
             mediaElement.SetPlaybackSource(playbackItem);
 
@@ -354,6 +354,8 @@ namespace MediaPlayerCS
             {
                 var newOffset = FFmpegMSS.SubtitleDelay.Subtract(TimeSpan.FromSeconds(1));
                 FFmpegMSS.SetSubtitleDelay(newOffset);
+                tbSubtitleDelay.Text = newOffset.TotalSeconds.ToString();
+
             }
         }
 
@@ -363,7 +365,13 @@ namespace MediaPlayerCS
             {
                 var newOffset = FFmpegMSS.SubtitleDelay.Add(TimeSpan.FromSeconds(1));
                 FFmpegMSS.SetSubtitleDelay(newOffset);
+                tbSubtitleDelay.Text = newOffset.TotalSeconds.ToString();
             }
+        }
+
+        private void MediaOpened(object sender, RoutedEventArgs e)
+        {
+            tbSubtitleDelay.Text = "0";
         }
     }
 }
