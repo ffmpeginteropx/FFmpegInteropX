@@ -151,7 +151,7 @@ namespace FFmpegInterop
 		}
 
 		/*Gets the subtitle offset in ticks*/
-		property TimeSpan DefaultSubtitleSyncOffset;
+		property TimeSpan DefaultSubtitleSyncDelay;
 		
 
 		property String^ DefaultAudioStreamName;

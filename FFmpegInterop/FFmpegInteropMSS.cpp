@@ -79,7 +79,7 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispa
 
 		isRegisteredMutex.unlock();
 	}
-	SubtitleOffset = config->DefaultSubtitleSyncOffset;
+	SubtitleDelay = config->DefaultSubtitleSyncDelay;
 	audioStrInfos = ref new Vector<AudioStreamInfo^>();
 	subtitleStrInfos = ref new Vector<SubtitleStreamInfo^>();
 	externalSubtitleStreams = ref new Vector<ExternalSubtitleProvider^>();
@@ -322,7 +322,7 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		auto subConfig = ref new FFmpegInteropConfig();
 		subConfig->IsExternalSubtitleParser = true;
 		subConfig->DefaultSubtitleStreamName = streamName;
-		subConfig->DefaultSubtitleSyncOffset = this->SubtitleOffset;
+		subConfig->DefaultSubtitleSyncDelay = this->SubtitleDelay;
 		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
 		subConfig->AnsiSubtitleEncoding = this->config->AnsiSubtitleEncoding;
 		subConfig->OverrideSubtitleStyles = this->config->OverrideSubtitleStyles;
@@ -358,10 +358,10 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 			{
 				if (externalSubtitle->SubtitleTrack->Cues->Size > 0)
 				{
-					auto externalSubtitleProvider = ref new ExternalSubtitleProvider(this->dispatcher, externalSubtitle, subConfig->DefaultSubtitleSyncOffset);
-					if (SubtitleOffset.Duration != subConfig->DefaultSubtitleSyncOffset.Duration)
+					auto externalSubtitleProvider = ref new ExternalSubtitleProvider(this->dispatcher, externalSubtitle, subConfig->DefaultSubtitleSyncDelay);
+					if (SubtitleDelay.Duration != subConfig->DefaultSubtitleSyncDelay.Duration)
 					{
-						externalSubtitleProvider->SetSubtitleDelay(SubtitleOffset);
+						externalSubtitleProvider->SetSubtitleDelay(SubtitleDelay);
 					}
 
 					subtitleStrInfos->Append(externalSubtitle);
@@ -890,7 +890,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 
 		if (SUCCEEDED(hr))
 		{
-			avSubsStream->AdditionalStreamSampleOffset = SubtitleOffset;
+			avSubsStream->AdditionalStreamSampleOffset = SubtitleDelay;
 			hr = avSubsStream->Initialize();
 		}
 
@@ -1053,12 +1053,12 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream * avStream, in
 	return result;
 }
 
-void FFmpegInteropMSS::SetSubtitleOfset(TimeSpan offset)
+void FFmpegInteropMSS::SetSubtitleDelay(TimeSpan offset)
 {
 	mutexGuard.lock();
 	try
 	{
-		SubtitleOffset = offset;
+		SubtitleDelay = offset;
 		
 		for each(auto internalStream in subtitleStreams)
 		{

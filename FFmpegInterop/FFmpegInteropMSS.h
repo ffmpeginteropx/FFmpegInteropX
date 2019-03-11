@@ -28,7 +28,6 @@
 #include "StreamInfo.h"
 #include "SubtitleProvider.h"
 #include <collection.h>
-#include <AutoResetEvent.h>
 #include "ExternalSubtitleProvider.h"
 
 using namespace Platform;
@@ -77,7 +76,7 @@ namespace FFmpegInterop
 		static FFmpegInteropMSS^ CreateFFmpegInteropMSSFromUri(String^ uri, bool forceAudioDecode, bool forceVideoDecode);
 
 		/*Sets subtitle start position offset. use negative values to speed them up, positive values to delay them*/
-		void SetSubtitleOfset(TimeSpan offset);
+		void SetSubtitleDelay(TimeSpan offset);
 
 		void SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects);
 		void SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects);
@@ -182,7 +181,7 @@ namespace FFmpegInterop
 				return playbackItem;
 			}
 		}
-		property TimeSpan SubtitleOffset;
+		property TimeSpan SubtitleDelay;
 
 
 	private:

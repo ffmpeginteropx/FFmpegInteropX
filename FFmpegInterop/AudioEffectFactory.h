@@ -1,26 +1,26 @@
 #pragma once
 #include "AbstractEffectFactory.h"
 #include "AudioFilter.h"
+#include "AvCodecContextHelpers.h"
+
 namespace FFmpegInterop
 {
 	ref class AudioEffectFactory : public AbstractEffectFactory
 	{
-		AVCodecContext* InputContext;
-		long long inChannelLayout;
-		int nb_channels;
+		AVCodecContext* InputContext;	
 
 	internal:
 
-		AudioEffectFactory(AVCodecContext* input_ctx, long long p_inChannelLayout, int p_nb_channels)
+		AudioEffectFactory(AVCodecContext* input_ctx)
 		{
 			InputContext = input_ctx;
-			inChannelLayout = p_inChannelLayout;
-			nb_channels = p_nb_channels;
 		}
 
 		IAvEffect^ CreateEffect(IVectorView<AvEffectDefinition^>^ definitions) override
 		{
-			AudioFilter^ filter = ref new AudioFilter(InputContext, inChannelLayout, nb_channels);
+			int numChannels = AvCodecContextHelpers::GetNBChannels(InputContext);
+			auto channel_layout = AvCodecContextHelpers::GetChannelLayout(InputContext, numChannels);
+			AudioFilter^ filter = ref new AudioFilter(InputContext,channel_layout, numChannels);
 			auto hr = filter ? S_OK : E_OUTOFMEMORY;
 			if (SUCCEEDED(hr))
 			{
@@ -34,7 +34,6 @@ namespace FFmpegInterop
 			{
 				return nullptr;
 			}
-
 		}
 	};
 }

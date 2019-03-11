@@ -331,15 +331,20 @@ namespace MediaPlayerCS
             Config.PassthroughVideoWMV3 = passthrough;
         }
 
-        private void DelaySubtitles(object sender, RoutedEventArgs e)
+        private void AddTestFilter(object sender, RoutedEventArgs e)
         {
             if (FFmpegMSS != null)
             {
-                var currentOffset = FFmpegMSS.SubtitleOffset;
-                var newOffset = FFmpegMSS.SubtitleOffset.Add(TimeSpan.FromSeconds(1));
-                subtitleOffset.Text = newOffset.TotalSeconds.ToString();
-                FFmpegMSS.SetSubtitleOfset(newOffset);
+                FFmpegMSS.SetAudioEffects(new AvEffectDefinition[] { new AvEffectDefinition("aecho", "0.8:0.9:1000|1800:0.3|0.25") });
+            }
 
+        }
+
+        private void RemoveTestFilter(object sender, RoutedEventArgs e)
+        {
+            if (FFmpegMSS != null)
+            {
+                FFmpegMSS.DisableAudioEffects();
             }
         }
 
@@ -347,12 +352,17 @@ namespace MediaPlayerCS
         {
             if (FFmpegMSS != null)
             {
-                var currentOffset = FFmpegMSS.SubtitleOffset;
-                var newOffset = FFmpegMSS.SubtitleOffset.Subtract(TimeSpan.FromSeconds(1));
-                subtitleOffset.Text = newOffset.TotalSeconds.ToString();
+                var newOffset = FFmpegMSS.SubtitleDelay.Subtract(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleDelay(newOffset);
+            }
+        }
 
-                FFmpegMSS.SetSubtitleOfset(newOffset);
-
+        private void DelaySubtitles(object sender, RoutedEventArgs e)
+        {
+            if (FFmpegMSS != null)
+            {
+                var newOffset = FFmpegMSS.SubtitleDelay.Add(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleDelay(newOffset);
             }
         }
     }

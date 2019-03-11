@@ -21,6 +21,7 @@
 #include "UncompressedAudioSampleProvider.h"
 #include "NativeBufferFactory.h"
 #include "AudioEffectFactory.h"
+#include "AvCodecContextHelpers.h"
 
 extern "C"
 {
@@ -42,8 +43,9 @@ UncompressedAudioSampleProvider::UncompressedAudioSampleProvider(
 
 IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor()
 {
-	inChannels = outChannels = m_pAvCodecCtx->profile == FF_PROFILE_AAC_HE_V2 && m_pAvCodecCtx->channels == 1 ? 2 : m_pAvCodecCtx->channels;
-	inChannelLayout = m_pAvCodecCtx->channel_layout && (m_pAvCodecCtx->profile != FF_PROFILE_AAC_HE_V2 || m_pAvCodecCtx->channels > 1) ? m_pAvCodecCtx->channel_layout : av_get_default_channel_layout(inChannels);
+	inChannels = outChannels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
+
+	inChannelLayout = AvCodecContextHelpers::GetChannelLayout(m_pAvCodecCtx, inChannels);
 	outChannelLayout = av_get_default_channel_layout(outChannels);
 	inSampleRate = outSampleRate = m_pAvCodecCtx->sample_rate;
 	inSampleFormat = m_pAvCodecCtx->sample_fmt;
@@ -52,7 +54,7 @@ IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor(
 		(inSampleFormat == AV_SAMPLE_FMT_FLT || inSampleFormat == AV_SAMPLE_FMT_FLTP) ? AV_SAMPLE_FMT_FLT :
 		AV_SAMPLE_FMT_S16;
 
-	frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new AudioEffectFactory(m_pAvCodecCtx, inChannelLayout, inChannels));
+	frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new AudioEffectFactory(m_pAvCodecCtx));
 
 	needsUpdateResampler = inSampleFormat != outSampleFormat || inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate;
 
