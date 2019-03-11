@@ -133,19 +133,41 @@ namespace FFmpegInterop
 				int startStyle = -1;
 				int endStyle = -1;
 				int lastComma = -1;
+				int marginL = 0, marginR = 0, marginV = 0;
 				bool hasError = false;
 				for (int i = 0; i < textIndex; i++)
 				{
 					auto nextComma = str.find(',', lastComma + 1);
 					if (nextComma != str.npos)
 					{
-						if (i == styleIndex)
+						if (i == 2)
 						{
 							startStyle = (int)nextComma + 1;
 						}
-						else if (i == styleIndex + 1)
+						else if (i == 3)
 						{
 							endStyle = (int)nextComma;
+						}
+						else if (i == 4)
+						{
+							if (str[nextComma + 1] != ',')
+							{
+								marginL = parseInt(str.substr(nextComma + 1));
+							}
+						}
+						else if (i == 5)
+						{
+							if (str[nextComma + 1] != ',')
+							{
+								marginR = parseInt(str.substr(nextComma + 1));
+							}
+						}
+						else if (i == 6)
+						{
+							if (str[nextComma + 1] != ',')
+							{
+								marginV = parseInt(str.substr(nextComma + 1));
+							}
 						}
 						lastComma = (int)nextComma;
 					}
@@ -168,6 +190,22 @@ namespace FFmpegInterop
 					}
 				}
 
+				auto cueStyle = !m_config->OverrideSubtitleStyles && style ? style->Style : m_config->SubtitleStyle;
+				auto cueRegion = !m_config->OverrideSubtitleStyles && style ? style->Region : m_config->SubtitleRegion;
+				TimedTextRegion^ subRegion = nullptr;
+
+				if ((marginL > 0 || marginR > 0 || marginV > 0) && width > 0 && height > 0)
+				{
+					TimedTextPadding padding;
+					padding.Unit = TimedTextUnit::Percentage;
+					padding.Start = (double)marginL * 100 / width;
+					padding.End = (double)marginR * 100 / width;
+					padding.After = (double)marginV * 100 / height;
+
+					subRegion = CopyRegion(cueRegion);
+					subRegion->Padding = padding;
+				}
+
 				if (lastComma > 0 && lastComma < (int)str.length() - 1)
 				{
 					// get actual text
@@ -178,9 +216,6 @@ namespace FFmpegInterop
 					find_and_replace(str, L"\\h", L" ");
 					str.erase(str.find_last_not_of(L" \n\r") + 1);
 
-					auto cueStyle = !m_config->OverrideSubtitleStyles && style ? style->Style : m_config->SubtitleStyle;
-					auto cueRegion = !m_config->OverrideSubtitleStyles && style ? style->Region : m_config->SubtitleRegion;
-
 					TimedTextCue^ cue = ref new TimedTextCue();
 					cue->CueRegion = cueRegion;
 					cue->CueStyle = cueStyle;
@@ -190,7 +225,6 @@ namespace FFmpegInterop
 
 					TimedTextStyle^ subStyle = nullptr;
 					TimedTextSubformat^ subFormat = nullptr;
-					TimedTextRegion^ subRegion = nullptr;
 					while (true)
 					{
 						auto nextEffect = str.find('{');
@@ -747,7 +781,7 @@ namespace FFmpegInterop
 			copy->Extent = region->Extent;
 			copy->IsOverflowClipped = region->IsOverflowClipped;
 			copy->LineHeight = region->LineHeight;
-			copy->Name = region->Name + " Copy " + regionIndex++;
+			copy->Name = region->Name + "_" + regionIndex++;
 			copy->Padding = region->Padding;
 			copy->Position = region->Position;
 			copy->ScrollMode = region->ScrollMode;
@@ -941,7 +975,6 @@ namespace FFmpegInterop
 		int videoWidth;
 		int videoHeight;
 		int regionIndex = 1;
-		const int styleIndex = 2;
 		std::map<String^, SsaStyleDefinition^> styles;
 		std::map<std::wstring, String^> fonts;
 		AttachedFileHelper^ attachedFileHelper;
