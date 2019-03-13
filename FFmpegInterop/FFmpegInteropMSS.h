@@ -74,8 +74,8 @@ namespace FFmpegInterop
 		[WFM::Deprecated("Use the CreateFromUriAsync method.", WFM::DeprecationType::Deprecate, 0x0)]
 		static FFmpegInteropMSS^ CreateFFmpegInteropMSSFromUri(String^ uri, bool forceAudioDecode, bool forceVideoDecode);
 
-		/*Sets subtitle start position offset. use negative values to speed them up, positive values to delay them*/
-		void SetSubtitleDelay(TimeSpan offset);
+		///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
+		void SetSubtitleDelay(TimeSpan delay);
 
 		void SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects);
 		void SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects);
