@@ -181,7 +181,7 @@ namespace FFmpegInterop
 		///<summary>Default style to use for subtitles.</summary>
 		property TimedTextStyle^ SubtitleStyle;
 		
-		///<summary>Used to enable conversion of ANSII encoded subtitles to Unicode.</summary>
+		///<summary>Enable conversion of ANSI encoded subtitles to UTF-8.</summary>
 		property bool AutoCorrectAnsiSubtitles;
 
 		///<summary>The character encoding used to decode ANSI encoded subtitles. By default, the active windows codepage is used.</summary>
@@ -208,10 +208,6 @@ namespace FFmpegInterop
 
 		///<summary>The default name to use for external subtitle streams.</summary>
 		property String^ DefaultExternalSubtitleStreamName;
-
-		///<summary>Used when the duration of a timed metadata cue could not be resolved.</summary>
-		property TimeSpan DefaultTimedMetadataCueDuration;
-	
 
 internal:
 		/*Internal use:determines if a FFmpegInteropInstance is in frame grabber mode. This mode is used to grab frames from a video stream.*/
