@@ -66,48 +66,55 @@ namespace FFmpegInterop
 		{
 			if (m_isEnabled)
 			{
-				TimeSpan position;
-				TimeSpan duration;
-				bool isDurationFixed = false;
-
-				position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
-				duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
-
-				auto cue = CreateCue(packet, &position, &duration);
-				if (cue && position.Duration >= 0)
+				try
 				{
-					if (duration.Duration < 0)
-					{
-						duration.Duration = InfiniteDuration;
-					}
+					TimeSpan position;
+					TimeSpan duration;
+					bool isDurationFixed = false;
 
-					cue->StartTime = position;
-					cue->Duration = duration;
-					AddCue(cue);
+					position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
+					duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
 
-					if (!m_config->IsExternalSubtitleParser)
+					auto cue = CreateCue(packet, &position, &duration);
+					if (cue && position.Duration >= 0)
 					{
-						isPreviousCueInfiniteDuration = duration.Duration >= InfiniteDuration;
-					}
-					else
-					{
-						// fixup infinite duration cues for external subs
-						if (isPreviousCueInfiniteDuration)
+						if (duration.Duration < 0)
 						{
-							infiniteDurationCue->Duration = cue->StartTime - infiniteDurationCue->StartTime;
+							duration.Duration = InfiniteDuration;
 						}
 
-						if (duration.Duration >= InfiniteDuration)
+						cue->StartTime = position;
+						cue->Duration = duration;
+						AddCue(cue);
+
+						if (!m_config->IsExternalSubtitleParser)
 						{
-							isPreviousCueInfiniteDuration = true;
-							infiniteDurationCue = cue;
+							isPreviousCueInfiniteDuration = duration.Duration >= InfiniteDuration;
 						}
 						else
 						{
-							isPreviousCueInfiniteDuration = false;
-							infiniteDurationCue = nullptr;
+							// fixup infinite duration cues for external subs
+							if (isPreviousCueInfiniteDuration)
+							{
+								infiniteDurationCue->Duration = cue->StartTime - infiniteDurationCue->StartTime;
+							}
+
+							if (duration.Duration >= InfiniteDuration)
+							{
+								isPreviousCueInfiniteDuration = true;
+								infiniteDurationCue = cue;
+							}
+							else
+							{
+								isPreviousCueInfiniteDuration = false;
+								infiniteDurationCue = nullptr;
+							}
 						}
 					}
+				}
+				catch (...)
+				{
+					OutputDebugString(L"Failed to create subtitle cue.");
 				}
 			}
 			av_packet_free(&packet);

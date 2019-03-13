@@ -225,6 +225,11 @@ namespace FFmpegInterop
 
 					TimedTextStyle^ subStyle = nullptr;
 					TimedTextSubformat^ subFormat = nullptr;
+
+					bool isDrawing = false;
+					size_t drawingStart = 0;
+					size_t drawingEnd = 0;
+
 					while (true)
 					{
 						auto nextEffect = str.find('{');
@@ -388,6 +393,19 @@ namespace FFmpegInterop
 										{
 											subStyle->IsLineThroughEnabled = true;
 										}
+										else if (tag.compare(L"p0") == 0)
+										{
+											if (isDrawing)
+											{
+												drawingEnd = nextEffect;
+											}
+										}
+										else if (tag[0] == L'p' && tag[1] >= L'1' && tag[1] <= L'9')
+										{
+											isDrawing = true;
+											drawingStart = nextEffect;
+											drawingEnd = 0;
+										}
 									}
 									catch (...)
 									{
@@ -402,40 +420,6 @@ namespace FFmpegInterop
 									
 									TimedTextPadding padding;
 									padding.Unit = TimedTextUnit::Percentage;
-
-									/*
-									switch (subRegion->DisplayAlignment)
-									{
-									case TimedTextDisplayAlignment::Before:
-										padding.Before = y * 100;
-										break;
-									case TimedTextDisplayAlignment::After:
-										padding.After = (1.0 - y) * 100;
-										break;
-									case TimedTextDisplayAlignment::Center:
-										padding.Before = max(y - 0.1, 0) * 100;
-										padding.After = min(1.0 - y - 0.1, 1) * 100;
-										break;
-									default:
-										break;
-									}
-
-									switch (subStyle->LineAlignment)
-									{
-									case TimedTextLineAlignment::Start:
-										padding.Start = x * 100;
-										break;
-									case TimedTextLineAlignment::End:
-										padding.End = (1.0 - x) * 100;
-										break;
-									case TimedTextLineAlignment::Center:
-										padding.Start = max(x - 0.1, 0) * 100;
-										padding.End = min(1.0 - x - 0.1, 1) * 100;
-										break;
-									default:
-										break;
-									}
-									*/
 
 									TimedTextSize extent;
 									TimedTextPoint position;
@@ -494,6 +478,39 @@ namespace FFmpegInterop
 								{
 									str = str.substr(0, nextEffect);
 								}
+
+								// strip drawing from actual text
+								if (isDrawing && drawingEnd > drawingStart)
+								{
+									if (drawingEnd < str.length() - 1)
+									{
+										str = str.substr(0, drawingStart).append(str.substr(drawingEnd));
+									}
+									else
+									{
+										str = str.substr(0, drawingStart);
+									}
+									isDrawing = false;
+
+									// cleanup subformats
+									subFormat->StartIndex = drawingStart;
+
+									for each (auto style in textLine->Subformats->GetView())
+									{
+										if ((size_t)style->StartIndex >= drawingStart)
+										{
+											unsigned int index;
+											if (textLine->Subformats->IndexOf(style, &index))
+											{
+												textLine->Subformats->RemoveAt(index);
+											}
+										}
+										else if ((size_t)(style->StartIndex + style->Length) > drawingStart)
+										{
+											style->Length = drawingStart - style->StartIndex;
+										}
+									}
+								}
 							}
 							else
 							{
@@ -504,6 +521,13 @@ namespace FFmpegInterop
 						{
 							break;
 						}
+					}
+
+					// if drawing was not closed, remove rest of string
+					if (isDrawing)
+					{
+						str = str.substr(0, drawingStart);
+						subFormat = nullptr;
 					}
 
 					// apply last subformat, if any
