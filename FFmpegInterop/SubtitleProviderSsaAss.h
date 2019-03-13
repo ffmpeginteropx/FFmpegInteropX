@@ -290,34 +290,34 @@ namespace FFmpegInterop
 										}
 										else if (startsWith(tag, L"c"))
 										{
-											int color = parseHexInt(tag.substr(3, 6));
+											int color = parseHexOrDecimalInt(tag, 2);
 											subStyle->Foreground = ColorFromArgb(color << 8 | subStyle->Foreground.A);
 										}
 										else if (startsWith(tag, L"1c"))
 										{
-											int color = parseHexInt(tag.substr(4, 6));
+											int color = parseHexOrDecimalInt(tag, 3);
 											subStyle->Foreground = ColorFromArgb(color << 8 | subStyle->Foreground.A);
 										}
 										else if (startsWith(tag, L"3c"))
 										{
-											int color = parseHexInt(tag.substr(4, 6));
+											int color = parseHexOrDecimalInt(tag, 3);
 											subStyle->OutlineColor = ColorFromArgb(color << 8 | subStyle->OutlineColor.A);
 										}
 										else if (startsWith(tag, L"alpha"))
 										{
-											auto alpha = parseHexInt(tag.substr(7));
+											auto alpha = parseHexOrDecimalInt(tag, 6);
 											auto color = subStyle->Foreground;
 											subStyle->Foreground = ColorFromArgb(alpha, color.R, color.G, color.B);
 										}
 										else if (startsWith(tag, L"1a"))
 										{
-											auto alpha = parseHexInt(tag.substr(4));
+											auto alpha = parseHexOrDecimalInt(tag, 3);
 											auto color = subStyle->Foreground;
 											subStyle->Foreground = ColorFromArgb(alpha, color.R, color.G, color.B);
 										}
 										else if (startsWith(tag, L"3a"))
 										{
-											auto alpha = parseHexInt(tag.substr(4));
+											auto alpha = parseHexOrDecimalInt(tag, 3);
 											auto color = subStyle->OutlineColor;
 											subStyle->OutlineColor = ColorFromArgb(alpha, color.R, color.G, color.B);
 										}

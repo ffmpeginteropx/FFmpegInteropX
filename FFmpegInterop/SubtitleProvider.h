@@ -147,6 +147,15 @@ namespace FFmpegInterop
 			return std::stoi(str, nullptr, 16);
 		}
 
+		int parseHexOrDecimalInt(std::wstring str, int offset)
+		{
+			if (str[offset] == L'H')
+			{
+				return parseHexInt(str.substr(offset + 1));
+			}
+			return parseInt(str.substr(offset));
+		}
+
 		bool startsWith(std::wstring str, std::wstring prefix)
 		{
 			return str.compare(0, prefix.size(), prefix) == 0;
