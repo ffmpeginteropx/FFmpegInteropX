@@ -151,6 +151,9 @@
     <ClInclude Include="AttachedFileHelper.h">
       <Filter>Subtitles</Filter>
     </ClInclude>
+    <ClInclude Include="AvCodecContextHelpers.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">

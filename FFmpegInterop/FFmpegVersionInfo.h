@@ -51,7 +51,7 @@ namespace FFmpegInterop
 	{
 	public:
 		static property String^ MinimumVersion { String^ get() { return "4.0"; } };
-		static property String^ RecommendedVersion { String^ get() { return "4.1"; } };
+		static property String^ RecommendedVersion { String^ get() { return "4.1.1"; } };
 		static property String^ CurrentVersion 
 		{ 
 			String^ get()

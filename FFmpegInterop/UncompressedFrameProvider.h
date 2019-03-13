@@ -19,6 +19,8 @@ namespace FFmpegInterop
 		AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;
 		AbstractEffectFactory^ m_effectFactory;
+		bool hadFirstFrame;
+		IVectorView<AvEffectDefinition^>^ pendingEffects;
 
 	internal:
 
@@ -31,11 +33,19 @@ namespace FFmpegInterop
 
 		void UpdateFilter(IVectorView<AvEffectDefinition^>^ effects)
 		{
-			filter = m_effectFactory->CreateEffect(effects);
+			if (!hadFirstFrame)
+			{
+				pendingEffects = effects;
+			}
+			else
+			{
+				filter = m_effectFactory->CreateEffect(effects);
+			}
 		}
 
 		void DisableFilter()
 		{
+			pendingEffects = nullptr;
 			filter = nullptr;
 		}
 
@@ -44,7 +54,13 @@ namespace FFmpegInterop
 			HRESULT hr = avcodec_receive_frame(m_pAvCodecCtx, avFrame);
 			if (SUCCEEDED(hr))
 			{
-				if (filter) 
+				hadFirstFrame = true;
+				if (pendingEffects && pendingEffects->Size > 0)
+				{
+					filter = m_effectFactory->CreateEffect(pendingEffects);
+					pendingEffects = nullptr;
+				}
+				if (filter)
 				{
 					hr = filter->AddFrame(avFrame);
 					if (SUCCEEDED(hr))

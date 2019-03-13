@@ -329,6 +329,7 @@
     <ClInclude Include="AttachedFileHelper.h" />
     <ClInclude Include="AudioEffectFactory.h" />
     <ClInclude Include="AudioFilter.h" />
+    <ClInclude Include="AvCodecContextHelpers.h" />
     <ClInclude Include="AvEffectDefinition.h" />
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
