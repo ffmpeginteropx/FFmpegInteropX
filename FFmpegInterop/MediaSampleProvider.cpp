@@ -360,6 +360,14 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
 	videoProperties->Bitrate = (unsigned int)m_pAvCodecCtx->bit_rate;
 }
 
+void MediaSampleProvider::Detach()
+{
+	Flush();
+	m_pReader = nullptr;
+	avcodec_close(m_pAvCodecCtx);
+	avcodec_free_context(&m_pAvCodecCtx);
+}
+
 String^ ConvertString(const char* charString)
 {
 	String^ result;

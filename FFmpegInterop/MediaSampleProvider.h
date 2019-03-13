@@ -77,6 +77,7 @@ namespace FFmpegInterop
 		virtual void SetFilters(IVectorView<AvEffectDefinition^>^ effects) { };// override for setting effects in sample providers
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
 		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
+		virtual void Detach();
 
 	protected private:
 		MediaSampleProvider(

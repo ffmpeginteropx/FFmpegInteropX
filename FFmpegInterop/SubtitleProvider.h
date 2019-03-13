@@ -228,7 +228,6 @@ namespace FFmpegInterop
 				{
 					SubtitleTrack->RemoveCue(SubtitleTrack->Cues->GetAt(0));
 				}
-
 				auto refCue = static_cast<ReferenceCue^>(args->Cue);
 				SubtitleTrack->AddCue(refCue->CueRef);
 				referenceTrack->RemoveCue(refCue);
@@ -312,6 +311,9 @@ namespace FFmpegInterop
 			{
 				OutputDebugString(L"Failed to add pending subtitle cues.");
 			}
+			
+			pendingCues.clear();
+			pendingRefCues.clear();
 
 			if (SubtitleDelay != newDelay)
 			{
@@ -324,13 +326,12 @@ namespace FFmpegInterop
 				}
 				SubtitleDelay = newDelay;
 			}
-			
-			pendingCues.clear();
-			pendingRefCues.clear();
+
 			if (timer != nullptr)
 			{
 				timer->Stop();
 			}
+
 			mutex.unlock();
 		}
 
@@ -352,7 +353,7 @@ namespace FFmpegInterop
 				//check to see if this cue had negative duration
 				if (c->StartTime.Duration == 0)
 				{
-					int lookupIndex = -1;
+					size_t lookupIndex = -1;
 					for (size_t i = 0; i < negativePositionCues.size(); i++)
 					{
 						auto element = negativePositionCues.at(i);

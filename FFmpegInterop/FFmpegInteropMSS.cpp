@@ -328,6 +328,7 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		subConfig->SubtitleRegion = this->config->SubtitleRegion;
 		subConfig->SubtitleStyle = this->config->SubtitleStyle;
 		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
+		subConfig->AutoSelectForcedSubtitles = false;
 
 		if (VideoDescriptor)
 		{
@@ -362,6 +363,9 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 			{
 				if (externalSubtitle->SubtitleTrack->Cues->Size > 0)
 				{
+					// detach stream
+					externalSubtitle->Detach();
+				
 					// find and add stream info
 					for each (auto subtitleInfo in externalSubsParser->SubtitleStreams)
 					{
