@@ -374,7 +374,7 @@ void MediaPlayerCPP::MainPage::DelaySubtitles(Platform::Object^ sender, Windows:
 		TimeSpan newDelay;
 		newDelay.Duration = delay + 10000000;
 		FFmpegMSS->SetSubtitleDelay(newDelay);
-		tbSubtitleDelay->Text = (newDelay.Duration % 10000000).ToString();
+		tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
 
 	}
 }
@@ -388,12 +388,12 @@ void MediaPlayerCPP::MainPage::QuickenSubtitles(Platform::Object^ sender, Window
 		TimeSpan newDelay;
 		newDelay.Duration = delay - 10000000;
 		FFmpegMSS->SetSubtitleDelay(newDelay);
-		tbSubtitleDelay->Text = (newDelay.Duration % 10000000).ToString();
+		tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
 	}
 }
 
 
 void MediaPlayerCPP::MainPage::MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-	tbSubtitleDelay->Text = "0";
+	tbSubtitleDelay->Text = "Subtitle delay: 0s";
 }

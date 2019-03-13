@@ -150,8 +150,9 @@ namespace FFmpegInterop
 			}
 		}
 
-		/*Gets the subtitle offset in ticks*/
-		property TimeSpan DefaultSubtitleSyncDelay;
+		///<summary>The subtitle delay will be initially applied to all subtitle tracks.
+		///Use SetSubtitleDelay() on the FFmpegInteropMSS instance if you want to change the delay during playback.</summary>
+		property TimeSpan DefaultSubtitleDelay;
 		
 
 		property String^ DefaultAudioStreamName;

@@ -28,7 +28,6 @@
 #include "StreamInfo.h"
 #include "SubtitleProvider.h"
 #include <collection.h>
-#include "ExternalSubtitleProvider.h"
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -181,7 +180,12 @@ namespace FFmpegInterop
 				return playbackItem;
 			}
 		}
-		property TimeSpan SubtitleDelay;
+
+		///<summary>The current subtitle delay used by this instance.</summary>
+		property TimeSpan SubtitleDelay
+		{
+			TimeSpan get() { return subtitleDelay; }
+		}
 
 
 	private:
@@ -250,7 +254,6 @@ namespace FFmpegInterop
 		VideoStreamInfo^ videoStreamInfo;
 		IVectorView<AudioStreamInfo^>^ audioStreamInfos;
 		IVectorView<SubtitleStreamInfo^>^ subtitleStreamInfos;
-		Vector<ExternalSubtitleProvider^>^ externalSubtitleStreams;
 
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher^ dispatcher;
@@ -259,6 +262,7 @@ namespace FFmpegInterop
 		String^ videoCodecName;
 		String^ audioCodecName;
 		TimeSpan mediaDuration;
+		TimeSpan subtitleDelay;
 		unsigned char* fileStreamBuffer;
 		bool isFirstSeek;
 

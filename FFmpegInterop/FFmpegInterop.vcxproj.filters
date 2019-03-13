@@ -148,9 +148,6 @@
     <ClInclude Include="AvCodecContextHelpers.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="ExternalSubtitleProvider.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">

@@ -332,7 +332,6 @@
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
     <ClInclude Include="CharacterEncoding.h" />
-    <ClInclude Include="ExternalSubtitleProvider.h" />
     <ClInclude Include="FFmpegInteropConfig.h" />
     <ClInclude Include="FFmpegInteropLogging.h" />
     <ClInclude Include="FFmpegInteropMSS.h" />

@@ -354,7 +354,7 @@ namespace MediaPlayerCS
             {
                 var newOffset = FFmpegMSS.SubtitleDelay.Subtract(TimeSpan.FromSeconds(1));
                 FFmpegMSS.SetSubtitleDelay(newOffset);
-                tbSubtitleDelay.Text = newOffset.TotalSeconds.ToString();
+                tbSubtitleDelay.Text = "Subtitle delay: " + newOffset.TotalSeconds.ToString() + "s";
 
             }
         }
@@ -365,13 +365,13 @@ namespace MediaPlayerCS
             {
                 var newOffset = FFmpegMSS.SubtitleDelay.Add(TimeSpan.FromSeconds(1));
                 FFmpegMSS.SetSubtitleDelay(newOffset);
-                tbSubtitleDelay.Text = newOffset.TotalSeconds.ToString();
+                tbSubtitleDelay.Text = "Subtitle delay: " + newOffset.TotalSeconds.ToString() + "s";
             }
         }
 
         private void MediaOpened(object sender, RoutedEventArgs e)
         {
-            tbSubtitleDelay.Text = "0";
+            tbSubtitleDelay.Text = "Subtitle delay: 0s";
         }
     }
 }

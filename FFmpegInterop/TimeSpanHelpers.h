@@ -22,6 +22,10 @@ inline bool operator==(const TimeSpan& span, const TimeSpan& other)
 {
 	return span.Duration == other.Duration;
 }
+inline bool operator!=(const TimeSpan& span, const TimeSpan& other)
+{
+	return span.Duration != other.Duration;
+}
 
 inline TimeSpan operator+(const TimeSpan& span, const TimeSpan& other)
 {

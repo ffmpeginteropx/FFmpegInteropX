@@ -79,10 +79,9 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispa
 
 		isRegisteredMutex.unlock();
 	}
-	SubtitleDelay = config->DefaultSubtitleSyncDelay;
+	subtitleDelay = config->DefaultSubtitleDelay;
 	audioStrInfos = ref new Vector<AudioStreamInfo^>();
 	subtitleStrInfos = ref new Vector<SubtitleStreamInfo^>();
-	externalSubtitleStreams = ref new Vector<ExternalSubtitleProvider^>();
 }
 
 FFmpegInteropMSS::~FFmpegInteropMSS()
@@ -322,7 +321,7 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		auto subConfig = ref new FFmpegInteropConfig();
 		subConfig->IsExternalSubtitleParser = true;
 		subConfig->DefaultSubtitleStreamName = streamName;
-		subConfig->DefaultSubtitleSyncDelay = this->SubtitleDelay;
+		subConfig->DefaultSubtitleDelay = this->SubtitleDelay;
 		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
 		subConfig->AnsiSubtitleEncoding = this->config->AnsiSubtitleEncoding;
 		subConfig->OverrideSubtitleStyles = this->config->OverrideSubtitleStyles;
@@ -352,20 +351,29 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		mutexGuard.lock();
 		try
 		{
+			if (SubtitleDelay.Duration != externalSubsParser->SubtitleDelay.Duration)
+			{
+				externalSubsParser->SetSubtitleDelay(SubtitleDelay);
+			}
+
 			int subtitleTracksCount = 0;
 
-			for each(auto externalSubtitle in externalSubsParser->SubtitleStreams)
+			for each(auto externalSubtitle in externalSubsParser->subtitleStreams)
 			{
 				if (externalSubtitle->SubtitleTrack->Cues->Size > 0)
 				{
-					auto externalSubtitleProvider = ref new ExternalSubtitleProvider(this->dispatcher, externalSubtitle, subConfig->DefaultSubtitleSyncDelay);
-					if (SubtitleDelay.Duration != subConfig->DefaultSubtitleSyncDelay.Duration)
+					// find and add stream info
+					for each (auto subtitleInfo in externalSubsParser->SubtitleStreams)
 					{
-						externalSubtitleProvider->SetSubtitleDelay(SubtitleDelay);
+						if (subtitleInfo->SubtitleTrack == externalSubtitle->SubtitleTrack)
+						{
+							subtitleStrInfos->Append(subtitleInfo);
+							break;
+						}
 					}
 
-					subtitleStrInfos->Append(externalSubtitle);
-					this->externalSubtitleStreams->Append(externalSubtitleProvider);
+					// add stream
+					subtitleStreams.push_back(externalSubtitle);
 					if (this->PlaybackItem != nullptr)
 					{
 						PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
@@ -890,7 +898,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 
 		if (SUCCEEDED(hr))
 		{
-			avSubsStream->AdditionalStreamSampleOffset = SubtitleDelay;
+			avSubsStream->SubtitleDelay = SubtitleDelay;
 			hr = avSubsStream->Initialize();
 		}
 
@@ -1058,24 +1066,18 @@ void FFmpegInteropMSS::SetSubtitleDelay(TimeSpan offset)
 	mutexGuard.lock();
 	try
 	{
-		SubtitleDelay = offset;
-		
-		for each(auto internalStream in subtitleStreams)
+		for each(auto subtitleStream in subtitleStreams)
 		{
-			internalStream->AdditionalStreamSampleOffset = offset;
+			subtitleStream->SetSubtitleDelay(offset);
 		}
-		for each(auto extSub in externalSubtitleStreams)
-		{
-			extSub->SetSubtitleDelay(offset);
-		}
+	
+		subtitleDelay = offset;
 	}
 	catch (...)
 	{
 	}
 	mutexGuard.unlock();
 }
-
-
 
 void FFmpegInteropMSS::SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects)
 {
