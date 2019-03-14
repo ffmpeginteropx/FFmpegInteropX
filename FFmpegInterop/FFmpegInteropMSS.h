@@ -36,6 +36,7 @@ using namespace Windows::Media::Core;
 using namespace Windows::Media::Playback;
 using namespace Platform::Collections;
 using namespace Windows::UI::Core;
+using namespace Windows::UI::Xaml;
 namespace WFM = Windows::Foundation::Metadata;
 
 extern "C"
@@ -73,6 +74,8 @@ namespace FFmpegInterop
 		[WFM::Deprecated("Use the CreateFromUriAsync method.", WFM::DeprecationType::Deprecate, 0x0)]
 		static FFmpegInteropMSS^ CreateFFmpegInteropMSSFromUri(String^ uri, bool forceAudioDecode, bool forceVideoDecode);
 
+		///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
+		void SetSubtitleDelay(TimeSpan delay);
 
 		void SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects);
 		void SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects);
@@ -127,6 +130,8 @@ namespace FFmpegInterop
 			IVectorView<SubtitleStreamInfo^>^ get() { return subtitleStreamInfos; }
 		}
 
+
+
 		property bool HasThumbnail
 		{
 			bool get() { return thumbnailStreamIndex; }
@@ -176,6 +181,12 @@ namespace FFmpegInterop
 			}
 		}
 
+		///<summary>The current subtitle delay used by this instance.</summary>
+		property TimeSpan SubtitleDelay
+		{
+			TimeSpan get() { return subtitleDelay; }
+		}
+
 
 	private:
 		FFmpegInteropMSS(FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
@@ -199,7 +210,6 @@ namespace FFmpegInterop
 
 
 	internal:
-
 		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);
 		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 		HRESULT Seek(TimeSpan position);
@@ -247,10 +257,12 @@ namespace FFmpegInterop
 
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher^ dispatcher;
+		
 
 		String^ videoCodecName;
 		String^ audioCodecName;
 		TimeSpan mediaDuration;
+		TimeSpan subtitleDelay;
 		unsigned char* fileStreamBuffer;
 		bool isFirstSeek;
 

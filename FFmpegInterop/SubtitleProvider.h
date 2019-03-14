@@ -2,11 +2,12 @@
 
 #include <string>
 #include <codecvt>
+#include <collection.h>
 
 #include "CompressedSampleProvider.h"
 #include "StreamInfo.h"
 #include "NativeBufferFactory.h"
-#include <ReferenceCue.h>
+#include "ReferenceCue.h"
 
 using namespace Windows::UI::Core;
 using namespace Windows::Media::Playback;
@@ -35,16 +36,18 @@ namespace FFmpegInterop
 
 		property MediaPlaybackItem^ PlaybackItem;
 
+		property TimeSpan SubtitleDelay;
+
 		virtual HRESULT Initialize() override
 		{
 			InitializeNameLanguageCodec();
 
 			SubtitleTrack = ref new TimedMetadataTrack(Name, Language, timedMetadataKind);
 			SubtitleTrack->Label = Name != nullptr ? Name : Language;
-			
+
 			if (!m_config->IsExternalSubtitleParser)
 			{
-				if (Windows::Foundation::Metadata::ApiInformation::IsEnumNamedValuePresent("Windows.Media.Core.TimedMetadataKind", "ImageSubtitle") && 
+				if (Windows::Foundation::Metadata::ApiInformation::IsEnumNamedValuePresent("Windows.Media.Core.TimedMetadataKind", "ImageSubtitle") &&
 					timedMetadataKind == TimedMetadataKind::ImageSubtitle)
 				{
 					SubtitleTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueEntered);
@@ -81,6 +84,14 @@ namespace FFmpegInterop
 						duration.Duration = InfiniteDuration;
 					}
 
+					// apply subtitle delay
+					position += SubtitleDelay;
+					if (position.Duration < 0)
+					{
+						negativePositionCues.emplace_back(cue, position.Duration);
+						position.Duration = 0;
+					}
+
 					cue->StartTime = position;
 					cue->Duration = duration;
 					AddCue(cue);
@@ -113,6 +124,21 @@ namespace FFmpegInterop
 			av_packet_free(&packet);
 		}
 
+		void SetSubtitleDelay(TimeSpan delay)
+		{
+			mutex.lock();
+			newDelay = delay;
+			try
+			{
+				StartTimer();
+			}
+			catch (...)
+			{
+
+			}
+			mutex.unlock();
+		}
+
 		// convert UTF-8 string to wstring
 		std::wstring utf8_to_wstring(const std::string& str)
 		{
@@ -137,7 +163,7 @@ namespace FFmpegInterop
 					/*This is a fix only to work around a bug in windows phones: when 2 different cues have the exact same start position and length, the runtime panics and throws an exception
 					The problem has only been observed in external subtitles so far, and only on phones. Might also be present on ARM64 devices*/
 					bool individualCue = true;
-					if (this->timedMetadataKind == TimedMetadataKind::Subtitle) 
+					if (this->timedMetadataKind == TimedMetadataKind::Subtitle)
 					{
 						for (int i = SubtitleTrack->Cues->Size - 1; i >= 0; i--)
 						{
@@ -202,7 +228,6 @@ namespace FFmpegInterop
 				{
 					SubtitleTrack->RemoveCue(SubtitleTrack->Cues->GetAt(0));
 				}
-
 				auto refCue = static_cast<ReferenceCue^>(args->Cue);
 				SubtitleTrack->AddCue(refCue->CueRef);
 				referenceTrack->RemoveCue(refCue);
@@ -242,7 +267,8 @@ namespace FFmpegInterop
 
 		void StartTimer()
 		{
-			if (dispatcher != nullptr) {
+			if (dispatcher != nullptr && IsEnabled) 
+			{
 				dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
 					ref new Windows::UI::Core::DispatchedHandler([this]
 				{
@@ -285,11 +311,75 @@ namespace FFmpegInterop
 			{
 				OutputDebugString(L"Failed to add pending subtitle cues.");
 			}
-
+			
 			pendingCues.clear();
 			pendingRefCues.clear();
-			timer->Stop();
+
+			if (SubtitleDelay != newDelay)
+			{
+				try
+				{
+					UpdateCuePositions();
+				}
+				catch (...)
+				{
+				}
+				SubtitleDelay = newDelay;
+			}
+
+			if (timer != nullptr)
+			{
+				timer->Stop();
+			}
+
 			mutex.unlock();
+		}
+
+		void UpdateCuePositions()
+		{
+			auto track = SubtitleTrack;
+			auto cues = to_vector(track->Cues);
+			while (track->Cues->Size > 0)
+			{
+				track->RemoveCue(track->Cues->GetAt(0));
+			}
+
+			std::vector<std::pair<IMediaCue^, long long>> newNegativePositionCues;
+
+			for each(auto c in cues)
+			{
+				TimeSpan cStartTime = c->StartTime;
+
+				//check to see if this cue had negative duration
+				if (c->StartTime.Duration == 0)
+				{
+					size_t lookupIndex = -1;
+					for (size_t i = 0; i < negativePositionCues.size(); i++)
+					{
+						auto element = negativePositionCues.at(i);
+						if (c == element.first)
+						{
+							cStartTime.Duration = element.second;
+							lookupIndex = i;
+							break;
+						}
+					}
+				}
+
+				TimeSpan originalStartPosition = { cStartTime.Duration - SubtitleDelay.Duration };
+				TimeSpan newStartPosition = { originalStartPosition.Duration + newDelay.Duration };
+				//start time cannot be negative.
+				if (newStartPosition.Duration < 0)
+				{
+					newNegativePositionCues.emplace_back(c, newStartPosition.Duration);
+					newStartPosition.Duration = 0;
+				}
+
+				c->StartTime = newStartPosition;
+				track->AddCue(c);
+			}
+
+			negativePositionCues = newNegativePositionCues;
 		}
 
 		void EnsureRefTrackInitialized()
@@ -326,43 +416,49 @@ namespace FFmpegInterop
 		{
 			CompressedSampleProvider::Flush();
 
-			mutex.lock();
-
-			try
+			if (!m_config->IsExternalSubtitleParser)
 			{
-				while (SubtitleTrack->Cues->Size > 0)
+				mutex.lock();
+			
+				try
 				{
-					SubtitleTrack->RemoveCue(SubtitleTrack->Cues->GetAt(0));
-				}
-
-				if (referenceTrack != nullptr)
-				{
-					while (referenceTrack->Cues->Size > 0)
+					while (SubtitleTrack->Cues->Size > 0)
 					{
-						referenceTrack->RemoveCue(referenceTrack->Cues->GetAt(0));
+						SubtitleTrack->RemoveCue(SubtitleTrack->Cues->GetAt(0));
 					}
+
+					if (referenceTrack != nullptr)
+					{
+						while (referenceTrack->Cues->Size > 0)
+						{
+							referenceTrack->RemoveCue(referenceTrack->Cues->GetAt(0));
+						}
+					}
+
+					pendingCues.clear();
+					pendingRefCues.clear();
+					isPreviousCueInfiniteDuration = false;
+					negativePositionCues.clear();
 				}
-
-				pendingCues.clear();
-				pendingRefCues.clear();
-				isPreviousCueInfiniteDuration = false;
+				catch (...)
+				{
+				}
+		
+				mutex.unlock();
 			}
-			catch (...)
-			{
-			}
-
-			mutex.unlock();
 		}
 
 	private:
 
-		std::mutex mutex;
+		std::recursive_mutex mutex;
 		int cueCount;
 		std::vector<IMediaCue^> pendingCues;
 		std::vector<IMediaCue^> pendingRefCues;
 		TimedMetadataKind timedMetadataKind;
 		Windows::UI::Core::CoreDispatcher^ dispatcher;
 		Windows::UI::Xaml::DispatcherTimer^ timer;
+		TimeSpan newDelay;
+		std::vector<std::pair<IMediaCue^, long long>> negativePositionCues;
 		bool isPreviousCueInfiniteDuration;
 		IMediaCue^ infiniteDurationCue;
 		TimedMetadataTrack^ referenceTrack;

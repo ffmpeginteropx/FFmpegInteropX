@@ -57,7 +57,7 @@ namespace MediaPlayerCS
 
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
-
+           
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
         }
@@ -106,7 +106,7 @@ namespace MediaPlayerCS
         private void CreatePlaybackItemAndStartPlaybackInternal()
         {
             playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
-
+            
             // Pass MediaStreamSource to Media Element
             mediaElement.SetPlaybackSource(playbackItem);
 
@@ -346,6 +346,32 @@ namespace MediaPlayerCS
             {
                 FFmpegMSS.DisableAudioEffects();
             }
+        }
+
+        private void QuickenSubtitles(object sender, RoutedEventArgs e)
+        {
+            if (FFmpegMSS != null)
+            {
+                var newOffset = FFmpegMSS.SubtitleDelay.Subtract(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleDelay(newOffset);
+                tbSubtitleDelay.Text = "Subtitle delay: " + newOffset.TotalSeconds.ToString() + "s";
+
+            }
+        }
+
+        private void DelaySubtitles(object sender, RoutedEventArgs e)
+        {
+            if (FFmpegMSS != null)
+            {
+                var newOffset = FFmpegMSS.SubtitleDelay.Add(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleDelay(newOffset);
+                tbSubtitleDelay.Text = "Subtitle delay: " + newOffset.TotalSeconds.ToString() + "s";
+            }
+        }
+
+        private void MediaOpened(object sender, RoutedEventArgs e)
+        {
+            tbSubtitleDelay.Text = "Subtitle delay: 0s";
         }
     }
 }
