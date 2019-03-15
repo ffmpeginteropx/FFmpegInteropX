@@ -171,7 +171,6 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromStream(IRandomAcce
 	config->PassthroughAudioAAC = !forceAudioDecode;
 	config->PassthroughAudioMP3 = !forceAudioDecode;
 	config->PassthroughVideoH264 = !forceVideoDecode;
-	config->PassthroughVideoH264Hi10P = !forceVideoDecode;
 	config->PassthroughVideoHEVC = !forceVideoDecode;
 	config->PassthroughVideoMPEG2 = !forceVideoDecode;
 	config->PassthroughVideoVC1 = !forceVideoDecode;
@@ -210,7 +209,6 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromUri(String^ uri, b
 	config->PassthroughAudioAAC = !forceAudioDecode;
 	config->PassthroughAudioMP3 = !forceAudioDecode;
 	config->PassthroughVideoH264 = !forceVideoDecode;
-	config->PassthroughVideoH264Hi10P = !forceVideoDecode;
 	config->PassthroughVideoHEVC = !forceVideoDecode;
 	config->PassthroughVideoMPEG2 = !forceVideoDecode;
 	config->PassthroughVideoVC1 = !forceVideoDecode;
@@ -1294,7 +1292,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 	}
 
 	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 &&
-		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationH264, config->PassthroughVideoH264, FF_PROFILE_H264_HIGH, 41))
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationH264, config->PassthroughVideoH264, config->PassthroughVideoH264MaxProfile, config->PassthroughVideoH264MaxLevel))
 	{
 		auto videoProperties = VideoEncodingProperties::CreateH264();
 
@@ -1309,7 +1307,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 		}
 	}
 	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC &&
-		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC, config->PassthroughVideoHEVC, FF_PROFILE_HEVC_MAIN, 41) &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC, config->PassthroughVideoHEVC, config->PassthroughVideoHEVCMaxProfile, config->PassthroughVideoHEVCMaxLevel) &&
 		Windows::Foundation::Metadata::ApiInformation::IsMethodPresent("Windows.Media.MediaProperties.VideoEncodingProperties", "CreateHevc"))
 	{
 		auto videoProperties = VideoEncodingProperties::CreateHevc();
@@ -1356,7 +1354,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 	}
 	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP9 &&
-		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP9, config->PassthroughVideoVP9 && !(avVideoCodecCtx->profile & 0x10), -1, -1) &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP9, config->PassthroughVideoVP9 && !(avVideoCodecCtx->profile & 0x01), -1, -1) &&
 		Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.MediaProperties.MediaEncodingSubtypes", "Vp9"))
 	{
 		auto videoProperties = ref new VideoEncodingProperties();

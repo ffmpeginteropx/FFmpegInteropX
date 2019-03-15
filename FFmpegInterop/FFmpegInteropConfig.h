@@ -1,11 +1,19 @@
 #pragma once
-#include <CharacterEncoding.h>
+
+extern "C"
+{
+#include "libavcodec/avcodec.h"
+}
+
+#include "CharacterEncoding.h"
 #include "TimeSpanHelpers.h"
 
 using namespace Platform;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
+
+namespace WFM = Windows::Foundation::Metadata;
 
 namespace FFmpegInterop
 {
@@ -21,8 +29,11 @@ namespace FFmpegInterop
 			AutoDetectHardwareAcceleration = true;
 
 			PassthroughVideoH264 = true;
-			PassthroughVideoH264Hi10P = false;
+			PassthroughVideoH264MaxProfile = FF_PROFILE_H264_HIGH;
+			PassthroughVideoH264MaxLevel = 41;
 			PassthroughVideoHEVC = true;
+			PassthroughVideoHEVCMaxProfile = FF_PROFILE_HEVC_MAIN_10;
+			PassthroughVideoH264MaxLevel = 41;
 			PassthroughVideoWMV3 = true;
 			PassthroughVideoVC1 = true;
 			PassthroughVideoMPEG2 = false;
@@ -120,10 +131,23 @@ namespace FFmpegInterop
 		property bool PassthroughVideoH264;
 
 		///<summary>Allow passthrough for H264 video (High10 Profile - 10 Bit). Not recommended: Neither Windows codecs nor known HW decoders support Hi10P!</summary>
+		[WFM::Deprecated("Use PassthroughVideoH264MaxProfile and PassthroughVideoH264MaxLevel.", WFM::DeprecationType::Deprecate, 0x0)]
 		property bool PassthroughVideoH264Hi10P;
+
+		///<summary>Max profile allowed for H264 passthrough. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
+		property int PassthroughVideoH264MaxProfile;
+
+		///<summary>Max level allowed for H264 passthrough. Default: Level 4.1 (41).</summary>
+		property int PassthroughVideoH264MaxLevel;
 
 		///<summary>Allow passthrough for HEVC video.</summary>
 		property bool PassthroughVideoHEVC;
+
+		///<summary>Max profile allowed for HEVC passthrough. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
+		property int PassthroughVideoHEVCMaxProfile;
+
+		///<summary>Max level allowed for HEVS passthrough. Default: Level 4.1 (41).</summary>
+		property int PassthroughVideoHEVCMaxLevel;
 
 		///<summary>Allow passthrough for WMV3 video.</summary>
 		property bool PassthroughVideoWMV3;
