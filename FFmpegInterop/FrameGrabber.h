@@ -6,6 +6,8 @@
 using namespace concurrency;
 
 namespace FFmpegInterop {
+
+	/// <summary>Supports grabbing of video frames from a file.</summary>
 	public ref class FrameGrabber sealed
 	{
 
