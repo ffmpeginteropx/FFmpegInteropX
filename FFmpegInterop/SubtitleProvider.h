@@ -17,8 +17,6 @@ namespace FFmpegInterop
 	ref class SubtitleProvider abstract : CompressedSampleProvider
 	{
 
-	private:
-		EventRegistrationToken tickToken;
 
 	internal:
 
@@ -282,7 +280,7 @@ namespace FFmpegInterop
 						{
 							thisInstance->timer = ref new Windows::UI::Xaml::DispatcherTimer();
 							thisInstance->timer->Interval = ToTimeSpan(10000);
-							thisInstance->tickToken = thisInstance->timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(thisInstance, &FFmpegInterop::SubtitleProvider::OnTick);
+							thisInstance->timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(thisInstance, &FFmpegInterop::SubtitleProvider::OnTick);
 						}
 						thisInstance->timer->Start();
 					}
@@ -336,8 +334,7 @@ namespace FFmpegInterop
 			}
 
 			if (timer != nullptr)
-			{
-				timer->Tick -= tickToken;
+			{				
 				timer->Stop();
 			}
 
