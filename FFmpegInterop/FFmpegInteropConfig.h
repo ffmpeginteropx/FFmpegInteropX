@@ -199,6 +199,11 @@ namespace FFmpegInterop
 			}
 		}
 
+		///<summary>The subtitle delay will be initially applied to all subtitle tracks.
+		///Use SetSubtitleDelay() on the FFmpegInteropMSS instance if you want to change the delay during playback.</summary>
+		property TimeSpan DefaultSubtitleDelay;
+		
+
 
 		///<summary>The default name to use for audio streams.</summary>
 		property String^ DefaultAudioStreamName;
@@ -214,9 +219,10 @@ internal:
 		property bool IsFrameGrabber;
 		/*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
 		property bool IsExternalSubtitleParser;
-	
+
 		/*Used to pass additional, specific options to external sub parsers*/
 		property PropertySet^ AdditionalFFmpegSubtitleOptions;
+		
 
 	private:
 		CharacterEncoding^ m_CharacterEncoding;

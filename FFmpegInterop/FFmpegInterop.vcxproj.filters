@@ -145,6 +145,9 @@
     <ClInclude Include="CharacterEncoding.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="AvCodecContextHelpers.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">
@@ -154,6 +157,9 @@
       <Filter>Build</Filter>
     </None>
     <None Include="..\README.md">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Init_AppVeyor.bat">
       <Filter>Build</Filter>
     </None>
   </ItemGroup>

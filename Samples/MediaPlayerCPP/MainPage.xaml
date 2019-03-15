@@ -63,6 +63,17 @@
                     <Button Content="Load External Subtitle File (ffmpeg)" Click="LoadSubtitleFileFFmpeg"  Margin="0,20,10,10" />
                     <Button Content="Load External Subtitle File (winAPI)" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
 
+                    <TextBlock x:Name="tbSubtitleDelay" Text="Subtitle delay: 0s" Margin="0,20,0,5"/>
+                    <StackPanel Orientation="Horizontal">
+                        <AppBarButton Icon="Remove" Label="Quicken subtitles" Click="QuickenSubtitles"></AppBarButton>
+                        <AppBarButton Icon="Add" Label="Delay subtitles" Click="DelaySubtitles"></AppBarButton>
+                    </StackPanel>
+
+                    <TextBlock Text="Filters..." Margin="0,20,0,5"/>
+                    <StackPanel Orientation="Horizontal">
+                        <AppBarButton Icon="Accept" Click="AddTestFilter" Label="Add filter"/>
+                        <AppBarButton Icon="Remove" Click="RemoveTestFilter"  Label="Remove filter"/>
+                    </StackPanel>
                 </StackPanel>
             </SplitView.Pane>
 
@@ -72,6 +83,7 @@
                         AudioCategory="BackgroundCapableMedia"
                         AutoPlay="True"
                         MediaFailed="MediaFailed"
+                        MediaOpened="MediaOpened"
             />
 
         </SplitView>

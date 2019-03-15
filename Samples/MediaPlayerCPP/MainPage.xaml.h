@@ -53,5 +53,10 @@ namespace MediaPlayerCPP
 		Windows::Media::Playback::MediaPlaybackItem^ playbackItem;
 		Windows::Foundation::EventRegistrationToken timedMetadataTracksChangedToken;
 		void CbEncodings_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e);
+		void AddTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void RemoveTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void DelaySubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void QuickenSubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 	};
 }

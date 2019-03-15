@@ -327,6 +327,7 @@
     <ClInclude Include="AbstractEffectFactory.h" />
     <ClInclude Include="AudioEffectFactory.h" />
     <ClInclude Include="AudioFilter.h" />
+    <ClInclude Include="AvCodecContextHelpers.h" />
     <ClInclude Include="AvEffectDefinition.h" />
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
@@ -390,6 +391,7 @@
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat" />
     <None Include="..\FFmpegConfig.sh" />
+    <None Include="..\Init_AppVeyor.bat" />
     <None Include="..\README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

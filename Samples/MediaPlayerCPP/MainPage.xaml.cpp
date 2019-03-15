@@ -23,12 +23,14 @@
 
 #include "pch.h"
 #include "MainPage.xaml.h"
+#include <collection.h>
 
 using namespace FFmpegInterop;
 using namespace MediaPlayerCPP;
 
 using namespace concurrency;
 using namespace Platform;
+using namespace Platform::Collections;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
@@ -55,7 +57,7 @@ MainPage::MainPage()
 	Splitter->IsPaneOpen = true;
 
 	// optionally check for recommended ffmpeg version
-	FFmpegVersionInfo::CheckRecommendedVersion();
+	//FFmpegVersionInfo::CheckRecommendedVersion();
 
 	// populate character encodings
 	cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
@@ -98,6 +100,7 @@ void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::Routed
 						FFmpegMSS = result;
 						playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
+
 						// Pass MediaPlaybackItem to Media Element
 						mediaElement->SetPlaybackSource(playbackItem);
 
@@ -134,7 +137,7 @@ void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::K
 		// Below are some sample options that you can set to configure RTSP streaming
 		// Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
 		// Config->FFmpegOptions->Insert("stimeout", 100000);
-		
+
 		// Instantiate FFmpegInteropMSS using the URI
 		mediaElement->Stop();
 		try
@@ -173,7 +176,7 @@ void MainPage::ExtractFrame(Platform::Object^ sender, Windows::UI::Xaml::RoutedE
 			{
 				bool exactSeek = grabFrameExactSeek->IsOn;
 				// extract frame using FFmpegInterop and current position
-				create_task(FrameGrabber::CreateFromStreamAsync(stream)).then([this,exactSeek](FrameGrabber^ frameGrabber)
+				create_task(FrameGrabber::CreateFromStreamAsync(stream)).then([this, exactSeek](FrameGrabber^ frameGrabber)
 				{
 					create_task(frameGrabber->ExtractVideoFrameAsync(mediaElement->Position, exactSeek)).then([this](VideoFrame^ frame)
 					{
@@ -340,4 +343,57 @@ void MediaPlayerCPP::MainPage::PassthroughVideo_Toggled(Platform::Object^ sender
 	Config->PassthroughVideoVC1 = passthrough;
 	Config->PassthroughVideoVP9 = passthrough;
 	Config->PassthroughVideoWMV3 = passthrough;
+}
+
+
+void MediaPlayerCPP::MainPage::AddTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	if (FFmpegMSS != nullptr)
+	{
+		Vector<AvEffectDefinition^>^ effects = ref new Vector<AvEffectDefinition^>();
+		effects->Append(ref new AvEffectDefinition("aecho", "0.8:0.9:1000|1800:0.3|0.25"));
+		FFmpegMSS->SetAudioEffects(effects->GetView());
+	}
+}
+
+
+void MediaPlayerCPP::MainPage::RemoveTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	if (FFmpegMSS != nullptr)
+	{
+		FFmpegMSS->DisableAudioEffects();
+	}
+}
+
+
+void MediaPlayerCPP::MainPage::DelaySubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	if (FFmpegMSS != nullptr)
+	{
+		auto delay = FFmpegMSS->SubtitleDelay.Duration;
+		TimeSpan newDelay;
+		newDelay.Duration = delay + 10000000;
+		FFmpegMSS->SetSubtitleDelay(newDelay);
+		tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
+
+	}
+}
+
+
+void MediaPlayerCPP::MainPage::QuickenSubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	if (FFmpegMSS != nullptr)
+	{
+		auto delay = FFmpegMSS->SubtitleDelay.Duration;
+		TimeSpan newDelay;
+		newDelay.Duration = delay - 10000000;
+		FFmpegMSS->SetSubtitleDelay(newDelay);
+		tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
+	}
+}
+
+
+void MediaPlayerCPP::MainPage::MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	tbSubtitleDelay->Text = "Subtitle delay: 0s";
 }
