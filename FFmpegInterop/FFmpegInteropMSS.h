@@ -37,6 +37,7 @@ using namespace Windows::Media::Core;
 using namespace Windows::Media::Playback;
 using namespace Platform::Collections;
 using namespace Windows::UI::Core;
+using namespace Windows::UI::Xaml;
 namespace WFM = Windows::Foundation::Metadata;
 
 extern "C"
@@ -53,13 +54,20 @@ namespace FFmpegInterop
 		UTF8
 	};
 
+	///<summary>This is the main class that allows media playback with ffmpeg.</summary>
 	public ref class FFmpegInteropMSS sealed
 	{
 	public:
+		///<summary>Creates a FFmpegInteropMSS from a stream.</summary>
 		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromStreamAsync(IRandomAccessStream^ stream, FFmpegInteropConfig^ config);
+
+		///<summary>Creates a FFmpegInteropMSS from a stream.</summary>
 		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromStreamAsync(IRandomAccessStream^ stream) { return CreateFromStreamAsync(stream, ref new FFmpegInteropConfig()); }
 
+		///<summary>Creates a FFmpegInteropMSS from a Uri.</summary>
 		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromUriAsync(String^ uri, FFmpegInteropConfig^ config);
+		
+		///<summary>Creates a FFmpegInteropMSS from a Uri.</summary>
 		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromUriAsync(String^ uri) { return CreateFromUriAsync(uri, ref new FFmpegInteropConfig()); }
 
 		[WFM::Deprecated("Use the CreateFromStreamAsync method.", WFM::DeprecationType::Deprecate, 0x0)]
@@ -74,29 +82,55 @@ namespace FFmpegInterop
 		[WFM::Deprecated("Use the CreateFromUriAsync method.", WFM::DeprecationType::Deprecate, 0x0)]
 		static FFmpegInteropMSS^ CreateFFmpegInteropMSSFromUri(String^ uri, bool forceAudioDecode, bool forceVideoDecode);
 
+		///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
+		void SetSubtitleDelay(TimeSpan delay);
 
+		///<summary>Sets audio effects. This replaces any effects which were already set.</summary>
 		void SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects);
+		
+		///<summary>Sets video effects. This replaces any effects which were already set.</summary>
 		void SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects);
+		
+		
+		///<summary>Disables audio effects.</summary>
 		void DisableAudioEffects();
+		
+		///<summary>Disables video effects.</summary>
 		void DisableVideoEffects();
+	
+		///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
 		MediaThumbnailData^ ExtractThumbnail();
 
+		///<summary>Gets the MediaStreamSource. Using the MediaStreamSource will prevent subtitles from working. Please use CreateMediaPlaybackItem instead.</summary>
 		MediaStreamSource^ GetMediaStreamSource();
+		
+		///<summary>Creates a MediaPlaybackItem for playback.</summary>
 		MediaPlaybackItem^ CreateMediaPlaybackItem();
+	
+		///<summary>Creates a MediaPlaybackItem for playback which starts at the specified stream offset.</summary>
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime);
+		
+		///<summary>Creates a MediaPlaybackItem for playback which starts at the specified stream offset and ends after the specified duration.</summary>
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime, TimeSpan durationLimit);
 
+		///<summary>Adds an external subtitle from a stream.</summary>
+		///<param name="stream">The subtitle stream.</param>
+		///<param name="streamName">The name to use for the subtitle.</param>
 		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName);
 
+		///<summary>Adds an external subtitle from a stream.</summary>
+		///<param name="stream">The subtitle stream.</param>
 		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream)
 		{
 			return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName);
 		}
 
+		///<summary>Destroys the FFmpegInteropMSS instance and releases all resources.</summary>
 		virtual ~FFmpegInteropMSS();
 
 		// Properties
 
+		///<summary>Gets the configuration that has been passed when creating the MSS instance.</summary>
 		property FFmpegInteropConfig^ Configuration
 		{
 			FFmpegInteropConfig^ get()
@@ -105,6 +139,7 @@ namespace FFmpegInterop
 			}
 		}
 
+		///<summary>Gets the duration of the stream. Returns zero, if this is streaming media.</summary>
 		property TimeSpan Duration
 		{
 			TimeSpan get()
@@ -113,21 +148,25 @@ namespace FFmpegInterop
 			};
 		};
 
+		///<summary>Gets video stream information.</summary>
 		property VideoStreamInfo^ VideoStream
 		{
 			VideoStreamInfo^ get() { return videoStreamInfo; }
 		}
 
+		///<summary>Gets audio stream information.</summary>
 		property IVectorView<AudioStreamInfo^>^ AudioStreams
 		{
 			IVectorView<AudioStreamInfo^>^ get() { return audioStreamInfos; }
 		}
 
+		///<summary>Gets subtitle stream information.</summary>
 		property IVectorView<SubtitleStreamInfo^>^ SubtitleStreams
 		{
 			IVectorView<SubtitleStreamInfo^>^ get() { return subtitleStreamInfos; }
 		}
 
+		///<summary>Gets a boolean indication if a thumbnail is embedded in the file.</summary>
 		property bool HasThumbnail
 		{
 			bool get() { return thumbnailStreamIndex; }
@@ -169,12 +208,19 @@ namespace FFmpegInterop
 			};
 		};
 
+		///<summary>Gets the MediaPlaybackItem that was created before by using CreateMediaPlaybackItem.</summary>
 		property MediaPlaybackItem^ PlaybackItem
 		{
 			MediaPlaybackItem^ get()
 			{
 				return playbackItem;
 			}
+		}
+
+		///<summary>The current subtitle delay used by this instance.</summary>
+		property TimeSpan SubtitleDelay
+		{
+			TimeSpan get() { return subtitleDelay; }
 		}
 
 
@@ -201,7 +247,6 @@ namespace FFmpegInterop
 
 
 	internal:
-
 		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);
 		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 		HRESULT Seek(TimeSpan position);
@@ -249,10 +294,12 @@ namespace FFmpegInterop
 
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher^ dispatcher;
+		
 
 		String^ videoCodecName;
 		String^ audioCodecName;
 		TimeSpan mediaDuration;
+		TimeSpan subtitleDelay;
 		unsigned char* fileStreamBuffer;
 		bool isFirstSeek;
 

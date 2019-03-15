@@ -146,6 +146,9 @@
     <ClInclude Include="CharacterEncoding.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="AvCodecContextHelpers.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
     <ClInclude Include="CodecChecker.h" />
   </ItemGroup>
   <ItemGroup>
@@ -156,6 +159,9 @@
       <Filter>Build</Filter>
     </None>
     <None Include="..\README.md">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Init_AppVeyor.bat">
       <Filter>Build</Filter>
     </None>
   </ItemGroup>
