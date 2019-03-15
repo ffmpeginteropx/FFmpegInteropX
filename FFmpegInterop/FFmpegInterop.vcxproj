@@ -393,6 +393,7 @@
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat" />
     <None Include="..\FFmpegConfig.sh" />
+    <None Include="..\Init_AppVeyor.bat" />
     <None Include="..\README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

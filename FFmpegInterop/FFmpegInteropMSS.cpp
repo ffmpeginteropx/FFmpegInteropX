@@ -76,9 +76,10 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispa
 			isRegistered = true;
 			FFmpegVersionInfo::CheckMinimumVersion();
 		}
+
 		isRegisteredMutex.unlock();
 	}
-
+	subtitleDelay = config->DefaultSubtitleDelay;
 	audioStrInfos = ref new Vector<AudioStreamInfo^>();
 	subtitleStrInfos = ref new Vector<SubtitleStreamInfo^>();
 }
@@ -210,7 +211,7 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromUri(String^ uri, b
 	config->PassthroughAudioMP3 = !forceAudioDecode;
 	config->PassthroughVideoH264 = !forceVideoDecode;
 	config->PassthroughVideoH264Hi10P = !forceVideoDecode;
-	config->PassthroughVideoHEVC = !forceVideoDecode;	
+	config->PassthroughVideoHEVC = !forceVideoDecode;
 	config->PassthroughVideoMPEG2 = !forceVideoDecode;
 	config->PassthroughVideoVC1 = !forceVideoDecode;
 	config->PassthroughVideoVP9 = !forceVideoDecode;
@@ -317,17 +318,17 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 {
 	return create_async([this, stream, streamName]
 	{
-
 		auto subConfig = ref new FFmpegInteropConfig();
 		subConfig->IsExternalSubtitleParser = true;
 		subConfig->DefaultSubtitleStreamName = streamName;
-		
+		subConfig->DefaultSubtitleDelay = this->SubtitleDelay;
 		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
 		subConfig->AnsiSubtitleEncoding = this->config->AnsiSubtitleEncoding;
 		subConfig->OverrideSubtitleStyles = this->config->OverrideSubtitleStyles;
 		subConfig->SubtitleRegion = this->config->SubtitleRegion;
 		subConfig->SubtitleStyle = this->config->SubtitleStyle;
 		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
+		subConfig->AutoSelectForcedSubtitles = false;
 
 		if (VideoDescriptor)
 		{
@@ -361,14 +362,32 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		mutexGuard.lock();
 		try
 		{
+			if (SubtitleDelay.Duration != externalSubsParser->SubtitleDelay.Duration)
+			{
+				externalSubsParser->SetSubtitleDelay(SubtitleDelay);
+			}
+
 			int subtitleTracksCount = 0;
 
-			for each(auto externalSubtitle in externalSubsParser->SubtitleStreams)
+			for each(auto externalSubtitle in externalSubsParser->subtitleStreams)
 			{
 				if (externalSubtitle->SubtitleTrack->Cues->Size > 0)
 				{
-					subtitleStrInfos->Append(externalSubtitle);
+					// detach stream
+					externalSubtitle->Detach();
+				
+					// find and add stream info
+					for each (auto subtitleInfo in externalSubsParser->SubtitleStreams)
+					{
+						if (subtitleInfo->SubtitleTrack == externalSubtitle->SubtitleTrack)
+						{
+							subtitleStrInfos->Append(subtitleInfo);
+							break;
+						}
+					}
 
+					// add stream
+					subtitleStreams.push_back(externalSubtitle);
 					if (this->PlaybackItem != nullptr)
 					{
 						PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
@@ -389,7 +408,6 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 			mutexGuard.unlock();
 			throw;
 		}
-
 		mutexGuard.unlock();
 		return externalSubsParser->SubtitleStreams;
 	});
@@ -919,6 +937,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 
 		if (SUCCEEDED(hr))
 		{
+			avSubsStream->SubtitleDelay = SubtitleDelay;
 			hr = avSubsStream->Initialize();
 		}
 
@@ -1081,6 +1100,24 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream * avStream, in
 	return result;
 }
 
+void FFmpegInteropMSS::SetSubtitleDelay(TimeSpan offset)
+{
+	mutexGuard.lock();
+	try
+	{
+		for each(auto subtitleStream in subtitleStreams)
+		{
+			subtitleStream->SetSubtitleDelay(offset);
+		}
+	
+		subtitleDelay = offset;
+	}
+	catch (...)
+	{
+	}
+	mutexGuard.unlock();
+}
+
 void FFmpegInteropMSS::SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects)
 {
 	mutexGuard.lock();
@@ -1195,7 +1232,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 {
 	MediaSampleProvider^ videoSampleProvider;
 	VideoEncodingProperties^ videoProperties;
-	
+
 	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 && config->PassthroughVideoH264 && !config->IsFrameGrabber && (avVideoCodecCtx->profile <= 100 || config->PassthroughVideoH264Hi10P))
 	{
 		auto videoProperties = VideoEncodingProperties::CreateH264();
@@ -1239,7 +1276,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
 		videoProperties->Subtype = MediaEncodingSubtypes::Wvc1;
-		
+
 		auto extradata = Platform::ArrayReference<uint8_t>(avVideoCodecCtx->extradata, avVideoCodecCtx->extradata_size);
 		videoProperties->SetFormatUserData(extradata);
 		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);

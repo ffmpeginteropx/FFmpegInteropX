@@ -100,6 +100,7 @@ void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::Routed
 						FFmpegMSS = result;
 						playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
+
 						// Pass MediaPlaybackItem to Media Element
 						mediaElement->SetPlaybackSource(playbackItem);
 
@@ -362,4 +363,37 @@ void MediaPlayerCPP::MainPage::RemoveTestFilter(Platform::Object^ sender, Window
 	{
 		FFmpegMSS->DisableAudioEffects();
 	}
+}
+
+
+void MediaPlayerCPP::MainPage::DelaySubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	if (FFmpegMSS != nullptr)
+	{
+		auto delay = FFmpegMSS->SubtitleDelay.Duration;
+		TimeSpan newDelay;
+		newDelay.Duration = delay + 10000000;
+		FFmpegMSS->SetSubtitleDelay(newDelay);
+		tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
+
+	}
+}
+
+
+void MediaPlayerCPP::MainPage::QuickenSubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	if (FFmpegMSS != nullptr)
+	{
+		auto delay = FFmpegMSS->SubtitleDelay.Duration;
+		TimeSpan newDelay;
+		newDelay.Duration = delay - 10000000;
+		FFmpegMSS->SetSubtitleDelay(newDelay);
+		tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
+	}
+}
+
+
+void MediaPlayerCPP::MainPage::MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	tbSubtitleDelay->Text = "Subtitle delay: 0s";
 }
