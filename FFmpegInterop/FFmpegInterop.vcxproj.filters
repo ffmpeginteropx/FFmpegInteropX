@@ -162,5 +162,8 @@
     <None Include="..\Init_AppVeyor.bat">
       <Filter>Build</Filter>
     </None>
+    <None Include="FFmpegInteropLibs.props">
+      <Filter>Build</Filter>
+    </None>
   </ItemGroup>
 </Project>
