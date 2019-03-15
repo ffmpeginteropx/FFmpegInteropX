@@ -450,10 +450,10 @@ namespace FFmpegInterop
 
 		void Flush() override
 		{
-			CompressedSampleProvider::Flush();
-
 			if (!m_config->IsExternalSubtitleParser)
 			{
+				CompressedSampleProvider::Flush();
+
 				mutex.lock();
 			
 				try
