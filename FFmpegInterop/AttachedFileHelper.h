@@ -51,6 +51,13 @@ namespace FFmpegInterop
 			}
 			else
 			{
+				if (this->instanceId == nullptr)
+				{
+					GUID gdn;
+					CoCreateGuid(&gdn);
+					instanceId = Guid(gdn).ToString();
+				}
+
 				auto folder = co_await ApplicationData::Current->TemporaryFolder->CreateFolderAsync(
 					config->AttachmentCacheFolderName, CreationCollisionOption::OpenIfExists);
 				auto instanceFolder = co_await folder->CreateFolderAsync(instanceId, CreationCollisionOption::OpenIfExists);
