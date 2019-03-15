@@ -17,6 +17,15 @@ namespace FFmpegInterop
 {
 	ref class AttachedFileHelper sealed
 	{
+	public:
+		virtual ~AttachedFileHelper()
+		{
+			if (extractedFiles.size() > 0)
+			{
+				CleanupTempFiles(config->AttachmentCacheFolderName, InstanceId);
+			}
+		}
+
 	internal:
 
 		AttachedFileHelper(FFmpegInteropConfig^ config)
@@ -31,49 +40,46 @@ namespace FFmpegInterop
 		{
 			attachedFiles->Append(file);
 		}
-
-		IAsyncOperation<StorageFile^>^ ExtractFile(AttachedFile^ attachment)
+		
+		task<StorageFile^> ExtractFileAsync(AttachedFile^ attachment)
 		{
+			StorageFile^ file;
 			auto result = extractedFiles.find(attachment->Name);
 			if (result != extractedFiles.end())
 			{
-				return create_async([result] { return result->second; });
+				file = result->second;
 			}
 			else
 			{
-				return create_async([this, attachment]
-				{
-					return create_task(ApplicationData::Current->TemporaryFolder->CreateFolderAsync(
-						config->AttachmentCacheFolderName, CreationCollisionOption::OpenIfExists)).then([this, attachment](task<StorageFolder^> t)
-					{
-						auto folder = t.get();
-						if (this->instanceId == nullptr)
-						{
-							GUID gdn;
-							CoCreateGuid(&gdn);
-							Guid gd(gdn);
-							instanceId = gd.ToString();
-						}
-						return create_task(folder->CreateFolderAsync(
-							instanceId, CreationCollisionOption::OpenIfExists)).then([this, attachment](task<StorageFolder^> t)
-						{
-							auto instanceFolder = t.get();
-							return create_task(instanceFolder->CreateFileAsync(
-								attachment->Name, CreationCollisionOption::ReplaceExisting)).then([this, attachment](task<StorageFile^> t)
-							{
-								auto file = t.get();
-								return create_task(FileIO::WriteBufferAsync(file, attachment->GetBuffer())).then([this, file, attachment](task<void> t)
-								{
-									t.wait();
-									extractedFiles[attachment->Name] = file;
-									return file;
-								});
-							});
-						});
-					});
-				});
+				auto folder = co_await ApplicationData::Current->TemporaryFolder->CreateFolderAsync(
+					config->AttachmentCacheFolderName, CreationCollisionOption::OpenIfExists);
+				auto instanceFolder = co_await folder->CreateFolderAsync(instanceId, CreationCollisionOption::OpenIfExists);
+				file = co_await instanceFolder->CreateFileAsync(attachment->Name, CreationCollisionOption::ReplaceExisting);
+				co_await FileIO::WriteBufferAsync(file, attachment->GetBuffer());
+
+				extractedFiles[attachment->Name] = file;
 			}
+			return file;
 		};
+
+		static task<void> CleanupTempFiles(String^ folderName, String^ instanceId)
+		{
+			try
+			{
+				auto folder = co_await ApplicationData::Current->TemporaryFolder->GetFolderAsync(folderName);
+				auto instancefolder = co_await folder->GetFolderAsync(instanceId);
+				auto files = co_await instancefolder->GetFilesAsync();
+				for each (auto file in files)
+				{
+					co_await file->DeleteAsync();
+				}
+				co_await instancefolder->DeleteAsync();
+			}
+			catch (...)
+			{
+				OutputDebugString(L"Failed to cleanup temp files.");
+			}
+		}
 
 	private:
 		std::map<String^, StorageFile^> extractedFiles;

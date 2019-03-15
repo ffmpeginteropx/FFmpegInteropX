@@ -888,7 +888,7 @@ namespace FFmpegInterop
 						std::wstring mime(attachment->MimeType->Data());
 						if (mime.find(L"font") != mime.npos)
 						{
-							auto file = create_task(attachedFileHelper->ExtractFile(attachment)).get();
+							auto file = attachedFileHelper->ExtractFileAsync(attachment).get();
 							auto names = ref new Vector<String^>();
 							names->Append("System.Title");
 							auto properties = create_task(file->Properties->RetrievePropertiesAsync(names)).get();
