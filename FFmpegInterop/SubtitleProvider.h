@@ -17,6 +17,7 @@ namespace FFmpegInterop
 	ref class SubtitleProvider abstract : CompressedSampleProvider
 	{
 
+
 	internal:
 
 		SubtitleProvider(FFmpegReader^ reader,
@@ -267,18 +268,22 @@ namespace FFmpegInterop
 
 		void StartTimer()
 		{
-			if (dispatcher != nullptr && IsEnabled) 
+			if (dispatcher != nullptr && IsEnabled)
 			{
+				WeakReference wr(this);
 				dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
-					ref new Windows::UI::Core::DispatchedHandler([this]
+					ref new Windows::UI::Core::DispatchedHandler([wr]
 				{
-					if (timer == nullptr)
-					{
-						timer = ref new Windows::UI::Xaml::DispatcherTimer();
-						timer->Interval = ToTimeSpan(10000);
-						timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &FFmpegInterop::SubtitleProvider::OnTick);
+					auto thisInstance = wr.Resolve<SubtitleProvider>();
+					if (thisInstance != nullptr) {
+						if (thisInstance->timer == nullptr)
+						{
+							thisInstance->timer = ref new Windows::UI::Xaml::DispatcherTimer();
+							thisInstance->timer->Interval = ToTimeSpan(10000);
+							thisInstance->timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(thisInstance, &FFmpegInterop::SubtitleProvider::OnTick);
+						}
+						thisInstance->timer->Start();
 					}
-					timer->Start();
 				}));
 			}
 			else
@@ -290,6 +295,7 @@ namespace FFmpegInterop
 		void OnTick(Platform::Object ^sender, Platform::Object ^args)
 		{
 			mutex.lock();
+			
 			try
 			{
 				for each (auto cue in pendingCues)
@@ -311,7 +317,7 @@ namespace FFmpegInterop
 			{
 				OutputDebugString(L"Failed to add pending subtitle cues.");
 			}
-			
+
 			pendingCues.clear();
 			pendingRefCues.clear();
 
@@ -328,7 +334,7 @@ namespace FFmpegInterop
 			}
 
 			if (timer != nullptr)
-			{
+			{				
 				timer->Stop();
 			}
 
@@ -419,7 +425,7 @@ namespace FFmpegInterop
 			if (!m_config->IsExternalSubtitleParser)
 			{
 				mutex.lock();
-			
+
 				try
 				{
 					while (SubtitleTrack->Cues->Size > 0)
@@ -443,7 +449,7 @@ namespace FFmpegInterop
 				catch (...)
 				{
 				}
-		
+
 				mutex.unlock();
 			}
 		}
