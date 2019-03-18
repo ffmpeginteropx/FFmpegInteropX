@@ -145,15 +145,11 @@
     <ClInclude Include="CharacterEncoding.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="AttachedFile.h">
-      <Filter>Subtitles</Filter>
-    </ClInclude>
-    <ClInclude Include="AttachedFileHelper.h">
-      <Filter>Subtitles</Filter>
-    </ClInclude>
     <ClInclude Include="AvCodecContextHelpers.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="AttachedFile.h" />
+    <ClInclude Include="AttachedFileHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">
@@ -166,6 +162,9 @@
       <Filter>Build</Filter>
     </None>
     <None Include="..\Init_AppVeyor.bat">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="FFmpegInteropLibs.props">
       <Filter>Build</Filter>
     </None>
   </ItemGroup>
