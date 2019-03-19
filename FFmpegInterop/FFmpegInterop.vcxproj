@@ -76,7 +76,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/bigobj /await %(AdditionalOptions)</AdditionalOptions>
       <DisableSpecificWarnings>28204;4635</DisableSpecificWarnings>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
     </ClCompile>
@@ -95,6 +95,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AbstractEffectFactory.h" />
+    <ClInclude Include="AttachedFile.h" />
+    <ClInclude Include="AttachedFileHelper.h" />
     <ClInclude Include="AudioEffectFactory.h" />
     <ClInclude Include="AudioFilter.h" />
     <ClInclude Include="AvCodecContextHelpers.h" />

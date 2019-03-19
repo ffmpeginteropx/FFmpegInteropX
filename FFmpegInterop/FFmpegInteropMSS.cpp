@@ -341,6 +341,16 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 
 		if (externalSubsParser->SubtitleStreams->Size > 0)
 		{
+			if (VideoDescriptor)
+			{
+				auto pixelAspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
+				auto videoAspect = ((double)videoStream->m_pAvCodecCtx->width / videoStream->m_pAvCodecCtx->height) / pixelAspect;
+				for each (auto stream in externalSubsParser->subtitleStreams)
+				{
+					stream->NotifyVideoFrameSize(videoStream->m_pAvCodecCtx->width, videoStream->m_pAvCodecCtx->height, videoAspect);
+				}
+			}
+
 			int readResult = 0;
 			while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
 			{
@@ -675,6 +685,30 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 	auto audioStreamIndex = av_find_best_stream(avFormatCtx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
 	auto subtitleStreamIndex = av_find_best_stream(avFormatCtx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0);
 
+	attachedFileHelper = ref new AttachedFileHelper(config);
+
+	// first parse attached files, so they are available for subtitle streams during initialize
+	if (config->UseEmbeddedSubtitleFonts)
+	{
+		for (unsigned int index = 0; index < avFormatCtx->nb_streams; index++)
+		{
+			auto avStream = avFormatCtx->streams[index];
+			if (avStream->codecpar->codec_type == AVMEDIA_TYPE_ATTACHMENT)
+			{
+				auto fileName = av_dict_get(avStream->metadata, "filename", NULL, 0);
+				auto mimetype = av_dict_get(avStream->metadata, "mimetype", NULL, 0);
+				if (fileName && avStream->codecpar->extradata && avStream->codecpar->extradata_size > 0)
+				{
+					auto name = ConvertString(fileName->value);
+					auto mime = mimetype ? ConvertString(mimetype->value) : "";
+
+					auto file = ref new AttachedFile(name, mime, avStream);
+					attachedFileHelper->AddAttachedFile(file);
+				}
+			}
+		}
+	}
+
 	for (unsigned int index = 0; index < avFormatCtx->nb_streams; index++)
 	{
 		auto avStream = avFormatCtx->streams[index];
@@ -764,10 +798,11 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 
 	if (videoStream)
 	{
-		auto aspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
+		auto pixelAspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
+		auto videoAspect = ((double)videoStream->m_pAvCodecCtx->width / videoStream->m_pAvCodecCtx->height) / pixelAspect;
 		for each (auto stream in subtitleStreams)
 		{
-			stream->NotifyVideoFrameSize(videoStream->m_pAvCodecCtx->width, videoStream->m_pAvCodecCtx->height, aspect);
+			stream->NotifyVideoFrameSize(videoStream->m_pAvCodecCtx->width, videoStream->m_pAvCodecCtx->height, videoAspect);
 		}
 	}
 
@@ -883,7 +918,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream * avSt
 				{
 					if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
 					{
-						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, dispatcher);
+						avSubsStream = ref new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config, index, dispatcher, attachedFileHelper);
 					}
 					else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
 					{

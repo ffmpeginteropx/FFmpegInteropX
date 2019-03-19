@@ -286,7 +286,10 @@ void MediaSampleProvider::Flush()
 		AVPacket *avPacket = PopPacket();
 		av_packet_free(&avPacket);
 	}
-	avcodec_flush_buffers(m_pAvCodecCtx);
+	if (m_pAvCodecCtx)
+	{
+		avcodec_flush_buffers(m_pAvCodecCtx);
+	}
 	m_isDiscontinuous = true;
 	IsCleanSample = false;
 }

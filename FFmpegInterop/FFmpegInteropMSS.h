@@ -27,6 +27,7 @@
 #include "AvEffectDefinition.h"
 #include "StreamInfo.h"
 #include "SubtitleProvider.h"
+#include "AttachedFileHelper.h"
 #include <collection.h>
 
 using namespace Platform;
@@ -289,6 +290,8 @@ namespace FFmpegInterop
 		VideoStreamInfo^ videoStreamInfo;
 		IVectorView<AudioStreamInfo^>^ audioStreamInfos;
 		IVectorView<SubtitleStreamInfo^>^ subtitleStreamInfos;
+
+		AttachedFileHelper^ attachedFileHelper;
 
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher^ dispatcher;
