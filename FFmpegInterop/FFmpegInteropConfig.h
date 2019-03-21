@@ -102,7 +102,7 @@ namespace FFmpegInterop
 			//OutlineRadius = new TimedTextDouble { Unit = TimedTextUnit.Percentage, Value = 10 },
 			TimedTextDouble outlineThickness;
 			outlineThickness.Unit = TimedTextUnit::Percentage;
-			outlineThickness.Value = 3.5;
+			outlineThickness.Value = 4.5;
 			SubtitleStyle->OutlineThickness = outlineThickness;
 			SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
 			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };
@@ -113,6 +113,9 @@ namespace FFmpegInterop
 			DefaultAudioStreamName = "Audio Stream";
 			DefaultSubtitleStreamName = "Subtitle";
 			DefaultExternalSubtitleStreamName = "External Subtitle";
+
+			AttachmentCacheFolderName = "FFmpegAttachmentCache";
+			UseEmbeddedSubtitleFonts = true;
 		};
 
 
@@ -243,7 +246,13 @@ namespace FFmpegInterop
 		///<summary>The default name to use for external subtitle streams.</summary>
 		property String^ DefaultExternalSubtitleStreamName;
 
-internal:
+		///<summary>Use subtitle font files that are embedded in the media file.</summary>
+		property bool UseEmbeddedSubtitleFonts;
+		
+		///<summary>The folder where attachments such as fonts are stored (inside the app's temp folder).</summary>
+		property String^ AttachmentCacheFolderName;
+
+	internal:
 		/*Internal use:determines if a FFmpegInteropInstance is in frame grabber mode. This mode is used to grab frames from a video stream.*/
 		property bool IsFrameGrabber;
 		/*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/

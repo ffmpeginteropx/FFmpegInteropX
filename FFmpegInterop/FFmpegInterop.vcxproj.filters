@@ -149,6 +149,8 @@
     <ClInclude Include="AvCodecContextHelpers.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="AttachedFile.h" />
+    <ClInclude Include="AttachedFileHelper.h" />
     <ClInclude Include="CodecChecker.h" />
   </ItemGroup>
   <ItemGroup>
@@ -162,6 +164,9 @@
       <Filter>Build</Filter>
     </None>
     <None Include="..\Init_AppVeyor.bat">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="FFmpegInteropLibs.props">
       <Filter>Build</Filter>
     </None>
   </ItemGroup>

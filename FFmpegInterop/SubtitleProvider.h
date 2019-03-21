@@ -17,6 +17,7 @@ namespace FFmpegInterop
 	ref class SubtitleProvider abstract : CompressedSampleProvider
 	{
 
+
 	internal:
 
 		SubtitleProvider(FFmpegReader^ reader,
@@ -69,20 +70,22 @@ namespace FFmpegInterop
 		{
 			if (m_isEnabled)
 			{
-				TimeSpan position;
-				TimeSpan duration;
-				bool isDurationFixed = false;
-
-				position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
-				duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
-
-				auto cue = CreateCue(packet, &position, &duration);
-				if (cue && position.Duration >= 0)
+				try
 				{
-					if (duration.Duration < 0)
+					TimeSpan position;
+					TimeSpan duration;
+					bool isDurationFixed = false;
+
+					position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
+					duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
+
+					auto cue = CreateCue(packet, &position, &duration);
+					if (cue && position.Duration >= 0)
 					{
-						duration.Duration = InfiniteDuration;
-					}
+						if (duration.Duration < 0)
+						{
+							duration.Duration = InfiniteDuration;
+						}
 
 					// apply subtitle delay
 					position += SubtitleDelay;
@@ -96,29 +99,34 @@ namespace FFmpegInterop
 					cue->Duration = duration;
 					AddCue(cue);
 
-					if (!m_config->IsExternalSubtitleParser)
-					{
-						isPreviousCueInfiniteDuration = duration.Duration >= InfiniteDuration;
-					}
-					else
-					{
-						// fixup infinite duration cues for external subs
-						if (isPreviousCueInfiniteDuration)
+						if (!m_config->IsExternalSubtitleParser)
 						{
-							infiniteDurationCue->Duration = cue->StartTime - infiniteDurationCue->StartTime;
-						}
-
-						if (duration.Duration >= InfiniteDuration)
-						{
-							isPreviousCueInfiniteDuration = true;
-							infiniteDurationCue = cue;
+							isPreviousCueInfiniteDuration = duration.Duration >= InfiniteDuration;
 						}
 						else
 						{
-							isPreviousCueInfiniteDuration = false;
-							infiniteDurationCue = nullptr;
+							// fixup infinite duration cues for external subs
+							if (isPreviousCueInfiniteDuration)
+							{
+								infiniteDurationCue->Duration = cue->StartTime - infiniteDurationCue->StartTime;
+							}
+
+							if (duration.Duration >= InfiniteDuration)
+							{
+								isPreviousCueInfiniteDuration = true;
+								infiniteDurationCue = cue;
+							}
+							else
+							{
+								isPreviousCueInfiniteDuration = false;
+								infiniteDurationCue = nullptr;
+							}
 						}
 					}
+				}
+				catch (...)
+				{
+					OutputDebugString(L"Failed to create subtitle cue.");
 				}
 			}
 			av_packet_free(&packet);
@@ -149,6 +157,35 @@ namespace FFmpegInterop
 		Platform::String ^ convertFromString(const std::wstring & input)
 		{
 			return ref new Platform::String(input.c_str(), (unsigned int)input.length());
+		}
+
+		int parseInt(std::wstring str)
+		{
+			return std::stoi(str, nullptr, 10);
+		}		
+
+		double parseDouble(std::wstring str)
+		{
+			return std::stod(str);
+		}
+
+		int parseHexInt(std::wstring str)
+		{
+			return std::stoi(str, nullptr, 16);
+		}
+
+		int parseHexOrDecimalInt(std::wstring str, int offset)
+		{
+			if (str[offset] == L'H')
+			{
+				return parseHexInt(str.substr(offset + 1));
+			}
+			return parseInt(str.substr(offset));
+		}
+
+		bool startsWith(std::wstring str, std::wstring prefix)
+		{
+			return str.compare(0, prefix.size(), prefix) == 0;
 		}
 
 	private:
@@ -267,18 +304,22 @@ namespace FFmpegInterop
 
 		void StartTimer()
 		{
-			if (dispatcher != nullptr && IsEnabled) 
+			if (dispatcher != nullptr && IsEnabled)
 			{
+				WeakReference wr(this);
 				dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
-					ref new Windows::UI::Core::DispatchedHandler([this]
+					ref new Windows::UI::Core::DispatchedHandler([wr]
 				{
-					if (timer == nullptr)
-					{
-						timer = ref new Windows::UI::Xaml::DispatcherTimer();
-						timer->Interval = ToTimeSpan(10000);
-						timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &FFmpegInterop::SubtitleProvider::OnTick);
+					auto thisInstance = wr.Resolve<SubtitleProvider>();
+					if (thisInstance != nullptr) {
+						if (thisInstance->timer == nullptr)
+						{
+							thisInstance->timer = ref new Windows::UI::Xaml::DispatcherTimer();
+							thisInstance->timer->Interval = ToTimeSpan(10000);
+							thisInstance->timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(thisInstance, &FFmpegInterop::SubtitleProvider::OnTick);
+						}
+						thisInstance->timer->Start();
 					}
-					timer->Start();
 				}));
 			}
 			else
@@ -290,6 +331,7 @@ namespace FFmpegInterop
 		void OnTick(Platform::Object ^sender, Platform::Object ^args)
 		{
 			mutex.lock();
+			
 			try
 			{
 				for each (auto cue in pendingCues)
@@ -311,7 +353,7 @@ namespace FFmpegInterop
 			{
 				OutputDebugString(L"Failed to add pending subtitle cues.");
 			}
-			
+
 			pendingCues.clear();
 			pendingRefCues.clear();
 
@@ -328,7 +370,7 @@ namespace FFmpegInterop
 			}
 
 			if (timer != nullptr)
-			{
+			{				
 				timer->Stop();
 			}
 
@@ -414,12 +456,12 @@ namespace FFmpegInterop
 
 		void Flush() override
 		{
-			CompressedSampleProvider::Flush();
-
 			if (!m_config->IsExternalSubtitleParser)
 			{
+				CompressedSampleProvider::Flush();
+
 				mutex.lock();
-			
+
 				try
 				{
 					while (SubtitleTrack->Cues->Size > 0)
@@ -443,7 +485,7 @@ namespace FFmpegInterop
 				catch (...)
 				{
 				}
-		
+
 				mutex.unlock();
 			}
 		}
