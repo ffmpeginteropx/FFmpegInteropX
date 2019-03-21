@@ -27,14 +27,24 @@ namespace FFmpegInterop
 	{
 	internal:
 		property bool IsAvailable;
-		property Vector<int>^ SupportedProfiles;
-		property VideoResolution VideoResolution;
+		property std::vector<std::pair<int, VideoResolution>> SupportedProfiles;
+		property VideoResolution MaxResolution;
 
 		void Reset()
 		{
 			IsAvailable = false;
-			SupportedProfiles = nullptr;
-			VideoResolution = FFmpegInterop::VideoResolution::UnknownResolution;
+			SupportedProfiles.clear();
+			MaxResolution = VideoResolution::UnknownResolution;
+		}
+
+		void AppendProfile(int profile)
+		{
+			SupportedProfiles.push_back(std::pair<int, VideoResolution>(profile, VideoResolution::UnknownResolution));
+		}
+
+		void AppendProfile(int profile, VideoResolution resolution)
+		{
+			SupportedProfiles.push_back(std::pair<int, VideoResolution>(profile, resolution));
 		}
 	};
 
@@ -209,32 +219,30 @@ namespace FFmpegInterop
 							if (!hardwareAccelerationH264->IsAvailable)
 							{
 								hardwareAccelerationH264->IsAvailable = true;
-								hardwareAccelerationH264->VideoResolution = CheckResolution(profile, videoDevice);
-								hardwareAccelerationH264->SupportedProfiles = ref new Vector<int>();
-								hardwareAccelerationH264->SupportedProfiles->Append(FF_PROFILE_H264_BASELINE);
-								hardwareAccelerationH264->SupportedProfiles->Append(FF_PROFILE_H264_CONSTRAINED_BASELINE);
-								hardwareAccelerationH264->SupportedProfiles->Append(FF_PROFILE_H264_EXTENDED);
-								hardwareAccelerationH264->SupportedProfiles->Append(FF_PROFILE_H264_MAIN);
-								hardwareAccelerationH264->SupportedProfiles->Append(FF_PROFILE_H264_HIGH);
+								hardwareAccelerationH264->MaxResolution = CheckResolution(profile, videoDevice);
+								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_BASELINE);
+								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_CONSTRAINED_BASELINE);
+								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_EXTENDED);
+								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_MAIN);
+								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_HIGH);
 							}
 						}
 
 						if (profile == D3D11_DECODER_PROFILE_HEVC_VLD_MAIN ||
 							profile == D3D11_DECODER_PROFILE_HEVC_VLD_MAIN10)
 						{
-							if (!hardwareAccelerationHEVC->IsAvailable)
-							{
-								hardwareAccelerationHEVC->IsAvailable = true;
-								hardwareAccelerationHEVC->VideoResolution = CheckResolution(profile, videoDevice);
-								hardwareAccelerationHEVC->SupportedProfiles = ref new Vector<int>();
-							}
+							hardwareAccelerationHEVC->IsAvailable = true;
+
+							auto resolution = CheckResolution(profile, videoDevice);
+							hardwareAccelerationHEVC->MaxResolution = max(resolution, hardwareAccelerationHEVC->MaxResolution);
+
 							if (profile == D3D11_DECODER_PROFILE_HEVC_VLD_MAIN)
 							{
-								hardwareAccelerationHEVC->SupportedProfiles->Append(FF_PROFILE_HEVC_MAIN);
+								hardwareAccelerationHEVC->AppendProfile(FF_PROFILE_HEVC_MAIN, resolution);
 							}
 							else
 							{
-								hardwareAccelerationHEVC->SupportedProfiles->Append(FF_PROFILE_HEVC_MAIN_10);
+								hardwareAccelerationHEVC->AppendProfile(FF_PROFILE_HEVC_MAIN_10, resolution);
 							}
 						}
 
@@ -244,43 +252,41 @@ namespace FFmpegInterop
 							if (!hardwareAccelerationMPEG2->IsAvailable)
 							{
 								hardwareAccelerationMPEG2->IsAvailable = true;
-								hardwareAccelerationMPEG2->VideoResolution = CheckResolution(profile, videoDevice);
-								hardwareAccelerationMPEG2->IsAvailable = true;
-								hardwareAccelerationMPEG2->SupportedProfiles = ref new Vector<int>();
-								hardwareAccelerationMPEG2->SupportedProfiles->Append(FF_PROFILE_MPEG2_MAIN);
-								hardwareAccelerationMPEG2->SupportedProfiles->Append(FF_PROFILE_MPEG2_SIMPLE);
+								hardwareAccelerationMPEG2->AppendProfile(FF_PROFILE_MPEG2_MAIN);
+								hardwareAccelerationMPEG2->AppendProfile(FF_PROFILE_MPEG2_SIMPLE);
 							}
+
+							auto resolution = CheckResolution(profile, videoDevice);
+							hardwareAccelerationMPEG2->MaxResolution = max(resolution, hardwareAccelerationMPEG2->MaxResolution);
 						}
 
 						if (profile == D3D11_DECODER_PROFILE_VC1_VLD ||
 							profile == D3D11_DECODER_PROFILE_VC1_D2010)
 						{
-							if (!hardwareAccelerationVC1->IsAvailable)
-							{
-								hardwareAccelerationVC1->IsAvailable = true;
-								hardwareAccelerationVC1->VideoResolution = CheckResolution(profile, videoDevice);
-								hardwareAccelerationWMV3->IsAvailable = true;
-								hardwareAccelerationWMV3->VideoResolution = hardwareAccelerationVC1->VideoResolution;
-							}
+							auto resolution = CheckResolution(profile, videoDevice);
+
+							hardwareAccelerationVC1->IsAvailable = true;
+							hardwareAccelerationVC1->MaxResolution = max(resolution, hardwareAccelerationVC1->MaxResolution);
+
+							hardwareAccelerationWMV3->IsAvailable = true;
+							hardwareAccelerationWMV3->MaxResolution = hardwareAccelerationVC1->MaxResolution;
 						}
 
 						if (profile == D3D11_DECODER_PROFILE_VP9_VLD_PROFILE0 ||
 							profile == D3D11_DECODER_PROFILE_VP9_VLD_10BIT_PROFILE2)
 						{
-							if (!hardwareAccelerationVP9->IsAvailable)
-							{
-								hardwareAccelerationVP9->IsAvailable = true;
-								hardwareAccelerationVP9->VideoResolution = CheckResolution(profile, videoDevice);
-								hardwareAccelerationVP9->SupportedProfiles = ref new Vector<int>();
-							}
+							hardwareAccelerationVP9->IsAvailable = true;
+
+							auto resolution = CheckResolution(profile, videoDevice);
+							hardwareAccelerationVP9->MaxResolution = max(resolution, hardwareAccelerationVP9->MaxResolution);
 
 							if (profile == D3D11_DECODER_PROFILE_VP9_VLD_PROFILE0)
 							{
-								hardwareAccelerationVP9->SupportedProfiles->Append(FF_PROFILE_VP9_0);
+								hardwareAccelerationVP9->AppendProfile(FF_PROFILE_VP9_0, resolution);
 							}
 							else
 							{
-								hardwareAccelerationVP9->SupportedProfiles->Append(FF_PROFILE_VP9_2);
+								hardwareAccelerationVP9->AppendProfile(FF_PROFILE_VP9_2, resolution);
 							}
 						}
 					}

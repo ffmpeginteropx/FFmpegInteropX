@@ -244,7 +244,7 @@ namespace FFmpegInterop
 		void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args);
 		void InitializePlaybackItem(MediaPlaybackItem^ playbackitem);
 		bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, bool manualStatus, int maxProfile, int maxLevel);
-
+		void CheckVideoResolution(bool& result, int width, int height, VideoResolution maxResolution);
 
 	internal:
 		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);
