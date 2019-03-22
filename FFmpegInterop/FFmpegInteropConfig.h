@@ -38,6 +38,7 @@ namespace FFmpegInterop
 			PassthroughVideoVC1 = true;
 			PassthroughVideoMPEG2 = false;
 			PassthroughVideoVP9 = false;
+			PassthroughVideoVP8 = false;
 
 			VideoOutputAllowIyuv = false;
 			VideoOutputAllow10bit = false;
@@ -163,6 +164,9 @@ namespace FFmpegInterop
 
 		///<summary>Allow passthrough for VP9 video. Requires "VP9 Video Extensions" from Windows Store.</summary>
 		property bool PassthroughVideoVP9;
+
+		///<summary>Allow passthrough for VP8 video. Requires "VP9 Video Extensions" from Windows Store.</summary>
+		property bool PassthroughVideoVP8;
 
 
 

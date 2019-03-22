@@ -476,7 +476,7 @@ bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, 
 				{
 					result &= CodecChecker::CheckIsMpeg2VideoExtensionInstalled();
 				}
-				else if (avCodecCtx->codec_id == AV_CODEC_ID_VP9)
+				else if (avCodecCtx->codec_id == AV_CODEC_ID_VP9 || avCodecCtx->codec_id == AV_CODEC_ID_VP8)
 				{
 					result &= CodecChecker::CheckIsVP9VideoExtensionInstalled();
 				}
@@ -1405,6 +1405,16 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
 		videoProperties->Subtype = MediaEncodingSubtypes::Vp9;
+
+		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+	}
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP8 &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP8, config->PassthroughVideoVP8, -1, -1) &&
+		Windows::Foundation::Metadata::ApiInformation::IsTypePresent("Windows.Media.Core.CodecSubtypes"))
+
+	{
+		auto videoProperties = ref new VideoEncodingProperties();
+		videoProperties->Subtype = Windows::Media::Core::CodecSubtypes::VideoFormatVP80;
 
 		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
 	}

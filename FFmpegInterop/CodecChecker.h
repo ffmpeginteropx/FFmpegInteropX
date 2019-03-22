@@ -2,17 +2,20 @@
 
 #include <d3d11.h>
 #include <mutex>
+#include <pplawait.h>
 
 #include "libavformat/avformat.h"
 
-using namespace Platform;
-using namespace Platform::Collections;
-using namespace Windows::Foundation;
-using namespace Windows::System;
-using namespace Concurrency;
-
 namespace FFmpegInterop
 {
+	using namespace Platform;
+	using namespace Platform::Collections;
+	using namespace Windows::Foundation;
+	using namespace Windows::Foundation::Collections;
+	using namespace Windows::Media::Core;
+	using namespace Windows::System;
+	using namespace Concurrency;
+
 	enum VideoResolution
 	{
 		UnknownResolution,
@@ -127,6 +130,7 @@ namespace FFmpegInterop
 					try
 					{
 						isMpeg2ExtensionInstalled = IsAppInstalledAsync("Microsoft.MPEG2VideoExtension_8wekyb3d8bbwe").get();
+						//isMpeg2ExtensionInstalled = IsVideoCodecInstalledAsync(CodecSubtypes::VideoFormatMpeg2).get();
 					}
 					catch ( ...)
 					{
@@ -152,6 +156,7 @@ namespace FFmpegInterop
 					try
 					{
 						isVP9ExtensionInstalled = IsAppInstalledAsync("Microsoft.VP9VideoExtensions_8wekyb3d8bbwe").get();
+						//isVP9ExtensionInstalled = IsVideoCodecInstalledAsync(CodecSubtypes::VideoFormatVP90).get();
 					}
 					catch (...)
 					{
@@ -171,6 +176,7 @@ namespace FFmpegInterop
 		static property HardwareAccelerationStatus^ HardwareAccelerationWMV3 { HardwareAccelerationStatus^ get() { return hardwareAccelerationWMV3; } }
 		static property HardwareAccelerationStatus^ HardwareAccelerationVC1 { HardwareAccelerationStatus^ get() { return hardwareAccelerationVC1; } }
 		static property HardwareAccelerationStatus^ HardwareAccelerationVP9 { HardwareAccelerationStatus^ get() { return hardwareAccelerationVP9; } }
+		static property HardwareAccelerationStatus^ HardwareAccelerationVP8 { HardwareAccelerationStatus^ get() { return hardwareAccelerationVP8; } }
 		static property HardwareAccelerationStatus^ HardwareAccelerationMPEG2 { HardwareAccelerationStatus^ get() { return hardwareAccelerationMPEG2; } }
 
 		static bool PerformCheckHardwareAcceleration()
@@ -226,6 +232,7 @@ namespace FFmpegInterop
 								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_MAIN);
 								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_HIGH);
 							}
+							continue;
 						}
 
 						if (profile == D3D11_DECODER_PROFILE_HEVC_VLD_MAIN ||
@@ -244,6 +251,7 @@ namespace FFmpegInterop
 							{
 								hardwareAccelerationHEVC->AppendProfile(FF_PROFILE_HEVC_MAIN_10, resolution);
 							}
+							continue;
 						}
 
 						if (profile == D3D11_DECODER_PROFILE_MPEG2_VLD ||
@@ -258,6 +266,7 @@ namespace FFmpegInterop
 
 							auto resolution = CheckResolution(profile, videoDevice);
 							hardwareAccelerationMPEG2->MaxResolution = max(resolution, hardwareAccelerationMPEG2->MaxResolution);
+							continue;
 						}
 
 						if (profile == D3D11_DECODER_PROFILE_VC1_VLD ||
@@ -270,6 +279,7 @@ namespace FFmpegInterop
 
 							hardwareAccelerationWMV3->IsAvailable = true;
 							hardwareAccelerationWMV3->MaxResolution = hardwareAccelerationVC1->MaxResolution;
+							continue;
 						}
 
 						if (profile == D3D11_DECODER_PROFILE_VP9_VLD_PROFILE0 ||
@@ -288,6 +298,16 @@ namespace FFmpegInterop
 							{
 								hardwareAccelerationVP9->AppendProfile(FF_PROFILE_VP9_2, resolution);
 							}
+							continue;
+						}
+
+						if (profile == D3D11_DECODER_PROFILE_VP8_VLD)
+						{
+							hardwareAccelerationVP8->IsAvailable = true;
+
+							auto resolution = CheckResolution(profile, videoDevice);
+							hardwareAccelerationVP8->MaxResolution = resolution;
+							continue;
 						}
 					}
 				}
@@ -323,6 +343,7 @@ namespace FFmpegInterop
 		static HardwareAccelerationStatus^ hardwareAccelerationWMV3;
 		static HardwareAccelerationStatus^ hardwareAccelerationVC1;
 		static HardwareAccelerationStatus^ hardwareAccelerationVP9;
+		static HardwareAccelerationStatus^ hardwareAccelerationVP8;
 		static HardwareAccelerationStatus^ hardwareAccelerationMPEG2;
 
 		inline static VideoResolution CheckResolution(GUID profile, ID3D11VideoDevice* videoDevice)
@@ -401,6 +422,21 @@ namespace FFmpegInterop
 				return false;
 			});
 		}
+
+		//// this works, but it takes 500ms on first call, so not using it right now...
+		//static task<bool> IsVideoCodecInstalledAsync(String^ videoCodecSubtype)
+		//{
+		//	auto query = ref new CodecQuery();
+		//	auto codecs = co_await query->FindAllAsync(CodecKind::Video, CodecCategory::Decoder, videoCodecSubtype);
+		//	for each (auto codec in codecs)
+		//	{
+		//		if (codec->IsTrusted)
+		//		{
+		//			return true;
+		//		}
+		//	}
+		//	return false;
+		//}
 
 	};
 

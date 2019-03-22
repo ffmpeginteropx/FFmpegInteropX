@@ -17,4 +17,5 @@ HardwareAccelerationStatus^ CodecChecker::hardwareAccelerationHEVC = ref new Har
 HardwareAccelerationStatus^ CodecChecker::hardwareAccelerationWMV3 = ref new HardwareAccelerationStatus();
 HardwareAccelerationStatus^ CodecChecker::hardwareAccelerationVC1 = ref new HardwareAccelerationStatus();
 HardwareAccelerationStatus^ CodecChecker::hardwareAccelerationVP9 = ref new HardwareAccelerationStatus();
+HardwareAccelerationStatus^ CodecChecker::hardwareAccelerationVP8 = ref new HardwareAccelerationStatus();
 HardwareAccelerationStatus^ CodecChecker::hardwareAccelerationMPEG2 = ref new HardwareAccelerationStatus();

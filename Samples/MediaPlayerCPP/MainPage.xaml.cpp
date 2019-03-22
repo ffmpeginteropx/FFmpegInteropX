@@ -337,11 +337,11 @@ void MediaPlayerCPP::MainPage::PassthroughVideo_Toggled(Platform::Object^ sender
 {
 	auto passthrough = PassthroughVideo->IsOn;
 	Config->PassthroughVideoH264 = passthrough;
-	Config->PassthroughVideoH264Hi10P = passthrough;
 	Config->PassthroughVideoHEVC = passthrough;
 	Config->PassthroughVideoMPEG2 = passthrough;
 	Config->PassthroughVideoVC1 = passthrough;
 	Config->PassthroughVideoVP9 = passthrough;
+	Config->PassthroughVideoVP8 = passthrough;
 	Config->PassthroughVideoWMV3 = passthrough;
 }
 
