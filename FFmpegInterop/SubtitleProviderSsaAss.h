@@ -249,7 +249,7 @@ namespace FFmpegInterop
 								// apply previous subformat, if any
 								if (subFormat != nullptr)
 								{
-									subFormat->Length = nextEffect - subFormat->StartIndex;
+									subFormat->Length = (int)nextEffect - subFormat->StartIndex;
 									textLine->Subformats->Append(subFormat);
 								}
 
@@ -257,7 +257,7 @@ namespace FFmpegInterop
 								subStyle = subStyle != nullptr ? CopyStyle(subStyle) : CopyStyle(cueStyle);
 								subFormat = ref new TimedTextSubformat();
 								subFormat->SubformatStyle = subStyle;
-								subFormat->StartIndex = nextEffect;
+								subFormat->StartIndex = (int)nextEffect;
 
 								bool hasPosition = false;
 								double posX = 0, posY = 0;
@@ -269,7 +269,7 @@ namespace FFmpegInterop
 								while (end != std::string::npos)
 								{
 									tags.push_back(effectContent.substr(start, end - start));
-									start = end + 1;
+									start = (int)end + 1;
 									end = effectContent.find(L"\\", start);
 								}
 								tags.push_back(effectContent.substr(start, end));
@@ -499,7 +499,7 @@ namespace FFmpegInterop
 									isDrawing = false;
 
 									// cleanup subformats
-									subFormat->StartIndex = drawingStart;
+									subFormat->StartIndex = (int)drawingStart;
 
 									for each (auto style in textLine->Subformats->GetView())
 									{
@@ -513,7 +513,7 @@ namespace FFmpegInterop
 										}
 										else if ((size_t)(style->StartIndex + style->Length) > drawingStart)
 										{
-											style->Length = drawingStart - style->StartIndex;
+											style->Length = (int)drawingStart - style->StartIndex;
 										}
 									}
 								}
@@ -539,7 +539,7 @@ namespace FFmpegInterop
 					// apply last subformat, if any
 					if (subFormat != nullptr)
 					{
-						subFormat->Length = str.size() - subFormat->StartIndex;
+						subFormat->Length = (int)str.size() - subFormat->StartIndex;
 						textLine->Subformats->Append(subFormat);
 					}
 					if (subRegion != nullptr)
