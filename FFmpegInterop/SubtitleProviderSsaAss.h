@@ -249,7 +249,7 @@ namespace FFmpegInterop
 								// apply previous subformat, if any
 								if (subFormat != nullptr)
 								{
-									subFormat->Length = nextEffect - subFormat->StartIndex;
+									subFormat->Length = (int)nextEffect - subFormat->StartIndex;
 									textLine->Subformats->Append(subFormat);
 								}
 
@@ -257,7 +257,7 @@ namespace FFmpegInterop
 								subStyle = subStyle != nullptr ? CopyStyle(subStyle) : CopyStyle(cueStyle);
 								subFormat = ref new TimedTextSubformat();
 								subFormat->SubformatStyle = subStyle;
-								subFormat->StartIndex = nextEffect;
+								subFormat->StartIndex = (int)nextEffect;
 
 								bool hasPosition = false;
 								double posX = 0, posY = 0;
@@ -269,7 +269,7 @@ namespace FFmpegInterop
 								while (end != std::string::npos)
 								{
 									tags.push_back(effectContent.substr(start, end - start));
-									start = end + 1;
+									start = (int)end + 1;
 									end = effectContent.find(L"\\", start);
 								}
 								tags.push_back(effectContent.substr(start, end));
@@ -281,12 +281,18 @@ namespace FFmpegInterop
 										if (startsWith(tag, L"fn"))
 										{
 											auto fnName = tag.substr(2);
-											subStyle->FontFamily = GetFontFamily(fnName);
+											if (fnName.size() > 0)
+											{
+												subStyle->FontFamily = GetFontFamily(fnName);
+											}
 										}
 										else if (startsWith(tag, L"fs"))
 										{
 											auto size = parseDouble(tag.substr(2));
-											subStyle->FontSize = GetFontSize(size);
+											if (size > 0)
+											{
+												subStyle->FontSize = GetFontSize(size);
+											}
 										}
 										else if (startsWith(tag, L"c"))
 										{
@@ -493,7 +499,7 @@ namespace FFmpegInterop
 									isDrawing = false;
 
 									// cleanup subformats
-									subFormat->StartIndex = drawingStart;
+									subFormat->StartIndex = (int)drawingStart;
 
 									for each (auto style in textLine->Subformats->GetView())
 									{
@@ -507,7 +513,7 @@ namespace FFmpegInterop
 										}
 										else if ((size_t)(style->StartIndex + style->Length) > drawingStart)
 										{
-											style->Length = drawingStart - style->StartIndex;
+											style->Length = (int)drawingStart - style->StartIndex;
 										}
 									}
 								}
@@ -533,7 +539,7 @@ namespace FFmpegInterop
 					// apply last subformat, if any
 					if (subFormat != nullptr)
 					{
-						subFormat->Length = str.size() - subFormat->StartIndex;
+						subFormat->Length = (int)str.size() - subFormat->StartIndex;
 						textLine->Subformats->Append(subFormat);
 					}
 					if (subRegion != nullptr)
@@ -684,8 +690,10 @@ namespace FFmpegInterop
 
 		void StoreSubtitleStyle(char* name, char *font, float size, int color, int outlineColor, int bold, int italic, int underline, int strikeout, float outline, Windows::Media::Core::TimedTextLineAlignment horizontalAlignment, Windows::Media::Core::TimedTextDisplayAlignment verticalAlignment, float marginL, float marginR, float marginV)
 		{
+			auto wname = utf8_to_wstring(std::string(name));
+			
 			auto SubtitleRegion = ref new TimedTextRegion();
-			SubtitleRegion->Name = ConvertString(name);
+			SubtitleRegion->Name = convertFromString(wname);
 
 			TimedTextSize extent;
 			extent.Unit = TimedTextUnit::Percentage;
@@ -756,13 +764,16 @@ namespace FFmpegInterop
 				SubtitleStyle->IsLineThroughEnabled = strikeout;
 			}
 
-			auto style = ref new SsaStyleDefinition();
-			auto wname = utf8_to_wstring(std::string(name));
-			style->Name = convertFromString(wname);
-			style->Region = SubtitleRegion;
-			style->Style = SubtitleStyle;
+			// sanity check style parameters
+			if (wname.size() > 0 && SubtitleStyle->FontFamily->Length() > 0 && SubtitleStyle->FontSize.Value > 0)
+			{
+				auto style = ref new SsaStyleDefinition();
+				style->Name = convertFromString(wname);
+				style->Region = SubtitleRegion;
+				style->Style = SubtitleStyle;
 
-			styles[style->Name] = style;
+				styles[style->Name] = style;
+			}
 		}
 
 		TimedTextStyle^ CopyStyle(TimedTextStyle^ style)
