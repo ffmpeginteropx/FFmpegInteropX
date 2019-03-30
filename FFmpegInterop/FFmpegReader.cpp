@@ -49,7 +49,14 @@ int FFmpegReader::ReadPacket()
 		return ret;
 	}
 
-	if (avPacket->stream_index > (int)sampleProviders->size() || avPacket->stream_index < 0)
+	if (avPacket->stream_index >= (int)sampleProviders->size())
+	{
+		// new stream detected. if this is a subtitle stream, we could create it now.
+		av_packet_free(&avPacket);
+		return ret;
+	}
+
+	if (avPacket->stream_index < 0)
 	{
 		av_packet_free(&avPacket);
 		return E_FAIL;
