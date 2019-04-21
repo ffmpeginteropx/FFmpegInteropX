@@ -23,7 +23,9 @@ namespace FFmpegInterop
 		HD,
 		FullHD,
 		UHD4K,
+		UHD4K_DCI,
 		UHD8K,
+		UHD8K_DCI,
 	};
 
 	ref class HardwareAccelerationStatus
@@ -96,7 +98,7 @@ namespace FFmpegInterop
 			if (!hasCheckedHardwareAcceleration)
 			{
 				mutex.lock();
-
+				
 				if (!hasCheckedHardwareAcceleration)
 				{
 					PerformCheckHardwareAcceleration();
@@ -179,7 +181,7 @@ namespace FFmpegInterop
 		static property HardwareAccelerationStatus^ HardwareAccelerationVP8 { HardwareAccelerationStatus^ get() { return hardwareAccelerationVP8; } }
 		static property HardwareAccelerationStatus^ HardwareAccelerationMPEG2 { HardwareAccelerationStatus^ get() { return hardwareAccelerationMPEG2; } }
 
-		static bool PerformCheckHardwareAcceleration()
+		static void PerformCheckHardwareAcceleration()
 		{
 			hardwareAccelerationH264->Reset();
 			hardwareAccelerationHEVC->Reset();
@@ -322,10 +324,54 @@ namespace FFmpegInterop
 			{
 				device->Release();
 			}
-
-			return false;
 		}
 
+		static bool CheckUseHardwareAcceleration(HardwareAccelerationStatus^ status, AVCodecID codecId, int profile, int width, int height)
+		{
+			bool result = false;
+
+			// auto detection
+			if (status->IsAvailable)
+			{
+				// check profile, if restricted
+				if (status->SupportedProfiles.size() > 0)
+				{
+					for each (auto profileInfo in status->SupportedProfiles)
+					{
+						if (profileInfo.first == profile)
+						{
+							result = true;
+
+							// check profile resolution, if restricted
+							if (profileInfo.second > 0)
+							{
+								CheckVideoResolution(result, width, height, profileInfo.second);
+							}
+
+							break;
+						}
+					}
+				}
+				else
+				{
+					result = true;
+				}
+
+				// check installation status of extension
+				if (codecId == AV_CODEC_ID_MPEG2VIDEO)
+				{
+					result &= CheckIsMpeg2VideoExtensionInstalled();
+				}
+				else if (codecId == AV_CODEC_ID_VP9 || codecId == AV_CODEC_ID_VP8)
+				{
+					result &= CheckIsVP9VideoExtensionInstalled();
+				}
+
+				CheckVideoResolution(result, width, height, status->MaxResolution);
+			}
+
+			return result;
+		}
 
 	private:
 
@@ -353,20 +399,38 @@ namespace FFmpegInterop
 			desc.Guid = profile;
 			desc.OutputFormat = DXGI_FORMAT_NV12;
 
-			desc.SampleWidth = 8192;
+			desc.SampleWidth = 7680;
 			desc.SampleHeight = 4320;
 			videoDevice->GetVideoDecoderConfigCount(&desc, &count);
 			if (count > 0)
 			{
-				return VideoResolution::UHD8K;
+				desc.SampleWidth = 8192;
+				videoDevice->GetVideoDecoderConfigCount(&desc, &count);
+				if (count > 0)
+				{
+					return VideoResolution::UHD8K_DCI;
+				}
+				else
+				{
+					return VideoResolution::UHD8K;
+				}
 			}
 
-			desc.SampleWidth = 4096;
+			desc.SampleWidth = 3840;
 			desc.SampleHeight = 2160;
 			videoDevice->GetVideoDecoderConfigCount(&desc, &count);
 			if (count > 0)
 			{
-				return VideoResolution::UHD4K;
+				desc.SampleWidth = 4096;
+				videoDevice->GetVideoDecoderConfigCount(&desc, &count);
+				if (count > 0)
+				{
+					return VideoResolution::UHD4K_DCI;
+				}
+				else
+				{
+					return VideoResolution::UHD4K;
+				}
 			}
 
 			desc.SampleWidth = 1920;
@@ -394,6 +458,39 @@ namespace FFmpegInterop
 			}
 
 			return VideoResolution::UnknownResolution;
+		}
+
+		static void CheckVideoResolution(bool& result, int width, int height, VideoResolution maxResolution)
+		{
+			if (result && width > 0 && height > 0)
+			{
+				switch (maxResolution)
+				{
+				case VideoResolution::SD:
+					result = width <= 720 && height <= 576;
+					break;
+				case VideoResolution::HD:
+					result = width <= 1280 && height <= 720;
+					break;
+				case VideoResolution::FullHD:
+					result = width <= 1920 && height <= 1088;
+					break;
+				case VideoResolution::UHD4K:
+					result = width <= 3840 && height <= 2160;
+					break;
+				case VideoResolution::UHD4K_DCI:
+					result = width <= 4096 && height <= 2160;
+					break;
+				case VideoResolution::UHD8K:
+					result = width <= 7680 && height <= 4320;
+					break;
+				case VideoResolution::UHD8K_DCI:
+					result = width <= 8192 && height <= 4320;
+					break;
+				default:
+					break;
+				}
+			}
 		}
 
 		static task<bool> IsAppInstalledAsync(String^ packageName)

@@ -444,45 +444,8 @@ bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, 
 	{
 		if (config->AutoDetectHardwareAcceleration)
 		{
-			// auto detection
-			if (status->IsAvailable)
-			{
-				// check profile, if restricted
-				if (status->SupportedProfiles.size() > 0)
-				{
-					for each (auto profile in status->SupportedProfiles)
-					{
-						if (profile.first == avCodecCtx->profile)
-						{
-							result = true;
-
-							// check profile resolution, if restricted
-							if (profile.second > 0)
-							{
-								CheckVideoResolution(result, avCodecCtx->width, avCodecCtx->height, profile.second);
-							}
-
-							break;
-						}
-					}
-				}
-				else
-				{
-					result = true;
-				}
-
-				// check installation status of extension
-				if (avCodecCtx->codec_id == AV_CODEC_ID_MPEG2VIDEO)
-				{
-					result &= CodecChecker::CheckIsMpeg2VideoExtensionInstalled();
-				}
-				else if (avCodecCtx->codec_id == AV_CODEC_ID_VP9 || avCodecCtx->codec_id == AV_CODEC_ID_VP8)
-				{
-					result &= CodecChecker::CheckIsVP9VideoExtensionInstalled();
-				}
-
-				CheckVideoResolution(result, avCodecCtx->width, avCodecCtx->height, status->MaxResolution);
-			}
+			result = CodecChecker::CheckUseHardwareAcceleration(status, 
+				avCodecCtx->codec_id, avCodecCtx->profile, avCodecCtx->width, avCodecCtx->height);
 		}
 		else
 		{
@@ -511,32 +474,6 @@ bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, 
 	return result;
 }
 
-void FFmpegInterop::FFmpegInteropMSS::CheckVideoResolution(bool& result, int width, int height, VideoResolution maxResolution)
-{
-	if (result && width > 0 && height > 0)
-	{
-		switch (maxResolution)
-		{
-		case VideoResolution::SD:
-			result = width <= 720 && height <= 576;
-			break;
-		case VideoResolution::HD:
-			result = width <= 1280 && height <= 720;
-			break;
-		case VideoResolution::FullHD:
-			result = width <= 1920 && height <= 1088;
-			break;
-		case VideoResolution::UHD4K:
-			result = width <= 4096 && height <= 2160;
-			break;
-		case VideoResolution::UHD8K:
-			result = width <= 8192 && height <= 4320;
-			break;
-		default:
-			break;
-		}
-	}
-}
 
 void FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args)
 {
