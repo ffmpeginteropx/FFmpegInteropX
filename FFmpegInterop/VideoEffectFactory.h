@@ -1,5 +1,6 @@
 #pragma once
 #include "AbstractEffectFactory.h"
+#include "VideoFilter.h"
 
 namespace FFmpegInterop
 {
@@ -16,9 +17,21 @@ namespace FFmpegInterop
 
 		IAvEffect^ CreateEffect(IVectorView<AvEffectDefinition^>^ definitions) override
 		{
-			//implement this when someone has ideas
-			return nullptr;
+			auto filter = ref new VideoFilter(InputContext);
 
+			auto hr = filter ? S_OK : E_OUTOFMEMORY;
+			if (SUCCEEDED(hr))
+			{
+				hr = filter->AllocResources(definitions);
+			}
+			if (SUCCEEDED(hr))
+			{
+				return filter;
+			}
+			else
+			{
+				return nullptr;
+			}
 		}
 	};
 }

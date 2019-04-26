@@ -335,6 +335,9 @@ namespace MediaPlayerCS
         {
             if (FFmpegMSS != null)
             {
+                //
+                FFmpegMSS.SetVideoEffects(new AvEffectDefinition[] { new AvEffectDefinition("colorlevels", "romin=0.5:gomin=0.5:bomin=0.5") });
+
                 FFmpegMSS.SetAudioEffects(new AvEffectDefinition[] { new AvEffectDefinition("aecho", "0.8:0.9:1000|1800:0.3|0.25") });
             }
 

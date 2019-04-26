@@ -150,6 +150,10 @@
     </ClInclude>
     <ClInclude Include="AttachedFile.h" />
     <ClInclude Include="AttachedFileHelper.h" />
+    <ClInclude Include="VideoFilter.h" />
+    <ClInclude Include="StringUtils.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">
