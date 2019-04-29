@@ -101,6 +101,7 @@
     <ClInclude Include="AudioFilter.h" />
     <ClInclude Include="AvCodecContextHelpers.h" />
     <ClInclude Include="AvEffectDefinition.h" />
+    <ClInclude Include="BasicVideoEffect.h" />
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
     <ClInclude Include="CharacterEncoding.h" />
@@ -137,6 +138,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BasicVideoEffect.cpp" />
     <ClCompile Include="CompressedSampleProvider.cpp" />
     <ClCompile Include="CharacterEncoding.cpp" />
     <ClCompile Include="FFmpegInteropLogging.cpp" />
@@ -170,6 +172,5 @@
     <None Include="FFmpegInteropLibs.props" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

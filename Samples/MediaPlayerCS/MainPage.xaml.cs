@@ -21,6 +21,7 @@ using FFmpegInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Windows.Foundation.Collections;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
@@ -54,10 +55,11 @@ namespace MediaPlayerCS
 
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
+            mediaElement.AddVideoEffect("FFmpegInterop.BasicVideoEffect", false, new PropertySet() { });
 
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
-           
+
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
         }
@@ -336,8 +338,6 @@ namespace MediaPlayerCS
             if (FFmpegMSS != null)
             {
                 //
-                FFmpegMSS.SetVideoEffects(new AvEffectDefinition[] { new AvEffectDefinition("colorlevels", "romin=0.5:gomin=0.5:bomin=0.5") });
-
                 FFmpegMSS.SetAudioEffects(new AvEffectDefinition[] { new AvEffectDefinition("aecho", "0.8:0.9:1000|1800:0.3|0.25") });
             }
 
