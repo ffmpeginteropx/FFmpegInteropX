@@ -177,5 +177,6 @@
     <None Include="FFmpegInteropLibs.props">
       <Filter>Build</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
