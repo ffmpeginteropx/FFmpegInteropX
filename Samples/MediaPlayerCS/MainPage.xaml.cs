@@ -55,7 +55,14 @@ namespace MediaPlayerCS
 
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
-            mediaElement.AddVideoEffect("FFmpegInterop.BasicVideoEffect", false, new PropertySet() { });
+
+            var properties = new PropertySet();
+            properties["Brightness"] = 1.0f;
+            properties["Contrast"] = 1.5f;
+            properties["Saturation"] = 2.0f;
+            properties["Sharpness"] = 4.0f;
+
+            mediaElement.AddVideoEffect("FFmpegInterop.BasicVideoEffect", false, properties);
 
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
