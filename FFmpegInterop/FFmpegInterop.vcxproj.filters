@@ -20,6 +20,9 @@
     <Filter Include="Helpers">
       <UniqueIdentifier>{cba53c0e-fc61-41d0-92a8-92da386261d7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Metadata">
+      <UniqueIdentifier>{4bf436be-fb97-4ba4-b842-9406d925ebc6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -150,6 +153,10 @@
     </ClInclude>
     <ClInclude Include="AttachedFile.h" />
     <ClInclude Include="AttachedFileHelper.h" />
+    <ClInclude Include="MediaMetadata.h">
+      <Filter>Metadata</Filter>
+    </ClInclude>
+    <ClInclude Include="StringUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">
