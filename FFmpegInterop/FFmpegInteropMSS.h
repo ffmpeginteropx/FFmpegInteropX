@@ -144,6 +144,10 @@ namespace FFmpegInterop
 		{
 			MediaMetadata^ get()
 			{
+				if (metadata == nullptr && !config->IsExternalSubtitleParser && !config->IsFrameGrabber)
+				{
+					metadata = ref new MediaMetadata(avFormatCtx);
+				}
 				return metadata;
 			}
 		}

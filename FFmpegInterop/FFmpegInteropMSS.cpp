@@ -864,10 +864,7 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 			switchStreamRequestedToken = mss->SwitchStreamsRequested += ref new TypedEventHandler<MediaStreamSource ^, MediaStreamSourceSwitchStreamsRequestedEventArgs ^>(this, &FFmpegInteropMSS::OnSwitchStreamsRequested);
 		}
 	}
-	if (!config->IsExternalSubtitleParser && !config->IsFrameGrabber)
-	{
-		metadata = ref new MediaMetadata(avFormatCtx);
-	}
+	
 	return hr;
 }
 
