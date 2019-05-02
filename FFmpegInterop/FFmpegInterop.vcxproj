@@ -132,6 +132,7 @@
     <ClInclude Include="UncompressedFrameProvider.h" />
     <ClInclude Include="UncompressedSampleProvider.h" />
     <ClInclude Include="UncompressedVideoSampleProvider.h" />
+    <ClInclude Include="VideoEffectConfiguration.h" />
     <ClInclude Include="VideoEffectFactory.h" />
     <ClInclude Include="VideoFilter.h" />
     <ClInclude Include="VideoFrame.h" />

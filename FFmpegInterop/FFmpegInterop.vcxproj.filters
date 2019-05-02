@@ -160,6 +160,9 @@
     <ClInclude Include="BasicVideoEffect.h">
       <Filter>Effects</Filter>
     </ClInclude>
+    <ClInclude Include="VideoEffectConfiguration.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">
