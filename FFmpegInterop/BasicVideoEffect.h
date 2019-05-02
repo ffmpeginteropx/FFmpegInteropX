@@ -85,6 +85,24 @@ namespace FFmpegInterop
 			}
 		}
 
+		property float Temperature
+		{
+			float get()
+			{
+				auto value = configuration->Lookup("Temperature");
+				return safe_cast<float>(value);
+			}
+		}
+
+		property float Tint
+		{
+			float get()
+			{
+				auto value = configuration->Lookup("Tint");
+				return safe_cast<float>(value);
+			}
+		}
+
 		property float Sharpness
 		{
 			float get()
@@ -106,10 +124,13 @@ namespace FFmpegInterop
 				auto c = Contrast;
 				auto b = Brightness;
 				auto s = Saturation;
+				auto temp = Temperature;
+				auto tint = Tint;
 				auto sharpness = Sharpness;
 
 				bool hasSharpness = sharpness > 0.0f;
 				bool hasColor = c != 1.0f || b != 1.0f || s != 1.0f;
+				bool hasTemperatureAndTint = tint != 0.0f || temp != 0.0f;
 
 				auto inputBitmap = context->InputFrame->Direct3DSurface ?
 					CanvasBitmap::CreateFromDirect3D11Surface(canvasDevice, context->InputFrame->Direct3DSurface) :
@@ -120,6 +141,11 @@ namespace FFmpegInterop
 				if (hasColor)
 				{
 					source = CreateColorEffect(source, c, b - 1.0f, s);
+				}
+
+				if (hasTemperatureAndTint)
+				{
+					source = CreateTermperatureAndTintEffect(source, temp, tint);
 				}
 
 				if (hasSharpness)
@@ -152,8 +178,8 @@ namespace FFmpegInterop
 			Matrix5x4 matrix =
 			{
 				c * (sr + s),	c * (sr),		c * (sr),		0,
-				c * (sg),		c * (sg + s),		c * (sg),		0,
-				c * (sb),		c * (sb),		c * (sb + s),		0,
+				c * (sg),		c * (sg + s),	c * (sg),		0,
+				c * (sb),		c * (sb),		c * (sb + s),	0,
 				0,				0,				0,				1,
 				t + b,			t + b,			t + b,			0
 			};
@@ -169,6 +195,15 @@ namespace FFmpegInterop
 		{
 			auto effect = ref new SharpenEffect();
 			effect->Amount = sharpness;
+			effect->Source = source;
+			return effect;
+		}
+
+		ICanvasEffect^ CreateTermperatureAndTintEffect(ICanvasImage^ source, float temperature, float tint)
+		{
+			auto effect = ref new TemperatureAndTintEffect();
+			effect->Temperature = temperature;
+			effect->Tint = tint;
 			effect->Source = source;
 			return effect;
 		}
