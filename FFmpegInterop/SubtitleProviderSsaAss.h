@@ -353,7 +353,7 @@ namespace FFmpegInterop
 										{
 											size_t numDigits;
 											posX = std::stod(tag.substr(4), &numDigits);
-											if (numDigits > 0 && tag.size > 5 + numDigits)
+											if (numDigits > 0 && tag.length() > 5 + numDigits)
 											{
 												posY = std::stod(tag.substr(5 + numDigits), nullptr);
 												if (!subRegion) subRegion = CopyRegion(cueRegion);

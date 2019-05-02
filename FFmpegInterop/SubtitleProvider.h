@@ -174,7 +174,7 @@ namespace FFmpegInterop
 			return std::stoi(str, nullptr, 16);
 		}
 
-		int parseHexOrDecimalInt(std::wstring str, int offset)
+		int parseHexOrDecimalInt(std::wstring str, size_t offset)
 		{
 			if (str.length() > offset + 1 && str[offset] == L'H')
 			{
@@ -183,7 +183,7 @@ namespace FFmpegInterop
 			return parseInt(str.substr(offset));
 		}
 
-		bool checkTag(std::wstring str, std::wstring prefix, int minParamLenth = 1)
+		bool checkTag(std::wstring str, std::wstring prefix, size_t minParamLenth = 1)
 		{
 			return 
 				str.size() >= (prefix.size() + minParamLenth) && 
