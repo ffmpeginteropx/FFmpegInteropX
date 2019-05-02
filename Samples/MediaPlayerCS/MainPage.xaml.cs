@@ -58,8 +58,10 @@ namespace MediaPlayerCS
 
             var properties = new PropertySet();
             properties["Brightness"] = 1.0f;
-            properties["Contrast"] = 1.5f;
-            properties["Saturation"] = 2.0f;
+            properties["Contrast"] = 1.0f;
+            properties["Saturation"] = 1.0f;
+            properties["Temperature"] = 0.3f;
+            properties["Tint"] = -0.3f;
             properties["Sharpness"] = 4.0f;
 
             mediaElement.AddVideoEffect("FFmpegInterop.BasicVideoEffect", false, properties);
