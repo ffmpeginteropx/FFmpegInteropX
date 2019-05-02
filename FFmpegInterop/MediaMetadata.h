@@ -2,6 +2,8 @@
 #include <pch.h>
 #include <vector>
 #include <collection.h>
+#include "KeyStringValuePair.h"
+
 extern "C"
 {
 #include <libavformat/avformat.h>
@@ -13,47 +15,16 @@ using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 
 namespace FFmpegInterop {
-
-	public ref class MediaMetadataEntry sealed
-	{
-		String ^key, ^value;
-
-	public:
-
-		property String^ Key
-		{
-			String^ get()
-			{
-				return key;
-			}
-		}
-
-		property String^ Value
-		{
-			String^ get()
-			{
-				return value;
-			}
-		}
-
-		MediaMetadataEntry(String^ key, String^ value)
-		{
-			this->key = key;
-			this->value = value;
-		}
-	};
-
-
-
+		
 	public ref class MediaMetadata sealed
 	{
-		Vector<MediaMetadataEntry^>^ entries;
+		Vector<KeyStringValuePair^>^ entries;
 
 	internal:
 
 		MediaMetadata(AVFormatContext *m_pAvFormatCtx)
 		{
-			entries = ref new Vector<MediaMetadataEntry^>();
+			entries = ref new Vector<KeyStringValuePair^>();
 			if (m_pAvFormatCtx->metadata)
 			{
 				AVDictionaryEntry* entry = NULL;
@@ -61,7 +32,7 @@ namespace FFmpegInterop {
 				do {
 					entry = av_dict_get(m_pAvFormatCtx->metadata, "", entry, AV_DICT_IGNORE_SUFFIX);
 					if (entry)
-						entries->Append(ref new MediaMetadataEntry(StringUtils::AnsiStringToPlatformString(entry->key), StringUtils::AnsiStringToPlatformString(entry->value)));
+						entries->Append(ref new KeyStringValuePair(StringUtils::AnsiStringToPlatformString(entry->key), StringUtils::AnsiStringToPlatformString(entry->value)));
 
 				} while (entry);
 
@@ -69,9 +40,9 @@ namespace FFmpegInterop {
 		}
 	public:
 
-		property IVectorView<MediaMetadataEntry^>^ Values
+		property IVectorView<KeyStringValuePair^>^ Values
 		{
-			IVectorView<MediaMetadataEntry^>^ get()
+			IVectorView<KeyStringValuePair^>^ get()
 			{
 				return entries->GetView();
 			}

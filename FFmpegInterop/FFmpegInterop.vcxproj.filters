@@ -157,6 +157,9 @@
       <Filter>Metadata</Filter>
     </ClInclude>
     <ClInclude Include="StringUtils.h" />
+    <ClInclude Include="KeyStringValuePair.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">
