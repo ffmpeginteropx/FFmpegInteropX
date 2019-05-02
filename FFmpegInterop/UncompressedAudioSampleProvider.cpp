@@ -48,7 +48,7 @@ IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor(
 	inChannels = outChannels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
 
 	inChannelLayout = AvCodecContextHelpers::GetChannelLayout(m_pAvCodecCtx, inChannels);
-	outChannelLayout = inChannelLayout < 0x20000000 ? inChannelLayout : av_get_default_channel_layout(outChannels);
+	outChannelLayout = inChannelLayout < 0x20000000 ? inChannelLayout : AvCodecContextHelpers::GetDefaultChannelLayout(outChannels);
 	inSampleRate = outSampleRate = m_pAvCodecCtx->sample_rate;
 	inSampleFormat = m_pAvCodecCtx->sample_fmt;
 	outSampleFormat =
@@ -100,7 +100,7 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVFrame* frame)
 		if (inChannels != channels)
 		{
 			inChannels = channels;
-			inChannelLayout = frame->channel_layout ? frame->channel_layout : av_get_default_channel_layout(inChannels);
+			inChannelLayout = frame->channel_layout ? frame->channel_layout : AvCodecContextHelpers::GetDefaultChannelLayout(inChannels);
 		}
 		inSampleRate = frame->sample_rate;
 		inSampleFormat = (AVSampleFormat)frame->format;
