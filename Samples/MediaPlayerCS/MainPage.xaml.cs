@@ -57,15 +57,16 @@ namespace MediaPlayerCS
             Splitter.IsPaneOpen = true;
 
             var properties = new PropertySet();
-            properties["Brightness"] = 1.0f;
-            properties["Contrast"] = 1.0f;
-            properties["Saturation"] = 1.0f;
-            properties["Temperature"] = 0.3f;
-            properties["Tint"] = -0.3f;
-            properties["Sharpness"] = 4.0f;
+            VideoEffectConfiguration effectConfig = new VideoEffectConfiguration();
+            effectConfig.Brightness = 1.0f;
+            effectConfig.Contrast = 1.0f;
+            effectConfig.Saturation = 1.0f;
+            effectConfig.Temperature = 0.3f;
+            effectConfig .Tint= -0.3f;
+            effectConfig.Sharpness = 4.0f;
 
-            mediaElement.AddVideoEffect("FFmpegInterop.BasicVideoEffect", false, properties);
-
+            MediaPlayerHelpers.AddVideoEffect(mediaElement, effectConfig);
+           
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
 

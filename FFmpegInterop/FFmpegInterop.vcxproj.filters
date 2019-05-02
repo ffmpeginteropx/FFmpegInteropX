@@ -60,6 +60,9 @@
     <ClCompile Include="BasicVideoEffect.cpp">
       <Filter>Effects</Filter>
     </ClCompile>
+    <ClCompile Include="MediaPlayerHelpers.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -162,6 +165,9 @@
     </ClInclude>
     <ClInclude Include="VideoEffectConfiguration.h">
       <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaPlayerHelpers.h">
+      <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

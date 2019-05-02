@@ -1,4 +1,5 @@
 #pragma once
+#include <VideoEffectConfiguration.h>
 
 namespace FFmpegInterop
 {
@@ -13,13 +14,15 @@ namespace FFmpegInterop
 
 	public ref class BasicVideoEffect sealed : IBasicVideoEffect
 	{
-		IPropertySet^ configuration;
+		IPropertySet^ inputConfiguration;
 		CanvasDevice^ canvasDevice;
+		VideoEffectConfiguration^ EffectConfiguration;
 
 	public:
 		virtual void SetProperties(IPropertySet ^configuration)
 		{
-			this->configuration = configuration;
+			this->inputConfiguration = configuration;
+			EffectConfiguration = safe_cast<VideoEffectConfiguration^>(configuration->Lookup("config"));
 		}
 
 		virtual property bool IsReadOnly
@@ -58,59 +61,7 @@ namespace FFmpegInterop
 			}
 		}
 
-		property float Brightness
-		{
-			float get()
-			{
-				auto value = configuration->Lookup("Brightness");
-				return safe_cast<float>(value);
-			}
-		}
-
-		property float Contrast
-		{
-			float get()
-			{
-				auto value = configuration->Lookup("Contrast");
-				return safe_cast<float>(value);
-			}
-		}
-
-		property float Saturation
-		{
-			float get()
-			{
-				auto value = configuration->Lookup("Saturation");
-				return safe_cast<float>(value);
-			}
-		}
-
-		property float Temperature
-		{
-			float get()
-			{
-				auto value = configuration->Lookup("Temperature");
-				return safe_cast<float>(value);
-			}
-		}
-
-		property float Tint
-		{
-			float get()
-			{
-				auto value = configuration->Lookup("Tint");
-				return safe_cast<float>(value);
-			}
-		}
-
-		property float Sharpness
-		{
-			float get()
-			{
-				auto value = configuration->Lookup("Sharpness");
-				return safe_cast<float>(value);
-			}
-		}
+	
 
 		virtual void SetEncodingProperties(Windows::Media::MediaProperties::VideoEncodingProperties ^encodingProperties, Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice ^device)
 		{
@@ -121,12 +72,12 @@ namespace FFmpegInterop
 		{
 			try
 			{
-				auto c = Contrast;
-				auto b = Brightness;
-				auto s = Saturation;
-				auto temp = Temperature;
-				auto tint = Tint;
-				auto sharpness = Sharpness;
+				auto c = EffectConfiguration->Contrast;
+				auto b = EffectConfiguration->Brightness;
+				auto s = EffectConfiguration->Saturation;
+				auto temp = EffectConfiguration->Temperature;
+				auto tint = EffectConfiguration->Tint;
+				auto sharpness = EffectConfiguration->Sharpness;
 
 				bool hasSharpness = sharpness > 0.0f;
 				bool hasColor = c != 1.0f || b != 1.0f || s != 1.0f;
