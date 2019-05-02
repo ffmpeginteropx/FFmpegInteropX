@@ -278,7 +278,7 @@ namespace FFmpegInterop
 								{
 									try
 									{
-										if (startsWith(tag, L"fn"))
+										if (checkTag(tag, L"fn"))
 										{
 											auto fnName = tag.substr(2);
 											if (fnName.size() > 0)
@@ -286,7 +286,7 @@ namespace FFmpegInterop
 												subStyle->FontFamily = GetFontFamily(fnName);
 											}
 										}
-										else if (startsWith(tag, L"fs"))
+										else if (checkTag(tag, L"fs"))
 										{
 											auto size = parseDouble(tag.substr(2));
 											if (size > 0)
@@ -294,40 +294,40 @@ namespace FFmpegInterop
 												subStyle->FontSize = GetFontSize(size);
 											}
 										}
-										else if (startsWith(tag, L"c"))
+										else if (checkTag(tag, L"c", 2))
 										{
 											int color = parseHexOrDecimalInt(tag, 2);
 											subStyle->Foreground = ColorFromArgb(color << 8 | subStyle->Foreground.A);
 										}
-										else if (startsWith(tag, L"1c"))
+										else if (checkTag(tag, L"1c", 2))
 										{
 											int color = parseHexOrDecimalInt(tag, 3);
 											subStyle->Foreground = ColorFromArgb(color << 8 | subStyle->Foreground.A);
 										}
-										else if (startsWith(tag, L"3c"))
+										else if (checkTag(tag, L"3c", 2))
 										{
 											int color = parseHexOrDecimalInt(tag, 3);
 											subStyle->OutlineColor = ColorFromArgb(color << 8 | subStyle->OutlineColor.A);
 										}
-										else if (startsWith(tag, L"alpha"))
+										else if (checkTag(tag, L"alpha", 2))
 										{
 											auto alpha = parseHexOrDecimalInt(tag, 6);
 											auto color = subStyle->Foreground;
 											subStyle->Foreground = ColorFromArgb(alpha, color.R, color.G, color.B);
 										}
-										else if (startsWith(tag, L"1a"))
+										else if (checkTag(tag, L"1a", 2))
 										{
 											auto alpha = parseHexOrDecimalInt(tag, 3);
 											auto color = subStyle->Foreground;
 											subStyle->Foreground = ColorFromArgb(alpha, color.R, color.G, color.B);
 										}
-										else if (startsWith(tag, L"3a"))
+										else if (checkTag(tag, L"3a", 2))
 										{
 											auto alpha = parseHexOrDecimalInt(tag, 3);
 											auto color = subStyle->OutlineColor;
 											subStyle->OutlineColor = ColorFromArgb(alpha, color.R, color.G, color.B);
 										}
-										else if (startsWith(tag, L"an"))
+										else if (checkTag(tag, L"an"))
 										{
 											// numpad alignment
 											auto alignment = parseInt(tag.substr(2));
@@ -338,7 +338,7 @@ namespace FFmpegInterop
 											cue->CueStyle = CopyStyle(cueStyle);
 											cue->CueStyle->LineAlignment = subStyle->LineAlignment;
 										}
-										else if (startsWith(tag, L"a"))
+										else if (checkTag(tag, L"a"))
 										{
 											// legacy alignment
 											auto alignment = parseInt(tag.substr(1));
@@ -349,15 +349,18 @@ namespace FFmpegInterop
 											cue->CueStyle = CopyStyle(cueStyle);
 											cue->CueStyle->LineAlignment = subStyle->LineAlignment;
 										}
-										else if (startsWith(tag, L"pos"))
+										else if (checkTag(tag, L"pos", 5))
 										{
 											size_t numDigits;
 											posX = std::stod(tag.substr(4), &numDigits);
-											posY = std::stod(tag.substr(5 + numDigits), nullptr);
-											if (!subRegion) subRegion = CopyRegion(cueRegion);
-											hasPosition = true;
+											if (numDigits > 0 && tag.size > 5 + numDigits)
+											{
+												posY = std::stod(tag.substr(5 + numDigits), nullptr);
+												if (!subRegion) subRegion = CopyRegion(cueRegion);
+												hasPosition = true;
+											}
 										}
-										else if (startsWith(tag, L"bord"))
+										else if (checkTag(tag, L"bord"))
 										{
 											auto border = std::stod(tag.substr(4));
 											auto outline = subStyle->OutlineThickness;
@@ -406,7 +409,7 @@ namespace FFmpegInterop
 												drawingEnd = nextEffect;
 											}
 										}
-										else if (tag[0] == L'p' && tag[1] >= L'1' && tag[1] <= L'9')
+										else if (tag[0] == L'p' && tag.size() > 1 && tag[1] >= L'1' && tag[1] <= L'9')
 										{
 											isDrawing = true;
 											drawingStart = nextEffect;
