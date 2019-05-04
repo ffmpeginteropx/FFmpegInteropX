@@ -1,4 +1,7 @@
 #include "pch.h"
+
+#include <mfapi.h>
+
 #include "CompressedSampleProvider.h"
 #include "NativeBufferFactory.h"
 
@@ -101,6 +104,13 @@ IMediaStreamDescriptor^ CompressedSampleProvider::CreateStreamDescriptor()
 				audioStreamDescriptor->TrailingEncoderPadding = (unsigned int)m_pAvStream->codecpar->trailing_padding;
 			}
 		}
+	
+		// Set channel layout
+		if (m_pAvCodecCtx->channel_layout > 0 && m_pAvCodecCtx->channel_layout < 0x20000000)
+		{
+			audioEncodingProperties->Properties->Insert(MF_MT_AUDIO_CHANNEL_MASK, (UINT32)m_pAvCodecCtx->channel_layout);
+		}
+
 		mediaStreamDescriptor = audioStreamDescriptor;
 	}
 	return mediaStreamDescriptor;
