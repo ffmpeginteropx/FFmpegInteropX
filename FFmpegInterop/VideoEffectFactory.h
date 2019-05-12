@@ -22,7 +22,7 @@ namespace FFmpegInterop
 			which supports hardware acceleration.
 			FFmpeg filters only work with AVFrame, which contains raw data,
 			hence it is unsuitable for real time playback. There could be scenarios 
-			in which the extensive video filer library of FFmpeg could be used (i.e transcoding)*/
+			in which the extensive video filer library of FFmpeg could be used (i.e transcoding).*/
 			return nullptr;
 		}
 	};
