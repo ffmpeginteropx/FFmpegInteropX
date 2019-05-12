@@ -14,38 +14,38 @@ namespace FFmpegInterop {
 	{
 	public:
 		[Windows::Foundation::Metadata::DefaultOverloadAttribute]
-		static VideoEffectConfiguration^ AddVideoEffect(MediaPlayer^ player)
+		static VideoEffectConfiguration^ AddVideoEffect(MediaPlayer^ player, bool optional)
 		{
 			VideoEffectConfiguration^ config = ref new VideoEffectConfiguration();
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", config);
-			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", false, set);
+			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", optional, set);
 			return config;
 		}
 
 		[Windows::Foundation::Metadata::DefaultOverloadAttribute]
-		static VideoEffectConfiguration^ AddVideoEffect(MediaPlayer^ player, VideoEffectConfiguration^ config)
+		static VideoEffectConfiguration^ AddVideoEffect(MediaPlayer^ player, VideoEffectConfiguration^ config, bool optional)
 		{			
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", config);
-			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", false, set);
+			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", optional, set);
 			return config;
 		}
 
-		static VideoEffectConfiguration^ AddVideoEffect(MediaElement^ player)
+		static VideoEffectConfiguration^ AddVideoEffect(MediaElement^ player, bool optional)
 		{
 			VideoEffectConfiguration^ config = ref new VideoEffectConfiguration();
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", config);
-			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", false, set);
+			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", optional, set);
 			return config;
 		}
 
-		static VideoEffectConfiguration^ AddVideoEffect(MediaElement^ player, VideoEffectConfiguration^ config)
+		static VideoEffectConfiguration^ AddVideoEffect(MediaElement^ player, VideoEffectConfiguration^ config, bool optional)
 		{
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", config);
-			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", false, set);
+			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", optional, set);
 			return config;
 		}
 
