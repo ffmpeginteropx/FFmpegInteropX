@@ -113,7 +113,7 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, 
 		else
 		{
 			// Update the timestamp
-			if (avFrame->pts != AV_NOPTS_VALUE && avFrame->pts >= 0 && avFrame->pts - nextFramePts < 600000000)
+			if (avFrame->pts != AV_NOPTS_VALUE && (!hasNextFramePts || avFrame->pts - nextFramePts < 600000000))
 			{
 				framePts = avFrame->pts;
 			}
