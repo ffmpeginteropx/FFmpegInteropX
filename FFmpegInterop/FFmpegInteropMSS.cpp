@@ -82,6 +82,10 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispa
 	subtitleDelay = config->DefaultSubtitleDelay;
 	audioStrInfos = ref new Vector<AudioStreamInfo^>();
 	subtitleStrInfos = ref new Vector<SubtitleStreamInfo^>();
+	if (!config->IsExternalSubtitleParser && !config->IsFrameGrabber)
+	{
+		metadata = ref new MediaMetadata();
+	}
 }
 
 FFmpegInteropMSS::~FFmpegInteropMSS()
@@ -375,7 +379,7 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 				{
 					// detach stream
 					externalSubtitle->Detach();
-				
+
 					// find and add stream info
 					for each (auto subtitleInfo in externalSubsParser->SubtitleStreams)
 					{
@@ -864,6 +868,7 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 			switchStreamRequestedToken = mss->SwitchStreamsRequested += ref new TypedEventHandler<MediaStreamSource ^, MediaStreamSourceSwitchStreamsRequestedEventArgs ^>(this, &FFmpegInteropMSS::OnSwitchStreamsRequested);
 		}
 	}
+	
 	return hr;
 }
 
@@ -1109,7 +1114,7 @@ void FFmpegInteropMSS::SetSubtitleDelay(TimeSpan offset)
 		{
 			subtitleStream->SetSubtitleDelay(offset);
 		}
-	
+
 		subtitleDelay = offset;
 	}
 	catch (...)
