@@ -27,9 +27,9 @@ UncompressedSampleProvider::UncompressedSampleProvider(
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
 	int streamIndex
-): MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex)
+) : MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex)
 {
-	
+
 }
 
 HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration)
@@ -113,7 +113,7 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, 
 		else
 		{
 			// Update the timestamp
-			if (avFrame->pts != AV_NOPTS_VALUE)
+			if (avFrame->pts != AV_NOPTS_VALUE && (!hasNextFramePts || avFrame->pts - nextFramePts < 600000000))
 			{
 				framePts = avFrame->pts;
 			}
@@ -121,9 +121,10 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, 
 			{
 				framePts = nextFramePts;
 			}
+
 			frameDuration = avFrame->pkt_duration;
 			nextFramePts = framePts + frameDuration;
-
+			
 			hr = S_OK;
 			break;
 		}
