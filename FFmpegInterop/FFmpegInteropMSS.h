@@ -138,17 +138,14 @@ namespace FFmpegInterop
 			{
 				return config;
 			}
-		}
+		}		
 
-		property MediaMetadata^ Metadata
+		property IVectorView<KeyStringValuePair^>^ MetadataTags
 		{
-			MediaMetadata^ get()
+			IVectorView<KeyStringValuePair^>^ get()
 			{
-				if (metadata == nullptr && !config->IsExternalSubtitleParser && !config->IsFrameGrabber)
-				{
-					metadata = ref new MediaMetadata(avFormatCtx);
-				}
-				return metadata;
+				metadata->LoadMetadataTags(avFormatCtx);
+				return metadata->MetadataTags;
 			}
 		}
 

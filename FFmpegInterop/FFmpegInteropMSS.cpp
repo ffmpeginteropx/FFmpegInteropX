@@ -82,6 +82,10 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispa
 	subtitleDelay = config->DefaultSubtitleDelay;
 	audioStrInfos = ref new Vector<AudioStreamInfo^>();
 	subtitleStrInfos = ref new Vector<SubtitleStreamInfo^>();
+	if (!config->IsExternalSubtitleParser && !config->IsFrameGrabber)
+	{
+		metadata = ref new MediaMetadata();
+	}
 }
 
 FFmpegInteropMSS::~FFmpegInteropMSS()
