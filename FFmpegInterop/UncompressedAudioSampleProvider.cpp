@@ -18,6 +18,8 @@
 
 #include "pch.h"
 
+#include <mfapi.h>
+
 #include "UncompressedAudioSampleProvider.h"
 #include "NativeBufferFactory.h"
 #include "AudioEffectFactory.h"
@@ -46,7 +48,7 @@ IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor(
 	inChannels = outChannels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
 
 	inChannelLayout = AvCodecContextHelpers::GetChannelLayout(m_pAvCodecCtx, inChannels);
-	outChannelLayout = av_get_default_channel_layout(outChannels);
+	outChannelLayout = inChannelLayout < 0x20000000 ? inChannelLayout : AvCodecContextHelpers::GetDefaultChannelLayout(outChannels);
 	inSampleRate = outSampleRate = m_pAvCodecCtx->sample_rate;
 	inSampleFormat = m_pAvCodecCtx->sample_fmt;
 	outSampleFormat =
@@ -58,10 +60,12 @@ IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor(
 
 	needsUpdateResampler = inSampleFormat != outSampleFormat || inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate;
 
+	AudioStreamDescriptor^ result;
+
 	// We try to preserve source format
 	if (outSampleFormat == AV_SAMPLE_FMT_S32)
 	{
-		return ref new AudioStreamDescriptor(AudioEncodingProperties::CreatePcm(outSampleRate, outChannels, 32));
+		result = ref new AudioStreamDescriptor(AudioEncodingProperties::CreatePcm(outSampleRate, outChannels, 32));
 	}
 	else if (outSampleFormat == AV_SAMPLE_FMT_FLT)
 	{
@@ -71,13 +75,18 @@ IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor(
 		properties->SampleRate = outSampleRate;
 		properties->ChannelCount = outChannels;
 		properties->Bitrate = 32 * outSampleRate * outChannels;
-		return ref new AudioStreamDescriptor(properties);
+		result = ref new AudioStreamDescriptor(properties);
 	}
 	else
 	{
 		// Use S16 for all other cases
-		return ref new AudioStreamDescriptor(AudioEncodingProperties::CreatePcm(outSampleRate, outChannels, 16));
+		result = ref new AudioStreamDescriptor(AudioEncodingProperties::CreatePcm(outSampleRate, outChannels, 16));
 	}
+
+	// Set channel layout
+	result->EncodingProperties->Properties->Insert(MF_MT_AUDIO_CHANNEL_MASK, (UINT32)outChannelLayout);
+
+	return result;
 }
 
 HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVFrame* frame)
@@ -88,8 +97,11 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVFrame* frame)
 	bool hasFormatChanged = channels != inChannels || frame->sample_rate != inSampleRate || frame->format != inSampleFormat;
 	if (hasFormatChanged)
 	{
-		inChannels = channels;
-		inChannelLayout = frame->channel_layout ? frame->channel_layout : av_get_default_channel_layout(inChannels);
+		if (inChannels != channels)
+		{
+			inChannels = channels;
+			inChannelLayout = frame->channel_layout ? frame->channel_layout : AvCodecContextHelpers::GetDefaultChannelLayout(inChannels);
+		}
 		inSampleRate = frame->sample_rate;
 		inSampleFormat = (AVSampleFormat)frame->format;
 		needsUpdateResampler = true;

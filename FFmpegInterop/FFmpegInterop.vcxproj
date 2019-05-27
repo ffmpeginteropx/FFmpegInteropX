@@ -113,6 +113,7 @@
     <ClInclude Include="FrameGrabber.h" />
     <ClInclude Include="H264AVCSampleProvider.h" />
     <ClInclude Include="IAvEffect.h" />
+    <ClInclude Include="KeyStringValuePair.h" />
     <ClInclude Include="LanguageTagConverter.h" />
     <ClInclude Include="MediaPlayerHelpers.h" />
     <ClInclude Include="NALPacketSampleProvider.h" />
@@ -129,6 +130,7 @@
     <ClInclude Include="SubtitleProviderBitmap.h" />
     <ClInclude Include="SubtitleProviderSsaAss.h" />
     <ClInclude Include="TimeSpanHelpers.h" />
+    <ClInclude Include="MediaMetadata.h" />
     <ClInclude Include="UncompressedAudioSampleProvider.h" />
     <ClInclude Include="UncompressedFrameProvider.h" />
     <ClInclude Include="UncompressedSampleProvider.h" />

@@ -20,6 +20,9 @@
     <Filter Include="Helpers">
       <UniqueIdentifier>{cba53c0e-fc61-41d0-92a8-92da386261d7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Metadata">
+      <UniqueIdentifier>{4bf436be-fb97-4ba4-b842-9406d925ebc6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -57,12 +60,8 @@
     <ClCompile Include="CharacterEncoding.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="BasicVideoEffect.cpp">
-      <Filter>Effects</Filter>
-    </ClCompile>
-    <ClCompile Include="MediaPlayerHelpers.cpp">
-      <Filter>Helpers</Filter>
-    </ClCompile>
+    <ClCompile Include="BasicVideoEffect.cpp" />
+    <ClCompile Include="MediaPlayerHelpers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -156,17 +155,17 @@
     </ClInclude>
     <ClInclude Include="AttachedFile.h" />
     <ClInclude Include="AttachedFileHelper.h" />
-    <ClInclude Include="VideoFilter.h" />
-    <ClInclude Include="StringUtils.h">
+    <ClInclude Include="MediaMetadata.h">
+      <Filter>Metadata</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyStringValuePair.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="BasicVideoEffect.h">
-      <Filter>Effects</Filter>
-    </ClInclude>
-    <ClInclude Include="VideoEffectConfiguration.h">
-      <Filter>Effects</Filter>
-    </ClInclude>
-    <ClInclude Include="MediaPlayerHelpers.h">
+    <ClInclude Include="BasicVideoEffect.h" />
+    <ClInclude Include="MediaPlayerHelpers.h" />
+    <ClInclude Include="VideoEffectConfiguration.h" />
+    <ClInclude Include="VideoFilter.h" />
+    <ClInclude Include="StringUtils.h">
       <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>

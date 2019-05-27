@@ -60,7 +60,7 @@ MediaSampleProvider::MediaSampleProvider(
 		//if start time is AV_NOPTS_VALUE, set it to 0
 		m_nextPacketPts = 0;
 	}
-	else 
+	else
 	{
 		//otherwise set the start time of the first packet to the stream start time.
 		m_nextPacketPts = m_pAvFormatCtx->streams[m_streamIndex]->start_time;
@@ -177,7 +177,7 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 		LONGLONG dur = 0;
 
 		hr = CreateNextSampleBuffer(&buffer, pts, dur);
-
+		
 		if (hr == S_OK)
 		{
 			pts = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * pts) - m_startOffset;
@@ -228,7 +228,8 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packe
 		*avPacket = packet;
 
 		packetDuration = packet->duration;
-		if (packet->pts != AV_NOPTS_VALUE)
+		
+		if (packet->pts != AV_NOPTS_VALUE && packet->pts - m_nextPacketPts < 600000000)
 		{
 			packetPts = packet->pts;
 			// Set the PTS for the next sample if it doesn't one.
