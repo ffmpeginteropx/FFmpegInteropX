@@ -703,8 +703,8 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 				auto mimetype = av_dict_get(avStream->metadata, "mimetype", NULL, 0);
 				if (fileName && avStream->codecpar->extradata && avStream->codecpar->extradata_size > 0)
 				{
-					auto name = ConvertString(fileName->value);
-					auto mime = mimetype ? ConvertString(mimetype->value) : "";
+					auto name = StringUtils::Utf8ToPlatformString(fileName->value);
+					auto mime = mimetype ? StringUtils::Utf8ToPlatformString(mimetype->value) : "";
 
 					auto file = ref new AttachedFile(name, mime, avStream);
 					attachedFileHelper->AddAttachedFile(file);
