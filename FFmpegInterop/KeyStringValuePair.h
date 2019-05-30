@@ -3,23 +3,23 @@ using namespace Platform;
 using namespace Windows::Foundation::Collections;
 
 namespace FFmpegInterop {
-	public ref class KeyStringValuePair sealed : IKeyValuePair<String^, String^>
+	ref class KeyStringValuePair sealed : IKeyValuePair<String^,String^>
 	{
 		String ^key, ^value;
 
 	public:
 
-		virtual property String^ Key
+		property String^ Key
 		{
-			String^ get()
+			virtual String^ get()
 			{
 				return key;
 			}
 		}
 
-		virtual property String^ Value
+		property String^ Value
 		{
-			String^ get()
+			virtual String^ get()
 			{
 				return value;
 			}
