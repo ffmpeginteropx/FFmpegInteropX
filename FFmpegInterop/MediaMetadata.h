@@ -24,14 +24,13 @@ namespace FFmpegInterop {
 
 		MediaMetadata()
 		{
-
+			entries = ref new Vector<IKeyValuePair<String^, String^>^>();
 		}
 
 		void LoadMetadataTags(AVFormatContext *m_pAvFormatCtx)
 		{
 			if (!tagsLoaded) 
 			{
-				entries = ref new Vector<IKeyValuePair<String^, String^>^>();
 				if (m_pAvFormatCtx->metadata)
 				{
 					AVDictionaryEntry* entry = NULL;
