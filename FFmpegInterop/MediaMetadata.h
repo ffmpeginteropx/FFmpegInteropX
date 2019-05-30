@@ -39,7 +39,7 @@ namespace FFmpegInterop {
 						entry = av_dict_get(m_pAvFormatCtx->metadata, "", entry, AV_DICT_IGNORE_SUFFIX);
 						if (entry)
 							entries->Append(ref new KeyStringValuePair(
-								StringUtils::AnsiStringToPlatformString(entry->key), 
+								StringUtils::Utf8ToPlatformString(entry->key),
 								StringUtils::Utf8ToPlatformString(entry->value)));
 
 					} while (entry);
