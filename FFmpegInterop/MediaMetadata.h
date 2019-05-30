@@ -55,11 +55,6 @@ namespace FFmpegInterop {
 			}
 		}
 	
-	public:
-		virtual ~MediaMetadata()
-		{
-			entries->Clear();
-		}
 	};
 
 
