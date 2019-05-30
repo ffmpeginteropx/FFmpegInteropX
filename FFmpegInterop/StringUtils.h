@@ -1,4 +1,6 @@
 #include <string.h>
+#include <codecvt>
+
 using namespace Platform;
 
 namespace FFmpegInterop
@@ -12,5 +14,13 @@ namespace FFmpegInterop
 			const wchar_t* w_char = wid_str.c_str();
 			return ref new String(w_char);
 		}
+
+		static String^ Utf8ToPlatformString(const char* char_array) {
+			std::string s_str = std::string(char_array);
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+			std::wstring wid_str = myconv.from_bytes(s_str);
+			return ref new String(wid_str.c_str());
+		}
+
 	};
 }

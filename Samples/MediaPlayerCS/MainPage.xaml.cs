@@ -87,6 +87,7 @@ namespace MediaPlayerCS
                     // Instantiate FFmpegInteropMSS using the opened local file stream
 
                     FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, Config);
+                    var tags = FFmpegMSS.MetadataTags.ToArray();
                     if (AutoCreatePlaybackItem)
                     {
                         CreatePlaybackItemAndStartPlaybackInternal();
