@@ -18,7 +18,7 @@ namespace FFmpegInterop {
 
 	ref class MediaMetadata sealed
 	{
-		Vector<KeyStringValuePair^>^ entries;
+		Vector<IKeyValuePair<String^, String^>^>^ entries;
 		bool tagsLoaded = false;
 	internal:
 
@@ -31,7 +31,7 @@ namespace FFmpegInterop {
 		{
 			if (!tagsLoaded) 
 			{
-				entries = ref new Vector<KeyStringValuePair^>();
+				entries = ref new Vector<IKeyValuePair<String^, String^>^>();
 				if (m_pAvFormatCtx->metadata)
 				{
 					AVDictionaryEntry* entry = NULL;
@@ -48,9 +48,9 @@ namespace FFmpegInterop {
 		}
 	
 
-		property IVectorView<KeyStringValuePair^>^ MetadataTags
+		property IVectorView<IKeyValuePair<String^, String^>^>^ MetadataTags
 		{
-			IVectorView<KeyStringValuePair^>^ get()
+			IVectorView<IKeyValuePair<String^, String^>^>^ get()
 			{
 				return entries->GetView();
 			}

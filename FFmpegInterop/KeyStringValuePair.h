@@ -3,7 +3,7 @@ using namespace Platform;
 using namespace Windows::Foundation::Collections;
 
 namespace FFmpegInterop {
-	public ref class KeyStringValuePair sealed 
+	ref class KeyStringValuePair sealed : IKeyValuePair<String^,String^>
 	{
 		String ^key, ^value;
 
@@ -11,7 +11,7 @@ namespace FFmpegInterop {
 
 		property String^ Key
 		{
-			String^ get()
+			virtual String^ get()
 			{
 				return key;
 			}
@@ -19,7 +19,7 @@ namespace FFmpegInterop {
 
 		property String^ Value
 		{
-			String^ get()
+			virtual String^ get()
 			{
 				return value;
 			}
