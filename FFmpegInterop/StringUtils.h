@@ -40,7 +40,7 @@ namespace FFmpegInterop
 		}
 
 
-		static std::string PlatformStringToWString(String^ value)
+		static std::string PlatformStringToAnsiString(String^ value)
 		{
 			std::wstring strW(value->Begin());
 			std::string strA = std::string(strW.begin(), strW.end());
