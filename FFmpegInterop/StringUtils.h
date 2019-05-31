@@ -39,5 +39,14 @@ namespace FFmpegInterop
 			return ref new Platform::String(input.c_str(), (unsigned int)input.length());
 		}
 
+
+		static std::string PlatformStringToWString(String^ value)
+		{
+			std::wstring strW(value->Begin());
+			std::string strA = std::string(strW.begin(), strW.end());
+
+			return strA;
+		}
+
 	};
 }

@@ -35,7 +35,7 @@ namespace FFmpegInterop {
 		const AVFilter  *AVSink;
 
 		AVFilterContext *aResampler_ctx;
-		const AVFilter        *aResampler;
+		const AVFilter  *aResampler;
 		AVFilterGraph	*graph;
 		AVFilterContext *avSource_ctx, *avSink_ctx;
 
@@ -47,7 +47,7 @@ namespace FFmpegInterop {
 		long long inChannelLayout;
 		int nb_channels;
 
-		HRESULT init_filter_graph(IVectorView<AvEffectDefinition^>^ effects)
+		HRESULT InitFilterGraph(IVectorView<AvEffectDefinition^>^ effects)
 		{
 			//init graph
 			int error = 0;
@@ -71,10 +71,10 @@ namespace FFmpegInterop {
 			{
 				auto effectDefinition = effects->GetAt(i);
 
-				auto effectName = PlatformStringToChar(effectDefinition->FilterName);
-				auto configString = PlatformStringToChar(effectDefinition->Configuration);
-				auto c_effectName = effectName->c_str();
-				auto c_configString = configString->c_str();
+				auto effectName = StringUtils::PlatformStringToWString(effectDefinition->FilterName);
+				auto configString = StringUtils::PlatformStringToWString(effectDefinition->Configuration);
+				auto c_effectName = effectName.c_str();
+				auto c_configString = configString.c_str();
 
 				AVFilterContext* ctx;
 				const AVFilter* filter;
@@ -83,21 +83,15 @@ namespace FFmpegInterop {
 				ctx = avfilter_graph_alloc_filter(graph, filter, c_configString);
 				if (!filter)
 				{
-					delete configString;
-					delete effectName;
 					return AVERROR_FILTER_NOT_FOUND;
 
 				}
 				if (avfilter_init_str(ctx, c_configString) < 0)
 				{
-					delete configString;
-					delete effectName;
 					return E_FAIL;
 				}
 				AVFilters.push_back(filter);
 				AVFilterContexts.push_back(ctx);
-				delete configString;
-				delete effectName;
 
 			}
 
@@ -110,13 +104,6 @@ namespace FFmpegInterop {
 			return error;
 		}
 
-		std::string* PlatformStringToChar(String^ value)
-		{
-			std::wstring strW(value->Begin());
-			std::string* strA = new std::string(strW.begin(), strW.end());
-
-			return strA;
-		}
 
 
 
@@ -274,7 +261,7 @@ namespace FFmpegInterop {
 		HRESULT AllocResources(IVectorView<AvEffectDefinition^>^ effects)
 		{
 			av_get_channel_layout_string(channel_layout_name, sizeof(channel_layout_name), nb_channels, inChannelLayout);
-			return init_filter_graph(effects);
+			return InitFilterGraph(effects);
 		}
 
 
