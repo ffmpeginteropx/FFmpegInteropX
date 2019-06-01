@@ -40,12 +40,11 @@ namespace FFmpegInterop
 		}
 
 
-		static std::string PlatformStringToAnsiString(String^ value)
+		static std::string PlatformStringToUtf8String(String^ value)
 		{
-			std::wstring strW(value->Begin());
-			std::string strA = std::string(strW.begin(), strW.end());
-
-			return strA;
+			std::wstring strW(value->Begin(), value->Length());
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
+			return myconv.to_bytes(strW);
 		}
 
 	};

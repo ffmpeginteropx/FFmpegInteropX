@@ -71,8 +71,8 @@ namespace FFmpegInterop {
 			{
 				auto effectDefinition = effects->GetAt(i);
 
-				auto effectName = StringUtils::PlatformStringToAnsiString(effectDefinition->FilterName);
-				auto configString = StringUtils::PlatformStringToAnsiString(effectDefinition->Configuration);
+				auto effectName = StringUtils::PlatformStringToUtf8String(effectDefinition->FilterName);
+				auto configString = StringUtils::PlatformStringToUtf8String(effectDefinition->Configuration);
 				auto c_effectName = effectName.c_str();
 				auto c_configString = configString.c_str();
 

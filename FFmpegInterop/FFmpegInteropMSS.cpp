@@ -1327,19 +1327,11 @@ HRESULT FFmpegInteropMSS::ParseOptions(PropertySet^ ffmpegOptions)
 
 		while (options->HasCurrent)
 		{
-			String^ key = options->Current->Key;
-			std::wstring keyW(key->Begin());
-			std::string keyA(keyW.begin(), keyW.end());
-			const char* keyChar = keyA.c_str();
-
-			// Convert value from Object^ to const char*. avformat_open_input will internally convert value from const char* to the correct type
-			String^ value = options->Current->Value->ToString();
-			std::wstring valueW(value->Begin());
-			std::string valueA(valueW.begin(), valueW.end());
-			const char* valueChar = valueA.c_str();
+			auto key = StringUtils::PlatformStringToUtf8String(options->Current->Key);
+			auto value = StringUtils::PlatformStringToUtf8String(options->Current->Value->ToString());
 
 			// Add key and value pair entry
-			if (av_dict_set(&avDict, keyChar, valueChar, 0) < 0)
+			if (av_dict_set(&avDict, key.c_str(), value.c_str(), 0) < 0)
 			{
 				hr = E_INVALIDARG;
 				break;
