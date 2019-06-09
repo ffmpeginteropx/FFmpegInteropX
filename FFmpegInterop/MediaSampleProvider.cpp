@@ -229,7 +229,7 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packe
 
 		packetDuration = packet->duration;
 		
-		if (packet->pts != AV_NOPTS_VALUE && packet->pts - m_nextPacketPts < 600000000)
+		if (packet->pts != AV_NOPTS_VALUE)
 		{
 			packetPts = packet->pts;
 			// Set the PTS for the next sample if it doesn't one.
