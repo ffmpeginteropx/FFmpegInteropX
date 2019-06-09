@@ -60,8 +60,9 @@
     <ClCompile Include="CharacterEncoding.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="BasicVideoEffect.cpp" />
-    <ClCompile Include="MediaPlayerHelpers.cpp" />
+    <ClCompile Include="BasicVideoEffect.cpp">
+      <Filter>Effects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -161,12 +162,15 @@
     <ClInclude Include="KeyStringValuePair.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="BasicVideoEffect.h" />
-    <ClInclude Include="MediaPlayerHelpers.h" />
-    <ClInclude Include="VideoEffectConfiguration.h" />
     <ClInclude Include="VideoFilter.h" />
     <ClInclude Include="StringUtils.h">
       <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoEffectConfiguration.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicVideoEffect.h">
+      <Filter>Effects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

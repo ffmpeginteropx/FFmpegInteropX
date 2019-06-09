@@ -78,9 +78,10 @@ namespace FFmpegInterop
 				auto temp = EffectConfiguration->Temperature;
 				auto tint = EffectConfiguration->Tint;
 				auto sharpness = EffectConfiguration->Sharpness;
+				auto sharpnessThreshold = EffectConfiguration->SharpnessThreshold;
 
 				bool hasSharpness = sharpness > 0.0f;
-				bool hasColor = c != 1.0f || b != 1.0f || s != 1.0f;
+				bool hasColor = c != 1.0f || b != 0.0f || s != 1.0f;
 				bool hasTemperatureAndTint = tint != 0.0f || temp != 0.0f;
 
 				auto inputBitmap = context->InputFrame->Direct3DSurface ?
@@ -91,7 +92,7 @@ namespace FFmpegInterop
 
 				if (hasColor)
 				{
-					source = CreateColorEffect(source, c, b - 1.0f, s);
+					source = CreateColorEffect(source, c, b, s);
 				}
 
 				if (hasTemperatureAndTint)
@@ -101,7 +102,7 @@ namespace FFmpegInterop
 
 				if (hasSharpness)
 				{
-					source = CreateSharpnessEffect(source, sharpness);
+					source = CreateSharpnessEffect(source, sharpness, sharpnessThreshold);
 				}
 
 				auto renderTarget = CanvasRenderTarget::CreateFromDirect3D11Surface(canvasDevice, context->OutputFrame->Direct3DSurface);
@@ -142,10 +143,11 @@ namespace FFmpegInterop
 			return colorMatrixEffect;
 		}
 
-		ICanvasEffect^ CreateSharpnessEffect(ICanvasImage^ source, float sharpness)
+		ICanvasEffect^ CreateSharpnessEffect(ICanvasImage^ source, float sharpness, float sharpnessThreshold)
 		{
 			auto effect = ref new SharpenEffect();
 			effect->Amount = sharpness;
+			effect->Threshold = sharpnessThreshold;
 			effect->Source = source;
 			return effect;
 		}

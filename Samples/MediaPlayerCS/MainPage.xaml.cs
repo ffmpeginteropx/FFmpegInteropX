@@ -65,7 +65,7 @@ namespace MediaPlayerCS
             effectConfig .Tint= -0.3f;
             effectConfig.Sharpness = 4.0f;
 
-            MediaPlayerHelpers.AddVideoEffect(mediaElement, effectConfig, true);
+            effectConfig.AddVideoEffect(mediaElement);
            
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
