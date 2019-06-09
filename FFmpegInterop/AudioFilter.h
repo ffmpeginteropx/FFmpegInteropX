@@ -69,33 +69,25 @@ namespace FFmpegInterop {
 			{
 				auto effectDefinition = effects->GetAt(i);
 
-				auto effectName = StringUtils::PlatformStringToChar(effectDefinition->FilterName);
-				auto configString = StringUtils::PlatformStringToChar(effectDefinition->Configuration);
-				auto c_effectName = effectName->c_str();
-				auto c_configString = configString->c_str();
+				auto effectName = StringUtils::PlatformStringToUtf8String(effectDefinition->FilterName);
+				auto configString = StringUtils::PlatformStringToUtf8String(effectDefinition->Configuration);
 
 				AVFilterContext* ctx;
 				const AVFilter* filter;
 
-				filter = avfilter_get_by_name(c_effectName);
-				ctx = avfilter_graph_alloc_filter(graph, filter, c_configString);
+				filter = avfilter_get_by_name(effectName.c_str());
+				ctx = avfilter_graph_alloc_filter(graph, filter, configString.c_str());
 				if (!filter)
 				{
-					delete configString;
-					delete effectName;
 					return AVERROR_FILTER_NOT_FOUND;
 
 				}
-				if (avfilter_init_str(ctx, c_configString) < 0)
+				if (avfilter_init_str(ctx, configString.c_str()) < 0)
 				{
-					delete configString;
-					delete effectName;
 					return E_FAIL;
 				}
 				AVFilters.push_back(filter);
 				AVFilterContexts.push_back(ctx);
-				delete configString;
-				delete effectName;
 
 			}
 
@@ -108,7 +100,6 @@ namespace FFmpegInterop {
 			return error;
 		}
 
-		
 
 
 		HRESULT AllocGraph()

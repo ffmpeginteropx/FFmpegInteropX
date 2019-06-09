@@ -147,18 +147,6 @@ namespace FFmpegInterop
 			mutex.unlock();
 		}
 
-		// convert UTF-8 string to wstring
-		std::wstring utf8_to_wstring(const std::string& str)
-		{
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-			return myconv.from_bytes(str);
-		}
-
-		Platform::String ^ convertFromString(const std::wstring & input)
-		{
-			return ref new Platform::String(input.c_str(), (unsigned int)input.length());
-		}
-
 		int parseInt(std::wstring str)
 		{
 			return std::stoi(str, nullptr, 10);

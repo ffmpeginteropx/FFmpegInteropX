@@ -128,7 +128,7 @@ namespace FFmpegInterop
 			auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
 			if (result > 0 && gotSubtitle && subtitle.num_rects > 0)
 			{
-				auto str = utf8_to_wstring(std::string(subtitle.rects[0]->ass));
+				auto str = StringUtils::Utf8ToWString(subtitle.rects[0]->ass);
 				
 				int startStyle = -1;
 				int endStyle = -1;
@@ -182,7 +182,7 @@ namespace FFmpegInterop
 				SsaStyleDefinition^ style = nullptr;
 				if (!hasError && startStyle > 0 && endStyle > 0)
 				{
-					auto styleName = convertFromString(str.substr(startStyle, endStyle - startStyle));
+					auto styleName = StringUtils::WStringToPlatformString(str.substr(startStyle, endStyle - startStyle));
 					auto result = styles.find(styleName);
 					if (result != styles.end())
 					{
@@ -549,7 +549,7 @@ namespace FFmpegInterop
 					{
 						cue->CueRegion = subRegion;
 					}
-					auto timedText = convertFromString(str);
+					auto timedText = StringUtils::WStringToPlatformString(str);
 					if (timedText->Length() > 0)
 					{
 						textLine->Text = timedText;
@@ -693,10 +693,10 @@ namespace FFmpegInterop
 
 		void StoreSubtitleStyle(char* name, char *font, float size, int color, int outlineColor, int bold, int italic, int underline, int strikeout, float outline, Windows::Media::Core::TimedTextLineAlignment horizontalAlignment, Windows::Media::Core::TimedTextDisplayAlignment verticalAlignment, float marginL, float marginR, float marginV)
 		{
-			auto wname = utf8_to_wstring(std::string(name));
+			auto wname = StringUtils::Utf8ToWString(name);
 			
 			auto SubtitleRegion = ref new TimedTextRegion();
-			SubtitleRegion->Name = convertFromString(wname);
+			SubtitleRegion->Name = StringUtils::WStringToPlatformString(wname);
 
 			TimedTextSize extent;
 			extent.Unit = TimedTextUnit::Percentage;
@@ -771,7 +771,7 @@ namespace FFmpegInterop
 			if (wname.size() > 0 && SubtitleStyle->FontFamily->Length() > 0 && SubtitleStyle->FontSize.Value > 0)
 			{
 				auto style = ref new SsaStyleDefinition();
-				style->Name = convertFromString(wname);
+				style->Name = StringUtils::WStringToPlatformString(wname);
 				style->Region = SubtitleRegion;
 				style->Style = SubtitleStyle;
 
@@ -877,7 +877,7 @@ namespace FFmpegInterop
 
 		String^ GetFontFamily(char* str)
 		{
-			auto wstr = utf8_to_wstring(std::string(str));
+			auto wstr = StringUtils::Utf8ToWString(str);
 			return GetFontFamily(wstr);
 		}
 
@@ -912,7 +912,7 @@ namespace FFmpegInterop
 								auto fontFamily = std::wstring(title->Data());
 								if (str.compare(fontFamily) == 0)
 								{
-									result = "ms-appdata:///temp/" + m_config->AttachmentCacheFolderName + "/" + attachedFileHelper->InstanceId + "/" + attachment->Name + "#" + convertFromString(str);
+									result = "ms-appdata:///temp/" + m_config->AttachmentCacheFolderName + "/" + attachedFileHelper->InstanceId + "/" + attachment->Name + "#" + StringUtils::WStringToPlatformString(str);
 									break;
 								}
 							}
@@ -926,7 +926,7 @@ namespace FFmpegInterop
 
 			if (!result)
 			{
-				result = convertFromString(str);
+				result = StringUtils::WStringToPlatformString(str);
 			}
 
 			fonts[str] = result;

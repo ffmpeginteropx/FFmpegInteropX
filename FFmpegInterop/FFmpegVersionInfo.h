@@ -10,8 +10,6 @@ extern "C"
 using namespace Platform;
 using namespace Windows::Foundation;
 
-String^ ConvertString(const char* charString);
-
 void CheckFFmpegVersion(String^ current, String^ min)
 {
 	int v1, v2, v3, min1, min2, min3;
@@ -61,7 +59,7 @@ namespace FFmpegInterop
 				{
 					version = version++;
 				}
-				return ConvertString(version);
+				return StringUtils::Utf8ToPlatformString(version);
 			}
 		};
 
