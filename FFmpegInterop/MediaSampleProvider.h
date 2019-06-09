@@ -109,7 +109,5 @@ namespace FFmpegInterop
 	};
 }
 
-String^ ConvertString(const char* charString);
-
 // free AVBufferRef*
 void free_buffer(void *lpVoid);

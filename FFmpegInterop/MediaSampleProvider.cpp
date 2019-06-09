@@ -91,13 +91,13 @@ void FFmpegInterop::MediaSampleProvider::InitializeNameLanguageCodec()
 	auto title = av_dict_get(m_pAvStream->metadata, "title", NULL, 0);
 	if (title)
 	{
-		Name = ConvertString(title->value);
+		Name = StringUtils::Utf8ToPlatformString(title->value);
 	}
 
 	auto language = av_dict_get(m_pAvStream->metadata, "language", NULL, 0);
 	if (language)
 	{
-		Language = ConvertString(language->value);
+		Language = StringUtils::Utf8ToPlatformString(language->value);
 		if (Language->Length() == 3)
 		{
 			auto entry = LanguageTagConverter::TryGetLanguage(Language);
@@ -159,7 +159,7 @@ void FFmpegInterop::MediaSampleProvider::InitializeNameLanguageCodec()
 	auto codec = m_pAvCodecCtx->codec_descriptor->name;
 	if (codec)
 	{
-		CodecName = ConvertString(codec);
+		CodecName = StringUtils::Utf8ToPlatformString(codec);
 	}
 }
 
@@ -370,28 +370,6 @@ void MediaSampleProvider::Detach()
 	m_pReader = nullptr;
 	avcodec_close(m_pAvCodecCtx);
 	avcodec_free_context(&m_pAvCodecCtx);
-}
-
-String^ ConvertString(const char* charString)
-{
-	String^ result;
-
-	if (charString)
-	{
-		// Convert string from const char* to Platform::String
-		auto codecNameChars = charString;
-		size_t newsize = strlen(codecNameChars) + 1;
-		wchar_t * wcstring = new(std::nothrow) wchar_t[newsize];
-		if (wcstring != nullptr)
-		{
-			size_t convertedChars = 0;
-			mbstowcs_s(&convertedChars, wcstring, newsize, codecNameChars, _TRUNCATE);
-			result = ref new Platform::String(wcstring);
-			delete[] wcstring;
-		}
-	}
-
-	return result;
 }
 
 void free_buffer(void *lpVoid)
