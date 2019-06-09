@@ -56,11 +56,10 @@ namespace MediaPlayerCS
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
 
-            var properties = new PropertySet();
             VideoEffectConfiguration effectConfig = new VideoEffectConfiguration();
-            effectConfig.Brightness = 1.0f;
-            effectConfig.Contrast = 1.0f;
-            effectConfig.Saturation = 1.0f;
+            effectConfig.Brightness = 0.0f;
+            effectConfig.Contrast = 0.3f;
+            effectConfig.Saturation = 0.3f;
             effectConfig.Temperature = 0.3f;
             effectConfig .Tint= -0.3f;
             effectConfig.Sharpness = 4.0f;
