@@ -81,7 +81,7 @@ namespace FFmpegInterop
 				auto sharpnessThreshold = EffectConfiguration->SharpnessThreshold;
 
 				bool hasSharpness = sharpness > 0.0f;
-				bool hasColor = c != 1.0f || b != 0.0f || s != 1.0f;
+				bool hasColor = c != 0.0f || b != 0.0f || s != 0.0f;
 				bool hasTemperatureAndTint = tint != 0.0f || temp != 0.0f;
 
 				auto inputBitmap = context->InputFrame->Direct3DSurface ?
@@ -92,7 +92,7 @@ namespace FFmpegInterop
 
 				if (hasColor)
 				{
-					source = CreateColorEffect(source, c, b, s);
+					source = CreateColorEffect(source, c + 1.0f, b, s + 1.0f);
 				}
 
 				if (hasTemperatureAndTint)

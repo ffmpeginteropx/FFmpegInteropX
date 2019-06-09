@@ -10,37 +10,112 @@ namespace FFmpegInterop
 	[Windows::Foundation::Metadata::WebHostHidden]
 	public ref class VideoEffectConfiguration sealed
 	{
+	private:
+		float _Brightness;
+		float _Contrast;
+		float _Saturation;
+		float _Temperature;
+		float _Tint;
+		float _Sharpness;
+		float _SharpnessThreshold;
+
 	public:
-		///<summary>Adjusts the brightness of the image. Default value is 0.</summary>
-		property float Brightness;
+		///<summary>Adjusts the brightness of the image. Default value is 0, range -1 to 1.</summary>
+		property float Brightness
+		{
+			float get() { return _Brightness; }
+			void set(float value) 
+			{
+				if (value < -1 || value > 1)
+				{
+					throw ref new InvalidArgumentException("Invalid parameter.");
+				}
+				_Brightness = value;
+			}
+		}
 
-		///<summary>Adjusts the contrast of the image. Default value is 1.</summary>
-		property float Contrast;
+		///<summary>Adjusts the contrast of the image. Default value is 0, range -1 to 1.</summary>
+		property float Contrast
+		{
+			float get() { return _Contrast; }
+			void set(float value)
+			{
+				if (value < -1 || value > 1)
+				{
+					throw ref new InvalidArgumentException("Invalid parameter.");
+				}
+				_Contrast = value;
+			}
+		}
 
-		///<summary>Adjusts the saturation of the image. Default value is 1.</summary>
-		property float Saturation;
+		///<summary>Adjusts the saturation of the image. Default value is 0, range -1 to 1.</summary>
+		property float Saturation
+		{
+			float get() { return _Saturation; }
+			void set(float value)
+			{
+				if (value < -1 || value > 1)
+				{
+					throw ref new InvalidArgumentException("Invalid parameter.");
+				}
+				_Saturation = value;
+			}
+		}
 
 		///<summary>Adjusts the temperature of the image. Default value is 0, range -1 to 1.</summary>
-		property float Temperature;
+		property float Temperature
+		{
+			float get() { return _Temperature; }
+			void set(float value)
+			{
+				if (value < -1 || value > 1)
+				{
+					throw ref new InvalidArgumentException("Invalid parameter.");
+				}
+				_Temperature = value;
+			}
+		}
 
 		///<summary>Adjusts the tint of the image. Default value is 0, range -1 to 1.</summary>
-		property float Tint;
+		property float Tint
+		{
+			float get() { return _Tint; }
+			void set(float value)
+			{
+				if (value < -1 || value > 1)
+				{
+					throw ref new InvalidArgumentException("Invalid parameter.");
+				}
+				_Tint = value;
+			}
+		}
 
 		///<summary>Adjusts the sharpness of the image. Default value is 0, range 0 to 10.</summary>
-		property float Sharpness;
+		property float Sharpness
+		{
+			float get() { return _Sharpness; }
+			void set(float value)
+			{
+				if (value < 0 || value > 10)
+				{
+					throw ref new InvalidArgumentException("Invalid parameter.");
+				}
+				_Sharpness = value;
+			}
+		}
 
 		///<summary>Adjusts which areas are sharpened. Default value is 0, range 0 to 10.</summary>
-		property float SharpnessThreshold;
-
-		VideoEffectConfiguration()
+		property float SharpnessThreshold
 		{
-			Sharpness = 0.0f;
-			SharpnessThreshold = 0.0f;
-			Contrast = 1.0f;
-			Brightness = 0.0f;
-			Saturation = 1.0f;
-			Tint = 0.0f;
-			Temperature = 0.0f;
+			float get() { return _SharpnessThreshold; }
+			void set(float value)
+			{
+				if (value < 0 || value > 10)
+				{
+					throw ref new InvalidArgumentException("Invalid parameter.");
+				}
+				_SharpnessThreshold = value;
+			}
 		}
 
 		[Windows::Foundation::Metadata::DefaultOverloadAttribute]
