@@ -24,6 +24,7 @@
 #pragma once
 
 #include "MainPage.g.h"
+#include "FloatToDoubleConverter.h"
 
 namespace MediaPlayerCPP
 {
@@ -33,6 +34,7 @@ namespace MediaPlayerCPP
 		MainPage();
 
 		property FFmpegInterop::FFmpegInteropConfig^ Config;
+		property FFmpegInterop::VideoEffectConfiguration^ VideoEffectConfiguration;
 
 	private:
 		void OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
@@ -58,5 +60,6 @@ namespace MediaPlayerCPP
 		void DelaySubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void QuickenSubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 	};
 }

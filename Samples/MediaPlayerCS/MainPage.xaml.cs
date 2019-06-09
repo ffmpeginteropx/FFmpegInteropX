@@ -47,6 +47,12 @@ namespace MediaPlayerCS
             set;
         } = true;
 
+        public VideoEffectConfiguration VideoEffectConfiguration
+        {
+            get;
+            set;
+        }
+
         public MainPage()
         {
             Config = new FFmpegInteropConfig();
@@ -56,16 +62,8 @@ namespace MediaPlayerCS
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
 
-            VideoEffectConfiguration effectConfig = new VideoEffectConfiguration();
-            effectConfig.Brightness = 0.0f;
-            effectConfig.Contrast = 0.3f;
-            effectConfig.Saturation = 0.3f;
-            effectConfig.Temperature = 0.3f;
-            effectConfig .Tint= -0.3f;
-            effectConfig.Sharpness = 4.0f;
+            VideoEffectConfiguration = new VideoEffectConfiguration();
 
-            effectConfig.AddVideoEffect(mediaElement);
-           
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
 
@@ -385,6 +383,15 @@ namespace MediaPlayerCS
         private void MediaOpened(object sender, RoutedEventArgs e)
         {
             tbSubtitleDelay.Text = "Subtitle delay: 0s";
+        }
+
+        private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
+        {
+            mediaElement.RemoveAllEffects();
+            if (enableVideoEffects.IsOn)
+            {
+                VideoEffectConfiguration.AddVideoEffect(mediaElement);
+            }
         }
     }
 }

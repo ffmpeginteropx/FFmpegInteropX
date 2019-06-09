@@ -62,7 +62,7 @@ namespace FFmpegInterop
 			}
 		}
 
-		///<summary>Adjusts the temperature of the image. Default value is 0, range -1 to 1.</summary>
+		///<summary>Adjusts the color temperature of the image. Default value is 0, range -1 to 1.</summary>
 		property float Temperature
 		{
 			float get() { return _Temperature; }
@@ -136,17 +136,15 @@ namespace FFmpegInterop
 
 		void AddVideoEffect(MediaElement^ player)
 		{
-			VideoEffectConfiguration^ config = ref new VideoEffectConfiguration();
 			PropertySet^ set = ref new PropertySet();
-			set->Insert("config", config);
+			set->Insert("config", this);
 			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", true, set);
 		}
 
 		void AddVideoEffect(MediaElement^ player, bool optional)
 		{
-			VideoEffectConfiguration^ config = ref new VideoEffectConfiguration();
 			PropertySet^ set = ref new PropertySet();
-			set->Insert("config", config);
+			set->Insert("config", this);
 			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", optional, set);
 		}
 	};
