@@ -36,7 +36,7 @@
             <!-- Control panel -->
             <SplitView.Pane>
                 <ScrollViewer>
-                    <StackPanel Margin="10, 50, 0, 0">
+                    <StackPanel Margin="10, 50, 10, 0">
                         <TextBlock x:Name="Header" Text="Open Local File or URI"/>
                         <StackPanel Orientation="Horizontal">
                             <AppBarButton Content="Open Local File" Icon="OpenFile" Margin="0, 10, 10, 0" Click="OpenLocalFile"/>
