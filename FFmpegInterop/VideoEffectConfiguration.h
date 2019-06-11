@@ -20,49 +20,37 @@ namespace FFmpegInterop
 		float _SharpnessThreshold;
 
 	public:
-		///<summary>Adjusts the brightness of the image. Default value is 0, range -1 to 1.</summary>
+		///<summary>Adjusts the brightness of the image. Default value is 0, recommended range -1 to 1.</summary>
 		property float Brightness
 		{
 			float get() { return _Brightness; }
 			void set(float value) 
 			{
-				if (value < -1 || value > 1)
-				{
-					throw ref new InvalidArgumentException("Invalid parameter.");
-				}
 				_Brightness = value;
 			}
 		}
 
-		///<summary>Adjusts the contrast of the image. Default value is 0, range -1 to 1.</summary>
+		///<summary>Adjusts the contrast of the image. Default value is 0, recommended range -1 to 1.</summary>
 		property float Contrast
 		{
 			float get() { return _Contrast; }
 			void set(float value)
 			{
-				if (value < -1 || value > 1)
-				{
-					throw ref new InvalidArgumentException("Invalid parameter.");
-				}
 				_Contrast = value;
 			}
 		}
 
-		///<summary>Adjusts the saturation of the image. Default value is 0, range -1 to 1.</summary>
+		///<summary>Adjusts the saturation of the image. Default value is 0, recommended range -1 to 1.</summary>
 		property float Saturation
 		{
 			float get() { return _Saturation; }
 			void set(float value)
 			{
-				if (value < -1 || value > 1)
-				{
-					throw ref new InvalidArgumentException("Invalid parameter.");
-				}
 				_Saturation = value;
 			}
 		}
 
-		///<summary>Adjusts the color temperature of the image. Default value is 0, range -1 to 1.</summary>
+		///<summary>Adjusts the color temperature of the image. Default value is 0, allowed range -1 to 1.</summary>
 		property float Temperature
 		{
 			float get() { return _Temperature; }
@@ -76,7 +64,7 @@ namespace FFmpegInterop
 			}
 		}
 
-		///<summary>Adjusts the tint of the image. Default value is 0, range -1 to 1.</summary>
+		///<summary>Adjusts the tint of the image. Default value is 0, allowed range -1 to 1.</summary>
 		property float Tint
 		{
 			float get() { return _Tint; }
@@ -90,7 +78,7 @@ namespace FFmpegInterop
 			}
 		}
 
-		///<summary>Adjusts the sharpness of the image. Default value is 0, range 0 to 10.</summary>
+		///<summary>Adjusts the sharpness of the image. Default value is 0, allowed range 0 to 10.</summary>
 		property float Sharpness
 		{
 			float get() { return _Sharpness; }
@@ -104,7 +92,7 @@ namespace FFmpegInterop
 			}
 		}
 
-		///<summary>Adjusts which areas are sharpened. Default value is 0, range 0 to 10.</summary>
+		///<summary>Adjusts which areas are sharpened. Default value is 0, allowed range 0 to 10.</summary>
 		property float SharpnessThreshold
 		{
 			float get() { return _SharpnessThreshold; }
