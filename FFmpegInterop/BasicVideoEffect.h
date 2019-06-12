@@ -61,8 +61,6 @@ namespace FFmpegInterop
 			}
 		}
 
-	
-
 		virtual void SetEncodingProperties(Windows::Media::MediaProperties::VideoEncodingProperties ^encodingProperties, Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice ^device)
 		{
 			canvasDevice = CanvasDevice::CreateFromDirect3D11Device(device);
@@ -84,11 +82,7 @@ namespace FFmpegInterop
 				bool hasColor = c != 0.0f || b != 0.0f || s != 0.0f;
 				bool hasTemperatureAndTint = tint != 0.0f || temp != 0.0f;
 
-				auto inputBitmap = context->InputFrame->Direct3DSurface ?
-					CanvasBitmap::CreateFromDirect3D11Surface(canvasDevice, context->InputFrame->Direct3DSurface) :
-					CanvasBitmap::CreateFromSoftwareBitmap(canvasDevice, context->InputFrame->SoftwareBitmap);
-
-				ICanvasImage^ source = inputBitmap;
+				ICanvasImage^ source = CanvasBitmap::CreateFromDirect3D11Surface(canvasDevice, context->InputFrame->Direct3DSurface);
 
 				if (hasColor)
 				{
