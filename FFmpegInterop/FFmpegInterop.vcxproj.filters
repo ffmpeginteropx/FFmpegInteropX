@@ -60,6 +60,9 @@
     <ClCompile Include="CharacterEncoding.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="BasicVideoEffect.cpp">
+      <Filter>Effects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -156,9 +159,18 @@
     <ClInclude Include="MediaMetadata.h">
       <Filter>Metadata</Filter>
     </ClInclude>
-    <ClInclude Include="StringUtils.h" />
     <ClInclude Include="KeyStringValuePair.h">
       <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoFilter.h" />
+    <ClInclude Include="StringUtils.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoEffectConfiguration.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicVideoEffect.h">
+      <Filter>Effects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -177,5 +189,6 @@
     <None Include="FFmpegInteropLibs.props">
       <Filter>Build</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

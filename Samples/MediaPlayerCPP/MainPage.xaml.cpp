@@ -56,6 +56,8 @@ MainPage::MainPage()
 	// Show the control panel on startup so user can start opening media
 	Splitter->IsPaneOpen = true;
 
+	VideoEffectConfiguration = ref new FFmpegInterop::VideoEffectConfiguration();
+
 	// optionally check for recommended ffmpeg version
 	//FFmpegVersionInfo::CheckRecommendedVersion();
 
@@ -396,4 +398,14 @@ void MediaPlayerCPP::MainPage::QuickenSubtitles(Platform::Object^ sender, Window
 void MediaPlayerCPP::MainPage::MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	tbSubtitleDelay->Text = "Subtitle delay: 0s";
+}
+
+
+void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	mediaElement->RemoveAllEffects();
+	if (enableVideoEffects->IsOn)
+	{
+		VideoEffectConfiguration->AddVideoEffect(mediaElement);
+	}
 }
