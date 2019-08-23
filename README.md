@@ -33,18 +33,25 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 
 **Prerequisites:**
 
-- Visual Studio 2017 15.9.x
+Either Visual Studio 2017 or Visual Studio 2019 is required.
 
-- Optional components from Visual Studio Installer:
+- Visual Studio 2017 (15.9.x or higher):
+  - Select Universal Windows Platform development workload in Installer
+  - Select additional components from Installer:
+    - Universal Windows Platform tools
+    - VC++ 2017 version 15.9 v14.16 latest v141 tools
+    - Win 10 SDK (10.0.15063.0) for uwp: c#, vb, js
+    - Win 10 SDK (10.0.15063.0) for uwp: c++
+    - Visual C++ compilers and libraries for ARM64
+    - Visual C++ compilers and libraries for ARM
+    - C++ UWP tools for ARM64
+    - C++ runtime for uwp
 
-  - Universal Windows Platform tools
-  - VC++ 2017 version 15.9 v14.16 latest v141 tools
-  - Win 10 SDK (10.0.15063.0) for uwp: c#, vb, js
-  - Win 10 SDK (10.0.15063.0) for uwp: c++
-  - Visual C++ compilers and libraries for ARM64
-  - Visual C++ compilers and libraries for ARM
-  - C++ UWP tools for ARM64
-  - C++ runtime for uwp
+- Visual Studio 2019:
+  - Select Universal Windows Platform development workload in Installer
+  - Manually install Windows 10 SDK 10.0.15063.0 from SDK archive:
+    https://developer.microsoft.com/en-us/windows/downloads/sdk-archive
+
 
 ## FFmpeg Version
 
@@ -88,9 +95,9 @@ Your `FFmpegInteropX` folder should look as follows
 	    Libs\zlib\             - zlib compression library
 	    Samples\               - Sample Media Player applications in C++ and C#
 	    Tests\                 - Unit tests for FFmpegInterop
-	    BuildFFmpeg_VS2017.bat - FFmpeg build file for Visual Studio 2017
+	    BuildFFmpeg_VS2017.bat - FFmpeg build file for Visual Studio 2017 and higher
 	    FFmpegConfig.sh        - Internal script that contains FFmpeg configure options
-	    FFmpegInterop.sln      - Microsoft Visual Studio 2017 solution file for Windows 10 apps development
+	    FFmpegInterop.sln      - Microsoft Visual Studio solution file for Windows 10 apps development
 	    LICENSE
 	    README.md
 
@@ -98,7 +105,7 @@ Your `FFmpegInteropX` folder should look as follows
 
 Now that you have the FFmpeg source code, you can follow the instructions on how to [build FFmpeg for WinRT](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT) apps. *Follow the setup instruction very carefully to avoid build issues!! Be very careful not to miss a single step. If you have problems building ffmpeg, go through these steps again, since chances are high that you missed some detail.*
 
-## Building ffmpeg with Visual Studio 2017
+## Building ffmpeg with Visual Studio 2017 / 2019
 
 After installing the ffmpeg build tools, you can invoke `BuildFFmpeg_VS2017.bat` from a normal cmd prompt. It builds all Windows 10 versions of ffmpeg (x86, x64, ARM and ARM64). 
 
