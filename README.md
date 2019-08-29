@@ -50,7 +50,7 @@ Either Visual Studio 2017 or Visual Studio 2019 is required.
 - Visual Studio 2019:
   - Select Universal Windows Platform development workload in Installer
   - Manually install Windows 10 SDK 10.0.15063.0 from SDK archive:
-    https://developer.microsoft.com/en-us/windows/downloads/sdk-archive  
+    https://developer.microsoft.com/en-us/windows/downloads/sdk-archive
 
 
 ## FFmpeg Version
