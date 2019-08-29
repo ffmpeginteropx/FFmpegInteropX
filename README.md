@@ -50,7 +50,7 @@ Either Visual Studio 2017 or Visual Studio 2019 is required.
 - Visual Studio 2019:
   - Select Universal Windows Platform development workload in Installer
   - Manually install Windows 10 SDK 10.0.15063.0 from SDK archive:
-    https://developer.microsoft.com/en-us/windows/downloads/sdk-archive
+    https://developer.microsoft.com/en-us/windows/downloads/sdk-archive  
 
 
 ## FFmpeg Version
@@ -104,6 +104,11 @@ Your `FFmpegInteropX` folder should look as follows
 ## Installing ffmpeg build tools
 
 Now that you have the FFmpeg source code, you can follow the instructions on how to [build FFmpeg for WinRT](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT) apps. *Follow the setup instruction very carefully to avoid build issues!! Be very careful not to miss a single step. If you have problems building ffmpeg, go through these steps again, since chances are high that you missed some detail.*
+
+### Note
+In case you downloaded yasm 64-bit version you'll also need [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-US/download/details.aspx?id=48145). This package is usually installed with VS 2017 but not with VS2019.  In case it's missing yasm will ouput this error message while building ffmpeg:
+
+    C:/msys64/usr/bin/yasm.exe: error while loading shared libraries: MSVCR100.dll: cannot open shared object file: No such file or directory
 
 ## Building ffmpeg with Visual Studio 2017 / 2019
 
