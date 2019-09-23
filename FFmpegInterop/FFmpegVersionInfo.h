@@ -34,7 +34,7 @@ void CheckFFmpegVersion(String^ current, String^ min)
 
 	if (countV < 2 || countMin < 2)
 	{
-		throw ref new COMException(E_UNEXPECTED);
+		OutputDebugString(L"Failed to parse ffmpeg version number.");
 	}
 	else if (min1 > v1 || (min1 == v1 && min2 > v2) || (min1 == v1 && min2 == v2 && min3 > v3))
 	{
