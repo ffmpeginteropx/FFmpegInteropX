@@ -12,7 +12,7 @@ param(
     [string] $PlatformToolset = 'v141',
 
     [ValidateSet('x86', 'x64', 'ARM', 'ARM64')]
-    [string[]] $Platform = ('x86', 'x64', 'ARM', 'ARM64'),
+    [string[]] $Platforms = ('x86', 'x64', 'ARM', 'ARM64'),
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
@@ -34,7 +34,7 @@ if (! (Test-Path $PSScriptRoot\ffmpeg\configure)) {
     Exit
 }
 
-# [$env:PROCESSOR_ARCHITECTURE][$Platform]
+# [$env:PROCESSOR_ARCHITECTURE][$platform]
 $vcvarsArchs = @{
     'x86' = @{
         'x86'   = 'x86'
