@@ -22,17 +22,9 @@ param(
     [System.IO.FileInfo] $Msys2Bin = 'C:\msys64\usr\bin\bash.exe'
 )
 
-$vsLatestPath = & "$VSInstallerFolder\vswhere.exe" -latest -property installationPath -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+[System.IO.DirectoryInfo] $vsLatestPath = & "$VSInstallerFolder\vswhere.exe" -latest -property installationPath -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
 
 Write-Host "Visual Studio Installation folder: [$vsLatestPath]"
-
-try {
-    $vsLatestDir = [System.IO.DirectoryInfo] $vsLatestPath
-}
-catch {
-    "Could not find Visual Studio installation at [$vsLatestPath]."
-    Exit
-}
 
 # Export full current PATH from environment into MSYS2
 $env:MSYS2_PATH_TYPE = 'inherit'
@@ -124,6 +116,7 @@ foreach ($platform in $Platforms) {
 
     # Build ffmpeg
     & $Msys2Bin --login -x $PSScriptRoot\FFmpegConfig.sh Win10 $platform
-    #ls -Recurse -Include *.pdb .\ffuj\ffmpeg\Output\Windows10\x64\ | cp -Destination .\erasme\
+
+    # Copy PDBs to built binaries dir
     Get-ChildItem -Recurse -Include '*.pdb' .\ffmpeg\Output\Windows10\$platform | Copy-Item -Destination .\ffmpeg\Build\Windows10\$platform\bin\
 }
