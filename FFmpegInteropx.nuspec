@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <description>FFmpeg decoding library for Windows 10 UWP Apps</description>
+    <authors>FFmpegInteropX</authors>
+    <projectUrl>https://github.com/ffmpeginteropx/FFmpegInteropX</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+  </metadata>
+  <files>
+
+    <file src="ffmpeg\Build\Windows10\x64\include\**\*.h" target="include" />
+    <file src="x64\Release\FFmpegInterop\FFmpegInterop.winmd" target="lib\uap10.0" />
+
+    <file src="ffmpeg\Build\Windows10\x64\bin\*.dll"                      target="runtimes\win10-x64\native" />
+    <file src="ffmpeg\Build\Windows10\x64\bin\*.pdb"                      target="runtimes\win10-x64\native" />
+    <file src="FFmpegInterop\x64\Release\FFmpegInterop\FFmpegInterop.dll" target="runtimes\win10-x64\native" />
+    <file src="FFmpegInterop\x64\Release\FFmpegInterop\FFmpegInterop.pdb" target="runtimes\win10-x64\native" />
+
+
+    <file src="ffmpeg\Build\Windows10\x86\bin\*.dll"                      target="runtimes\win10-x86\native" />
+    <file src="ffmpeg\Build\Windows10\x86\bin\*.pdb"                      target="runtimes\win10-x86\native" />
+    <file src="FFmpegInterop\Release\FFmpegInterop\FFmpegInterop.dll" target="runtimes\win10-x86\native" />
+    <file src="FFmpegInterop\Release\FFmpegInterop\FFmpegInterop.pdb" target="runtimes\win10-x86\native" />
+
+  </files>
+</package>
