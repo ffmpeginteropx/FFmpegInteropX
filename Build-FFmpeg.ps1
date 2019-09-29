@@ -1,4 +1,10 @@
 param(
+
+    [ValidateSet('x86', 'x64', 'ARM', 'ARM64')]
+    [string[]] $Platforms = ('x86', 'x64', 'ARM', 'ARM64'),
+
+    [version] $VcVersion = '14.1',
+
     <#
         Example values:
         8.1
@@ -6,13 +12,7 @@ param(
         10.0.17763.0
         10.0.18362.0
     #>
-    [string] $WindowsTargetPlatformVersion = '10.0.15063.0',
-
-    [ValidateSet('v141', 'v142')]
-    [string] $PlatformToolset = 'v141',
-
-    [ValidateSet('x86', 'x64', 'ARM', 'ARM64')]
-    [string[]] $Platforms = ('x86', 'x64', 'ARM', 'ARM64'),
+    [version] $WindowsTargetPlatformVersion = '10.0.15063.0',
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
@@ -34,6 +34,9 @@ if (! (Test-Path $PSScriptRoot\ffmpeg\configure)) {
     Exit
 }
 
+# 14.16.27023 => v141
+$platformToolSet = "v$($VcVersion.Major)$("$VcVersion.Minor"[0])"
+
 # [$env:PROCESSOR_ARCHITECTURE][$platform]
 $vcvarsArchs = @{
     'x86' = @{
@@ -50,6 +53,8 @@ $vcvarsArchs = @{
         'ARM64' = 'amd64_arm64'
     }
 }
+
+$start = Get-Date
 
 foreach ($platform in $Platforms) {
 
@@ -80,7 +85,7 @@ foreach ($platform in $Platforms) {
         /p:Configuration="${Configuration}WinRT" `
         /p:Platform=$platform `
         /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-        /p:PlatformToolset=$PlatformToolset
+        /p:PlatformToolset=$platformToolSet
 
     Get-ChildItem -Recurse -Include '*.h' $libs\build\libzlib\include | Copy-Item -Destination $libs\include\
     Copy-Item -Recurse $libs\build\libzlib\licenses\* -Destination $libs\licenses\
@@ -92,7 +97,7 @@ foreach ($platform in $Platforms) {
         /p:Configuration="${Configuration}WinRT" `
         /p:Platform=$platform `
         /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-        /p:PlatformToolset=$PlatformToolset
+        /p:PlatformToolset=$platformToolSet
 
     Get-ChildItem -Recurse -Include '*.h' $libs\build\libbz2\include | Copy-Item -Destination $libs\include\
     Copy-Item -Recurse $libs\build\libbz2\licenses\* -Destination $libs\licenses\
@@ -104,7 +109,7 @@ foreach ($platform in $Platforms) {
         /p:Configuration="${Configuration}WinRT" `
         /p:Platform=$platform `
         /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-        /p:PlatformToolset=$PlatformToolset
+        /p:PlatformToolset=$platformToolSet
 
     Get-ChildItem -Recurse -Include '*.h' $libs\build\libiconv\include | Copy-Item -Destination $libs\include\
     Copy-Item -Recurse $libs\build\libiconv\licenses\* -Destination $libs\licenses\
@@ -120,3 +125,5 @@ foreach ($platform in $Platforms) {
     # Copy PDBs to built binaries dir
     Get-ChildItem -Recurse -Include '*.pdb' .\ffmpeg\Output\Windows10\$platform | Copy-Item -Destination .\ffmpeg\Build\Windows10\$platform\bin\
 }
+
+Write-Host 'Time elapsed' ' {0}' -f ((Get-Date) - $start)
