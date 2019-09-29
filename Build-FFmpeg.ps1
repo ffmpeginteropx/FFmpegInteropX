@@ -5,7 +5,6 @@ param(
 
     <#
         Example values:
-
         14.1
         14.2
         14.16
