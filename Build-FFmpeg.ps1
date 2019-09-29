@@ -57,7 +57,7 @@ foreach ($platform in $Platforms) {
 
     # Load environment from VCVARS.
     $vcvarsArch = $vcvarsArchs[$env:PROCESSOR_ARCHITECTURE][$platform]
-    CMD /c "`"$vsLatestDir\VC\Auxiliary\Build\vcvarsall.bat`" $vcvarsArch uwp $WindowsTargetPlatformVersion && SET" | . {
+    CMD /c "`"$vsLatestPath\VC\Auxiliary\Build\vcvarsall.bat`" $vcvarsArch uwp $WindowsTargetPlatformVersion && SET" | . {
         PROCESS {
             if ($_ -match '^([^=]+)=(.*)') {
                 if ($matches[1] -notin 'HOME') {
@@ -99,7 +99,7 @@ foreach ($platform in $Platforms) {
     Copy-Item $libs\build\libbz2\lib\$platform\libbz2_winrt.lib $libs\lib\bz2.lib
     Copy-Item $libs\build\libbz2\lib\$platform\libbz2_winrt.pdb $libs\lib\bz2.pdb
 
-    MSBuild.exe .\Libs\bzip2\SMP\libiconv.vcxproj `
+    MSBuild.exe .\Libs\libiconv\SMP\libiconv.vcxproj `
         /p:OutDir="$libs\build\" `
         /p:Configuration="${Configuration}WinRT" `
         /p:Platform=$platform `
