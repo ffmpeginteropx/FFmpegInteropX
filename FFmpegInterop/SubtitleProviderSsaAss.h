@@ -128,7 +128,7 @@ namespace FFmpegInterop
 			auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
 			if (result > 0 && gotSubtitle && subtitle.num_rects > 0)
 			{
-				auto str = utf8_to_wstring(std::string(subtitle.rects[0]->ass));
+				auto str = StringUtils::Utf8ToWString(subtitle.rects[0]->ass);
 				
 				int startStyle = -1;
 				int endStyle = -1;
@@ -182,7 +182,7 @@ namespace FFmpegInterop
 				SsaStyleDefinition^ style = nullptr;
 				if (!hasError && startStyle > 0 && endStyle > 0)
 				{
-					auto styleName = convertFromString(str.substr(startStyle, endStyle - startStyle));
+					auto styleName = StringUtils::WStringToPlatformString(str.substr(startStyle, endStyle - startStyle));
 					auto result = styles.find(styleName);
 					if (result != styles.end())
 					{
@@ -249,7 +249,7 @@ namespace FFmpegInterop
 								// apply previous subformat, if any
 								if (subFormat != nullptr)
 								{
-									subFormat->Length = nextEffect - subFormat->StartIndex;
+									subFormat->Length = (int)nextEffect - subFormat->StartIndex;
 									textLine->Subformats->Append(subFormat);
 								}
 
@@ -257,7 +257,7 @@ namespace FFmpegInterop
 								subStyle = subStyle != nullptr ? CopyStyle(subStyle) : CopyStyle(cueStyle);
 								subFormat = ref new TimedTextSubformat();
 								subFormat->SubformatStyle = subStyle;
-								subFormat->StartIndex = nextEffect;
+								subFormat->StartIndex = (int)nextEffect;
 
 								bool hasPosition = false;
 								double posX = 0, posY = 0;
@@ -269,7 +269,7 @@ namespace FFmpegInterop
 								while (end != std::string::npos)
 								{
 									tags.push_back(effectContent.substr(start, end - start));
-									start = end + 1;
+									start = (int)end + 1;
 									end = effectContent.find(L"\\", start);
 								}
 								tags.push_back(effectContent.substr(start, end));
@@ -278,50 +278,56 @@ namespace FFmpegInterop
 								{
 									try
 									{
-										if (startsWith(tag, L"fn"))
+										if (checkTag(tag, L"fn"))
 										{
 											auto fnName = tag.substr(2);
-											subStyle->FontFamily = GetFontFamily(fnName);
+											if (fnName.size() > 0)
+											{
+												subStyle->FontFamily = GetFontFamily(fnName);
+											}
 										}
-										else if (startsWith(tag, L"fs"))
+										else if (checkTag(tag, L"fs"))
 										{
 											auto size = parseDouble(tag.substr(2));
-											subStyle->FontSize = GetFontSize(size);
+											if (size > 0)
+											{
+												subStyle->FontSize = GetFontSize(size);
+											}
 										}
-										else if (startsWith(tag, L"c"))
+										else if (checkTag(tag, L"c", 2))
 										{
 											int color = parseHexOrDecimalInt(tag, 2);
 											subStyle->Foreground = ColorFromArgb(color << 8 | subStyle->Foreground.A);
 										}
-										else if (startsWith(tag, L"1c"))
+										else if (checkTag(tag, L"1c", 2))
 										{
 											int color = parseHexOrDecimalInt(tag, 3);
 											subStyle->Foreground = ColorFromArgb(color << 8 | subStyle->Foreground.A);
 										}
-										else if (startsWith(tag, L"3c"))
+										else if (checkTag(tag, L"3c", 2))
 										{
 											int color = parseHexOrDecimalInt(tag, 3);
 											subStyle->OutlineColor = ColorFromArgb(color << 8 | subStyle->OutlineColor.A);
 										}
-										else if (startsWith(tag, L"alpha"))
+										else if (checkTag(tag, L"alpha", 2))
 										{
 											auto alpha = parseHexOrDecimalInt(tag, 6);
 											auto color = subStyle->Foreground;
 											subStyle->Foreground = ColorFromArgb(alpha, color.R, color.G, color.B);
 										}
-										else if (startsWith(tag, L"1a"))
+										else if (checkTag(tag, L"1a", 2))
 										{
 											auto alpha = parseHexOrDecimalInt(tag, 3);
 											auto color = subStyle->Foreground;
 											subStyle->Foreground = ColorFromArgb(alpha, color.R, color.G, color.B);
 										}
-										else if (startsWith(tag, L"3a"))
+										else if (checkTag(tag, L"3a", 2))
 										{
 											auto alpha = parseHexOrDecimalInt(tag, 3);
 											auto color = subStyle->OutlineColor;
 											subStyle->OutlineColor = ColorFromArgb(alpha, color.R, color.G, color.B);
 										}
-										else if (startsWith(tag, L"an"))
+										else if (checkTag(tag, L"an"))
 										{
 											// numpad alignment
 											auto alignment = parseInt(tag.substr(2));
@@ -332,7 +338,7 @@ namespace FFmpegInterop
 											cue->CueStyle = CopyStyle(cueStyle);
 											cue->CueStyle->LineAlignment = subStyle->LineAlignment;
 										}
-										else if (startsWith(tag, L"a"))
+										else if (checkTag(tag, L"a"))
 										{
 											// legacy alignment
 											auto alignment = parseInt(tag.substr(1));
@@ -343,15 +349,18 @@ namespace FFmpegInterop
 											cue->CueStyle = CopyStyle(cueStyle);
 											cue->CueStyle->LineAlignment = subStyle->LineAlignment;
 										}
-										else if (startsWith(tag, L"pos"))
+										else if (checkTag(tag, L"pos", 5))
 										{
 											size_t numDigits;
 											posX = std::stod(tag.substr(4), &numDigits);
-											posY = std::stod(tag.substr(5 + numDigits), nullptr);
-											if (!subRegion) subRegion = CopyRegion(cueRegion);
-											hasPosition = true;
+											if (numDigits > 0 && tag.length() > 5 + numDigits)
+											{
+												posY = std::stod(tag.substr(5 + numDigits), nullptr);
+												if (!subRegion) subRegion = CopyRegion(cueRegion);
+												hasPosition = true;
+											}
 										}
-										else if (startsWith(tag, L"bord"))
+										else if (checkTag(tag, L"bord"))
 										{
 											auto border = std::stod(tag.substr(4));
 											auto outline = subStyle->OutlineThickness;
@@ -400,7 +409,7 @@ namespace FFmpegInterop
 												drawingEnd = nextEffect;
 											}
 										}
-										else if (tag[0] == L'p' && tag[1] >= L'1' && tag[1] <= L'9')
+										else if (tag[0] == L'p' && tag.size() > 1 && tag[1] >= L'1' && tag[1] <= L'9')
 										{
 											isDrawing = true;
 											drawingStart = nextEffect;
@@ -493,7 +502,7 @@ namespace FFmpegInterop
 									isDrawing = false;
 
 									// cleanup subformats
-									subFormat->StartIndex = drawingStart;
+									subFormat->StartIndex = (int)drawingStart;
 
 									for each (auto style in textLine->Subformats->GetView())
 									{
@@ -507,7 +516,7 @@ namespace FFmpegInterop
 										}
 										else if ((size_t)(style->StartIndex + style->Length) > drawingStart)
 										{
-											style->Length = drawingStart - style->StartIndex;
+											style->Length = (int)drawingStart - style->StartIndex;
 										}
 									}
 								}
@@ -533,14 +542,14 @@ namespace FFmpegInterop
 					// apply last subformat, if any
 					if (subFormat != nullptr)
 					{
-						subFormat->Length = str.size() - subFormat->StartIndex;
+						subFormat->Length = (int)str.size() - subFormat->StartIndex;
 						textLine->Subformats->Append(subFormat);
 					}
 					if (subRegion != nullptr)
 					{
 						cue->CueRegion = subRegion;
 					}
-					auto timedText = convertFromString(str);
+					auto timedText = StringUtils::WStringToPlatformString(str);
 					if (timedText->Length() > 0)
 					{
 						textLine->Text = timedText;
@@ -684,8 +693,10 @@ namespace FFmpegInterop
 
 		void StoreSubtitleStyle(char* name, char *font, float size, int color, int outlineColor, int bold, int italic, int underline, int strikeout, float outline, Windows::Media::Core::TimedTextLineAlignment horizontalAlignment, Windows::Media::Core::TimedTextDisplayAlignment verticalAlignment, float marginL, float marginR, float marginV)
 		{
+			auto wname = StringUtils::Utf8ToWString(name);
+			
 			auto SubtitleRegion = ref new TimedTextRegion();
-			SubtitleRegion->Name = ConvertString(name);
+			SubtitleRegion->Name = StringUtils::WStringToPlatformString(wname);
 
 			TimedTextSize extent;
 			extent.Unit = TimedTextUnit::Percentage;
@@ -756,13 +767,16 @@ namespace FFmpegInterop
 				SubtitleStyle->IsLineThroughEnabled = strikeout;
 			}
 
-			auto style = ref new SsaStyleDefinition();
-			auto wname = utf8_to_wstring(std::string(name));
-			style->Name = convertFromString(wname);
-			style->Region = SubtitleRegion;
-			style->Style = SubtitleStyle;
+			// sanity check style parameters
+			if (wname.size() > 0 && SubtitleStyle->FontFamily->Length() > 0 && SubtitleStyle->FontSize.Value > 0)
+			{
+				auto style = ref new SsaStyleDefinition();
+				style->Name = StringUtils::WStringToPlatformString(wname);
+				style->Region = SubtitleRegion;
+				style->Style = SubtitleStyle;
 
-			styles[style->Name] = style;
+				styles[style->Name] = style;
+			}
 		}
 
 		TimedTextStyle^ CopyStyle(TimedTextStyle^ style)
@@ -863,7 +877,7 @@ namespace FFmpegInterop
 
 		String^ GetFontFamily(char* str)
 		{
-			auto wstr = utf8_to_wstring(std::string(str));
+			auto wstr = StringUtils::Utf8ToWString(str);
 			return GetFontFamily(wstr);
 		}
 
@@ -898,7 +912,7 @@ namespace FFmpegInterop
 								auto fontFamily = std::wstring(title->Data());
 								if (str.compare(fontFamily) == 0)
 								{
-									result = "ms-appdata:///temp/" + m_config->AttachmentCacheFolderName + "/" + attachedFileHelper->InstanceId + "/" + attachment->Name + "#" + convertFromString(str);
+									result = "ms-appdata:///temp/" + m_config->AttachmentCacheFolderName + "/" + attachedFileHelper->InstanceId + "/" + attachment->Name + "#" + StringUtils::WStringToPlatformString(str);
 									break;
 								}
 							}
@@ -912,7 +926,7 @@ namespace FFmpegInterop
 
 			if (!result)
 			{
-				result = convertFromString(str);
+				result = StringUtils::WStringToPlatformString(str);
 			}
 
 			fonts[str] = result;

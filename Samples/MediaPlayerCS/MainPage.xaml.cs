@@ -21,6 +21,7 @@ using FFmpegInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Windows.Foundation.Collections;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
@@ -46,6 +47,12 @@ namespace MediaPlayerCS
             set;
         } = true;
 
+        public VideoEffectConfiguration VideoEffectConfiguration
+        {
+            get;
+            set;
+        }
+
         public MainPage()
         {
             Config = new FFmpegInteropConfig();
@@ -55,9 +62,11 @@ namespace MediaPlayerCS
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
 
+            VideoEffectConfiguration = new VideoEffectConfiguration();
+
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
-           
+
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
         }
@@ -87,6 +96,7 @@ namespace MediaPlayerCS
                     // Instantiate FFmpegInteropMSS using the opened local file stream
 
                     FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, Config);
+                    var tags = FFmpegMSS.MetadataTags.ToArray();
                     if (AutoCreatePlaybackItem)
                     {
                         CreatePlaybackItemAndStartPlaybackInternal();
@@ -335,6 +345,7 @@ namespace MediaPlayerCS
         {
             if (FFmpegMSS != null)
             {
+                //
                 FFmpegMSS.SetAudioEffects(new AvEffectDefinition[] { new AvEffectDefinition("aecho", "0.8:0.9:1000|1800:0.3|0.25") });
             }
 
@@ -374,9 +385,20 @@ namespace MediaPlayerCS
             tbSubtitleDelay.Text = "Subtitle delay: 0s";
         }
 
+      
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
         {
             PassthroughVideo.IsEnabled = !AutoDetect.IsOn;
+        }
+        
+        private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
+        {
+        
+	mediaElement.RemoveAllEffects();
+            if (enableVideoEffects.IsOn)
+            {
+                VideoEffectConfiguration.AddVideoEffect(mediaElement);
+            }
         }
     }
 }

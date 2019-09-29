@@ -26,57 +26,74 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d" Loaded="Page_Loaded">
+    <Page.Resources>
+        <local:FloatToDoubleConverter x:Key="FloatToDoubleConverter" />
+    </Page.Resources>
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <SplitView x:Name="Splitter">
 
             <!-- Control panel -->
             <SplitView.Pane>
-                <StackPanel VerticalAlignment="Stretch" Margin="10, 50, 0, 0">
-                    <TextBlock x:Name="Header" Text="Open Local File or URI"/>
-                    <StackPanel Orientation="Horizontal">
-                        <AppBarButton Content="Open Local File" Icon="OpenFile" Margin="0, 10, 10, 0" Click="OpenLocalFile"/>
-                        <TextBox PlaceholderText="Enter URI and press Enter" InputScope="Url" Width="210" Height="30" KeyUp="URIBoxKeyUp"/>
-                    </StackPanel>
+                <ScrollViewer>
 
-                    <ToggleSwitch Header="Passthrough Audio MP3" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioMP3}"/>
-                    <ToggleSwitch Header="Passthrough Audio AAC" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioAAC}" Margin="0,0,0,20" />
+                    <StackPanel VerticalAlignment="Stretch" Margin="10, 50, 10, 0">
+                        <TextBlock x:Name="Header" Text="Open Local File or URI"/>
+                        <StackPanel Orientation="Horizontal">
+                            <AppBarButton Content="Open Local File" Icon="OpenFile" Margin="0, 10, 10, 0" Click="OpenLocalFile"/>
+                            <TextBox PlaceholderText="Enter URI and press Enter" InputScope="Url" Width="210" Height="30" KeyUp="URIBoxKeyUp"/>
+                        </StackPanel>
+
+                        <ToggleSwitch Header="Passthrough Audio MP3" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioMP3}"/>
+                        <ToggleSwitch Header="Passthrough Audio AAC" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioAAC}" Margin="0,0,0,20" />
 
                     <ToggleSwitch Header="Auto-Detect Hardware Accelection" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.AutoDetectHardwareAcceleration}" x:Name="AutoDetect" Toggled="AutoDetect_Toggled" />
-                    <ToggleSwitch Header="Passthrough Video" OffContent="OFF" OnContent="ON" IsOn="True" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
+                        <ToggleSwitch Header="Passthrough Video" OffContent="OFF" OnContent="ON" IsOn="True" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
                     
-                    <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.VideoOutputAllowIyuv}"/>
+                        <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.VideoOutputAllowIyuv}"/>
 
-                    <Button Content="Extract Frame" Click="ExtractFrame" Margin="0,20,10,10" />
-                    <ToggleSwitch x:Name="grabFrameExactSeek" Header="Exact Seek for Extract Frame" OffContent="OFF" OnContent="ON" IsOn="True"/>
+                        <Button Content="Extract Frame" Click="ExtractFrame" Margin="0,20,10,10" />
+                        <ToggleSwitch x:Name="grabFrameExactSeek" Header="Exact Seek for Extract Frame" OffContent="OFF" OnContent="ON" IsOn="True"/>
 
-                    <ComboBox x:Name="cbEncodings" PlaceholderText="Select ANSI subtitle encoding" SelectionChanged="CbEncodings_SelectionChanged">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Description}" />
-                                    <TextBlock Text="-" Margin="10,0" />
-                                    <TextBlock Text="{Binding WindowsCodePage}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                        <ComboBox x:Name="cbEncodings" PlaceholderText="Select ANSI subtitle encoding" SelectionChanged="CbEncodings_SelectionChanged">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Description}" />
+                                        <TextBlock Text="-" Margin="10,0" />
+                                        <TextBlock Text="{Binding WindowsCodePage}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
 
-                    <Button Content="Load External Subtitle File (ffmpeg)" Click="LoadSubtitleFileFFmpeg"  Margin="0,20,10,10" />
-                    <Button Content="Load External Subtitle File (winAPI)" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
+                        <Button Content="Load External Subtitle File (ffmpeg)" Click="LoadSubtitleFileFFmpeg"  Margin="0,20,10,10" />
+                        <Button Content="Load External Subtitle File (winAPI)" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
 
-                    <TextBlock x:Name="tbSubtitleDelay" Text="Subtitle delay: 0s" Margin="0,20,0,5"/>
-                    <StackPanel Orientation="Horizontal">
-                        <AppBarButton Icon="Remove" Label="Quicken subtitles" Click="QuickenSubtitles"></AppBarButton>
-                        <AppBarButton Icon="Add" Label="Delay subtitles" Click="DelaySubtitles"></AppBarButton>
+                        <TextBlock x:Name="tbSubtitleDelay" Text="Subtitle delay: 0s" Margin="0,20,0,5"/>
+                        <StackPanel Orientation="Horizontal">
+                            <AppBarButton Icon="Remove" Label="Quicken subtitles" Click="QuickenSubtitles"></AppBarButton>
+                            <AppBarButton Icon="Add" Label="Delay subtitles" Click="DelaySubtitles"></AppBarButton>
+                        </StackPanel>
+
+                        <TextBlock Text="Audio Effects:" Margin="0,20,0,5"/>
+                        <StackPanel Orientation="Horizontal">
+                            <AppBarButton Icon="Accept" Click="AddTestFilter" Label="Add audio effect."/>
+                            <AppBarButton Icon="Remove" Click="RemoveTestFilter"  Label="Remove audio effect."/>
+                        </StackPanel>
+
+                        <TextBlock Text="Video Effects:" Margin="0,20,0,5"/>
+                        <ToggleSwitch x:Name="enableVideoEffects" Header="Enable video effects (applied on next file)" OffContent="OFF" OnContent="ON" Toggled="EnableVideoEffects_Toggled" />
+                        <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Contrast" Value="{x:Bind Path=VideoEffectConfiguration.Contrast, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Brightness" Value="{x:Bind Path=VideoEffectConfiguration.Brightness, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Saturation" Value="{x:Bind Path=VideoEffectConfiguration.Saturation, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Temperature" Value="{x:Bind Path=VideoEffectConfiguration.Temperature, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Tint" Value="{x:Bind Path=VideoEffectConfiguration.Tint, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="1" StepFrequency="0.1" Header="Sharpness" Value="{x:Bind Path=VideoEffectConfiguration.Sharpness, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="1" StepFrequency="0.1" Header="SharpnessThreshold" Value="{x:Bind Path=VideoEffectConfiguration.SharpnessThreshold, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+
                     </StackPanel>
-
-                    <TextBlock Text="Filters..." Margin="0,20,0,5"/>
-                    <StackPanel Orientation="Horizontal">
-                        <AppBarButton Icon="Accept" Click="AddTestFilter" Label="Add filter"/>
-                        <AppBarButton Icon="Remove" Click="RemoveTestFilter"  Label="Remove filter"/>
-                    </StackPanel>
-                </StackPanel>
+                </ScrollViewer>
             </SplitView.Pane>
 
             <!-- Main content -->

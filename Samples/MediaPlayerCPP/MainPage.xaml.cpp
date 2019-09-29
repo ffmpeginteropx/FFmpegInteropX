@@ -56,6 +56,8 @@ MainPage::MainPage()
 	// Show the control panel on startup so user can start opening media
 	Splitter->IsPaneOpen = true;
 
+	VideoEffectConfiguration = ref new FFmpegInterop::VideoEffectConfiguration();
+
 	// optionally check for recommended ffmpeg version
 	//FFmpegVersionInfo::CheckRecommendedVersion();
 
@@ -402,4 +404,12 @@ void MediaPlayerCPP::MainPage::MediaOpened(Platform::Object^ sender, Windows::UI
 void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	PassthroughVideo->IsEnabled = !AutoDetect->IsOn;
+}
+void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	mediaElement->RemoveAllEffects();
+	if (enableVideoEffects->IsOn)
+	{
+		VideoEffectConfiguration->AddVideoEffect(mediaElement);
+	}
 }

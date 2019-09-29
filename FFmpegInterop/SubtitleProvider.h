@@ -147,18 +147,6 @@ namespace FFmpegInterop
 			mutex.unlock();
 		}
 
-		// convert UTF-8 string to wstring
-		std::wstring utf8_to_wstring(const std::string& str)
-		{
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-			return myconv.from_bytes(str);
-		}
-
-		Platform::String ^ convertFromString(const std::wstring & input)
-		{
-			return ref new Platform::String(input.c_str(), (unsigned int)input.length());
-		}
-
 		int parseInt(std::wstring str)
 		{
 			return std::stoi(str, nullptr, 10);
@@ -174,18 +162,20 @@ namespace FFmpegInterop
 			return std::stoi(str, nullptr, 16);
 		}
 
-		int parseHexOrDecimalInt(std::wstring str, int offset)
+		int parseHexOrDecimalInt(std::wstring str, size_t offset)
 		{
-			if (str[offset] == L'H')
+			if (str.length() > offset + 1 && str[offset] == L'H')
 			{
 				return parseHexInt(str.substr(offset + 1));
 			}
 			return parseInt(str.substr(offset));
 		}
 
-		bool startsWith(std::wstring str, std::wstring prefix)
+		bool checkTag(std::wstring str, std::wstring prefix, size_t minParamLenth = 1)
 		{
-			return str.compare(0, prefix.size(), prefix) == 0;
+			return 
+				str.size() >= (prefix.size() + minParamLenth) && 
+				str.compare(0, prefix.size(), prefix) == 0;
 		}
 
 	private:

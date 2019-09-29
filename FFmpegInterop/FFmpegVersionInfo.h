@@ -10,8 +10,6 @@ extern "C"
 using namespace Platform;
 using namespace Windows::Foundation;
 
-String^ ConvertString(const char* charString);
-
 void CheckFFmpegVersion(String^ current, String^ min)
 {
 	int v1, v2, v3, min1, min2, min3;
@@ -36,7 +34,7 @@ void CheckFFmpegVersion(String^ current, String^ min)
 
 	if (countV < 2 || countMin < 2)
 	{
-		throw ref new COMException(E_UNEXPECTED);
+		OutputDebugString(L"Failed to parse ffmpeg version number.");
 	}
 	else if (min1 > v1 || (min1 == v1 && min2 > v2) || (min1 == v1 && min2 == v2 && min3 > v3))
 	{
@@ -61,7 +59,7 @@ namespace FFmpegInterop
 				{
 					version = version++;
 				}
-				return ConvertString(version);
+				return StringUtils::Utf8ToPlatformString(version);
 			}
 		};
 

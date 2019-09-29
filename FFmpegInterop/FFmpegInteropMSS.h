@@ -30,6 +30,7 @@
 #include "AttachedFileHelper.h"
 #include "CodecChecker.h"
 #include <collection.h>
+#include "MediaMetadata.h"
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -67,7 +68,7 @@ namespace FFmpegInterop
 
 		///<summary>Creates a FFmpegInteropMSS from a Uri.</summary>
 		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromUriAsync(String^ uri, FFmpegInteropConfig^ config);
-		
+
 		///<summary>Creates a FFmpegInteropMSS from a Uri.</summary>
 		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromUriAsync(String^ uri) { return CreateFromUriAsync(uri, ref new FFmpegInteropConfig()); }
 
@@ -88,29 +89,29 @@ namespace FFmpegInterop
 
 		///<summary>Sets audio effects. This replaces any effects which were already set.</summary>
 		void SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects);
-		
+
 		///<summary>Sets video effects. This replaces any effects which were already set.</summary>
 		void SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects);
-		
-		
+
+
 		///<summary>Disables audio effects.</summary>
 		void DisableAudioEffects();
-		
+
 		///<summary>Disables video effects.</summary>
 		void DisableVideoEffects();
-	
+
 		///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
 		MediaThumbnailData^ ExtractThumbnail();
 
 		///<summary>Gets the MediaStreamSource. Using the MediaStreamSource will prevent subtitles from working. Please use CreateMediaPlaybackItem instead.</summary>
 		MediaStreamSource^ GetMediaStreamSource();
-		
+
 		///<summary>Creates a MediaPlaybackItem for playback.</summary>
 		MediaPlaybackItem^ CreateMediaPlaybackItem();
-	
+
 		///<summary>Creates a MediaPlaybackItem for playback which starts at the specified stream offset.</summary>
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime);
-		
+
 		///<summary>Creates a MediaPlaybackItem for playback which starts at the specified stream offset and ends after the specified duration.</summary>
 		MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime, TimeSpan durationLimit);
 
@@ -137,6 +138,15 @@ namespace FFmpegInterop
 			FFmpegInteropConfig^ get()
 			{
 				return config;
+			}
+		}		
+
+		property IVectorView<IKeyValuePair<String^, String^>^>^ MetadataTags
+		{
+			IVectorView<IKeyValuePair<String^, String^>^>^ get()
+			{
+				metadata->LoadMetadataTags(avFormatCtx);
+				return metadata->MetadataTags;
 			}
 		}
 
@@ -294,9 +304,11 @@ namespace FFmpegInterop
 
 		AttachedFileHelper^ attachedFileHelper;
 
+		MediaMetadata^ metadata;
+
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher^ dispatcher;
-		
+
 
 		String^ videoCodecName;
 		String^ audioCodecName;
