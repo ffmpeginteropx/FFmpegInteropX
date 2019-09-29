@@ -3,6 +3,15 @@ param(
     [ValidateSet('x86', 'x64', 'ARM', 'ARM64')]
     [string[]] $Platforms = ('x86', 'x64', 'ARM', 'ARM64'),
 
+    <#
+        Example values:
+
+        14.1
+        14.2
+        14.16
+        14.16.27023
+        14.23.27820
+    #>
     [version] $VcVersion = '14.1',
 
     <#
