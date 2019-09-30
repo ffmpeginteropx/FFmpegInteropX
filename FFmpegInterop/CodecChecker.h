@@ -28,35 +28,123 @@ namespace FFmpegInterop
 		UHD8K_DCI,
 	};
 
-	ref class HardwareAccelerationStatus
+	ref class ProfileInfo
 	{
 	internal:
+		int Profile;
+		VideoResolution Resolution;
+		String^ Description;
+
+		ProfileInfo(int profile, VideoResolution resolution, String^ desc)
+		{
+			Profile = profile;
+			Resolution = resolution;
+			Description = desc;
+		}
+	};
+
+	public ref class ProfileInformationView sealed
+	{
+		String ^resolution, ^profile;
+	public:
+		property String ^Resolution {
+			String^ get()
+			{
+				return resolution;
+			}
+		}
+
+		property String^ Profile {
+			String^ get()
+			{
+				return profile;
+			}
+		}
+
+	internal:
+		ProfileInformationView(String^ profileDescription, VideoResolution videoResolution)
+		{
+			profile = profileDescription;
+			switch (videoResolution)
+			{
+			case VideoResolution::FullHD:
+				resolution = "Full HD (1920x1080)";
+				break;
+			case VideoResolution::HD:
+				resolution = "HD (1280 x 720)";
+				break;
+			case VideoResolution::SD:
+				resolution = "SD (720 x 480)";
+				break;
+			case VideoResolution::UHD4K:
+				resolution = "UHD 4K (3840 x 2160)";
+				break;
+			case VideoResolution::UHD4K_DCI:
+				resolution = "UHD 4K DCI (4096 x 2160)";
+				break;
+			case VideoResolution::UHD8K:
+				resolution = "UHD 8K (7680 x 4320)";
+				break;
+			case VideoResolution::UHD8K_DCI:
+				resolution = "UHD 8K DCI (8192 x 4320)";
+				break;
+			case VideoResolution::UnknownResolution:
+				resolution = "Unknown resolution";
+				break;
+			}
+		}
+	};
+
+	ref class HardwareAccelerationStatus
+	{
+		Vector <ProfileInformationView^>^ infoView;
+
+	internal:
 		property bool IsAvailable;
-		property std::vector<std::pair<int, VideoResolution>> SupportedProfiles;
+		property std::vector<ProfileInfo^> SupportedProfiles;
 		property VideoResolution MaxResolution;
+
+		HardwareAccelerationStatus()
+		{
+			infoView = ref new Vector <ProfileInformationView^>();
+		}
 
 		void Reset()
 		{
 			IsAvailable = false;
 			SupportedProfiles.clear();
 			MaxResolution = VideoResolution::UnknownResolution;
+			infoView->Clear();
 		}
 
-		void AppendProfile(int profile)
+		void AppendProfile(int profile, String^ description)
 		{
-			SupportedProfiles.push_back(std::pair<int, VideoResolution>(profile, VideoResolution::UnknownResolution));
+			SupportedProfiles.push_back(ref new ProfileInfo(profile, VideoResolution::UnknownResolution, description));
 		}
 
-		void AppendProfile(int profile, VideoResolution resolution)
+		void AppendProfile(int profile, VideoResolution resolution, String^ description)
 		{
-			SupportedProfiles.push_back(std::pair<int, VideoResolution>(profile, resolution));
+			SupportedProfiles.push_back(ref new ProfileInfo(profile, resolution, description));
+		}
+
+		IVectorView<ProfileInformationView^>^ GetView()
+		{
+			if (infoView->Size != SupportedProfiles.size())
+			{
+				for (int i = 0; i < SupportedProfiles.size(); i++)
+				{
+					auto profile = SupportedProfiles.at(i);
+					infoView->Append(ref new ProfileInformationView(profile->Description, profile->Resolution));
+				}
+			}
+			return infoView->GetView();
 		}
 	};
 
 	public ref class CodecChecker sealed
 	{
 	public:
-		
+
 		static IAsyncAction^ InitializeAsync()
 		{
 			return create_async(&Initialize);
@@ -91,6 +179,42 @@ namespace FFmpegInterop
 			return create_async([] { return Launcher::LaunchUriAsync(ref new Uri("ms-windows-store://pdp/?ProductId=9n4d0msmp0pt")); });
 		}
 
+	
+		static IVectorView<ProfileInformationView^>^ GetHardwareAccelerationH264View()
+		{
+			return HardwareAccelerationH264->GetView();
+		}
+
+		static IVectorView<ProfileInformationView^>^ GetHardwareAccelerationHEVCView()
+		{
+			return HardwareAccelerationHEVC->GetView();
+		}
+
+		static IVectorView<ProfileInformationView^>^ GetHardwareAccelerationWMV3View()
+		{
+			return HardwareAccelerationWMV3->GetView();
+		}
+
+		static IVectorView<ProfileInformationView^>^ GetHardwareAccelerationVC1View()
+		{
+			return HardwareAccelerationVC1->GetView();
+		}
+
+		static IVectorView<ProfileInformationView^>^ GetHardwareAccelerationVP9View()
+		{
+			return HardwareAccelerationVP9->GetView();
+		}
+
+		static IVectorView<ProfileInformationView^>^ GetHardwareAccelerationVP8View()
+		{
+			return HardwareAccelerationVP8->GetView();
+		}
+
+		static IVectorView<ProfileInformationView^>^ GetHardwareAccelerationMPEG2View()
+		{
+			return HardwareAccelerationMPEG2->GetView();
+		}
+
 	internal:
 
 		static void Initialize()
@@ -98,7 +222,7 @@ namespace FFmpegInterop
 			if (!hasCheckedHardwareAcceleration)
 			{
 				mutex.lock();
-				
+
 				if (!hasCheckedHardwareAcceleration)
 				{
 					PerformCheckHardwareAcceleration();
@@ -134,7 +258,7 @@ namespace FFmpegInterop
 						isMpeg2ExtensionInstalled = IsAppInstalledAsync("Microsoft.MPEG2VideoExtension_8wekyb3d8bbwe").get();
 						//isMpeg2ExtensionInstalled = IsVideoCodecInstalledAsync(CodecSubtypes::VideoFormatMpeg2).get();
 					}
-					catch ( ...)
+					catch (...)
 					{
 						isMpeg2ExtensionInstalled = false;
 					}
@@ -220,19 +344,19 @@ namespace FFmpegInterop
 
 					if (SUCCEEDED(hr))
 					{
-						if (profile == D3D11_DECODER_PROFILE_H264_VLD_FGT || 
-							profile == D3D11_DECODER_PROFILE_H264_VLD_NOFGT || 
+						if (profile == D3D11_DECODER_PROFILE_H264_VLD_FGT ||
+							profile == D3D11_DECODER_PROFILE_H264_VLD_NOFGT ||
 							profile == D3D11_DECODER_PROFILE_H264_VLD_WITHFMOASO_NOFGT)
 						{
 							if (!hardwareAccelerationH264->IsAvailable)
 							{
 								hardwareAccelerationH264->IsAvailable = true;
 								hardwareAccelerationH264->MaxResolution = CheckResolution(profile, videoDevice);
-								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_BASELINE);
-								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_CONSTRAINED_BASELINE);
-								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_EXTENDED);
-								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_MAIN);
-								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_HIGH);
+								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_BASELINE, "H264 Baseline");
+								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_CONSTRAINED_BASELINE, "H264 Constrained Baseline");
+								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_EXTENDED, "H264 Extended");
+								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_MAIN, "H264 Main");
+								hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_HIGH, "H264 High");
 							}
 							continue;
 						}
@@ -247,11 +371,11 @@ namespace FFmpegInterop
 
 							if (profile == D3D11_DECODER_PROFILE_HEVC_VLD_MAIN)
 							{
-								hardwareAccelerationHEVC->AppendProfile(FF_PROFILE_HEVC_MAIN, resolution);
+								hardwareAccelerationHEVC->AppendProfile(FF_PROFILE_HEVC_MAIN, resolution, "HEVC Main");
 							}
 							else
 							{
-								hardwareAccelerationHEVC->AppendProfile(FF_PROFILE_HEVC_MAIN_10, resolution);
+								hardwareAccelerationHEVC->AppendProfile(FF_PROFILE_HEVC_MAIN_10, resolution, "HEVC Main 10");
 							}
 							continue;
 						}
@@ -262,8 +386,8 @@ namespace FFmpegInterop
 							if (!hardwareAccelerationMPEG2->IsAvailable)
 							{
 								hardwareAccelerationMPEG2->IsAvailable = true;
-								hardwareAccelerationMPEG2->AppendProfile(FF_PROFILE_MPEG2_MAIN);
-								hardwareAccelerationMPEG2->AppendProfile(FF_PROFILE_MPEG2_SIMPLE);
+								hardwareAccelerationMPEG2->AppendProfile(FF_PROFILE_MPEG2_MAIN, "MPEG2 Main");
+								hardwareAccelerationMPEG2->AppendProfile(FF_PROFILE_MPEG2_SIMPLE, "MPEG2 Simple");
 							}
 
 							auto resolution = CheckResolution(profile, videoDevice);
@@ -294,11 +418,11 @@ namespace FFmpegInterop
 
 							if (profile == D3D11_DECODER_PROFILE_VP9_VLD_PROFILE0)
 							{
-								hardwareAccelerationVP9->AppendProfile(FF_PROFILE_VP9_0, resolution);
+								hardwareAccelerationVP9->AppendProfile(FF_PROFILE_VP9_0, resolution, "VP9 0");
 							}
 							else
 							{
-								hardwareAccelerationVP9->AppendProfile(FF_PROFILE_VP9_2, resolution);
+								hardwareAccelerationVP9->AppendProfile(FF_PROFILE_VP9_2, resolution, "VP9 2");
 							}
 							continue;
 						}
@@ -338,14 +462,14 @@ namespace FFmpegInterop
 				{
 					for each (auto profileInfo in status->SupportedProfiles)
 					{
-						if (profileInfo.first == profile)
+						if (profileInfo->Profile == profile)
 						{
 							result = true;
 
 							// check profile resolution, if restricted
-							if (profileInfo.second > 0)
+							if (profileInfo->Resolution > 0)
 							{
-								CheckVideoResolution(result, width, height, profileInfo.second);
+								CheckVideoResolution(result, width, height, profileInfo->Resolution);
 							}
 
 							break;
