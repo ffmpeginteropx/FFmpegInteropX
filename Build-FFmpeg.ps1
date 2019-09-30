@@ -70,7 +70,7 @@ foreach ($platform in $Platforms) {
 
     # Load environment from VCVARS.
     $vcvarsArch = $vcvarsArchs[$env:PROCESSOR_ARCHITECTURE][$platform]
-    CMD /c "`"$vsLatestPath\VC\Auxiliary\Build\vcvarsall.bat`" $vcvarsArch uwp $WindowsTargetPlatformVersion && SET" | . {
+    CMD /c "`"$vsLatestPath\VC\Auxiliary\Build\vcvarsall.bat`" $vcvarsArch uwp $WindowsTargetPlatformVersion -vcvars_ver=$VcVersion && SET" | . {
         PROCESS {
             if ($_ -match '^([^=]+)=(.*)') {
                 if ($matches[1] -notin 'HOME') {
