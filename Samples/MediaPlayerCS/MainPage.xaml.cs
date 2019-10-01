@@ -116,7 +116,7 @@ namespace MediaPlayerCS
         private void CreatePlaybackItemAndStartPlaybackInternal()
         {
             playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
-            
+
             // Pass MediaStreamSource to Media Element
             mediaElement.SetPlaybackSource(playbackItem);
 
@@ -385,20 +385,26 @@ namespace MediaPlayerCS
             tbSubtitleDelay.Text = "Subtitle delay: 0s";
         }
 
-      
+
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
         {
             PassthroughVideo.IsEnabled = !AutoDetect.IsOn;
         }
-        
+
         private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
         {
-        
-	mediaElement.RemoveAllEffects();
+
+            mediaElement.RemoveAllEffects();
             if (enableVideoEffects.IsOn)
             {
                 VideoEffectConfiguration.AddVideoEffect(mediaElement);
             }
+        }
+
+        private async void ShowHardwareinfo(object sender, RoutedEventArgs e)
+        {
+            HardwareSupportDialog page = new HardwareSupportDialog();
+            await page.ShowAsync();
         }
     }
 }

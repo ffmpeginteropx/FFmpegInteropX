@@ -1,0 +1,48 @@
+﻿<ContentDialog
+    x:Class="MediaPlayerCS.HardwareSupportDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MediaPlayerCS"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    IsPrimaryButtonEnabled="True"
+    PrimaryButtonText="Close"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <TextBlock Text="Hardware support info" Margin="20, 10, 10, 10" FontSize="24" FontWeight="SemiLight"/>
+        <ListView x:Name="lsvHardwareInfo" Grid.Row="1">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"></RowDefinition>
+                            <RowDefinition></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{Binding CodecName}" FontSize="20" FontWeight="SemiLight"/>
+                            <TextBlock Text="{Binding SupportStatus}" FontSize="18"/>
+                            <ListView ItemsSource="{Binding ProfileInfos}">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <RichTextBlock TextWrapping="WrapWholeWords">
+                                            <Paragraph>
+                                                <Run Text="{Binding Profile}"/>
+                                                <Run Text="{Binding Resolution}"/>
+                                            </Paragraph>
+                                        </RichTextBlock>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</ContentDialog>
