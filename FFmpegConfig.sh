@@ -31,8 +31,8 @@ if [ "$1" == "Win10" ]; then
         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
         --prefix=../../../Build/Windows10/x86
-        make -j8
-        make install
+        make -j8 || exit
+        make install || exit
         popd
 
     elif [ "$2" == "x64" ]; then
@@ -62,8 +62,8 @@ if [ "$1" == "Win10" ]; then
         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
         --prefix=../../../Build/Windows10/x64
-        make -j8
-        make install
+        make -j8 || exit
+        make install || exit
         popd
 
     elif [ "$2" == "ARM" ]; then
@@ -96,8 +96,8 @@ if [ "$1" == "Win10" ]; then
         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
         --prefix=../../../Build/Windows10/ARM
-        make -j8
-        make install
+        make -j8 || exit
+        make install || exit
         popd
 
     elif [ "$2" == "ARM64" ]; then
@@ -129,8 +129,8 @@ if [ "$1" == "Win10" ]; then
         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
         --prefix=../../../Build/Windows10/ARM64
-        make -j8
-        make install
+        make -j8 || exit
+        make install || exit
         popd
 
     fi
