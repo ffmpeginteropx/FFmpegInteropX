@@ -62,9 +62,9 @@ Minimum: **FFmpeg 4.0**
 
 ##### Important: Update of gas-preprocessor required!
 
-The gas-preprocessor on the FFmpeg site is currently out-of-date. Please download it from the following website instead, otherwise you won't be able to compile ARM64 successfully.
+The gas-preprocessor has changed since FFmpeg 4.2. Please download an updated copy here:
 
-https://github.com/libav/gas-preprocessor
+https://github.com/FFmpeg/gas-preprocessor
 
 An exception will be thrown if FFmpegInterop is used with anything lower than the minimum version. The recommended version has been tested and is what we currently recommend to use with FFmpegInteropX.
 
@@ -111,12 +111,6 @@ Your `FFmpegInteropX` folder should look as follows
 ## Installing ffmpeg build tools
 
 Now that you have the FFmpeg source code, you can follow the instructions on how to [build FFmpeg for WinRT](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT) apps. *Follow the setup instruction very carefully to avoid build issues!! Be very careful not to miss a single step. If you have problems building ffmpeg, go through these steps again, since chances are high that you missed some detail.*
-
-##### Important: Update of gas-preprocessor required!
-
-The gas-preprocessor on the FFmpeg site is currently out-of-date. Please download it from the following website instead, otherwise you won't be able to compile ARM64 successfully.
-
-https://github.com/libav/gas-preprocessor
 
 ### Note
 In case you downloaded yasm 64-bit version you'll also need [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-US/download/details.aspx?id=48145). This package is usually installed with VS 2017 but not with VS2019.  In case it's missing yasm will ouput this error message while building ffmpeg:
