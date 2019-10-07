@@ -72,8 +72,15 @@ namespace MediaPlayerCS
 
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
+                      
 
-            TryOpenLastFile();
+            this.KeyDown += MainPage_KeyDown;
+        }
+
+
+        private async void MainPage_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            await TryOpenLastFile();
         }
 
         private async Task TryOpenLastFile()

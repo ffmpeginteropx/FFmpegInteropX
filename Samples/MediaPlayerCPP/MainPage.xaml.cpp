@@ -64,8 +64,8 @@ MainPage::MainPage()
 
 	// populate character encodings
 	cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
-
-	TryOpenLastFile();
+	
+	this->KeyDown += ref new Windows::UI::Xaml::Input::KeyEventHandler(this, &MediaPlayerCPP::MainPage::OnKeyDown);
 }
 
 void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -434,3 +434,12 @@ void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ send
 		VideoEffectConfiguration->AddVideoEffect(mediaElement);
 	}
 }
+
+
+void MediaPlayerCPP::MainPage::OnKeyDown(Platform::Object ^sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs ^e)
+{
+	TryOpenLastFile();
+}
+
+
+
