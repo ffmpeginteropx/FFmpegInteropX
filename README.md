@@ -22,6 +22,7 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
   - VP9 (Requires "VP9 Video Extensions" from Windows Store)
 - Major performance improvements (zero-copy data handling in all important areas)
 - Frame grabber support
+- Chapter information support
 - API improvements
 - Include zlib and bzlib libraries into ffmpeg for full MKV subtitle support
 - Include iconv for character encoding conversion
