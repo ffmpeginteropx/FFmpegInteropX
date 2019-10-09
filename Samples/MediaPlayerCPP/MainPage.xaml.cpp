@@ -36,6 +36,7 @@ using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
 using namespace Windows::Media::Playback;
 using namespace Windows::Storage;
+using namespace Windows::Storage::AccessCache;
 using namespace Windows::Storage::Pickers;
 using namespace Windows::Storage::Streams;
 using namespace Windows::UI::Popups;
@@ -63,6 +64,8 @@ MainPage::MainPage()
 
 	// populate character encodings
 	cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
+	
+	this->KeyDown += ref new Windows::UI::Xaml::Input::KeyEventHandler(this, &MediaPlayerCPP::MainPage::OnKeyDown);
 }
 
 void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -73,6 +76,19 @@ void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI
 
 void MediaPlayerCPP::MainPage::OnButtonPressed(Windows::Media::SystemMediaTransportControls ^sender, Windows::Media::SystemMediaTransportControlsButtonPressedEventArgs ^args)
 {
+}
+
+void MainPage::TryOpenLastFile()
+{
+
+	{
+		//Try open last file
+		create_task(StorageApplicationPermissions::FutureAccessList->GetFileAsync(
+			StorageApplicationPermissions::FutureAccessList->Entries->GetAt(0).Token)).then([this](StorageFile^ file)
+				{
+					OpenLocalFile(file);
+				});
+	}
 }
 
 void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -87,18 +103,28 @@ void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::Routed
 	{
 		if (file != nullptr)
 		{
-			currentFile = file;
-			mediaElement->Stop();
+			OpenLocalFile(file);
+		}
+	});
+}
 
-			// Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
-			create_task(file->OpenAsync(FileAccessMode::Read)).then([this, file](task<IRandomAccessStream^> stream)
+void MainPage::OpenLocalFile(StorageFile^ file)
+{
+	currentFile = file;
+	mediaElement->Stop();
+
+	// Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
+	create_task(file->OpenAsync(FileAccessMode::Read)).then([this, file](task<IRandomAccessStream^> stream)
+		{
+			try
 			{
-				try
-				{
-					// Instantiate FFmpegInteropMSS using the opened local file stream
-					IRandomAccessStream^ readStream = stream.get();
-					create_task(FFmpegInteropMSS::CreateFromStreamAsync(readStream, Config)).then([this](FFmpegInteropMSS^ result)
+				// Instantiate FFmpegInteropMSS using the opened local file stream
+				IRandomAccessStream^ readStream = stream.get();
+				create_task(FFmpegInteropMSS::CreateFromStreamAsync(readStream, Config)).then([this, file](FFmpegInteropMSS^ result)
 					{
+						StorageApplicationPermissions::FutureAccessList->Clear();
+						StorageApplicationPermissions::FutureAccessList->Add(file);
+
 						FFmpegMSS = result;
 						playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
@@ -114,14 +140,12 @@ void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::Routed
 						controls->IsPauseEnabled = true;
 						controls->PlaybackStatus = Windows::Media::MediaPlaybackStatus::Playing;
 					});
-				}
-				catch (Exception^ ex)
-				{
-					DisplayErrorMessage(ex->Message);
-				}
-			});
-		}
-	});
+			}
+			catch (Exception ^ ex)
+			{
+				DisplayErrorMessage(ex->Message);
+			}
+		});
 }
 
 void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e)
@@ -413,3 +437,16 @@ void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ send
 		VideoEffectConfiguration->AddVideoEffect(mediaElement);
 	}
 }
+
+
+void MediaPlayerCPP::MainPage::OnKeyDown(Platform::Object ^sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs ^e)
+{
+	if (e->Key == Windows::System::VirtualKey::Enter && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down)
+		== Windows::UI::Core::CoreVirtualKeyStates::Down && StorageApplicationPermissions::FutureAccessList->Entries->Size == 1)
+	{
+		TryOpenLastFile();
+	}
+}
+
+
+

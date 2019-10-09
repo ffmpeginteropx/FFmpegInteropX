@@ -21,13 +21,16 @@ using FFmpegInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Windows.Foundation.Collections;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
+using Windows.Storage.AccessCache;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using Windows.System;
+using Windows.UI.Core;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -69,6 +72,34 @@ namespace MediaPlayerCS
 
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
+                      
+
+            this.KeyDown += MainPage_KeyDown;
+        }
+
+
+        private async void MainPage_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == VirtualKey.Enter && (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down)
+                == CoreVirtualKeyStates.Down && StorageApplicationPermissions.FutureAccessList.Entries.Count == 1)
+            {
+                await TryOpenLastFile();
+            }
+        }
+
+        private async Task TryOpenLastFile()
+        {
+            try
+            {
+                //Try open last file
+                var file = await StorageApplicationPermissions.FutureAccessList.GetFileAsync(
+                    StorageApplicationPermissions.FutureAccessList.Entries[0].Token);
+
+                await OpenLocalFile(file);
+            }
+            catch (Exception)
+            {
+            }
         }
 
         public FFmpegInteropConfig Config { get; set; }
@@ -85,31 +116,38 @@ namespace MediaPlayerCS
 
             if (file != null)
             {
-                currentFile = file;
-                mediaElement.Stop();
+                await OpenLocalFile(file);
+            }
+        }
 
-                // Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
-                IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
+        private async Task OpenLocalFile(StorageFile file)
+        {
+            currentFile = file;
+            mediaElement.Stop();
 
-                try
+            // Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
+            IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
+
+            try
+            {
+                StorageApplicationPermissions.FutureAccessList.Clear();
+                StorageApplicationPermissions.FutureAccessList.Add(file);
+
+                // Instantiate FFmpegInteropMSS using the opened local file stream
+                FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, Config);
+                var tags = FFmpegMSS.MetadataTags.ToArray();
+                if (AutoCreatePlaybackItem)
                 {
-                    // Instantiate FFmpegInteropMSS using the opened local file stream
-
-                    FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, Config);
-                    var tags = FFmpegMSS.MetadataTags.ToArray();
-                    if (AutoCreatePlaybackItem)
-                    {
-                        CreatePlaybackItemAndStartPlaybackInternal();
-                    }
-                    else
-                    {
-                        playbackItem = null;
-                    }
+                    CreatePlaybackItemAndStartPlaybackInternal();
                 }
-                catch (Exception ex)
+                else
                 {
-                    DisplayErrorMessage(ex.Message);
+                    playbackItem = null;
                 }
+            }
+            catch (Exception ex)
+            {
+                DisplayErrorMessage(ex.Message);
             }
         }
 
