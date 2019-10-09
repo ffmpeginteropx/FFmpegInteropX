@@ -80,8 +80,7 @@ void MediaPlayerCPP::MainPage::OnButtonPressed(Windows::Media::SystemMediaTransp
 
 void MainPage::TryOpenLastFile()
 {
-	if ((Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down)
-		== Windows::UI::Core::CoreVirtualKeyStates::Down && StorageApplicationPermissions::FutureAccessList->Entries->Size == 1)
+
 	{
 		//Try open last file
 		create_task(StorageApplicationPermissions::FutureAccessList->GetFileAsync(
@@ -438,7 +437,11 @@ void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ send
 
 void MediaPlayerCPP::MainPage::OnKeyDown(Platform::Object ^sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs ^e)
 {
-	TryOpenLastFile();
+	if (e->Key == Windows::System::VirtualKey::Enter && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down)
+		== Windows::UI::Core::CoreVirtualKeyStates::Down && StorageApplicationPermissions::FutureAccessList->Entries->Size == 1)
+	{
+		TryOpenLastFile();
+	}
 }
 
 

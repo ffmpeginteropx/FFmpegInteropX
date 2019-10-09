@@ -80,25 +80,25 @@ namespace MediaPlayerCS
 
         private async void MainPage_KeyDown(object sender, KeyRoutedEventArgs e)
         {
-            await TryOpenLastFile();
+            if (e.Key == VirtualKey.Enter && (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down)
+                == CoreVirtualKeyStates.Down && StorageApplicationPermissions.FutureAccessList.Entries.Count == 1)
+            {
+                await TryOpenLastFile();
+            }
         }
 
         private async Task TryOpenLastFile()
         {
-            if ((Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & Windows.UI.Core.CoreVirtualKeyStates.Down)
-                == CoreVirtualKeyStates.Down && StorageApplicationPermissions.FutureAccessList.Entries.Count == 1)
+            try
             {
-                try
-                {
-                    //Try open last file
-                    var file = await StorageApplicationPermissions.FutureAccessList.GetFileAsync(
-                        StorageApplicationPermissions.FutureAccessList.Entries[0].Token);
+                //Try open last file
+                var file = await StorageApplicationPermissions.FutureAccessList.GetFileAsync(
+                    StorageApplicationPermissions.FutureAccessList.Entries[0].Token);
 
-                    await OpenLocalFile(file);
-                }
-                catch (Exception)
-                {
-                }
+                await OpenLocalFile(file);
+            }
+            catch (Exception)
+            {
             }
         }
 
