@@ -13,8 +13,9 @@ CompressedSampleProvider::CompressedSampleProvider(
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
 	int streamIndex,
-	VideoEncodingProperties^ encodingProperties) :
-	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex),
+	VideoEncodingProperties^ encodingProperties,
+	bool hardwareAccel) :
+	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareAccel),
 	videoEncodingProperties(encodingProperties)
 {
 }
@@ -25,8 +26,9 @@ CompressedSampleProvider::CompressedSampleProvider(
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
 	int streamIndex,
-	AudioEncodingProperties^ encodingProperties) :
-	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex),
+	AudioEncodingProperties^ encodingProperties,
+	bool hardwareAccel) :
+	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareAccel),
 	audioEncodingProperties(encodingProperties)
 {
 }
@@ -37,8 +39,9 @@ CompressedSampleProvider::CompressedSampleProvider(
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
-	int streamIndex) :
-	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex)
+	int streamIndex,
+	bool hardwareAccel) :
+	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareAccel)
 {
 }
 

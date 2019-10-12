@@ -35,7 +35,8 @@ namespace FFmpegInterop
 			AVCodecContext* avCodecCtx,
 			FFmpegInteropConfig^ config, 
 			int streamIndex,
-			VideoEncodingProperties^ encodingProperties);
+			VideoEncodingProperties^ encodingProperties,
+			bool hardwareAccel);
 		virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer) override;
 		virtual HRESULT GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, int length);
 		virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer^* pBuffer);

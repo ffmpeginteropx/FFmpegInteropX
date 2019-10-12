@@ -57,11 +57,17 @@ namespace FFmpegInterop
 			bool get() { return m_isEnabled; }
 		}
 
+		property bool HardwareAccelerated
+		{
+			bool get() { return hardwareAccelerated; }
+		}
+
 		property bool IsCleanSample;
 
 		property String^ Name;
 		property String^ Language;
 		property String^ CodecName;
+
 
 	internal:
 		virtual HRESULT Initialize();
@@ -85,12 +91,14 @@ namespace FFmpegInterop
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			FFmpegInteropConfig^ config,
-			int streamIndex);
+			int streamIndex,
+			bool hardwareAccel);
 
 	private:
 		std::queue<AVPacket*> m_packetQueue;
 		int64 m_nextPacketPts;
 		IMediaStreamDescriptor^ m_streamDescriptor;
+		bool hardwareAccelerated;
 
 	internal:
 		// The FFmpeg context. Because they are complex types

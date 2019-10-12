@@ -58,7 +58,7 @@ namespace FFmpegInterop
 	{
 	public:
 		VideoStreamInfo(String^ name, String^ language, String^ codecName, int64 bitrate, bool isDefault,
-			int pixelWidth, int pixelHeight, int bitsPerSample)
+			int pixelWidth, int pixelHeight, int bitsPerSample, bool hwAccel)
 		{
 			this->name = name;
 			this->language = language;
@@ -69,6 +69,8 @@ namespace FFmpegInterop
 			this->pixelWidth = pixelWidth;
 			this->pixelHeight = pixelHeight;
 			this->bitsPerSample = bitsPerSample;
+
+			this->hardwareAccelerated = hwAccel;
 		}
 
 		virtual property String^ Name { String^ get() { return name; } }
@@ -80,6 +82,7 @@ namespace FFmpegInterop
 		property int PixelWidth { int get() { return pixelWidth; } }
 		property int PixelHeight { int get() { return pixelHeight; } }
 		property int BitsPerSample { int get() { return bitsPerSample; } }
+		property bool HardwareAccelerated {bool get() { return hardwareAccelerated; }}
 
 	private:
 		String ^ name;
@@ -87,6 +90,7 @@ namespace FFmpegInterop
 		String^ codecName;
 		int64 bitrate;
 		bool isDefault;
+		bool hardwareAccelerated;
 
 		int pixelWidth;
 		int pixelHeight;
@@ -114,7 +118,7 @@ namespace FFmpegInterop
 		virtual property int64 Bitrate { int64 get() { return 0; } }
 		virtual property bool IsDefault { bool get() { return isDefault; } }
 
-	    property bool IsExternal {bool get() { return isExternal; }}
+		property bool IsExternal {bool get() { return isExternal; }}
 		property bool IsForced { bool get() { return isForced; } }
 
 		property TimedMetadataTrack^ SubtitleTrack

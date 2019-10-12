@@ -27,7 +27,7 @@ UncompressedSampleProvider::UncompressedSampleProvider(
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
 	int streamIndex
-) : MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex)
+) : MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, false)
 {
 
 }
