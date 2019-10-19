@@ -187,6 +187,7 @@ namespace FFmpegInterop
 			hardwareAccelerationHEVC->Reset();
 			hardwareAccelerationWMV3->Reset();
 			hardwareAccelerationVC1->Reset();
+			hardwareAccelerationVP8->Reset();
 			hardwareAccelerationVP9->Reset();
 			hardwareAccelerationMPEG2->Reset();
 
