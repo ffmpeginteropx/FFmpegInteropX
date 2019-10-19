@@ -28,8 +28,8 @@ NALPacketSampleProvider::NALPacketSampleProvider(
 	FFmpegInteropConfig^ config,
 	int streamIndex,
 	VideoEncodingProperties^ encodingProperties,
-	bool hardwareAccel)
-	: CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareAccel)
+	HardwareDecoderStatus hardwareDecoderStatus)
+	: CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareDecoderStatus)
 {
 }
 

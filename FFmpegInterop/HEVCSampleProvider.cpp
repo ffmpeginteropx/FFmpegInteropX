@@ -28,8 +28,8 @@ HEVCSampleProvider::HEVCSampleProvider(
 	FFmpegInteropConfig^ config,
 	int streamIndex,
 	VideoEncodingProperties^ encodingProperties,
-	bool hardwareAccel)
-	: H264AVCSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareAccel)
+	HardwareDecoderStatus hardwareDecoderStatus)
+	: H264AVCSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareDecoderStatus)
 {
 }
 

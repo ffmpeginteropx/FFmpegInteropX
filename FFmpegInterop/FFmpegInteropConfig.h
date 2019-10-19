@@ -270,4 +270,5 @@ namespace FFmpegInterop
 		CharacterEncoding^ m_CharacterEncoding;
 
 	};
+
 }

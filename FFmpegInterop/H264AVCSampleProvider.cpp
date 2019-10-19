@@ -28,8 +28,8 @@ H264AVCSampleProvider::H264AVCSampleProvider(
 	FFmpegInteropConfig^ config,
 	int streamIndex,
 	VideoEncodingProperties^ encodingProperties,
-	bool hardwareAccel)
-	: NALPacketSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareAccel)
+	HardwareDecoderStatus hardwareDecoderStatus)
+	: NALPacketSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareDecoderStatus)
 {
 }
 

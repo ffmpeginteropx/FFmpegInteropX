@@ -21,6 +21,7 @@
 #include "FFmpegInteropConfig.h"
 #include "AvEffectDefinition.h"
 #include "TimeSpanHelpers.h"
+#include "Enumerations.h"
 
 extern "C"
 {
@@ -57,9 +58,14 @@ namespace FFmpegInterop
 			bool get() { return m_isEnabled; }
 		}
 
-		property bool HardwareAccelerated
+		property HardwareDecoderStatus HardwareAccelerationStatus
 		{
-			bool get() { return hardwareAccelerated; }
+			HardwareDecoderStatus get() { return hardwareDecoderStatus; }
+		}
+
+		property DecoderEngine Decoder
+		{
+			DecoderEngine get() { return decoder; }
 		}
 
 		property bool IsCleanSample;
@@ -92,13 +98,13 @@ namespace FFmpegInterop
 			AVCodecContext* avCodecCtx,
 			FFmpegInteropConfig^ config,
 			int streamIndex,
-			bool hardwareAccel);
+			HardwareDecoderStatus hardwareDecoderStatus);
 
 	private:
 		std::queue<AVPacket*> m_packetQueue;
 		int64 m_nextPacketPts;
 		IMediaStreamDescriptor^ m_streamDescriptor;
-		bool hardwareAccelerated;
+		HardwareDecoderStatus hardwareDecoderStatus;
 
 	internal:
 		// The FFmpeg context. Because they are complex types
@@ -113,6 +119,7 @@ namespace FFmpegInterop
 		bool m_isDiscontinuous;
 		int m_streamIndex;
 		int64 m_startOffset;
+		DecoderEngine decoder;
 
 	};
 }

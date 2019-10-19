@@ -31,14 +31,14 @@ MediaSampleProvider::MediaSampleProvider(
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
 	int streamIndex,
-	bool hardwareAccel)
+	HardwareDecoderStatus hardwareDecoderStatus)
 	: m_pReader(reader)
 	, m_pAvFormatCtx(avFormatCtx)
 	, m_pAvCodecCtx(avCodecCtx)
 	, m_pAvStream(avFormatCtx->streams[streamIndex])
 	, m_config(config)
 	, m_streamIndex(streamIndex)
-	, hardwareAccelerated(hardwareAccel)
+	, hardwareDecoderStatus(hardwareDecoderStatus)
 {
 	DebugMessage(L"MediaSampleProvider\n");
 	if (m_pAvFormatCtx->start_time != AV_NOPTS_VALUE)
