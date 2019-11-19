@@ -41,8 +41,8 @@ Either Visual Studio 2017 or Visual Studio 2019 is required.
   - Select additional components from Installer:
     - Universal Windows Platform tools
     - VC++ 2017 version 15.9 v14.16 latest v141 tools
-    - Win 10 SDK (10.0.15063.0) for uwp: c#, vb, js
-    - Win 10 SDK (10.0.15063.0) for uwp: c++
+    - Win 10 SDK (10.0.17763.0) for uwp: c#, vb, js
+    - Win 10 SDK (10.0.17763.0) for uwp: c++
     - Visual C++ compilers and libraries for ARM64
     - Visual C++ compilers and libraries for ARM
     - C++ UWP tools for ARM64
@@ -50,8 +50,7 @@ Either Visual Studio 2017 or Visual Studio 2019 is required.
 
 - Visual Studio 2019:
   - Select Universal Windows Platform development workload in Installer
-  - Manually install Windows 10 SDK 10.0.15063.0 from SDK archive:
-    https://developer.microsoft.com/en-us/windows/downloads/sdk-archive
+  - Select Windows 10 SDK 10.0.17763.0
   - [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-US/download/details.aspx?id=48145) (only if you installed yasm 64-bit)
 
 
@@ -105,7 +104,7 @@ Your `FFmpegInteropX` folder should look as follows
 
 ## Installing ffmpeg build tools
 
-Now that you have the FFmpeg source code, you can follow the instructions on how to [build FFmpeg for WinRT](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT) apps. *Follow the setup instruction very carefully to avoid build issues!! Be very careful not to miss a single step. If you have problems building ffmpeg, go through these steps again, since chances are high that you missed some detail.*
+Now that you have the FFmpeg source code, please follow the instructions on how to install MSYS2, YASM and gas-preprocessor on the [FFmpeg for WinRT Compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT) apps. *Follow the setup instruction very carefully (including installation guide on MSYS2 website) to avoid build issues!! Be very careful not to miss a single step. If you have problems building ffmpeg, go through these steps again, since chances are high that you missed some detail.*
 
 ### Note
 In case you downloaded yasm 64-bit version you'll also need [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-US/download/details.aspx?id=48145). This package is usually installed with VS 2017 but not with VS2019.  In case it's missing yasm will ouput this error message while building ffmpeg:
