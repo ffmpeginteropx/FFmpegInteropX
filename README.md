@@ -104,7 +104,7 @@ Your `FFmpegInteropX` folder should look as follows
 
 ## Installing ffmpeg build tools
 
-Now that you have the FFmpeg source code, please follow the instructions on how to install MSYS2, YASM and gas-preprocessor on the [FFmpeg for WinRT Compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT) apps. *Follow the setup instruction very carefully (including installation guide on MSYS2 website) to avoid build issues!! Be very careful not to miss a single step. If you have problems building ffmpeg, go through these steps again, since chances are high that you missed some detail.*
+Now that you have the FFmpeg source code, please follow the instructions on how to install MSYS2, YASM and gas-preprocessor on the [FFmpeg for WinRT Compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT). *Follow the setup instruction very carefully (including installation guide on MSYS2 website) to avoid build issues!! Be very careful not to miss a single step. If you have problems building ffmpeg, go through these steps again, since chances are high that you missed some detail.*
 
 ### Note
 In case you downloaded yasm 64-bit version you'll also need [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-US/download/details.aspx?id=48145). This package is usually installed with VS 2017 but not with VS2019.  In case it's missing yasm will ouput this error message while building ffmpeg:
