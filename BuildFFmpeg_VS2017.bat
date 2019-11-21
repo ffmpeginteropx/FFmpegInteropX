@@ -64,15 +64,15 @@ echo:
 echo Checking CPU architecture...
 
 if %PROCESSOR_ARCHITECTURE%==x86 (
-    set Comp_x86=x86 uwp 10.0.15063.0
-    set Comp_x64=x86_amd64 uwp 10.0.15063.0
-    set Comp_ARM=x86_arm uwp 10.0.15063.0
-    set Comp_ARM64=x86_arm64 uwp 10.0.15063.0
+    set Comp_x86=x86 uwp 10.0.17763.0
+    set Comp_x64=x86_amd64 uwp 10.0.17763.0
+    set Comp_ARM=x86_arm uwp 10.0.17763.0
+    set Comp_ARM64=x86_arm64 uwp 10.0.17763.0
 ) else (
-    set Comp_x86=amd64_x86 uwp 10.0.15063.0
-    set Comp_x64=amd64 uwp 10.0.15063.0
-    set Comp_ARM=amd64_arm uwp 10.0.15063.0
-    set Comp_ARM64=amd64_arm64 uwp 10.0.15063.0
+    set Comp_x86=amd64_x86 uwp 10.0.17763.0
+    set Comp_x64=amd64 uwp 10.0.17763.0
+    set Comp_ARM=amd64_arm uwp 10.0.17763.0
+    set Comp_ARM64=amd64_arm64 uwp 10.0.17763.0
 )
 
 :: Export full current PATH from environment into MSYS2
