@@ -428,6 +428,7 @@ void MediaPlayerCPP::MainPage::MediaOpened(Platform::Object^ sender, Windows::UI
 void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	PassthroughVideo->IsEnabled = !AutoDetect->IsOn;
+	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::AutoDetection : VideoDecoderMode::ManualSelection;
 }
 void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {

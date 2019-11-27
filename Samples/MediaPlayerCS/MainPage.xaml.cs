@@ -427,6 +427,7 @@ namespace MediaPlayerCS
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
         {
             PassthroughVideo.IsEnabled = !AutoDetect.IsOn;
+            Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.AutoDetection : VideoDecoderMode.ManualSelection;
         }
         
         private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
