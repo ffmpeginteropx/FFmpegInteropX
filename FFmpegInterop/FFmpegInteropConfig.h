@@ -5,6 +5,7 @@ extern "C"
 #include "libavcodec/avcodec.h"
 }
 
+#include "Enumerations.h"
 #include "CharacterEncoding.h"
 #include "TimeSpanHelpers.h"
 
@@ -26,20 +27,20 @@ namespace FFmpegInterop
 			PassthroughAudioMP3 = false;
 			PassthroughAudioAAC = false;
 
-			AutoDetectHardwareAcceleration = true;
+			VideoDecoderMode = FFmpegInterop::VideoDecoderMode::AutoDetection;
 
 			PassthroughVideoH264 = true;
 			PassthroughVideoH264MaxProfile = FF_PROFILE_H264_HIGH;
 			PassthroughVideoH264MaxLevel = 41;
 			PassthroughVideoHEVC = true;
 			PassthroughVideoHEVCMaxProfile = FF_PROFILE_HEVC_MAIN_10;
-			PassthroughVideoH264MaxLevel = 41;
+			PassthroughVideoHEVCMaxLevel = 153;
 			PassthroughVideoWMV3 = true;
 			PassthroughVideoVC1 = true;
 			PassthroughVideoMPEG2 = false;
 			PassthroughVideoVP9 = false;
 			PassthroughVideoVP8 = false;
-
+			
 			VideoOutputAllowIyuv = false;
 			VideoOutputAllow10bit = false;
 			VideoOutputAllowBgra8 = false;
@@ -106,7 +107,7 @@ namespace FFmpegInterop
 			outlineThickness.Value = 4.5;
 			SubtitleStyle->OutlineThickness = outlineThickness;
 			SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
-			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };
+			SubtitleStyle->OutlineColor = Windows::UI::Color{ 0x80, 0, 0, 0 };
 
 			AutoCorrectAnsiSubtitles = true;
 			AnsiSubtitleEncoding = CharacterEncoding::GetSystemDefault();
@@ -126,10 +127,8 @@ namespace FFmpegInterop
 		///<summary>Enable passthrough for AAC audio.</summary>
 		property bool PassthroughAudioAAC;
 
-
-		///<summary>Automatically detect hardware acceleration capabilities and enable passthrough for those formats.</summary>
-		property bool AutoDetectHardwareAcceleration;
-
+		///<summary>Sets the video decoder mode. Default is AutoDetection.</summary>
+		property FFmpegInterop::VideoDecoderMode VideoDecoderMode;
 
 		///<summary>Allow passthrough for H264 video.</summary>
 		property bool PassthroughVideoH264;
@@ -141,7 +140,7 @@ namespace FFmpegInterop
 		///<summary>Max profile allowed for H264 passthrough. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
 		property int PassthroughVideoH264MaxProfile;
 
-		///<summary>Max level allowed for H264 passthrough. Default: Level 4.1 (41).</summary>
+		///<summary>Max level allowed for H264 passthrough. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
 		property int PassthroughVideoH264MaxLevel;
 
 		///<summary>Allow passthrough for HEVC video.</summary>
@@ -150,7 +149,8 @@ namespace FFmpegInterop
 		///<summary>Max profile allowed for HEVC passthrough. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
 		property int PassthroughVideoHEVCMaxProfile;
 
-		///<summary>Max level allowed for HEVS passthrough. Default: Level 4.1 (41).</summary>
+		///<summary>Max level allowed for HEVC passthrough. Default: Level 5.1 (153). Use -1 to disable level check.</summary>
+		///<remarks>Encoded as: 30*Major + 3*Minor. So Level 5.1 = 30*5 + 3*1 = 163; 4.1 = 123.</remarks>
 		property int PassthroughVideoHEVCMaxLevel;
 
 		///<summary>Allow passthrough for WMV3 video.</summary>

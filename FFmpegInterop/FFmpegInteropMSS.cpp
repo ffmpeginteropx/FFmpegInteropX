@@ -461,7 +461,7 @@ bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, 
 	bool result = false;
 	if (!config->IsFrameGrabber)
 	{
-		if (config->AutoDetectHardwareAcceleration)
+		if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection)
 		{
 			result = CodecChecker::CheckUseHardwareAcceleration(status, 
 				avCodecCtx->codec_id, avCodecCtx->profile, avCodecCtx->width, avCodecCtx->height);
@@ -474,7 +474,7 @@ bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, 
 
 			hardwareDecoderStatus = result ? HardwareDecoderStatus::Available : HardwareDecoderStatus::NotAvailable;
 		}
-		else
+		else if (config->VideoDecoderMode == VideoDecoderMode::ManualSelection)
 		{
 			// manual settings
 			if (manualStatus)
@@ -495,6 +495,14 @@ bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, 
 					result = avCodecCtx->level <= maxLevel;
 				}
 			}
+		}
+		else if (config->VideoDecoderMode == VideoDecoderMode::ForceSystemDecoder)
+		{
+			result = true;
+		}
+		else
+		{
+			result = false;
 		}
 	}
 
@@ -1322,7 +1330,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 	VideoEncodingProperties^ videoProperties;
 	HardwareDecoderStatus hardwareDecoderStatus;
 	
-	if (config->AutoDetectHardwareAcceleration)
+	if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection)
 	{
 		CodecChecker::Initialize();
 	}
@@ -1410,7 +1418,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 	}
 	else
 	{
-		if (config->AutoDetectHardwareAcceleration)
+		if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection)
 		{
 			hardwareDecoderStatus = HardwareDecoderStatus::NotAvailable;
 		}
