@@ -79,6 +79,12 @@ namespace FFmpegInterop
 			return create_async(&CheckIsVP9VideoExtensionInstalled);
 		}
 
+		static IAsyncOperation<bool>^ CheckIsHEVCVideoExtensionInstalledAsync()
+		{
+			hasCheckedHEVCExtension = false;
+			return create_async(&CheckIsHEVCVideoExtensionInstalled);
+		}
+
 		static IAsyncOperation<bool>^ OpenMpeg2VideoExtensionStoreEntryAsync()
 		{
 			hasCheckedMpeg2Extension = false;
@@ -89,6 +95,19 @@ namespace FFmpegInterop
 		{
 			hasCheckedVP9Extension = false;
 			return create_async([] { return Launcher::LaunchUriAsync(ref new Uri("ms-windows-store://pdp/?ProductId=9n4d0msmp0pt")); });
+		}
+
+		static IAsyncOperation<bool>^ OpenHEVCVideoExtensionStoreEntryAsync()
+		{
+			hasCheckedHEVCExtension = false;
+#ifdef _M_AMD64
+			// open free x64 extension
+			return create_async([] { return Launcher::LaunchUriAsync(ref new Uri("ms-windows-store://pdp/?ProductId=9n4wgh0z6vhq")); });
+#else
+			// open paid extension for all other platforms
+			return create_async([] { return Launcher::LaunchUriAsync(ref new Uri("ms-windows-store://pdp/?ProductId=9nmzlz57r3t7")); });
+#endif // _WIN64
+
 		}
 
 	internal:
@@ -123,54 +142,49 @@ namespace FFmpegInterop
 
 		static bool CheckIsMpeg2VideoExtensionInstalled()
 		{
-			if (!hasCheckedMpeg2Extension)
-			{
-				mutex.lock();
-
-				if (!hasCheckedMpeg2Extension)
-				{
-					try
-					{
-						isMpeg2ExtensionInstalled = IsAppInstalledAsync("Microsoft.MPEG2VideoExtension_8wekyb3d8bbwe").get();
-						//isMpeg2ExtensionInstalled = IsVideoCodecInstalledAsync(CodecSubtypes::VideoFormatMpeg2).get();
-					}
-					catch ( ...)
-					{
-						isMpeg2ExtensionInstalled = false;
-					}
-					hasCheckedMpeg2Extension = true;
-				}
-
-				mutex.unlock();
-			}
-
-			return isMpeg2ExtensionInstalled;
+			return CheckIsVideoExtensionInstalled(
+				"Microsoft.MPEG2VideoExtension_8wekyb3d8bbwe", 
+				hasCheckedMpeg2Extension, isMpeg2ExtensionInstalled);
 		}
 
 		static bool CheckIsVP9VideoExtensionInstalled()
 		{
-			if (!hasCheckedVP9Extension)
+			return CheckIsVideoExtensionInstalled(
+				"Microsoft.VP9VideoExtensions_8wekyb3d8bbwe",
+				hasCheckedVP9Extension, isVP9ExtensionInstalled);
+		}
+
+		static bool CheckIsHEVCVideoExtensionInstalled()
+		{
+			return CheckIsVideoExtensionInstalled(
+				"Microsoft.HEVCVideoExtension_8wekyb3d8bbwe",
+				hasCheckedHEVCExtension, isHEVCExtensionInstalled);
+		}
+
+		static bool CheckIsVideoExtensionInstalled(String^ appId, bool& hasCheckedExtension, bool& isExtensionInstalled)
+		{
+			if (!hasCheckedExtension)
 			{
 				mutex.lock();
 
-				if (!hasCheckedVP9Extension)
+				if (!hasCheckedExtension)
 				{
 					try
 					{
-						isVP9ExtensionInstalled = IsAppInstalledAsync("Microsoft.VP9VideoExtensions_8wekyb3d8bbwe").get();
-						//isVP9ExtensionInstalled = IsVideoCodecInstalledAsync(CodecSubtypes::VideoFormatVP90).get();
+						isExtensionInstalled = IsAppInstalledAsync(appId).get();
+						//isExtensionInstalled = IsVideoCodecInstalledAsync(codecSubtype).get();
 					}
 					catch (...)
 					{
-						isVP9ExtensionInstalled = false;
+						isExtensionInstalled = false;
 					}
-					hasCheckedVP9Extension = true;
+					hasCheckedExtension = true;
 				}
 
 				mutex.unlock();
 			}
 
-			return isVP9ExtensionInstalled;
+			return isExtensionInstalled;
 		}
 
 		static property HardwareAccelerationStatus^ HardwareAccelerationH264 { HardwareAccelerationStatus^ get() { return hardwareAccelerationH264; } }
@@ -367,6 +381,10 @@ namespace FFmpegInterop
 				{
 					result &= CheckIsVP9VideoExtensionInstalled();
 				}
+				else if (codecId == AV_CODEC_ID_HEVC)
+				{
+					result &= CheckIsHEVCVideoExtensionInstalled();
+				}
 
 				CheckVideoResolution(result, width, height, status->MaxResolution);
 			}
@@ -381,9 +399,11 @@ namespace FFmpegInterop
 		static bool hasCheckedHardwareAcceleration;
 		static bool hasCheckedMpeg2Extension;
 		static bool hasCheckedVP9Extension;
+		static bool hasCheckedHEVCExtension;
 
 		static bool isMpeg2ExtensionInstalled;
 		static bool isVP9ExtensionInstalled;
+		static bool isHEVCExtensionInstalled;
 
 		static HardwareAccelerationStatus^ hardwareAccelerationH264;
 		static HardwareAccelerationStatus^ hardwareAccelerationHEVC;

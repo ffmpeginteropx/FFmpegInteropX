@@ -34,7 +34,7 @@ namespace FFmpegInterop
 			PassthroughVideoH264MaxLevel = 41;
 			PassthroughVideoHEVC = true;
 			PassthroughVideoHEVCMaxProfile = FF_PROFILE_HEVC_MAIN_10;
-			PassthroughVideoHEVCMaxLevel = 153;
+			PassthroughVideoHEVCMaxLevel = -1;
 			PassthroughVideoWMV3 = true;
 			PassthroughVideoVC1 = true;
 			PassthroughVideoMPEG2 = false;
@@ -141,6 +141,7 @@ namespace FFmpegInterop
 		property int PassthroughVideoH264MaxProfile;
 
 		///<summary>Max level allowed for H264 passthrough. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
+		///<remarks>Most H264 HW decoders only support Level 4.1, so this is the default.</remarks>
 		property int PassthroughVideoH264MaxLevel;
 
 		///<summary>Allow passthrough for HEVC video.</summary>
@@ -149,8 +150,9 @@ namespace FFmpegInterop
 		///<summary>Max profile allowed for HEVC passthrough. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
 		property int PassthroughVideoHEVCMaxProfile;
 
-		///<summary>Max level allowed for HEVC passthrough. Default: Level 5.1 (153). Use -1 to disable level check.</summary>
-		///<remarks>Encoded as: 30*Major + 3*Minor. So Level 5.1 = 30*5 + 3*1 = 163; 4.1 = 123.</remarks>
+		///<summary>Max level allowed for HEVC passthrough. Default: Disabled (-1).</summary>
+		///<remarks>Encoded as: 30*Major + 3*Minor. So Level 6.0 = 30*6 = 180, 5.1 = 30*5 + 3*1 = 163, 4.1 = 123.
+		///Many HEVC HW decoders support even very high levels, so we disable the check by default.</remarks>
 		property int PassthroughVideoHEVCMaxLevel;
 
 		///<summary>Allow passthrough for WMV3 video.</summary>

@@ -8,9 +8,11 @@ std::mutex CodecChecker::mutex;
 bool CodecChecker::hasCheckedHardwareAcceleration = false;
 bool CodecChecker::hasCheckedMpeg2Extension = false;
 bool CodecChecker::hasCheckedVP9Extension = false;
+bool CodecChecker::hasCheckedHEVCExtension = false;
 
 bool CodecChecker::isMpeg2ExtensionInstalled = false;
 bool CodecChecker::isVP9ExtensionInstalled = false;
+bool CodecChecker::isHEVCExtensionInstalled = false;
 
 HardwareAccelerationStatus^ CodecChecker::hardwareAccelerationH264 = ref new HardwareAccelerationStatus();
 HardwareAccelerationStatus^ CodecChecker::hardwareAccelerationHEVC = ref new HardwareAccelerationStatus();
