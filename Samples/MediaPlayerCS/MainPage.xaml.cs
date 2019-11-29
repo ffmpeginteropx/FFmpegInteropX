@@ -64,6 +64,7 @@ namespace MediaPlayerCS
 
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
+            AutoDetect.IsOn = true;
 
             VideoEffectConfiguration = new VideoEffectConfiguration();
 
@@ -72,7 +73,6 @@ namespace MediaPlayerCS
 
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
-                      
 
             this.KeyDown += MainPage_KeyDown;
         }

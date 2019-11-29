@@ -56,6 +56,7 @@ MainPage::MainPage()
 
 	// Show the control panel on startup so user can start opening media
 	Splitter->IsPaneOpen = true;
+	AutoDetect->IsOn = true;
 
 	VideoEffectConfiguration = ref new FFmpegInterop::VideoEffectConfiguration();
 
@@ -430,6 +431,7 @@ void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Wind
 	PassthroughVideo->IsEnabled = !AutoDetect->IsOn;
 	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::AutoDetection : VideoDecoderMode::ManualSelection;
 }
+
 void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	mediaElement->RemoveAllEffects();
