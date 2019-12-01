@@ -3,6 +3,7 @@
   <metadata>
     <id>$id$</id>
     <version>$version$</version>
+    <commitId>$commitId$</commitId>
     <description>FFmpeg decoding library for Windows 10 UWP Apps</description>
     <authors>FFmpegInteropX</authors>
     <projectUrl>https://github.com/ffmpeginteropx/FFmpegInteropX</projectUrl>
