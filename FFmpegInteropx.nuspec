@@ -7,7 +7,7 @@
     <authors>FFmpegInteropX</authors>
     <projectUrl>https://github.com/ffmpeginteropx/FFmpegInteropX</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <license type="expression">Apache-2.0</license>
+    <license type="expression">Apache-2.0 AND LGPL-2.1-or-later AND bzip2-1.0.6 AND Zlib</license>
     <dependencies>
       <group targetFramework="uap10.0" />
     </dependencies>
