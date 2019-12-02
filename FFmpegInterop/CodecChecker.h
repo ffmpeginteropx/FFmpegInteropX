@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CodecRequiredEventArgs.h"
+
 #include <d3d11.h>
 #include <mutex>
 #include <pplawait.h>
@@ -53,15 +55,26 @@ namespace FFmpegInterop
 		}
 	};
 
+	public delegate void CodecRequiredEventHandler(CodecRequiredEventArgs^ args);
+
+	///<summary>This static class handles hardware acceleration detection and status handling.</summary>
 	public ref class CodecChecker sealed
 	{
 	public:
+
+		///<summary>This event is raised if a codec is required to improve playback experience.</summary>
+		///<remarks>The event is only raised once per codec. It will be raised again after a call to RefreshAsync().</remarks>
+		static event CodecRequiredEventHandler^ CodecRequired;
 		
+		///<summary>This will pre-initialize the hardware acceleration status.</summary>
+		///<remarks>This can be called on app startup, but it is not required.</remarks>
 		static IAsyncAction^ InitializeAsync()
 		{
 			return create_async(&Initialize);
 		}
 
+		///<summary>This will refresh the hardware acceleration status.</summary>
+		///<remarks>Call this after installing a codec or after a change of the active GPU.</remarks>
 		static IAsyncAction^ RefreshAsync()
 		{
 			return create_async(&Refresh);
@@ -134,8 +147,14 @@ namespace FFmpegInterop
 
 			PerformCheckHardwareAcceleration();
 			hasCheckedHardwareAcceleration = true;
+
 			hasCheckedMpeg2Extension = false;
 			hasCheckedVP9Extension = false;
+			hasCheckedHEVCExtension = false;
+
+			hasAskedInstallMpeg2Extension = false;
+			hasAskedInstallVP9Extension = false;
+			hasAskedInstallHEVCExtension = false;
 
 			mutex.unlock();
 		}
@@ -185,6 +204,11 @@ namespace FFmpegInterop
 			}
 
 			return isExtensionInstalled;
+		}
+
+		static void RaiseCodecRequired(CodecRequiredReason reason, String^ codecName, String^ storeEntryName, String^ uri)
+		{
+			CodecRequired(ref new CodecRequiredEventArgs(reason, codecName, storeEntryName, uri));
 		}
 
 		static property HardwareAccelerationStatus^ HardwareAccelerationH264 { HardwareAccelerationStatus^ get() { return hardwareAccelerationH264; } }
@@ -376,14 +400,36 @@ namespace FFmpegInterop
 				if (codecId == AV_CODEC_ID_MPEG2VIDEO)
 				{
 					result &= CheckIsMpeg2VideoExtensionInstalled();
+					if (!result && !hasAskedInstallMpeg2Extension)
+					{
+						RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, "MPEG2", "MPEG2 Video Extension", "9n95q1zzpmh4");
+						hasAskedInstallMpeg2Extension = true;
+					}
 				}
 				else if (codecId == AV_CODEC_ID_VP9 || codecId == AV_CODEC_ID_VP8)
 				{
 					result &= CheckIsVP9VideoExtensionInstalled();
+					if (!result && !hasAskedInstallVP9Extension)
+					{
+						String^ codecName = codecId == AV_CODEC_ID_VP9 ? "VP9" : "VP8";
+						RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, codecName, "VP9 Video Extensions", "9n4d0msmp0pt");
+						hasAskedInstallVP9Extension = true;
+					}
 				}
 				else if (codecId == AV_CODEC_ID_HEVC)
 				{
 					result &= CheckIsHEVCVideoExtensionInstalled();
+					if (!result && !hasAskedInstallHEVCExtension)
+					{
+#ifdef _M_AMD64
+						// open free x64 extension
+						RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, "HEVC", "HEVC Video Extensions from Device Manufacturer", "9n4wgh0z6vhq");
+#else
+						// open paid extension for all other platforms
+						RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, "HEVC", "HEVC Video Extensions", "9nmzlz57r3t7");
+#endif // _WIN64
+						hasAskedInstallHEVCExtension = true;
+					}
 				}
 
 				CheckVideoResolution(result, width, height, status->MaxResolution);
@@ -397,6 +443,7 @@ namespace FFmpegInterop
 		static std::mutex mutex;
 
 		static bool hasCheckedHardwareAcceleration;
+
 		static bool hasCheckedMpeg2Extension;
 		static bool hasCheckedVP9Extension;
 		static bool hasCheckedHEVCExtension;
@@ -404,6 +451,10 @@ namespace FFmpegInterop
 		static bool isMpeg2ExtensionInstalled;
 		static bool isVP9ExtensionInstalled;
 		static bool isHEVCExtensionInstalled;
+
+		static bool hasAskedInstallMpeg2Extension;
+		static bool hasAskedInstallVP9Extension;
+		static bool hasAskedInstallHEVCExtension;
 
 		static HardwareAccelerationStatus^ hardwareAccelerationH264;
 		static HardwareAccelerationStatus^ hardwareAccelerationHEVC;

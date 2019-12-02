@@ -14,6 +14,10 @@ bool CodecChecker::isMpeg2ExtensionInstalled = false;
 bool CodecChecker::isVP9ExtensionInstalled = false;
 bool CodecChecker::isHEVCExtensionInstalled = false;
 
+bool CodecChecker::hasAskedInstallMpeg2Extension = false;
+bool CodecChecker::hasAskedInstallVP9Extension = false;
+bool CodecChecker::hasAskedInstallHEVCExtension = false;
+
 HardwareAccelerationStatus^ CodecChecker::hardwareAccelerationH264 = ref new HardwareAccelerationStatus();
 HardwareAccelerationStatus^ CodecChecker::hardwareAccelerationHEVC = ref new HardwareAccelerationStatus();
 HardwareAccelerationStatus^ CodecChecker::hardwareAccelerationWMV3 = ref new HardwareAccelerationStatus();

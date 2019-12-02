@@ -71,12 +71,47 @@ namespace MediaPlayerCS
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
 
+            CodecChecker.CodecRequired += CodecChecker_CodecRequired;
+
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
 
             this.KeyDown += MainPage_KeyDown;
         }
 
+        private async void CodecChecker_CodecRequired(CodecRequiredEventArgs args)
+        {
+            await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                CoreDispatcherPriority.Normal,
+                new DispatchedHandler(async () =>
+                {
+                    await AskUserInstallCodec(args);
+                }));
+        }
+
+        private static async Task AskUserInstallCodec(CodecRequiredEventArgs args)
+        {
+            // show message box to user
+
+            // then open store page
+            await args.OpenStorePageAsync();
+
+            // wait for app window to be re-activated
+            var tcs = new TaskCompletionSource<object>();
+            WindowActivatedEventHandler handler = (s, e) =>
+               {
+                   if (e.WindowActivationState != CoreWindowActivationState.Deactivated)
+                   {
+                       tcs.TrySetResult(null);
+                   }
+               };
+            Window.Current.Activated += handler;
+            await tcs.Task;
+            Window.Current.Activated -= handler;
+
+            // now refresh codec checker, so next file might use HW acceleration (if codec was really installed)
+            await CodecChecker.RefreshAsync();
+        }
 
         private async void MainPage_KeyDown(object sender, KeyRoutedEventArgs e)
         {

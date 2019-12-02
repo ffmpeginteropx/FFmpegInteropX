@@ -104,6 +104,7 @@
     <ClInclude Include="AvEffectDefinition.h" />
     <ClInclude Include="CodecChecker.h" />
     <ClInclude Include="BasicVideoEffect.h" />
+    <ClInclude Include="CodecRequiredEventArgs.h" />
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
     <ClInclude Include="CharacterEncoding.h" />

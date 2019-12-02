@@ -175,6 +175,7 @@
       <Filter>Effects</Filter>
     </ClInclude>
     <ClInclude Include="Enumerations.h" />
+    <ClInclude Include="CodecRequiredEventArgs.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">
