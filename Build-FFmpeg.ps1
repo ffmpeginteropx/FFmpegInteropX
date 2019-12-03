@@ -151,7 +151,7 @@ function Build-Platform {
     & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh Win10 $Platform
 
     # Copy PDBs to built binaries dir
-    Get-ChildItem -Recurse -Include '*.pdb' $SolutionDir\ffmpeg\Output\Windows10\$Platform | `
+    Get-ChildItem -Recurse -Include '*.pdb' $SolutionDir\Target\$Platform\$Configuration\ffmpeg-Win10 | `
         Copy-Item -Destination $SolutionDir\ffmpeg\Build\Windows10\$Platform\bin\
 }
 
