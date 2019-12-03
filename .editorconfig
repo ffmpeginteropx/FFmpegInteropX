@@ -1,0 +1,33 @@
+# EditorConfig is awesome: http://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Default settings:
+# A newline ending every file
+# Use 2 spaces as indentation
+# Trim trailing whitespace
+[*]
+indent_style = tab
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+end_of_line = lf
+
+[*.{yml}]
+indent_size = 2
+
+[*.cs]
+indent_style = space
+end_of_line = lf
+
+# Xml files
+[*.{csproj,msbuild,props,targets,config,nuspec,xml,stylecop,resx,ruleset}]
+indent_size = 2
+end_of_line = crlf
+insert_final_newline = false
+
+# Shell scripts
+[*.{cmd,bat,ps1}]
+end_of_line = crlf
