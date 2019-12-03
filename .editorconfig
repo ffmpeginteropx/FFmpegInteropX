@@ -23,7 +23,7 @@ indent_style = space
 end_of_line = lf
 
 # Xml files
-[*.{csproj,msbuild,props,targets,config,nuspec,xml,stylecop,resx,ruleset}]
+[*.{csproj,msbuild,props,targets,config,nuspec,xml,stylecop,resx,ruleset,vcxproj}]
 indent_size = 2
 end_of_line = crlf
 insert_final_newline = false
