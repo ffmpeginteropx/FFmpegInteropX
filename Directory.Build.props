@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+
+  <PropertyGroup>
+    <SolutionDir   Condition="'$(SolutionDir)'   == ''">$(MSBuildThisFileDirectory)</SolutionDir>
+    <Platform      Condition="'$(Platform)'      == ''">x64</Platform>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Configuration">
+    <BaseIntDir>$(SolutionDir)Build\$(Platform)\$(Configuration)</BaseIntDir>
+    <BaseOutDir>$(SolutionDir)Target\$(Platform)\$(Configuration)</BaseOutDir>
+
+    <IntDir>$(BaseIntDir)\$(MSBuildProjectName)\</IntDir>
+    <OutDir>$(BaseOutDir)\</OutDir>
+
+    <GeneratedFilesDir>$(IntDir)Generated Files\</GeneratedFilesDir>
+  </PropertyGroup>
+
+</Project>
