@@ -55,7 +55,7 @@ function Build-Platform {
             'ARM'   = 'x86_arm'
             'ARM64' = 'x86_arm64'
         }
-    
+
         'AMD64' = @{
             'x86'   = 'amd64_x86'
             'x64'   = 'amd64'
@@ -150,6 +150,7 @@ function Build-Platform {
     # Build ffmpeg
     & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh Win10 $Platform
 
+    Get-ChildItem -Recurse -Include '*.pdb' $SolutionDir\Target\$Platform\$Configuration\ffmpeg-Win10
     # Copy PDBs to built binaries dir
     Get-ChildItem -Recurse -Include '*.pdb' $SolutionDir\Target\$Platform\$Configuration\ffmpeg-Win10 | `
         Copy-Item -Destination $SolutionDir\ffmpeg\Build\Windows10\$Platform\bin\

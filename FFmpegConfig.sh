@@ -1,11 +1,45 @@
 #!/bin/bash
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-declare -A arch
-arch['x86']='x86'
-arch['x64']='x86_64'
-arch['ARM']='arm'
-arch['ARM64']='arm64'
+# declare -A arch
+# arch['x86']='x86'
+# arch['x64']='x86_64'
+# arch['ARM']='arm'
+# arch['ARM64']='arm64'
+
+# variant=$1
+# platform=$2
+
+# #Main
+# echo "Make $1 $2"
+# pushd $DIR/ffmpeg
+# rm -rf $DIR/Target/$2/Release/ffmpeg-$1
+# rm -rf $DIR/Build/$2/Release/ffmpeg-$1
+# mkdir -p $DIR/Build/$2/Release/ffmpeg-$1
+# cd $DIR/Build/$2/Release/ffmpeg-$1
+# $DIR/ffmpeg/configure \
+#     --toolchain=msvc \
+#     --disable-programs \
+#     --disable-d3d11va \
+#     --disable-dxva2 \
+#     #--disable-encoders \ 4 => Win10
+#     #--disable-devices \ 4 => Win10
+#     #--disable-hwaccels \ 4 => Win10
+#     --disable-doc \
+#     --arch="${arch[$2]}" \
+#     --enable-shared \
+#     --enable-cross-compile \
+#     --enable-debug \
+#     #--enable-zlib \ 4 => Win10
+#     #--enable-bzlib \ 4 => Win10
+#     #--enable-iconv \ 4 => Win10
+#     --target-os=win32 \
+#     #--extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \ 2
+#     #--extra-ldflags="-APPCONTAINER WindowsApp.lib" \ 4 =>Win10  x64 x86
+#     --prefix=$DIR/Target/$2/Release/ffmpeg-$1
+# #make -j8 4
+# make install
+# popd
 
 if [ "$1" == "Win10" ]; then
     echo "Make $1"
