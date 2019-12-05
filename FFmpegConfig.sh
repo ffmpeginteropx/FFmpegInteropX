@@ -17,7 +17,7 @@ rm -rf $DIR/Target/$platform/Release/ffmpeg-$variant
 rm -rf $DIR/Build/$platform/Release/ffmpeg-$variant
 mkdir -p $DIR/Build/$platform/Release/ffmpeg-$variant
 cd $DIR/Build/$platform/Release/ffmpeg-$variant
-configureArgs=" \
+configureArgs="\
     --toolchain=msvc \
     --disable-programs \
     --disable-d3d11va \
@@ -47,14 +47,15 @@ if [ "$variant" == "Win10" ]; then
     makeArgs="$makeArgs -j8"
 
     if [ "$platform" = "x64" ] || [ "$platform" = "x86" ]; then
-        configureArgs=" \
+        configureArgs="\
             $configureArgs \
             --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00'
 "
     fi
 
     if [ "$platform" = "ARM" ] || [ "$platform" = "ARM64" ]; then
-        configureArgs="$configureArgs
+        configureArgs="\
+            $configureArgs \
             --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP'
             "
     fi
@@ -62,15 +63,17 @@ fi
 
 if [ "$variant" == "Win8.1" ]; then
     if [ "$platform" = "x64" ] || [ "$platform" = "x86" ]; then
-        configureArgs="$configureArgs
-            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603'
+        configureArgs="\
+            $configureArgs \
+            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603' \
             --extra-ldflags='-APPCONTAINER'
             "
     fi
 
     if [ "$platform" == "ARM" ]; then
-        configureArgs="$configureArgs
-            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP'
+        configureArgs="\
+            $configureArgs \
+            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP' \
             --extra-ldflags='-APPCONTAINER -MACHINE:$platform'
             "
     fi
@@ -78,28 +81,32 @@ fi
 
 if [ "$variant" == "Phone8.1" ]; then
     if [ "$platform" == "ARM" ]; then
-        configureArgs="$configureArgs
-            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP'
+        configureArgs="\
+            $configureArgs \
+            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP' \
             --extra-ldflags='-APPCONTAINER -MACHINE:$platform -subsystem:console -opt:ref WindowsPhoneCore.lib RuntimeObject.lib PhoneAppModelHost.lib -NODEFAULTLIB:kernel32.lib -NODEFAULTLIB:ole32.lib'
             "
 
     elif [ "$platform" == "x86" ]; then
-        configureArgs="$configureArgs
-            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603'
+        configureArgs="\
+            $configureArgs \
+            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603' \
             --extra-ldflags='-APPCONTAINER -subsystem:console -opt:ref WindowsPhoneCore.lib RuntimeObject.lib PhoneAppModelHost.lib -NODEFAULTLIB:kernel32.lib -NODEFAULTLIB:ole32.lib'
             "
     fi
 fi
 
 if [ "$variant" == "Win7" ]; then
-    configureArgs="$configureArgs \
+    configureArgs="\
+        $configureArgs \
         --extra-cflags='-MD -D_WINDLL' \
         --extra-ldflags='-APPCONTAINER:NO -MACHINE:$platform'
     "
 fi
 
 if [ "$platform" == "ARM" ]; then
-    configureArgs="$configureArgs \
+    configureArgs="\
+        $configureArgs \
         --as=armasm \
         --cpu=armv7 \
         --enable-thumb
@@ -107,7 +114,8 @@ if [ "$platform" == "ARM" ]; then
 fi
 
 if [ "$platform" = "ARM64" ]; then
-    configureArgs="$configureArgs \
+    configureArgs="\
+        $configureArgs \
         --cpu=armv7 \
         --enable-thumb
     "
