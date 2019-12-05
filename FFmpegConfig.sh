@@ -23,7 +23,7 @@ configureArgs=" \
     --disable-d3d11va \
     --disable-dxva2 \
     --disable-doc \
-    --arch=\"${arch[$platform]}\" \
+    --arch='${arch[$platform]}' \
     --enable-shared \
     --enable-cross-compile \
     --enable-debug \
@@ -33,27 +33,29 @@ configureArgs=" \
 makeArgs=''
 
 if [ "$variant" == "Win10" ]; then
-    configureArgs="$configureArgs \
+    configureArgs="\
+        $configureArgs \
         --disable-encoders \
         --disable-devices \
         --disable-hwaccels \
         --enable-zlib \
         --enable-bzlib \
         --enable-iconv \
-        --extra-ldflags=\"-APPCONTAINER WindowsApp.lib\"
+        --extra-ldflags='-APPCONTAINER WindowsApp.lib'
 "
 
     makeArgs="$makeArgs -j8"
 
     if [ "$platform" = "x64" ] || [ "$platform" = "x86" ]; then
-        configureArgs="$configureArgs \
-            --extra-cflags=\"-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00\"
+        configureArgs=" \
+            $configureArgs \
+            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00'
 "
     fi
 
     if [ "$platform" = "ARM" ] || [ "$platform" = "ARM64" ]; then
         configureArgs="$configureArgs
-            --extra-cflags=\"-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP\"
+            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP'
             "
     fi
 fi
@@ -61,15 +63,15 @@ fi
 if [ "$variant" == "Win8.1" ]; then
     if [ "$platform" = "x64" ] || [ "$platform" = "x86" ]; then
         configureArgs="$configureArgs
-            --extra-cflags=\"-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603\"
-            --extra-ldflags=\"-APPCONTAINER\"
+            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603'
+            --extra-ldflags='-APPCONTAINER'
             "
     fi
 
     if [ "$platform" == "ARM" ]; then
         configureArgs="$configureArgs
-            --extra-cflags=\"-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP\"
-            --extra-ldflags=\"-APPCONTAINER -MACHINE:$platform\"
+            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP'
+            --extra-ldflags='-APPCONTAINER -MACHINE:$platform'
             "
     fi
 fi
@@ -77,22 +79,22 @@ fi
 if [ "$variant" == "Phone8.1" ]; then
     if [ "$platform" == "ARM" ]; then
         configureArgs="$configureArgs
-            --extra-cflags=\"-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP\"
-            --extra-ldflags=\"-APPCONTAINER -MACHINE:$platform -subsystem:console -opt:ref WindowsPhoneCore.lib RuntimeObject.lib PhoneAppModelHost.lib -NODEFAULTLIB:kernel32.lib -NODEFAULTLIB:ole32.lib\"
+            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP'
+            --extra-ldflags='-APPCONTAINER -MACHINE:$platform -subsystem:console -opt:ref WindowsPhoneCore.lib RuntimeObject.lib PhoneAppModelHost.lib -NODEFAULTLIB:kernel32.lib -NODEFAULTLIB:ole32.lib'
             "
 
     elif [ "$platform" == "x86" ]; then
         configureArgs="$configureArgs
-            --extra-cflags=\"-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603\"
-            --extra-ldflags=\"-APPCONTAINER -subsystem:console -opt:ref WindowsPhoneCore.lib RuntimeObject.lib PhoneAppModelHost.lib -NODEFAULTLIB:kernel32.lib -NODEFAULTLIB:ole32.lib\"
+            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603'
+            --extra-ldflags='-APPCONTAINER -subsystem:console -opt:ref WindowsPhoneCore.lib RuntimeObject.lib PhoneAppModelHost.lib -NODEFAULTLIB:kernel32.lib -NODEFAULTLIB:ole32.lib'
             "
     fi
 fi
 
 if [ "$variant" == "Win7" ]; then
     configureArgs="$configureArgs \
-        --extra-cflags=\"-MD -D_WINDLL\" \
-        --extra-ldflags=\"-APPCONTAINER:NO -MACHINE:$platform\"
+        --extra-cflags='-MD -D_WINDLL' \
+        --extra-ldflags='-APPCONTAINER:NO -MACHINE:$platform'
     "
 fi
 
@@ -111,7 +113,7 @@ if [ "$platform" = "ARM64" ]; then
     "
 fi
 
-eval "$DIR/ffmpeg/configure $configureArgs"
+eval $DIR/ffmpeg/configure $configureArgs
 
 make $makeArgs
 make install
