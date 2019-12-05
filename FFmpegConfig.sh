@@ -17,36 +17,36 @@ rm -rf $DIR/Target/$platform/Release/ffmpeg-$variant
 rm -rf $DIR/Build/$platform/Release/ffmpeg-$variant
 mkdir -p $DIR/Build/$platform/Release/ffmpeg-$variant
 cd $DIR/Build/$platform/Release/ffmpeg-$variant
-configureArgs="
-    --toolchain=msvc
-    --disable-programs
-    --disable-d3d11va
-    --disable-dxva2
-    --disable-doc
-    --arch="${arch[$platform]}"
-    --enable-shared
-    --enable-cross-compile
-    --enable-debug
-    --target-os=win32
+configureArgs=" \
+    --toolchain=msvc \
+    --disable-programs \
+    --disable-d3d11va \
+    --disable-dxva2 \
+    --disable-doc \
+    --arch=\"${arch[$platform]}\" \
+    --enable-shared \
+    --enable-cross-compile \
+    --enable-debug \
+    --target-os=win32 \
     --prefix=$DIR/Target/$platform/Release/ffmpeg-$variant
 "
 makeArgs=''
 
 if [ "$variant" == "Win10" ]; then
-    configureArgs="$configureArgs
-        --disable-encoders
-        --disable-devices
-        --disable-hwaccels
-        --enable-zlib
-        --enable-bzlib
-        --enable-iconv
+    configureArgs="$configureArgs \
+        --disable-encoders \
+        --disable-devices \
+        --disable-hwaccels \
+        --enable-zlib \
+        --enable-bzlib \
+        --enable-iconv \
         --extra-ldflags=\"-APPCONTAINER WindowsApp.lib\"
 "
 
     makeArgs="$makeArgs -j8"
 
     if [ "$platform" = "x64" ] || [ "$platform" = "x86" ]; then
-        configureArgs="$configureArgs
+        configureArgs="$configureArgs \
             --extra-cflags=\"-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00\"
 "
     fi
@@ -90,28 +90,28 @@ if [ "$variant" == "Phone8.1" ]; then
 fi
 
 if [ "$variant" == "Win7" ]; then
-    configureArgs="$configureArgs
-        --extra-cflags=\"-MD -D_WINDLL\"
+    configureArgs="$configureArgs \
+        --extra-cflags=\"-MD -D_WINDLL\" \
         --extra-ldflags=\"-APPCONTAINER:NO -MACHINE:$platform\"
     "
 fi
 
 if [ "$platform" == "ARM" ]; then
-    configureArgs="$configureArgs
-        --as=armasm
-        --cpu=armv7
+    configureArgs="$configureArgs \
+        --as=armasm \
+        --cpu=armv7 \
         --enable-thumb
     "
 fi
 
 if [ "$platform" = "ARM64" ]; then
-    configureArgs="$configureArgs
-        --cpu=armv7
+    configureArgs="$configureArgs \
+        --cpu=armv7 \
         --enable-thumb
     "
 fi
 
-$DIR/ffmpeg/configure $configureArgs
+eval "$DIR/ffmpeg/configure $configureArgs"
 
 make $makeArgs
 make install
