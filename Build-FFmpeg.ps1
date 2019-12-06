@@ -92,8 +92,10 @@ function Build-Platform {
 
     try {
         MSBuild.exe $SolutionDir\Libs\zlib\SMP\libzlib.vcxproj `
-            /p:OutDir="$libs\build\" `
-            /p:Configuration="${Configuration}WinRT" `
+            /p:TargetName='zlib' `
+            /p:Configuration="${Configuration}" `
+            /p:IntDir="${SolutionDir}Build\${Platform}\${Configuration}\libzlib\" `
+            /p:OutDir="${SolutionDir}Target\${Platform}\${Configuration}\" `
             /p:Platform=$Platform `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
             /p:PlatformToolset=$platformToolSet
@@ -101,16 +103,13 @@ function Build-Platform {
     catch {
         Exit
     }
-
-    Get-ChildItem -Recurse -Include '*.h' $libs\build\libzlib\include | Copy-Item -Destination $libs\include\
-    Copy-Item -Recurse $libs\build\libzlib\licenses\* -Destination $libs\licenses\
-    Copy-Item $libs\build\libzlib\lib\$Platform\libzlib_winrt.lib $libs\lib\zlib.lib
-    Copy-Item $libs\build\libzlib\lib\$Platform\libzlib_winrt.pdb $libs\lib\zlib.pdb
 
     try {
         MSBuild.exe $SolutionDir\Libs\bzip2\SMP\libbz2.vcxproj `
-            /p:OutDir="$libs\build\" `
-            /p:Configuration="${Configuration}WinRT" `
+            /p:TargetName='bz2' `
+            /p:Configuration="${Configuration}" `
+            /p:IntDir="${SolutionDir}Build\${Platform}\${Configuration}\libbz2\" `
+            /p:OutDir="${SolutionDir}Target\${Platform}\${Configuration}\" `
             /p:Platform=$Platform `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
             /p:PlatformToolset=$platformToolSet
@@ -118,16 +117,13 @@ function Build-Platform {
     catch {
         Exit
     }
-
-    Get-ChildItem -Recurse -Include '*.h' $libs\build\libbz2\include | Copy-Item -Destination $libs\include\
-    Copy-Item -Recurse $libs\build\libbz2\licenses\* -Destination $libs\licenses\
-    Copy-Item $libs\build\libbz2\lib\$Platform\libbz2_winrt.lib $libs\lib\bz2.lib
-    Copy-Item $libs\build\libbz2\lib\$Platform\libbz2_winrt.pdb $libs\lib\bz2.pdb
 
     try {
         MSBuild.exe $SolutionDir\Libs\libiconv\SMP\libiconv.vcxproj `
-            /p:OutDir="$libs\build\" `
-            /p:Configuration="${Configuration}WinRT" `
+            /p:TargetName='iconv' `
+            /p:Configuration="${Configuration}" `
+            /p:IntDir="${SolutionDir}Build\${Platform}\${Configuration}\libiconv\" `
+            /p:OutDir="${SolutionDir}Target\${Platform}\${Configuration}\" `
             /p:Platform=$Platform `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
             /p:PlatformToolset=$platformToolSet
@@ -136,13 +132,8 @@ function Build-Platform {
         Exit
     }
 
-    Get-ChildItem -Recurse -Include '*.h' $libs\build\libiconv\include | Copy-Item -Destination $libs\include\
-    Copy-Item -Recurse $libs\build\libiconv\licenses\* -Destination $libs\licenses\
-    Copy-Item $libs\build\libiconv\lib\$Platform\libiconv_winrt.lib $libs\lib\iconv.lib
-    Copy-Item $libs\build\libiconv\lib\$Platform\libiconv_winrt.pdb $libs\lib\iconv.pdb
-
-    $env:LIB += ";${libs}\lib"
-    $env:INCLUDE += ";${libs}\include"
+    $env:LIB += ";${SolutionDir}Target\${Platform}\${Configuration}\${_}\lib\${Platform}"
+    $env:INCLUDE += ";${SolutionDir}Target\${Platform}\${Configuration}\${_}\include"
 
     # Export full current PATH from environment into MSYS2
     $env:MSYS2_PATH_TYPE = 'inherit'
@@ -150,10 +141,9 @@ function Build-Platform {
     # Build ffmpeg
     & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh Win10 $Platform
 
-    #Get-ChildItem -Recurse -Include '*.pdb' $SolutionDir\Target\$Platform\$Configuration\ffmpeg-Win10
     # Copy PDBs to built binaries dir
-    Get-ChildItem -Recurse -Include '*.pdb' $SolutionDir\Target\$Platform\$Configuration\ffmpeg-Win10 | `
-        Copy-Item -Destination $SolutionDir\ffmpeg\Build\Windows10\$Platform\bin\
+    Get-ChildItem -Recurse -Include '*.pdb' $SolutionDir\Build\$Platform\$Configuration\ffmpeg-Win10 | `
+        Copy-Item -Destination $SolutionDir\Target\$Platform\$Configuration\ffmpeg-Win10\bin\
 }
 
 if (! (Test-Path $PSScriptRoot\ffmpeg\configure)) {
