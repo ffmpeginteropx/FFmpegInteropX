@@ -261,6 +261,21 @@ MediaSource^ FFmpegInteropMSS::CreateMediaSource()
 			source->ExternalTimedMetadataTracks->Append(subtitleInfo->SubtitleTrack);
 		}
 	}
+
+	if (chapterInfos->Size > 0)
+	{
+		auto track = ref new TimedMetadataTrack("Chapters", "", TimedMetadataKind::Chapter);
+		for each (auto chapter in chapterInfos)
+		{
+			auto cue = ref new ChapterCue();
+			cue->Title = chapter->Title;
+			cue->StartTime = chapter->StartTime;
+			cue->Duration = chapter->Duration;
+			track->AddCue(cue);
+		}
+		source->ExternalTimedMetadataTracks->Append(track);
+	}
+
 	return source;
 }
 
@@ -514,9 +529,7 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(String^ uri)
 
 	if (SUCCEEDED(hr))
 	{
-		std::wstring uriW(uri->Begin());
-		std::string uriA(uriW.begin(), uriW.end());
-		charStr = uriA.c_str();
+		charStr = StringUtils::PlatformStringToUtf8String(uri).c_str();
 
 		// Open media in the given URI using the specified options
 		if (avformat_open_input(&avFormatCtx, charStr, NULL, &avDict) < 0)
@@ -842,6 +855,31 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 					mss->AddStreamDescriptor(stream->StreamDescriptor);
 				}
 			}
+
+			auto chapters = ref new Vector<ChapterInfo^>();
+			if (avFormatCtx->chapters && avFormatCtx->nb_chapters > 1)
+			{
+				for (size_t i = 0; i < avFormatCtx->nb_chapters; i++)
+				{
+					auto chapter = avFormatCtx->chapters[i];
+					auto entry = av_dict_get(chapter->metadata, "title", NULL, AV_DICT_IGNORE_SUFFIX);
+					if (entry)
+					{
+						auto title = StringUtils::Utf8ToPlatformString(entry->value);
+						TimeSpan start{ (long long)((chapter->start / (double)chapter->time_base.den) * chapter->time_base.num * 10000000) };
+						TimeSpan duration{ (long long)(((chapter->end - chapter->start) / (double)chapter->time_base.den) * chapter->time_base.num * 10000000) };
+						
+						// compensate for start time offset
+						if (avFormatCtx->start_time != AV_NOPTS_VALUE)
+						{
+							start.Duration -= (avFormatCtx->start_time * 10);
+						}
+
+						chapters->Append(ref new ChapterInfo(title, start, duration));
+					}
+				}
+			}
+			chapterInfos = chapters->GetView();
 		}
 
 		if (SUCCEEDED(hr))
