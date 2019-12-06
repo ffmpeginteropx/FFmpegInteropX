@@ -82,21 +82,16 @@ function Build-Platform {
     # 14.16.27023 => v141
     $platformToolSet = "v$($VcVersion.Major)$("$VcVersion.Minor"[0])"
 
-    New-Item -ItemType Directory -Force $SolutionDir\Libs\Build\$Platform -OutVariable libs
-
-    ('lib', 'licenses', 'include', 'build') | ForEach-Object {
-        New-Item -ItemType Directory -Force $libs\$_
-    }
-    # Clean platform-specific build dir.
-    Remove-Item -Force -Recurse $libs\build\*
+    $baseIntDir = "${SolutionDir}Build\${Platform}\${Configuration}"
+    $baseOutDir = "${SolutionDir}Target\${Platform}\${Configuration}"
 
     try {
         MSBuild.exe $SolutionDir\Libs\zlib\SMP\libzlib.vcxproj `
             /p:TargetName='zlib' `
-            /p:Configuration="${Configuration}" `
-            /p:IntDir="${SolutionDir}Build\${Platform}\${Configuration}\libzlib\" `
-            /p:OutDir="${SolutionDir}Target\${Platform}\${Configuration}\" `
+            /p:IntDir="$baseIntDir\libzlib\" `
+            /p:OutDir="$baseOutDir\" `
             /p:Platform=$Platform `
+            /p:Configuration=$Configuration `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
             /p:PlatformToolset=$platformToolSet
     }
@@ -107,10 +102,10 @@ function Build-Platform {
     try {
         MSBuild.exe $SolutionDir\Libs\bzip2\SMP\libbz2.vcxproj `
             /p:TargetName='bz2' `
-            /p:Configuration="${Configuration}" `
-            /p:IntDir="${SolutionDir}Build\${Platform}\${Configuration}\libbz2\" `
-            /p:OutDir="${SolutionDir}Target\${Platform}\${Configuration}\" `
+            /p:IntDir="$baseIntDir\libbz2\" `
+            /p:OutDir="$baseOutDir\" `
             /p:Platform=$Platform `
+            /p:Configuration=$Configuration `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
             /p:PlatformToolset=$platformToolSet
     }
@@ -121,10 +116,10 @@ function Build-Platform {
     try {
         MSBuild.exe $SolutionDir\Libs\libiconv\SMP\libiconv.vcxproj `
             /p:TargetName='iconv' `
-            /p:Configuration="${Configuration}" `
-            /p:IntDir="${SolutionDir}Build\${Platform}\${Configuration}\libiconv\" `
-            /p:OutDir="${SolutionDir}Target\${Platform}\${Configuration}\" `
+            /p:IntDir="$baseIntDir\libiconv\" `
+            /p:OutDir="$baseOutDir\" `
             /p:Platform=$Platform `
+            /p:Configuration=$Configuration `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
             /p:PlatformToolset=$platformToolSet
     }
@@ -132,8 +127,8 @@ function Build-Platform {
         Exit
     }
 
-    $env:LIB += ";${SolutionDir}Target\${Platform}\${Configuration}\${_}\lib\${Platform}"
-    $env:INCLUDE += ";${SolutionDir}Target\${Platform}\${Configuration}\${_}\include"
+    $env:LIB += ";$baseOutDir\lib\${Platform}"
+    $env:INCLUDE += ";$baseOutDir\include"
 
     # Export full current PATH from environment into MSYS2
     $env:MSYS2_PATH_TYPE = 'inherit'
@@ -142,8 +137,8 @@ function Build-Platform {
     & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh Win10 $Platform
 
     # Copy PDBs to built binaries dir
-    Get-ChildItem -Recurse -Include '*.pdb' $SolutionDir\Build\$Platform\$Configuration\ffmpeg-Win10 | `
-        Copy-Item -Destination $SolutionDir\Target\$Platform\$Configuration\ffmpeg-Win10\bin\
+    Get-ChildItem -Recurse -Include '*.pdb' $baseIntDir\ffmpeg-Win10 | `
+        Copy-Item -Destination $baseOutDir\ffmpeg-Win10\bin\
 }
 
 if (! (Test-Path $PSScriptRoot\ffmpeg\configure)) {
