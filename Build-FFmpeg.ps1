@@ -142,7 +142,7 @@ function Build-Platform {
     $env:MSYS2_PATH_TYPE = 'inherit'
 
     # Build ffmpeg - disable strict error handling since ffmpeg writes to error out
-    $ErrorActionPreference = "SilentlyContinue"
+    $ErrorActionPreference = "Continue"
     & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh Win10 $Platform
     $ErrorActionPreference = "Stop"
 
