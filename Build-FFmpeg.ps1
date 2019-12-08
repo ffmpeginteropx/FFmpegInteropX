@@ -82,7 +82,7 @@ function Build-Platform {
     if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
     # 14.16.27023 => v141
-    $platformToolSet = "v$($VcVersion.Major)$($VcVersion.Minor[0])"
+    $platformToolSet = "v$($VcVersion.Major)$("$($VcVersion.Minor)"[0])"
     Write-Host "Platform Toolset: [$platformToolSet]"
 
     New-Item -ItemType Directory -Force $SolutionDir\Libs\Build\$Platform -OutVariable libs
