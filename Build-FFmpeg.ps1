@@ -79,8 +79,11 @@ function Build-Platform {
         }
     }
 
+    if ($lastexitcode -ne 0) { Exit $lastexitcode }
+
     # 14.16.27023 => v141
-    $platformToolSet = "v$($VcVersion.Major)$("$VcVersion.Minor"[0])"
+    $platformToolSet = "v$($VcVersion.Major)$($VcVersion.Minor[0])"
+    Write-Host "Platform Toolset: [$platformToolSet]"
 
     New-Item -ItemType Directory -Force $SolutionDir\Libs\Build\$Platform -OutVariable libs
 
@@ -90,51 +93,42 @@ function Build-Platform {
     # Clean platform-specific build dir.
     Remove-Item -Force -Recurse $libs\build\*
 
-    try {
-        MSBuild.exe $SolutionDir\Libs\zlib\SMP\libzlib.vcxproj `
-            /p:OutDir="$libs\build\" `
-            /p:Configuration="${Configuration}WinRT" `
-            /p:Platform=$Platform `
-            /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-            /p:PlatformToolset=$platformToolSet
-    }
-    catch {
-        Exit
-    }
+    MSBuild.exe $SolutionDir\Libs\zlib\SMP\libzlib.vcxproj `
+        /p:OutDir="$libs\build\" `
+        /p:Configuration="${Configuration}WinRT" `
+        /p:Platform=$Platform `
+        /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+        /p:PlatformToolset=$platformToolSet
+
+    if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
     Get-ChildItem -Recurse -Include '*.h' $libs\build\libzlib\include | Copy-Item -Destination $libs\include\
     Copy-Item -Recurse $libs\build\libzlib\licenses\* -Destination $libs\licenses\
     Copy-Item $libs\build\libzlib\lib\$Platform\libzlib_winrt.lib $libs\lib\zlib.lib
     Copy-Item $libs\build\libzlib\lib\$Platform\libzlib_winrt.pdb $libs\lib\zlib.pdb
 
-    try {
-        MSBuild.exe $SolutionDir\Libs\bzip2\SMP\libbz2.vcxproj `
-            /p:OutDir="$libs\build\" `
-            /p:Configuration="${Configuration}WinRT" `
-            /p:Platform=$Platform `
-            /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-            /p:PlatformToolset=$platformToolSet
-    }
-    catch {
-        Exit
-    }
+    MSBuild.exe $SolutionDir\Libs\bzip2\SMP\libbz2.vcxproj `
+        /p:OutDir="$libs\build\" `
+        /p:Configuration="${Configuration}WinRT" `
+        /p:Platform=$Platform `
+        /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+        /p:PlatformToolset=$platformToolSet
+
+    if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
     Get-ChildItem -Recurse -Include '*.h' $libs\build\libbz2\include | Copy-Item -Destination $libs\include\
     Copy-Item -Recurse $libs\build\libbz2\licenses\* -Destination $libs\licenses\
     Copy-Item $libs\build\libbz2\lib\$Platform\libbz2_winrt.lib $libs\lib\bz2.lib
     Copy-Item $libs\build\libbz2\lib\$Platform\libbz2_winrt.pdb $libs\lib\bz2.pdb
 
-    try {
-        MSBuild.exe $SolutionDir\Libs\libiconv\SMP\libiconv.vcxproj `
-            /p:OutDir="$libs\build\" `
-            /p:Configuration="${Configuration}WinRT" `
-            /p:Platform=$Platform `
-            /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-            /p:PlatformToolset=$platformToolSet
-    }
-    catch {
-        Exit
-    }
+    MSBuild.exe $SolutionDir\Libs\libiconv\SMP\libiconv.vcxproj `
+        /p:OutDir="$libs\build\" `
+        /p:Configuration="${Configuration}WinRT" `
+        /p:Platform=$Platform `
+        /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+        /p:PlatformToolset=$platformToolSet
+    
+    if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
     Get-ChildItem -Recurse -Include '*.h' $libs\build\libiconv\include | Copy-Item -Destination $libs\include\
     Copy-Item -Recurse $libs\build\libiconv\licenses\* -Destination $libs\licenses\
@@ -147,13 +141,20 @@ function Build-Platform {
     # Export full current PATH from environment into MSYS2
     $env:MSYS2_PATH_TYPE = 'inherit'
 
-    # Build ffmpeg
+    # Build ffmpeg - disable strict error handling since ffmpeg writes to error out
+    $ErrorActionPreference = "Continue"
     & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh Win10 $Platform
+    $ErrorActionPreference = "Stop"
+
+    if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
     # Copy PDBs to built binaries dir
     Get-ChildItem -Recurse -Include '*.pdb' $SolutionDir\ffmpeg\Output\Windows10\$Platform | `
         Copy-Item -Destination $SolutionDir\ffmpeg\Build\Windows10\$Platform\bin\
 }
+
+# Stop on all PowerShell command errors
+$ErrorActionPreference = "Stop"
 
 if (! (Test-Path $PSScriptRoot\ffmpeg\configure)) {
     Write-Error 'configure is not found in ffmpeg folder. Ensure this folder is populated with ffmpeg snapshot'
