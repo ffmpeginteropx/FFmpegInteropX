@@ -27,7 +27,7 @@ namespace FFmpegInterop
 			int index,
 			TimedMetadataKind timedMetadataKind,
 			CoreDispatcher^ dispatcher)
-			: CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, index)
+			: CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, index, HardwareDecoderStatus::Unknown)
 		{
 			this->timedMetadataKind = timedMetadataKind;
 			this->dispatcher = dispatcher;

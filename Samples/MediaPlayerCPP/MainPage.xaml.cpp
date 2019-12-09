@@ -56,6 +56,7 @@ MainPage::MainPage()
 
 	// Show the control panel on startup so user can start opening media
 	Splitter->IsPaneOpen = true;
+	AutoDetect->IsOn = true;
 
 	VideoEffectConfiguration = ref new FFmpegInterop::VideoEffectConfiguration();
 
@@ -363,11 +364,11 @@ void MediaPlayerCPP::MainPage::PassthroughVideo_Toggled(Platform::Object^ sender
 {
 	auto passthrough = PassthroughVideo->IsOn;
 	Config->PassthroughVideoH264 = passthrough;
-	Config->PassthroughVideoH264Hi10P = passthrough;
 	Config->PassthroughVideoHEVC = passthrough;
 	Config->PassthroughVideoMPEG2 = passthrough;
 	Config->PassthroughVideoVC1 = passthrough;
 	Config->PassthroughVideoVP9 = passthrough;
+	Config->PassthroughVideoVP8 = passthrough;
 	Config->PassthroughVideoWMV3 = passthrough;
 }
 
@@ -424,6 +425,12 @@ void MediaPlayerCPP::MainPage::MediaOpened(Platform::Object^ sender, Windows::UI
 	tbSubtitleDelay->Text = "Subtitle delay: 0s";
 }
 
+
+void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	PassthroughVideo->IsEnabled = !AutoDetect->IsOn;
+	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::AutoDetection : VideoDecoderMode::ManualSelection;
+}
 
 void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {

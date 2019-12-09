@@ -41,9 +41,6 @@ namespace FFmpegInterop {
 			{
 				FFmpegInteropConfig^ config = ref new FFmpegInteropConfig();
 				config->IsFrameGrabber = true;
-				config->PassthroughVideoH264 = false;
-				config->PassthroughVideoH264Hi10P = false;
-				config->PassthroughVideoHEVC = false;
 
 				auto result = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr, nullptr);
 				if (result == nullptr)

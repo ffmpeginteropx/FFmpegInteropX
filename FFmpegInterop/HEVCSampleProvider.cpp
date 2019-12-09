@@ -27,8 +27,9 @@ HEVCSampleProvider::HEVCSampleProvider(
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
 	int streamIndex,
-	VideoEncodingProperties^ encodingProperties)
-	: H264AVCSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties)
+	VideoEncodingProperties^ encodingProperties,
+	HardwareDecoderStatus hardwareDecoderStatus)
+	: H264AVCSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareDecoderStatus)
 {
 }
 

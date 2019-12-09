@@ -64,19 +64,54 @@ namespace MediaPlayerCS
 
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
+            AutoDetect.IsOn = true;
 
             VideoEffectConfiguration = new VideoEffectConfiguration();
 
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
 
+            CodecChecker.CodecRequired += CodecChecker_CodecRequired;
+
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
-                      
 
             this.KeyDown += MainPage_KeyDown;
         }
 
+        private async void CodecChecker_CodecRequired(CodecRequiredEventArgs args)
+        {
+            await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                CoreDispatcherPriority.Normal,
+                new DispatchedHandler(async () =>
+                {
+                    await AskUserInstallCodec(args);
+                }));
+        }
+
+        private static async Task AskUserInstallCodec(CodecRequiredEventArgs args)
+        {
+            // show message box to user
+
+            // then open store page
+            await args.OpenStorePageAsync();
+
+            // wait for app window to be re-activated
+            var tcs = new TaskCompletionSource<object>();
+            WindowActivatedEventHandler handler = (s, e) =>
+               {
+                   if (e.WindowActivationState != CoreWindowActivationState.Deactivated)
+                   {
+                       tcs.TrySetResult(null);
+                   }
+               };
+            Window.Current.Activated += handler;
+            await tcs.Task;
+            Window.Current.Activated -= handler;
+
+            // now refresh codec checker, so next file might use HW acceleration (if codec was really installed)
+            await CodecChecker.RefreshAsync();
+        }
 
         private async void MainPage_KeyDown(object sender, KeyRoutedEventArgs e)
         {
@@ -371,11 +406,11 @@ namespace MediaPlayerCS
         {
             var passthrough = PassthroughVideo.IsOn;
             Config.PassthroughVideoH264 = passthrough;
-            Config.PassthroughVideoH264Hi10P = passthrough;
             Config.PassthroughVideoHEVC = passthrough;
             Config.PassthroughVideoMPEG2 = passthrough;
             Config.PassthroughVideoVC1 = passthrough;
             Config.PassthroughVideoVP9 = passthrough;
+            Config.PassthroughVideoVP8 = passthrough;
             Config.PassthroughVideoWMV3 = passthrough;
         }
 
@@ -423,9 +458,17 @@ namespace MediaPlayerCS
             tbSubtitleDelay.Text = "Subtitle delay: 0s";
         }
 
+      
+        private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
+        {
+            PassthroughVideo.IsEnabled = !AutoDetect.IsOn;
+            Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.AutoDetection : VideoDecoderMode.ManualSelection;
+        }
+        
         private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
         {
-            mediaElement.RemoveAllEffects();
+        
+	mediaElement.RemoveAllEffects();
             if (enableVideoEffects.IsOn)
             {
                 VideoEffectConfiguration.AddVideoEffect(mediaElement);

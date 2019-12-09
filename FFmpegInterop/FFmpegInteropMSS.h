@@ -20,6 +20,7 @@
 #include <queue>
 #include <mutex>
 #include <pplawait.h>
+#include "Enumerations.h"
 #include "FFmpegReader.h"
 #include "MediaSampleProvider.h"
 #include "MediaThumbnailData.h"
@@ -28,6 +29,7 @@
 #include "StreamInfo.h"
 #include "SubtitleProvider.h"
 #include "AttachedFileHelper.h"
+#include "CodecChecker.h"
 #include <collection.h>
 #include "MediaMetadata.h"
 
@@ -259,7 +261,7 @@ namespace FFmpegInterop
 		void OnAudioTracksChanged(MediaPlaybackItem ^sender, IVectorChangedEventArgs ^args);
 		void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args);
 		void InitializePlaybackItem(MediaPlaybackItem^ playbackitem);
-
+		bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, HardwareDecoderStatus &hardwareDecoderStatus, bool manualStatus, int maxProfile, int maxLevel);
 
 	internal:
 		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);

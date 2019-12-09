@@ -175,7 +175,6 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromStream(IRandomAcce
 	config->PassthroughAudioAAC = !forceAudioDecode;
 	config->PassthroughAudioMP3 = !forceAudioDecode;
 	config->PassthroughVideoH264 = !forceVideoDecode;
-	config->PassthroughVideoH264Hi10P = !forceVideoDecode;
 	config->PassthroughVideoHEVC = !forceVideoDecode;
 	config->PassthroughVideoMPEG2 = !forceVideoDecode;
 	config->PassthroughVideoVC1 = !forceVideoDecode;
@@ -214,7 +213,6 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromUri(String^ uri, b
 	config->PassthroughAudioAAC = !forceAudioDecode;
 	config->PassthroughAudioMP3 = !forceAudioDecode;
 	config->PassthroughVideoH264 = !forceVideoDecode;
-	config->PassthroughVideoH264Hi10P = !forceVideoDecode;
 	config->PassthroughVideoHEVC = !forceVideoDecode;
 	config->PassthroughVideoMPEG2 = !forceVideoDecode;
 	config->PassthroughVideoVC1 = !forceVideoDecode;
@@ -457,6 +455,60 @@ void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 		stream->PlaybackItem = playbackItem;
 	}
 }
+
+bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, HardwareDecoderStatus& hardwareDecoderStatus, bool manualStatus, int maxProfile, int maxLevel)
+{
+	bool result = false;
+	if (!config->IsFrameGrabber)
+	{
+		if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection)
+		{
+			result = CodecChecker::CheckUseHardwareAcceleration(status, 
+				avCodecCtx->codec_id, avCodecCtx->profile, avCodecCtx->width, avCodecCtx->height);
+
+			// check level, if restricted
+			if (result && maxLevel >= 0)
+			{
+				result = avCodecCtx->level <= maxLevel;
+			}
+
+			hardwareDecoderStatus = result ? HardwareDecoderStatus::Available : HardwareDecoderStatus::NotAvailable;
+		}
+		else if (config->VideoDecoderMode == VideoDecoderMode::ManualSelection)
+		{
+			// manual settings
+			if (manualStatus)
+			{
+				// check profile, if restricted
+				if (maxProfile >= 0)
+				{
+					result = avCodecCtx->profile <= maxProfile;
+				}
+				else
+				{
+					result = true;
+				}
+
+				// check level, if restricted
+				if (result && maxLevel >= 0)
+				{
+					result = avCodecCtx->level <= maxLevel;
+				}
+			}
+		}
+		else if (config->VideoDecoderMode == VideoDecoderMode::ForceSystemDecoder)
+		{
+			result = true;
+		}
+		else
+		{
+			result = false;
+		}
+	}
+
+	return result;
+}
+
 
 void FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList ^sender, TimedMetadataPresentationModeChangedEventArgs ^args)
 {
@@ -746,7 +798,8 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 				}
 				auto info = ref new AudioStreamInfo(stream->Name, stream->Language, stream->CodecName, avStream->codecpar->bit_rate, isDefault,
 					channels, avStream->codecpar->sample_rate,
-					max(avStream->codecpar->bits_per_raw_sample, avStream->codecpar->bits_per_coded_sample));
+					max(avStream->codecpar->bits_per_raw_sample, avStream->codecpar->bits_per_coded_sample),
+					stream->Decoder);
 				if (isDefault)
 				{
 					currentAudioStream = stream;
@@ -772,7 +825,7 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 			{
 				videoStreamInfo = ref new VideoStreamInfo(stream->Name, stream->Language, stream->CodecName, avStream->codecpar->bit_rate, true,
 					avStream->codecpar->width, avStream->codecpar->height,
-					max(avStream->codecpar->bits_per_raw_sample, avStream->codecpar->bits_per_coded_sample));
+					max(avStream->codecpar->bits_per_raw_sample, avStream->codecpar->bits_per_coded_sample), VideoSampleProvider->HardwareAccelerationStatus, VideoSampleProvider->Decoder);
 			}
 		}
 		else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE)
@@ -1250,12 +1303,12 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateAudioSampleProvider(AVStream* avStr
 		{
 			encodingProperties = AudioEncodingProperties::CreateAac(avAudioCodecCtx->profile == FF_PROFILE_AAC_HE || avAudioCodecCtx->profile == FF_PROFILE_AAC_HE_V2 ? avAudioCodecCtx->sample_rate / 2 : avAudioCodecCtx->sample_rate, avAudioCodecCtx->channels, (unsigned int)avAudioCodecCtx->bit_rate);
 		}
-		audioSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config, index, encodingProperties);
+		audioSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config, index, encodingProperties, HardwareDecoderStatus::Unknown);
 	}
 	else if (avAudioCodecCtx->codec_id == AV_CODEC_ID_MP3 && config->PassthroughAudioMP3)
 	{
 		AudioEncodingProperties^ encodingProperties = AudioEncodingProperties::CreateMp3(avAudioCodecCtx->sample_rate, avAudioCodecCtx->channels, (unsigned int)avAudioCodecCtx->bit_rate);
-		audioSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config, index, encodingProperties);
+		audioSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config, index, encodingProperties, HardwareDecoderStatus::Unknown);
 	}
 	else
 	{
@@ -1275,22 +1328,30 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 {
 	MediaSampleProvider^ videoSampleProvider;
 	VideoEncodingProperties^ videoProperties;
+	HardwareDecoderStatus hardwareDecoderStatus;
+	
+	if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection)
+	{
+		CodecChecker::Initialize();
+	}
 
-	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 && config->PassthroughVideoH264 && !config->IsFrameGrabber && (avVideoCodecCtx->profile <= 100 || config->PassthroughVideoH264Hi10P))
+	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 &&
+		(CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationH264, hardwareDecoderStatus, config->PassthroughVideoH264, config->PassthroughVideoH264MaxProfile, config->PassthroughVideoH264MaxLevel)))
 	{
 		auto videoProperties = VideoEncodingProperties::CreateH264();
 
 		// Check for H264 bitstream flavor. H.264 AVC extradata starts with 1 while non AVC one starts with 0
 		if (avVideoCodecCtx->extradata != nullptr && avVideoCodecCtx->extradata_size > 0 && avVideoCodecCtx->extradata[0] == 1)
 		{
-			videoSampleProvider = ref new H264AVCSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+			videoSampleProvider = ref new H264AVCSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
 		}
 		else
 		{
-			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
 		}
 	}
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC && config->PassthroughVideoHEVC && !config->IsFrameGrabber &&
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC, hardwareDecoderStatus, config->PassthroughVideoHEVC, config->PassthroughVideoHEVCMaxProfile, config->PassthroughVideoHEVCMaxLevel) &&
 		Windows::Foundation::Metadata::ApiInformation::IsMethodPresent("Windows.Media.MediaProperties.VideoEncodingProperties", "CreateHevc"))
 	{
 		auto videoProperties = VideoEncodingProperties::CreateHevc();
@@ -1299,49 +1360,69 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 		if (avVideoCodecCtx->extradata != nullptr && avVideoCodecCtx->extradata_size > 22 &&
 			(avVideoCodecCtx->extradata[0] || avVideoCodecCtx->extradata[1] || avVideoCodecCtx->extradata[2] > 1))
 		{
-			videoSampleProvider = ref new HEVCSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+			videoSampleProvider = ref new HEVCSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
 		}
 		else
 		{
-			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
 		}
 	}
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3 && config->PassthroughVideoWMV3 && !config->IsFrameGrabber && avVideoCodecCtx->extradata_size > 0)
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3 &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationWMV3, hardwareDecoderStatus, config->PassthroughVideoWMV3, -1, -1) &&
+		avVideoCodecCtx->extradata_size > 0)
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
 		videoProperties->Subtype = MediaEncodingSubtypes::Wmv3;
 
 		auto extradata = Platform::ArrayReference<uint8_t>(avVideoCodecCtx->extradata, avVideoCodecCtx->extradata_size);
 		videoProperties->SetFormatUserData(extradata);
-		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
 	}
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VC1 && config->PassthroughVideoVC1 && !config->IsFrameGrabber && avVideoCodecCtx->extradata_size > 0)
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VC1 &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVC1, hardwareDecoderStatus, config->PassthroughVideoVC1, -1, -1) &&
+		avVideoCodecCtx->extradata_size > 0)
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
 		videoProperties->Subtype = MediaEncodingSubtypes::Wvc1;
 
 		auto extradata = Platform::ArrayReference<uint8_t>(avVideoCodecCtx->extradata, avVideoCodecCtx->extradata_size);
 		videoProperties->SetFormatUserData(extradata);
-		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
 	}
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_MPEG2VIDEO && config->PassthroughVideoMPEG2 && !config->IsFrameGrabber)
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_MPEG2VIDEO &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationMPEG2, hardwareDecoderStatus, config->PassthroughVideoMPEG2, -1, -1))
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
 		videoProperties->Subtype = MediaEncodingSubtypes::Mpeg2;
 
-		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
 	}
-	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP9 && config->PassthroughVideoVP9 && !config->IsFrameGrabber &&
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP9 &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP9, hardwareDecoderStatus, config->PassthroughVideoVP9 && !(avVideoCodecCtx->profile & 0x01), -1, -1) &&
 		Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.MediaProperties.MediaEncodingSubtypes", "Vp9"))
 	{
 		auto videoProperties = ref new VideoEncodingProperties();
 		videoProperties->Subtype = MediaEncodingSubtypes::Vp9;
 
-		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties);
+		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
+	}
+	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP8 &&
+		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP8, hardwareDecoderStatus, config->PassthroughVideoVP8, -1, -1) &&
+		Windows::Foundation::Metadata::ApiInformation::IsTypePresent("Windows.Media.Core.CodecSubtypes"))
+
+	{
+		auto videoProperties = ref new VideoEncodingProperties();
+		videoProperties->Subtype = Windows::Media::Core::CodecSubtypes::VideoFormatVP80;
+
+		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
 	}
 	else
 	{
-		videoSampleProvider = ref new UncompressedVideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index);
+		if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection)
+		{
+			hardwareDecoderStatus = HardwareDecoderStatus::NotAvailable;
+		}
+		videoSampleProvider = ref new UncompressedVideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, hardwareDecoderStatus);
 	}
 
 	auto hr = videoSampleProvider->Initialize();

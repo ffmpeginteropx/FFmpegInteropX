@@ -48,6 +48,7 @@
                         <ToggleSwitch Header="Passthrough Audio MP3" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioMP3}"/>
                         <ToggleSwitch Header="Passthrough Audio AAC" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioAAC}" Margin="0,0,0,20" />
 
+                        <ToggleSwitch Header="Auto-Detect Hardware Accelection" OffContent="OFF" OnContent="ON" x:Name="AutoDetect" Toggled="AutoDetect_Toggled" />
                         <ToggleSwitch Header="Passthrough Video" OffContent="OFF" OnContent="ON" IsOn="True" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
 
                         <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.VideoOutputAllowIyuv}"/>
