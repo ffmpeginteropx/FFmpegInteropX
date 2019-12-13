@@ -266,6 +266,12 @@ namespace FFmpegInterop
 
 		/*Used to pass additional, specific options to external sub parsers*/
 		property PropertySet^ AdditionalFFmpegSubtitleOptions;
+
+		/*Internal use: Sets the target width for frame grabber.*/
+		property int DecodePixelWidth;
+
+		/*Internal use: Sets the target height for frame grabber.*/
+		property int DecodePixelHeight;
 		
 
 	private:

@@ -89,16 +89,25 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 		outputMediaSubtype = MediaEncodingSubtypes::Nv12;
 	}
 
-	auto width = m_pAvCodecCtx->width;
-	auto height = m_pAvCodecCtx->height;
+	TargetWidth = decoderWidth = m_pAvCodecCtx->width;
+	TargetHeight = decoderHeight = m_pAvCodecCtx->height;
 
-	if (m_pAvCodecCtx->pix_fmt == m_OutputPixelFormat)
+	if (m_config->IsFrameGrabber)
+	{
+		if (m_config->DecodePixelWidth > 0 && m_config->DecodePixelHeight > 0)
+		{
+			TargetWidth = decoderWidth = m_config->DecodePixelWidth;
+			TargetWidth = decoderHeight = m_config->DecodePixelHeight;
+		}
+		m_bUseScaler = true;
+	}
+	else if (m_pAvCodecCtx->pix_fmt == m_OutputPixelFormat)
 	{
 		if (m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1)
 		{
 			// This codec supports direct buffer decoding.
 			// Get decoder frame size and override get_buffer2...
-			avcodec_align_dimensions(m_pAvCodecCtx, &width, &height);
+			avcodec_align_dimensions(m_pAvCodecCtx, &decoderWidth, &decoderHeight);
 
 			m_pAvCodecCtx->get_buffer2 = get_buffer2;
 			m_pAvCodecCtx->opaque = (void*)this;
@@ -113,9 +122,6 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 		// Scaler required to convert pixel format
 		m_bUseScaler = true;
 	}
-
-	decoderWidth = width;
-	decoderHeight = height;
 }
 
 IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor()
@@ -160,8 +166,8 @@ HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired()
 			m_pAvCodecCtx->width,
 			m_pAvCodecCtx->height,
 			m_pAvCodecCtx->pix_fmt,
-			m_pAvCodecCtx->width,
-			m_pAvCodecCtx->height,
+			TargetWidth,
+			TargetHeight,
 			m_OutputPixelFormat,
 			SWS_BICUBIC,
 			NULL,

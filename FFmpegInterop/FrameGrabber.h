@@ -1,6 +1,7 @@
 #pragma once
 #include "FFmpegInteropMSS.h"
 #include "FFmpegInteropConfig.h"
+#include "UncompressedVideoSampleProvider.h"
 #include <ppl.h>
 
 using namespace concurrency;
@@ -32,6 +33,26 @@ namespace FFmpegInterop {
 			{
 				return interopMSS->Duration;
 			}
+		}
+
+		/// <summary>Gets video stream information.</summary>
+		property VideoStreamInfo^ VideoStream
+		{
+			VideoStreamInfo^ get() { return interopMSS->VideoStream; }
+		}
+
+		/// <summary>Gets or sets the decode pixel width.</summary>
+		property int DecodePixelWidth
+		{
+			int get() { return interopMSS->Configuration->DecodePixelWidth; }
+			void set(int value) { interopMSS->Configuration->DecodePixelWidth = value; }
+		}
+
+		/// <summary>Gets or sets the decode pixel height.</summary>
+		property int DecodePixelHeight
+		{
+			int get() { return interopMSS->Configuration->DecodePixelHeight; }
+			void set(int value) { interopMSS->Configuration->DecodePixelHeight = value; }
 		}
 
 		/// <summary>Creates a new FrameGrabber from the specified stream.</summary>
@@ -116,12 +137,25 @@ namespace FFmpegInterop {
 						continue;
 					}
 
+					auto sampleProvider = static_cast<UncompressedVideoSampleProvider^>(interopMSS->VideoSampleProvider);
 					auto streamDescriptor = static_cast<VideoStreamDescriptor^>(interopMSS->VideoSampleProvider->StreamDescriptor);
+					MediaRatio^ pixelAspectRatio = streamDescriptor->EncodingProperties->PixelAspectRatio;
+					int width, height;
+					if (interopMSS->Configuration->DecodePixelWidth > 0 || interopMSS->Configuration->DecodePixelHeight > 0)
+					{
+						width = sampleProvider->TargetWidth;
+						height = sampleProvider->TargetHeight;
+						pixelAspectRatio->Numerator = 1;
+						pixelAspectRatio->Denominator = 1;
+					}
+					else
+					{
+						width = interopMSS->VideoStream->PixelWidth;
+						height = interopMSS->VideoStream->PixelHeight;
+					}
 
 					auto result = ref new VideoFrame(sample->Buffer,
-						interopMSS->VideoStream->PixelWidth,
-						interopMSS->VideoStream->PixelHeight,
-						streamDescriptor->EncodingProperties->PixelAspectRatio,
+						width, height, pixelAspectRatio,
 						sample->Timestamp);
 
 					return result;
