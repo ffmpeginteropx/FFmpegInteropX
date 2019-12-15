@@ -52,11 +52,12 @@ namespace FFmpegInterop
 		AVPixelFormat GetOutputPixelFormat() { return m_OutputPixelFormat; }
 		property int TargetWidth;
 		property int TargetHeight;
+		property byte* TargetBuffer;
 
 	private:
 		void SelectOutputFormat();
 		HRESULT InitializeScalerIfRequired();
-		HRESULT FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer);
+		HRESULT FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height);
 		AVBufferRef* AllocateBuffer(int totalSize);
 		static int get_buffer2(AVCodecContext *avCodecContext, AVFrame *frame, int flags);
 

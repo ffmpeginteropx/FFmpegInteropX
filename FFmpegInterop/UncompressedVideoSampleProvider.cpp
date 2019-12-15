@@ -94,11 +94,6 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 
 	if (m_config->IsFrameGrabber)
 	{
-		if (m_config->DecodePixelWidth > 0 && m_config->DecodePixelHeight > 0)
-		{
-			TargetWidth = decoderWidth = m_config->DecodePixelWidth;
-			TargetWidth = decoderHeight = m_config->DecodePixelHeight;
-		}
 		m_bUseScaler = true;
 	}
 	else if (m_pAvCodecCtx->pix_fmt == m_OutputPixelFormat)
@@ -224,7 +219,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 			uint8_t* data[4];
 			AVBufferRef* buffer;
 
-			hr = FillLinesAndBuffer(linesize, data, &buffer);
+			hr = FillLinesAndBuffer(linesize, data, &buffer, TargetWidth, TargetHeight);
 			if (SUCCEEDED(hr))
 			{
 				// Convert to output format using FFmpeg software scaler
@@ -313,16 +308,16 @@ HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample^ 
 	return S_OK;
 }
 
-HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer)
+HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height)
 {
-	if (av_image_fill_linesizes(linesize, m_OutputPixelFormat, decoderWidth) < 0)
+	if (av_image_fill_linesizes(linesize, m_OutputPixelFormat, width) < 0)
 	{
 		return E_FAIL;
 	}
 
-	auto YBufferSize = linesize[0] * decoderHeight;
-	auto UBufferSize = linesize[1] * decoderHeight / 2;
-	auto VBufferSize = linesize[2] * decoderHeight / 2;
+	auto YBufferSize = linesize[0] * height;
+	auto UBufferSize = linesize[1] * height / 2;
+	auto VBufferSize = linesize[2] * height / 2;
 	auto totalSize = YBufferSize + UBufferSize + VBufferSize;
 
 	buffer[0] = AllocateBuffer(totalSize);
@@ -341,6 +336,12 @@ HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte*
 
 AVBufferRef* UncompressedVideoSampleProvider::AllocateBuffer(int totalSize)
 {
+	if (m_config->IsFrameGrabber && TargetBuffer)
+	{
+		auto bufferRef = av_buffer_create(TargetBuffer, totalSize, NULL, NULL, 0);
+		return bufferRef;
+	}
+
 	if (!m_pBufferPool)
 	{
 		m_pBufferPool = av_buffer_pool_init(totalSize, NULL);
@@ -375,6 +376,6 @@ int UncompressedVideoSampleProvider::get_buffer2(AVCodecContext *avCodecContext,
 	}
 	else
 	{
-		return provider->FillLinesAndBuffer(frame->linesize, frame->data, frame->buf);
+		return provider->FillLinesAndBuffer(frame->linesize, frame->data, frame->buf, provider->decoderWidth, provider->decoderHeight);
 	}
 }

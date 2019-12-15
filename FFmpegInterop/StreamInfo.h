@@ -75,6 +75,7 @@ namespace FFmpegInterop
 
 			this->pixelWidth = pixelWidth;
 			this->pixelHeight = pixelHeight;
+			this->displayAspectRatio = displayAspectRatio;
 			this->bitsPerSample = bitsPerSample;
 
 			this->hardwareDecoderStatus = hwAccel;
