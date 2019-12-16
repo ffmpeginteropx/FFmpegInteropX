@@ -338,7 +338,7 @@ AVBufferRef* UncompressedVideoSampleProvider::AllocateBuffer(int totalSize)
 {
 	if (m_config->IsFrameGrabber && TargetBuffer)
 	{
-		auto bufferRef = av_buffer_create(TargetBuffer, totalSize, NULL, NULL, 0);
+		auto bufferRef = av_buffer_create(TargetBuffer, totalSize, [](void*, byte*) {}, NULL, 0);
 		return bufferRef;
 	}
 
