@@ -1,11 +1,15 @@
 #pragma once
 #include "FFmpegInteropMSS.h"
 #include "FFmpegInteropConfig.h"
+#include "UncompressedVideoSampleProvider.h"
 #include <ppl.h>
+#include <robuffer.h>
 
-using namespace concurrency;
 
 namespace FFmpegInterop {
+
+	using namespace concurrency;
+	using namespace Windows::Storage::Streams;
 
 	/// <summary>Supports grabbing of video frames from a file.</summary>
 	public ref class FrameGrabber sealed
@@ -33,6 +37,18 @@ namespace FFmpegInterop {
 				return interopMSS->Duration;
 			}
 		}
+
+		/// <summary>Gets video stream information.</summary>
+		property VideoStreamInfo^ VideoStream
+		{
+			VideoStreamInfo^ get() { return interopMSS->VideoStream; }
+		}
+
+		/// <summary>Gets or sets the decode pixel width.</summary>
+		property int DecodePixelWidth;
+
+		/// <summary>Gets or sets the decode pixel height.</summary>
+		property int DecodePixelHeight;
 
 		/// <summary>Creates a new FrameGrabber from the specified stream.</summary>
 		static IAsyncOperation<FrameGrabber^>^ CreateFromStreamAsync(IRandomAccessStream^ stream)
@@ -63,10 +79,46 @@ namespace FFmpegInterop {
 		/// <param name="position">The position of the requested frame.</param>
 		/// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
 		/// <param name="maxFrameSkip">If exactSeek=true, this limits the number of frames to decode after the key frame.</param>
+		/// <param name="targetBuffer">The target buffer which shall contain the decoded pixel data.</param>
 		/// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
-		IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int maxFrameSkip)
+		IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int maxFrameSkip, IBuffer^ targetBuffer)
 		{
-			return create_async([this, position, exactSeek, maxFrameSkip]
+			// the IBuffer from WriteableBitmap can only be accessed on UI thread
+			// so we need to check it and get its pointer here already
+
+			auto sampleProvider = static_cast<UncompressedVideoSampleProvider^>(interopMSS->VideoSampleProvider);
+			auto streamDescriptor = static_cast<VideoStreamDescriptor^>(interopMSS->VideoSampleProvider->StreamDescriptor);
+			MediaRatio^ pixelAspectRatio = streamDescriptor->EncodingProperties->PixelAspectRatio;
+			if (DecodePixelWidth > 0 &&
+				DecodePixelHeight > 0)
+			{
+				sampleProvider->TargetWidth = DecodePixelWidth;
+				sampleProvider->TargetHeight = DecodePixelHeight;
+				pixelAspectRatio->Numerator = 1;
+				pixelAspectRatio->Denominator = 1;
+			}
+			auto width = sampleProvider->TargetWidth;
+			auto height = sampleProvider->TargetHeight;
+
+			byte* pixels = nullptr;
+			if (targetBuffer)
+			{
+				auto length = targetBuffer->Length;
+				if (length != width * height * 4)
+				{
+					throw ref new InvalidArgumentException();
+				}
+
+				// Query the IBufferByteAccess interface.  
+				Microsoft::WRL::ComPtr<IBufferByteAccess> bufferByteAccess;
+				reinterpret_cast<IInspectable*>(targetBuffer)->QueryInterface(IID_PPV_ARGS(&bufferByteAccess));
+
+				// Retrieve the buffer data.  
+				bufferByteAccess->Buffer(&pixels);
+			}
+			sampleProvider->TargetBuffer = pixels;
+
+			return create_async([this, position, exactSeek, maxFrameSkip, width, height, pixelAspectRatio]
 			{
 				bool seekSucceeded = false;
 				if (interopMSS->Duration.Duration > position.Duration)
@@ -116,12 +168,8 @@ namespace FFmpegInterop {
 						continue;
 					}
 
-					auto streamDescriptor = static_cast<VideoStreamDescriptor^>(interopMSS->VideoSampleProvider->StreamDescriptor);
-
 					auto result = ref new VideoFrame(sample->Buffer,
-						interopMSS->VideoStream->PixelWidth,
-						interopMSS->VideoStream->PixelHeight,
-						streamDescriptor->EncodingProperties->PixelAspectRatio,
+						width, height, pixelAspectRatio,
 						sample->Timestamp);
 
 					return result;
@@ -133,13 +181,20 @@ namespace FFmpegInterop {
 		/// <summary>Extracts a video frame at the specififed position.</summary>
 		/// <param name="position">The position of the requested frame.</param>
 		/// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
+		/// <param name="maxFrameSkip">If exactSeek=true, this limits the number of frames to decode after the key frame.</param>
 		/// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
-		IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position, bool exactSeek) { return ExtractVideoFrameAsync(position, exactSeek, 0); };
-		
+		IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int maxFrameSkip) { return ExtractVideoFrameAsync(position, exactSeek, maxFrameSkip, nullptr); };
+
+		/// <summary>Extracts a video frame at the specififed position.</summary>
+		/// <param name="position">The position of the requested frame.</param>
+		/// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
+		/// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
+		IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position, bool exactSeek) { return ExtractVideoFrameAsync(position, exactSeek, 0, nullptr); };
+
 		/// <summary>Extracts a video frame at the specififed position.</summary>
 		/// <param name="position">The position of the requested frame.</param>
 		/// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
-		IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position) { return ExtractVideoFrameAsync(position, false, 0); };
+		IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position) { return ExtractVideoFrameAsync(position, false, 0, nullptr); };
 
 	};
 }

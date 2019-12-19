@@ -65,7 +65,7 @@ namespace FFmpegInterop
 	{
 	public:
 		VideoStreamInfo(String^ name, String^ language, String^ codecName, int64 bitrate, bool isDefault,
-			int pixelWidth, int pixelHeight, int bitsPerSample, HardwareDecoderStatus hwAccel, DecoderEngine decoderEngine)
+			int pixelWidth, int pixelHeight, double displayAspectRatio, int bitsPerSample, HardwareDecoderStatus hwAccel, DecoderEngine decoderEngine)
 		{
 			this->name = name;
 			this->language = language;
@@ -75,6 +75,7 @@ namespace FFmpegInterop
 
 			this->pixelWidth = pixelWidth;
 			this->pixelHeight = pixelHeight;
+			this->displayAspectRatio = displayAspectRatio;
 			this->bitsPerSample = bitsPerSample;
 
 			this->hardwareDecoderStatus = hwAccel;
@@ -89,6 +90,7 @@ namespace FFmpegInterop
 
 		property int PixelWidth { int get() { return pixelWidth; } }
 		property int PixelHeight { int get() { return pixelHeight; } }
+		property double DisplayAspectRatio { double get() { return displayAspectRatio; } }
 		property int BitsPerSample { int get() { return bitsPerSample; } }
 
 		property FFmpegInterop::HardwareDecoderStatus HardwareDecoderStatus {FFmpegInterop::HardwareDecoderStatus get() { return hardwareDecoderStatus; }}
@@ -103,6 +105,7 @@ namespace FFmpegInterop
 
 		int pixelWidth;
 		int pixelHeight;
+		double displayAspectRatio;
 		int bitsPerSample;
 
 		FFmpegInterop::HardwareDecoderStatus hardwareDecoderStatus;

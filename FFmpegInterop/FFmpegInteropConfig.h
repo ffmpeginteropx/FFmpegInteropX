@@ -268,6 +268,7 @@ namespace FFmpegInterop
 		property PropertySet^ AdditionalFFmpegSubtitleOptions;
 		
 
+
 	private:
 		CharacterEncoding^ m_CharacterEncoding;
 

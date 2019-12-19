@@ -823,8 +823,11 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 
 			if (videoStream)
 			{
+				auto pixelAspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
+				auto videoAspect = ((double)videoStream->m_pAvCodecCtx->width / videoStream->m_pAvCodecCtx->height) / pixelAspect;
+
 				videoStreamInfo = ref new VideoStreamInfo(stream->Name, stream->Language, stream->CodecName, avStream->codecpar->bit_rate, true,
-					avStream->codecpar->width, avStream->codecpar->height,
+					avStream->codecpar->width, avStream->codecpar->height, videoAspect,
 					max(avStream->codecpar->bits_per_raw_sample, avStream->codecpar->bits_per_coded_sample), VideoSampleProvider->HardwareAccelerationStatus, VideoSampleProvider->Decoder);
 			}
 		}
