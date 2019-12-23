@@ -168,7 +168,7 @@ For a C# project, you can do it like this:
   </ItemGroup>
 ```
 
-This assumes that the FFmpegInterop folder is located next to your solution folder and the ffmpeg build output folder contains exclusively the latest ffmpeg dlls. Paths might be different on your folder setup. For CPP and JS this can be done similarly, check the samples for reference.
+This assumes that the FFmpegInterop folder is located next to your solution folder and the ffmpeg build output folder contains exclusively the latest ffmpeg dlls. Paths might be different on your folder setup. For CPP and JS this can be done similarly, check the samples for reference. If your program crashes with `The specified module could not be found. (Exception from HRESULT: 0x8007007E)` error, the path is probably wrong. 
 
 ## FFmpegUniversal
 
