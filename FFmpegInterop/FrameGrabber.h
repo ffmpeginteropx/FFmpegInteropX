@@ -178,6 +178,61 @@ namespace FFmpegInterop {
 			});
 		}
 
+		/// <summary>Extracts the next consecutive video frame in the file. Returns <c>null</c> at end of stream.</summary>
+		/// <param name="targetBuffer">The target buffer which shall contain the decoded pixel data.</param>
+		IAsyncOperation<VideoFrame^>^ ExtractNextVideoFrameAsync(IBuffer^ targetBuffer)
+		{
+			// the IBuffer from WriteableBitmap can only be accessed on UI thread
+			// so we need to check it and get its pointer here already
+
+			auto sampleProvider = static_cast<UncompressedVideoSampleProvider^>(interopMSS->VideoSampleProvider);
+			auto streamDescriptor = static_cast<VideoStreamDescriptor^>(interopMSS->VideoSampleProvider->StreamDescriptor);
+			MediaRatio^ pixelAspectRatio = streamDescriptor->EncodingProperties->PixelAspectRatio;
+			if (DecodePixelWidth > 0 &&
+				DecodePixelHeight > 0)
+			{
+				sampleProvider->TargetWidth = DecodePixelWidth;
+				sampleProvider->TargetHeight = DecodePixelHeight;
+				pixelAspectRatio->Numerator = 1;
+				pixelAspectRatio->Denominator = 1;
+			}
+			auto width = sampleProvider->TargetWidth;
+			auto height = sampleProvider->TargetHeight;
+
+			byte* pixels = nullptr;
+			if (targetBuffer)
+			{
+				auto length = targetBuffer->Length;
+				if (length != width * height * 4)
+				{
+					throw ref new InvalidArgumentException();
+				}
+
+				// Query the IBufferByteAccess interface.  
+				Microsoft::WRL::ComPtr<IBufferByteAccess> bufferByteAccess;
+				reinterpret_cast<IInspectable*>(targetBuffer)->QueryInterface(IID_PPV_ARGS(&bufferByteAccess));
+
+				// Retrieve the buffer data.  
+				bufferByteAccess->Buffer(&pixels);
+			}
+			sampleProvider->TargetBuffer = pixels;
+
+			return create_async([this, width, height, pixelAspectRatio]
+				{
+					auto sample = interopMSS->VideoSampleProvider->GetNextSample();
+					VideoFrame^ result = nullptr;
+
+					if (sample)
+					{
+						result = ref new VideoFrame(sample->Buffer,
+							width, height, pixelAspectRatio,
+							sample->Timestamp);
+					}
+
+					return result;
+				});
+		}
+
 		/// <summary>Extracts a video frame at the specififed position.</summary>
 		/// <param name="position">The position of the requested frame.</param>
 		/// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
@@ -196,6 +251,9 @@ namespace FFmpegInterop {
 		/// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
 		IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position) { return ExtractVideoFrameAsync(position, false, 0, nullptr); };
 
+
+		/// <summary>Extracts the next consecutive video frame in the file. Returns <c>null</c> at end of stream.</summary>
+		IAsyncOperation<VideoFrame^>^ ExtractNextVideoFrameAsync() { return ExtractNextVideoFrameAsync(nullptr); };
 	};
 }
 
