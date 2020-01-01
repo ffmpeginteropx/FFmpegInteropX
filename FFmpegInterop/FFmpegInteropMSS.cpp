@@ -558,7 +558,6 @@ void FFmpegInteropMSS::OnAudioTracksChanged(MediaPlaybackItem ^sender, IVectorCh
 HRESULT FFmpegInteropMSS::CreateMediaStreamSource(String^ uri)
 {
 	HRESULT hr = S_OK;
-	const char* charStr = nullptr;
 	if (!uri)
 	{
 		hr = E_INVALIDARG;
@@ -581,10 +580,10 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(String^ uri)
 
 	if (SUCCEEDED(hr))
 	{
-		charStr = StringUtils::PlatformStringToUtf8String(uri).c_str();
+		auto charStr = StringUtils::PlatformStringToUtf8String(uri);
 
 		// Open media in the given URI using the specified options
-		if (avformat_open_input(&avFormatCtx, charStr, NULL, &avDict) < 0)
+		if (avformat_open_input(&avFormatCtx, charStr.c_str(), NULL, &avDict) < 0)
 		{
 			hr = E_FAIL; // Error opening file
 		}
