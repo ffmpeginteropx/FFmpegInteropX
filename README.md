@@ -56,9 +56,15 @@ Either Visual Studio 2017 or Visual Studio 2019 is required.
 
 ## FFmpeg Version
 
-Recommended: **FFmpeg 4.1.1**
+Recommended: **FFmpeg 4.2.1**
 
 Minimum: **FFmpeg 4.0**
+
+##### Important: Update of gas-preprocessor required!
+
+The gas-preprocessor has changed since FFmpeg 4.2. Please download an updated copy here:
+
+https://github.com/FFmpeg/gas-preprocessor
 
 An exception will be thrown if FFmpegInterop is used with anything lower than the minimum version. The recommended version has been tested and is what we currently recommend to use with FFmpegInteropX.
 
