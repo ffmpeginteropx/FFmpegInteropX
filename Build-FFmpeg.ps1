@@ -41,6 +41,7 @@ function Build-Platform {
         [string] $Platform,
         [string] $Configuration,
         [version] $WindowsTargetPlatformVersion,
+        [version] $VcVersion,
         [string] $PlatformToolset,
         [string] $VsLatestPath,
         [string] $Msys2Bin = 'C:\msys64\usr\bin\bash.exe'
@@ -64,13 +65,15 @@ function Build-Platform {
         }
     }
 
-       Write-Host "Building FFmpeg for Windows 10 apps ${Platform}..."
+    Write-Host "Building FFmpeg for Windows 10 apps ${Platform}..."
+    Write-Host ""
     
-     # Load environment from VCVARS.
+    # Load environment from VCVARS.
     $vcvarsArch = $vcvarsArchs[$env:PROCESSOR_ARCHITECTURE][$Platform]
 
     CMD /c "`"$VsLatestPath\VC\Auxiliary\Build\vcvarsall.bat`" $vcvarsArch uwp $WindowsTargetPlatformVersion -vcvars_ver=$VcVersion && SET" | . {
         PROCESS {
+            Write-Host $_
             if ($_ -match '^([^=]+)=(.*)') {
                 if ($Matches[1] -notin 'HOME') {
                     Set-Item -Path "Env:\$($Matches[1])" -Value $Matches[2]
@@ -80,7 +83,6 @@ function Build-Platform {
     }
 
     if ($lastexitcode -ne 0) { Exit $lastexitcode }
-
 
     New-Item -ItemType Directory -Force $SolutionDir\Libs\Build\$Platform -OutVariable libs
 
@@ -209,6 +211,7 @@ foreach ($platform in $Platforms) {
         -Platform $platform `
         -Configuration 'Release' `
         -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
+        -VcVersion $VcVersion `
         -PlatformToolset $platformToolSet `
         -VsLatestPath $vsLatestPath `
         -Msys2Bin $Msys2Bin
