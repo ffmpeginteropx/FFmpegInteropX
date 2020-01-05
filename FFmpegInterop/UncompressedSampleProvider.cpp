@@ -26,10 +26,11 @@ UncompressedSampleProvider::UncompressedSampleProvider(
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
-	int streamIndex
-) : MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex)
+	int streamIndex,
+	HardwareDecoderStatus hardwareDecoderStatus
+) : MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
 {
-
+	decoder = DecoderEngine::FFmpegSoftwareDecoder;
 }
 
 HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration)

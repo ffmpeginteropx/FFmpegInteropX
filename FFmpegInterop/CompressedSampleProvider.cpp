@@ -13,10 +13,12 @@ CompressedSampleProvider::CompressedSampleProvider(
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
 	int streamIndex,
-	VideoEncodingProperties^ encodingProperties) :
-	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex),
+	VideoEncodingProperties^ encodingProperties,
+	HardwareDecoderStatus hardwareDecoderStatus) :
+	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus),
 	videoEncodingProperties(encodingProperties)
 {
+	decoder = DecoderEngine::SystemDecoder;
 }
 
 CompressedSampleProvider::CompressedSampleProvider(
@@ -25,10 +27,12 @@ CompressedSampleProvider::CompressedSampleProvider(
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
 	int streamIndex,
-	AudioEncodingProperties^ encodingProperties) :
-	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex),
+	AudioEncodingProperties^ encodingProperties,
+	HardwareDecoderStatus hardwareDecoderStatus) :
+	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus),
 	audioEncodingProperties(encodingProperties)
 {
+	decoder = DecoderEngine::SystemDecoder;
 }
 
 
@@ -37,9 +41,11 @@ CompressedSampleProvider::CompressedSampleProvider(
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
-	int streamIndex) :
-	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex)
+	int streamIndex,
+	HardwareDecoderStatus hardwareDecoderStatus) :
+	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
 {
+	decoder = DecoderEngine::SystemDecoder;
 }
 
 CompressedSampleProvider::~CompressedSampleProvider()

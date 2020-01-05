@@ -60,6 +60,7 @@
     <ClCompile Include="CharacterEncoding.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="CodecChecker.cpp" />
     <ClCompile Include="BasicVideoEffect.cpp">
       <Filter>Effects</Filter>
     </ClCompile>
@@ -156,6 +157,7 @@
     </ClInclude>
     <ClInclude Include="AttachedFile.h" />
     <ClInclude Include="AttachedFileHelper.h" />
+    <ClInclude Include="CodecChecker.h" />
     <ClInclude Include="MediaMetadata.h">
       <Filter>Metadata</Filter>
     </ClInclude>
@@ -172,6 +174,8 @@
     <ClInclude Include="BasicVideoEffect.h">
       <Filter>Effects</Filter>
     </ClInclude>
+    <ClInclude Include="Enumerations.h" />
+    <ClInclude Include="CodecRequiredEventArgs.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">
@@ -190,5 +194,8 @@
       <Filter>Build</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="..\Build-FFmpeg.ps1">
+      <Filter>Build</Filter>
+    </None>
   </ItemGroup>
 </Project>

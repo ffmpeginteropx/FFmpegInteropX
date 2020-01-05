@@ -1,11 +1,20 @@
 #pragma once
-#include <CharacterEncoding.h>
+
+extern "C"
+{
+#include "libavcodec/avcodec.h"
+}
+
+#include "Enumerations.h"
+#include "CharacterEncoding.h"
 #include "TimeSpanHelpers.h"
 
 using namespace Platform;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
+
+namespace WFM = Windows::Foundation::Metadata;
 
 namespace FFmpegInterop
 {
@@ -18,14 +27,20 @@ namespace FFmpegInterop
 			PassthroughAudioMP3 = false;
 			PassthroughAudioAAC = false;
 
+			VideoDecoderMode = FFmpegInterop::VideoDecoderMode::AutoDetection;
+
 			PassthroughVideoH264 = true;
-			PassthroughVideoH264Hi10P = false;
+			PassthroughVideoH264MaxProfile = FF_PROFILE_H264_HIGH;
+			PassthroughVideoH264MaxLevel = 41;
 			PassthroughVideoHEVC = true;
+			PassthroughVideoHEVCMaxProfile = FF_PROFILE_HEVC_MAIN_10;
+			PassthroughVideoHEVCMaxLevel = -1;
 			PassthroughVideoWMV3 = true;
 			PassthroughVideoVC1 = true;
 			PassthroughVideoMPEG2 = false;
 			PassthroughVideoVP9 = false;
-
+			PassthroughVideoVP8 = false;
+			
 			VideoOutputAllowIyuv = false;
 			VideoOutputAllow10bit = false;
 			VideoOutputAllowBgra8 = false;
@@ -92,7 +107,7 @@ namespace FFmpegInterop
 			outlineThickness.Value = 4.5;
 			SubtitleStyle->OutlineThickness = outlineThickness;
 			SubtitleStyle->FlowDirection = TimedTextFlowDirection::LeftToRight;
-			SubtitleStyle->OutlineColor = { 0x80, 0, 0, 0 };
+			SubtitleStyle->OutlineColor = Windows::UI::Color{ 0x80, 0, 0, 0 };
 
 			AutoCorrectAnsiSubtitles = true;
 			AnsiSubtitleEncoding = CharacterEncoding::GetSystemDefault();
@@ -112,16 +127,33 @@ namespace FFmpegInterop
 		///<summary>Enable passthrough for AAC audio.</summary>
 		property bool PassthroughAudioAAC;
 
-
+		///<summary>Sets the video decoder mode. Default is AutoDetection.</summary>
+		property FFmpegInterop::VideoDecoderMode VideoDecoderMode;
 
 		///<summary>Allow passthrough for H264 video.</summary>
 		property bool PassthroughVideoH264;
 
 		///<summary>Allow passthrough for H264 video (High10 Profile - 10 Bit). Not recommended: Neither Windows codecs nor known HW decoders support Hi10P!</summary>
+		[WFM::Deprecated("Use PassthroughVideoH264MaxProfile and PassthroughVideoH264MaxLevel.", WFM::DeprecationType::Deprecate, 0x0)]
 		property bool PassthroughVideoH264Hi10P;
+
+		///<summary>Max profile allowed for H264 passthrough. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
+		property int PassthroughVideoH264MaxProfile;
+
+		///<summary>Max level allowed for H264 passthrough. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
+		///<remarks>Most H264 HW decoders only support Level 4.1, so this is the default.</remarks>
+		property int PassthroughVideoH264MaxLevel;
 
 		///<summary>Allow passthrough for HEVC video.</summary>
 		property bool PassthroughVideoHEVC;
+
+		///<summary>Max profile allowed for HEVC passthrough. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
+		property int PassthroughVideoHEVCMaxProfile;
+
+		///<summary>Max level allowed for HEVC passthrough. Default: Disabled (-1).</summary>
+		///<remarks>Encoded as: 30*Major + 3*Minor. So Level 6.0 = 30*6 = 180, 5.1 = 30*5 + 3*1 = 163, 4.1 = 123.
+		///Many HEVC HW decoders support even very high levels, so we disable the check by default.</remarks>
+		property int PassthroughVideoHEVCMaxLevel;
 
 		///<summary>Allow passthrough for WMV3 video.</summary>
 		property bool PassthroughVideoWMV3;
@@ -134,6 +166,9 @@ namespace FFmpegInterop
 
 		///<summary>Allow passthrough for VP9 video. Requires "VP9 Video Extensions" from Windows Store.</summary>
 		property bool PassthroughVideoVP9;
+
+		///<summary>Allow passthrough for VP8 video. Requires "VP9 Video Extensions" from Windows Store.</summary>
+		property bool PassthroughVideoVP8;
 
 
 
@@ -233,8 +268,10 @@ namespace FFmpegInterop
 		property PropertySet^ AdditionalFFmpegSubtitleOptions;
 		
 
+
 	private:
 		CharacterEncoding^ m_CharacterEncoding;
 
 	};
+
 }

@@ -36,8 +36,9 @@ UncompressedVideoSampleProvider::UncompressedVideoSampleProvider(
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	FFmpegInteropConfig^ config,
-	int streamIndex)
-	: UncompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex)
+	int streamIndex,
+	HardwareDecoderStatus hardwareDecoderStatus)
+	: UncompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
 {
 }
 
@@ -88,16 +89,20 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 		outputMediaSubtype = MediaEncodingSubtypes::Nv12;
 	}
 
-	auto width = m_pAvCodecCtx->width;
-	auto height = m_pAvCodecCtx->height;
+	TargetWidth = decoderWidth = m_pAvCodecCtx->width;
+	TargetHeight = decoderHeight = m_pAvCodecCtx->height;
 
-	if (m_pAvCodecCtx->pix_fmt == m_OutputPixelFormat)
+	if (m_config->IsFrameGrabber)
+	{
+		m_bUseScaler = true;
+	}
+	else if (m_pAvCodecCtx->pix_fmt == m_OutputPixelFormat)
 	{
 		if (m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1)
 		{
 			// This codec supports direct buffer decoding.
 			// Get decoder frame size and override get_buffer2...
-			avcodec_align_dimensions(m_pAvCodecCtx, &width, &height);
+			avcodec_align_dimensions(m_pAvCodecCtx, &decoderWidth, &decoderHeight);
 
 			m_pAvCodecCtx->get_buffer2 = get_buffer2;
 			m_pAvCodecCtx->opaque = (void*)this;
@@ -112,9 +117,6 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 		// Scaler required to convert pixel format
 		m_bUseScaler = true;
 	}
-
-	decoderWidth = width;
-	decoderHeight = height;
 }
 
 IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor()
@@ -159,8 +161,8 @@ HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired()
 			m_pAvCodecCtx->width,
 			m_pAvCodecCtx->height,
 			m_pAvCodecCtx->pix_fmt,
-			m_pAvCodecCtx->width,
-			m_pAvCodecCtx->height,
+			TargetWidth,
+			TargetHeight,
 			m_OutputPixelFormat,
 			SWS_BICUBIC,
 			NULL,
@@ -217,7 +219,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 			uint8_t* data[4];
 			AVBufferRef* buffer;
 
-			hr = FillLinesAndBuffer(linesize, data, &buffer);
+			hr = FillLinesAndBuffer(linesize, data, &buffer, TargetWidth, TargetHeight);
 			if (SUCCEEDED(hr))
 			{
 				// Convert to output format using FFmpeg software scaler
@@ -306,16 +308,16 @@ HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample^ 
 	return S_OK;
 }
 
-HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer)
+HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height)
 {
-	if (av_image_fill_linesizes(linesize, m_OutputPixelFormat, decoderWidth) < 0)
+	if (av_image_fill_linesizes(linesize, m_OutputPixelFormat, width) < 0)
 	{
 		return E_FAIL;
 	}
 
-	auto YBufferSize = linesize[0] * decoderHeight;
-	auto UBufferSize = linesize[1] * decoderHeight / 2;
-	auto VBufferSize = linesize[2] * decoderHeight / 2;
+	auto YBufferSize = linesize[0] * height;
+	auto UBufferSize = linesize[1] * height / 2;
+	auto VBufferSize = linesize[2] * height / 2;
 	auto totalSize = YBufferSize + UBufferSize + VBufferSize;
 
 	buffer[0] = AllocateBuffer(totalSize);
@@ -334,6 +336,12 @@ HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte*
 
 AVBufferRef* UncompressedVideoSampleProvider::AllocateBuffer(int totalSize)
 {
+	if (m_config->IsFrameGrabber && TargetBuffer)
+	{
+		auto bufferRef = av_buffer_create(TargetBuffer, totalSize, [](void*, byte*) {}, NULL, 0);
+		return bufferRef;
+	}
+
 	if (!m_pBufferPool)
 	{
 		m_pBufferPool = av_buffer_pool_init(totalSize, NULL);
@@ -368,6 +376,6 @@ int UncompressedVideoSampleProvider::get_buffer2(AVCodecContext *avCodecContext,
 	}
 	else
 	{
-		return provider->FillLinesAndBuffer(frame->linesize, frame->data, frame->buf);
+		return provider->FillLinesAndBuffer(frame->linesize, frame->data, frame->buf, provider->decoderWidth, provider->decoderHeight);
 	}
 }

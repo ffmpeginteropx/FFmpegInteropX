@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pch.h"
+#include "Enumerations.h"
 
 using namespace Platform;
 
@@ -19,7 +20,7 @@ namespace FFmpegInterop
 	{
 	public:
 		AudioStreamInfo(String^ name, String^ language, String^ codecName, int64 bitrate, bool isDefault,
-			int channels, int sampleRate, int bitsPerSample)
+			int channels, int sampleRate, int bitsPerSample, DecoderEngine decoderEngine)
 		{
 			this->name = name;
 			this->language = language;
@@ -30,6 +31,8 @@ namespace FFmpegInterop
 			this->channels = channels;
 			this->sampleRate = sampleRate;
 			this->bitsPerSample = bitsPerSample;
+	
+			this->decoderEngine = decoderEngine;
 		}
 
 		virtual property String^ Name { String^ get() { return name; } }
@@ -42,6 +45,8 @@ namespace FFmpegInterop
 		property int SampleRate { int get() { return sampleRate; } }
 		property int BitsPerSample { int get() { return bitsPerSample; } }
 
+		property FFmpegInterop::DecoderEngine DecoderEngine {FFmpegInterop::DecoderEngine get() { return decoderEngine; }}
+
 	private:
 		String ^ name;
 		String^ language;
@@ -52,13 +57,15 @@ namespace FFmpegInterop
 		int channels;
 		int sampleRate;
 		int bitsPerSample;
+	
+		FFmpegInterop::DecoderEngine decoderEngine;
 	};
 
 	public ref class VideoStreamInfo sealed : public IStreamInfo
 	{
 	public:
 		VideoStreamInfo(String^ name, String^ language, String^ codecName, int64 bitrate, bool isDefault,
-			int pixelWidth, int pixelHeight, int bitsPerSample)
+			int pixelWidth, int pixelHeight, double displayAspectRatio, int bitsPerSample, HardwareDecoderStatus hwAccel, DecoderEngine decoderEngine)
 		{
 			this->name = name;
 			this->language = language;
@@ -68,7 +75,11 @@ namespace FFmpegInterop
 
 			this->pixelWidth = pixelWidth;
 			this->pixelHeight = pixelHeight;
+			this->displayAspectRatio = displayAspectRatio;
 			this->bitsPerSample = bitsPerSample;
+
+			this->hardwareDecoderStatus = hwAccel;
+			this->decoderEngine = decoderEngine;
 		}
 
 		virtual property String^ Name { String^ get() { return name; } }
@@ -79,7 +90,11 @@ namespace FFmpegInterop
 
 		property int PixelWidth { int get() { return pixelWidth; } }
 		property int PixelHeight { int get() { return pixelHeight; } }
+		property double DisplayAspectRatio { double get() { return displayAspectRatio; } }
 		property int BitsPerSample { int get() { return bitsPerSample; } }
+
+		property FFmpegInterop::HardwareDecoderStatus HardwareDecoderStatus {FFmpegInterop::HardwareDecoderStatus get() { return hardwareDecoderStatus; }}
+		property FFmpegInterop::DecoderEngine DecoderEngine {FFmpegInterop::DecoderEngine get() { return decoderEngine; }}
 
 	private:
 		String ^ name;
@@ -90,7 +105,11 @@ namespace FFmpegInterop
 
 		int pixelWidth;
 		int pixelHeight;
+		double displayAspectRatio;
 		int bitsPerSample;
+
+		FFmpegInterop::HardwareDecoderStatus hardwareDecoderStatus;
+		FFmpegInterop::DecoderEngine decoderEngine;
 	};
 
 
@@ -114,7 +133,7 @@ namespace FFmpegInterop
 		virtual property int64 Bitrate { int64 get() { return 0; } }
 		virtual property bool IsDefault { bool get() { return isDefault; } }
 
-	    property bool IsExternal {bool get() { return isExternal; }}
+		property bool IsExternal {bool get() { return isExternal; }}
 		property bool IsForced { bool get() { return isForced; } }
 
 		property TimedMetadataTrack^ SubtitleTrack

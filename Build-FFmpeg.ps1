@@ -42,6 +42,7 @@ function Build-Platform {
         [string] $Configuration,
         [version] $WindowsTargetPlatformVersion,
         [version] $VcVersion,
+        [string] $PlatformToolset,
         [string] $VsLatestPath,
         [string] $Msys2Bin = 'C:\msys64\usr\bin\bash.exe'
     )
@@ -65,12 +66,14 @@ function Build-Platform {
     }
 
     Write-Host "Building FFmpeg for Windows 10 apps ${Platform}..."
-
+    Write-Host ""
+    
     # Load environment from VCVARS.
     $vcvarsArch = $vcvarsArchs[$env:PROCESSOR_ARCHITECTURE][$Platform]
 
     CMD /c "`"$VsLatestPath\VC\Auxiliary\Build\vcvarsall.bat`" $vcvarsArch uwp $WindowsTargetPlatformVersion -vcvars_ver=$VcVersion && SET" | . {
         PROCESS {
+            Write-Host $_
             if ($_ -match '^([^=]+)=(.*)') {
                 if ($Matches[1] -notin 'HOME') {
                     Set-Item -Path "Env:\$($Matches[1])" -Value $Matches[2]
@@ -80,10 +83,6 @@ function Build-Platform {
     }
 
     if ($lastexitcode -ne 0) { Exit $lastexitcode }
-
-    # 14.16.27023 => v141
-    $platformToolSet = "v$($VcVersion.Major)$($VcVersion.Minor[0])"
-    Write-Host "Platform Toolset: [$platformToolSet]"
 
     New-Item -ItemType Directory -Force $SolutionDir\Libs\Build\$Platform -OutVariable libs
 
@@ -98,7 +97,7 @@ function Build-Platform {
         /p:Configuration="${Configuration}WinRT" `
         /p:Platform=$Platform `
         /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-        /p:PlatformToolset=$platformToolSet
+        /p:PlatformToolset=$PlatformToolset
 
     if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
@@ -112,7 +111,7 @@ function Build-Platform {
         /p:Configuration="${Configuration}WinRT" `
         /p:Platform=$Platform `
         /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-        /p:PlatformToolset=$platformToolSet
+        /p:PlatformToolset=$PlatformToolset
 
     if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
@@ -126,7 +125,7 @@ function Build-Platform {
         /p:Configuration="${Configuration}WinRT" `
         /p:Platform=$Platform `
         /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-        /p:PlatformToolset=$platformToolSet
+        /p:PlatformToolset=$PlatformToolset
     
     if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
@@ -152,6 +151,10 @@ function Build-Platform {
     Get-ChildItem -Recurse -Include '*.pdb' $SolutionDir\ffmpeg\Output\Windows10\$Platform | `
         Copy-Item -Destination $SolutionDir\ffmpeg\Build\Windows10\$Platform\bin\
 }
+
+Write-Host
+Write-Host "Building FFmpegInteropX..."
+Write-Host
 
 # Stop on all PowerShell command errors
 $ErrorActionPreference = "Stop"
@@ -189,6 +192,17 @@ if (!(Test-Path $Msys2Bin)) {
 
 Write-Host "Visual Studio Installation folder: [$vsLatestPath]"
 
+# 14.16.27023 => v141
+$platformToolSet = "v$($VcVersion.Major)$("$($VcVersion.Minor)"[0])"
+Write-Host "Platform Toolset: [$platformToolSet]"
+
+# Save orignal environment variables
+$oldEnv = @{};
+foreach ($item in Get-ChildItem env:)
+{
+    $oldEnv.Add($item.Name, $item.Value);
+}
+
 $start = Get-Date
 
 foreach ($platform in $Platforms) {
@@ -198,8 +212,22 @@ foreach ($platform in $Platforms) {
         -Configuration 'Release' `
         -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
         -VcVersion $VcVersion `
+        -PlatformToolset $platformToolSet `
         -VsLatestPath $vsLatestPath `
         -Msys2Bin $Msys2Bin
+
+    # Restore orignal environment variables
+    foreach ($item in $oldEnv.GetEnumerator())
+    {
+        Set-Item -Path env:"$($item.Name)" -Value $item.Value
+    }
+    foreach ($item in Get-ChildItem env:)
+    {
+        if (!$oldEnv.ContainsKey($item.Name))
+        {
+             Remove-Item -Path env:"$($item.Name)"
+        }
+    }
 }
 
 Write-Host 'Time elapsed'

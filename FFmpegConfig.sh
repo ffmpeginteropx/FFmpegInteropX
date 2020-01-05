@@ -85,7 +85,6 @@ if [ "$1" == "Win10" ]; then
         --arch=arm \
         --as=armasm \
         --cpu=armv7 \
-        --enable-thumb \
         --enable-shared \
         --enable-cross-compile \
         --enable-debug \
@@ -117,8 +116,8 @@ if [ "$1" == "Win10" ]; then
 		--disable-hwaccels \
         --disable-doc \
         --arch=arm64 \
-        --cpu=armv7 \
-        --enable-thumb \
+        --as=armasm64 \
+        --cpu=armv8 \
         --enable-shared \
         --enable-cross-compile \
         --enable-debug \

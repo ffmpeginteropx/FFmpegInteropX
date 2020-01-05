@@ -81,7 +81,7 @@
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>shcore.lib;runtimeobject.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>shcore.lib;runtimeobject.lib;mfuuid.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
     <Xdcmake>
@@ -101,10 +101,13 @@
     <ClInclude Include="AudioFilter.h" />
     <ClInclude Include="AvCodecContextHelpers.h" />
     <ClInclude Include="AvEffectDefinition.h" />
+    <ClInclude Include="CodecChecker.h" />
     <ClInclude Include="BasicVideoEffect.h" />
+    <ClInclude Include="CodecRequiredEventArgs.h" />
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
     <ClInclude Include="CharacterEncoding.h" />
+    <ClInclude Include="Enumerations.h" />
     <ClInclude Include="FFmpegInteropConfig.h" />
     <ClInclude Include="FFmpegInteropLogging.h" />
     <ClInclude Include="FFmpegInteropMSS.h" />
@@ -141,6 +144,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CodecChecker.cpp" />
     <ClCompile Include="BasicVideoEffect.cpp" />
     <ClCompile Include="CompressedSampleProvider.cpp" />
     <ClCompile Include="CharacterEncoding.cpp" />
@@ -161,6 +165,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Build-FFmpeg.ps1" />
     <None Include="..\BuildFFmpeg_VS2017.bat" />
     <None Include="..\FFmpegConfig.sh" />
     <None Include="..\Init_AppVeyor.bat" />
