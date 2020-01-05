@@ -84,8 +84,7 @@ function Build-Platform {
 
     if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
- 
-   New-Item -ItemType Directory -Force $SolutionDir\Libs\Build\$Platform -OutVariable libs
+    New-Item -ItemType Directory -Force $SolutionDir\Libs\Build\$Platform -OutVariable libs
 
     ('lib', 'licenses', 'include', 'build') | ForEach-Object {
         New-Item -ItemType Directory -Force $libs\$_
