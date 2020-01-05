@@ -165,6 +165,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Build-FFmpeg.ps1" />
     <None Include="..\BuildFFmpeg_VS2017.bat" />
     <None Include="..\FFmpegConfig.sh" />
     <None Include="..\Init_AppVeyor.bat" />

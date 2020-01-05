@@ -194,5 +194,8 @@
       <Filter>Build</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="..\Build-FFmpeg.ps1">
+      <Filter>Build</Filter>
+    </None>
   </ItemGroup>
 </Project>
