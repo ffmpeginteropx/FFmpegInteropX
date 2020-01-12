@@ -160,10 +160,10 @@ namespace FFmpegInterop
 			};
 		};
 
-		///<summary>Gets video stream information.</summary>
-		property VideoStreamInfo^ VideoStream
+
+		property IVectorView<VideoStreamInfo^>^ VideoStreams
 		{
-			VideoStreamInfo^ get() { return videoStreamInfo; }
+			IVectorView<VideoStreamInfo^>^ get() { return videoStreamInfos; }
 		}
 
 		///<summary>Gets audio stream information.</summary>
@@ -204,7 +204,7 @@ namespace FFmpegInterop
 		{
 			VideoStreamDescriptor^ get()
 			{
-				return videoStream ? dynamic_cast<VideoStreamDescriptor^>(videoStream->StreamDescriptor) : nullptr;
+				return currentVideoStream ? dynamic_cast<VideoStreamDescriptor^>(currentVideoStream->StreamDescriptor) : nullptr;
 			};
 		};
 
@@ -213,7 +213,7 @@ namespace FFmpegInterop
 		{
 			String^ get()
 			{
-				return videoStream ? videoStream->CodecName : nullptr;
+				return currentVideoStream ? currentVideoStream->CodecName : nullptr;
 			};
 		};
 
@@ -272,7 +272,7 @@ namespace FFmpegInterop
 		{
 			MediaSampleProvider^ get()
 			{
-				return videoStream;
+				return currentVideoStream;
 			}
 		}
 
@@ -293,11 +293,14 @@ namespace FFmpegInterop
 		MediaPlaybackItem^ playbackItem;
 		Vector<AudioStreamInfo^>^ audioStrInfos;
 		Vector<SubtitleStreamInfo^>^ subtitleStrInfos;
+		Vector<VideoStreamInfo^>^ videoStrInfos;
 
 		std::vector<MediaSampleProvider^> sampleProviders;
 		std::vector<MediaSampleProvider^> audioStreams;
 		std::vector<SubtitleProvider^> subtitleStreams;
-		MediaSampleProvider^ videoStream;
+		std::vector<MediaSampleProvider^> videoStreams;
+
+		MediaSampleProvider^ currentVideoStream;
 		MediaSampleProvider^ currentAudioStream;
 		IVectorView<AvEffectDefinition^>^ currentAudioEffects;
 		int thumbnailStreamIndex;
@@ -305,7 +308,8 @@ namespace FFmpegInterop
 		EventRegistrationToken audioTracksChangedToken;
 		EventRegistrationToken subtitlePresentationModeChangedToken;
 
-		VideoStreamInfo^ videoStreamInfo;
+		
+		IVectorView<VideoStreamInfo^>^ videoStreamInfos;
 		IVectorView<AudioStreamInfo^>^ audioStreamInfos;
 		IVectorView<SubtitleStreamInfo^>^ subtitleStreamInfos;
 		IVectorView<ChapterInfo^>^ chapterInfos;
