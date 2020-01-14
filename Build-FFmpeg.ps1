@@ -89,8 +89,14 @@ function Build-Platform {
     ('lib', 'licenses', 'include', 'build') | ForEach-Object {
         New-Item -ItemType Directory -Force $libs\$_
     }
+    
+    $env:LIB += ";${libs}\lib"
+    $env:INCLUDE += ";${libs}\include"
+
     # Clean platform-specific build dir.
     Remove-Item -Force -Recurse $libs\build\*
+    Remove-Item -Force -Recurse ${libs}\lib\*
+    Remove-Item -Force -Recurse ${libs}\include\*
 
     MSBuild.exe $SolutionDir\Libs\zlib\SMP\libzlib.vcxproj `
         /p:OutDir="$libs\build\" `
@@ -101,10 +107,10 @@ function Build-Platform {
 
     if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
-    Get-ChildItem -Recurse -Include '*.h' $libs\build\libzlib\include | Copy-Item -Destination $libs\include\
+    Copy-Item -Path $libs\build\libzlib\include\* -Force -Recurse -Destination $libs\include\ 
     Copy-Item -Recurse $libs\build\libzlib\licenses\* -Destination $libs\licenses\
-    Copy-Item $libs\build\libzlib\lib\$Platform\libzlib_winrt.lib $libs\lib\zlib.lib
-    Copy-Item $libs\build\libzlib\lib\$Platform\libzlib_winrt.pdb $libs\lib\zlib.pdb
+    Copy-Item $libs\build\libzlib\lib\$Platform\libzlib_winrt.lib $libs\lib\
+    Copy-Item $libs\build\libzlib\lib\$Platform\libzlib_winrt.pdb $libs\lib\
 
     MSBuild.exe $SolutionDir\Libs\bzip2\SMP\libbz2.vcxproj `
         /p:OutDir="$libs\build\" `
@@ -115,10 +121,10 @@ function Build-Platform {
 
     if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
-    Get-ChildItem -Recurse -Include '*.h' $libs\build\libbz2\include | Copy-Item -Destination $libs\include\
+    Copy-Item -Path $libs\build\libbz2\include\* -Force -Recurse -Destination $libs\include\ 
     Copy-Item -Recurse $libs\build\libbz2\licenses\* -Destination $libs\licenses\
-    Copy-Item $libs\build\libbz2\lib\$Platform\libbz2_winrt.lib $libs\lib\bz2.lib
-    Copy-Item $libs\build\libbz2\lib\$Platform\libbz2_winrt.pdb $libs\lib\bz2.pdb
+    Copy-Item $libs\build\libbz2\lib\$Platform\libbz2_winrt.lib $libs\lib\
+    Copy-Item $libs\build\libbz2\lib\$Platform\libbz2_winrt.pdb $libs\lib\
 
     MSBuild.exe $SolutionDir\Libs\libiconv\SMP\libiconv.vcxproj `
         /p:OutDir="$libs\build\" `
@@ -129,13 +135,58 @@ function Build-Platform {
     
     if ($lastexitcode -ne 0) { Exit $lastexitcode }
 
-    Get-ChildItem -Recurse -Include '*.h' $libs\build\libiconv\include | Copy-Item -Destination $libs\include\
+    Copy-Item -Path $libs\build\libiconv\include\* -Force -Recurse -Destination $libs\include\ 
     Copy-Item -Recurse $libs\build\libiconv\licenses\* -Destination $libs\licenses\
-    Copy-Item $libs\build\libiconv\lib\$Platform\libiconv_winrt.lib $libs\lib\iconv.lib
-    Copy-Item $libs\build\libiconv\lib\$Platform\libiconv_winrt.pdb $libs\lib\iconv.pdb
+    Copy-Item $libs\build\libiconv\lib\$Platform\libiconv_winrt.lib $libs\lib\
+    Copy-Item $libs\build\libiconv\lib\$Platform\libiconv_winrt.pdb $libs\lib\
 
-    $env:LIB += ";${libs}\lib"
-    $env:INCLUDE += ";${libs}\include"
+    MSBuild.exe $SolutionDir\Libs\liblzma\SMP\liblzma.vcxproj `
+        /p:OutDir="$libs\build\" `
+        /p:Configuration="${Configuration}WinRT" `
+        /p:Platform=$Platform `
+        /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+        /p:PlatformToolset=$PlatformToolset `
+        /p:useenv=true
+    
+    if ($lastexitcode -ne 0) { Exit $lastexitcode }
+
+    Copy-Item -Path $libs\build\liblzma\include\* -Force -Recurse -Destination $libs\include\
+    Copy-Item -Recurse $libs\build\liblzma\licenses\* -Destination $libs\licenses\
+    Copy-Item $libs\build\liblzma\lib\$Platform\liblzma_winrt.lib $libs\lib\
+    Copy-Item $libs\build\liblzma\lib\$Platform\liblzma_winrt.pdb $libs\lib\
+
+    MSBuild.exe $SolutionDir\Libs\libxml2\SMP\libxml2.vcxproj `
+        /p:OutDir="$libs\build\" `
+        /p:Configuration="${Configuration}WinRT" `
+        /p:Platform=$Platform `
+        /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+        /p:PlatformToolset=$PlatformToolset `
+        /p:useenv=true
+    
+    if ($lastexitcode -ne 0) { Exit $lastexitcode }
+
+    Copy-Item -Path $libs\build\libxml2\include\* -Force -Recurse -Destination $libs\include\ 
+    Copy-Item -Recurse $libs\build\libxml2\licenses\* -Destination $libs\licenses\
+    Copy-Item $libs\build\libxml2\lib\$Platform\libxml2_winrt.lib $libs\lib\
+    Copy-Item $libs\build\libxml2\lib\$Platform\libxml2_winrt.pdb $libs\lib\
+
+    Rename-Item $libs\lib\libzlib_winrt.lib $libs\lib\zlib.lib -Force
+    Rename-Item $libs\lib\libzlib_winrt.pdb $libs\lib\zlib.pdb -Force
+    
+    Rename-Item $libs\lib\libbz2_winrt.lib $libs\lib\bz2.lib -Force
+    Rename-Item $libs\lib\libbz2_winrt.pdb $libs\lib\bz2.pdb -Force
+    
+    Rename-Item $libs\lib\liblzma_winrt.lib $libs\lib\lzma.lib -Force
+    Rename-Item $libs\lib\liblzma_winrt.pdb $libs\lib\lzma.pdb -Force
+
+    Rename-Item $libs\lib\libiconv_winrt.lib $libs\lib\iconv.lib -Force
+    Rename-Item $libs\lib\libiconv_winrt.pdb $libs\lib\iconv.pdb -Force
+
+    Rename-Item $libs\lib\libxml2_winrt.lib $libs\lib\libxml2.lib -Force
+    Rename-Item $libs\lib\libxml2_winrt.pdb $libs\lib\libxml2.pdb -Force
+
+    # Fixup needed for libxml2 headers, otherwise ffmpeg build fails
+    Copy-Item -Path $libs\include\libxml2\libxml -Force -Recurse -Destination $libs\include\ 
 
     # Export full current PATH from environment into MSYS2
     $env:MSYS2_PATH_TYPE = 'inherit'

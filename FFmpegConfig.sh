@@ -28,8 +28,9 @@ if [ "$1" == "Win10" ]; then
         --enable-bzlib \
         --enable-iconv \
         --target-os=win32 \
-        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
+        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -DLZMA_API_STATIC" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
+        --pkg-config="$DIR/Libs/Build/pkg-config.exe" \
         --prefix=../../../Build/Windows10/x86
         make -j8 || exit
         make install || exit
@@ -57,10 +58,13 @@ if [ "$1" == "Win10" ]; then
         --enable-debug \
         --enable-zlib \
         --enable-bzlib \
+        --enable-lzma \
+        --enable-libxml2 \
         --enable-iconv \
         --target-os=win32 \
-        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
+        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -DLZMA_API_STATIC" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
+        --pkg-config="$DIR/Libs/Build/pkg-config.exe" \
         --prefix=../../../Build/Windows10/x64
         make -j8 || exit
         make install || exit
@@ -92,8 +96,9 @@ if [ "$1" == "Win10" ]; then
         --enable-bzlib \
         --enable-iconv \
         --target-os=win32 \
-        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP" \
+        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -DLZMA_API_STATIC -D__ARM_PCS_VFP" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
+        --pkg-config="$DIR/Libs/Build/pkg-config.exe" \
         --prefix=../../../Build/Windows10/ARM
         make -j8 || exit
         make install || exit
@@ -125,8 +130,9 @@ if [ "$1" == "Win10" ]; then
         --enable-bzlib \
         --enable-iconv \
         --target-os=win32 \
-        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP" \
+        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -DLZMA_API_STATIC -D__ARM_PCS_VFP" \
         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
+        --pkg-config="$DIR/Libs/Build/pkg-config.exe" \
         --prefix=../../../Build/Windows10/ARM64
         make -j8 || exit
         make install || exit

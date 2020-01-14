@@ -162,7 +162,9 @@ void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::K
 		// Set FFmpeg specific options. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
 
 		// Below are some sample options that you can set to configure RTSP streaming
-		// Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
+		Config->FFmpegOptions->Insert("buffer_size", "" + 1024 * 1024 * 5);
+		Config->FFmpegOptions->Insert("recv_buffer_size", "" + 1024 * 1024 * 5);
+		Config->FFmpegOptions->Insert("fifo_size", "" + 1024 * 4 * 70);
 		// Config->FFmpegOptions->Insert("stimeout", 100000);
 
 		// Instantiate FFmpegInteropMSS using the URI
@@ -172,6 +174,7 @@ void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::K
 			create_task(FFmpegInteropMSS::CreateFromUriAsync(uri, Config)).then([this](FFmpegInteropMSS^ result)
 			{
 				FFmpegMSS = result;
+				FFmpegMSS->GetMediaStreamSource()->BufferTime = TimeSpan{ 30000000 };
 				playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
 				// Pass MediaPlaybackItem to Media Element
