@@ -57,7 +57,7 @@ namespace FFmpegInterop {
 				{
 					throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
 				}
-				if (result->VideoStreams->Size == 0)
+				if (result->VideoStream == nullptr)
 				{
 					throw ref new Exception(E_FAIL, "No video stream found in file (or no suitable decoder available).");
 				}
