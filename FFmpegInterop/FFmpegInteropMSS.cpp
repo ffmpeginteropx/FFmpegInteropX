@@ -83,6 +83,7 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispa
 	audioStrInfos = ref new Vector<AudioStreamInfo^>();
 	subtitleStrInfos = ref new Vector<SubtitleStreamInfo^>();
 	videoStrInfos = ref new Vector<VideoStreamInfo^>();
+
 	if (!config->IsExternalSubtitleParser && !config->IsFrameGrabber)
 	{
 		metadata = ref new MediaMetadata();
@@ -109,7 +110,6 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 
 	// Clear our data
 	currentAudioStream = nullptr;
-	currentVideoStream = nullptr;
 	currentVideoStream = nullptr;
 
 	if (m_pReader != nullptr)
@@ -889,6 +889,7 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 
 	audioStreamInfos = audioStrInfos->GetView();
 	subtitleStreamInfos = subtitleStrInfos->GetView();
+	videoStreamInfos = videoStrInfos->GetView();
 
 	if (currentVideoStream)
 	{
