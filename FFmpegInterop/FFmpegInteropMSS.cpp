@@ -831,7 +831,7 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 				auto pixelAspect = (double)streamDescriptor->EncodingProperties->PixelAspectRatio->Numerator / streamDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
 				auto videoAspect = ((double)stream->m_pAvCodecCtx->width / stream->m_pAvCodecCtx->height) / pixelAspect;
 
-				auto info = ref new VideoStreamInfo(stream->Name, stream->Language, stream->CodecName, avStream->codecpar->bit_rate, true,
+				auto info = ref new VideoStreamInfo(stream->Name, stream->Language, stream->CodecName, avStream->codecpar->bit_rate, isDefault,
 					avStream->codecpar->width, avStream->codecpar->height, videoAspect,
 					max(avStream->codecpar->bits_per_raw_sample, avStream->codecpar->bits_per_coded_sample), stream->HardwareAccelerationStatus, stream->Decoder);
 
@@ -1559,8 +1559,8 @@ void FFmpegInteropMSS::OnSwitchStreamsRequested(MediaStreamSource^ sender, Media
 	}
 	if (currentVideoStream && args->Request->OldStreamDescriptor == currentVideoStream->StreamDescriptor)
 	{
-		currentAudioStream->DisableStream();
-		currentAudioStream = nullptr;
+		currentVideoStream->DisableStream();
+		currentVideoStream = nullptr;
 	}
 
 	for each (auto stream in audioStreams)
