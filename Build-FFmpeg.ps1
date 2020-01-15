@@ -84,6 +84,16 @@ function Build-Platform {
 
     if ($lastexitcode -ne 0) { throw "Failed to configure vcvarsall environment." }
 
+
+    # Build pkg-config fake
+    MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
+        /p:OutputPath="$SolutionDir\Libs\Build\" `
+        /p:Configuration="Release" `
+        /p:Platform=${Env:\PreferredToolArchitecture}
+
+    if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
+
+
     New-Item -ItemType Directory -Force $SolutionDir\Libs\Build\$Platform -OutVariable libs
 
     ('lib', 'licenses', 'include', 'build') | ForEach-Object {

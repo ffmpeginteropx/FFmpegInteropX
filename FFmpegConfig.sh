@@ -26,6 +26,8 @@ if [ "$1" == "Win10" ]; then
         --enable-debug \
         --enable-zlib \
         --enable-bzlib \
+        --enable-lzma \
+        --enable-libxml2 \
         --enable-iconv \
         --target-os=win32 \
         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -DLZMA_API_STATIC" \
@@ -94,6 +96,8 @@ if [ "$1" == "Win10" ]; then
         --enable-debug \
         --enable-zlib \
         --enable-bzlib \
+        --enable-lzma \
+        --enable-libxml2 \
         --enable-iconv \
         --target-os=win32 \
         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -DLZMA_API_STATIC -D__ARM_PCS_VFP" \
@@ -128,6 +132,8 @@ if [ "$1" == "Win10" ]; then
         --enable-debug \
         --enable-zlib \
         --enable-bzlib \
+        --enable-lzma \
+        --enable-libxml2 \
         --enable-iconv \
         --target-os=win32 \
         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -DLZMA_API_STATIC -D__ARM_PCS_VFP" \

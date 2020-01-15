@@ -16,3 +16,6 @@
 [submodule "Libs/liblzma"]
 	path = Libs/liblzma
 	url = https://github.com/ffmpeginteropx/liblzma.git
+[submodule "Libs/PkgConfigFake"]
+	path = Libs/PkgConfigFake
+	url = https://github.com/ffmpeginteropx/PkgConfigFake.git
