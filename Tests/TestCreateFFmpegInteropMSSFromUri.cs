@@ -65,7 +65,7 @@ namespace UnitTest.Windows
 
             // Validate the metadata
             Assert.AreEqual(FFmpegMSS.AudioStreams[0].CodecName.ToLowerInvariant(), "aac");
-            Assert.AreEqual(FFmpegMSS.VideoStream.CodecName.ToLowerInvariant(), "h264");
+            Assert.AreEqual(FFmpegMSS.VideoStreams[0].CodecName.ToLowerInvariant(), "h264");
 
             MediaStreamSource mss = FFmpegMSS.GetMediaStreamSource();
             Assert.IsNotNull(mss);
@@ -85,7 +85,7 @@ namespace UnitTest.Windows
 
             // Validate the metadata
             Assert.AreEqual(FFmpegMSS.AudioStreams[0].CodecName.ToLowerInvariant(), "aac");
-            Assert.AreEqual(FFmpegMSS.VideoStream.CodecName.ToLowerInvariant(), "h264");
+            Assert.AreEqual(FFmpegMSS.VideoStreams[0].CodecName.ToLowerInvariant(), "h264");
 
             MediaStreamSource mss = FFmpegMSS.GetMediaStreamSource();
             Assert.IsNotNull(mss);
@@ -105,7 +105,7 @@ namespace UnitTest.Windows
 
             // Validate the metadata
             Assert.AreEqual(FFmpegMSS.AudioStreams[0].CodecName.ToLowerInvariant(), "aac");
-            Assert.AreEqual(FFmpegMSS.VideoStream.CodecName.ToLowerInvariant(), "h264");
+            Assert.AreEqual(FFmpegMSS.VideoStreams[0].CodecName.ToLowerInvariant(), "h264");
 
             MediaStreamSource mss = FFmpegMSS.GetMediaStreamSource();
             Assert.IsNotNull(mss);
@@ -131,7 +131,7 @@ namespace UnitTest.Windows
 
             // Validate the metadata
             Assert.AreEqual(FFmpegMSS.AudioStreams[0].CodecName.ToLowerInvariant(), "aac");
-            Assert.AreEqual(FFmpegMSS.VideoStream.CodecName.ToLowerInvariant(), "h264");
+            Assert.AreEqual(FFmpegMSS.VideoStreams[0].CodecName.ToLowerInvariant(), "h264");
 
             MediaStreamSource mss = FFmpegMSS.GetMediaStreamSource();
             Assert.IsNotNull(mss);

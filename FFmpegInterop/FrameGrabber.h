@@ -38,12 +38,6 @@ namespace FFmpegInterop {
 			}
 		}
 
-		/// <summary>Gets video stream information.</summary>
-		property VideoStreamInfo^ VideoStream
-		{
-			VideoStreamInfo^ get() { return interopMSS->VideoStream; }
-		}
-
 		/// <summary>Gets or sets the decode pixel width.</summary>
 		property int DecodePixelWidth;
 

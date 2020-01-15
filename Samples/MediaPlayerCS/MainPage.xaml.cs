@@ -120,6 +120,14 @@ namespace MediaPlayerCS
             {
                 await TryOpenLastFile();
             }
+            if (e.Key == VirtualKey.V)
+            {
+                if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
+                {
+                    playbackItem.VideoTracks.SelectedIndex = 
+                        (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
+                }
+            }
         }
 
         private async Task TryOpenLastFile()
