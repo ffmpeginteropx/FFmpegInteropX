@@ -452,7 +452,13 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Platform::Object ^sender, Windows::UI::
 	{
 		TryOpenLastFile();
 	}
+
+	if (e->Key == Windows::System::VirtualKey::V)
+	{
+		if (playbackItem && playbackItem->VideoTracks->Size > 1)
+		{
+			playbackItem->VideoTracks->SelectedIndex = 
+				(playbackItem->VideoTracks->SelectedIndex + 1) % playbackItem->VideoTracks->Size;
+		}
+	}
 }
-
-
-
