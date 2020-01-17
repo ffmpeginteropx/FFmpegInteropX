@@ -301,6 +301,7 @@ void MediaSampleProvider::EnableStream()
 {
 	DebugMessage(L"EnableStream\n");
 	m_isEnabled = true;
+	m_pAvStream->discard = AVDISCARD_DEFAULT;
 }
 
 void MediaSampleProvider::DisableStream()
@@ -308,6 +309,7 @@ void MediaSampleProvider::DisableStream()
 	DebugMessage(L"DisableStream\n");
 	Flush();
 	m_isEnabled = false;
+	m_pAvStream->discard = AVDISCARD_ALL;
 }
 
 void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoProperties, bool isCompressedFormat)

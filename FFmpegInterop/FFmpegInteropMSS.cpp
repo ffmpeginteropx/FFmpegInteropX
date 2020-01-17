@@ -783,6 +783,8 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 	for (unsigned int index = 0; index < avFormatCtx->nb_streams; index++)
 	{
 		auto avStream = avFormatCtx->streams[index];
+		avStream->discard = AVDISCARD_ALL; // all streams are disabled until we enable them
+
 		MediaSampleProvider^ stream;
 
 		if (avStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && !config->IsFrameGrabber && !config->IsExternalSubtitleParser)
