@@ -82,60 +82,76 @@ function Build-Platform {
         }
     }
 
-    if ($lastexitcode -ne 0) { Exit $lastexitcode }
+    if ($lastexitcode -ne 0) { throw "Failed to configure vcvarsall environment." }
+
+
+    # Build pkg-config fake
+    MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
+        /p:OutputPath="$SolutionDir\Libs\Build\" `
+        /p:Configuration="Release" `
+        /p:Platform=${Env:\PreferredToolArchitecture}
+
+    if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
+
 
     New-Item -ItemType Directory -Force $SolutionDir\Libs\Build\$Platform -OutVariable libs
 
     ('lib', 'licenses', 'include', 'build') | ForEach-Object {
         New-Item -ItemType Directory -Force $libs\$_
     }
-    # Clean platform-specific build dir.
-    Remove-Item -Force -Recurse $libs\build\*
-
-    MSBuild.exe $SolutionDir\Libs\zlib\SMP\libzlib.vcxproj `
-        /p:OutDir="$libs\build\" `
-        /p:Configuration="${Configuration}WinRT" `
-        /p:Platform=$Platform `
-        /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-        /p:PlatformToolset=$PlatformToolset
-
-    if ($lastexitcode -ne 0) { Exit $lastexitcode }
-
-    Get-ChildItem -Recurse -Include '*.h' $libs\build\libzlib\include | Copy-Item -Destination $libs\include\
-    Copy-Item -Recurse $libs\build\libzlib\licenses\* -Destination $libs\licenses\
-    Copy-Item $libs\build\libzlib\lib\$Platform\libzlib_winrt.lib $libs\lib\zlib.lib
-    Copy-Item $libs\build\libzlib\lib\$Platform\libzlib_winrt.pdb $libs\lib\zlib.pdb
-
-    MSBuild.exe $SolutionDir\Libs\bzip2\SMP\libbz2.vcxproj `
-        /p:OutDir="$libs\build\" `
-        /p:Configuration="${Configuration}WinRT" `
-        /p:Platform=$Platform `
-        /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-        /p:PlatformToolset=$PlatformToolset
-
-    if ($lastexitcode -ne 0) { Exit $lastexitcode }
-
-    Get-ChildItem -Recurse -Include '*.h' $libs\build\libbz2\include | Copy-Item -Destination $libs\include\
-    Copy-Item -Recurse $libs\build\libbz2\licenses\* -Destination $libs\licenses\
-    Copy-Item $libs\build\libbz2\lib\$Platform\libbz2_winrt.lib $libs\lib\bz2.lib
-    Copy-Item $libs\build\libbz2\lib\$Platform\libbz2_winrt.pdb $libs\lib\bz2.pdb
-
-    MSBuild.exe $SolutionDir\Libs\libiconv\SMP\libiconv.vcxproj `
-        /p:OutDir="$libs\build\" `
-        /p:Configuration="${Configuration}WinRT" `
-        /p:Platform=$Platform `
-        /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-        /p:PlatformToolset=$PlatformToolset
     
-    if ($lastexitcode -ne 0) { Exit $lastexitcode }
-
-    Get-ChildItem -Recurse -Include '*.h' $libs\build\libiconv\include | Copy-Item -Destination $libs\include\
-    Copy-Item -Recurse $libs\build\libiconv\licenses\* -Destination $libs\licenses\
-    Copy-Item $libs\build\libiconv\lib\$Platform\libiconv_winrt.lib $libs\lib\iconv.lib
-    Copy-Item $libs\build\libiconv\lib\$Platform\libiconv_winrt.pdb $libs\lib\iconv.pdb
-
     $env:LIB += ";${libs}\lib"
     $env:INCLUDE += ";${libs}\include"
+    $env:Path += ";${SolutionDir}"
+
+    # Clean platform-specific build dir.
+    Remove-Item -Force -Recurse $libs\build\*
+    Remove-Item -Force -Recurse ${libs}\lib\*
+    Remove-Item -Force -Recurse ${libs}\include\*
+
+    # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
+    $libdefs = @(
+        @('zlib', 'libzlib', 'zlib'),
+        @('bzip2', 'libbz2', 'bz2'),
+        @('libiconv', 'libiconv', 'iconv'),
+        @('liblzma', 'liblzma', 'lzma'),
+        @('libxml2', 'libxml2', 'libxml2')
+        )
+
+    # Build all libraries
+    $libdefs | ForEach-Object {
+    
+        $folder = $_[0];
+        $project = $_[1];
+
+        MSBuild.exe $SolutionDir\Libs\$folder\SMP\$project.vcxproj `
+            /p:OutDir="$libs\build\" `
+            /p:Configuration="${Configuration}WinRT" `
+            /p:Platform=$Platform `
+            /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+            /p:PlatformToolset=$PlatformToolset `
+            /p:useenv=true
+
+        if ($lastexitcode -ne 0) { throw "Failed to build library $project." }
+
+        Copy-Item $libs\build\$project\include\* -Recurse $libs\include\ 
+        Copy-Item $libs\build\$project\licenses\* -Recurse $libs\licenses\
+        Copy-Item $libs\build\$project\lib\$Platform\${project}_winrt.lib $libs\lib\
+        Copy-Item $libs\build\$project\lib\$Platform\${project}_winrt.pdb $libs\lib\
+    }
+
+    # Rename all libraries to ffmpeg target names
+    $libdefs | ForEach-Object {
+
+        $project = $_[1];
+        $target = $_[2];
+
+        Rename-Item $libs\lib\${project}_winrt.lib $libs\lib\$target.lib
+        Rename-Item $libs\lib\${project}_winrt.pdb $libs\lib\$target.pdb
+    }
+
+    # Fixup libxml2 includes for ffmpeg build
+    Copy-Item $libs\include\libxml2\libxml -Force -Recurse $libs\include\ 
 
     # Export full current PATH from environment into MSYS2
     $env:MSYS2_PATH_TYPE = 'inherit'
@@ -145,11 +161,10 @@ function Build-Platform {
     & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh Win10 $Platform
     $ErrorActionPreference = "Stop"
 
-    if ($lastexitcode -ne 0) { Exit $lastexitcode }
+    if ($lastexitcode -ne 0) { throw "Failed to build FFmpeg." }
 
     # Copy PDBs to built binaries dir
-    Get-ChildItem -Recurse -Include '*.pdb' $SolutionDir\ffmpeg\Output\Windows10\$Platform | `
-        Copy-Item -Destination $SolutionDir\ffmpeg\Build\Windows10\$Platform\bin\
+    Copy-Item $SolutionDir\ffmpeg\Output\Windows10\$Platform\*.pdb $SolutionDir\ffmpeg\Build\Windows10\$Platform\bin\
 }
 
 Write-Host
@@ -161,7 +176,7 @@ $ErrorActionPreference = "Stop"
 
 if (! (Test-Path $PSScriptRoot\ffmpeg\configure)) {
     Write-Error 'configure is not found in ffmpeg folder. Ensure this folder is populated with ffmpeg snapshot'
-    Exit
+    Exit 1
 }
 
 if (!(Test-Path $Msys2Bin)) {
@@ -179,7 +194,7 @@ if (!(Test-Path $Msys2Bin)) {
     # Search for MSYS locations
     if (! $msysFound) {
         Write-Error "MSYS2 not found."
-        Exit;
+        Exit 1;
     }
 }
 
@@ -204,31 +219,58 @@ foreach ($item in Get-ChildItem env:)
 }
 
 $start = Get-Date
+$success = 1
 
 foreach ($platform in $Platforms) {
-    Build-Platform `
-        -SolutionDir "${PSScriptRoot}\" `
-        -Platform $platform `
-        -Configuration 'Release' `
-        -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
-        -VcVersion $VcVersion `
-        -PlatformToolset $platformToolSet `
-        -VsLatestPath $vsLatestPath `
-        -Msys2Bin $Msys2Bin
 
-    # Restore orignal environment variables
-    foreach ($item in $oldEnv.GetEnumerator())
+    try
     {
-        Set-Item -Path env:"$($item.Name)" -Value $item.Value
+        Build-Platform `
+            -SolutionDir "${PSScriptRoot}\" `
+            -Platform $platform `
+            -Configuration 'Release' `
+            -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
+            -VcVersion $VcVersion `
+            -PlatformToolset $platformToolSet `
+            -VsLatestPath $vsLatestPath `
+            -Msys2Bin $Msys2Bin
     }
-    foreach ($item in Get-ChildItem env:)
+    catch
     {
-        if (!$oldEnv.ContainsKey($item.Name))
+        Write-Error "Error occured: $PSItem"
+        $success = 0
+        Break
+    }
+    finally
+    {
+        # Restore orignal environment variables
+        foreach ($item in $oldEnv.GetEnumerator())
         {
-             Remove-Item -Path env:"$($item.Name)"
+            Set-Item -Path env:"$($item.Name)" -Value $item.Value
+        }
+        foreach ($item in Get-ChildItem env:)
+        {
+            if (!$oldEnv.ContainsKey($item.Name))
+            {
+                 Remove-Item -Path env:"$($item.Name)"
+            }
         }
     }
 }
 
+Write-Host ''
 Write-Host 'Time elapsed'
-Write-Host (' {0}' -f ((Get-Date) - $start))
+Write-Host ('{0}' -f ((Get-Date) - $start))
+Write-Host ''
+
+if ($success)
+{
+    Write-Host 'Build succeeded!'
+
+}
+else
+{
+    Write-Host 'Build failed!'
+    Exit 1
+}
+

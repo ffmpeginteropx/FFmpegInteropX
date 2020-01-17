@@ -54,6 +54,9 @@ namespace FFmpegInterop
 
 			FFmpegOptions = ref new PropertySet();
 
+			DefaultBufferTime = TimeSpan{ 0 };
+			DefaultBufferTimeUri = TimeSpan{ 50000000 };
+
 			AutoSelectForcedSubtitles = true;
 			OverrideSubtitleStyles = false;
 
@@ -199,12 +202,20 @@ namespace FFmpegInterop
 		/// This does not modify what the transport control default UI shows as available playback speeds. Custom UI is necessary!</summary>
 		property double MaxSupportedPlaybackRate;
 		
-		///<summary>The buffer size to use for streaming sources (URI based).</summary>
+		///<summary>The buffer size in bytes to use for IRandomAccessStream sources.</summary>
 		property unsigned int StreamBufferSize;
 
 		///<summary>Additional options to use when creating the ffmpeg AVFormatContext.</summary>
 		property PropertySet^ FFmpegOptions;
 
+
+		///<summary>The default BufferTime that gets assigned to the MediaStreamSource for IRandomAccessStream sources.</summary>
+		///<remarks>A value of 0 is recommended for local files, to avoid framework bugs and unneccessary memory consumption.</remarks>
+		property TimeSpan DefaultBufferTime;
+
+		///<summary>The default BufferTime that gets assigned to the MediaStreamSource for URI sources.</summary>
+		///<remarks>Default is 5 seconds. You might want to use higher values, especially for DASH stream sources.</remarks>
+		property TimeSpan DefaultBufferTimeUri;
 
 
 		///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>
