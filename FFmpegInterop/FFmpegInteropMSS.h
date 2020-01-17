@@ -250,6 +250,14 @@ namespace FFmpegInterop
 			TimeSpan get() { return subtitleDelay; }
 		}
 
+		///<summary>Gets or sets the BufferTime of the MediaStreamSource.</summary>
+		///<remarks>A value of 0 is recommended for local files, streaming sources should use higher values.</remarks>
+		property TimeSpan BufferTime
+		{
+			TimeSpan get() { return mss->BufferTime; }
+			void set(TimeSpan value) { mss->BufferTime = value; }
+		}
+
 
 	private:
 		FFmpegInteropMSS(FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);

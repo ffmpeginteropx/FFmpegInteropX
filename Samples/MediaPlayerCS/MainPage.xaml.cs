@@ -229,7 +229,6 @@ namespace MediaPlayerCS
                     // Instantiate FFmpegInteropMSS using the URI
                     mediaElement.Stop();
                     FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync(uri, Config);
-                    FFmpegMSS.GetMediaStreamSource().BufferTime = TimeSpan.FromSeconds(3);
 
                     var source = FFmpegMSS.CreateMediaPlaybackItem();
 
