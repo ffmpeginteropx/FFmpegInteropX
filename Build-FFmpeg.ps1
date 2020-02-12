@@ -41,7 +41,7 @@ param(
 
     [System.IO.FileInfo] $Msys2Bin = 'C:\msys64\usr\bin\bash.exe',
 
-    [Boolean] $ClearBuildFolders = $true
+    [Boolean] $ClearBuildFolders = $false
 )
 
 function Build-Platform {
@@ -72,7 +72,8 @@ function Build-Platform {
         }
     }
 
-    Write-Host "Building FFmpeg for Windows 10 apps ${Platform}..."
+    Write-Host ""
+    Write-Host "Building FFmpeg for Windows 10 ($WindowsTarget) ${Platform}..."
     Write-Host ""
     
     # Load environment from VCVARS.
@@ -110,8 +111,8 @@ function Build-Platform {
         New-Item -ItemType Directory -Force $libs\$_
     }
     
-    $env:LIB += ";${libs}\lib"
-    $env:INCLUDE += ";${libs}\include"
+    $env:LIB += ";$libs\lib"
+    $env:INCLUDE += ";$libs\include"
 
     if ($ClearBuildFolders) {
         # Clean platform-specific library build dirs.
@@ -135,6 +136,10 @@ function Build-Platform {
     
         $folder = $_[0]
         $project = $_[1]
+
+        Write-Host ""
+        Write-Host "Building Library ${folder}..."
+        Write-Host ""
 
         # Decide vcvars target string based on target platform
         if ($WindowsTarget -eq "UWP") { 
@@ -183,7 +188,10 @@ function Build-Platform {
 
     if ($WindowsTarget -eq "Win32") { 
 
-        # Build x264
+        #Build x264
+        Write-Host ""
+        Write-Host "Building Library x264..."
+        Write-Host ""
         
         $x264Archs = @{
             'x86'   = 'x86'
@@ -202,6 +210,9 @@ function Build-Platform {
 
 
         #Build libvpx
+        Write-Host ""
+        Write-Host "Building Library libvpx..."
+        Write-Host ""
 
         $vpxArchs = @{
             'x86'   = 'x86'
@@ -237,8 +248,11 @@ function Build-Platform {
         Remove-Item $libs\lib\$vpxOutDir -Force -Recurse
     } 
 
+    # Build ffmpeg
+    Write-Host ""
+    Write-Host "Building FFmpeg..."
+    Write-Host ""
 
-    # Build ffmpeg - disable strict error handling since ffmpeg writes to error out
     $ErrorActionPreference = "Continue"
     & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
     $ErrorActionPreference = "Stop"
@@ -246,6 +260,9 @@ function Build-Platform {
 
     # Copy PDBs to built binaries dir
     Copy-Item $libs\build\ffmpeg\*.pdb $libs\bin\ -Force
+
+    # Copy FFmpeg license
+    Copy-Item $SolutionDir\FFmpeg\COPYING.LGPLv2.1 $libs\licenses\ffmpeg.txt -Force
 }
 
 Write-Host
