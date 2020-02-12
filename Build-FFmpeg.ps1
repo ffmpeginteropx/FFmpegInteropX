@@ -15,6 +15,9 @@ param(
     #>
     [version] $VcVersion = '14.1',
 
+    [ValidateSet('UWP', 'Win32')]
+    [string] $WindowsTarget = 'UWP',
+
     <#
         Example values:
         8.1
@@ -26,13 +29,19 @@ param(
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
+    
+    # shared: create shared dll - static: create lib for static linking
+    [ValidateSet('shared', 'static')]
+    [string] $SharedOrStatic = 'shared',
 
     [System.IO.DirectoryInfo] $VSInstallerFolder = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer",
 
     # Set the search criteria for VSWHERE.EXE.
     [string[]] $VsWhereCriteria = '-latest',
 
-    [System.IO.FileInfo] $Msys2Bin = 'C:\msys64\usr\bin\bash.exe'
+    [System.IO.FileInfo] $Msys2Bin = 'C:\msys64\usr\bin\bash.exe',
+
+    [Boolean] $ClearBuildFolders = $true
 )
 
 function Build-Platform {
@@ -40,8 +49,6 @@ function Build-Platform {
         [System.IO.DirectoryInfo] $SolutionDir,
         [string] $Platform,
         [string] $Configuration,
-        [version] $WindowsTargetPlatformVersion,
-        [version] $VcVersion,
         [string] $PlatformToolset,
         [string] $VsLatestPath,
         [string] $Msys2Bin = 'C:\msys64\usr\bin\bash.exe'
@@ -71,7 +78,10 @@ function Build-Platform {
     # Load environment from VCVARS.
     $vcvarsArch = $vcvarsArchs[$env:PROCESSOR_ARCHITECTURE][$Platform]
 
-    CMD /c "`"$VsLatestPath\VC\Auxiliary\Build\vcvarsall.bat`" $vcvarsArch uwp $WindowsTargetPlatformVersion -vcvars_ver=$VcVersion && SET" | . {
+    # Decide vcvars target string based on target platform
+    $windowsTargetString = if ($WindowsTarget -eq "UWP") { "uwp $WindowsTargetPlatformVersion" } else { $windowsTargetString = "" }
+
+    CMD /c "`"$VsLatestPath\VC\Auxiliary\Build\vcvarsall.bat`" $vcvarsArch $windowsTargetString -vcvars_ver=$VcVersion && SET" | . {
         PROCESS {
             Write-Host $_
             if ($_ -match '^([^=]+)=(.*)') {
@@ -102,12 +112,14 @@ function Build-Platform {
     
     $env:LIB += ";${libs}\lib"
     $env:INCLUDE += ";${libs}\include"
-    $env:Path += ";${SolutionDir}"
 
-    # Clean platform-specific build dir.
-    Remove-Item -Force -Recurse $libs\build\*
-    Remove-Item -Force -Recurse ${libs}\lib\*
-    Remove-Item -Force -Recurse ${libs}\include\*
+    if ($ClearBuildFolders) {
+        # Clean platform-specific library build dirs.
+        Remove-Item -Force -Recurse $libs\build\*
+        Remove-Item -Force -Recurse $libs\lib\*
+        Remove-Item -Force -Recurse $libs\include\*
+        Remove-Item -Force -Recurse $libs\licenses\*
+    }
 
     # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
     $libdefs = @(
@@ -121,12 +133,26 @@ function Build-Platform {
     # Build all libraries
     $libdefs | ForEach-Object {
     
-        $folder = $_[0];
-        $project = $_[1];
+        $folder = $_[0]
+        $project = $_[1]
+
+        # Decide vcvars target string based on target platform
+        if ($WindowsTarget -eq "UWP") { 
+            $configurationName = "${Configuration}WinRT"
+            $targetName = "${project}_winrt"
+            $outDir = "$libs\build\"
+        }
+        else {
+            $configurationName = ${Configuration}
+            $targetName = ${project}
+            $outDir = "$libs\build\$project\"
+        }
+        $intDir = "$libs\build\int\$project\"
 
         MSBuild.exe $SolutionDir\Libs\$folder\SMP\$project.vcxproj `
-            /p:OutDir="$libs\build\" `
-            /p:Configuration="${Configuration}WinRT" `
+            /p:OutDir=$outDir `
+            /p:IntDir=$intDir `
+            /p:Configuration=$configurationName `
             /p:Platform=$Platform `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
             /p:PlatformToolset=$PlatformToolset `
@@ -134,10 +160,10 @@ function Build-Platform {
 
         if ($lastexitcode -ne 0) { throw "Failed to build library $project." }
 
-        Copy-Item $libs\build\$project\include\* -Recurse $libs\include\ 
-        Copy-Item $libs\build\$project\licenses\* -Recurse $libs\licenses\
-        Copy-Item $libs\build\$project\lib\$Platform\${project}_winrt.lib $libs\lib\
-        Copy-Item $libs\build\$project\lib\$Platform\${project}_winrt.pdb $libs\lib\
+        Copy-Item $libs\build\$project\include\* $libs\include\ -Recurse -Force
+        Copy-Item $libs\build\$project\licenses\* $libs\licenses\ -Recurse -Force
+        Copy-Item $libs\build\$project\lib\$Platform\$targetName.lib $libs\lib\ -Force
+        Copy-Item $libs\build\$project\lib\$Platform\$targetName.pdb $libs\lib\ -Force
     }
 
     # Rename all libraries to ffmpeg target names
@@ -145,26 +171,81 @@ function Build-Platform {
 
         $project = $_[1];
         $target = $_[2];
+        $targetName = if ($WindowsTarget -eq "UWP") { "${project}_winrt" } else { $project }
 
-        Rename-Item $libs\lib\${project}_winrt.lib $libs\lib\$target.lib
-        Rename-Item $libs\lib\${project}_winrt.pdb $libs\lib\$target.pdb
+        Move-Item $libs\lib\$targetName.lib $libs\lib\$target.lib -Force
+        Move-Item $libs\lib\$targetName.pdb $libs\lib\$target.pdb -Force
     }
 
     # Fixup libxml2 includes for ffmpeg build
-    Copy-Item $libs\include\libxml2\libxml -Force -Recurse $libs\include\ 
+    Copy-Item $libs\include\libxml2\libxml $libs\include\ -Force -Recurse
 
-    # Export full current PATH from environment into MSYS2
-    $env:MSYS2_PATH_TYPE = 'inherit'
+
+    if ($WindowsTarget -eq "Win32") { 
+
+        # Build x264
+        
+        $x264Archs = @{
+            'x86'   = 'x86'
+            'x64'   = 'x86_64'
+            'ARM'   = 'arm'
+            'ARM64' = 'aarch64'
+        }
+        $x264Arch = $x264Archs[$Platform]
+
+        New-Item -ItemType Directory -Force $libs\build\x264
+
+        $ErrorActionPreference = "Continue"
+        & $Msys2Bin --login -c "cd \$libs\build\x264 && CC=cl ..\..\..\..\x264\configure --host=${x264Arch}-mingw64 --prefix=\$libs --disable-cli --enable-static && make -j8 && make install".Replace("\", "/").Replace(":", "")
+        $ErrorActionPreference = "Stop"
+        if ($lastexitcode -ne 0) { throw "Failed to build library x264." }
+
+
+        #Build libvpx
+
+        $vpxArchs = @{
+            'x86'   = 'x86'
+            'x64'   = 'x86_64'
+            'ARM'   = 'armv7'
+            'ARM64' = 'arm64'
+        }
+        $vpxPlatforms = @{
+            'x86'   = 'win32'
+            'x64'   = 'win64'
+            'ARM'   = 'win32'
+            'ARM64' = 'win64'
+        }
+        $vpxArch = $vpxArchs[$Platform]
+        $vpxPlatform = $vpxPlatforms[$Platform]
+
+        New-Item -ItemType Directory -Force $libs\build\libvpx
+        
+        $ErrorActionPreference = "Continue"
+        & $Msys2Bin --login -c "cd \$libs\build\libvpx && ..\..\..\..\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$libs --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 && make install".Replace("\", "/").Replace(":", "")
+        $ErrorActionPreference = "Stop"
+        if ($lastexitcode -ne 0) { throw "Failed to build library libvpx." }
+
+        $vpxOutDirs = @{
+            'x86'   = 'Win32'
+            'x64'   = 'x64'
+            'ARM'   = 'ARM'
+            'ARM64' = 'ARM64'
+        }
+        $vpxOutDir = $vpxOutDirs[$Platform]
+
+        Move-Item $libs\lib\$vpxOutDir\vpxmd.lib $libs\lib\vpx.lib -Force
+        Remove-Item $libs\lib\$vpxOutDir -Force -Recurse
+    } 
+
 
     # Build ffmpeg - disable strict error handling since ffmpeg writes to error out
     $ErrorActionPreference = "Continue"
-    & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh Win10 $Platform
+    & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
     $ErrorActionPreference = "Stop"
-
     if ($lastexitcode -ne 0) { throw "Failed to build FFmpeg." }
 
     # Copy PDBs to built binaries dir
-    Copy-Item $SolutionDir\ffmpeg\Output\Windows10\$Platform\*.pdb $SolutionDir\ffmpeg\Build\Windows10\$Platform\bin\
+    Copy-Item $libs\build\ffmpeg\*.pdb $libs\bin\ -Force
 }
 
 Write-Host
@@ -211,6 +292,9 @@ Write-Host "Visual Studio Installation folder: [$vsLatestPath]"
 $platformToolSet = "v$($VcVersion.Major)$("$($VcVersion.Minor)"[0])"
 Write-Host "Platform Toolset: [$platformToolSet]"
 
+# Export full current PATH from environment into MSYS2
+$env:MSYS2_PATH_TYPE = 'inherit'
+
 # Save orignal environment variables
 $oldEnv = @{};
 foreach ($item in Get-ChildItem env:)
@@ -229,15 +313,13 @@ foreach ($platform in $Platforms) {
             -SolutionDir "${PSScriptRoot}\" `
             -Platform $platform `
             -Configuration 'Release' `
-            -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
-            -VcVersion $VcVersion `
             -PlatformToolset $platformToolSet `
             -VsLatestPath $vsLatestPath `
             -Msys2Bin $Msys2Bin
     }
     catch
     {
-        Write-Error "Error occured: $PSItem"
+        Write-Warning "Error occured: $PSItem"
         $success = 0
         Break
     }
