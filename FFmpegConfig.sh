@@ -11,8 +11,8 @@ variant=$1
 platform=$2
 sharedOrStatic=$3
 
-intDir="$DIR/Libs/Build/$platform/Build/ffmpeg"
-outDir="$DIR/Libs/Build/$platform"
+intDir="$DIR/Output/FFmpeg$variant/$platform/ffmpeg"
+outDir="$DIR/FFmpeg$variant/$platform"
 
 #Main
 echo "Make $variant $platform $sharedOrStatic $intDir $outDir"
@@ -28,7 +28,7 @@ configureArgs="\
     --enable-cross-compile \
     --enable-debug \
     --target-os=win32 \
-    --pkg-config=$DIR/Libs/Build/pkg-config.exe \
+    --pkg-config=$DIR/Build/pkg-config.exe \
     --prefix=$outDir \
 "
 
