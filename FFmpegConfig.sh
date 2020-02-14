@@ -11,7 +11,7 @@ variant=$1
 platform=$2
 sharedOrStatic=$3
 
-intDir="$DIR/Output/FFmpeg$variant/$platform/ffmpeg"
+intDir="$DIR/Output/FFmpeg$variant/$platform/int/ffmpeg"
 outDir="$DIR/FFmpeg$variant/$platform"
 
 #Main
@@ -28,7 +28,7 @@ configureArgs="\
     --enable-cross-compile \
     --enable-debug \
     --target-os=win32 \
-    --pkg-config=$DIR/Build/pkg-config.exe \
+    --pkg-config=$DIR/Output/pkg-config.exe \
     --prefix=$outDir \
 "
 
@@ -129,6 +129,7 @@ if [ "$variant" == "Win32" ]; then
         --enable-libxml2 \
         --enable-iconv \
         --enable-libx264 \
+        --enable-libx265 \
         --enable-libvpx \
         --enable-gpl \
         --enable-static \

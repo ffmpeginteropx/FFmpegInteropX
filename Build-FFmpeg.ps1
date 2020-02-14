@@ -98,7 +98,7 @@ function Build-Platform {
 
     # Build pkg-config fake
     MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
-        /p:OutputPath="$SolutionDir\Build\" `
+        /p:OutputPath="$SolutionDir\Output\" `
         /p:Configuration="Release" `
         /p:Platform=${Env:\PreferredToolArchitecture}
 
@@ -107,19 +107,20 @@ function Build-Platform {
     New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable build
 
     New-Item -ItemType Directory -Force $SolutionDir\FFmpeg$WindowsTarget\$Platform -OutVariable target
-
-    ('lib', 'licenses', 'include') | ForEach-Object {
-        New-Item -ItemType Directory -Force $target\$_
-    }
     
-    $env:LIB += ";$target\lib"
-    $env:INCLUDE += ";$target\include"
-
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
         Remove-Item -Force -Recurse $build\*
         Remove-Item -Force -Recurse $target\*
     }
+
+    ('lib', 'licenses', 'include') | ForEach-Object {
+        New-Item -ItemType Directory -Force $build\$_
+        New-Item -ItemType Directory -Force $target\$_
+    }
+    
+    $env:LIB += ";$build\lib"
+    $env:INCLUDE += ";$build\include"
 
     # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
     $libdefs = @(
@@ -164,10 +165,10 @@ function Build-Platform {
 
         if ($lastexitcode -ne 0) { throw "Failed to build library $project." }
 
-        Copy-Item $build\$project\include\* $target\include\ -Recurse -Force
-        Copy-Item $build\$project\licenses\* $target\licenses\ -Recurse -Force
-        Copy-Item $build\$project\lib\$Platform\$targetName.lib $target\lib\ -Force
-        Copy-Item $build\$project\lib\$Platform\$targetName.pdb $target\lib\ -Force
+        Copy-Item $build\$project\include\* $build\include\ -Recurse -Force
+        Copy-Item $build\$project\licenses\* $build\licenses\ -Recurse -Force
+        Copy-Item $build\$project\lib\$Platform\$targetName.lib $build\lib\ -Force
+        Copy-Item $build\$project\lib\$Platform\$targetName.pdb $build\lib\ -Force
     }
 
     # Rename all libraries to ffmpeg target names
@@ -177,15 +178,41 @@ function Build-Platform {
         $ffmpegTarget = $_[2];
         $targetName = if ($WindowsTarget -eq "UWP") { "${project}_winrt" } else { $project }
 
-        Move-Item $target\lib\$targetName.lib $target\lib\$ffmpegTarget.lib -Force
-        Move-Item $target\lib\$targetName.pdb $target\lib\$ffmpegTarget.pdb -Force
+        Move-Item $build\lib\$targetName.lib $build\lib\$ffmpegTarget.lib -Force
+        Move-Item $build\lib\$targetName.pdb $build\lib\$ffmpegTarget.pdb -Force
     }
 
     # Fixup libxml2 includes for ffmpeg build
-    Copy-Item $target\include\libxml2\libxml $target\include\ -Force -Recurse
+    Copy-Item $build\include\libxml2\libxml $build\include\ -Force -Recurse
 
 
     if ($WindowsTarget -eq "Win32") { 
+        
+        $env:Path += ";$(Split-Path $Msys2Bin)"
+
+        #Build x265
+        Write-Host ""
+        Write-Host "Building Library x265..."
+        Write-Host ""
+
+        $cmakePlatforms = @{
+            'x86'   = 'Win32'
+            'x64'   = 'x64'
+            'ARM'   = 'ARM'
+            'ARM64' = 'ARM64'
+        }
+        $cmakePlatform = $cmakePlatforms[$Platform]
+
+        New-Item -ItemType Directory -Force $build\int\x265
+
+        $ErrorActionPreference = "Continue"
+        cmd.exe /C $SolutionDir\Libs\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
+        $ErrorActionPreference = "Stop"
+        if ($lastexitcode -ne 0) { throw "Failed to build library x264." }
+
+        Copy-Item $build\int\x265\x265-static.lib $build\lib\x265.lib -Force
+        Copy-Item $build\int\x265\include\* $build\include\ -Force
+        Copy-Item $SolutionDir\Libs\x265\COPYING $build\licenses\x265.txt -Force
 
         #Build x264
         Write-Host ""
@@ -203,7 +230,7 @@ function Build-Platform {
         New-Item -ItemType Directory -Force $build\x264
 
         $ErrorActionPreference = "Continue"
-        & $Msys2Bin --login -c "cd \$build\x264 && CC=cl ..\..\..\..\x264\configure --host=${x264Arch}-mingw64 --prefix=\$target --disable-cli --enable-static && make -j8 && make install".Replace("\", "/").Replace(":", "")
+        & $Msys2Bin --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 && make install".Replace("\", "/").Replace(":", "")
         $ErrorActionPreference = "Stop"
         if ($lastexitcode -ne 0) { throw "Failed to build library x264." }
 
@@ -231,20 +258,12 @@ function Build-Platform {
         New-Item -ItemType Directory -Force $build\libvpx
         
         $ErrorActionPreference = "Continue"
-        & $Msys2Bin --login -c "cd \$build\libvpx && ..\..\..\..\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$target --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 && make install".Replace("\", "/").Replace(":", "")
+        & $Msys2Bin --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 && make install".Replace("\", "/").Replace(":", "")
         $ErrorActionPreference = "Stop"
         if ($lastexitcode -ne 0) { throw "Failed to build library libvpx." }
 
-        $vpxOutDirs = @{
-            'x86'   = 'Win32'
-            'x64'   = 'x64'
-            'ARM'   = 'ARM'
-            'ARM64' = 'ARM64'
-        }
-        $vpxOutDir = $vpxOutDirs[$Platform]
-
-        Move-Item $target\lib\$vpxOutDir\vpxmd.lib $target\lib\vpx.lib -Force
-        Remove-Item $target\lib\$vpxOutDir -Force -Recurse
+        Move-Item $build\lib\$cmakePlatform\vpxmd.lib $build\lib\vpx.lib -Force
+        Remove-Item $build\lib\$cmakePlatform -Force -Recurse
     } 
 
     # Build ffmpeg
@@ -258,10 +277,11 @@ function Build-Platform {
     if ($lastexitcode -ne 0) { throw "Failed to build FFmpeg." }
 
     # Copy PDBs to built binaries dir
-    Copy-Item $build\ffmpeg\*.pdb $target\bin\ -Force
+    Copy-Item $build\int\ffmpeg\*.pdb $target\bin\ -Force
 
-    # Copy FFmpeg license
+    # Copy license files
     Copy-Item $SolutionDir\FFmpeg\COPYING.LGPLv2.1 $target\licenses\ffmpeg.txt -Force
+    Copy-Item $build\licenses\* $target\licenses\ -Force
 }
 
 Write-Host
