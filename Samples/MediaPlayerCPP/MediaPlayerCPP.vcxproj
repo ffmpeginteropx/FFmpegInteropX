@@ -100,7 +100,7 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll">
+    <None Include="$(SolutionDir)FFmpegUWP\$(PlatformTarget)\bin\*.dll">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</DeploymentContent>
