@@ -115,13 +115,14 @@ namespace FFmpegInterop {
 			return create_async([this, position, exactSeek, maxFrameSkip, width, height, pixelAspectRatio]
 			{
 				bool seekSucceeded = false;
-				if (interopMSS->Duration.Duration > position.Duration)
+				if (interopMSS->Duration.Duration >= position.Duration)
 				{
 					seekSucceeded = SUCCEEDED(interopMSS->Seek(position));
 				}
 
 				int framesSkipped = 0;
 				MediaStreamSample^ lastSample = nullptr;
+				bool gotSample = true;
 
 				while (true)
 				{
@@ -134,7 +135,7 @@ namespace FFmpegInterop {
 						if (lastSample != nullptr)
 						{
 							sample = lastSample;
-							seekSucceeded = false;
+							gotSample = false;
 						}
 						else
 						{
@@ -147,7 +148,7 @@ namespace FFmpegInterop {
 					}
 
 					// if exact seek, continue decoding until we have the right sample
-					if (exactSeek && seekSucceeded && (position.Duration - sample->Timestamp.Duration > sample->Duration.Duration) &&
+					if (gotSample && exactSeek && seekSucceeded && (position.Duration - sample->Timestamp.Duration > sample->Duration.Duration) &&
 						(maxFrameSkip <= 0 || framesSkipped < maxFrameSkip))
 					{
 						framesSkipped++;
@@ -155,7 +156,7 @@ namespace FFmpegInterop {
 					}
 
 					//  make sure we have a clean sample (key frame, no half interlaced frame)
-					if (!interopMSS->VideoSampleProvider->IsCleanSample && 
+					if (gotSample && !interopMSS->VideoSampleProvider->IsCleanSample &&
 						(maxFrameSkip <= 0 || framesSkipped < maxFrameSkip))
 					{
 						framesSkipped++;
