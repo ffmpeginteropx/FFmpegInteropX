@@ -30,10 +30,6 @@ Intermediate/
 Output/
 FFmpegUWP/
 FFmpegWin32/
-Libs/Build/
-Libs/x264/
-Libs/x265/
-Libs/libvpx/
 
 # Visual Studio 2015 cache/options directory
 .vs/

@@ -167,7 +167,7 @@ if [ "$platform" = "ARM64" ]; then
     "
 fi
 
-eval $DIR/ffmpeg/configure $configureArgs || exit
+eval $DIR/Libs/ffmpeg/configure $configureArgs || exit
 
 make -j8 || exit
 make install || exit
