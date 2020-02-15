@@ -25,3 +25,6 @@
 [submodule "Libs/libvpx"]
 	path = Libs/libvpx
 	url = https://chromium.googlesource.com/webm/libvpx
+[submodule "Libs/x264"]
+	path = Libs/x264
+	url = https://code.videolan.org/videolan/x264.git
