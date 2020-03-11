@@ -26,6 +26,7 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 - API improvements
 - Include zlib and bzlib libraries into ffmpeg for full MKV subtitle support
 - Include iconv for character encoding conversion
+- Include libxml2 for DASH streaming support
 - Lots of bug fixes
 
 **Other changes:**
@@ -56,7 +57,7 @@ Either Visual Studio 2017 or Visual Studio 2019 is required.
 
 ## FFmpeg Version
 
-Recommended: **FFmpeg 4.2.1**
+Recommended: **FFmpeg 4.2.2**
 
 Minimum: **FFmpeg 4.0**
 
@@ -76,9 +77,11 @@ A legacy branch exists which tagets **FFmpeg 3.4.2**.
 
 FFmpegInteropX uses the following git submodules:
 
-- ffmpeg
+- Libs\ffmpeg
 - Libs\bzlib2
 - Libs\iconv
+- Libs\liblzma
+- Libs\libxml2
 - Libs\zlib
 
 Please use clone recursive, to get the exact verion of the libs that is required for use with FFmpegInteropX.
@@ -95,14 +98,13 @@ Please do not use later versions of FFmpeg (e.g. master branch) with FFmpegInter
 Your `FFmpegInteropX` folder should look as follows
 
 	FFmpegInteropX\
-	    ffmpeg\                - ffmpeg source code from the latest release in git://github.com/FFmpeg/FFmpeg.git
 	    FFmpegInterop\         - FFmpegInterop WinRT component
+	    Libs\ffmpeg\           - ffmpeg source code from the latest release in git://github.com/FFmpeg/FFmpeg.git
 	    Libs\bzip2\            - bzip2 (bzliib) compression library
-	    Libs\iconv\            - iconv library for character encoding conversion
-	    Libs\zlib\             - zlib compression library
+	    Libs\...               - additional libraries required for building FFmpeg
 	    Samples\               - Sample Media Player applications in C++ and C#
 	    Tests\                 - Unit tests for FFmpegInterop
-	    BuildFFmpeg_VS2017.bat - FFmpeg build file for Visual Studio 2017 and higher
+	    Build-FFmpeg.ps1       - FFmpeg build file for Visual Studio 2017 and higher
 	    FFmpegConfig.sh        - Internal script that contains FFmpeg configure options
 	    FFmpegInterop.sln      - Microsoft Visual Studio solution file for Windows 10 apps development
 	    LICENSE
@@ -119,17 +121,61 @@ In case you downloaded yasm 64-bit version you'll also need [Visual C++ Redistri
 
 ## Building ffmpeg with Visual Studio 2017 / 2019
 
-After installing the ffmpeg build tools, you can invoke `BuildFFmpeg_VS2017.bat` from a normal cmd prompt. It builds all Windows 10 versions of ffmpeg (x86, x64, ARM and ARM64). 
+After installing the ffmpeg build tools, you run Build-FFmpeg.ps1 to build FFmpeg.
+
+Run the build script from PowerShell:
+
+`.\Build-FFmpeg.ps1`
+
+Run the build script from CMD:
+
+`PowerShell -NoProfile -ExecutionPolicy Bypass -Command ".\Build-FFmpeg.ps1"`
+
+##### The build script has multiple parameters to select build toolset, SDK version and more. Here are some examples:
+
+Build using a specific SDK version:
+
+`.\Build-FFmpeg.ps1 -WindowsTargetPlatformVersion 10.0.17763.0`
+
+Or from CMD:
+
+`PowerShell -NoProfile -ExecutionPolicy Bypass -Command ".\Build-FFmpeg.ps1 -WindowsTargetPlatformVersion 10.0.17763.0"`
+
+
+Build with PlatformToolset v142 instead of v141:
+
+`.\Build-FFmpeg.ps1 -VcVersion 14.22`
+
+(This requires MSVC v142 build tools "14.22" (exactly!) to be installed. Later versions have a bug that will make ARM/ARM64 compilations fail.)
+
+
+Build using Visual Studio 2017 instead of "latest":
+
+`.\Build-FFmpeg.ps1 -VsWhereCriteria '-version [15.0,16.0)'`
+
+
+Build using Visual Studio 2019 instead of "latest":
+
+`.\Build-FFmpeg.ps1 -VsWhereCriteria '-version [16.0,17.0)'`
+
+
+Build only x86 and x64:
+
+`.\Build-FFmpeg.ps1 -Platforms x86, x64`
+
+
+You can of course combine parameters. There are more parameters, you can see them at the beginning of the build script.
+
 
 Note: You need Visual Studio 2017 15.9.0 or higher to build the ARM64 version of ffmpeg!
 
 ## Building the FFmpegInterop library
 
-After building ffmpeg with the steps above, you should find the ffmpeg libraries in the `ffmpeg/Build/<platform\>/<architecture\>` folders.
+After building ffmpeg with the steps above, you should find the ffmpeg libraries in the `FFmpegUWP/<platform>` folders.
 
 Now you can build the FFmpegInterop library. 
 
-Simply open the Visual Studio solution file `FFmpegInterop.sln`, set one of the MediaPlayer[CS/CPP/JS] sample projects as StartUp project, and run. FFmpegInterop should build cleanly giving you the interop object as well as the selected sample MediaPlayer (C++, C# or JS) that show how to connect the MediaStreamSource to a MediaElement or Video tag for playback.
+Simply open the Visual Studio solution file `FFmpegInterop.sln`, set one of the MediaPlayer[CS/CPP] sample projects as StartUp project, and run. FFmpegInterop should build cleanly giving you the interop object as well as the selected sample MediaPlayer (C++ or C#) that show how to connect the MediaStreamSource to a MediaElement for playback.
 
 ### Using the FFmpegInteropMSS object
 
