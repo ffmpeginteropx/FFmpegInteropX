@@ -7,35 +7,32 @@
     <authors>FFmpegInteropX</authors>
     <projectUrl>https://github.com/ffmpeginteropx/FFmpegInteropX</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <license type="expression">Apache-2.0 AND LGPL-2.1-or-later AND bzip2-1.0.6 AND Zlib</license>
+    <license type="expression">Apache-2.0</license>
     <dependencies>
+	  <group>
+        <dependency id="FFmpegInteropX.FFmpegUWP" version="4.0.0" />
+	  </group>
       <group targetFramework="uap10.0" />
     </dependencies>
   </metadata>
   <files>
 
-    <file src="ffmpeg\Build\Windows10\x64\include\**\*.h" target="include" />
-    <file src="x64\Release\FFmpegInterop\FFmpegInterop.winmd" target="lib\uap10.0" />
+    <file src="FFmpegInterop\x64\Release\FFmpegInterop.winmd"   target="lib\uap10.0" />
+    <file src="FFmpegInterop\x64\Release\FFmpegInterop.xml"     target="lib\uap10.0" />
 
-    <file src="ffmpeg\Build\Windows10\x64\bin\*.dll"                      target="runtimes\win10-x64\native" />
-    <file src="ffmpeg\Build\Windows10\x64\bin\*.pdb"                      target="runtimes\win10-x64\native" />
-    <file src="FFmpegInterop\x64\Release\FFmpegInterop\FFmpegInterop.dll" target="runtimes\win10-x64\native" />
-    <file src="FFmpegInterop\x64\Release\FFmpegInterop\FFmpegInterop.pdb" target="runtimes\win10-x64\native" />
+    <file src="FFmpegInterop\x86\Release\FFmpegInterop.dll"     target="runtimes\win10-x86\native" />
+    <file src="FFmpegInterop\x86\Release\FFmpegInterop.pdb"     target="runtimes\win10-x86\native" />
 
-    <file src="ffmpeg\Build\Windows10\x86\bin\*.dll"                  target="runtimes\win10-x86\native" />
-    <file src="ffmpeg\Build\Windows10\x86\bin\*.pdb"                  target="runtimes\win10-x86\native" />
-    <file src="FFmpegInterop\Release\FFmpegInterop\FFmpegInterop.dll" target="runtimes\win10-x86\native" />
-    <file src="FFmpegInterop\Release\FFmpegInterop\FFmpegInterop.pdb" target="runtimes\win10-x86\native" />
+    <file src="FFmpegInterop\x64\Release\FFmpegInterop.dll"     target="runtimes\win10-x64\native" />
+    <file src="FFmpegInterop\x64\Release\FFmpegInterop.pdb"     target="runtimes\win10-x64\native" />
 
-    <file src="ffmpeg\Build\Windows10\ARM\bin\*.dll"                      target="runtimes\win10-arm\native" />
-    <file src="ffmpeg\Build\Windows10\ARM\bin\*.pdb"                      target="runtimes\win10-arm\native" />
-    <file src="FFmpegInterop\ARM\Release\FFmpegInterop\FFmpegInterop.dll" target="runtimes\win10-arm\native" />
-    <file src="FFmpegInterop\ARM\Release\FFmpegInterop\FFmpegInterop.pdb" target="runtimes\win10-arm\native" />
+    <file src="FFmpegInterop\ARM\Release\FFmpegInterop.dll"     target="runtimes\win10-arm\native" />
+    <file src="FFmpegInterop\ARM\Release\FFmpegInterop.pdb"     target="runtimes\win10-arm\native" />
 
-    <file src="ffmpeg\Build\Windows10\ARM64\bin\*.dll"                      target="runtimes\win10-arm64\native" />
-    <file src="ffmpeg\Build\Windows10\ARM64\bin\*.pdb"                      target="runtimes\win10-arm64\native" />
-    <file src="FFmpegInterop\ARM64\Release\FFmpegInterop\FFmpegInterop.dll" target="runtimes\win10-arm64\native" />
-    <file src="FFmpegInterop\ARM64\Release\FFmpegInterop\FFmpegInterop.pdb" target="runtimes\win10-arm64\native" />
+    <file src="FFmpegInterop\ARM64\Release\FFmpegInterop.dll"   target="runtimes\win10-arm64\native" />
+    <file src="FFmpegInterop\ARM64\Release\FFmpegInterop.pdb"   target="runtimes\win10-arm64\native" />
+
+    <file src="FFmpegInteropX.targets"                                        target="build\native"/>
 
   </files>
 </package>
