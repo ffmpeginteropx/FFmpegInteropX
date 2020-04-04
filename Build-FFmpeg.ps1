@@ -41,7 +41,11 @@ param(
 
     [System.IO.FileInfo] $Msys2Bin = 'C:\msys64\usr\bin\bash.exe',
 
-    [Boolean] $ClearBuildFolders = $false
+    [Boolean] $ClearBuildFolders = $false,
+
+    [Boolean] $BuildNugetPacket = $false,
+
+    [string] $NugetPacketVersion = "1.0.0"
 )
 
 function Build-Platform {
@@ -277,7 +281,7 @@ function Build-Platform {
     if ($lastexitcode -ne 0) { throw "Failed to build FFmpeg." }
 
     # Copy PDBs to built binaries dir
-    Copy-Item $build\int\ffmpeg\*.pdb $target\bin\ -Force
+    Get-ChildItem -Recurse -Include '*.pdb' $build\int\ffmpeg\ | Copy-Item -Destination $target\bin\ -Force
 
     # Copy license files
     Copy-Item $SolutionDir\FFmpeg\COPYING.LGPLv2.1 $target\licenses\ffmpeg.txt -Force
@@ -291,7 +295,7 @@ Write-Host
 # Stop on all PowerShell command errors
 $ErrorActionPreference = "Stop"
 
-if (! (Test-Path $PSScriptRoot\ffmpeg\configure)) {
+if (! (Test-Path $PSScriptRoot\Libs\ffmpeg\configure)) {
     Write-Error 'configure is not found in ffmpeg folder. Ensure this folder is populated with ffmpeg snapshot'
     Exit 1
 }
@@ -374,6 +378,11 @@ foreach ($platform in $Platforms) {
             }
         }
     }
+}
+
+if ($success -and $BuildNugetPacket)
+{
+    nuget pack .\FFmpegInteropX.FFmpegUWP.nuspec -Properties id=FFmpegInteropX.FFmpegUWP -Version $NugetPacketVersion -Symbols -SymbolPackageFormat snupkg
 }
 
 Write-Host ''
