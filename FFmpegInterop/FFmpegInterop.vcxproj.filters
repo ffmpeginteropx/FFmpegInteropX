@@ -187,14 +187,14 @@
     <None Include="..\README.md">
       <Filter>Build</Filter>
     </None>
-    <None Include="..\Init_AppVeyor.bat">
-      <Filter>Build</Filter>
-    </None>
     <None Include="FFmpegInteropLibs.props">
       <Filter>Build</Filter>
     </None>
     <None Include="packages.config" />
     <None Include="..\Build-FFmpeg.ps1">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\AppVeyor_Build.bat">
       <Filter>Build</Filter>
     </None>
   </ItemGroup>
