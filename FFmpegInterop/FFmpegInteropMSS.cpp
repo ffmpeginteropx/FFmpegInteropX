@@ -136,18 +136,18 @@ IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromStreamAsync(IRan
 {
 	auto dispatcher = GetCurrentDispatcher();
 	return create_async([stream, config, dispatcher]
-	{
-		return CreateFromStream(stream, config, nullptr, dispatcher);
-	});
+		{
+			return CreateFromStream(stream, config, nullptr, dispatcher);
+		});
 };
 
 IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromUriAsync(String^ uri, FFmpegInteropConfig^ config)
 {
 	auto dispatcher = GetCurrentDispatcher();
 	return create_async([uri, config, dispatcher]
-	{
-		return CreateFromUri(uri, config, dispatcher);
-	});
+		{
+			return CreateFromUri(uri, config, dispatcher);
+		});
 };
 
 FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher)
@@ -337,100 +337,100 @@ MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem(TimeSpan startTime,
 IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName)
 {
 	return create_async([this, stream, streamName]
-	{
-		auto subConfig = ref new FFmpegInteropConfig();
-		subConfig->IsExternalSubtitleParser = true;
-		subConfig->DefaultSubtitleStreamName = streamName;
-		subConfig->DefaultSubtitleDelay = this->SubtitleDelay;
-		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
-		subConfig->AnsiSubtitleEncoding = this->config->AnsiSubtitleEncoding;
-		subConfig->OverrideSubtitleStyles = this->config->OverrideSubtitleStyles;
-		subConfig->SubtitleRegion = this->config->SubtitleRegion;
-		subConfig->SubtitleStyle = this->config->SubtitleStyle;
-		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
-		subConfig->AutoSelectForcedSubtitles = false;
-
-		if (VideoDescriptor)
 		{
-			subConfig->AdditionalFFmpegSubtitleOptions = ref new PropertySet();
+			auto subConfig = ref new FFmpegInteropConfig();
+			subConfig->IsExternalSubtitleParser = true;
+			subConfig->DefaultSubtitleStreamName = streamName;
+			subConfig->DefaultSubtitleDelay = this->SubtitleDelay;
+			subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
+			subConfig->AnsiSubtitleEncoding = this->config->AnsiSubtitleEncoding;
+			subConfig->OverrideSubtitleStyles = this->config->OverrideSubtitleStyles;
+			subConfig->SubtitleRegion = this->config->SubtitleRegion;
+			subConfig->SubtitleStyle = this->config->SubtitleStyle;
+			subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
+			subConfig->AutoSelectForcedSubtitles = false;
 
-			subConfig->AdditionalFFmpegSubtitleOptions->Insert("subfps",
-				VideoDescriptor->EncodingProperties->FrameRate->Numerator.ToString() + "/" + VideoDescriptor->EncodingProperties->FrameRate->Denominator.ToString());
-		}
-		auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, subConfig, nullptr, nullptr);
-
-		if (externalSubsParser->SubtitleStreams->Size > 0)
-		{
 			if (VideoDescriptor)
 			{
-				auto pixelAspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
-				auto videoAspect = ((double)currentVideoStream->m_pAvCodecCtx->width / currentVideoStream->m_pAvCodecCtx->height) / pixelAspect;
-				for each (auto stream in externalSubsParser->subtitleStreams)
+				subConfig->AdditionalFFmpegSubtitleOptions = ref new PropertySet();
+
+				subConfig->AdditionalFFmpegSubtitleOptions->Insert("subfps",
+					VideoDescriptor->EncodingProperties->FrameRate->Numerator.ToString() + "/" + VideoDescriptor->EncodingProperties->FrameRate->Denominator.ToString());
+			}
+			auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, subConfig, nullptr, nullptr);
+
+			if (externalSubsParser->SubtitleStreams->Size > 0)
+			{
+				if (VideoDescriptor)
 				{
-					stream->NotifyVideoFrameSize(currentVideoStream->m_pAvCodecCtx->width, currentVideoStream->m_pAvCodecCtx->height, videoAspect);
+					auto pixelAspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
+					auto videoAspect = ((double)currentVideoStream->m_pAvCodecCtx->width / currentVideoStream->m_pAvCodecCtx->height) / pixelAspect;
+					for each (auto stream in externalSubsParser->subtitleStreams)
+					{
+						stream->NotifyVideoFrameSize(currentVideoStream->m_pAvCodecCtx->width, currentVideoStream->m_pAvCodecCtx->height, videoAspect);
+					}
+				}
+
+				int readResult = 0;
+				while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
+				{
+					Concurrency::interruption_point();
 				}
 			}
 
-			int readResult = 0;
-			while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
+
+			mutexGuard.lock();
+			try
 			{
-				Concurrency::interruption_point();
-			}
-		}
-
-
-		mutexGuard.lock();
-		try
-		{
-			if (SubtitleDelay.Duration != externalSubsParser->SubtitleDelay.Duration)
-			{
-				externalSubsParser->SetSubtitleDelay(SubtitleDelay);
-			}
-
-			int subtitleTracksCount = 0;
-
-			for each (auto externalSubtitle in externalSubsParser->subtitleStreams)
-			{
-				if (externalSubtitle->SubtitleTrack->Cues->Size > 0)
+				if (SubtitleDelay.Duration != externalSubsParser->SubtitleDelay.Duration)
 				{
-					// detach stream
-					externalSubtitle->Detach();
+					externalSubsParser->SetSubtitleDelay(SubtitleDelay);
+				}
 
-					// find and add stream info
-					for each (auto subtitleInfo in externalSubsParser->SubtitleStreams)
+				int subtitleTracksCount = 0;
+
+				for each (auto externalSubtitle in externalSubsParser->subtitleStreams)
+				{
+					if (externalSubtitle->SubtitleTrack->Cues->Size > 0)
 					{
-						if (subtitleInfo->SubtitleTrack == externalSubtitle->SubtitleTrack)
+						// detach stream
+						externalSubtitle->Detach();
+
+						// find and add stream info
+						for each (auto subtitleInfo in externalSubsParser->SubtitleStreams)
 						{
-							subtitleStrInfos->Append(subtitleInfo);
-							break;
+							if (subtitleInfo->SubtitleTrack == externalSubtitle->SubtitleTrack)
+							{
+								subtitleStrInfos->Append(subtitleInfo);
+								break;
+							}
 						}
-					}
 
-					// add stream
-					subtitleStreams.push_back(externalSubtitle);
-					if (this->PlaybackItem != nullptr)
-					{
-						PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
+						// add stream
+						subtitleStreams.push_back(externalSubtitle);
+						if (this->PlaybackItem != nullptr)
+						{
+							PlaybackItem->Source->ExternalTimedMetadataTracks->Append(externalSubtitle->SubtitleTrack);
+						}
+						subtitleTracksCount++;
 					}
-					subtitleTracksCount++;
 				}
-			}
 
-			if (subtitleTracksCount == 0)
+				if (subtitleTracksCount == 0)
+				{
+					throw ref new InvalidArgumentException("No subtitles found in file.");
+				}
+
+				subtitleStreamInfos = subtitleStrInfos->GetView();
+			}
+			catch (...)
 			{
-				throw ref new InvalidArgumentException("No subtitles found in file.");
+				mutexGuard.unlock();
+				throw;
 			}
-
-			subtitleStreamInfos = subtitleStrInfos->GetView();
-		}
-		catch (...)
-		{
 			mutexGuard.unlock();
-			throw;
-		}
-		mutexGuard.unlock();
-		return externalSubsParser->SubtitleStreams;
-	});
+			return externalSubsParser->SubtitleStreams;
+		});
 }
 
 void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
@@ -951,7 +951,7 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 				{
 					auto chapter = avFormatCtx->chapters[i];
 					auto entry = av_dict_get(chapter->metadata, "title", NULL, AV_DICT_IGNORE_SUFFIX);
-					if (entry)
+					if (entry && chapter->start >= 0 && chapter->end >= 0)
 					{
 						auto title = StringUtils::Utf8ToPlatformString(entry->value);
 						TimeSpan start{ (long long)((chapter->start / (double)chapter->time_base.den) * chapter->time_base.num * 10000000) };
