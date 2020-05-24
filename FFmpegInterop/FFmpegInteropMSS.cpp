@@ -966,7 +966,7 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 						// cut off negative start times
 						if (start.Duration < 0)
 						{
-							duration.Duration -= start.Duration;
+							duration.Duration += start.Duration;
 							start.Duration = 0;
 						}
 
