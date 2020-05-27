@@ -963,7 +963,17 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 							start.Duration -= (avFormatCtx->start_time * 10);
 						}
 
-						chapters->Append(ref new ChapterInfo(title, start, duration));
+						// cut off negative start times
+						if (start.Duration < 0)
+						{
+							duration.Duration += start.Duration;
+							start.Duration = 0;
+						}
+
+						if (duration.Duration > 0)
+						{
+							chapters->Append(ref new ChapterInfo(title, start, duration));
+						}
 					}
 				}
 			}
