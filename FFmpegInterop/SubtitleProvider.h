@@ -86,6 +86,10 @@ namespace FFmpegInterop
 						{
 							duration.Duration = InfiniteDuration;
 						}
+						else if (duration.Duration < m_config->MinimumSubtitleDuration.Duration)
+						{
+							duration.Duration = m_config->MinimumSubtitleDuration.Duration;
+						}
 
 					// apply subtitle delay
 					position += SubtitleDelay;
