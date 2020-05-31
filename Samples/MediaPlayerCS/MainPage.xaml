@@ -27,6 +27,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <Page.Resources>
+        <local:DoubleToTimespanConvertor x:Key="DoubleTimeSpanConverter" />
+
         <local:FloatToDoubleConverter x:Key="FloatToDoubleConverter" />
     </Page.Resources>
 
@@ -76,6 +78,9 @@
                             <AppBarButton Icon="Remove" Label="Quicken subtitles" Click="QuickenSubtitles"></AppBarButton>
                             <AppBarButton Icon="Add" Label="Delay subtitles" Click="DelaySubtitles"></AppBarButton>
                         </StackPanel>
+
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Minimum subtitle duration (s)" Value="{x:Bind Path=Config.MinimumSubtitleDuration, Mode=TwoWay, Converter={StaticResource DoubleTimeSpanConverter}}" />
+
 
                         <TextBlock Text="Audio Effects:" Margin="0,20,0,5"/>
                         <StackPanel Orientation="Horizontal">
