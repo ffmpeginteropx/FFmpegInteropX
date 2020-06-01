@@ -82,26 +82,57 @@ namespace FFmpegInterop
 					auto cue = CreateCue(packet, &position, &duration);
 					if (cue && position.Duration >= 0)
 					{
+						// apply subtitle delay
+						position += SubtitleDelay;
+						if (position.Duration < 0)
+						{
+							negativePositionCues.emplace_back(cue, position.Duration);
+							position.Duration = 0;
+						}
+
+						// clip previous extended duration cue, if there is one
+						if (lastExtendedDurationCue && m_config->PreventModifiedSubtitleDurationOverlap &&
+							lastExtendedDurationCue->StartTime + lastExtendedDurationCue->Duration > position)
+						{
+							auto diff = position - (lastExtendedDurationCue->StartTime + lastExtendedDurationCue->Duration);
+							auto newDuration = lastExtendedDurationCue->Duration + diff;
+							if (newDuration.Duration > 0)
+							{
+								lastExtendedDurationCue->Duration = newDuration;
+								if (!m_config->IsExternalSubtitleParser)
+								{
+									pendingChangedDurationCues.push_back(lastExtendedDurationCue);
+								}
+							}
+							else
+							{
+								// weird subtitle timings, just leave it as is
+							}
+						}
+
+						lastExtendedDurationCue = nullptr;
+
 						if (duration.Duration < 0)
 						{
 							duration.Duration = InfiniteDuration;
 						}
-						else if (duration.Duration < m_config->MinimumSubtitleDuration.Duration)
+						else
 						{
-							duration.Duration = m_config->MinimumSubtitleDuration.Duration;
+							if (m_config->AdditionalSubtitleDuration.Duration != 0)
+							{
+								duration.Duration += m_config->AdditionalSubtitleDuration.Duration;
+								lastExtendedDurationCue = cue;
+							}
+							if (duration.Duration < m_config->MinimumSubtitleDuration.Duration)
+							{
+								duration.Duration = m_config->MinimumSubtitleDuration.Duration;
+								lastExtendedDurationCue = cue;
+							}
 						}
 
-					// apply subtitle delay
-					position += SubtitleDelay;
-					if (position.Duration < 0)
-					{
-						negativePositionCues.emplace_back(cue, position.Duration);
-						position.Duration = 0;
-					}
-
-					cue->StartTime = position;
-					cue->Duration = duration;
-					AddCue(cue);
+						cue->StartTime = position;
+						cue->Duration = duration;
+						AddCue(cue);
 
 						if (!m_config->IsExternalSubtitleParser)
 						{
@@ -328,6 +359,12 @@ namespace FFmpegInterop
 			
 			try
 			{
+				for each (auto cue in pendingChangedDurationCues)
+				{
+					SubtitleTrack->RemoveCue(cue);
+					SubtitleTrack->AddCue(cue);
+				}
+
 				for each (auto cue in pendingCues)
 				{
 					SubtitleTrack->AddCue(cue);
@@ -350,6 +387,7 @@ namespace FFmpegInterop
 
 			pendingCues.clear();
 			pendingRefCues.clear();
+			pendingChangedDurationCues.clear();
 
 			if (SubtitleDelay != newDelay)
 			{
@@ -490,6 +528,7 @@ namespace FFmpegInterop
 		int cueCount;
 		std::vector<IMediaCue^> pendingCues;
 		std::vector<IMediaCue^> pendingRefCues;
+		std::vector<IMediaCue^> pendingChangedDurationCues;
 		TimedMetadataKind timedMetadataKind;
 		Windows::UI::Core::CoreDispatcher^ dispatcher;
 		Windows::UI::Xaml::DispatcherTimer^ timer;
@@ -497,6 +536,7 @@ namespace FFmpegInterop
 		std::vector<std::pair<IMediaCue^, long long>> negativePositionCues;
 		bool isPreviousCueInfiniteDuration;
 		IMediaCue^ infiniteDurationCue;
+		IMediaCue^ lastExtendedDurationCue;
 		TimedMetadataTrack^ referenceTrack;
 		const long long InfiniteDuration = ((long long)0xFFFFFFFF) * 10000;
 

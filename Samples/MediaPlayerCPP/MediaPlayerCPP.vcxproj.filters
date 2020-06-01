@@ -23,6 +23,7 @@
     <ClInclude Include="App.xaml.h" />
     <ClInclude Include="MainPage.xaml.h" />
     <ClInclude Include="FloatToDoubleConverter.h" />
+    <ClInclude Include="TimeSpanToDoubleConverter.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">

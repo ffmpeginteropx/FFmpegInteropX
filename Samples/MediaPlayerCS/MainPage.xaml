@@ -27,7 +27,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <Page.Resources>
-        <local:DoubleToTimespanConvertor x:Key="DoubleTimeSpanConverter" />
+        <local:TimeSpanToDoubleConverter x:Key="TimeSpanToDoubleConverter" />
 
         <local:FloatToDoubleConverter x:Key="FloatToDoubleConverter" />
     </Page.Resources>
@@ -79,8 +79,9 @@
                             <AppBarButton Icon="Add" Label="Delay subtitles" Click="DelaySubtitles"></AppBarButton>
                         </StackPanel>
 
-                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Minimum subtitle duration (s)" Value="{x:Bind Path=Config.MinimumSubtitleDuration, Mode=TwoWay, Converter={StaticResource DoubleTimeSpanConverter}}" />
-
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Minimum subtitle duration (s)" Value="{x:Bind Path=Config.MinimumSubtitleDuration, Mode=TwoWay, Converter={StaticResource TimeSpanToDoubleConverter}}" />
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Additional subtitle duration (s)" Value="{x:Bind Path=Config.AdditionalSubtitleDuration, Mode=TwoWay, Converter={StaticResource TimeSpanToDoubleConverter}}" />
+                        <ToggleSwitch Header="Prevent subtitle overlap" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PreventModifiedSubtitleDurationOverlap}"/>
 
                         <TextBlock Text="Audio Effects:" Margin="0,20,0,5"/>
                         <StackPanel Orientation="Horizontal">
