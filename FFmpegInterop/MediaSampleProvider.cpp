@@ -218,7 +218,7 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packe
 	{
 		if (m_pReader->ReadPacket() < 0)
 		{
-			DebugMessage(L"GetNextSample reaching EOF\n");
+			DebugMessage(L"GetNextPacket reaching EOF\n");
 			break;
 		}
 	}
@@ -252,6 +252,85 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packe
 	return hr;
 }
 
+HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp)
+{
+	HRESULT hr = S_FALSE;
+
+	// Continue reading until there is an appropriate packet in the stream
+	while (m_packetQueue.empty())
+	{
+		if (m_pReader->ReadPacket() < 0)
+		{
+			DebugMessage(L"GetNextPacketTimestamp reaching EOF\n");
+			break;
+		}
+	}
+
+	if (!m_packetQueue.empty())
+	{
+		// peek next packet and set pts value
+		auto packet = m_packetQueue.front();
+		if (packet->pts != AV_NOPTS_VALUE)
+		{
+			timestamp.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
+			hr = S_OK;
+		}
+	}
+
+	return hr;
+}
+
+HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan timestamp)
+{
+	HRESULT hr = S_OK;
+	bool foundPacket = false;
+
+	while (hr == S_OK && !foundPacket)
+	{
+		// Continue reading until there is an appropriate packet in the stream
+		while (m_packetQueue.empty())
+		{
+			if (m_pReader->ReadPacket() < 0)
+			{
+				DebugMessage(L"SkipPacketsUntilTimestamp reaching EOF\n");
+				break;
+			}
+		}
+
+		if (!m_packetQueue.empty())
+		{
+			// peek next packet and check pts value
+			auto packet = m_packetQueue.front();
+
+			if (packet->pts != AV_NOPTS_VALUE && packet->duration != AV_NOPTS_VALUE)
+			{
+				auto packetEnd = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * (packet->pts + packet->duration)) - m_startOffset;
+				if (packetEnd <= timestamp.Duration)
+				{
+					m_packetQueue.pop();
+					av_packet_free(&packet);
+				}
+				else
+				{
+					foundPacket = true;
+					break;
+				}
+			}
+			else
+			{
+				hr = S_FALSE;
+				break;
+			}
+		}
+		else
+		{
+			// no more packet found
+			hr = S_FALSE;
+		}
+	}
+
+	return hr;
+}
 
 void MediaSampleProvider::QueuePacket(AVPacket *packet)
 {
