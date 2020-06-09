@@ -1630,7 +1630,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 				}
 			}
 
-			if (currentVideoStream && FastSeek)
+			if (currentVideoStream && config->FastSeek)
 			{
 				// get and apply keyframe position for fast seeking
 				TimeSpan timestampVideo;
@@ -1638,7 +1638,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 				{
 					actualPosition = timestampVideo;
 
-					if (currentAudioStream)
+					if (currentAudioStream && config->FastSeekCleanAudio)
 					{
 						// if we have audio, we need to seek back a bit more to get 100% clean audio
 						TimeSpan timestampAudio;

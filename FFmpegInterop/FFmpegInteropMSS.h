@@ -258,10 +258,6 @@ namespace FFmpegInterop
 			void set(TimeSpan value) { mss->BufferTime = value; }
 		}
 
-		///<summary>Enables fast seeking when set to true.</summary>
-		///<remarks>Fast seeking will seek to closest previous video keyframe and play from that position.</remarks>
-		property bool FastSeek;
-
 	private:
 		FFmpegInteropMSS(FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 
