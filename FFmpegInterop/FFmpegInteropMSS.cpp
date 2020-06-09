@@ -349,6 +349,9 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		subConfig->SubtitleStyle = this->config->SubtitleStyle;
 		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
 		subConfig->AutoSelectForcedSubtitles = false;
+		subConfig->MinimumSubtitleDuration = this->config->MinimumSubtitleDuration;
+		subConfig->AdditionalSubtitleDuration = this->config->AdditionalSubtitleDuration;
+		subConfig->PreventModifiedSubtitleDurationOverlap = this->config->PreventModifiedSubtitleDurationOverlap;
 
 		if (VideoDescriptor)
 		{
