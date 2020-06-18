@@ -1622,19 +1622,35 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 		else
 		{
 			// Flush all active streams
-			for each (auto stream in sampleProviders)
-			{
-				if (stream && stream->IsEnabled)
-				{
-					stream->Flush();
-				}
-			}
+			FlushStreams();
 
 			if (currentVideoStream && config->FastSeek)
 			{
 				// get and apply keyframe position for fast seeking
 				TimeSpan timestampVideo;
-				if (currentVideoStream->GetNextPacketTimestamp(timestampVideo) == S_OK)
+				hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo);
+
+				if (hr == S_OK)
+				{
+					// check if we accidentially landed before playback position although we should have seeked after it
+					if (timestampVideo < currentVideoStream->LastSampleTimestamp && position > currentVideoStream->LastSampleTimestamp)
+					{
+						// seek again without "backward" flag
+						if (av_seek_frame(avFormatCtx, streamIndex, seekTarget, 0) < 0)
+						{
+							hr = E_FAIL;
+							DebugMessage(L" - ### Error while seeking\n");
+						}
+						else
+						{
+							// flush streams and get next packet timestamp
+							FlushStreams();
+							hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo);
+						}
+					}
+				}
+
+				if (hr == S_OK)
 				{
 					actualPosition = timestampVideo;
 
@@ -1642,7 +1658,8 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 					{
 						// if we have audio, we need to seek back a bit more to get 100% clean audio
 						TimeSpan timestampAudio;
-						if (currentAudioStream->GetNextPacketTimestamp(timestampAudio) == S_OK)
+						hr = currentAudioStream->GetNextPacketTimestamp(timestampAudio);
+						if (hr == S_OK)
 						{
 							auto audioPreroll = timestampAudio.Duration - timestampVideo.Duration;
 							if (audioPreroll > 0)
@@ -1656,14 +1673,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 								}
 								else
 								{
-									// Flush all active streams
-									for each (auto stream in sampleProviders)
-									{
-										if (stream && stream->IsEnabled)
-										{
-											stream->Flush();
-										}
-									}
+									FlushStreams();
 
 									// Now drop all packets until desired keyframe position
 									currentVideoStream->SkipPacketsUntilTimestamp(timestampVideo);

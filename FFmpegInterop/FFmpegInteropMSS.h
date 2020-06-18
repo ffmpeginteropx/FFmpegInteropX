@@ -279,6 +279,18 @@ namespace FFmpegInterop
 		void InitializePlaybackItem(MediaPlaybackItem^ playbackitem);
 		bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, HardwareDecoderStatus& hardwareDecoderStatus, bool manualStatus, int maxProfile, int maxLevel);
 
+		void FlushStreams()
+		{
+			// Flush all active streams
+			for each (auto stream in sampleProviders)
+			{
+				if (stream && stream->IsEnabled)
+				{
+					stream->Flush();
+				}
+			}
+		}
+
 	internal:
 		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);
 		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);

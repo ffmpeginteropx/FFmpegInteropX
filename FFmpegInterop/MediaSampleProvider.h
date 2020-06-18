@@ -73,7 +73,7 @@ namespace FFmpegInterop
 		property String^ Name;
 		property String^ Language;
 		property String^ CodecName;
-
+		property TimeSpan LastSampleTimestamp;
 
 	internal:
 		virtual HRESULT Initialize();
