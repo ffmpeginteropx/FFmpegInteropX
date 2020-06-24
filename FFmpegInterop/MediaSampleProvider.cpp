@@ -239,6 +239,12 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packe
 			// Set the PTS for the next sample if it doesn't one.
 			m_nextPacketPts = packetPts + packetDuration;
 		}
+		else if (m_isDiscontinuous && packet->dts != AV_NOPTS_VALUE)
+		{
+			packetPts = packet->dts;
+			// Use DTS instead of PTS after a seek, if PTS is not available (e.g. some WMV files)
+			m_nextPacketPts = packetPts + packetDuration;
+		}
 		else
 		{
 			packetPts = m_nextPacketPts;
@@ -272,9 +278,10 @@ HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp)
 	{
 		// peek next packet and set pts value
 		auto packet = m_packetQueue.front();
-		if (packet->pts != AV_NOPTS_VALUE)
+		auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
+		if (pts != AV_NOPTS_VALUE)
 		{
-			timestamp.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
+			timestamp.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * pts) - m_startOffset;
 			hr = S_OK;
 		}
 	}
@@ -304,9 +311,10 @@ HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan timestamp)
 			// peek next packet and check pts value
 			auto packet = m_packetQueue.front();
 
-			if (packet->pts != AV_NOPTS_VALUE && packet->duration != AV_NOPTS_VALUE)
+			auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
+			if (pts != AV_NOPTS_VALUE && packet->duration != AV_NOPTS_VALUE)
 			{
-				auto packetEnd = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * (packet->pts + packet->duration)) - m_startOffset;
+				auto packetEnd = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * (pts + packet->duration)) - m_startOffset;
 				if (packet->duration > 0 ? packetEnd <= timestamp.Duration : packetEnd < timestamp.Duration)
 				{
 					m_packetQueue.pop();
