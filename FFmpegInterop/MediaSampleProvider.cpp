@@ -307,7 +307,7 @@ HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan timestamp)
 			if (packet->pts != AV_NOPTS_VALUE && packet->duration != AV_NOPTS_VALUE)
 			{
 				auto packetEnd = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * (packet->pts + packet->duration)) - m_startOffset;
-				if (packetEnd <= timestamp.Duration)
+				if (packet->duration > 0 ? packetEnd <= timestamp.Duration : packetEnd < timestamp.Duration)
 				{
 					m_packetQueue.pop();
 					av_packet_free(&packet);
