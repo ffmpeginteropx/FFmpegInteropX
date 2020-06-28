@@ -1510,6 +1510,7 @@ HRESULT FFmpegInteropMSS::ParseOptions(PropertySet^ ffmpegOptions)
 
 void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args)
 {
+	mutexGuard.lock();
 	MediaStreamSourceStartingRequest^ request = args->Request;
 
 	// Perform seek operation when MediaStreamSource received seek event from MediaElement
@@ -1534,6 +1535,7 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 	}
 
 	isFirstSeek = false;
+	mutexGuard.unlock();
 }
 
 void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource^ sender, MediaStreamSourceSampleRequestedEventArgs^ args)
