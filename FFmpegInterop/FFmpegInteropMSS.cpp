@@ -1614,45 +1614,56 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 		int64 correctedPosition = position.Duration + startOffset;
 		int64_t seekTarget = static_cast<int64_t>(correctedPosition / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
 
-		if (av_seek_frame(avFormatCtx, streamIndex, seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
+		if (currentVideoStream && config->FastSeek)
 		{
-			hr = E_FAIL;
-			DebugMessage(L" - ### Error while seeking\n");
-		}
-		else
-		{
-			// Flush all active streams
-			FlushStreams();
+			// fast seek
+			auto playbackPosition = currentVideoStream ? currentVideoStream->LastSampleTimestamp : currentAudioStream->LastSampleTimestamp;
+			int64_t min = INT64_MIN;
+			int64_t max = INT64_MAX;
 
-			if (currentVideoStream && config->FastSeek)
+			if (!isLastSeekForward && position <= lastSeekStart && position >= lastSeekActual)
 			{
+				max = static_cast<int64_t>((lastSeekStart.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
+				DebugMessage(L" - ### Backward seeking continue\n");
+			}
+			else if (isLastSeekForward && position >= lastSeekStart && position <= lastSeekActual)
+			{
+				min = static_cast<int64_t>((lastSeekStart.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
+				DebugMessage(L" - ### Forward seeking continue\n");
+			}
+			else if (position < playbackPosition)
+			{
+				max = static_cast<int64_t>((playbackPosition.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
+				DebugMessage(L" - ### Backward seeking\n");
+			}
+			else
+			{
+				min = static_cast<int64_t>((playbackPosition.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
+				DebugMessage(L" - ### Forward seeking\n");
+			}
+
+			if (avformat_seek_file(avFormatCtx, streamIndex, min, seekTarget, max, 0) < 0)
+			{
+				hr = E_FAIL;
+				DebugMessage(L" - ### Error while seeking\n");
+			}
+			else
+			{
+				// Flush all active streams
+				FlushStreams();
+
 				// get and apply keyframe position for fast seeking
 				TimeSpan timestampVideo;
 				hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo);
 
 				if (hr == S_OK)
 				{
-					// check if we accidentially landed before playback position although we should have seeked after it
-					if (timestampVideo < currentVideoStream->LastSampleTimestamp && position > currentVideoStream->LastSampleTimestamp)
-					{
-						// seek again without "backward" flag
-						if (av_seek_frame(avFormatCtx, streamIndex, seekTarget, 0) < 0)
-						{
-							hr = E_FAIL;
-							DebugMessage(L" - ### Error while seeking\n");
-						}
-						else
-						{
-							// flush streams and get next packet timestamp
-							FlushStreams();
-							hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo);
-						}
-					}
-				}
-
-				if (hr == S_OK)
-				{
 					actualPosition = timestampVideo;
+
+					// remember last seek direction
+					isLastSeekForward = actualPosition > position;
+					lastSeekStart = position;
+					lastSeekActual = actualPosition;
 
 					if (currentAudioStream && config->FastSeekCleanAudio)
 					{
@@ -1683,6 +1694,19 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 						}
 					}
 				}
+			}
+		}
+		else
+		{
+			if (av_seek_frame(avFormatCtx, streamIndex, seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
+			{
+				hr = E_FAIL;
+				DebugMessage(L" - ### Error while seeking\n");
+			}
+			else
+			{
+				// Flush all active streams
+				FlushStreams();
 			}
 		}
 	}

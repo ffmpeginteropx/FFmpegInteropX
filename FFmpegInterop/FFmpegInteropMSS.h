@@ -357,6 +357,10 @@ namespace FFmpegInterop
 		unsigned char* fileStreamBuffer;
 		bool isFirstSeek;
 
+		bool isLastSeekForward;
+		TimeSpan lastSeekStart;
+		TimeSpan lastSeekActual;
+
 		static CoreDispatcher^ GetCurrentDispatcher();
 	};
 
