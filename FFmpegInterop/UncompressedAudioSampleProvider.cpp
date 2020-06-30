@@ -219,7 +219,10 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 	{
 		// always update duration with real decoded sample duration
 		auto actualDuration = (long long)avFrame->nb_samples * m_pAvStream->time_base.den / (outSampleRate * m_pAvStream->time_base.num);
-
+		if (actualDuration == 0)
+		{
+			actualDuration = 1;
+		}
 		if (frameDuration != actualDuration)
 		{
 			// compensate for start encoder padding (gapless playback)
