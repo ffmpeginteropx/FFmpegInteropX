@@ -98,12 +98,9 @@
             </SplitView.Pane>
 
             <!-- Main content -->
-            <MediaElement x:Name="mediaElement"
+            <MediaPlayerElement x:Name="mediaPlayerElement"
                         AreTransportControlsEnabled="True"
-                        AudioCategory="ForegroundOnlyMedia"
                         AutoPlay="True"
-                        MediaFailed="MediaFailed"
-                        MediaOpened="MediaOpened"
             />
 
         </SplitView>

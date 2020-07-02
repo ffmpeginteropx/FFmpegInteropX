@@ -60,6 +60,13 @@ MainPage::MainPage()
 
 	VideoEffectConfiguration = ref new FFmpegInterop::VideoEffectConfiguration();
 
+	mediaPlayer = ref new MediaPlayer();
+	mediaPlayer->AudioCategory = Windows::Media::Playback::MediaPlayerAudioCategory::Movie;
+	mediaPlayer->MediaOpened += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlayer^, Platform::Object^>(this, &MediaPlayerCPP::MainPage::OnMediaOpened);
+	mediaPlayer->MediaFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlayer^, Windows::Media::Playback::MediaPlayerFailedEventArgs^>(this, &MediaPlayerCPP::MainPage::OnMediaFailed);
+
+	mediaPlayerElement->SetMediaPlayer(mediaPlayer);
+
 	// optionally check for recommended ffmpeg version
 	//FFmpegVersionInfo::CheckRecommendedVersion();
 
@@ -112,7 +119,7 @@ void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::Routed
 void MainPage::OpenLocalFile(StorageFile^ file)
 {
 	currentFile = file;
-	mediaElement->Stop();
+	mediaPlayer->Source = nullptr;
 
 	// Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
 	create_task(file->OpenAsync(FileAccessMode::Read)).then([this, file](task<IRandomAccessStream^> stream)
@@ -131,7 +138,7 @@ void MainPage::OpenLocalFile(StorageFile^ file)
 
 
 						// Pass MediaPlaybackItem to Media Element
-						mediaElement->SetPlaybackSource(playbackItem);
+						mediaPlayer->Source = playbackItem;
 
 						// Close control panel after file open
 						Splitter->IsPaneOpen = false;
@@ -166,7 +173,7 @@ void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::K
 		// Config->FFmpegOptions->Insert("stimeout", 100000);
 
 		// Instantiate FFmpegInteropMSS using the URI
-		mediaElement->Stop();
+		mediaPlayer->Source = nullptr;
 		try
 		{
 			create_task(FFmpegInteropMSS::CreateFromUriAsync(uri, Config)).then([this](FFmpegInteropMSS^ result)
@@ -175,7 +182,7 @@ void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::K
 				playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
 				// Pass MediaPlaybackItem to Media Element
-				mediaElement->SetPlaybackSource(playbackItem);
+				mediaPlayer->Source = playbackItem;
 
 				// Close control panel after opening media
 				Splitter->IsPaneOpen = false;
@@ -190,7 +197,7 @@ void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::K
 
 void MainPage::ExtractFrame(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-	if (currentFile == nullptr)
+	if (!currentFile || !mediaPlayer->PlaybackSession)
 	{
 		DisplayErrorMessage("Please open a video file first.");
 	}
@@ -205,7 +212,7 @@ void MainPage::ExtractFrame(Platform::Object^ sender, Windows::UI::Xaml::RoutedE
 				// extract frame using FFmpegInterop and current position
 				create_task(FrameGrabber::CreateFromStreamAsync(stream)).then([this, exactSeek](FrameGrabber^ frameGrabber)
 				{
-					create_task(frameGrabber->ExtractVideoFrameAsync(mediaElement->Position, exactSeek)).then([this](VideoFrame^ frame)
+					create_task(frameGrabber->ExtractVideoFrameAsync(mediaPlayer->PlaybackSession->Position, exactSeek)).then([this](VideoFrame^ frame)
 					{
 						auto filePicker = ref new FileSavePicker();
 						filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
@@ -340,9 +347,13 @@ void MediaPlayerCPP::MainPage::OnResolved(TimedTextSource ^sender, TimedTextSour
 	}
 }
 
-void MainPage::MediaFailed(Platform::Object^ sender, Windows::UI::Xaml::ExceptionRoutedEventArgs^ e)
+void MediaPlayerCPP::MainPage::OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args)
 {
-	DisplayErrorMessage(e->ErrorMessage);
+	Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
+		ref new Windows::UI::Core::DispatchedHandler([this, args]
+			{
+				DisplayErrorMessage(args->ErrorMessage);
+			}));
 }
 
 void MainPage::DisplayErrorMessage(Platform::String^ message)
@@ -419,12 +430,20 @@ void MediaPlayerCPP::MainPage::QuickenSubtitles(Platform::Object^ sender, Window
 	}
 }
 
-
-void MediaPlayerCPP::MainPage::MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlayer^ sender, Platform::Object^ args)
 {
-	tbSubtitleDelay->Text = "Subtitle delay: 0s";
-}
+	auto session = sender->PlaybackSession;
+	if (FFmpegMSS && session)
+	{
+		FFmpegMSS->Session = session;
+	}
 
+	Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
+		ref new Windows::UI::Core::DispatchedHandler([this]
+			{
+				tbSubtitleDelay->Text = "Subtitle delay: 0s";
+			}));
+}
 
 void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
@@ -434,10 +453,10 @@ void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Wind
 
 void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-	mediaElement->RemoveAllEffects();
+	mediaPlayer->RemoveAllEffects();
 	if (enableVideoEffects->IsOn)
 	{
-		VideoEffectConfiguration->AddVideoEffect(mediaElement);
+		VideoEffectConfiguration->AddVideoEffect(mediaPlayer);
 	}
 }
 
@@ -459,3 +478,5 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Platform::Object ^sender, Windows::UI::
 		}
 	}
 }
+
+

@@ -117,6 +117,7 @@ namespace FFmpegInterop
 
 			FastSeek = true;
 			FastSeekCleanAudio = true;
+			FastSeekSmartStreamSwitching = true;
 
 			DefaultAudioStreamName = "Audio Stream";
 			DefaultSubtitleStreamName = "Subtitle";
@@ -262,6 +263,10 @@ namespace FFmpegInterop
 		///<summary>Ensure that audio plays without artifacts after fast seeking.</summary>
 		///<remarks>This will slightly reduce the speed of fast seeking. Enabled by default.</remarks>
 		property bool FastSeekCleanAudio;
+
+		///<summary>Try to improve stream switching times when FastSeek is enabled.</summary>
+		///<remarks>You must assign the FFmpegInteropMSS.Session property for this to take effect!</remarks>
+		property bool FastSeekSmartStreamSwitching;
 
 		///<summary>The default name to use for audio streams.</summary>
 		property String^ DefaultAudioStreamName;

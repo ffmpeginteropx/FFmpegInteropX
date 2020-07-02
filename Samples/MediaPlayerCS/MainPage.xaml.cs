@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.Foundation.Collections;
 using Windows.Media.Core;
 using Windows.Media.Playback;
@@ -43,6 +44,7 @@ namespace MediaPlayerCS
         private FFmpegInteropMSS FFmpegMSS;
         private StorageFile currentFile;
         private MediaPlaybackItem playbackItem;
+        private MediaPlayer mediaPlayer;
 
         public bool AutoCreatePlaybackItem
         {
@@ -67,6 +69,11 @@ namespace MediaPlayerCS
             AutoDetect.IsOn = true;
 
             VideoEffectConfiguration = new VideoEffectConfiguration();
+
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.AudioCategory = MediaPlayerAudioCategory.Movie;
+            mediaPlayer.MediaOpened += MediaPlayer_MediaOpened;
+            mediaPlayer.MediaFailed += MediaPlayer_MediaFailed;
 
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
@@ -166,7 +173,7 @@ namespace MediaPlayerCS
         private async Task OpenLocalFile(StorageFile file)
         {
             currentFile = file;
-            mediaElement.Stop();
+            mediaPlayer.Source = null;
 
             // Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
             IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
@@ -198,8 +205,8 @@ namespace MediaPlayerCS
         {
             playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
             
-            // Pass MediaStreamSource to Media Element
-            mediaElement.SetPlaybackSource(playbackItem);
+            // Pass MediaStreamSource to MediaPlayer
+            mediaPlayer.Source = playbackItem;
 
             // Close control panel after file open
             Splitter.IsPaneOpen = false;
@@ -227,13 +234,13 @@ namespace MediaPlayerCS
                     // Config.FFmpegOptions.Add("stimeout", 100000);
 
                     // Instantiate FFmpegInteropMSS using the URI
-                    mediaElement.Stop();
+                    mediaPlayer.Source = null;
                     FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync(uri, Config);
 
                     var source = FFmpegMSS.CreateMediaPlaybackItem();
 
                     // Pass MediaStreamSource to Media Element
-                    mediaElement.SetPlaybackSource(source);
+                    mediaPlayer.Source = source;
 
                     // Close control panel after opening media
                     Splitter.IsPaneOpen = false;
@@ -247,7 +254,7 @@ namespace MediaPlayerCS
 
         private async void ExtractFrame(object sender, RoutedEventArgs e)
         {
-            if (currentFile == null)
+            if (currentFile == null || mediaPlayer.PlaybackSession == null)
             {
                 DisplayErrorMessage("Please open a video file first.");
             }
@@ -258,7 +265,7 @@ namespace MediaPlayerCS
                     var stream = await currentFile.OpenAsync(FileAccessMode.Read);
                     bool exactSeek = grabFrameExactSeek.IsOn;
                     var frameGrabber = await FrameGrabber.CreateFromStreamAsync(stream);
-                    var frame = await frameGrabber.ExtractVideoFrameAsync(mediaElement.Position, exactSeek);
+                    var frame = await frameGrabber.ExtractVideoFrameAsync(mediaPlayer.PlaybackSession.Position, exactSeek);
 
                     var filePicker = new FileSavePicker();
                     filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
@@ -325,9 +332,13 @@ namespace MediaPlayerCS
             }
         }
 
-        private void MediaFailed(object sender, ExceptionRoutedEventArgs e)
+        private async void MediaPlayer_MediaFailed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
         {
-            DisplayErrorMessage(e.ErrorMessage);
+            await CoreApplication.MainView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(
+            () =>
+            {
+                DisplayErrorMessage(args.ErrorMessage);
+            }));
         }
 
         private async void DisplayErrorMessage(string message)
@@ -462,11 +473,19 @@ namespace MediaPlayerCS
             }
         }
 
-        private void MediaOpened(object sender, RoutedEventArgs e)
+        private async void MediaPlayer_MediaOpened(MediaPlayer sender, object args)
         {
-            tbSubtitleDelay.Text = "Subtitle delay: 0s";
+            var session = sender.PlaybackSession;
+            if (session != null && FFmpegMSS != null)
+            {
+                FFmpegMSS.Session = session;
+            }
+            await CoreApplication.MainView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(
+                () =>
+                {
+                    tbSubtitleDelay.Text = "Subtitle delay: 0s";
+                }));
         }
-
       
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
         {
@@ -476,11 +495,10 @@ namespace MediaPlayerCS
         
         private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
         {
-        
-	mediaElement.RemoveAllEffects();
+        	mediaPlayer.RemoveAllEffects();
             if (enableVideoEffects.IsOn)
             {
-                VideoEffectConfiguration.AddVideoEffect(mediaElement);
+                VideoEffectConfiguration.AddVideoEffect(mediaPlayer);
             }
         }
     }

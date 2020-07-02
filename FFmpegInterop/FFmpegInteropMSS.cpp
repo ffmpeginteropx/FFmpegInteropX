@@ -129,6 +129,9 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 	{
 		fileStreamData->Release();
 	}
+
+	Session = nullptr;
+
 	mutexGuard.unlock();
 }
 
@@ -1535,6 +1538,7 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 	}
 
 	isFirstSeek = false;
+	isFirstSeekAfterStreamSwitch = false;
 	mutexGuard.unlock();
 }
 
@@ -1599,6 +1603,8 @@ void FFmpegInteropMSS::OnSwitchStreamsRequested(MediaStreamSource^ sender, Media
 		}
 	}
 
+	isFirstSeekAfterStreamSwitch = config->FastSeekSmartStreamSwitching;
+
 	mutexGuard.unlock();
 }
 
@@ -1615,33 +1621,52 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 		auto startOffset = avFormatCtx->start_time == AV_NOPTS_VALUE ? (LONGLONG)0 : avFormatCtx->start_time * 10;
 		int64 correctedPosition = position.Duration + startOffset;
 		int64_t seekTarget = static_cast<int64_t>(correctedPosition / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
-
-		if (currentVideoStream && config->FastSeek)
+		auto diffActual = position - actualPosition;
+		auto diffLast = position - lastPosition;
+		bool isSeekBeforeStreamSwitch = Session && config->FastSeekSmartStreamSwitching && diffActual.Duration > 0 && diffActual.Duration < 5000000 && diffLast.Duration > 0 && diffLast.Duration < 10000000;
+		
+		if (currentVideoStream && config->FastSeek && !isSeekBeforeStreamSwitch && !isFirstSeekAfterStreamSwitch)
 		{
 			// fast seek
-			auto playbackPosition = currentVideoStream ? currentVideoStream->LastSampleTimestamp : currentAudioStream->LastSampleTimestamp;
-			int64_t min = INT64_MIN;
-			int64_t max = INT64_MAX;
+			auto playbackPosition = Session ? lastPosition : currentVideoStream->LastSampleTimestamp;
+			bool seekForward;
+			TimeSpan referenceTime;
 
-			if (!isLastSeekForward && position <= lastSeekStart && position >= lastSeekActual)
+			// decide seek direction
+			if (isLastSeekForward && position > lastSeekStart && position <= lastSeekActual)
 			{
-				max = static_cast<int64_t>((lastSeekStart.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
-				DebugMessage(L" - ### Backward seeking continue\n");
-			}
-			else if (isLastSeekForward && position >= lastSeekStart && position <= lastSeekActual)
-			{
-				min = static_cast<int64_t>((lastSeekStart.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
+				seekForward = true;
+				referenceTime = lastSeekStart + ((position - lastSeekStart) * 0.2);
 				DebugMessage(L" - ### Forward seeking continue\n");
 			}
-			else if (position < playbackPosition)
+			else if (!isLastSeekForward && position < lastSeekStart && position >= lastSeekActual)
 			{
-				max = static_cast<int64_t>((playbackPosition.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
-				DebugMessage(L" - ### Backward seeking\n");
+				seekForward = false;
+				referenceTime = lastSeekStart + ((position - lastSeekStart) * 0.2);
+				DebugMessage(L" - ### Backward seeking continue\n");
+			}
+			else if (position >= playbackPosition)
+			{
+				seekForward = true;
+				referenceTime = playbackPosition + ((position - playbackPosition) * 0.2);
+				DebugMessage(L" - ### Forward seeking\n");
 			}
 			else
 			{
-				min = static_cast<int64_t>((playbackPosition.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
-				DebugMessage(L" - ### Forward seeking\n");
+				seekForward = false;
+				referenceTime = playbackPosition + ((position - playbackPosition) * 0.2);
+				DebugMessage(L" - ### Backward seeking\n");
+			}
+
+			int64_t min = INT64_MIN;
+			int64_t max = INT64_MAX;
+			if (seekForward)
+			{
+				min = static_cast<int64_t>((referenceTime.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
+			}
+			else
+			{
+				max = static_cast<int64_t>((referenceTime.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
 			}
 
 			if (avformat_seek_file(avFormatCtx, streamIndex, min, seekTarget, max, 0) < 0)
@@ -1658,12 +1683,33 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 				TimeSpan timestampVideo;
 				hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo);
 
+				while (hr == S_OK && seekForward && timestampVideo < referenceTime)
+				{
+					// our min position was not respected. try again with higher min and target.
+					min += 5.0 / av_q2d(avFormatCtx->streams[streamIndex]->time_base);
+					seekTarget += 5.0 / av_q2d(avFormatCtx->streams[streamIndex]->time_base);
+					
+					if (avformat_seek_file(avFormatCtx, streamIndex, min, seekTarget, max, 0) < 0)
+					{
+						hr = E_FAIL;
+						DebugMessage(L" - ### Error while seeking\n");
+					}
+					else
+					{
+						// Flush all active streams
+						FlushStreams();
+				
+						// get updated timestamp
+						hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo);
+					}
+				}
+
 				if (hr == S_OK)
 				{
 					actualPosition = timestampVideo;
 
 					// remember last seek direction
-					isLastSeekForward = actualPosition > position;
+					isLastSeekForward = seekForward;
 					lastSeekStart = position;
 					lastSeekActual = actualPosition;
 
@@ -1692,6 +1738,11 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 									currentVideoStream->SkipPacketsUntilTimestamp(timestampVideo);
 									currentAudioStream->SkipPacketsUntilTimestamp(timestampVideo);
 								}
+							}
+							else
+							{
+								// Negative audio preroll. Just drop all packets until keyframe position.
+								currentAudioStream->SkipPacketsUntilTimestamp(timestampVideo);
 							}
 						}
 					}
@@ -1739,6 +1790,14 @@ CoreDispatcher^ FFmpegInterop::FFmpegInteropMSS::GetCurrentDispatcher()
 		return nullptr;
 	}
 
+}
+
+void FFmpegInteropMSS::OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession^ sender, Platform::Object^ args)
+{
+	mutexGuard.lock();
+	lastPosition = actualPosition;
+	actualPosition = sender->Position;
+	mutexGuard.unlock();
 }
 
 // Static function to read file stream and pass data to FFmpeg. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
@@ -1811,5 +1870,4 @@ static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence)
 		return out.QuadPart; // Return the new position:
 	}
 }
-
 

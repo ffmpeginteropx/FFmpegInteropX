@@ -41,7 +41,6 @@ namespace MediaPlayerCPP
 		void OpenLocalFile(Windows::Storage::StorageFile^ file);
 		void TryOpenLastFile();
 		void URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e);
-		void MediaFailed(Platform::Object^ sender, Windows::UI::Xaml::ExceptionRoutedEventArgs^ e);
 		void ExtractFrame(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void DisplayErrorMessage(Platform::String^ message);
 		void Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
@@ -52,6 +51,7 @@ namespace MediaPlayerCPP
 		void OnTimedMetadataTracksChanged(Windows::Media::Playback::MediaPlaybackItem ^sender, Windows::Foundation::Collections::IVectorChangedEventArgs ^args);
 		void PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 
+		Windows::Media::Playback::MediaPlayer^ mediaPlayer;
 		Windows::Storage::StorageFile^ currentFile;
 		FFmpegInterop::FFmpegInteropMSS^ FFmpegMSS;
 		Windows::Media::Playback::MediaPlaybackItem^ playbackItem;
@@ -61,10 +61,11 @@ namespace MediaPlayerCPP
 		void RemoveTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void DelaySubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void QuickenSubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
-		void MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void OnKeyDown(Platform::Object ^sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs ^e);
 		
+		void OnMediaOpened(Windows::Media::Playback::MediaPlayer^ sender, Platform::Object^ args);
+		void OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args);
 	};
 }
