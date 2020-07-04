@@ -67,13 +67,13 @@ namespace MediaPlayerCS
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
             AutoDetect.IsOn = true;
-
             VideoEffectConfiguration = new VideoEffectConfiguration();
 
             mediaPlayer = new MediaPlayer();
             mediaPlayer.AudioCategory = MediaPlayerAudioCategory.Movie;
             mediaPlayer.MediaOpened += MediaPlayer_MediaOpened;
             mediaPlayer.MediaFailed += MediaPlayer_MediaFailed;
+            mediaPlayerElement.SetMediaPlayer(mediaPlayer);
 
             // optionally check for recommended ffmpeg version
             //FFmpegVersionInfo.CheckRecommendedVersion();
@@ -204,7 +204,7 @@ namespace MediaPlayerCS
         private void CreatePlaybackItemAndStartPlaybackInternal()
         {
             playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
-            
+            mediaPlayer.AutoPlay = true;
             // Pass MediaStreamSource to MediaPlayer
             mediaPlayer.Source = playbackItem;
 
