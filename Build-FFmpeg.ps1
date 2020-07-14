@@ -158,7 +158,7 @@ function Build-Platform {
 
     # Build ffmpeg - disable strict error handling since ffmpeg writes to error out
     $ErrorActionPreference = "Continue"
-    & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh Win10 $Platform
+    & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh $Platform
     $ErrorActionPreference = "Stop"
 
     if ($lastexitcode -ne 0) { throw "Failed to build FFmpeg." }
