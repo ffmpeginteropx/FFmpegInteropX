@@ -27,12 +27,6 @@ configureArgs="\
     --enable-${sharedOrStatic} \
     --enable-cross-compile \
     --enable-debug \
-    --disable-encoders \
-    --disable-devices \
-    --disable-hwaccels \
-    --disable-programs \
-    --disable-d3d11va \
-    --disable-dxva2 \
     --enable-zlib \
     --enable-bzlib \
     --enable-lzma \
@@ -46,6 +40,10 @@ configureArgs="\
 if [ "$variant" == "UWP" ]; then
     configureArgs="\
         $configureArgs \
+        --disable-encoders \
+        --disable-devices \
+        --disable-hwaccels \
+        --disable-programs \
         --extra-ldflags='-APPCONTAINER WindowsApp.lib' \
         "
 
