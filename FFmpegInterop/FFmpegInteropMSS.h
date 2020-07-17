@@ -32,6 +32,7 @@
 #include "CodecChecker.h"
 #include <collection.h>
 #include "MediaMetadata.h"
+#include "MFTEnumerator.h"
 
 using namespace Platform;
 using namespace Windows::Foundation;

@@ -34,6 +34,8 @@
 #include "FFmpegVersionInfo.h"
 #include "collection.h"
 #include <ppl.h>
+#include "DirectXDecoderManager.h"
+#include <mfidl.h>
 
 extern "C"
 {
@@ -67,6 +69,10 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispa
 	, isFirstSeek(true)
 	, dispatcher(dispatcher)
 {
+	auto mftEnumerator = ref new MFTEnumerator();
+	IMFTransform* transformer;
+	mftEnumerator->FindVideoDecoder(MFVideoFormat_ARGB32, true, false, false, &transformer);
+	
 	if (!isRegistered)
 	{
 		isRegisteredMutex.lock();
@@ -909,6 +915,8 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 	if (currentVideoStream && currentAudioStream)
 	{
 		mss = ref new MediaStreamSource(currentVideoStream->StreamDescriptor, currentAudioStream->StreamDescriptor);
+		
+		
 		currentVideoStream->EnableStream();
 		currentAudioStream->EnableStream();
 	}
@@ -1383,11 +1391,10 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 		CodecChecker::Initialize();
 	}
 
-	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 &&
-		(CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationH264, hardwareDecoderStatus, config->PassthroughVideoH264, config->PassthroughVideoH264MaxProfile, config->PassthroughVideoH264MaxLevel)))
+	if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264)
 	{
 		auto videoProperties = VideoEncodingProperties::CreateH264();
-
+		
 		// Check for H264 bitstream flavor. H.264 AVC extradata starts with 1 while non AVC one starts with 0
 		if (avVideoCodecCtx->extradata != nullptr && avVideoCodecCtx->extradata_size > 0 && avVideoCodecCtx->extradata[0] == 1)
 		{
@@ -1397,6 +1404,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 		{
 			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
 		}
+
 	}
 	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC &&
 		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC, hardwareDecoderStatus, config->PassthroughVideoHEVC, config->PassthroughVideoHEVCMaxProfile, config->PassthroughVideoHEVCMaxLevel) &&
@@ -1414,6 +1422,8 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 		{
 			videoSampleProvider = ref new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
 		}
+		videoSampleProvider->CreateStreamDescriptor();
+		
 	}
 	else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3 &&
 		CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationWMV3, hardwareDecoderStatus, config->PassthroughVideoWMV3, -1, -1) &&
@@ -1513,6 +1523,12 @@ HRESULT FFmpegInteropMSS::ParseOptions(PropertySet^ ffmpegOptions)
 
 void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args)
 {
+	auto iUnknownMss = reinterpret_cast<IUnknown*>(mss);
+	IMFDXGIDeviceManagerSource* deviceSource;
+	iUnknownMss->QueryInterface(&deviceSource);
+	
+
+	currentVideoStream->CreateDXVAManager(deviceSource);
 	MediaStreamSourceStartingRequest^ request = args->Request;
 
 	// Perform seek operation when MediaStreamSource received seek event from MediaElement

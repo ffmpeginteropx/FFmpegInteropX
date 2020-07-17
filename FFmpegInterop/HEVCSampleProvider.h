@@ -37,5 +37,9 @@ namespace FFmpegInterop
 			VideoEncodingProperties^ encodingProperties,
 			HardwareDecoderStatus hardwareDecoderStatus);
 		virtual HRESULT GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, int length) override;
+		
+
+	private:
+		DirectXDecoderManager^ DXVAManager;
 	};
 }

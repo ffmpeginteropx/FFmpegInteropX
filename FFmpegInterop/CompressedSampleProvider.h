@@ -17,7 +17,7 @@ namespace FFmpegInterop
 		virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer);
 		virtual IMediaStreamDescriptor^ CreateStreamDescriptor() override;
 
-	private:
+	private protected:
 		VideoEncodingProperties^ videoEncodingProperties;
 		AudioEncodingProperties^ audioEncodingProperties;
 	};

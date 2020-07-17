@@ -101,17 +101,28 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll">
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
-    </None>
     <None Include="$(SolutionDir)FFmpegInterop.pfx" />
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\avcodec-58.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\avdevice-58.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\avfilter-7.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\avformat-58.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\avutil-56.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\swresample-3.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\swscale-5.dll">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png" />

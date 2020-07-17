@@ -376,6 +376,12 @@ void MediaSampleProvider::Detach()
 	avcodec_free_context(&m_pAvCodecCtx);
 }
 
+void FFmpegInterop::MediaSampleProvider::CreateDXVAManager(IMFDXGIDeviceManagerSource* source)
+{
+	auto DXVAManager = ref new DirectXDecoderManager(source, m_pAvCodecCtx);
+	DXVAManager->Test();
+}
+
 void free_buffer(void *lpVoid)
 {
 	auto buffer = (AVBufferRef *)lpVoid;

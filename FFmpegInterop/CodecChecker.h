@@ -367,6 +367,7 @@ namespace FFmpegInterop
 
 		static bool CheckUseHardwareAcceleration(HardwareAccelerationStatus^ status, AVCodecID codecId, int profile, int width, int height)
 		{
+			return true;
 			bool result = false;
 
 			// auto detection

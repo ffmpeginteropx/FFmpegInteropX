@@ -22,6 +22,7 @@
 #include "AvEffectDefinition.h"
 #include "TimeSpanHelpers.h"
 #include "Enumerations.h"
+#include "DirectXDecoderManager.h"
 
 extern "C"
 {
@@ -90,6 +91,7 @@ namespace FFmpegInterop
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
 		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
 		virtual void Detach();
+		virtual void CreateDXVAManager(IMFDXGIDeviceManagerSource* source);
 
 	protected private:
 		MediaSampleProvider(

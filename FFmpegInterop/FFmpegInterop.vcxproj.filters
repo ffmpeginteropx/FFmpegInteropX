@@ -23,6 +23,9 @@
     <Filter Include="Metadata">
       <UniqueIdentifier>{4bf436be-fb97-4ba4-b842-9406d925ebc6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Passthrough">
+      <UniqueIdentifier>{47291814-fc42-4266-8b1a-ecb862ea262a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -176,6 +179,12 @@
     </ClInclude>
     <ClInclude Include="Enumerations.h" />
     <ClInclude Include="CodecRequiredEventArgs.h" />
+    <ClInclude Include="MFTEnumerator.h">
+      <Filter>Passthrough</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectXDecoderManager.h">
+      <Filter>Passthrough</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">

@@ -107,6 +107,7 @@
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
     <ClInclude Include="CharacterEncoding.h" />
+    <ClInclude Include="DirectXDecoderManager.h" />
     <ClInclude Include="Enumerations.h" />
     <ClInclude Include="FFmpegInteropConfig.h" />
     <ClInclude Include="FFmpegInteropLogging.h" />
@@ -118,6 +119,7 @@
     <ClInclude Include="IAvEffect.h" />
     <ClInclude Include="KeyStringValuePair.h" />
     <ClInclude Include="LanguageTagConverter.h" />
+    <ClInclude Include="MFTEnumerator.h" />
     <ClInclude Include="NALPacketSampleProvider.h" />
     <ClInclude Include="HEVCSampleProvider.h" />
     <ClInclude Include="ILogProvider.h" />

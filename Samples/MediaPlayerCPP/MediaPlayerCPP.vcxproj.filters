@@ -52,22 +52,14 @@
     <AppxManifest Include="Package.appxmanifest" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
     <None Include="$(SolutionDir)FFmpegInterop.pfx" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-    <None Include="$(SolutionDir)ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\avcodec-58.dll" />
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\avdevice-58.dll" />
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\avfilter-7.dll" />
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\avformat-58.dll" />
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\avutil-56.dll" />
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\swresample-3.dll" />
+    <None Include="..\..\ffmpeg\Build\Windows10\x86\bin\swscale-5.dll" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="MainPage.xaml" />
