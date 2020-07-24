@@ -1681,13 +1681,14 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 
 				// get and apply keyframe position for fast seeking
 				TimeSpan timestampVideo;
-				hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo);
+				TimeSpan timestampVideoDuration;
+				hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo, timestampVideoDuration);
 
 				while (hr == S_OK && seekForward && timestampVideo < referenceTime)
 				{
 					// our min position was not respected. try again with higher min and target.
-					min += 5.0 / av_q2d(avFormatCtx->streams[streamIndex]->time_base);
-					seekTarget += 5.0 / av_q2d(avFormatCtx->streams[streamIndex]->time_base);
+					min += (long long)(5.0 / av_q2d(avFormatCtx->streams[streamIndex]->time_base));
+					seekTarget += (long long)(5.0 / av_q2d(avFormatCtx->streams[streamIndex]->time_base));
 					
 					if (avformat_seek_file(avFormatCtx, streamIndex, min, seekTarget, max, 0) < 0)
 					{
@@ -1700,7 +1701,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 						FlushStreams();
 				
 						// get updated timestamp
-						hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo);
+						hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo, timestampVideoDuration);
 					}
 				}
 
@@ -1713,17 +1714,20 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 					lastSeekStart = position;
 					lastSeekActual = actualPosition;
 
-					if (currentAudioStream && config->FastSeekCleanAudio)
+					if (currentAudioStream)
 					{
 						// if we have audio, we need to seek back a bit more to get 100% clean audio
 						TimeSpan timestampAudio;
-						hr = currentAudioStream->GetNextPacketTimestamp(timestampAudio);
+						TimeSpan timestampAudioDuration;
+						hr = currentAudioStream->GetNextPacketTimestamp(timestampAudio, timestampAudioDuration);
 						if (hr == S_OK)
 						{
-							auto audioPreroll = timestampAudio.Duration - timestampVideo.Duration;
-							if (audioPreroll > 0)
+							// audio stream should start one sample before video
+							auto audioTarget = timestampVideo - timestampAudioDuration;
+							auto audioPreroll = timestampAudio - timestampVideo;
+							if (audioPreroll.Duration > 0 && config->FastSeekCleanAudio)
 							{
-								correctedPosition = timestampVideo.Duration - audioPreroll;
+								correctedPosition = audioTarget.Duration - audioPreroll.Duration;
 								seekTarget = static_cast<int64_t>(correctedPosition / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
 								if (av_seek_frame(avFormatCtx, streamIndex, seekTarget, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_ANY) < 0)
 								{
@@ -1736,13 +1740,27 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 
 									// Now drop all packets until desired keyframe position
 									currentVideoStream->SkipPacketsUntilTimestamp(timestampVideo);
-									currentAudioStream->SkipPacketsUntilTimestamp(timestampVideo);
+									currentAudioStream->SkipPacketsUntilTimestamp(audioTarget);
+
+									hr = currentAudioStream->GetNextPacketTimestamp(timestampAudio, timestampAudioDuration);
+									if (hr == S_OK && (timestampAudio + timestampAudioDuration) <= timestampVideo)
+									{
+										// if possible, decode one audio sample to get clean output
+										currentAudioStream->GetNextSample();
+									}
 								}
 							}
-							else
+							else if (audioPreroll.Duration <= 0)
 							{
-								// Negative audio preroll. Just drop all packets until keyframe position.
-								currentAudioStream->SkipPacketsUntilTimestamp(timestampVideo);
+								// Negative audio preroll. Just drop all packets until target position.
+								currentAudioStream->SkipPacketsUntilTimestamp(audioTarget);
+								
+								hr = currentAudioStream->GetNextPacketTimestamp(timestampAudio, timestampAudioDuration);
+								if (hr == S_OK && (timestampAudio + timestampAudioDuration) <= timestampVideo)
+								{
+									// if possible, decode one audio sample to get clean output
+									currentAudioStream->GetNextSample();
+								}
 							}
 						}
 					}

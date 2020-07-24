@@ -81,7 +81,7 @@ namespace FFmpegInterop
 		virtual void QueuePacket(AVPacket *packet);
 		AVPacket* PopPacket();
 		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG & packetPts, LONGLONG & packetDuration);
-		HRESULT GetNextPacketTimestamp(TimeSpan& timestamp);
+		HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
 		HRESULT SkipPacketsUntilTimestamp(TimeSpan timestamp);
 		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration) = 0;
 		virtual IMediaStreamDescriptor^ CreateStreamDescriptor() = 0;

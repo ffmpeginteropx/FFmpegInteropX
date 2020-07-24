@@ -260,7 +260,7 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packe
 	return hr;
 }
 
-HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp)
+HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration)
 {
 	HRESULT hr = S_FALSE;
 
@@ -282,6 +282,7 @@ HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp)
 		if (pts != AV_NOPTS_VALUE)
 		{
 			timestamp.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * pts) - m_startOffset;
+			packetDuration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
 			hr = S_OK;
 		}
 	}

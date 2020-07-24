@@ -56,14 +56,14 @@ inline TimeSpan& operator-=(TimeSpan& span, const TimeSpan& other)
 inline TimeSpan operator*(const TimeSpan& span, const double factor)
 {
 	TimeSpan result;
-	result.Duration = span.Duration * factor;
+	result.Duration = (long long)(span.Duration * factor);
 	return result;
 }
 
 inline TimeSpan operator/(const TimeSpan& span, const double factor)
 {
 	TimeSpan result;
-	result.Duration = span.Duration / factor;
+	result.Duration = (long long)(span.Duration / factor);
 	return result;
 }
 
