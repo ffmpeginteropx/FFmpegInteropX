@@ -37,6 +37,8 @@ configureArgs="\
     --prefix=$outDir \
 "
 
+cflags="-MD -DLZMA_API_STATIC"
+
 if [ "$variant" == "UWP" ]; then
     configureArgs="\
         $configureArgs \
@@ -47,22 +49,28 @@ if [ "$variant" == "UWP" ]; then
         --extra-ldflags='-APPCONTAINER WindowsApp.lib' \
         "
 
+    cflags="\
+        $cflags \
+        -DWINAPI_FAMILY=WINAPI_FAMILY_APP \
+        -D_WIN32_WINNT=0x0A00
+    "
+
     if [ "$platform" = "x64" ] || [ "$platform" = "x86" ]; then
         configureArgs="\
             $configureArgs \
-            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -DLZMA_API_STATIC'
+            --extra-cflags='$cflags'
 "
     fi
 
     if [ "$platform" = "ARM" ] || [ "$platform" = "ARM64" ]; then
         configureArgs="\
             $configureArgs \
-            --extra-cflags='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -DLZMA_API_STATIC -D__ARM_PCS_VFP'
+            --extra-cflags='$cflags -D__ARM_PCS_VFP'
             "
     fi
 fi
 
-if [ "$variant" == "Win32" ]; then
+if [ "$variant" == "Desktop" ]; then
     configureArgs="\
         $configureArgs \
         --enable-libx264 \
@@ -76,12 +84,12 @@ if [ "$variant" == "Win32" ]; then
     if [ "$sharedOrStatic" = "shared" ]; then
         configureArgs="\
             $configureArgs \
-            --extra-cflags='-MD -D_WINDLL -DLZMA_API_STATIC' \
+            --extra-cflags='$cflags -D_WINDLL' \
         "
     else
         configureArgs="\
             $configureArgs \
-            --extra-cflags='-MD -DLZMA_API_STATIC' \
+            --extra-cflags='$cflags' \
         "
     fi
 fi
@@ -90,7 +98,7 @@ if [ "$platform" == "ARM" ]; then
     configureArgs="\
         $configureArgs \
         --arch=arm \
-        --as=armasm \
+        --as=armasm.exe \
         --cpu=armv7
     "
 fi
@@ -99,12 +107,12 @@ if [ "$platform" = "ARM64" ]; then
     configureArgs="\
         $configureArgs \
         --arch=arm64 \
-        --as=armasm64 \
+        --as=armasm64.exe \
         --cpu=armv8
     "
 fi
 
-eval $DIR/Libs/ffmpeg/configure $configureArgs || exit
+eval $DIR/Libs/ffmpeg/configure $configureArgs || exit 1
 
 make -j8 || exit
 make install || exit
