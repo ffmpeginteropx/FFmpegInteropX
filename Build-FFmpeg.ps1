@@ -15,7 +15,7 @@ param(
     #>
     [version] $VcVersion = '14.1',
 
-    [ValidateSet('UWP', 'Win32')]
+    [ValidateSet('UWP', 'Desktop')]
     [string] $WindowsTarget = 'UWP',
 
     <#
@@ -39,13 +39,13 @@ param(
     # Set the search criteria for VSWHERE.EXE.
     [string[]] $VsWhereCriteria = '-latest',
 
-    [System.IO.FileInfo] $Msys2Bin = 'C:\msys64\usr\bin\bash.exe',
+    [System.IO.FileInfo] $BashExe = 'C:\msys64\usr\bin\bash.exe',
 
-    [Boolean] $ClearBuildFolders = $false,
+    [switch] $ClearBuildFolders,
 
-    [Boolean] $BuildNugetPacket = $false,
+    [switch] $BuildNugetPackage,
 
-    [string] $NugetPacketVersion = "1.0.0"
+    [version] $NugetPackageVersion = "1.0.0"
 )
 
 function Build-Platform {
@@ -53,65 +53,42 @@ function Build-Platform {
         [System.IO.DirectoryInfo] $SolutionDir,
         [string] $Platform,
         [string] $Configuration,
+        [version] $WindowsTargetPlatformVersion,
+        [version] $VcVersion,
         [string] $PlatformToolset,
         [string] $VsLatestPath,
-        [string] $Msys2Bin = 'C:\msys64\usr\bin\bash.exe'
+        [string] $BashExe = 'C:\msys64\usr\bin\bash.exe'
     )
 
     $PSBoundParameters | Out-String
 
-    $vcvarsArchs = @{
-        'x86' = @{
-            'x86'   = 'x86'
-            'x64'   = 'x86_amd64'
-            'ARM'   = 'x86_arm'
-            'ARM64' = 'x86_arm64'
-        }
-    
-        'AMD64' = @{
-            'x86'   = 'amd64_x86'
-            'x64'   = 'amd64'
-            'ARM'   = 'amd64_arm'
-            'ARM64' = 'amd64_arm64'
-        }
-    }
+    $hostArch = ( 'x86', 'x64' )[ [System.Environment]::Is64BitOperatingSystem ]
+    $targetArch = $Platform.ToLower()
 
-    Write-Host ""
+    Write-Host
     Write-Host "Building FFmpeg for Windows 10 ($WindowsTarget) ${Platform}..."
-    Write-Host ""
-    
+    Write-Host
+
     # Load environment from VCVARS.
-    $vcvarsArch = $vcvarsArchs[$env:PROCESSOR_ARCHITECTURE][$Platform]
+    Import-Module "$VsLatestPath\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
 
-    # Decide vcvars target string based on target platform
-    $windowsTargetString = if ($WindowsTarget -eq "UWP") { "uwp $WindowsTargetPlatformVersion" } else { $windowsTargetString = "" }
+    Enter-VsDevShell `
+        -VsInstallPath $VsLatestPath `
+        -StartInPath "$PWD" `
+        -DevCmdArguments "-arch=$targetArch -host_arch=$hostArch -winsdk=$WindowsTargetPlatformVersion -vcvars_ver=$VcVersion -app_platform=$WindowsTarget"
 
-    CMD /c "`"$VsLatestPath\VC\Auxiliary\Build\vcvarsall.bat`" $vcvarsArch $windowsTargetString -vcvars_ver=$VcVersion && SET" | . {
-        PROCESS {
-            Write-Host $_
-            if ($_ -match '^([^=]+)=(.*)') {
-                if ($Matches[1] -notin 'HOME') {
-                    Set-Item -Path "Env:\$($Matches[1])" -Value $Matches[2]
-                }
-            }
-        }
-    }
-
-    if ($lastexitcode -ne 0) { throw "Failed to configure vcvarsall environment." }
-
-
-    # Build pkg-config fake
+        # Build pkg-config fake
     MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
         /p:OutputPath="$SolutionDir\Output\" `
-        /p:Configuration="Release" `
+        /p:Configuration=$Configuration `
         /p:Platform=${Env:\PreferredToolArchitecture}
 
     if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
-    
+
     New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable build
 
     New-Item -ItemType Directory -Force $SolutionDir\FFmpeg$WindowsTarget\$Platform -OutVariable target
-    
+
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
         Remove-Item -Force -Recurse $build\*
@@ -141,9 +118,9 @@ function Build-Platform {
         $folder = $_[0]
         $project = $_[1]
 
-        Write-Host ""
+        Write-Host
         Write-Host "Building Library ${folder}..."
-        Write-Host ""
+        Write-Host
 
         # Decide vcvars target string based on target platform
         if ($WindowsTarget -eq "UWP") { 
@@ -190,9 +167,9 @@ function Build-Platform {
     Copy-Item $build\include\libxml2\libxml $build\include\ -Force -Recurse
 
 
-    if ($WindowsTarget -eq "Win32") { 
+    if ($WindowsTarget -eq "Desktop") { 
         
-        $env:Path += ";$(Split-Path $Msys2Bin)"
+        $env:Path += ";$(Split-Path $BashExe)"
 
         #Build x265
         Write-Host ""
@@ -234,15 +211,15 @@ function Build-Platform {
         New-Item -ItemType Directory -Force $build\x264
 
         $ErrorActionPreference = "Continue"
-        & $Msys2Bin --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 && make install".Replace("\", "/").Replace(":", "")
+        & $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 && make install".Replace("\", "/").Replace(":", "")
         $ErrorActionPreference = "Stop"
         if ($lastexitcode -ne 0) { throw "Failed to build library x264." }
 
 
         #Build libvpx
-        Write-Host ""
+        Write-Host
         Write-Host "Building Library libvpx..."
-        Write-Host ""
+        Write-Host
 
         $vpxArchs = @{
             'x86'   = 'x86'
@@ -262,7 +239,7 @@ function Build-Platform {
         New-Item -ItemType Directory -Force $build\libvpx
         
         $ErrorActionPreference = "Continue"
-        & $Msys2Bin --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 && make install".Replace("\", "/").Replace(":", "")
+        & $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 && make install".Replace("\", "/").Replace(":", "")
         $ErrorActionPreference = "Stop"
         if ($lastexitcode -ne 0) { throw "Failed to build library libvpx." }
 
@@ -271,12 +248,12 @@ function Build-Platform {
     } 
 
     # Build ffmpeg
-    Write-Host ""
+    Write-Host
     Write-Host "Building FFmpeg..."
-    Write-Host ""
+    Write-Host
 
     $ErrorActionPreference = "Continue"
-    & $Msys2Bin --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
+    & $BashExe --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
     $ErrorActionPreference = "Stop"
     if ($lastexitcode -ne 0) { throw "Failed to build FFmpeg." }
 
@@ -300,12 +277,12 @@ if (! (Test-Path $PSScriptRoot\Libs\ffmpeg\configure)) {
     Exit 1
 }
 
-if (!(Test-Path $Msys2Bin)) {
+if (!(Test-Path $BashExe)) {
 
     $msysFound = $false
     @( 'C:\msys64', 'C:\msys' ) | ForEach-Object {
         if (Test-Path $_) {
-            $Msys2Bin = "${_}\usr\bin\bash.exe"
+            $BashExe = "${_}\usr\bin\bash.exe"
             $msysFound = $true
 
             break
@@ -353,9 +330,11 @@ foreach ($platform in $Platforms) {
             -SolutionDir "${PSScriptRoot}\" `
             -Platform $platform `
             -Configuration 'Release' `
+            -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
+            -VcVersion $VcVersion `
             -PlatformToolset $platformToolSet `
             -VsLatestPath $vsLatestPath `
-            -Msys2Bin $Msys2Bin
+            -BashExe $BashExe
     }
     catch
     {
@@ -380,15 +359,18 @@ foreach ($platform in $Platforms) {
     }
 }
 
-if ($success -and $BuildNugetPacket)
+if ($success -and $BuildNugetPackage)
 {
-    nuget pack .\FFmpegInteropX.FFmpegUWP.nuspec -Properties id=FFmpegInteropX.FFmpegUWP -Version $NugetPacketVersion -Symbols -SymbolPackageFormat snupkg
+    nuget pack .\FFmpegInteropX.FFmpegUWP.nuspec `
+        -Properties "id=FFmpegInteropX.FFmpegUWP" `
+        -Version $NugetPackageVersion `
+        -Symbols -SymbolPackageFormat snupkg
 }
 
-Write-Host ''
+Write-Host
 Write-Host 'Time elapsed'
 Write-Host ('{0}' -f ((Get-Date) - $start))
-Write-Host ''
+Write-Host
 
 if ($success)
 {
@@ -397,7 +379,6 @@ if ($success)
 }
 else
 {
-    Write-Host 'Build failed!'
+    Write-Error 'Build failed!'
     Exit 1
 }
-
