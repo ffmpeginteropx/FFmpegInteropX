@@ -45,7 +45,12 @@ param(
 
     [switch] $BuildNugetPackage,
 
-    [version] $NugetPackageVersion = "1.0.0"
+    [version] $NugetPackageVersion = "1.0.0",
+
+    # FFmpeg NuGet settings
+    [string] $FFmpegUrl = 'https://git.ffmpeg.org/ffmpeg.git',
+
+    [string] $FFmpegCommit = $(git --git-dir Libs/ffmpeg/.git rev-parse HEAD)
 )
 
 function Build-Platform {
@@ -362,7 +367,7 @@ foreach ($platform in $Platforms) {
 if ($success -and $BuildNugetPackage)
 {
     nuget pack .\FFmpegInteropX.FFmpegUWP.nuspec `
-        -Properties "id=FFmpegInteropX.FFmpegUWP" `
+        -Properties "id=FFmpegInteropX.FFmpegUWP;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat snupkg
 }

@@ -9,11 +9,12 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">Apache-2.0</license>
     <dependencies>
-	  <group>
-        <dependency id="FFmpegInteropX.FFmpegUWP" version="4.0.0" />
-	  </group>
+      <group>
+          <dependency id="FFmpegInteropX.FFmpegUWP" version="4.0.0" />
+      </group>
       <group targetFramework="uap10.0" />
     </dependencies>
+    <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
   </metadata>
   <files>
 
@@ -32,7 +33,7 @@
     <file src="FFmpegInterop\ARM64\Release\FFmpegInterop.dll"   target="runtimes\win10-arm64\native" />
     <file src="FFmpegInterop\ARM64\Release\FFmpegInterop.pdb"   target="runtimes\win10-arm64\native" />
 
-    <file src="FFmpegInteropX.targets"                                        target="build\native"/>
+    <file src="FFmpegInteropX.targets"                          target="build\native"/>
 
   </files>
 </package>
