@@ -107,6 +107,8 @@ function Build-Platform {
     
     $env:LIB += ";$build\lib"
     $env:INCLUDE += ";$build\include"
+    $env:Path += ";$SolutionDir\Libs\gas-preprocessor"
+
 
     # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
     $libdefs = @(

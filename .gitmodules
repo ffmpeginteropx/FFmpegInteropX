@@ -28,3 +28,6 @@
 [submodule "Libs/x264"]
 	path = Libs/x264
 	url = https://code.videolan.org/videolan/x264.git
+[submodule "Libs/gas-preprocessor"]
+	path = Libs/gas-preprocessor
+	url = https://github.com/FFmpeg/gas-preprocessor
