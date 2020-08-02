@@ -29,7 +29,7 @@ Build/
 Intermediate/
 Output/
 FFmpegUWP/
-FFmpegWin32/
+FFmpegDesktop/
 
 # Visual Studio 2015 cache/options directory
 .vs/
