@@ -8,8 +8,14 @@ FFmpegInteropX is an open-source project that aims to provide an easy way to use
 
 FFmpegInteropX is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
 
-**Some of the important improvements:**
+#### Latest Releases:
+- FFmpegInteropX: 0.9.0
+  - First official NuGet Packet!
+- FFmpegInteropX.FFmpegUWP: 4.2.2
 
+### Some of the important improvements:
+
+- NuGet Packets!!
 - Multiple audio stream support
 - Subtitle support, including external subtitle files
 - Audio effects (special thanks to [mcosmin222](https://github.com/mcosmin222)!)
@@ -29,155 +35,36 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 - Include libxml2 for DASH streaming support
 - Lots of bug fixes
 
-**Other changes:**
+### Other changes:
 - Support for Windows 8.x and Windows Phone 8.x has been dropped
 - Visual Studio 2015 support has been dropped
 
-**Prerequisites:**
 
-Either Visual Studio 2017 or Visual Studio 2019 is required.
+## How to work with FFmpegInteropX
 
-- Visual Studio 2017 (15.9.x or higher):
-  - Select Universal Windows Platform development workload in Installer
-  - Select additional components from Installer:
-    - Universal Windows Platform tools
-    - VC++ 2017 version 15.9 v14.16 latest v141 tools
-    - Win 10 SDK (10.0.17763.0) for uwp: c#, vb, js
-    - Win 10 SDK (10.0.17763.0) for uwp: c++
-    - Visual C++ compilers and libraries for ARM64
-    - Visual C++ compilers and libraries for ARM
-    - C++ UWP tools for ARM64
-    - C++ runtime for uwp
+We have switched from manual builds to NuGet packets. There are two packets: 
 
-- Visual Studio 2019:
-  - Select Universal Windows Platform development workload in Installer
-  - Select Windows 10 SDK 10.0.17763.0
-  - [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-US/download/details.aspx?id=48145) (only if you installed yasm 64-bit)
+- **FFmpegInteropX**
+  - The library itself, referenced by app project files
+  - Has a dependency on FFmpegInteropX.FFmpegUWP, which contains the actual FFmpeg build
 
+- **FFmpegInteropX.FFmpegUWP**
+  - Our official FFmpeg build for the UWP platform
+  - Customized and tested for use with FFmpegInteropX
+  - Includes FFFmpeg dll files, libs, includes and license files
+  - Two purposes:
+    - Provide runtime dependencies (dlls) for apps
+    - Provide build dependencies for our library
 
-## FFmpeg Version
+The easiest way to work with FFmpegInteropX is to add both NuGet packets to your app. This allows full usage of all features, without checking out the repo or installing build tools.
 
-Recommended: **FFmpeg 4.2.2**
+**Advanced users and library developers:** If you want to be able to debug into FFmpegInteropX right from your app, or to work on the library, you need to clone this repository. Instead of adding the FFmpegInteropX NuGet packet to your app, you can directly add the `FFmpegInterop\FFmpegInterop.vcxproj` project file to your app solution (it does not matter where the FFmpegInteropX folder is located). Then in your main app project, add a reference to the FFmpegInterop project. Now you have all the sources directly in your app solution and can debug and enhance the lib.
 
-Minimum: **FFmpeg 4.0**
+**Full blown:** If needed, you can even supply your own custom FFmpeg build to replace our FFmpegInteropX.FFmpegUWP NuGet packet.
 
-##### Important: Update of gas-preprocessor required!
+Check out the [build instructions](README-BUILD.md) if you want to manually build FFmpgeInteropX or FFmpeg itself.
 
-The gas-preprocessor has changed since FFmpeg 4.2. Please download an updated copy here:
-
-https://github.com/FFmpeg/gas-preprocessor
-
-An exception will be thrown if FFmpegInterop is used with anything lower than the minimum version. The recommended version has been tested and is what we currently recommend to use with FFmpegInteropX.
-
-A legacy branch exists which tagets **FFmpeg 3.4.2**.
-
-**Hint:** To update the ffmpeg submodule to the recommended version (after pulling latest FFmpegInterop), use the following command in git bash from FFmpegInterop folder: `git submodule update`. Then rebuild ffmpeg and FFmpegInterop.
-
-## Getting the sources
-
-FFmpegInteropX uses the following git submodules:
-
-- Libs\ffmpeg
-- Libs\bzlib2
-- Libs\iconv
-- Libs\liblzma
-- Libs\libxml2
-- Libs\zlib
-
-Please use clone recursive, to get the exact verion of the libs that is required for use with FFmpegInteropX.
-
-	git clone --recursive https://github.com/ffmpeginteropx/FFmpegInteropX.git
-
-If you forgot to clone recursive, or if one of the library folders is empty, use these commands from FFmpegInteropX folder:
-
-	git submodule init
-    git submodule update
-
-Please do not use later versions of FFmpeg (e.g. master branch) with FFmpegInteropX. This could lead to various problems, ranging from build issues to runtime issues.
-
-Your `FFmpegInteropX` folder should look as follows
-
-	FFmpegInteropX\
-	    FFmpegInterop\         - FFmpegInterop WinRT component
-	    Libs\ffmpeg\           - ffmpeg source code from the latest release in git://github.com/FFmpeg/FFmpeg.git
-	    Libs\bzip2\            - bzip2 (bzliib) compression library
-	    Libs\...               - additional libraries required for building FFmpeg
-	    Samples\               - Sample Media Player applications in C++ and C#
-	    Tests\                 - Unit tests for FFmpegInterop
-	    Build-FFmpeg.ps1       - FFmpeg build file for Visual Studio 2017 and higher
-	    FFmpegConfig.sh        - Internal script that contains FFmpeg configure options
-	    FFmpegInterop.sln      - Microsoft Visual Studio solution file for Windows 10 apps development
-	    LICENSE
-	    README.md
-
-## Installing ffmpeg build tools
-
-Now that you have the FFmpeg source code, please follow the instructions on how to install MSYS2, YASM and gas-preprocessor on the [FFmpeg for WinRT Compilation guide](https://trac.ffmpeg.org/wiki/CompilationGuide/WinRT). *Follow the setup instruction very carefully (including installation guide on MSYS2 website) to avoid build issues!! Be very careful not to miss a single step. If you have problems building ffmpeg, go through these steps again, since chances are high that you missed some detail.*
-
-### Note
-In case you downloaded yasm 64-bit version you'll also need [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-US/download/details.aspx?id=48145). This package is usually installed with VS 2017 but not with VS2019.  In case it's missing yasm will ouput this error message while building ffmpeg:
-
-    C:/msys64/usr/bin/yasm.exe: error while loading shared libraries: MSVCR100.dll: cannot open shared object file: No such file or directory
-
-## Building ffmpeg with Visual Studio 2017 / 2019
-
-After installing the ffmpeg build tools, you run Build-FFmpeg.ps1 to build FFmpeg.
-
-Run the build script from PowerShell:
-
-`.\Build-FFmpeg.ps1`
-
-Run the build script from CMD:
-
-`PowerShell -NoProfile -ExecutionPolicy Bypass -Command ".\Build-FFmpeg.ps1"`
-
-##### The build script has multiple parameters to select build toolset, SDK version and more. Here are some examples:
-
-Build using a specific SDK version:
-
-`.\Build-FFmpeg.ps1 -WindowsTargetPlatformVersion 10.0.17763.0`
-
-Or from CMD:
-
-`PowerShell -NoProfile -ExecutionPolicy Bypass -Command ".\Build-FFmpeg.ps1 -WindowsTargetPlatformVersion 10.0.17763.0"`
-
-
-Build with PlatformToolset v142 instead of v141:
-
-`.\Build-FFmpeg.ps1 -VcVersion 14.22`
-
-(This requires MSVC v142 build tools "14.22" (exactly!) to be installed. Later versions have a bug that will make ARM/ARM64 compilations fail.)
-
-
-Build using Visual Studio 2017 instead of "latest":
-
-`.\Build-FFmpeg.ps1 -VsWhereCriteria '-version [15.0,16.0)'`
-
-
-Build using Visual Studio 2019 instead of "latest":
-
-`.\Build-FFmpeg.ps1 -VsWhereCriteria '-version [16.0,17.0)'`
-
-
-Build only x86 and x64:
-
-`.\Build-FFmpeg.ps1 -Platforms x86, x64`
-
-
-You can of course combine parameters. There are more parameters, you can see them at the beginning of the build script.
-
-
-Note: You need Visual Studio 2017 15.9.0 or higher to build the ARM64 version of ffmpeg!
-
-## Building the FFmpegInterop library
-
-After building ffmpeg with the steps above, you should find the ffmpeg libraries in the `FFmpegUWP/<platform>` folders.
-
-Now you can build the FFmpegInterop library. 
-
-Simply open the Visual Studio solution file `FFmpegInterop.sln`, set one of the MediaPlayer[CS/CPP] sample projects as StartUp project, and run. FFmpegInterop should build cleanly giving you the interop object as well as the selected sample MediaPlayer (C++ or C#) that show how to connect the MediaStreamSource to a MediaElement for playback.
-
-### Using the FFmpegInteropMSS object
+## Using the FFmpegInteropX libraray
 
 Using the **FFmpegInteropMSS** object is fairly straightforward and can be observed from the sample applications provided.
 
@@ -196,7 +83,7 @@ You can add a call to `FFmpegVersionInfo.CheckRecommendedVersion()` in your app 
 
 Call `FrameGrabber.CreateFromStreamAsync()` to grab one or more frames from a video file.
 
-### Subtitle Support
+## Subtitle Support
 
 FFmpegInterop will automatically load and use all embedded subtitles, supporting all formats through ffmpeg. You have to use the MediaPlaybackItem returned from the MSS object. Then subtitles can be selected from MediaElement's transport controls. 
 
@@ -205,22 +92,6 @@ You can also add external subtitle files by using `FFmpegInteropMSS.AddExternalS
 Some external text subtitle files are stored with ANSI encoding instead of UTF8 (which is required by ffmpeg). FFmpegInterop can do an automatic conversion to UTF8. This is enabled by default in the config class and will use the system's active codepage by default. You can change the behavior by changing `AutoCorrectAnsiSubtitles` and `AnsiSubtitleEncoding` parameters in the config class. Codepage 0 is the system's active codepage.
 
 Note: If your app uses multiple windows using CoreApplication.CreateNewView(), then you must create the FFmpegInteropMSS object on the thread of the window where the video is to be shown. Otherwise, subtitles will flicker.
-
-## Integrating FFmpegInterop into your app solution
-
-If you want to integrate FFmpegInterop into your app, you can just add the project file (`FFmpegInterop\FFmpegInterop.vcxproj`) to your app solution as an existing project and add a reference from your main app project to FFmpegInterop. The FFmpegInterop project does not have to be in your app's solution folder. 
-
-Additionally, your app must reference the ffmpeg dll files for the platform you are building. Best is to manually edit your app's project file. This allows you to refer the dlls built for the current platform using $BuildPlatform parameter.
-
-For a C# project, you can do it like this:
-
-```
-  <ItemGroup>
-    <Content Include="$(SolutionDir)..\FFmpegInterop\ffmpeg\Build\Windows10\$(PlatformTarget)\bin\*.dll" />
-  </ItemGroup>
-```
-
-This assumes that the FFmpegInterop folder is located next to your solution folder and the ffmpeg build output folder contains exclusively the latest ffmpeg dlls. Paths might be different on your folder setup. For CPP and JS this can be done similarly, check the samples for reference. If your program crashes with `The specified module could not be found. (Exception from HRESULT: 0x8007007E)` error, the path is probably wrong. 
 
 ## FFmpegUniversal
 
