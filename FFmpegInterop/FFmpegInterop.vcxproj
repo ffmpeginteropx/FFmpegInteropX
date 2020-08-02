@@ -170,7 +170,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Build-FFmpeg.ps1" />
-    <None Include="..\BuildFFmpeg_VS2017.bat" />
     <None Include="..\FFmpegConfig.sh" />
     <None Include="..\AppVeyor_Build.bat" />
     <None Include="..\README-BUILD.md" />
