@@ -13,7 +13,7 @@ param(
 
         Note. The PlatformToolset will be inferred from this value ('v141', 'v142'...)
     #>
-    [version] $VcVersion = '14.1',
+    [version] $VcVersion = '14.2',
 
     [ValidateSet('UWP', 'Desktop')]
     [string] $WindowsTarget = 'UWP',
@@ -45,7 +45,7 @@ param(
 
     [switch] $BuildNugetPackage,
 
-    [version] $NugetPackageVersion = "1.0.0",
+    [string] $NugetPackageVersion = "1.0.0",
 
     # FFmpeg NuGet settings
     [string] $FFmpegUrl = 'https://git.ffmpeg.org/ffmpeg.git',
@@ -108,7 +108,7 @@ function Build-Platform {
     $env:LIB += ";$build\lib"
     $env:INCLUDE += ";$build\include"
     $env:Path += ";$SolutionDir\Libs\gas-preprocessor"
-
+    $env:Path += ";$SolutionDir\Output\yasm"
 
     # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
     $libdefs = @(
@@ -273,7 +273,7 @@ function Build-Platform {
 }
 
 Write-Host
-Write-Host "Building FFmpegInteropX..."
+Write-Host "Building FFmpeg$WindowsTarget"
 Write-Host
 
 # Stop on all PowerShell command errors
@@ -302,6 +302,25 @@ if (!(Test-Path $BashExe)) {
         Exit 1;
     }
 }
+
+# Check for YASM and download if needed
+
+New-Item -ItemType Directory -Force $PSScriptRoot\Output\yasm -OutVariable yasm
+
+if (!(Test-Path $yasm\yasm.exe))
+{
+    if ($Env:PROCESSOR_ARCHITECTURE -eq "AMD64")
+    {
+        Start-BitsTransfer -Source http://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win64.exe -Destination $yasm\yasm.exe
+    }
+    else
+    {
+        Start-BitsTransfer -Source http://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win32.exe -Destination $yasm\yasm.exe
+    }
+
+    if ($lastexitcode -ne 0) { throw "Failed to download YASM." }
+}
+
 
 [System.IO.DirectoryInfo] $vsLatestPath = `
     & "$VSInstallerFolder\vswhere.exe" `
