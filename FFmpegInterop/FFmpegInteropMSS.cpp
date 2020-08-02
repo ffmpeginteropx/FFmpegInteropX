@@ -349,6 +349,9 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		subConfig->SubtitleStyle = this->config->SubtitleStyle;
 		subConfig->AutoCorrectAnsiSubtitles = this->config->AutoCorrectAnsiSubtitles;
 		subConfig->AutoSelectForcedSubtitles = false;
+		subConfig->MinimumSubtitleDuration = this->config->MinimumSubtitleDuration;
+		subConfig->AdditionalSubtitleDuration = this->config->AdditionalSubtitleDuration;
+		subConfig->PreventModifiedSubtitleDurationOverlap = this->config->PreventModifiedSubtitleDurationOverlap;
 
 		if (VideoDescriptor)
 		{
@@ -963,7 +966,17 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 							start.Duration -= (avFormatCtx->start_time * 10);
 						}
 
-						chapters->Append(ref new ChapterInfo(title, start, duration));
+						// cut off negative start times
+						if (start.Duration < 0)
+						{
+							duration.Duration += start.Duration;
+							start.Duration = 0;
+						}
+
+						if (duration.Duration > 0)
+						{
+							chapters->Append(ref new ChapterInfo(title, start, duration));
+						}
 					}
 				}
 			}

@@ -121,6 +121,10 @@ namespace FFmpegInterop
 
 			AttachmentCacheFolderName = "FFmpegAttachmentCache";
 			UseEmbeddedSubtitleFonts = true;
+
+			MinimumSubtitleDuration = TimeSpan{ 0 };
+			AdditionalSubtitleDuration = TimeSpan{ 0 };
+			PreventModifiedSubtitleDurationOverlap = true;
 		};
 
 
@@ -268,6 +272,15 @@ namespace FFmpegInterop
 		
 		///<summary>The folder where attachments such as fonts are stored (inside the app's temp folder).</summary>
 		property String^ AttachmentCacheFolderName;
+
+		///<summary>The minimum amount of time a subtitle should be shown. Default is 0.</summary>
+		property TimeSpan MinimumSubtitleDuration;
+
+		///<summary>Each subtitle's duration is extended by this amount. Default is 0.</summary>
+		property TimeSpan AdditionalSubtitleDuration;
+
+		///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
+		property bool PreventModifiedSubtitleDurationOverlap;
 
 	internal:
 		/*Internal use:determines if a FFmpegInteropInstance is in frame grabber mode. This mode is used to grab frames from a video stream.*/
