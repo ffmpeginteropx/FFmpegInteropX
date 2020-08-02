@@ -10,12 +10,12 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 
 #### Latest Releases:
 - FFmpegInteropX: 0.9.0
-  - First official NuGet Packet!
+  - First official NuGet Package!
 - FFmpegInteropX.FFmpegUWP: 4.2.2
 
 ### Some of the important improvements:
 
-- NuGet Packets!!
+- NuGet packages!!
 - Multiple audio stream support
 - Subtitle support, including external subtitle files
 - Audio effects (special thanks to [mcosmin222](https://github.com/mcosmin222)!)
@@ -42,7 +42,7 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 
 ## How to work with FFmpegInteropX
 
-We have switched from manual builds to NuGet packets. There are two packets: 
+We have switched from manual builds to providing NuGet packages. There are two packages: 
 
 - **FFmpegInteropX**
   - The library itself, referenced by app project files
@@ -56,11 +56,11 @@ We have switched from manual builds to NuGet packets. There are two packets:
     - Provide runtime dependencies (dlls) for apps
     - Provide build dependencies for our library
 
-The easiest way to work with FFmpegInteropX is to add both NuGet packets to your app. This allows full usage of all features, without checking out the repo or installing build tools.
+The easiest way to work with FFmpegInteropX is to add both NuGet packages to your app. This allows full usage of all features, without checking out the repo or installing build tools.
 
-**Advanced users and library developers:** If you want to be able to debug into FFmpegInteropX right from your app, or to work on the library, you need to clone this repository. Instead of adding the FFmpegInteropX NuGet packet to your app, you can directly add the `FFmpegInterop\FFmpegInterop.vcxproj` project file to your app solution (it does not matter where the FFmpegInteropX folder is located). Then in your main app project, add a reference to the FFmpegInterop project. Now you have all the sources directly in your app solution and can debug and enhance the lib.
+**Advanced users and library developers:** If you want to be able to debug into FFmpegInteropX right from your app, or to work on the library, you need to clone this repository. Instead of adding the FFmpegInteropX NuGet package to your app, you can directly add the `FFmpegInterop\FFmpegInterop.vcxproj` project file to your app solution (it does not matter where the FFmpegInteropX folder is located). Then in your main app project, add a reference to the FFmpegInterop project. Now you have all the sources directly in your app solution and can debug and enhance the lib.
 
-**Full blown:** If needed, you can even supply your own custom FFmpeg build to replace our FFmpegInteropX.FFmpegUWP NuGet packet.
+**Full blown:** If needed, you can even supply your own custom FFmpeg build to replace our FFmpegInteropX.FFmpegUWP NuGet package.
 
 Check out the [build instructions](README-BUILD.md) if you want to manually build FFmpgeInteropX or FFmpeg itself.
 

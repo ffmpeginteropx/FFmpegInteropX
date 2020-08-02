@@ -82,7 +82,7 @@ function Build-Platform {
         -StartInPath "$PWD" `
         -DevCmdArguments "-arch=$targetArch -host_arch=$hostArch -winsdk=$WindowsTargetPlatformVersion -vcvars_ver=$VcVersion -app_platform=$WindowsTarget"
 
-        # Build pkg-config fake
+    # Build pkg-config fake
     MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
         /p:OutputPath="$SolutionDir\Output\" `
         /p:Configuration=$Configuration `
@@ -108,7 +108,6 @@ function Build-Platform {
     $env:LIB += ";$build\lib"
     $env:INCLUDE += ";$build\include"
     $env:Path += ";$SolutionDir\Libs\gas-preprocessor"
-    $env:Path += ";$SolutionDir\Output\yasm"
 
     # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
     $libdefs = @(
@@ -284,8 +283,8 @@ if (! (Test-Path $PSScriptRoot\Libs\ffmpeg\configure)) {
     Exit 1
 }
 
+# Search for MSYS locations
 if (!(Test-Path $BashExe)) {
-
     $msysFound = $false
     @( 'C:\msys64', 'C:\msys' ) | ForEach-Object {
         if (Test-Path $_) {
@@ -296,31 +295,11 @@ if (!(Test-Path $BashExe)) {
         }
     }
 
-    # Search for MSYS locations
     if (! $msysFound) {
         Write-Error "MSYS2 not found."
         Exit 1;
     }
 }
-
-# Check for YASM and download if needed
-
-New-Item -ItemType Directory -Force $PSScriptRoot\Output\yasm -OutVariable yasm
-
-if (!(Test-Path $yasm\yasm.exe))
-{
-    if ($Env:PROCESSOR_ARCHITECTURE -eq "AMD64")
-    {
-        Start-BitsTransfer -Source http://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win64.exe -Destination $yasm\yasm.exe
-    }
-    else
-    {
-        Start-BitsTransfer -Source http://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win32.exe -Destination $yasm\yasm.exe
-    }
-
-    if ($lastexitcode -ne 0) { throw "Failed to download YASM." }
-}
-
 
 [System.IO.DirectoryInfo] $vsLatestPath = `
     & "$VSInstallerFolder\vswhere.exe" `

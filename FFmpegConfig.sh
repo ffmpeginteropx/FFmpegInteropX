@@ -16,7 +16,6 @@ outDir="$DIR/FFmpeg$variant/$platform"
 
 #Main
 echo "Make $variant $platform $sharedOrStatic $intDir $outDir"
-pushd $DIR/ffmpeg
 mkdir -p $intDir
 cd $intDir
 
@@ -116,6 +115,5 @@ eval $DIR/Libs/ffmpeg/configure $configureArgs || exit 1
 
 make -j8 || exit
 make install || exit
-popd
 
 exit 0

@@ -38,7 +38,7 @@ param(
 
     [string] $NugetPackageVersion = "1.0.0",
 
-    # FFmpeg NuGet settings
+    # FFmpegInteropX NuGet settings
     [string] $FFmpegInteropXUrl = 'https://github.com/ffmpeginteropx/FFmpegInteropX.git',
 
     [string] $FFmpegInteropXBranch = $(git branch --show-current),
