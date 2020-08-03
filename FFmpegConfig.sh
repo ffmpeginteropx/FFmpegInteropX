@@ -48,11 +48,11 @@ if [ "$1" == "Win10" ]; then
         ../../../configure \
         --toolchain=msvc \
         --disable-programs \
-        --disable-d3d11va \
+        --enable-d3d11va \
         --disable-dxva2 \
 		--disable-encoders \
 		--disable-devices \
-		--disable-hwaccels \
+		--enable-hwaccels \
         --disable-doc \
         --arch=x86_64 \
         --enable-shared \
