@@ -55,7 +55,7 @@ namespace FFmpegInterop
 			if (SUCCEEDED(hr))
 			{
 				AVFrame* sourceFrame = avFrame;
-				if (m_pAvCodecCtx->hwaccel_context) {
+				if (m_pAvCodecCtx->hw_device_ctx!=NULL) {
 					AVFrame* swFrame = av_frame_alloc();
 
 					av_hwframe_transfer_data(swFrame, avFrame, 0);

@@ -1213,7 +1213,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			hr = E_OUTOFMEMORY;
 		}
 		
-		avVideoCodecCtx->hwaccel_context = avHardwareContext;
+	
 		if (!avVideoCodecCtx)
 		{
 			DebugMessage(L"Could not allocate a decoding context\n");
@@ -1230,6 +1230,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 				hr = E_FAIL;
 			}
 		}
+		avVideoCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
 
 		if (SUCCEEDED(hr))
 		{
@@ -1251,6 +1252,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			}
 			else
 			{
+				
 				// Detect video format and create video stream descriptor accordingly
 				result = CreateVideoSampleProvider(avStream, avVideoCodecCtx, index, avHardwareContext, hwconfig);
 			}
