@@ -1573,7 +1573,8 @@ void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource
 		}
 		else if (currentVideoStream && args->Request->StreamDescriptor == currentVideoStream->StreamDescriptor)
 		{
-			args->Request->Sample = currentVideoStream->GetNextSample();
+			auto sample = currentVideoStream->GetNextSample();
+			args->Request->Sample = sample;
 		}
 		else
 		{

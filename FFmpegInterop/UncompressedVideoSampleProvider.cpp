@@ -88,7 +88,7 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 		m_OutputPixelFormat = AV_PIX_FMT_NV12;
 		outputMediaSubtype = MediaEncodingSubtypes::Nv12;
 	}
-
+	
 	TargetWidth = decoderWidth = m_pAvCodecCtx->width;
 	TargetHeight = decoderHeight = m_pAvCodecCtx->height;
 
@@ -117,6 +117,8 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 		// Scaler required to convert pixel format
 		m_bUseScaler = true;
 	}
+
+	m_bUseScaler = false;
 }
 
 IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor()

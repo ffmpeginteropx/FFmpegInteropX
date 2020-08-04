@@ -37,7 +37,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 {
 	HRESULT hr = S_OK;
 
-	AVFrame *avFrame = av_frame_alloc();
+	AVFrame* avFrame = av_frame_alloc();
 	unsigned int errorCount = 0;
 
 	if (!avFrame)
@@ -48,7 +48,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 	while (SUCCEEDED(hr))
 	{
 		hr = GetFrameFromFFmpegDecoder(avFrame, samplePts, sampleDuration);
-		if (sampleDuration == 0)
+		if (sampleDuration == 0 && this->m_pAvCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO)
 		{
 			samplePts.ToString();
 		}
@@ -129,7 +129,7 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, 
 
 			frameDuration = avFrame->pkt_duration;
 			nextFramePts = framePts + frameDuration;
-			
+
 			hr = S_OK;
 			break;
 		}
