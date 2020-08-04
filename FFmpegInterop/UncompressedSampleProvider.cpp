@@ -48,6 +48,10 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 	while (SUCCEEDED(hr))
 	{
 		hr = GetFrameFromFFmpegDecoder(avFrame, samplePts, sampleDuration);
+		if (sampleDuration == 0)
+		{
+			samplePts.ToString();
+		}
 		if (hr == S_FALSE)
 		{
 			// end of stream reached

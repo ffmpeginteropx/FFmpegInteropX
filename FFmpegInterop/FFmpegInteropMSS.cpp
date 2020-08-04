@@ -1203,9 +1203,9 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			{
 				break;
 			}
-			if (!hwconfig) break;
+			if (!hwconfig) break;			
 		}
-
+		
 		av_hwdevice_ctx_create(&avHardwareContext, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
 		if (!avHardwareContext)
 		{

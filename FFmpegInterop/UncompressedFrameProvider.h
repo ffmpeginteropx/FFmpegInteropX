@@ -58,7 +58,7 @@ namespace FFmpegInterop
 				if (m_pAvCodecCtx->hw_device_ctx!=NULL) {
 					AVFrame* swFrame = av_frame_alloc();
 
-					av_hwframe_transfer_data(swFrame, avFrame, 0);
+					auto err = av_hwframe_transfer_data(swFrame, avFrame, 0);
 					sourceFrame = swFrame;
 				}
 				hadFirstFrame = true;
