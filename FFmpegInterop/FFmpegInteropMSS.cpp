@@ -1195,6 +1195,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 		auto avVideoCodecCtx = avcodec_alloc_context3(avVideoCodec);
 		AVBufferRef* avHardwareContext;
 		const AVCodecHWConfig* hwconfig;
+			
 		for (int i=0;; i++)
 		{
 			hwconfig = avcodec_get_hw_config(avVideoCodec, i);
@@ -1205,7 +1206,13 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			if (!hwconfig) break;
 		}
 
-		auto hrr = av_hwdevice_ctx_create(&avHardwareContext, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
+		av_hwdevice_ctx_create(&avHardwareContext, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
+		if (!avHardwareContext)
+		{
+			DebugMessage(L"Could not allocate a hardware decoding context\n");
+			hr = E_OUTOFMEMORY;
+		}
+		
 		avVideoCodecCtx->hwaccel_context = avHardwareContext;
 		if (!avVideoCodecCtx)
 		{
@@ -1245,7 +1252,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			else
 			{
 				// Detect video format and create video stream descriptor accordingly
-				result = CreateVideoSampleProvider(avStream, avVideoCodecCtx, index);
+				result = CreateVideoSampleProvider(avStream, avVideoCodecCtx, index, avHardwareContext, hwconfig);
 			}
 		}
 
@@ -1387,7 +1394,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateAudioSampleProvider(AVStream* avStr
 	return audioSampleProvider;
 }
 
-MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index)
+MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index, AVBufferRef* avHardwareContext, const AVCodecHWConfig* hwconfig)
 {
 	MediaSampleProvider^ videoSampleProvider;
 	VideoEncodingProperties^ videoProperties;

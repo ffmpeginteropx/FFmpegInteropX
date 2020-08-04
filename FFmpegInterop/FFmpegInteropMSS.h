@@ -270,7 +270,7 @@ namespace FFmpegInterop
 		MediaSampleProvider^ CreateVideoStream(AVStream* avStream, int index);
 		SubtitleProvider^ CreateSubtitleSampleProvider(AVStream* avStream, int index);
 		MediaSampleProvider^ CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
-		MediaSampleProvider^ CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
+		MediaSampleProvider^ CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index, AVBufferRef* avHardwareContext, const AVCodecHWConfig* hwconfig);
 		HRESULT ParseOptions(PropertySet^ ffmpegOptions);
 		void OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args);
 		void OnSampleRequested(MediaStreamSource^ sender, MediaStreamSourceSampleRequestedEventArgs^ args);
