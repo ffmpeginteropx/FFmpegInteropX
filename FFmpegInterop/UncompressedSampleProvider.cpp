@@ -88,15 +88,24 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 	return hr;
 }
 
-HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
+HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame,  int64_t& framePts, int64_t& frameDuration)
 {
 	HRESULT hr = S_OK;
 
 	while (SUCCEEDED(hr))
 	{
+		HRESULT decodeFrame;
 		// Try to get a frame from the decoder.
-		auto decodeFrame = frameProvider->GetFrameFromCodec(avFrame);
-
+		if (frameProvider) 
+		{
+			decodeFrame = frameProvider->GetFrameFromCodec(avFrame);
+		}
+		if (hwFrameProvider)
+		{
+			AVFrame* hwFrame = av_frame_alloc();
+			decodeFrame = hwFrameProvider->GetHWFrameFromCodec(hwFrame, avFrame);
+			av_frame_free(&hwFrame);
+		}
 		if (decodeFrame == AVERROR(EAGAIN))
 		{
 			// The decoder doesn't have enough data to produce a frame,

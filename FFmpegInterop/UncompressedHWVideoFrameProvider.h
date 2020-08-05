@@ -3,6 +3,7 @@
 #include "AvEffectDefinition.h"
 #include "AbstractEffectFactory.h"
 #include <mutex>
+#include <Windows.h>
 
 extern "C"
 {
@@ -13,7 +14,7 @@ using namespace Windows::Foundation::Collections;
 
 namespace FFmpegInterop
 {
-	ref class UncompressedFrameProvider sealed
+	ref class UncompressedHWVideoFrameProvider sealed
 	{
 		IAvEffect^ filter;
 		AVFormatContext* m_pAvFormatCtx;
@@ -24,7 +25,7 @@ namespace FFmpegInterop
 
 	internal:
 
-		UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, AbstractEffectFactory^ p_effectFactory)
+		UncompressedHWVideoFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, AbstractEffectFactory^ p_effectFactory)
 		{
 			m_pAvCodecCtx = p_pAvCodecCtx;
 			m_pAvFormatCtx = p_pAvFormatCtx;
@@ -49,11 +50,16 @@ namespace FFmpegInterop
 			filter = nullptr;
 		}
 
-		HRESULT GetFrameFromCodec(AVFrame *avFrame)
+		HRESULT GetHWFrameFromCodec(AVFrame* avhwFrame, AVFrame* avswFrame)
 		{
-			HRESULT hr = avcodec_receive_frame(m_pAvCodecCtx, avFrame);
+			HRESULT hr = avcodec_receive_frame(m_pAvCodecCtx, avhwFrame);
 			if (SUCCEEDED(hr))
-			{
+			{				
+				if (m_pAvCodecCtx->hw_device_ctx != NULL) {
+					AVFrame* swFrame = av_frame_alloc();
+					hr = av_hwframe_transfer_data(avswFrame, avhwFrame, 0);
+				}
+				
 				hadFirstFrame = true;
 				if (pendingEffects && pendingEffects->Size > 0)
 				{
@@ -62,19 +68,18 @@ namespace FFmpegInterop
 				}
 				if (filter)
 				{
-					hr = filter->AddFrame(avFrame);
+					hr = filter->AddFrame(avswFrame);
 					if (SUCCEEDED(hr))
 					{
-						hr = filter->GetFrame(avFrame);
+						hr = filter->GetFrame(avswFrame);
 					}
 					if (FAILED(hr))
 					{
-						av_frame_unref(avFrame);
+						av_frame_unref(avswFrame);
 					}
 				}
 			}
 			return hr;
 		}
 	};
-
 }

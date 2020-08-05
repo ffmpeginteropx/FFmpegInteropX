@@ -21,6 +21,7 @@
 #include "NativeBufferFactory.h"
 #include <mfapi.h>
 #include "VideoEffectFactory.h"
+#include <UncompressedHWVideoFrameProvider.h>
 
 extern "C"
 {
@@ -117,15 +118,23 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 		// Scaler required to convert pixel format
 		m_bUseScaler = true;
 	}
-
-	m_bUseScaler = false;
 }
 
 IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor()
 {
 	SelectOutputFormat();
+	if (m_pAvCodecCtx->hw_device_ctx)
+	{
+		hwFrameProvider = ref new UncompressedHWVideoFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx));
+	}
+	else if (m_pAvCodecCtx->hw_frames_ctx)
+	{
 
-	frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx));
+	}
+	else 
+	{
+		frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx));
+	}
 	auto videoProperties = VideoEncodingProperties::CreateUncompressed(outputMediaSubtype, decoderWidth, decoderHeight);
 
 	SetCommonVideoEncodingProperties(videoProperties, false);
@@ -153,7 +162,7 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
 	return ref new VideoStreamDescriptor(videoProperties);
 }
 
-HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired()
+HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired(AVFrame* avFrame)
 {
 	HRESULT hr = S_OK;
 	if (m_bUseScaler && !m_pSwsCtx)
@@ -162,7 +171,7 @@ HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired()
 		m_pSwsCtx = sws_getContext(
 			m_pAvCodecCtx->width,
 			m_pAvCodecCtx->height,
-			m_pAvCodecCtx->pix_fmt,
+			(AVPixelFormat)avFrame->format,
 			TargetWidth,
 			TargetHeight,
 			m_OutputPixelFormat,
@@ -197,7 +206,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 {
 	HRESULT hr = S_OK;
 
-	hr = InitializeScalerIfRequired();
+	hr = InitializeScalerIfRequired(avFrame);
 
 	if (SUCCEEDED(hr))
 	{

@@ -176,6 +176,9 @@
     </ClInclude>
     <ClInclude Include="Enumerations.h" />
     <ClInclude Include="CodecRequiredEventArgs.h" />
+    <ClInclude Include="UncompressedHWVideoFrameProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\BuildFFmpeg_VS2017.bat">
