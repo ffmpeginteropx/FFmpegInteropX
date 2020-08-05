@@ -178,16 +178,10 @@
     <ClInclude Include="CodecRequiredEventArgs.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\BuildFFmpeg_VS2017.bat">
-      <Filter>Build</Filter>
-    </None>
     <None Include="..\FFmpegConfig.sh">
       <Filter>Build</Filter>
     </None>
     <None Include="..\README.md">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\Init_AppVeyor.bat">
       <Filter>Build</Filter>
     </None>
     <None Include="FFmpegInteropLibs.props">
@@ -195,6 +189,15 @@
     </None>
     <None Include="packages.config" />
     <None Include="..\Build-FFmpeg.ps1">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\AppVeyor_Build.bat">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\README-BUILD.md">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Build-FFmpegInteropX.ps1">
       <Filter>Build</Filter>
     </None>
   </ItemGroup>

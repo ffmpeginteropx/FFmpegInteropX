@@ -1,6 +1,3 @@
-[submodule "ffmpeg"]
-	path = ffmpeg
-	url = git://github.com/FFmpeg/FFmpeg.git
 [submodule "Libs/zlib"]
 	path = Libs/zlib
 	url = https://github.com/ffmpeginteropx/zlib.git
@@ -19,3 +16,18 @@
 [submodule "Libs/PkgConfigFake"]
 	path = Libs/PkgConfigFake
 	url = https://github.com/ffmpeginteropx/PkgConfigFake.git
+[submodule "Libs/ffmpeg"]
+	path = Libs/ffmpeg
+	url = https://git.ffmpeg.org/ffmpeg.git
+[submodule "Libs/x265"]
+	path = Libs/x265
+	url = https://github.com/videolan/x265.git
+[submodule "Libs/libvpx"]
+	path = Libs/libvpx
+	url = https://chromium.googlesource.com/webm/libvpx
+[submodule "Libs/x264"]
+	path = Libs/x264
+	url = https://code.videolan.org/videolan/x264.git
+[submodule "Libs/gas-preprocessor"]
+	path = Libs/gas-preprocessor
+	url = https://github.com/FFmpeg/gas-preprocessor

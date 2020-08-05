@@ -69,6 +69,10 @@
     <Import Project="FFmpegInteropLibs.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <IntDir>Intermediate\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <OutDir>$(PlatformTarget)\$(Configuration)\</OutDir>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -166,9 +170,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Build-FFmpeg.ps1" />
-    <None Include="..\BuildFFmpeg_VS2017.bat" />
+    <None Include="..\Build-FFmpegInteropX.ps1" />
     <None Include="..\FFmpegConfig.sh" />
-    <None Include="..\Init_AppVeyor.bat" />
+    <None Include="..\AppVeyor_Build.bat" />
+    <None Include="..\README-BUILD.md" />
     <None Include="..\README.md" />
     <None Include="FFmpegInteropLibs.props" />
     <None Include="packages.config" />
@@ -176,11 +181,13 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets" Condition="Exists('..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets')" />
+    <Import Project="..\packages\FFmpegInteropX.FFmpegUWP.4.2.200\build\native\FFmpegInteropX.FFmpegUWP.targets" Condition="Exists('..\packages\FFmpegInteropX.FFmpegUWP.4.2.200\build\native\FFmpegInteropX.FFmpegUWP.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets'))" />
+    <Error Condition="!Exists('..\packages\FFmpegInteropX.FFmpegUWP.4.2.200\build\native\FFmpegInteropX.FFmpegUWP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FFmpegInteropX.FFmpegUWP.4.2.200\build\native\FFmpegInteropX.FFmpegUWP.targets'))" />
   </Target>
 </Project>
