@@ -88,7 +88,6 @@ Now that you have the FFmpeg source code, please carefully follow these instruct
   - `pacman -S perl`
   - `pacman -S diffutils`
   - `pacman -S yasm`
-- Open the MSYS2 `usr/bin` folder (e.g. `C:\msys64\usr\bin`) and rename or delete `link.exe` to precent naming collisions with MSVC tools.
 
 ## Building ffmpeg with Visual Studio 2019 / 2017
 

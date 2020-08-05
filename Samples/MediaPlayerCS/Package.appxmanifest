@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">
-  <Identity Name="5388ef25-5c75-440f-a383-14d03f338feb" Publisher="CN=FFmpegInterop" Version="1.0.0.0" />
+  <Identity Name="5388ef25-5c75-440f-a383-14d03f338feb" Publisher="CN=FFmpegInterop" Version="1.0.2.0" />
   <mp:PhoneIdentity PhoneProductId="5388ef25-5c75-440f-a383-14d03f338feb" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>MediaPlayerCS</DisplayName>
-    <PublisherDisplayName>timargo</PublisherDisplayName>
+    <PublisherDisplayName>FFmpegInteropX</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>

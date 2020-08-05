@@ -9,9 +9,10 @@ FFmpegInteropX is an open-source project that aims to provide an easy way to use
 FFmpegInteropX is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
 
 #### Latest Releases:
-- FFmpegInteropX: 0.9.0
+- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.0
   - First official NuGet Package!
-- FFmpegInteropX.FFmpegUWP: 4.2.2
+- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.2.200
+  - FFmpeg 4.2.2 build for UWP platform
 
 ### Some of the important improvements:
 
@@ -44,11 +45,11 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 
 We have switched from manual builds to providing NuGet packages. There are two packages: 
 
-- **FFmpegInteropX**
+- [**FFmpegInteropX**](https://www.nuget.org/packages/FFmpegInteropX)
   - The library itself, referenced by app project files
   - Has a dependency on FFmpegInteropX.FFmpegUWP, which contains the actual FFmpeg build
 
-- **FFmpegInteropX.FFmpegUWP**
+- [**FFmpegInteropX.FFmpegUWP**](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP)
   - Our official FFmpeg build for the UWP platform
   - Customized and tested for use with FFmpegInteropX
   - Includes FFFmpeg dll files, libs, includes and license files

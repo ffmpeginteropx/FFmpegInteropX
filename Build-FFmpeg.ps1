@@ -369,7 +369,7 @@ if ($success -and $BuildNugetPackage)
     nuget pack .\FFmpegInteropX.FFmpegUWP.nuspec `
         -Properties "id=FFmpegInteropX.FFmpegUWP;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit" `
         -Version $NugetPackageVersion `
-        -Symbols -SymbolPackageFormat snupkg
+        -Symbols -SymbolPackageFormat symbols.nupkg
 }
 
 Write-Host

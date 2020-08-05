@@ -163,7 +163,7 @@ if ($success -and $BuildNugetPackage)
     nuget pack .\FFmpegInteropX.nuspec `
         -Properties "id=FFmpegInteropX;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit" `
         -Version $NugetPackageVersion `
-        -Symbols -SymbolPackageFormat snupkg
+        -Symbols -SymbolPackageFormat symbols.nupkg
 }
 
 Write-Host
