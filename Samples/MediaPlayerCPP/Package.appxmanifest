@@ -23,7 +23,7 @@
   <mp:PhoneIdentity PhoneProductId="c08bc68a-b511-4abc-8b98-067f25611588" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>MediaPlayerCPP</DisplayName>
-    <PublisherDisplayName>timargo</PublisherDisplayName>
+    <PublisherDisplayName>FFmpegInteropX</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>

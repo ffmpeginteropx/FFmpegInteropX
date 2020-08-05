@@ -53,13 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="$(SolutionDir)FFmpegInterop.pfx" />
-    <None Include="..\..\ffmpeg\Build\Windows10\x64\bin\avcodec-58.dll" />
-    <None Include="..\..\ffmpeg\Build\Windows10\x64\bin\avdevice-58.dll" />
-    <None Include="..\..\ffmpeg\Build\Windows10\x64\bin\avfilter-7.dll" />
-    <None Include="..\..\ffmpeg\Build\Windows10\x64\bin\avformat-58.dll" />
-    <None Include="..\..\ffmpeg\Build\Windows10\x64\bin\avutil-56.dll" />
-    <None Include="..\..\ffmpeg\Build\Windows10\x64\bin\swresample-3.dll" />
-    <None Include="..\..\ffmpeg\Build\Windows10\x64\bin\swscale-5.dll" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="MainPage.xaml" />
