@@ -22,6 +22,8 @@
 #include "AvEffectDefinition.h"
 #include "TimeSpanHelpers.h"
 #include "Enumerations.h"
+#include <d3d11.h>
+
 
 extern "C"
 {
@@ -31,6 +33,7 @@ extern "C"
 using namespace Windows::Storage::Streams;
 using namespace Windows::Media::Core;
 using namespace Windows::Media::MediaProperties;
+using namespace Windows::Graphics::DirectX::Direct3D11;
 
 namespace FFmpegInterop
 {
@@ -81,7 +84,7 @@ namespace FFmpegInterop
 		virtual void QueuePacket(AVPacket *packet);
 		AVPacket* PopPacket();
 		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG & packetPts, LONGLONG & packetDuration);
-		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration) = 0;
+		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) = 0;
 		virtual IMediaStreamDescriptor^ CreateStreamDescriptor() = 0;
 		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
 		void EnableStream();
@@ -120,7 +123,7 @@ namespace FFmpegInterop
 		int m_streamIndex;
 		int64 m_startOffset;
 		DecoderEngine decoder;
-
+		ID3D11Device* GraphicsDevice;
 	};
 }
 

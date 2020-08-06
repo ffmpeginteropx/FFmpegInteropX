@@ -34,6 +34,7 @@
 #include "FFmpegVersionInfo.h"
 #include "collection.h"
 #include <ppl.h>
+#include <Mfidl.h>
 
 extern "C"
 {
@@ -1195,25 +1196,25 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 		auto avVideoCodecCtx = avcodec_alloc_context3(avVideoCodec);
 		AVBufferRef* avHardwareContext;
 		const AVCodecHWConfig* hwconfig;
-			
-		for (int i=0;; i++)
+
+		for (int i = 0;; i++)
 		{
 			hwconfig = avcodec_get_hw_config(avVideoCodec, i);
 			if (hwconfig->device_type == AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA)
 			{
 				break;
 			}
-			if (!hwconfig) break;			
+			if (!hwconfig) break;
 		}
-		
+
 		av_hwdevice_ctx_create(&avHardwareContext, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
 		if (!avHardwareContext)
 		{
 			DebugMessage(L"Could not allocate a hardware decoding context\n");
 			hr = E_OUTOFMEMORY;
 		}
-		
-	
+
+
 		if (!avVideoCodecCtx)
 		{
 			DebugMessage(L"Could not allocate a decoding context\n");
@@ -1252,7 +1253,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			}
 			else
 			{
-				
+
 				// Detect video format and create video stream descriptor accordingly
 				result = CreateVideoSampleProvider(avStream, avVideoCodecCtx, index, avHardwareContext, hwconfig);
 			}
@@ -1538,6 +1539,27 @@ HRESULT FFmpegInteropMSS::ParseOptions(PropertySet^ ffmpegOptions)
 void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args)
 {
 	MediaStreamSourceStartingRequest^ request = args->Request;
+
+	if (isFirstSeek)
+	{
+		auto unknownMss = reinterpret_cast<IUnknown*>(sender);
+		IMFDXGIDeviceManagerSource* surfaceManager;
+		IMFDXGIDeviceManager* deviceManager;
+		HANDLE devicePointer;
+		unknownMss->QueryInterface(&surfaceManager);
+		surfaceManager->GetManager(&deviceManager);
+		deviceManager->OpenDeviceHandle(&devicePointer);
+		auto directXDevice = (ID3D11Device*)devicePointer;
+
+		for each (auto stream in videoStreams)
+		{
+			stream->GraphicsDevice = directXDevice;
+			if (stream != currentVideoStream)
+			{
+				mss->AddStreamDescriptor(stream->StreamDescriptor);
+			}
+		}
+	}
 
 	// Perform seek operation when MediaStreamSource received seek event from MediaElement
 	if (request->StartPosition && request->StartPosition->Value.Duration <= mediaDuration.Duration && (!isFirstSeek || request->StartPosition->Value.Duration > 0))

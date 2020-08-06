@@ -18,8 +18,11 @@
 
 #include "pch.h"
 #include "UncompressedSampleProvider.h"
+#include <EventToken.h>
+#include <windows.graphics.directx.direct3d11.interop.h>
 
 using namespace FFmpegInterop;
+
 
 UncompressedSampleProvider::UncompressedSampleProvider(
 	FFmpegReader^ reader,
@@ -33,7 +36,7 @@ UncompressedSampleProvider::UncompressedSampleProvider(
 	decoder = DecoderEngine::FFmpegSoftwareDecoder;
 }
 
-HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration)
+HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface)
 {
 	HRESULT hr = S_OK;
 
@@ -48,10 +51,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 	while (SUCCEEDED(hr))
 	{
 		hr = GetFrameFromFFmpegDecoder(avFrame, samplePts, sampleDuration);
-		if (sampleDuration == 0 && this->m_pAvCodecCtx->codec_type == AVMEDIA_TYPE_VIDEO)
-		{
-			samplePts.ToString();
-		}
+
 		if (hr == S_FALSE)
 		{
 			// end of stream reached
@@ -60,7 +60,14 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 
 		if (SUCCEEDED(hr))
 		{
-			hr = CreateBufferFromFrame(pBuffer, avFrame, samplePts, sampleDuration);
+			if (m_pAvCodecCtx->hw_device_ctx)
+			{
+				auto nativeSurface = reinterpret_cast<IDXGISurface*>(avFrame->data[0]);
+				*surface = Windows::Graphics::DirectX::Direct3D11::CreateDirect3DSurface(nativeSurface);
+			}
+			else {
+				hr = CreateBufferFromFrame(pBuffer, avFrame, samplePts, sampleDuration);
+			}
 			if (SUCCEEDED(hr))
 			{
 				// sample created. update m_nextFramePts in case pts or duration have changed
@@ -88,7 +95,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 	return hr;
 }
 
-HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame,  int64_t& framePts, int64_t& frameDuration)
+HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
 {
 	HRESULT hr = S_OK;
 
@@ -96,15 +103,16 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, 
 	{
 		HRESULT decodeFrame;
 		// Try to get a frame from the decoder.
-		if (frameProvider) 
+		if (frameProvider)
 		{
 			decodeFrame = frameProvider->GetFrameFromCodec(avFrame);
 		}
 		if (hwFrameProvider)
 		{
-			AVFrame* hwFrame = av_frame_alloc();
-			decodeFrame = hwFrameProvider->GetHWFrameFromCodec(hwFrame, avFrame);
-			av_frame_free(&hwFrame);
+			//AVFrame* hwFrame = av_frame_alloc();
+			decodeFrame = hwFrameProvider->GetHWFrameFromCodec(avFrame, avFrame);
+			/*av_frame_free(&hwFrame);*/
+
 		}
 		if (decodeFrame == AVERROR(EAGAIN))
 		{

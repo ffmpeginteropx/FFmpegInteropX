@@ -177,8 +177,8 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 		IBuffer^ buffer = nullptr;
 		LONGLONG pts = 0;
 		LONGLONG dur = 0;
-
-		hr = CreateNextSampleBuffer(&buffer, pts, dur);
+		IDirect3DSurface^ surface;
+		hr = CreateNextSampleBuffer(&buffer, pts, dur, &surface);
 		
 		if (hr == S_OK)
 		{
@@ -186,7 +186,15 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 			dur = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * dur);
 
 			TimeSpan duration = { dur };
-			sample = MediaStreamSample::CreateFromBuffer(buffer, { pts });
+			if (surface)
+			{
+				sample = MediaStreamSample::CreateFromDirect3D11Surface(surface, { pts });
+			}
+			else 
+			{
+				sample = MediaStreamSample::CreateFromBuffer(buffer, { pts });
+
+			}
 			sample->Duration = duration;
 			sample->Discontinuous = m_isDiscontinuous;
 

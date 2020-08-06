@@ -56,7 +56,7 @@ namespace FFmpegInterop
 			if (SUCCEEDED(hr))
 			{				
 				if (m_pAvCodecCtx->hw_device_ctx != NULL) {
-					hr = av_hwframe_transfer_data(avswFrame, avhwFrame, 0);
+					//hr = av_hwframe_transfer_data(avswFrame, avhwFrame, 0);
 				}
 				else
 				{
@@ -65,7 +65,7 @@ namespace FFmpegInterop
 
 				if (SUCCEEDED(hr))
 				{
-					hr = av_frame_copy_props(avswFrame, avhwFrame);
+					//hr = av_frame_copy_props(avswFrame, avhwFrame);
 				}
 				
 				hadFirstFrame = true;
