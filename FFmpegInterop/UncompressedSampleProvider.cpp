@@ -70,6 +70,9 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 				ID3D11Device* ffmpegDevice;
 				ID3D11DeviceContext* ffmpegDevcieContext;
 
+				ID3D11DeviceContext* mssDevcieContext;
+				GraphicsDevice->GetImmediateContext(&mssDevcieContext);
+
 				nativeSurface->GetDevice(&ffmpegDevice);
 				ffmpegDevice->GetImmediateContext(&ffmpegDevcieContext);
 				nativeSurface->GetDesc(&desc);
@@ -87,16 +90,31 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 				desc_shared.Usage = D3D11_USAGE_DEFAULT;
 				desc_shared.CPUAccessFlags = 0;
 				desc_shared.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
-				desc_shared.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+				desc_shared.BindFlags = desc.BindFlags;
 				ID3D11Texture2D* copy_tex;
 				hr = GraphicsDevice->CreateTexture2D(&desc_shared, NULL, &copy_tex);
 
-				ffmpegDevcieContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)avFrame->data[0], NULL);
+				HANDLE sharedHandle;
+				IDXGIResource* dxgiResource;
+				copy_tex->QueryInterface(&dxgiResource);
 
+				// obtain handle to IDXGIResource object.
+				hr = dxgiResource->GetSharedHandle(&sharedHandle);
+				SAFE_RELEASE(dxgiResource);
+
+				ID3D11Texture2D* sharedTexture;
+
+				HRESULT hr = ffmpegDevice->OpenSharedResource(sharedHandle, IID_ID3D11Texture2D, (void**)&sharedTexture);
+
+				ffmpegDevcieContext->CopySubresourceRegion(sharedTexture, 0, 0, 0, 0,  nativeSurface, (UINT)avFrame->data[1], NULL);
+				ffmpegDevcieContext->Flush();
+				mssDevcieContext->Flush();
 				IDXGISurface* finalSurface = NULL;
-				copy_tex->QueryInterface(&finalSurface);
+				sharedTexture->QueryInterface(&finalSurface);
 
 				*surface = DirectXInteropHelper::GetSurface(finalSurface);
+				SAFE_RELEASE(ffmpegDevice);
+				SAFE_RELEASE(ffmpegDevcieContext);
 
 			}
 			else {
