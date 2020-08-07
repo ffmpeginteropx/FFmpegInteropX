@@ -64,6 +64,7 @@
     <ClCompile Include="BasicVideoEffect.cpp">
       <Filter>Effects</Filter>
     </ClCompile>
+    <ClCompile Include="DirectXInteropHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -179,6 +180,7 @@
     <ClInclude Include="UncompressedHWVideoFrameProvider.h">
       <Filter>SampleProviders</Filter>
     </ClInclude>
+    <ClInclude Include="DirectXInteropHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\FFmpegConfig.sh">

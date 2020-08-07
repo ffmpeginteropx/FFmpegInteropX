@@ -124,7 +124,7 @@ namespace MediaPlayerCS
             {
                 if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
                 {
-                    playbackItem.VideoTracks.SelectedIndex = 
+                    playbackItem.VideoTracks.SelectedIndex =
                         (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
                 }
             }
@@ -197,7 +197,7 @@ namespace MediaPlayerCS
         private void CreatePlaybackItemAndStartPlaybackInternal()
         {
             playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
-            
+
             // Pass MediaStreamSource to Media Element
             mediaElement.SetPlaybackSource(playbackItem);
 
@@ -333,8 +333,11 @@ namespace MediaPlayerCS
         private async void DisplayErrorMessage(string message)
         {
             // Display error message
-            var errorDialog = new MessageDialog(message);
-            var x = await errorDialog.ShowAsync();
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+            {
+                var errorDialog = new MessageDialog(message);
+                var x = await errorDialog.ShowAsync();
+            });
         }
 
         private void CbEncodings_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -467,17 +470,17 @@ namespace MediaPlayerCS
             tbSubtitleDelay.Text = "Subtitle delay: 0s";
         }
 
-      
+
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
         {
             PassthroughVideo.IsEnabled = !AutoDetect.IsOn;
             Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.AutoDetection : VideoDecoderMode.ManualSelection;
         }
-        
+
         private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
         {
-        
-	mediaElement.RemoveAllEffects();
+
+            mediaElement.RemoveAllEffects();
             if (enableVideoEffects.IsOn)
             {
                 VideoEffectConfiguration.AddVideoEffect(mediaElement);

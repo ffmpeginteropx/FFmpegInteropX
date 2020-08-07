@@ -19,7 +19,8 @@
 #include "pch.h"
 #include "UncompressedSampleProvider.h"
 #include <EventToken.h>
-#include <windows.graphics.directx.direct3d11.interop.h>
+#include <d3d11.h>
+#include <DirectXInteropHelper.h>
 
 using namespace FFmpegInterop;
 
@@ -62,8 +63,45 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 		{
 			if (m_pAvCodecCtx->hw_device_ctx)
 			{
-				auto nativeSurface = reinterpret_cast<IDXGISurface*>(avFrame->data[0]);
-				*surface = Windows::Graphics::DirectX::Direct3D11::CreateDirect3DSurface(nativeSurface);
+				auto nativeSurface = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
+				ID3D11Texture2D* frameData;
+				D3D11_TEXTURE2D_DESC desc;
+				
+				ID3D11Device* ffmpegDevice;
+				ID3D11DeviceContext* ffmpegDevcieContext;
+
+				nativeSurface->GetDevice(&ffmpegDevice);
+				ffmpegDevice->GetImmediateContext(&ffmpegDevcieContext);
+				nativeSurface->GetDesc(&desc);
+
+
+				D3D11_TEXTURE2D_DESC desc_shared;
+				ZeroMemory(&desc_shared, sizeof(desc_shared));
+				desc_shared.Width = 0;
+				desc_shared.Height = 0;
+				desc_shared.MipLevels = desc.MipLevels;
+				desc_shared.ArraySize = desc.ArraySize;
+				desc_shared.Format = desc.Format;
+				desc_shared.SampleDesc.Count = desc.SampleDesc.Count;
+				desc_shared.SampleDesc.Quality = desc.SampleDesc.Quality;
+				desc_shared.Usage = D3D11_USAGE_DEFAULT;
+				desc_shared.CPUAccessFlags = 0;
+				desc_shared.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+				desc_shared.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+				ID3D11Texture2D* copy_tex;
+				hr = GraphicsDevice->CreateTexture2D(&desc, NULL, &copy_tex);
+				IDXGISurface* finalSurface = NULL;
+				copy_tex->QueryInterface(&finalSurface);
+
+				ffmpegDevcieContext->CopyResource(copy_tex, nativeSurface);
+				
+				
+				ID3D11Device* test;
+				copy_tex->GetDevice(&test);
+				
+				
+				*surface = DirectXInteropHelper::GetSurface(finalSurface);
+
 			}
 			else {
 				hr = CreateBufferFromFrame(pBuffer, avFrame, samplePts, sampleDuration);

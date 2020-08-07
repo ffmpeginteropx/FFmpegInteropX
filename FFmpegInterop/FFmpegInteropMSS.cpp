@@ -1546,11 +1546,15 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 		IMFDXGIDeviceManagerSource* surfaceManager;
 		IMFDXGIDeviceManager* deviceManager;
 		HANDLE devicePointer;
+		void* actualDevicePointer;
 		unknownMss->QueryInterface(&surfaceManager);
 		surfaceManager->GetManager(&deviceManager);
+	
 		deviceManager->OpenDeviceHandle(&devicePointer);
-		auto directXDevice = (ID3D11Device*)devicePointer;
-
+		deviceManager->GetVideoService(devicePointer, IID_ID3D11Device, &actualDevicePointer);
+		
+		auto directXDevice = (ID3D11Device*)actualDevicePointer;
+	
 		for each (auto stream in videoStreams)
 		{
 			stream->GraphicsDevice = directXDevice;
