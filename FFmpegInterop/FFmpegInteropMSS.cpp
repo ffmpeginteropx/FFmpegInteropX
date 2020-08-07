@@ -1563,6 +1563,8 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 				mss->AddStreamDescriptor(stream->StreamDescriptor);
 			}
 		}
+
+		
 	}
 
 	// Perform seek operation when MediaStreamSource received seek event from MediaElement

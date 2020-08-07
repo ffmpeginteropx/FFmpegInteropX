@@ -77,8 +77,8 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 
 				D3D11_TEXTURE2D_DESC desc_shared;
 				ZeroMemory(&desc_shared, sizeof(desc_shared));
-				desc_shared.Width = 0;
-				desc_shared.Height = 0;
+				desc_shared.Width = avFrame->width;
+				desc_shared.Height = avFrame->height;
 				desc_shared.MipLevels = desc.MipLevels;
 				desc_shared.ArraySize = desc.ArraySize;
 				desc_shared.Format = desc.Format;
@@ -90,15 +90,11 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 				desc_shared.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 				ID3D11Texture2D* copy_tex;
 				hr = GraphicsDevice->CreateTexture2D(&desc, NULL, &copy_tex);
-				IDXGISurface* finalSurface = NULL;
-				copy_tex->QueryInterface(&finalSurface);
-
+				
 				ffmpegDevcieContext->CopyResource(copy_tex, nativeSurface);
 				
-				
-				ID3D11Device* test;
-				copy_tex->GetDevice(&test);
-				
+				IDXGISurface* finalSurface = NULL;
+				copy_tex->QueryInterface(&finalSurface);
 				
 				*surface = DirectXInteropHelper::GetSurface(finalSurface);
 
