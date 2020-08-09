@@ -140,7 +140,6 @@
     <ClInclude Include="MediaMetadata.h" />
     <ClInclude Include="UncompressedAudioSampleProvider.h" />
     <ClInclude Include="UncompressedFrameProvider.h" />
-    <ClInclude Include="UncompressedHWVideoFrameProvider.h" />
     <ClInclude Include="UncompressedSampleProvider.h" />
     <ClInclude Include="UncompressedVideoSampleProvider.h" />
     <ClInclude Include="VideoEffectConfiguration.h" />

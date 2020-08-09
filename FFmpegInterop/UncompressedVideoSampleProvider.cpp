@@ -21,7 +21,6 @@
 #include "NativeBufferFactory.h"
 #include <mfapi.h>
 #include "VideoEffectFactory.h"
-#include <UncompressedHWVideoFrameProvider.h>
 
 extern "C"
 {
@@ -89,7 +88,7 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 		m_OutputPixelFormat = AV_PIX_FMT_NV12;
 		outputMediaSubtype = MediaEncodingSubtypes::Nv12;
 	}
-	
+
 	TargetWidth = decoderWidth = m_pAvCodecCtx->width;
 	TargetHeight = decoderHeight = m_pAvCodecCtx->height;
 
@@ -123,18 +122,9 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor()
 {
 	SelectOutputFormat();
-	if (m_pAvCodecCtx->hw_device_ctx)
-	{
-		hwFrameProvider = ref new UncompressedHWVideoFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx));
-	}
-	else if (m_pAvCodecCtx->hw_frames_ctx)
-	{
 
-	}
-	else 
-	{
-		frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx));
-	}
+	frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx));
+
 	auto videoProperties = VideoEncodingProperties::CreateUncompressed(outputMediaSubtype, decoderWidth, decoderHeight);
 
 	SetCommonVideoEncodingProperties(videoProperties, false);
@@ -234,7 +224,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 			if (SUCCEEDED(hr))
 			{
 				// Convert to output format using FFmpeg software scaler
-				if (sws_scale(m_pSwsCtx, (const uint8_t **)(avFrame->data), avFrame->linesize, 0, m_pAvCodecCtx->height, data, linesize) > 0)
+				if (sws_scale(m_pSwsCtx, (const uint8_t**)(avFrame->data), avFrame->linesize, 0, m_pAvCodecCtx->height, data, linesize) > 0)
 				{
 					*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, buffer->size, free_buffer, buffer);
 				}
@@ -376,7 +366,7 @@ AVBufferRef* UncompressedVideoSampleProvider::AllocateBuffer(int totalSize)
 	return buffer;
 }
 
-int UncompressedVideoSampleProvider::get_buffer2(AVCodecContext *avCodecContext, AVFrame *frame, int flags)
+int UncompressedVideoSampleProvider::get_buffer2(AVCodecContext* avCodecContext, AVFrame* frame, int flags)
 {
 	// If frame size changes during playback and gets larger than our buffer, we need to switch to sws_scale
 	auto provider = reinterpret_cast<UncompressedVideoSampleProvider^>(avCodecContext->opaque);

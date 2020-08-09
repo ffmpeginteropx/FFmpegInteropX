@@ -177,9 +177,6 @@
     </ClInclude>
     <ClInclude Include="Enumerations.h" />
     <ClInclude Include="CodecRequiredEventArgs.h" />
-    <ClInclude Include="UncompressedHWVideoFrameProvider.h">
-      <Filter>SampleProviders</Filter>
-    </ClInclude>
     <ClInclude Include="DirectXInteropHelper.h" />
   </ItemGroup>
   <ItemGroup>

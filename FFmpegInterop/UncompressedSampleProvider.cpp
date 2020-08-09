@@ -75,7 +75,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 				GraphicsDevice->GetImmediateContext(&mssDevcieContext);
 				//get the ffmpeg device pointer and its context
 				nativeSurface->GetDevice(&ffmpegDevice);
-				
+
 				ffmpegDevice->GetImmediateContext(&ffmpegDevcieContext);
 				//get the description of ffmpeg texture 2D
 				nativeSurface->GetDesc(&desc);
@@ -102,7 +102,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 				HANDLE sharedHandle;
 				IDXGIResource* dxgiResource;
 				copy_tex->QueryInterface(&dxgiResource);
-				
+
 				hr = dxgiResource->GetSharedHandle(&sharedHandle);
 				SAFE_RELEASE(dxgiResource);
 
@@ -110,7 +110,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 				//open the shared handle on the ffmpeg device
 				HRESULT hr = ffmpegDevice->OpenSharedResource(sharedHandle, IID_ID3D11Texture2D, (void**)&sharedTexture);
 				//copy the last array of the ffmpeg texture to the shared texture
-				ffmpegDevcieContext->CopySubresourceRegion(sharedTexture, 0, 0, 0, 0,  nativeSurface, (UINT)avFrame->data[1], NULL);
+				ffmpegDevcieContext->CopySubresourceRegion(sharedTexture, 0, 0, 0, 0, nativeSurface, (UINT)avFrame->data[1], NULL);
 				//flush the contextes to ensure the GPU data is updated
 				ffmpegDevcieContext->Flush();
 				mssDevcieContext->Flush();
@@ -122,7 +122,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 				SAFE_RELEASE(ffmpegDevice);
 				SAFE_RELEASE(ffmpegDevcieContext);
 				SAFE_RELEASE(copy_tex);
-				SAFE_RELEASE(sharedTexture);	
+				SAFE_RELEASE(sharedTexture);
 			}
 			else {
 				hr = CreateBufferFromFrame(pBuffer, avFrame, samplePts, sampleDuration);
@@ -162,17 +162,8 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, 
 	{
 		HRESULT decodeFrame;
 		// Try to get a frame from the decoder.
-		if (frameProvider)
-		{
-			decodeFrame = frameProvider->GetFrameFromCodec(avFrame);
-		}
-		if (hwFrameProvider)
-		{
-			//AVFrame* hwFrame = av_frame_alloc();
-			decodeFrame = hwFrameProvider->GetHWFrameFromCodec(avFrame, avFrame);
-			/*av_frame_free(&hwFrame);*/
+		decodeFrame = frameProvider->GetFrameFromCodec(avFrame);
 
-		}
 		if (decodeFrame == AVERROR(EAGAIN))
 		{
 			// The decoder doesn't have enough data to produce a frame,

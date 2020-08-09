@@ -24,7 +24,6 @@
 extern "C"
 {
 #include <libswresample/swresample.h>
-#include <UncompressedHWVideoFrameProvider.h>
 }
 
 namespace FFmpegInterop
@@ -52,7 +51,6 @@ namespace FFmpegInterop
 			frameProvider->DisableFilter();
 		}
 		UncompressedFrameProvider ^ frameProvider;
-		UncompressedHWVideoFrameProvider^ hwFrameProvider;
 
 
 	public:
