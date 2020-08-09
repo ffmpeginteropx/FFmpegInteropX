@@ -75,6 +75,9 @@ MediaSampleProvider::~MediaSampleProvider()
 
 	avcodec_close(m_pAvCodecCtx);
 	avcodec_free_context(&m_pAvCodecCtx);
+
+	SAFE_RELEASE(GraphicsDevice);
+	SAFE_RELEASE(GraphicsDeviceContext);
 }
 
 HRESULT MediaSampleProvider::Initialize()

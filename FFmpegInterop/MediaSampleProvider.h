@@ -124,6 +124,7 @@ namespace FFmpegInterop
 		int64 m_startOffset;
 		DecoderEngine decoder;
 		ID3D11Device* GraphicsDevice;
+		ID3D11DeviceContext* GraphicsDeviceContext;
 	};
 }
 

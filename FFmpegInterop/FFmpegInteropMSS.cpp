@@ -1195,17 +1195,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 		// allocate a new decoding context
 		auto avVideoCodecCtx = avcodec_alloc_context3(avVideoCodec);
 		AVBufferRef* avHardwareContext;
-		const AVCodecHWConfig* hwconfig;
-
-		for (int i = 0;; i++)
-		{
-			hwconfig = avcodec_get_hw_config(avVideoCodec, i);
-			if (hwconfig->device_type == AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA)
-			{
-				break;
-			}
-			if (!hwconfig) break;
-		}
+					
 
 		av_hwdevice_ctx_create(&avHardwareContext, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
 		if (!avHardwareContext)
@@ -1255,7 +1245,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			{
 
 				// Detect video format and create video stream descriptor accordingly
-				result = CreateVideoSampleProvider(avStream, avVideoCodecCtx, index, avHardwareContext, hwconfig);
+				result = CreateVideoSampleProvider(avStream, avVideoCodecCtx, index, avHardwareContext);
 			}
 		}
 
@@ -1397,7 +1387,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateAudioSampleProvider(AVStream* avStr
 	return audioSampleProvider;
 }
 
-MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index, AVBufferRef* avHardwareContext, const AVCodecHWConfig* hwconfig)
+MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index, AVBufferRef* avHardwareContext)
 {
 	MediaSampleProvider^ videoSampleProvider;
 	VideoEncodingProperties^ videoProperties;
@@ -1546,25 +1536,31 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 		IMFDXGIDeviceManagerSource* surfaceManager;
 		IMFDXGIDeviceManager* deviceManager;
 		HANDLE devicePointer;
-		void* actualDevicePointer;
+		HANDLE actualDevicePointer;
 		unknownMss->QueryInterface(&surfaceManager);
 		surfaceManager->GetManager(&deviceManager);
-	
+
 		deviceManager->OpenDeviceHandle(&devicePointer);
 		deviceManager->GetVideoService(devicePointer, IID_ID3D11Device, &actualDevicePointer);
-		
-		auto directXDevice = (ID3D11Device*)actualDevicePointer;
 	
+		auto directXDevice = (ID3D11Device*)actualDevicePointer;
+		ID3D11DeviceContext* directXDeviceContext;
+		directXDevice->GetImmediateContext(&directXDeviceContext);
+
 		for each (auto stream in videoStreams)
 		{
 			stream->GraphicsDevice = directXDevice;
+			stream->GraphicsDeviceContext = directXDeviceContext;
 			if (stream != currentVideoStream)
 			{
 				mss->AddStreamDescriptor(stream->StreamDescriptor);
 			}
 		}
 
-		
+		SAFE_RELEASE(surfaceManager);
+		SAFE_RELEASE(deviceManager);
+		CloseHandle(devicePointer);
+		SAFE_RELEASE(unknownMss);
 	}
 
 	// Perform seek operation when MediaStreamSource received seek event from MediaElement
