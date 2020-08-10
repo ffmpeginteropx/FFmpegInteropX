@@ -70,9 +70,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 
 				ID3D11Device* ffmpegDevice;
 				ID3D11DeviceContext* ffmpegDevcieContext;
-				ID3D11DeviceContext* mssDevcieContext;
-				//get the MSS device context
-				GraphicsDevice->GetImmediateContext(&mssDevcieContext);
+
 				//get the ffmpeg device pointer and its context
 				nativeSurface->GetDevice(&ffmpegDevice);
 
@@ -108,21 +106,23 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 
 				ID3D11Texture2D* sharedTexture;
 				//open the shared handle on the ffmpeg device
-				HRESULT hr = ffmpegDevice->OpenSharedResource(sharedHandle, IID_ID3D11Texture2D, (void**)&sharedTexture);
+				hr = ffmpegDevice->OpenSharedResource(sharedHandle, IID_ID3D11Texture2D, (void**)&sharedTexture);
 				//copy the last array of the ffmpeg texture to the shared texture
 				ffmpegDevcieContext->CopySubresourceRegion(sharedTexture, 0, 0, 0, 0, nativeSurface, (UINT)avFrame->data[1], NULL);
 				//flush the contextes to ensure the GPU data is updated
 				ffmpegDevcieContext->Flush();
-				mssDevcieContext->Flush();
+				GraphicsDeviceContext->Flush();
 				//create a IDXGISurface from the shared texture
 				IDXGISurface* finalSurface = NULL;
 				sharedTexture->QueryInterface(&finalSurface);
 				//get the IDirect3DSurface pointer
 				*surface = DirectXInteropHelper::GetSurface(finalSurface);
+
 				SAFE_RELEASE(ffmpegDevice);
 				SAFE_RELEASE(ffmpegDevcieContext);
 				SAFE_RELEASE(copy_tex);
 				SAFE_RELEASE(sharedTexture);
+				hr = S_OK;
 			}
 			else {
 				hr = CreateBufferFromFrame(pBuffer, avFrame, samplePts, sampleDuration);
