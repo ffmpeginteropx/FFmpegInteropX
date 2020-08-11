@@ -22,6 +22,11 @@
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <AppxBundle>Always</AppxBundle>
     <AppxBundlePlatforms>x86</AppxBundlePlatforms>
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <AppxPackageDir>$(SolutionDir)AppPackages\MediaPlayerCS\</AppxPackageDir>
+    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
     <DebugSymbols>true</DebugSymbols>
@@ -139,12 +144,15 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)FFmpegInterop\FFmpegInterop.vcxproj">
+    <ProjectReference Include="C:\Source\FFmpegInteropX\FFmpegInterop\FFmpegInterop.vcxproj">
       <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
       <Name>FFmpegInterop</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="FFmpegInteropX">
+      <Version>0.9.1-pre</Version>
+    </PackageReference>
     <PackageReference Include="FFmpegInteropX.FFmpegUWP">
       <Version>4.2.200</Version>
     </PackageReference>
