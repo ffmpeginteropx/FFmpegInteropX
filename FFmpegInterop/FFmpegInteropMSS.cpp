@@ -1199,7 +1199,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 	{
 		// allocate a new decoding context
 		auto avVideoCodecCtx = avcodec_alloc_context3(avVideoCodec);
-		
+
 
 		if (!avVideoCodecCtx)
 		{
@@ -1218,7 +1218,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			}
 		}
 		if (IsAVSampleSource())
-		{	
+		{
 
 			av_hwdevice_ctx_create(&avHardwareContext, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
 			if (!avHardwareContext)
@@ -1549,7 +1549,7 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 
 		deviceManager->OpenDeviceHandle(&devicePointer);
 		deviceManager->GetVideoService(devicePointer, IID_ID3D11Device, &actualDevicePointer);
-	
+
 		auto directXDevice = (ID3D11Device*)actualDevicePointer;
 		ID3D11DeviceContext* directXDeviceContext;
 		directXDevice->GetImmediateContext(&directXDeviceContext);
