@@ -130,6 +130,10 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 	{
 		fileStreamData->Release();
 	}
+	if (avHardwareContext)
+	{
+		av_buffer_unref(&avHardwareContext);
+	}
 	mutexGuard.unlock();
 }
 
@@ -714,8 +718,9 @@ static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelForm
 	do
 	{
 		format = fmt[index++];
+
 		//		
-		if (format != -1 && result == -1 && is_hwaccel_pix_fmt(format))
+		if (format != -1 && result == -1 && (s->hw_device_ctx ? is_hwaccel_pix_fmt(format) : !is_hwaccel_pix_fmt(format)))
 		{
 			// take first non hw accelerated format
 			result = format;
@@ -1194,16 +1199,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 	{
 		// allocate a new decoding context
 		auto avVideoCodecCtx = avcodec_alloc_context3(avVideoCodec);
-		AVBufferRef* avHardwareContext;
-					
-
-		av_hwdevice_ctx_create(&avHardwareContext, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
-		if (!avHardwareContext)
-		{
-			DebugMessage(L"Could not allocate a hardware decoding context\n");
-			hr = E_OUTOFMEMORY;
-		}
-
+		
 
 		if (!avVideoCodecCtx)
 		{
@@ -1221,7 +1217,18 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 				hr = E_FAIL;
 			}
 		}
-		avVideoCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+		if (IsAVSampleSource())
+		{	
+
+			av_hwdevice_ctx_create(&avHardwareContext, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
+			if (!avHardwareContext)
+			{
+				DebugMessage(L"Could not allocate a hardware decoding context\n");
+				hr = E_OUTOFMEMORY;
+			}
+
+			avVideoCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+		}
 
 		if (SUCCEEDED(hr))
 		{
@@ -1245,7 +1252,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			{
 
 				// Detect video format and create video stream descriptor accordingly
-				result = CreateVideoSampleProvider(avStream, avVideoCodecCtx, index, avHardwareContext);
+				result = CreateVideoSampleProvider(avStream, avVideoCodecCtx, index);
 			}
 		}
 
@@ -1387,7 +1394,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateAudioSampleProvider(AVStream* avStr
 	return audioSampleProvider;
 }
 
-MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index, AVBufferRef* avHardwareContext)
+MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index)
 {
 	MediaSampleProvider^ videoSampleProvider;
 	VideoEncodingProperties^ videoProperties;

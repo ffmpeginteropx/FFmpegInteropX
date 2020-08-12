@@ -270,7 +270,7 @@ namespace FFmpegInterop
 		MediaSampleProvider^ CreateVideoStream(AVStream* avStream, int index);
 		SubtitleProvider^ CreateSubtitleSampleProvider(AVStream* avStream, int index);
 		MediaSampleProvider^ CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
-		MediaSampleProvider^ CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index, AVBufferRef* avHardwareContext);
+		MediaSampleProvider^ CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
 		HRESULT ParseOptions(PropertySet^ ffmpegOptions);
 		void OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args);
 		void OnSampleRequested(MediaStreamSource^ sender, MediaStreamSourceSampleRequestedEventArgs^ args);
@@ -345,6 +345,12 @@ namespace FFmpegInterop
 		TimeSpan subtitleDelay;
 		unsigned char* fileStreamBuffer;
 		bool isFirstSeek;
+		AVBufferRef* avHardwareContext;
+
+		bool IsAVSampleSource()
+		{
+			return !Configuration->IsFrameGrabber && !Configuration->IsExternalSubtitleParser;
+		}
 
 		static CoreDispatcher^ GetCurrentDispatcher();
 	};
