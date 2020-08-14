@@ -34,8 +34,7 @@ param(
 
     [switch] $ClearBuildFolders,
 
-    [switch] $BuildNugetPackage,
-
+    # If a version string is specified, a NuGet package will be created.
     [string] $NugetPackageVersion = "1.0.0",
 
     # FFmpegInteropX NuGet settings
@@ -75,14 +74,8 @@ function Build-Platform {
 
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
-        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\FFmpegInterop\Intermediate\$Platform\*
-        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\FFmpegInterop\$Platform\*
-
-        if ($Platform -eq "x86") # x86 build will also create Win32 folders
-        {
-            Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\FFmpegInterop\Intermediate\Win32\*
-            Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\FFmpegInterop\Win32\*
-        }
+        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Intermediate\FFmpegInterop\$Platform\*
+        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Output\FFmpegInterop\$Platform\*
     }
 
     MSBuild.exe $SolutionDir\FFmpegInterop\FFmpegInterop.vcxproj `
@@ -168,12 +161,13 @@ foreach ($platform in $Platforms) {
     }
 }
 
-if ($success -and $BuildNugetPackage)
+if ($success -and $NugetPackageVersion)
 {
     nuget pack .\FFmpegInteropX.nuspec `
         -Properties "id=FFmpegInteropX;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit" `
         -Version $NugetPackageVersion `
-        -Symbols -SymbolPackageFormat symbols.nupkg
+        -Symbols -SymbolPackageFormat symbols.nupkg `
+        -OutputDirectory "Output\NuGet"
 }
 
 Write-Host
