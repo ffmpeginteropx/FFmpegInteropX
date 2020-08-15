@@ -40,6 +40,7 @@ extern "C"
 {
 #include <libavutil/imgutils.h>
 #include <libavutil/opt.h>
+#include <libavutil/hwcontext_d3d11va.h>
 }
 
 using namespace concurrency;
@@ -1206,9 +1207,11 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			DebugMessage(L"Could not allocate a decoding context\n");
 			hr = E_OUTOFMEMORY;
 		}
+		avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
 
 		if (SUCCEEDED(hr))
 		{
+			avVideoCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
 			avVideoCodecCtx->get_format = &get_format;
 
 			// initialize the stream parameters with demuxer information
@@ -1216,18 +1219,6 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			{
 				hr = E_FAIL;
 			}
-		}
-		if (IsAVSampleSource())
-		{
-
-			av_hwdevice_ctx_create(&avHardwareContext, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
-			if (!avHardwareContext)
-			{
-				DebugMessage(L"Could not allocate a hardware decoding context\n");
-				hr = E_OUTOFMEMORY;
-			}
-
-			avVideoCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
 		}
 
 		if (SUCCEEDED(hr))
@@ -1544,6 +1535,7 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 		IMFDXGIDeviceManager* deviceManager;
 		HANDLE devicePointer;
 		HANDLE actualDevicePointer;
+		HANDLE actualVideoDevicePointer;
 		unknownMss->QueryInterface(&surfaceManager);
 		surfaceManager->GetManager(&deviceManager);
 
@@ -1553,6 +1545,21 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 		auto directXDevice = (ID3D11Device*)actualDevicePointer;
 		ID3D11DeviceContext* directXDeviceContext;
 		directXDevice->GetImmediateContext(&directXDeviceContext);
+
+
+		deviceManager->GetVideoService(devicePointer, IID_ID3D11VideoDevice, &actualVideoDevicePointer);
+		auto videoDevice = (ID3D11VideoDevice*)actualVideoDevicePointer;
+		ID3D11VideoContext* videoContext;
+		directXDeviceContext->QueryInterface(&videoContext);
+
+		auto dataBuffer = (AVHWDeviceContext*)avHardwareContext->data;
+		auto internalDirectXHwContext = (AVD3D11VADeviceContext*)dataBuffer->hwctx;
+
+		internalDirectXHwContext->device_context = directXDeviceContext;
+		internalDirectXHwContext->video_device = videoDevice;
+		internalDirectXHwContext->video_context = videoContext;
+		internalDirectXHwContext->device = directXDevice;
+		auto err = av_hwdevice_ctx_init(avHardwareContext);
 
 		for each (auto stream in videoStreams)
 		{

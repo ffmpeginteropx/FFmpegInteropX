@@ -65,17 +65,8 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 			{
 				//cast the AVframe to texture 2D
 				auto nativeSurface = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
-				ID3D11Texture2D* frameData;
 				D3D11_TEXTURE2D_DESC desc;
-
-				ID3D11Device* ffmpegDevice;
-				ID3D11DeviceContext* ffmpegDevcieContext;
-
-				//get the ffmpeg device pointer and its context
-				nativeSurface->GetDevice(&ffmpegDevice);
-
-				ffmpegDevice->GetImmediateContext(&ffmpegDevcieContext);
-				//get the description of ffmpeg texture 2D
+				
 				nativeSurface->GetDesc(&desc);
 
 				//create a new texture description, with shared flag
@@ -93,35 +84,18 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 				desc_shared.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
 				desc_shared.BindFlags = desc.BindFlags;
 				ID3D11Texture2D* copy_tex;
-				//created a shared texture 2D, on the MSS device pointer
+				//create a shared texture 2D, on the MSS device pointer
 				hr = GraphicsDevice->CreateTexture2D(&desc_shared, NULL, &copy_tex);
-
-				//ge a handle to that shared texture
-				HANDLE sharedHandle;
-				IDXGIResource* dxgiResource;
-				copy_tex->QueryInterface(&dxgiResource);
-
-				hr = dxgiResource->GetSharedHandle(&sharedHandle);
-				SAFE_RELEASE(dxgiResource);
-
-				ID3D11Texture2D* sharedTexture;
-				//open the shared handle on the ffmpeg device
-				hr = ffmpegDevice->OpenSharedResource(sharedHandle, IID_ID3D11Texture2D, (void**)&sharedTexture);
-				//copy the last array of the ffmpeg texture to the shared texture
-				ffmpegDevcieContext->CopySubresourceRegion(sharedTexture, 0, 0, 0, 0, nativeSurface, (UINT)avFrame->data[1], NULL);
-				//flush the contextes to ensure the GPU data is updated
-				ffmpegDevcieContext->Flush();
+				
+				GraphicsDeviceContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)avFrame->data[1], NULL);
 				GraphicsDeviceContext->Flush();
 				//create a IDXGISurface from the shared texture
 				IDXGISurface* finalSurface = NULL;
-				sharedTexture->QueryInterface(&finalSurface);
+				copy_tex->QueryInterface(&finalSurface);
 				//get the IDirect3DSurface pointer
 				*surface = DirectXInteropHelper::GetSurface(finalSurface);
-
-				SAFE_RELEASE(ffmpegDevice);
-				SAFE_RELEASE(ffmpegDevcieContext);
+				
 				SAFE_RELEASE(copy_tex);
-				SAFE_RELEASE(sharedTexture);
 				hr = S_OK;
 			}
 			else {
