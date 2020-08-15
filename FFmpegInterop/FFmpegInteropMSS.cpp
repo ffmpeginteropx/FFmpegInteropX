@@ -1537,7 +1537,7 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 {
 	MediaStreamSourceStartingRequest^ request = args->Request;
 
-	if (isFirstSeek)
+	if (isFirstSeek && !videoStreams.empty())
 	{
 		auto unknownMss = reinterpret_cast<IUnknown*>(sender);
 		IMFDXGIDeviceManagerSource* surfaceManager;
@@ -1558,10 +1558,6 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 		{
 			stream->GraphicsDevice = directXDevice;
 			stream->GraphicsDeviceContext = directXDeviceContext;
-			if (stream != currentVideoStream)
-			{
-				mss->AddStreamDescriptor(stream->StreamDescriptor);
-			}
 		}
 
 		SAFE_RELEASE(surfaceManager);
