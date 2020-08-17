@@ -1,3 +1,5 @@
+md Output\NuGet
+
 nuget restore FFmpegInterop.sln
 
 msbuild FFmpegInterop.sln /m /t:build /p:Configuration=Debug;Platform=x86;AppxBundle=Never /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" || exit
