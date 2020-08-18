@@ -713,7 +713,8 @@ static int is_hwaccel_pix_fmt(enum AVPixelFormat pix_fmt)
 
 static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelFormat* fmt)
 {
-	AVPixelFormat result = (AVPixelFormat)-1;
+	AVPixelFormat result_sw = (AVPixelFormat)-1;
+	AVPixelFormat result_hw = (AVPixelFormat)-1;
 	AVPixelFormat format;
 	int index = 0;
 	do
@@ -721,18 +722,38 @@ static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelForm
 		format = fmt[index++];
 
 		//		
-		if (format != -1 && result == -1 && (s->hw_device_ctx ? is_hwaccel_pix_fmt(format) : !is_hwaccel_pix_fmt(format)))
+		if (format != -1)
 		{
-			// take first non hw accelerated format
-			result = format;
-		}
-		else if (format == AV_PIX_FMT_NV12 && result != AV_PIX_FMT_YUVA420P)
-		{
-			// switch to NV12 if available, unless this is an alpha channel file
-			result = format;
+			if (s->hw_device_ctx && format == AV_PIX_FMT_D3D11)
+			{
+				// we only support D3D11 HW format (not D3D11_VLD)
+				result_hw = format;
+			}
+			else if (result_sw == -1 && !is_hwaccel_pix_fmt(format))
+			{
+				// take first non hw accelerated format
+				result_sw = format;
+			}
+			else if (format == AV_PIX_FMT_NV12 && result_sw != AV_PIX_FMT_YUVA420P)
+			{
+				// switch SW format to NV12 if available, unless this is an alpha channel file
+				result_sw = format;
+			}
 		}
 	} while (format != -1);
-	return result;
+
+	if (result_hw != -1)
+	{
+		// disable multi threading for HW decoder
+		s->thread_count = 1;
+		return result_hw;
+	}
+	else
+	{
+		return result_sw;
+	}
+
+	return result_hw != -1 ? result_hw : result_sw;
 }
 
 HRESULT FFmpegInteropMSS::InitFFmpegContext()
@@ -1207,7 +1228,11 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			DebugMessage(L"Could not allocate a decoding context\n");
 			hr = E_OUTOFMEMORY;
 		}
-		avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
+
+		if (!avHardwareContext)
+		{
+			avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
+		}
 
 		if (SUCCEEDED(hr))
 		{
@@ -1530,6 +1555,7 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 
 	if (isFirstSeek && !videoStreams.empty())
 	{
+		bool hasHwAcceleration = false;
 		auto unknownMss = reinterpret_cast<IUnknown*>(sender);
 		IMFDXGIDeviceManagerSource* surfaceManager;
 		IMFDXGIDeviceManager* deviceManager;
@@ -1539,18 +1565,18 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 		unknownMss->QueryInterface(&surfaceManager);
 		surfaceManager->GetManager(&deviceManager);
 
-		deviceManager->OpenDeviceHandle(&devicePointer);
-		deviceManager->GetVideoService(devicePointer, IID_ID3D11Device, &actualDevicePointer);
+		HRESULT hr;
+		hr = deviceManager->OpenDeviceHandle(&devicePointer);
+		hr = deviceManager->GetVideoService(devicePointer, IID_ID3D11Device, &actualDevicePointer);
 
 		auto directXDevice = (ID3D11Device*)actualDevicePointer;
 		ID3D11DeviceContext* directXDeviceContext;
 		directXDevice->GetImmediateContext(&directXDeviceContext);
 
-
-		deviceManager->GetVideoService(devicePointer, IID_ID3D11VideoDevice, &actualVideoDevicePointer);
+		hr = deviceManager->GetVideoService(devicePointer, IID_ID3D11VideoDevice, &actualVideoDevicePointer);
 		auto videoDevice = (ID3D11VideoDevice*)actualVideoDevicePointer;
 		ID3D11VideoContext* videoContext;
-		directXDeviceContext->QueryInterface(&videoContext);
+		hr = directXDeviceContext->QueryInterface(&videoContext);
 
 		auto dataBuffer = (AVHWDeviceContext*)avHardwareContext->data;
 		auto internalDirectXHwContext = (AVD3D11VADeviceContext*)dataBuffer->hwctx;
@@ -1559,17 +1585,28 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 		internalDirectXHwContext->video_device = videoDevice;
 		internalDirectXHwContext->video_context = videoContext;
 		internalDirectXHwContext->device = directXDevice;
+
+		ID3D10Multithread* multithread;
+		directXDevice->QueryInterface(&multithread);
+
+		if (multithread)
+		{
+			multithread->SetMultithreadProtected(TRUE);
+			multithread->Release();
+		}
+
 		auto err = av_hwdevice_ctx_init(avHardwareContext);
 
 		for each (auto stream in videoStreams)
 		{
+			stream->m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
 			stream->GraphicsDevice = directXDevice;
 			stream->GraphicsDeviceContext = directXDeviceContext;
 		}
 
-		SAFE_RELEASE(surfaceManager);
+		deviceManager->CloseDeviceHandle(devicePointer);
 		SAFE_RELEASE(deviceManager);
-		CloseHandle(devicePointer);
+		SAFE_RELEASE(surfaceManager);
 		SAFE_RELEASE(unknownMss);
 	}
 

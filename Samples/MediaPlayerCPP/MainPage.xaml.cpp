@@ -56,7 +56,7 @@ MainPage::MainPage()
 
 	// Show the control panel on startup so user can start opening media
 	Splitter->IsPaneOpen = true;
-	AutoDetect->IsOn = true;
+	AutoDetect->IsOn = false;
 
 	VideoEffectConfiguration = ref new FFmpegInterop::VideoEffectConfiguration();
 
