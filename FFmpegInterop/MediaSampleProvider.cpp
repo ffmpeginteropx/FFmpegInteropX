@@ -189,6 +189,7 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 			dur = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * dur);
 
 			TimeSpan duration = { dur };
+
 			if (surface)
 			{
 				sample = MediaStreamSample::CreateFromDirect3D11Surface(surface, { pts });
