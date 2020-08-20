@@ -81,7 +81,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 				desc_shared.SampleDesc.Quality = desc.SampleDesc.Quality;
 				desc_shared.Usage = D3D11_USAGE_DEFAULT;
 				desc_shared.CPUAccessFlags = 0;
-				desc_shared.MiscFlags = 0;
+				desc_shared.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
 				desc_shared.BindFlags = desc.BindFlags;
 				ID3D11Texture2D* copy_tex;
 				//create a shared texture 2D, on the MSS device pointer
