@@ -1034,6 +1034,12 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 			startingRequestedToken = mss->Starting += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceStartingEventArgs^>(this, &FFmpegInteropMSS::OnStarting);
 			sampleRequestedToken = mss->SampleRequested += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceSampleRequestedEventArgs^>(this, &FFmpegInteropMSS::OnSampleRequested);
 			switchStreamRequestedToken = mss->SwitchStreamsRequested += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceSwitchStreamsRequestedEventArgs^>(this, &FFmpegInteropMSS::OnSwitchStreamsRequested);
+
+			// Register for closed event. This is done as lambda function, to keep our instance alive until MSS is closed (normal even handlers are weak event handlers).
+			closedToken = mss->Closed += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceClosedEventArgs^>([this](MediaStreamSource^  s, MediaStreamSourceClosedEventArgs^ e)
+				{
+					s->Closed -= closedToken;
+				});
 		}
 	}
 
@@ -1553,7 +1559,7 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 {
 	MediaStreamSourceStartingRequest^ request = args->Request;
 
-	if (isFirstSeek && !videoStreams.empty())
+	if (isFirstSeek && false)// !videoStreams.empty())
 	{
 		bool hasHwAcceleration = false;
 		auto unknownMss = reinterpret_cast<IUnknown*>(sender);

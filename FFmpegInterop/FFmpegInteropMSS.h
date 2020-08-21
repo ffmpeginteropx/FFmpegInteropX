@@ -307,6 +307,7 @@ namespace FFmpegInterop
 		EventRegistrationToken startingRequestedToken;
 		EventRegistrationToken sampleRequestedToken;
 		EventRegistrationToken switchStreamRequestedToken;
+		EventRegistrationToken closedToken;
 		MediaPlaybackItem^ playbackItem;
 		Vector<AudioStreamInfo^>^ audioStrInfos;
 		Vector<SubtitleStreamInfo^>^ subtitleStrInfos;
