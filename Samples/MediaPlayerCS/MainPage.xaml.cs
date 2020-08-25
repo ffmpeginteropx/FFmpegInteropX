@@ -418,14 +418,7 @@ namespace MediaPlayerCS
 
         private void PassthroughVideo_Toggled(object sender, RoutedEventArgs e)
         {
-            var passthrough = PassthroughVideo.IsOn;
-            Config.PassthroughVideoH264 = passthrough;
-            Config.PassthroughVideoHEVC = passthrough;
-            Config.PassthroughVideoMPEG2 = passthrough;
-            Config.PassthroughVideoVC1 = passthrough;
-            Config.PassthroughVideoVP9 = passthrough;
-            Config.PassthroughVideoVP8 = passthrough;
-            Config.PassthroughVideoWMV3 = passthrough;
+            Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
         }
 
         private void AddTestFilter(object sender, RoutedEventArgs e)
@@ -477,7 +470,7 @@ namespace MediaPlayerCS
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
         {
             PassthroughVideo.IsEnabled = !AutoDetect.IsOn;
-            Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.AutoDetection : VideoDecoderMode.ManualSelection;
+            Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
         }
 
         private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)

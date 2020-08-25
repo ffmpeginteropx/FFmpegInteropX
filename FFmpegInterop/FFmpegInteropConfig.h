@@ -27,7 +27,7 @@ namespace FFmpegInterop
 			PassthroughAudioMP3 = false;
 			PassthroughAudioAAC = false;
 
-			VideoDecoderMode = FFmpegInterop::VideoDecoderMode::AutoDetection;
+			VideoDecoderMode = FFmpegInterop::VideoDecoderMode::Automatic;
 
 			PassthroughVideoH264 = true;
 			PassthroughVideoH264MaxProfile = FF_PROFILE_H264_HIGH;

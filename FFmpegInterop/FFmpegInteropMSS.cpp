@@ -1229,14 +1229,42 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			hr = E_OUTOFMEMORY;
 		}
 
-		if (!avHardwareContext)
+		// create and assign HW device context, if supported and requested
+		if (config->VideoDecoderMode == VideoDecoderMode::Automatic)
 		{
-			avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
+			int i = 0;
+			while (true)
+			{
+				auto config = avcodec_get_hw_config(avVideoCodec, i++);
+				if (config)
+				{
+					if (config->pix_fmt == AV_PIX_FMT_D3D11 && config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
+					{
+						if (!avHardwareContext)
+						{
+							avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
+						}
+
+						if (avHardwareContext)
+						{
+							avVideoCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+						}
+						else
+						{
+							hr = E_OUTOFMEMORY;
+						}
+						break;
+					}
+				}
+				else
+				{
+					break;
+				}
+			}
 		}
 
 		if (SUCCEEDED(hr))
 		{
-			avVideoCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
 			avVideoCodecCtx->get_format = &get_format;
 
 			// initialize the stream parameters with demuxer information
@@ -1553,58 +1581,59 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 {
 	MediaStreamSourceStartingRequest^ request = args->Request;
 
-	if (isFirstSeek && !videoStreams.empty())
+	if (isFirstSeek && avHardwareContext)
 	{
-		bool hasHwAcceleration = false;
 		auto unknownMss = reinterpret_cast<IUnknown*>(sender);
-		IMFDXGIDeviceManagerSource* surfaceManager;
-		IMFDXGIDeviceManager* deviceManager;
-		HANDLE devicePointer;
-		HANDLE actualDevicePointer;
-		HANDLE actualVideoDevicePointer;
-		unknownMss->QueryInterface(&surfaceManager);
-		surfaceManager->GetManager(&deviceManager);
+		IMFDXGIDeviceManagerSource* surfaceManager = nullptr;
+		IMFDXGIDeviceManager* deviceManager = nullptr;
+		HANDLE deviceHandle = INVALID_HANDLE_VALUE;
+		ID3D11Device* device = nullptr;
+		ID3D11DeviceContext* deviceContext = nullptr;
+		ID3D11VideoDevice* videoDevice = nullptr;
+		ID3D11VideoContext* videoContext = nullptr;
 
-		HRESULT hr;
-		hr = deviceManager->OpenDeviceHandle(&devicePointer);
-		hr = deviceManager->GetVideoService(devicePointer, IID_ID3D11Device, &actualDevicePointer);
+		HRESULT hr = unknownMss->QueryInterface(&surfaceManager);
 
-		auto directXDevice = (ID3D11Device*)actualDevicePointer;
-		ID3D11DeviceContext* directXDeviceContext;
-		directXDevice->GetImmediateContext(&directXDeviceContext);
-
-		hr = deviceManager->GetVideoService(devicePointer, IID_ID3D11VideoDevice, &actualVideoDevicePointer);
-		auto videoDevice = (ID3D11VideoDevice*)actualVideoDevicePointer;
-		ID3D11VideoContext* videoContext;
-		hr = directXDeviceContext->QueryInterface(&videoContext);
+		if (SUCCEEDED(hr)) hr = surfaceManager->GetManager(&deviceManager);
+		if (SUCCEEDED(hr)) hr = deviceManager->OpenDeviceHandle(&deviceHandle);
+		if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11Device, (void**)&device);
+		if (SUCCEEDED(hr)) device->GetImmediateContext(&deviceContext);
+		if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
+		if (SUCCEEDED(hr)) hr = deviceContext->QueryInterface(&videoContext);
 
 		auto dataBuffer = (AVHWDeviceContext*)avHardwareContext->data;
 		auto internalDirectXHwContext = (AVD3D11VADeviceContext*)dataBuffer->hwctx;
 
-		internalDirectXHwContext->device_context = directXDeviceContext;
+		internalDirectXHwContext->device = device;
+		internalDirectXHwContext->device_context = deviceContext;
 		internalDirectXHwContext->video_device = videoDevice;
 		internalDirectXHwContext->video_context = videoContext;
-		internalDirectXHwContext->device = directXDevice;
 
-		ID3D10Multithread* multithread;
-		directXDevice->QueryInterface(&multithread);
-
-		if (multithread)
+		if (SUCCEEDED(hr))
 		{
-			multithread->SetMultithreadProtected(TRUE);
-			multithread->Release();
+			// multithread interface seems to be optional
+			ID3D10Multithread* multithread;
+			device->QueryInterface(&multithread);
+			if (multithread)
+			{
+				multithread->SetMultithreadProtected(TRUE);
+				multithread->Release();
+			}
 		}
 
 		auto err = av_hwdevice_ctx_init(avHardwareContext);
+		//TODO how to rollback everything on init error?!?
 
 		for each (auto stream in videoStreams)
 		{
-			stream->m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
-			stream->GraphicsDevice = directXDevice;
-			stream->GraphicsDeviceContext = directXDeviceContext;
+			if (stream->m_pAvCodecCtx->hw_device_ctx)
+			{
+				stream->GraphicsDevice = device;
+				stream->GraphicsDeviceContext = deviceContext;
+			}
 		}
 
-		deviceManager->CloseDeviceHandle(devicePointer);
+		deviceManager->CloseDeviceHandle(deviceHandle);
 		SAFE_RELEASE(deviceManager);
 		SAFE_RELEASE(surfaceManager);
 		SAFE_RELEASE(unknownMss);

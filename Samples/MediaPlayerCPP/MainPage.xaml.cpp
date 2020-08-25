@@ -56,7 +56,7 @@ MainPage::MainPage()
 
 	// Show the control panel on startup so user can start opening media
 	Splitter->IsPaneOpen = true;
-	AutoDetect->IsOn = false;
+	AutoDetect->IsOn = true;
 
 	VideoEffectConfiguration = ref new FFmpegInterop::VideoEffectConfiguration();
 
@@ -67,8 +67,6 @@ MainPage::MainPage()
 	cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
 	
 	this->KeyDown += ref new Windows::UI::Xaml::Input::KeyEventHandler(this, &MediaPlayerCPP::MainPage::OnKeyDown);
-
-	PassthroughVideo_Toggled(this, nullptr);
 }
 
 void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -365,14 +363,7 @@ void MediaPlayerCPP::MainPage::CbEncodings_SelectionChanged(Platform::Object^ se
 
 void MediaPlayerCPP::MainPage::PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-	auto passthrough = PassthroughVideo->IsOn;
-	Config->PassthroughVideoH264 = passthrough;
-	Config->PassthroughVideoHEVC = passthrough;
-	Config->PassthroughVideoMPEG2 = passthrough;
-	Config->PassthroughVideoVC1 = passthrough;
-	Config->PassthroughVideoVP9 = passthrough;
-	Config->PassthroughVideoVP8 = passthrough;
-	Config->PassthroughVideoWMV3 = passthrough;
+	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 
@@ -433,7 +424,7 @@ void MediaPlayerCPP::MainPage::MediaOpened(Platform::Object^ sender, Windows::UI
 void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	PassthroughVideo->IsEnabled = !AutoDetect->IsOn;
-	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::AutoDetection : VideoDecoderMode::ManualSelection;
+	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)

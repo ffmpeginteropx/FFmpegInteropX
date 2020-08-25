@@ -81,26 +81,41 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 				desc_shared.SampleDesc.Quality = desc.SampleDesc.Quality;
 				desc_shared.Usage = D3D11_USAGE_DEFAULT;
 				desc_shared.CPUAccessFlags = 0;
-				desc_shared.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+				desc_shared.MiscFlags = 0;
 				desc_shared.BindFlags = desc.BindFlags;
 				ID3D11Texture2D* copy_tex;
+
 				//create a shared texture 2D, on the MSS device pointer
 				hr = GraphicsDevice->CreateTexture2D(&desc_shared, NULL, &copy_tex);
 				
-				GraphicsDeviceContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)avFrame->data[1], NULL);
-				GraphicsDeviceContext->Flush();
+				//copy texture data
+				if (SUCCEEDED(hr))
+				{
+					GraphicsDeviceContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)avFrame->data[1], NULL);
+					GraphicsDeviceContext->Flush();
+				}
+
 				//create a IDXGISurface from the shared texture
 				IDXGISurface* finalSurface = NULL;
-				copy_tex->QueryInterface(&finalSurface);
+				if (SUCCEEDED(hr))
+				{
+					hr = copy_tex->QueryInterface(&finalSurface);
+				}
+
 				//get the IDirect3DSurface pointer
-				*surface = DirectXInteropHelper::GetSurface(finalSurface);
+				if (SUCCEEDED(hr))
+				{
+					*surface = DirectXInteropHelper::GetSurface(finalSurface);
+				}
 				
+				SAFE_RELEASE(finalSurface);
 				SAFE_RELEASE(copy_tex);
-				hr = S_OK;
 			}
-			else {
+			else 
+			{
 				hr = CreateBufferFromFrame(pBuffer, avFrame, samplePts, sampleDuration);
 			}
+
 			if (SUCCEEDED(hr))
 			{
 				// sample created. update m_nextFramePts in case pts or duration have changed
