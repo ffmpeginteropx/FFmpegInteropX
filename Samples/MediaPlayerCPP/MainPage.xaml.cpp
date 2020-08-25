@@ -67,6 +67,8 @@ MainPage::MainPage()
 	cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
 	
 	this->KeyDown += ref new Windows::UI::Xaml::Input::KeyEventHandler(this, &MediaPlayerCPP::MainPage::OnKeyDown);
+
+	PassthroughVideo_Toggled(this, nullptr);
 }
 
 void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -343,6 +345,7 @@ void MediaPlayerCPP::MainPage::OnResolved(TimedTextSource ^sender, TimedTextSour
 void MainPage::MediaFailed(Platform::Object^ sender, Windows::UI::Xaml::ExceptionRoutedEventArgs^ e)
 {
 	DisplayErrorMessage(e->ErrorMessage);
+	actualFFmpegMSS = nullptr;
 }
 
 void MainPage::DisplayErrorMessage(Platform::String^ message)
@@ -423,6 +426,7 @@ void MediaPlayerCPP::MainPage::QuickenSubtitles(Platform::Object^ sender, Window
 void MediaPlayerCPP::MainPage::MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	tbSubtitleDelay->Text = "Subtitle delay: 0s";
+	actualFFmpegMSS = FFmpegMSS;
 }
 
 

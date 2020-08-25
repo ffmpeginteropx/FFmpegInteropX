@@ -41,6 +41,7 @@ namespace MediaPlayerCS
     public sealed partial class MainPage : Page
     {
         private FFmpegInteropMSS FFmpegMSS;
+        private FFmpegInteropMSS actualFFmpegMSS;
         private StorageFile currentFile;
         private MediaPlaybackItem playbackItem;
 
@@ -328,6 +329,7 @@ namespace MediaPlayerCS
         private void MediaFailed(object sender, ExceptionRoutedEventArgs e)
         {
             DisplayErrorMessage(e.ErrorMessage);
+            actualFFmpegMSS = null;
         }
 
         private async void DisplayErrorMessage(string message)
@@ -468,6 +470,7 @@ namespace MediaPlayerCS
         private void MediaOpened(object sender, RoutedEventArgs e)
         {
             tbSubtitleDelay.Text = "Subtitle delay: 0s";
+            actualFFmpegMSS = FFmpegMSS;
         }
 
 

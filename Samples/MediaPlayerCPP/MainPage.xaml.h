@@ -54,6 +54,7 @@ namespace MediaPlayerCPP
 		void PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 
 		Windows::Storage::StorageFile^ currentFile;
+		FFmpegInterop::FFmpegInteropMSS^ actualFFmpegMSS;
 		FFmpegInterop::FFmpegInteropMSS^ FFmpegMSS;
 		Windows::Media::Playback::MediaPlaybackItem^ playbackItem;
 		Windows::Foundation::EventRegistrationToken timedMetadataTracksChangedToken;
