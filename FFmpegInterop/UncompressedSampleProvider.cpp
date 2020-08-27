@@ -91,7 +91,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 				//copy texture data
 				if (SUCCEEDED(hr))
 				{
-					GraphicsDeviceContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)avFrame->data[1], NULL);
+					GraphicsDeviceContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)(unsigned long long)avFrame->data[1], NULL);
 					GraphicsDeviceContext->Flush();
 				}
 

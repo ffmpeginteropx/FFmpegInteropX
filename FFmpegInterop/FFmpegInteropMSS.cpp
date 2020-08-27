@@ -1059,8 +1059,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream* avStr
 		if (config->AutoCorrectAnsiSubtitles && config->IsExternalSubtitleParser && streamByteOrderMark != ByteOrderMark::UTF8)
 		{
 			String^ key = config->AnsiSubtitleEncoding->Name;
-			std::wstring keyW(key->Begin());
-			std::string keyA(keyW.begin(), keyW.end());
+			std::string keyA = StringUtils::PlatformStringToUtf8String(key);
 			const char* keyChar = keyA.c_str();
 
 			if (av_opt_set(avSubsCodecCtx, "sub_charenc", keyChar, AV_OPT_SEARCH_CHILDREN) < 0)
