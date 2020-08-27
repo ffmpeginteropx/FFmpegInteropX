@@ -47,7 +47,7 @@ namespace FFmpegInterop
 			int streamIndex,
 			HardwareDecoderStatus hardwareDecoderStatus);
 		IMediaStreamDescriptor^ CreateStreamDescriptor() override;
-		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
+		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
 		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) override;
 		AVPixelFormat GetOutputPixelFormat() { return m_OutputPixelFormat; }
 		property int TargetWidth;

@@ -61,60 +61,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 
 		if (SUCCEEDED(hr))
 		{
-			if (avFrame->format == AV_PIX_FMT_D3D11)
-			{
-				//cast the AVframe to texture 2D
-				auto nativeSurface = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
-				D3D11_TEXTURE2D_DESC desc;
-				
-				nativeSurface->GetDesc(&desc);
-
-				//create a new texture description, with shared flag
-				D3D11_TEXTURE2D_DESC desc_shared;
-				ZeroMemory(&desc_shared, sizeof(desc_shared));
-				desc_shared.Width = desc.Width;
-				desc_shared.Height = desc.Height;
-				desc_shared.MipLevels = desc.MipLevels;
-				desc_shared.ArraySize = 1;
-				desc_shared.Format = desc.Format;
-				desc_shared.SampleDesc.Count = desc.SampleDesc.Count;
-				desc_shared.SampleDesc.Quality = desc.SampleDesc.Quality;
-				desc_shared.Usage = D3D11_USAGE_DEFAULT;
-				desc_shared.CPUAccessFlags = 0;
-				desc_shared.MiscFlags = 0;
-				desc_shared.BindFlags = desc.BindFlags;
-				ID3D11Texture2D* copy_tex;
-
-				//create a shared texture 2D, on the MSS device pointer
-				hr = GraphicsDevice->CreateTexture2D(&desc_shared, NULL, &copy_tex);
-				
-				//copy texture data
-				if (SUCCEEDED(hr))
-				{
-					GraphicsDeviceContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)(unsigned long long)avFrame->data[1], NULL);
-					GraphicsDeviceContext->Flush();
-				}
-
-				//create a IDXGISurface from the shared texture
-				IDXGISurface* finalSurface = NULL;
-				if (SUCCEEDED(hr))
-				{
-					hr = copy_tex->QueryInterface(&finalSurface);
-				}
-
-				//get the IDirect3DSurface pointer
-				if (SUCCEEDED(hr))
-				{
-					*surface = DirectXInteropHelper::GetSurface(finalSurface);
-				}
-				
-				SAFE_RELEASE(finalSurface);
-				SAFE_RELEASE(copy_tex);
-			}
-			else 
-			{
-				hr = CreateBufferFromFrame(pBuffer, avFrame, samplePts, sampleDuration);
-			}
+			hr = CreateBufferFromFrame(pBuffer, surface, avFrame, samplePts, sampleDuration);
 
 			if (SUCCEEDED(hr))
 			{

@@ -111,6 +111,7 @@
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
     <ClInclude Include="CharacterEncoding.h" />
+    <ClInclude Include="D3D11VideoSampleProvider.h" />
     <ClInclude Include="DirectXInteropHelper.h" />
     <ClInclude Include="Enumerations.h" />
     <ClInclude Include="FFmpegInteropConfig.h" />

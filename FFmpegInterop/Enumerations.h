@@ -12,7 +12,8 @@ namespace FFmpegInterop
 	public enum class DecoderEngine
 	{
 		SystemDecoder,
-		FFmpegSoftwareDecoder
+		FFmpegSoftwareDecoder,
+		FFmpegD3D11HardwareDecoder
 	};
 
 	public enum class VideoDecoderMode

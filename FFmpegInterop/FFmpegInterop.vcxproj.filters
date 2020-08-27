@@ -178,6 +178,9 @@
     <ClInclude Include="Enumerations.h" />
     <ClInclude Include="CodecRequiredEventArgs.h" />
     <ClInclude Include="DirectXInteropHelper.h" />
+    <ClInclude Include="D3D11VideoSampleProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\FFmpegConfig.sh">

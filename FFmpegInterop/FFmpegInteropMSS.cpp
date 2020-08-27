@@ -24,6 +24,7 @@
 #include "HEVCSampleProvider.h"
 #include "UncompressedAudioSampleProvider.h"
 #include "UncompressedVideoSampleProvider.h"
+#include "D3D11VideoSampleProvider.h"
 #include "SubtitleProviderSsaAss.h"
 #include "SubtitleProviderBitmap.h"
 #include "CritSec.h"
@@ -1529,6 +1530,11 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 
 		videoSampleProvider = ref new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus);
 	}
+	else if (avVideoCodecCtx->hw_device_ctx)
+	{
+		hardwareDecoderStatus = HardwareDecoderStatus::Available;
+		videoSampleProvider = ref new D3D11VideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, hardwareDecoderStatus);
+	}
 	else
 	{
 		if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection)
@@ -1582,60 +1588,35 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 
 	if (isFirstSeek && avHardwareContext)
 	{
-		auto unknownMss = reinterpret_cast<IUnknown*>(sender);
-		IMFDXGIDeviceManagerSource* surfaceManager = nullptr;
-		IMFDXGIDeviceManager* deviceManager = nullptr;
-		HANDLE deviceHandle = INVALID_HANDLE_VALUE;
 		ID3D11Device* device = nullptr;
 		ID3D11DeviceContext* deviceContext = nullptr;
-		ID3D11VideoDevice* videoDevice = nullptr;
-		ID3D11VideoContext* videoContext = nullptr;
 
-		HRESULT hr = unknownMss->QueryInterface(&surfaceManager);
-
-		if (SUCCEEDED(hr)) hr = surfaceManager->GetManager(&deviceManager);
-		if (SUCCEEDED(hr)) hr = deviceManager->OpenDeviceHandle(&deviceHandle);
-		if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11Device, (void**)&device);
-		if (SUCCEEDED(hr)) device->GetImmediateContext(&deviceContext);
-		if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
-		if (SUCCEEDED(hr)) hr = deviceContext->QueryInterface(&videoContext);
-
-		auto dataBuffer = (AVHWDeviceContext*)avHardwareContext->data;
-		auto internalDirectXHwContext = (AVD3D11VADeviceContext*)dataBuffer->hwctx;
-
-		internalDirectXHwContext->device = device;
-		internalDirectXHwContext->device_context = deviceContext;
-		internalDirectXHwContext->video_device = videoDevice;
-		internalDirectXHwContext->video_context = videoContext;
+		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext);
 
 		if (SUCCEEDED(hr))
 		{
-			// multithread interface seems to be optional
-			ID3D10Multithread* multithread;
-			device->QueryInterface(&multithread);
-			if (multithread)
+			// assign device and context
+			for each (auto stream in videoStreams)
 			{
-				multithread->SetMultithreadProtected(TRUE);
-				multithread->Release();
+				if (stream->m_pAvCodecCtx->hw_device_ctx)
+				{
+					stream->GraphicsDevice = device;
+					stream->GraphicsDeviceContext = deviceContext;
+				}
 			}
 		}
-
-		auto err = av_hwdevice_ctx_init(avHardwareContext);
-		//TODO how to rollback everything on init error?!?
-
-		for each (auto stream in videoStreams)
+		else
 		{
-			if (stream->m_pAvCodecCtx->hw_device_ctx)
+			// unref all hw device contexts
+			for each (auto stream in videoStreams)
 			{
-				stream->GraphicsDevice = device;
-				stream->GraphicsDeviceContext = deviceContext;
+				if (stream->m_pAvCodecCtx->hw_device_ctx)
+				{
+					av_buffer_unref(&stream->m_pAvCodecCtx->hw_device_ctx);
+				}
 			}
+			av_buffer_unref(&avHardwareContext);
 		}
-
-		deviceManager->CloseDeviceHandle(deviceHandle);
-		SAFE_RELEASE(deviceManager);
-		SAFE_RELEASE(surfaceManager);
-		SAFE_RELEASE(unknownMss);
 	}
 
 	// Perform seek operation when MediaStreamSource received seek event from MediaElement
