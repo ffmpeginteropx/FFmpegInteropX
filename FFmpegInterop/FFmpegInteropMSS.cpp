@@ -120,6 +120,7 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 		m_pReader = nullptr;
 	}
 
+	subtitleStreams.clear();
 	sampleProviders.clear();
 	audioStreams.clear();
 	videoStreams.clear();

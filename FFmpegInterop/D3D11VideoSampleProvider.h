@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UncompressedVideoSampleProvider.h"
+#include "TexturePool.h"
 
 #include <d3d11.h>
 #include <mfidl.h>
@@ -33,40 +34,28 @@ namespace FFmpegInterop
 
 		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override
 		{
-			HRESULT hr;
+			HRESULT hr = S_OK;
 
 			if (avFrame->format == AV_PIX_FMT_D3D11)
 			{
+				if (!texturePool)
+				{
+					texturePool = ref new TexturePool(GraphicsDevice, 5);
+				}
+
 				//cast the AVframe to texture 2D
 				auto nativeSurface = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
-				D3D11_TEXTURE2D_DESC desc;
-
-				nativeSurface->GetDesc(&desc);
-
-				//create a new texture description, with shared flag
-				D3D11_TEXTURE2D_DESC desc_shared;
-				ZeroMemory(&desc_shared, sizeof(desc_shared));
-				desc_shared.Width = desc.Width;
-				desc_shared.Height = desc.Height;
-				desc_shared.MipLevels = desc.MipLevels;
-				desc_shared.ArraySize = 1;
-				desc_shared.Format = desc.Format;
-				desc_shared.SampleDesc.Count = desc.SampleDesc.Count;
-				desc_shared.SampleDesc.Quality = desc.SampleDesc.Quality;
-				desc_shared.Usage = D3D11_USAGE_DEFAULT;
-				desc_shared.CPUAccessFlags = 0;
-				desc_shared.MiscFlags = 0;
-				desc_shared.BindFlags = desc.BindFlags;
-				ID3D11Texture2D* copy_tex;
-
-				//create a shared texture 2D, on the MSS device pointer
-				hr = GraphicsDevice->CreateTexture2D(&desc_shared, NULL, &copy_tex);
+				auto copy_tex = texturePool->GetCopyTexture(nativeSurface);
 
 				//copy texture data
-				if (SUCCEEDED(hr))
+				if (copy_tex)
 				{
 					GraphicsDeviceContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)(unsigned long long)avFrame->data[1], NULL);
 					GraphicsDeviceContext->Flush();
+				}
+				else
+				{
+					hr = E_FAIL;
 				}
 
 				//create a IDXGISurface from the shared texture
@@ -88,9 +77,51 @@ namespace FFmpegInterop
 			else
 			{
 				hr = UncompressedVideoSampleProvider::CreateBufferFromFrame(pBuffer, surface, avFrame, framePts, frameDuration);
+			
+				//TODO propagate actual decoder to StreamInfo class
+				decoder = DecoderEngine::FFmpegSoftwareDecoder;
 			}
 
 			return hr;
+		}
+
+		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) override
+		{
+			if (sample->Direct3D11Surface)
+			{
+				samples.push_back(sample);
+				sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(this, &D3D11VideoSampleProvider::OnProcessed);
+			}
+			
+			return UncompressedVideoSampleProvider::SetSampleProperties(sample);
+		};
+
+		void OnProcessed(Windows::Media::Core::MediaStreamSample^ sender, Platform::Object^ args)
+		{
+			auto unknown = reinterpret_cast<IUnknown*>(sender->Direct3D11Surface);
+			IDXGISurface* surface = NULL;
+			ID3D11Texture2D* texture = NULL;
+
+			HRESULT hr = DirectXInteropHelper::GetDXGISurface(sender->Direct3D11Surface, &surface);
+
+			if (SUCCEEDED(hr))
+			{
+				hr = surface->QueryInterface(&texture);
+			}
+
+			if (SUCCEEDED(hr))
+			{
+				texturePool->ReturnTexture(texture);
+			}
+			
+			auto it = std::find(samples.begin(), samples.end(), sender);
+			if (it != samples.end())
+			{
+				samples.erase(it);
+			}
+
+			SAFE_RELEASE(surface);
+			SAFE_RELEASE(texture);
 		}
 
 		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource^ sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext)
@@ -160,5 +191,9 @@ namespace FFmpegInterop
 			return hr;
 		}
 
-	};
+		TexturePool^ texturePool;
+		std::vector<MediaStreamSample^> samples;
+
+};
 }
+

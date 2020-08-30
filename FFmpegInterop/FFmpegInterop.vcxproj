@@ -137,6 +137,7 @@
     <ClInclude Include="SubtitleProvider.h" />
     <ClInclude Include="SubtitleProviderBitmap.h" />
     <ClInclude Include="SubtitleProviderSsaAss.h" />
+    <ClInclude Include="TexturePool.h" />
     <ClInclude Include="TimeSpanHelpers.h" />
     <ClInclude Include="MediaMetadata.h" />
     <ClInclude Include="UncompressedAudioSampleProvider.h" />

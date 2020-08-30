@@ -177,9 +177,12 @@
     </ClInclude>
     <ClInclude Include="Enumerations.h" />
     <ClInclude Include="CodecRequiredEventArgs.h" />
-    <ClInclude Include="DirectXInteropHelper.h" />
     <ClInclude Include="D3D11VideoSampleProvider.h">
       <Filter>SampleProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectXInteropHelper.h" />
+    <ClInclude Include="TexturePool.h">
+      <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

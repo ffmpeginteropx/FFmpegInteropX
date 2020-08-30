@@ -6,5 +6,6 @@ ref class DirectXInteropHelper
 {
 internal:
 	static IDirect3DSurface^ GetSurface(IDXGISurface* source);
+	static HRESULT GetDXGISurface(IDirect3DSurface^ source, IDXGISurface** dxgiSurface);
 };
 
