@@ -44,6 +44,12 @@ namespace FFmpegInterop {
 		/// <summary>Gets or sets the decode pixel height.</summary>
 		property int DecodePixelHeight;
 
+		/// <summary>Gets the current video stream information.</summary>
+		property VideoStreamInfo^ CurrentVideoStream
+		{
+			VideoStreamInfo^ get() { return interopMSS->VideoStream; }
+		}
+
 		/// <summary>Creates a new FrameGrabber from the specified stream.</summary>
 		static IAsyncOperation<FrameGrabber^>^ CreateFromStreamAsync(IRandomAccessStream^ stream)
 		{
