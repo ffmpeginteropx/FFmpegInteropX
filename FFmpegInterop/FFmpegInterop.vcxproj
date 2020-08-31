@@ -70,8 +70,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IntDir>Intermediate\$(PlatformTarget)\$(Configuration)\</IntDir>
-    <OutDir>$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>..\Intermediate\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <OutDir>..\Output\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -177,6 +177,11 @@
     <None Include="..\Build-FFmpegInteropX.ps1" />
     <None Include="..\FFmpegConfig.sh" />
     <None Include="..\AppVeyor_Build.bat" />
+    <None Include="..\FFmpegInteropX.FFmpegUWP.nuspec" />
+    <None Include="..\FFmpegInteropX.FFmpegUWP.targets" />
+    <None Include="..\FFmpegInteropX.nuspec" />
+    <None Include="..\FFmpegInteropX.targets" />
+    <None Include="..\NuGet.Config" />
     <None Include="..\README-BUILD.md" />
     <None Include="..\README.md" />
     <None Include="FFmpegInteropLibs.props" />

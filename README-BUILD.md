@@ -153,9 +153,16 @@ Run the build script from CMD:
 
 This script has similar parameters as the `Build-FFmpeg.ps1` script. Check parameters above.
 
-## Integrating FFmpegInterop into your app solution (instead of using NuGet package)
+## Integrating the FFmpegInteropX library into your app solution (instead of using NuGet package)
 
-If you want to integrate FFmpegInterop into your app, you can just add the project file (`FFmpegInterop\FFmpegInterop.vcxproj`) to your app solution as an existing project and add a reference from your main app project to FFmpegInterop. The FFmpegInterop project does not have to be in your app's solution folder. 
+If you want to integrate the FFmpegInteropX library into your app, you can just add the project file (`FFmpegInterop\FFmpegInterop.vcxproj`) to your app solution as an existing project and add a reference from your main app project to FFmpegInterop. The FFmpegInterop project does not have to be in your app's solution folder. This allows you to debug into the library.
+
+
+## Integrating custom FFmpeg builds into your app solution using NuGet
+
+When you build FFmpeg UWP and specify a NuGet package version, a package will be created automatically. When you open the FFmpegInteropX solution and click "Manage NuGet packages for Solution", select "LocalPackages" as package source in the top right area. Now you can easily select your latest build and install it into the sample projects. If you want to try the build in your own app, you need to create a NuGet.config file in your app's solution folder, similar to the one in our repo, and have it point to the FFmpegInteropX Output\NuGet folder.
+
+## Integrating custom FFmpeg builds into your app solution without NuGet
 
 Instead of using the FFmpegInteropX.FFmpegUWP NuGet package, you can also manually reference your custom built ffmpeg dll files for the platform you are building. Best is to manually edit your app's project file. This allows you to refer the dlls built for the current platform using $BuildPlatform parameter.
 

@@ -23,6 +23,9 @@
     <Filter Include="Metadata">
       <UniqueIdentifier>{4bf436be-fb97-4ba4-b842-9406d925ebc6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NuGet">
+      <UniqueIdentifier>{6ec5dc49-1ce3-43ae-8a32-385d881df05e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -207,6 +210,21 @@
     </None>
     <None Include="..\Build-FFmpegInteropX.ps1">
       <Filter>Build</Filter>
+    </None>
+    <None Include="..\FFmpegInteropX.FFmpegUWP.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\FFmpegInteropX.FFmpegUWP.targets">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\FFmpegInteropX.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\FFmpegInteropX.targets">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\NuGet.Config">
+      <Filter>NuGet</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -34,15 +34,14 @@ param(
 
     [switch] $ClearBuildFolders,
 
-    [switch] $BuildNugetPackage,
-
+    # If a version string is specified, a NuGet package will be created.
     [string] $NugetPackageVersion = "1.0.0",
 
     # FFmpegInteropX NuGet settings
     [string] $FFmpegInteropXUrl = 'https://github.com/ffmpeginteropx/FFmpegInteropX.git',
 
     [string] $FFmpegInteropXBranch = $(git branch --show-current),
-	
+    
     [string] $FFmpegInteropXCommit = $(git --git-dir Libs/ffmpeg/.git rev-parse HEAD)
 )
 
@@ -71,22 +70,23 @@ function Build-Platform {
     Enter-VsDevShell `
         -VsInstallPath $VsLatestPath `
         -StartInPath "$PWD" `
-        -DevCmdArguments "-arch=$targetArch -host_arch=$hostArch -winsdk=$WindowsTargetPlatformVersion -vcvars_ver=$VcVersion -app_platform=$WindowsTarget"
+        -DevCmdArguments "-arch=$targetArch -host_arch=$hostArch -winsdk=$WindowsTargetPlatformVersion -vcvars_ver=$VcVersion -app_platform=UWP"
 
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
-        # Remove-Item -Force -Recurse $build\*
-        # Remove-Item -Force -Recurse $target\*
+        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Intermediate\FFmpegInterop\$Platform\*
+        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Output\FFmpegInterop\$Platform\*
     }
-	
-	MSBuild.exe $SolutionDir\FFmpegInterop\FFmpegInterop.vcxproj `
-		/p:Configuration=$Configuration `
-		/p:Platform=$Platform `
-		/p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-		/p:PlatformToolset=$PlatformToolset `
-		/p:useenv=true
 
-	if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInterop.vcxproj." }
+    MSBuild.exe $SolutionDir\FFmpegInterop\FFmpegInterop.vcxproj `
+        /restore `
+        /p:Configuration=$Configuration `
+        /p:Platform=$Platform `
+        /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+        /p:PlatformToolset=$PlatformToolset `
+        /p:useenv=true
+
+    if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInterop.vcxproj." }
 
 }
 
@@ -123,6 +123,9 @@ foreach ($item in Get-ChildItem env:)
 $start = Get-Date
 $success = 1
 
+# Restore nuget packets for solution
+nuget.exe restore ${PSScriptRoot}\FFmpegInterop.sln
+
 foreach ($platform in $Platforms) {
 
     try
@@ -158,12 +161,13 @@ foreach ($platform in $Platforms) {
     }
 }
 
-if ($success -and $BuildNugetPackage)
+if ($success -and $NugetPackageVersion)
 {
     nuget pack .\FFmpegInteropX.nuspec `
         -Properties "id=FFmpegInteropX;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit" `
         -Version $NugetPackageVersion `
-        -Symbols -SymbolPackageFormat symbols.nupkg
+        -Symbols -SymbolPackageFormat symbols.nupkg `
+        -OutputDirectory "Output\NuGet"
 }
 
 Write-Host
