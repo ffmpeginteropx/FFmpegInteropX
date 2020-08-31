@@ -25,6 +25,7 @@
 
 #include "MainPage.g.h"
 #include "FloatToDoubleConverter.h"
+#include "TimeSpanToDoubleConverter.h"
 
 namespace MediaPlayerCPP
 {

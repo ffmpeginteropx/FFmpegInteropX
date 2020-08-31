@@ -25,7 +25,11 @@ bld/
 [Oo]bj/
 [Ll]og/
 Generated Files/
-Libs/Build/
+Build/
+Intermediate/
+Output/
+FFmpegUWP/
+FFmpegDesktop/
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -157,6 +161,7 @@ PublishScripts/
 
 # NuGet Packages
 *.nupkg
+*.snupkg
 # The packages folder can be ignored because of Package Restore
 **/packages/*
 # except build/, which is used as an MSBuild target.
