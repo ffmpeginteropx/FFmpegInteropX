@@ -87,6 +87,7 @@ HRESULT MediaSampleProvider::Initialize()
 	{
 		InitializeNameLanguageCodec();
 	}
+	InitializeStreamInfo();
 	return m_streamDescriptor ? S_OK : E_FAIL;
 }
 
@@ -165,6 +166,50 @@ void FFmpegInterop::MediaSampleProvider::InitializeNameLanguageCodec()
 	if (codec)
 	{
 		CodecName = StringUtils::Utf8ToPlatformString(codec);
+	}
+}
+
+void FFmpegInterop::MediaSampleProvider::InitializeStreamInfo()
+{
+	switch (m_pAvCodecCtx->codec_type)
+	{
+	case AVMEDIA_TYPE_AUDIO:
+	{
+		auto channels = m_pAvStream->codecpar->channels;
+		if (channels == 1 && m_pAvStream->codecpar->codec_id == AV_CODEC_ID_AAC && m_pAvStream->codecpar->profile == FF_PROFILE_AAC_HE_V2)
+		{
+			channels = 2;
+		}
+		auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
+
+		streamInfo = ref new AudioStreamInfo(
+			Name, Language, CodecName, m_pAvStream->codecpar->bit_rate, false, 
+			channels, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder);
+
+		break;
+	}
+	case AVMEDIA_TYPE_VIDEO:
+	{
+		auto streamDescriptor = dynamic_cast<VideoStreamDescriptor^>(StreamDescriptor);
+		auto pixelAspect = (double)streamDescriptor->EncodingProperties->PixelAspectRatio->Numerator / streamDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
+		auto videoAspect = ((double)m_pAvCodecCtx->width / m_pAvCodecCtx->height) / pixelAspect;
+		auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
+
+		streamInfo = ref new VideoStreamInfo(Name, Language, CodecName, m_pAvStream->codecpar->bit_rate, false,
+			m_pAvStream->codecpar->width, m_pAvStream->codecpar->height, videoAspect,
+			bitsPerSample, HardwareAccelerationStatus, Decoder);
+
+		break;
+	}
+	case AVMEDIA_TYPE_SUBTITLE:
+	{
+		auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
+		
+		streamInfo = ref new SubtitleStreamInfo(Name, Language, CodecName,
+			false, forced, ((SubtitleProvider^)this)->SubtitleTrack, m_config->IsExternalSubtitleParser);
+
+		break;
+	}
 	}
 }
 

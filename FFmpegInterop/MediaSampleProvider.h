@@ -22,6 +22,7 @@
 #include "AvEffectDefinition.h"
 #include "TimeSpanHelpers.h"
 #include "Enumerations.h"
+#include "StreamInfo.h"
 #include <d3d11.h>
 
 
@@ -49,6 +50,26 @@ namespace FFmpegInterop
 		property IMediaStreamDescriptor^ StreamDescriptor
 		{
 			IMediaStreamDescriptor^ get() { return m_streamDescriptor; }
+		}
+
+		property IStreamInfo^ StreamInfo
+		{
+			IStreamInfo^ get() { return streamInfo; }
+		}
+
+		property AudioStreamInfo^ AudioInfo
+		{
+			AudioStreamInfo^ get() { return dynamic_cast<AudioStreamInfo^>(streamInfo); }
+		}
+
+		property VideoStreamInfo^ VideoInfo
+		{
+			VideoStreamInfo^ get() { return dynamic_cast<VideoStreamInfo^>(streamInfo); }
+		}
+
+		property SubtitleStreamInfo^ SubtitleInfo
+		{
+			SubtitleStreamInfo^ get() { return dynamic_cast<SubtitleStreamInfo^>(streamInfo); }
 		}
 
 		property int StreamIndex
@@ -81,6 +102,7 @@ namespace FFmpegInterop
 	internal:
 		virtual HRESULT Initialize();
 		void InitializeNameLanguageCodec();
+		virtual void InitializeStreamInfo();
 		virtual void QueuePacket(AVPacket *packet);
 		AVPacket* PopPacket();
 		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG & packetPts, LONGLONG & packetDuration);
@@ -118,6 +140,7 @@ namespace FFmpegInterop
 		AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;
 		AVStream* m_pAvStream;
+		IStreamInfo^ streamInfo;
 		bool m_isEnabled = false;
 		bool m_isDiscontinuous;
 		int m_streamIndex;

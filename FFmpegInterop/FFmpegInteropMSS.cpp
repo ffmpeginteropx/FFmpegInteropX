@@ -826,27 +826,16 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 			stream = CreateAudioStream(avStream, index);
 			if (stream)
 			{
-				bool isDefault = index == audioStreamIndex;
-
-				// TODO get info from sample provider
-				auto channels = avStream->codecpar->channels;
-				if (channels == 1 && avStream->codecpar->codec_id == AV_CODEC_ID_AAC && avStream->codecpar->profile == FF_PROFILE_AAC_HE_V2)
+				if (index == audioStreamIndex)
 				{
-					channels = 2;
-				}
-				auto info = ref new AudioStreamInfo(stream->Name, stream->Language, stream->CodecName, avStream->codecpar->bit_rate, isDefault,
-					channels, avStream->codecpar->sample_rate,
-					max(avStream->codecpar->bits_per_raw_sample, avStream->codecpar->bits_per_coded_sample),
-					stream->Decoder);
-				if (isDefault)
-				{
+					stream->AudioInfo->SetDefault();
 					currentAudioStream = stream;
-					audioStrInfos->InsertAt(0, info);
+					audioStrInfos->InsertAt(0, stream->AudioInfo);
 					audioStreams.insert(audioStreams.begin(), stream);
 				}
 				else
 				{
-					audioStrInfos->Append(info);
+					audioStrInfos->Append(stream->AudioInfo);
 					audioStreams.push_back(stream);
 				}
 			}
@@ -857,30 +846,20 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 		}
 		else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && !config->IsExternalSubtitleParser)
 		{
-
-			bool isDefault = index == videoStreamIndex;
 			stream = CreateVideoStream(avStream, index);
-
 			if (stream)
 			{
-				auto streamDescriptor = dynamic_cast<VideoStreamDescriptor^>(stream->StreamDescriptor);
-				auto pixelAspect = (double)streamDescriptor->EncodingProperties->PixelAspectRatio->Numerator / streamDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
-				auto videoAspect = ((double)stream->m_pAvCodecCtx->width / stream->m_pAvCodecCtx->height) / pixelAspect;
-
-				auto info = ref new VideoStreamInfo(stream->Name, stream->Language, stream->CodecName, avStream->codecpar->bit_rate, isDefault,
-					avStream->codecpar->width, avStream->codecpar->height, videoAspect,
-					max(avStream->codecpar->bits_per_raw_sample, avStream->codecpar->bits_per_coded_sample), stream->HardwareAccelerationStatus, stream->Decoder);
-
-				if (isDefault)
+				if (index == videoStreamIndex)
 				{
+					stream->VideoInfo->SetDefault();
 					currentVideoStream = stream;
 					videoStreams.insert(videoStreams.begin(), stream);
-					videoStrInfos->InsertAt(0, info);
+					videoStrInfos->InsertAt(0, stream->VideoInfo);
 				}
 				else
 				{
 					videoStreams.push_back(stream);
-					videoStrInfos->Append(info);
+					videoStrInfos->Append(stream->VideoInfo);
 				}
 			}
 		}
@@ -889,17 +868,15 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 			stream = CreateSubtitleSampleProvider(avStream, index);
 			if (stream)
 			{
-				auto isDefault = index == subtitleStreamIndex;
-				auto info = ref new SubtitleStreamInfo(stream->Name, stream->Language, stream->CodecName,
-					isDefault, (avStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED, ((SubtitleProvider^)stream)->SubtitleTrack, config->IsExternalSubtitleParser);
-				if (isDefault)
+				if (index == subtitleStreamIndex)
 				{
-					subtitleStrInfos->InsertAt(0, info);
+					stream->SubtitleInfo->SetDefault();
+					subtitleStrInfos->InsertAt(0, stream->SubtitleInfo);
 					subtitleStreams.insert(subtitleStreams.begin(), (SubtitleProvider^)stream);
 				}
 				else
 				{
-					subtitleStrInfos->Append(info);
+					subtitleStrInfos->Append(stream->SubtitleInfo);
 					subtitleStreams.push_back((SubtitleProvider^)stream);
 				}
 

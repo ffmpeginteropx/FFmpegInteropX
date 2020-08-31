@@ -78,8 +78,11 @@ namespace FFmpegInterop
 			{
 				hr = UncompressedVideoSampleProvider::CreateBufferFromFrame(pBuffer, surface, avFrame, framePts, frameDuration);
 			
-				//TODO propagate actual decoder to StreamInfo class
-				decoder = DecoderEngine::FFmpegSoftwareDecoder;
+				if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
+				{
+					decoder = DecoderEngine::FFmpegSoftwareDecoder;
+					VideoInfo->DecoderEngine = decoder;
+				}
 			}
 
 			return hr;

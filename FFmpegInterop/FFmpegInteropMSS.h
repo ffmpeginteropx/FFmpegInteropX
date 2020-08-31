@@ -161,11 +161,32 @@ namespace FFmpegInterop
 		};
 
 		///<summary>Gets the first video stream information.</summary>
+		[WFM::Deprecated("Use the CurrentVideoStream property.", WFM::DeprecationType::Deprecate, 0x0)]
 		property VideoStreamInfo^ VideoStream
 		{
 			VideoStreamInfo^ get()
 			{
 				return videoStrInfos->Size > 0 ? videoStrInfos->GetAt(0) : nullptr;
+			}
+		}
+
+		///<summary>Gets the current video stream information.</summary>
+		property VideoStreamInfo^ CurrentVideoStream
+		{
+			VideoStreamInfo^ get()
+			{
+				auto stream = currentVideoStream;
+				return stream ? stream->VideoInfo : nullptr;
+			}
+		}
+
+		///<summary>Gets the current audio stream information.</summary>
+		property AudioStreamInfo^ CurrentAudioStream
+		{
+			AudioStreamInfo^ get()
+			{
+				auto stream = currentAudioStream;
+				return stream ? stream->AudioInfo : nullptr;
 			}
 		}
 
