@@ -11,8 +11,8 @@ variant=$1
 platform=$2
 sharedOrStatic=$3
 
-intDir="$DIR/Output/FFmpeg$variant/$platform/int/ffmpeg"
-outDir="$DIR/FFmpeg$variant/$platform"
+intDir="$DIR/Intermediate/FFmpeg$variant/$platform/int/ffmpeg"
+outDir="$DIR/Output/FFmpeg$variant/$platform"
 
 #Main
 echo "Make $variant $platform $sharedOrStatic $intDir $outDir"
@@ -32,7 +32,7 @@ configureArgs="\
     --enable-libxml2 \
     --enable-iconv \
     --target-os=win32 \
-    --pkg-config=$DIR/Output/pkg-config.exe \
+    --pkg-config=$DIR/Intermediate/pkg-config.exe \
     --prefix=$outDir \
 "
 

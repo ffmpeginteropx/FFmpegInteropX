@@ -43,9 +43,8 @@ param(
 
     [switch] $ClearBuildFolders,
 
-    [switch] $BuildNugetPackage,
-
-    [string] $NugetPackageVersion = "1.0.0",
+    # If a version string is specified, a NuGet package will be created.
+    [string] $NugetPackageVersion = $null,
 
     # FFmpeg NuGet settings
     [string] $FFmpegUrl = 'https://git.ffmpeg.org/ffmpeg.git',
@@ -84,15 +83,15 @@ function Build-Platform {
 
     # Build pkg-config fake
     MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
-        /p:OutputPath="$SolutionDir\Output\" `
+        /p:OutputPath="$SolutionDir\Intermediate\" `
         /p:Configuration=$Configuration `
         /p:Platform=${Env:\PreferredToolArchitecture}
 
     if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
 
-    New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable build
+    New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget\$Platform -OutVariable build
 
-    New-Item -ItemType Directory -Force $SolutionDir\FFmpeg$WindowsTarget\$Platform -OutVariable target
+    New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable target
 
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
@@ -364,12 +363,13 @@ foreach ($platform in $Platforms) {
     }
 }
 
-if ($success -and $BuildNugetPackage)
+if ($success -and $NugetPackageVersion)
 {
     nuget pack .\FFmpegInteropX.FFmpegUWP.nuspec `
         -Properties "id=FFmpegInteropX.FFmpegUWP;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit" `
         -Version $NugetPackageVersion `
-        -Symbols -SymbolPackageFormat symbols.nupkg
+        -Symbols -SymbolPackageFormat symbols.nupkg `
+        -OutputDirectory "${PSScriptRoot}\Output\NuGet"
 }
 
 Write-Host
