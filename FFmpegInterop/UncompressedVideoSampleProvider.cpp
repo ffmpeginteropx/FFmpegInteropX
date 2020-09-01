@@ -266,6 +266,35 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 				IsCleanSample = avFrame->key_frame || avFrame->pict_type == AV_PICTURE_TYPE_B;
 			}
 		}
+
+		// metadata for jpeg and png is only loaded on frame decode. check for orientation now and apply.
+		if (avFrame->metadata && m_pAvCodecCtx->frame_number == 1)
+		{
+			auto entry = av_dict_get(avFrame->metadata, "Orientation", NULL, 0);
+			if (entry)
+			{
+				auto value = atoi(entry->value);
+				uint32 rotationAngle = 0;
+				switch (value)
+				{
+				case 8:
+					rotationAngle = 270;
+					break;
+				case 3:
+					rotationAngle = 180;
+					break;
+				case 6:
+					rotationAngle = 90;
+					break;
+				}
+				if (rotationAngle)
+				{
+					auto videoProperties = ((VideoStreamDescriptor^)this->StreamDescriptor)->EncodingProperties;
+					Platform::Guid MF_MT_VIDEO_ROTATION(0xC380465D, 0x2271, 0x428C, 0x9B, 0x83, 0xEC, 0xEA, 0x3B, 0x4A, 0x85, 0xC1);
+					videoProperties->Properties->Insert(MF_MT_VIDEO_ROTATION, (uint32)rotationAngle);
+				}
+			}
+		}
 	}
 
 	return hr;
