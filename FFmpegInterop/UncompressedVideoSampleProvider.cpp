@@ -89,8 +89,18 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 		outputMediaSubtype = MediaEncodingSubtypes::Nv12;
 	}
 
-	TargetWidth = decoderWidth = m_pAvCodecCtx->width;
-	TargetHeight = decoderHeight = m_pAvCodecCtx->height;
+	decoderWidth = m_pAvCodecCtx->width;
+	decoderHeight = m_pAvCodecCtx->height;
+
+	if (m_OutputPixelFormat != AV_PIX_FMT_BGRA)
+	{
+		// only BGRA supports unaligned image sizes, all others require 4 pixel alignment
+		decoderWidth = ((decoderWidth - 1) / 4 * 4) + 4;
+		decoderHeight = ((decoderHeight - 1) / 4 * 4) + 4;
+	}
+
+	TargetWidth = decoderWidth;
+	TargetHeight = decoderHeight;
 
 	if (m_config->IsFrameGrabber)
 	{
