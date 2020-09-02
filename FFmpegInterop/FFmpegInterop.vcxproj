@@ -120,6 +120,7 @@
     <ClInclude Include="FrameGrabber.h" />
     <ClInclude Include="H264AVCSampleProvider.h" />
     <ClInclude Include="IAvEffect.h" />
+    <ClInclude Include="ImageListSource.h" />
     <ClInclude Include="KeyStringValuePair.h" />
     <ClInclude Include="LanguageTagConverter.h" />
     <ClInclude Include="NALPacketSampleProvider.h" />
@@ -157,6 +158,7 @@
     <ClCompile Include="FFmpegReader.cpp" />
     <ClCompile Include="FrameGrabber.cpp" />
     <ClCompile Include="H264AVCSampleProvider.cpp" />
+    <ClCompile Include="ImageListSource.cpp" />
     <ClCompile Include="NALPacketSampleProvider.cpp" />
     <ClCompile Include="HEVCSampleProvider.cpp" />
     <ClCompile Include="MediaSampleProvider.cpp" />

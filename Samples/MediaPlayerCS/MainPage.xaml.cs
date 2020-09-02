@@ -128,6 +128,17 @@ namespace MediaPlayerCS
                         (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
                 }
             }
+            if (e.Key == VirtualKey.I)
+            {
+                var filePicker = new FileOpenPicker();
+                filePicker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+                filePicker.ViewMode = PickerViewMode.Thumbnail;
+                filePicker.FileTypeFilter.Add("*");
+                var files = await filePicker.PickMultipleFilesAsync();
+                var source = await ImageListSource.CreateFromFilesAsync(files, 25.0);
+                var mss = source.MediaStreamSource;
+                mediaElement.SetPlaybackSource(MediaSource.CreateFromMediaStreamSource(mss));
+            }
         }
 
         private async Task TryOpenLastFile()

@@ -67,6 +67,7 @@
     <ClCompile Include="BasicVideoEffect.cpp">
       <Filter>Effects</Filter>
     </ClCompile>
+    <ClCompile Include="ImageListSource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -179,6 +180,7 @@
     </ClInclude>
     <ClInclude Include="Enumerations.h" />
     <ClInclude Include="CodecRequiredEventArgs.h" />
+    <ClInclude Include="ImageListSource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\FFmpegConfig.sh">
