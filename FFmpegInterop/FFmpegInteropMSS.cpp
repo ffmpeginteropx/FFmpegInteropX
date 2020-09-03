@@ -182,6 +182,7 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromUri(String^ uri, FFmpegInteropConf
 
 FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromStream(IRandomAccessStream^ stream, bool forceAudioDecode, bool forceVideoDecode, PropertySet^ ffmpegOptions, MediaStreamSource^ mss)
 {
+#pragma warning (disable: 4973)
 	auto config = ref new FFmpegInteropConfig();
 	config->PassthroughAudioAAC = !forceAudioDecode;
 	config->PassthroughAudioMP3 = !forceAudioDecode;
@@ -191,6 +192,8 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromStream(IRandomAcce
 	config->PassthroughVideoVC1 = !forceVideoDecode;
 	config->PassthroughVideoVP9 = !forceVideoDecode;
 	config->PassthroughVideoWMV3 = !forceVideoDecode;
+#pragma warning (default: 4973)
+
 	if (ffmpegOptions != nullptr)
 	{
 		config->FFmpegOptions = ffmpegOptions;
@@ -220,6 +223,7 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromStream(IRandomAcce
 
 FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromUri(String^ uri, bool forceAudioDecode, bool forceVideoDecode, PropertySet^ ffmpegOptions)
 {
+#pragma warning (disable: 4973)
 	auto config = ref new FFmpegInteropConfig();
 	config->PassthroughAudioAAC = !forceAudioDecode;
 	config->PassthroughAudioMP3 = !forceAudioDecode;
@@ -229,6 +233,8 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromUri(String^ uri, b
 	config->PassthroughVideoVC1 = !forceVideoDecode;
 	config->PassthroughVideoVP9 = !forceVideoDecode;
 	config->PassthroughVideoWMV3 = !forceVideoDecode;
+#pragma warning (default: 4973)
+
 	if (ffmpegOptions != nullptr)
 	{
 		config->FFmpegOptions = ffmpegOptions;
@@ -475,7 +481,9 @@ bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, 
 	bool result = false;
 	if (!config->IsFrameGrabber)
 	{
-		if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection)
+#pragma warning (disable: 4973)
+
+		if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection || config->VideoDecoderMode == VideoDecoderMode::AutomaticSystemDecoder)
 		{
 			result = CodecChecker::CheckUseHardwareAcceleration(status,
 				avCodecCtx->codec_id, avCodecCtx->profile, avCodecCtx->width, avCodecCtx->height);
@@ -518,6 +526,8 @@ bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, 
 		{
 			result = false;
 		}
+#pragma warning (default: 4973)
+
 	}
 
 	return result;
@@ -1422,7 +1432,9 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 	VideoEncodingProperties^ videoProperties;
 	HardwareDecoderStatus hardwareDecoderStatus;
 
-	if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection)
+#pragma warning (disable: 4973)
+
+	if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection || config->VideoDecoderMode == VideoDecoderMode::AutomaticSystemDecoder)
 	{
 		CodecChecker::Initialize();
 	}
@@ -1515,12 +1527,14 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 	}
 	else
 	{
-		if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection)
+		if (config->VideoDecoderMode == VideoDecoderMode::AutoDetection || config->VideoDecoderMode == VideoDecoderMode::AutomaticSystemDecoder)
 		{
 			hardwareDecoderStatus = HardwareDecoderStatus::NotAvailable;
 		}
 		videoSampleProvider = ref new UncompressedVideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, hardwareDecoderStatus);
 	}
+
+#pragma warning (default: 4973)
 
 	auto hr = videoSampleProvider->Initialize();
 
