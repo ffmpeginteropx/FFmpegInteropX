@@ -191,7 +191,7 @@ namespace MediaPlayerCS
             }
             catch (Exception ex)
             {
-                DisplayErrorMessage(ex.Message);
+                await DisplayErrorMessage(ex.Message);
             }
         }
 
@@ -241,7 +241,7 @@ namespace MediaPlayerCS
                 }
                 catch (Exception ex)
                 {
-                    DisplayErrorMessage(ex.Message);
+                    await DisplayErrorMessage(ex.Message);
                 }
             }
         }
@@ -250,7 +250,7 @@ namespace MediaPlayerCS
         {
             if (currentFile == null)
             {
-                DisplayErrorMessage("Please open a video file first.");
+                await DisplayErrorMessage("Please open a video file first.");
             }
             else
             {
@@ -275,13 +275,13 @@ namespace MediaPlayerCS
                         bool launched = await Windows.System.Launcher.LaunchFileAsync(file, new LauncherOptions() { DisplayApplicationPicker = false });
                         if (!launched)
                         {
-                            DisplayErrorMessage("File has been created:\n" + file.Path);
+                            await DisplayErrorMessage("File has been created:\n" + file.Path);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    DisplayErrorMessage(ex.Message);
+                    await DisplayErrorMessage(ex.Message);
                 }
             }
         }
@@ -307,7 +307,7 @@ namespace MediaPlayerCS
             }
             else
             {
-                DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
+                await DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
             }
         }
 
@@ -326,13 +326,13 @@ namespace MediaPlayerCS
             }
         }
 
-        private void MediaFailed(object sender, ExceptionRoutedEventArgs e)
+        private async void MediaFailed(object sender, ExceptionRoutedEventArgs e)
         {
-            DisplayErrorMessage(e.ErrorMessage);
+            await DisplayErrorMessage(e.ErrorMessage);
             actualFFmpegMSS = null;
         }
 
-        private async void DisplayErrorMessage(string message)
+        private async Task DisplayErrorMessage(string message)
         {
             // Display error message
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
@@ -376,12 +376,12 @@ namespace MediaPlayerCS
                 }
                 catch (Exception ex)
                 {
-                    DisplayErrorMessage(ex.ToString());
+                    await DisplayErrorMessage(ex.ToString());
                 }
             }
             else
             {
-                DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
+                await DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
             }
         }
 
@@ -402,7 +402,7 @@ namespace MediaPlayerCS
             }
         }
 
-        private void CreatePlaybackItemAndStartPlayback(object sender, RoutedEventArgs e)
+        private async void CreatePlaybackItemAndStartPlayback(object sender, RoutedEventArgs e)
         {
             if (playbackItem == null)
             {
@@ -411,8 +411,7 @@ namespace MediaPlayerCS
             }
             else
             {
-                DisplayErrorMessage("Playback item already created.");
-
+                await DisplayErrorMessage("Playback item already created.");
             }
         }
 

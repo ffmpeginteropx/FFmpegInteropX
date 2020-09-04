@@ -764,8 +764,6 @@ static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelForm
 	{
 		return result_sw;
 	}
-
-	return result_hw != -1 ? result_hw : result_sw;
 }
 
 HRESULT FFmpegInteropMSS::InitFFmpegContext()
@@ -1645,8 +1643,7 @@ void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource
 		}
 		else if (currentVideoStream && args->Request->StreamDescriptor == currentVideoStream->StreamDescriptor)
 		{
-			auto sample = currentVideoStream->GetNextSample();
-			args->Request->Sample = sample;
+			args->Request->Sample = currentVideoStream->GetNextSample();;
 		}
 		else
 		{

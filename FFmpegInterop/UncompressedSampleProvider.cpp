@@ -18,7 +18,6 @@
 
 #include "pch.h"
 #include "UncompressedSampleProvider.h"
-#include <EventToken.h>
 #include <d3d11.h>
 #include <DirectXInteropHelper.h>
 
