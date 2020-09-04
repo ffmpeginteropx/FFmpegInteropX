@@ -57,6 +57,7 @@ namespace FFmpegInterop {
 			{
 				FFmpegInteropConfig^ config = ref new FFmpegInteropConfig();
 				config->IsFrameGrabber = true;
+				config->VideoDecoderMode = VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 
 				auto result = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr, nullptr);
 				if (result == nullptr)

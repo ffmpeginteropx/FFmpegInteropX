@@ -368,11 +368,6 @@ namespace FFmpegInterop
 		bool isFirstSeek;
 		AVBufferRef* avHardwareContext;
 
-		bool IsAVSampleSource()
-		{
-			return !Configuration->IsFrameGrabber && !Configuration->IsExternalSubtitleParser;
-		}
-
 		static CoreDispatcher^ GetCurrentDispatcher();
 	};
 

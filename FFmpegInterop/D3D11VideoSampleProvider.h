@@ -77,7 +77,7 @@ namespace FFmpegInterop
 			else
 			{
 				hr = UncompressedVideoSampleProvider::CreateBufferFromFrame(pBuffer, surface, avFrame, framePts, frameDuration);
-			
+
 				if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
 				{
 					decoder = DecoderEngine::FFmpegSoftwareDecoder;
@@ -95,7 +95,7 @@ namespace FFmpegInterop
 				samples.push_back(sample);
 				sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(this, &D3D11VideoSampleProvider::OnProcessed);
 			}
-			
+
 			return UncompressedVideoSampleProvider::SetSampleProperties(sample);
 		};
 
@@ -116,7 +116,7 @@ namespace FFmpegInterop
 			{
 				texturePool->ReturnTexture(texture);
 			}
-			
+
 			auto it = std::find(samples.begin(), samples.end(), sender);
 			if (it != samples.end())
 			{
@@ -197,6 +197,6 @@ namespace FFmpegInterop
 		TexturePool^ texturePool;
 		std::vector<MediaStreamSample^> samples;
 
-};
+	};
 }
 

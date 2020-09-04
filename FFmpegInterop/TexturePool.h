@@ -89,6 +89,7 @@ namespace FFmpegInterop
 
 			if (pool.size() > 0)
 			{
+				//use pool texture, if available
 				auto result = pool.back();
 				pool.pop_back();
 				result->AddRef();
@@ -96,7 +97,7 @@ namespace FFmpegInterop
 			}
 			else
 			{
-				//create a shared texture 2D, on the MSS device pointer
+				//otherwise create a new texture
 				ID3D11Texture2D* copy_tex;
 				HRESULT hr = device->CreateTexture2D(&desc_shared, NULL, &copy_tex);
 				if (SUCCEEDED(hr))
@@ -119,7 +120,11 @@ namespace FFmpegInterop
 			{
 				pool.push_back(texture);
 			}
-
+			else
+			{
+				// free texture if it cannot be re-used in pool
+				texture->Release();
+			}
 		}
 
 	private:
