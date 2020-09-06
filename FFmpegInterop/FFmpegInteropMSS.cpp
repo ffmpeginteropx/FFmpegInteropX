@@ -137,6 +137,8 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 	{
 		av_buffer_unref(&avHardwareContext);
 	}
+	SAFE_RELEASE(device);
+	SAFE_RELEASE(deviceContext);
 	mutexGuard.unlock();
 }
 
@@ -1578,9 +1580,6 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 
 	if (isFirstSeek && avHardwareContext)
 	{
-		ID3D11Device* device = nullptr;
-		ID3D11DeviceContext* deviceContext = nullptr;
-
 		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext);
 
 		if (SUCCEEDED(hr))
@@ -1590,8 +1589,7 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 			{
 				if (stream->m_pAvCodecCtx->hw_device_ctx)
 				{
-					stream->GraphicsDevice = device;
-					stream->GraphicsDeviceContext = deviceContext;
+					stream->SetHardwareDevice(device, deviceContext);
 				}
 			}
 		}
@@ -1606,6 +1604,8 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 				}
 			}
 			av_buffer_unref(&avHardwareContext);
+			SAFE_RELEASE(device);
+			SAFE_RELEASE(deviceContext);
 		}
 	}
 

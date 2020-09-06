@@ -75,9 +75,9 @@ MediaSampleProvider::~MediaSampleProvider()
 
 	avcodec_close(m_pAvCodecCtx);
 	avcodec_free_context(&m_pAvCodecCtx);
-
-	SAFE_RELEASE(GraphicsDevice);
-	SAFE_RELEASE(GraphicsDeviceContext);
+	
+	SAFE_RELEASE(device);
+	SAFE_RELEASE(deviceContext);
 }
 
 HRESULT MediaSampleProvider::Initialize()
@@ -431,6 +431,14 @@ void MediaSampleProvider::Detach()
 	m_pReader = nullptr;
 	avcodec_close(m_pAvCodecCtx);
 	avcodec_free_context(&m_pAvCodecCtx);
+}
+
+void FFmpegInterop::MediaSampleProvider::SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context)
+{
+	device->AddRef();
+	context->AddRef();
+	this->device = device;
+	this->deviceContext = context;
 }
 
 void free_buffer(void *lpVoid)

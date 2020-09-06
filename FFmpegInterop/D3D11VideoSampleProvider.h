@@ -6,6 +6,7 @@
 #include <d3d11.h>
 #include <mfidl.h>
 #include <DirectXInteropHelper.h>
+#include <set>
 
 extern "C"
 {
@@ -40,22 +41,32 @@ namespace FFmpegInterop
 			{
 				if (!texturePool)
 				{
-					texturePool = ref new TexturePool(GraphicsDevice, 5);
+					// init texture pool, fail if we did not get a device ptr
+					if (device && deviceContext)
+					{
+						texturePool = ref new TexturePool(device, 5);
+					}
+					else
+					{
+						hr = E_FAIL;
+					}
 				}
 
 				//cast the AVframe to texture 2D
 				auto nativeSurface = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
-				auto copy_tex = texturePool->GetCopyTexture(nativeSurface);
+				ID3D11Texture2D* copy_tex = nullptr;
+
+				//get copy texture
+				if (SUCCEEDED(hr))
+				{
+					hr = texturePool->GetCopyTexture(nativeSurface, &copy_tex);
+				}
 
 				//copy texture data
-				if (copy_tex)
+				if (SUCCEEDED(hr))
 				{
-					GraphicsDeviceContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)(unsigned long long)avFrame->data[1], NULL);
-					GraphicsDeviceContext->Flush();
-				}
-				else
-				{
-					hr = E_FAIL;
+					deviceContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)(unsigned long long)avFrame->data[1], NULL);
+					deviceContext->Flush();
 				}
 
 				//create a IDXGISurface from the shared texture
@@ -92,7 +103,7 @@ namespace FFmpegInterop
 		{
 			if (sample->Direct3D11Surface)
 			{
-				samples.push_back(sample);
+				samples.insert(reinterpret_cast<IUnknown*>(sample));
 				sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(this, &D3D11VideoSampleProvider::OnProcessed);
 			}
 
@@ -117,11 +128,7 @@ namespace FFmpegInterop
 				texturePool->ReturnTexture(texture);
 			}
 
-			auto it = std::find(samples.begin(), samples.end(), sender);
-			if (it != samples.end())
-			{
-				samples.erase(it);
-			}
+			samples.erase(reinterpret_cast<IUnknown*>(sender));
 
 			SAFE_RELEASE(surface);
 			SAFE_RELEASE(texture);
@@ -150,10 +157,22 @@ namespace FFmpegInterop
 			auto dataBuffer = (AVHWDeviceContext*)avHardwareContext->data;
 			auto internalDirectXHwContext = (AVD3D11VADeviceContext*)dataBuffer->hwctx;
 
-			internalDirectXHwContext->device = device;
-			internalDirectXHwContext->device_context = deviceContext;
-			internalDirectXHwContext->video_device = videoDevice;
-			internalDirectXHwContext->video_context = videoContext;
+			if (SUCCEEDED(hr))
+			{
+				// give ownership to FFmpeg
+				internalDirectXHwContext->device = device;
+				internalDirectXHwContext->device_context = deviceContext;
+				internalDirectXHwContext->video_device = videoDevice;
+				internalDirectXHwContext->video_context = videoContext;
+			}
+			else
+			{
+				// release
+				SAFE_RELEASE(device);
+				SAFE_RELEASE(deviceContext);
+				SAFE_RELEASE(videoDevice);
+				SAFE_RELEASE(videoContext);
+			}
 
 			if (SUCCEEDED(hr))
 			{
@@ -178,6 +197,9 @@ namespace FFmpegInterop
 
 			if (SUCCEEDED(hr))
 			{
+				// addref and hand out pointers
+				device->AddRef();
+				deviceContext->AddRef();
 				*outDevice = device;
 				*outDeviceContext = deviceContext;
 			}
@@ -189,13 +211,12 @@ namespace FFmpegInterop
 
 			SAFE_RELEASE(deviceManager);
 			SAFE_RELEASE(surfaceManager);
-			SAFE_RELEASE(unknownMss);
 
 			return hr;
 		}
 
 		TexturePool^ texturePool;
-		std::vector<MediaStreamSample^> samples;
+		std::set<IUnknown*> samples;
 
 	};
 }

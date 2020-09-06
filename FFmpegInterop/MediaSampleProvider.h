@@ -115,6 +115,7 @@ namespace FFmpegInterop
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
 		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
 		virtual void Detach();
+		void SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context);
 
 	protected private:
 		MediaSampleProvider(
@@ -146,8 +147,8 @@ namespace FFmpegInterop
 		int m_streamIndex;
 		int64 m_startOffset;
 		DecoderEngine decoder;
-		ID3D11Device* GraphicsDevice;
-		ID3D11DeviceContext* GraphicsDeviceContext;
+		ID3D11Device* device;
+		ID3D11DeviceContext* deviceContext;
 	};
 }
 

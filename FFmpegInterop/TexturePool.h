@@ -12,6 +12,7 @@ namespace FFmpegInterop
 
 		TexturePool(ID3D11Device* device, int initialPoolSize)
 		{
+			device->AddRef();
 			this->device = device;
 			this->initialPoolSize = initialPoolSize;
 		}
@@ -20,23 +21,24 @@ namespace FFmpegInterop
 		~TexturePool()
 		{
 			Clear();
+			SAFE_RELEASE(device);
 		}
 
 	internal:
 
 		void Clear()
 		{
-			for each (auto texture in all)
+			for each (auto texture in pool)
 			{
 				texture->Release();
 			}
 			pool.clear();
-			all.clear();
+			ZeroMemory(&desc_shared, sizeof(desc_shared));
 		}
 
-		void Initialize(ID3D11Texture2D* sourceTexture)
+		HRESULT Initialize(ID3D11Texture2D* sourceTexture)
 		{
-			if (all.size() > 0)
+			if (pool.size() > 0)
 			{
 				Clear();
 			}
@@ -68,47 +70,43 @@ namespace FFmpegInterop
 				if (SUCCEEDED(hr))
 				{
 					pool.push_back(copy_tex);
-					all.push_back(copy_tex);
 				}
 				else
 				{
 					break;
 				}
 			}
+			return hr;
 		}
 
-		ID3D11Texture2D* GetCopyTexture(ID3D11Texture2D* sourceTexture)
+		HRESULT GetCopyTexture(ID3D11Texture2D* sourceTexture, ID3D11Texture2D** result)
 		{
+			HRESULT hr = S_OK;
+
 			D3D11_TEXTURE2D_DESC desc;
 			sourceTexture->GetDesc(&desc);
 
 			if (desc.Width != desc_shared.Width || desc.Height != desc_shared.Height || desc.Format != desc_shared.Format)
 			{
-				Initialize(sourceTexture);
+				hr = Initialize(sourceTexture);
 			}
 
-			if (pool.size() > 0)
+			if (SUCCEEDED(hr))
 			{
-				//use pool texture, if available
-				auto result = pool.back();
-				pool.pop_back();
-				result->AddRef();
-				return result;
-			}
-			else
-			{
-				//otherwise create a new texture
-				ID3D11Texture2D* copy_tex;
-				HRESULT hr = device->CreateTexture2D(&desc_shared, NULL, &copy_tex);
-				if (SUCCEEDED(hr))
+				if (pool.size() > 0)
 				{
-					all.push_back(copy_tex);
-					copy_tex->AddRef();
-					return copy_tex;
+					//use pool texture, if available
+					*result = pool.back();
+					pool.pop_back();
 				}
-
-				return nullptr;
+				else
+				{
+					//otherwise create a new texture
+					hr = device->CreateTexture2D(&desc_shared, NULL, result);
+				}
 			}
+
+			return hr;
 		}
 
 		void ReturnTexture(ID3D11Texture2D* texture)
@@ -119,18 +117,13 @@ namespace FFmpegInterop
 			if (desc.Width == desc_shared.Width && desc.Height == desc_shared.Height && desc.Format == desc_shared.Format)
 			{
 				pool.push_back(texture);
-			}
-			else
-			{
-				// free texture if it cannot be re-used in pool
-				texture->Release();
+				texture->AddRef();
 			}
 		}
 
 	private:
 		ID3D11Device* device;
 		std::vector<ID3D11Texture2D*> pool;
-		std::vector<ID3D11Texture2D*> all;
 		D3D11_TEXTURE2D_DESC desc_shared;
 		int initialPoolSize;
 	};
