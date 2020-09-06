@@ -56,7 +56,7 @@ namespace FFmpegInterop
 
 	private:
 		void SelectOutputFormat();
-		HRESULT InitializeScalerIfRequired(AVFrame* avFrame);
+		HRESULT InitializeScalerIfRequired();
 		HRESULT FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height);
 		AVBufferRef* AllocateBuffer(int totalSize);
 		static int get_buffer2(AVCodecContext *avCodecContext, AVFrame *frame, int flags);
