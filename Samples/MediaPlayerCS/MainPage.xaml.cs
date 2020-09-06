@@ -77,7 +77,24 @@ namespace MediaPlayerCS
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
 
-            this.KeyDown += MainPage_KeyDown;
+            CoreWindow.GetForCurrentThread().KeyDown += MainPage_KeyDown;
+        }
+
+        private async void MainPage_KeyDown(CoreWindow sender, KeyEventArgs args)
+        {
+            if (args.VirtualKey == VirtualKey.Enter && (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down)
+               == CoreVirtualKeyStates.Down && StorageApplicationPermissions.FutureAccessList.Entries.Count == 1)
+            {
+                await TryOpenLastFile();
+            }
+            if (args.VirtualKey == VirtualKey.V)
+            {
+                if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
+                {
+                    playbackItem.VideoTracks.SelectedIndex =
+                        (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
+                }
+            }
         }
 
         private async void CodecChecker_CodecRequired(CodecRequiredEventArgs args)
@@ -113,23 +130,7 @@ namespace MediaPlayerCS
             // now refresh codec checker, so next file might use HW acceleration (if codec was really installed)
             await CodecChecker.RefreshAsync();
         }
-
-        private async void MainPage_KeyDown(object sender, KeyRoutedEventArgs e)
-        {
-            if (e.Key == VirtualKey.Enter && (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down)
-                == CoreVirtualKeyStates.Down && StorageApplicationPermissions.FutureAccessList.Entries.Count == 1)
-            {
-                await TryOpenLastFile();
-            }
-            if (e.Key == VirtualKey.V)
-            {
-                if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
-                {
-                    playbackItem.VideoTracks.SelectedIndex =
-                        (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
-                }
-            }
-        }
+              
 
         private async Task TryOpenLastFile()
         {

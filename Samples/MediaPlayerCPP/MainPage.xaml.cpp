@@ -65,8 +65,7 @@ MainPage::MainPage()
 
 	// populate character encodings
 	cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
-	
-	this->KeyDown += ref new Windows::UI::Xaml::Input::KeyEventHandler(this, &MediaPlayerCPP::MainPage::OnKeyDown);
+	Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);
 }
 
 void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -125,6 +124,7 @@ void MainPage::OpenLocalFile(StorageFile^ file)
 					{
 						StorageApplicationPermissions::FutureAccessList->Clear();
 						StorageApplicationPermissions::FutureAccessList->Add(file);
+						
 
 						FFmpegMSS = result;
 						playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
@@ -437,19 +437,22 @@ void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ send
 }
 
 
-void MediaPlayerCPP::MainPage::OnKeyDown(Platform::Object ^sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs ^e)
+
+
+
+void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::KeyEventArgs^ args)
 {
-	if (e->Key == Windows::System::VirtualKey::Enter && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down)
+	if (args->VirtualKey == Windows::System::VirtualKey::Enter && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down)
 		== Windows::UI::Core::CoreVirtualKeyStates::Down && StorageApplicationPermissions::FutureAccessList->Entries->Size == 1)
 	{
 		TryOpenLastFile();
 	}
 
-	if (e->Key == Windows::System::VirtualKey::V)
+	if (args->VirtualKey == Windows::System::VirtualKey::V)
 	{
 		if (playbackItem && playbackItem->VideoTracks->Size > 1)
 		{
-			playbackItem->VideoTracks->SelectedIndex = 
+			playbackItem->VideoTracks->SelectedIndex =
 				(playbackItem->VideoTracks->SelectedIndex + 1) % playbackItem->VideoTracks->Size;
 		}
 	}

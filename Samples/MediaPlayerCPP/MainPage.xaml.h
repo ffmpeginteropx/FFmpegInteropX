@@ -66,7 +66,7 @@ namespace MediaPlayerCPP
 		void MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
-		void OnKeyDown(Platform::Object ^sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs ^e);
 		
+		void OnKeyDown(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::KeyEventArgs^ args);
 	};
 }
