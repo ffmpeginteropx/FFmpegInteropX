@@ -758,8 +758,6 @@ static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelForm
 
 	if (result_hw != -1)
 	{
-		// disable multi threading for HW decoder
-		s->thread_count = 1;
 		return result_hw;
 	}
 	else
