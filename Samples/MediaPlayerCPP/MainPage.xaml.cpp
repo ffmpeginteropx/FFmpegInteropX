@@ -51,7 +51,7 @@ using namespace Windows::UI::Xaml::Navigation;
 MainPage::MainPage()
 {
 	Config = ref new FFmpegInteropConfig();
-
+	Config->MaxVideoThreads = 12;
 	InitializeComponent();
 
 	// Show the control panel on startup so user can start opening media

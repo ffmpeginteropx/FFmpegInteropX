@@ -756,12 +756,19 @@ static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelForm
 		}
 	} while (format != -1);
 
+
 	if (result_hw != -1)
 	{
 		return result_hw;
 	}
 	else
 	{
+		auto config = reinterpret_cast<FFmpegInteropConfig^>(s->opaque);
+		unsigned threads = std::thread::hardware_concurrency();
+		if (threads > 0)
+		{
+			s->thread_count = config->MaxVideoThreads == 0 ? threads : min(threads, config->MaxVideoThreads);
+		}
 		return result_sw;
 	}
 }
@@ -1263,12 +1270,11 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 		if (SUCCEEDED(hr))
 		{
 			// enable multi threading
-			unsigned threads = std::thread::hardware_concurrency();
-			if (threads > 0)
-			{
-				avVideoCodecCtx->thread_count = config->MaxVideoThreads == 0 ? threads : min(threads, config->MaxVideoThreads);
-				avVideoCodecCtx->thread_type = config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
-			}
+			avVideoCodecCtx->opaque = reinterpret_cast<void*>(Configuration);
+
+			avVideoCodecCtx->thread_count = 1;
+			avVideoCodecCtx->thread_type = config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
+
 
 			if (avcodec_open2(avVideoCodecCtx, avVideoCodec, NULL) < 0)
 			{
