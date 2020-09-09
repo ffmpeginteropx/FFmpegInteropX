@@ -131,14 +131,13 @@ function Build-Platform {
         if ($WindowsTarget -eq "UWP") { 
             $configurationName = "${Configuration}WinRT"
             $targetName = "${project}_winrt"
-            $outDir = "$build\"
         }
         else {
             $configurationName = ${Configuration}
             $targetName = ${project}
-            $outDir = "$build\$project\"
         }
         $intDir = "$build\int\$project\"
+        $outDir = "$build\$project\"
 
         MSBuild.exe $SolutionDir\Libs\$folder\SMP\$project.vcxproj `
             /p:OutDir=$outDir `
@@ -147,6 +146,7 @@ function Build-Platform {
             /p:Platform=$Platform `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
             /p:PlatformToolset=$PlatformToolset `
+            /p:ForceImportBeforeCppTargets=$SolutionDir\Libs\LibOverrides.props `
             /p:useenv=true
 
         if ($lastexitcode -ne 0) { throw "Failed to build library $project." }
