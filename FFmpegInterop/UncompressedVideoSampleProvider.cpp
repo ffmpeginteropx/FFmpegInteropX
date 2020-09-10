@@ -240,64 +240,70 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 	// Don't set a timestamp on S_FALSE
 	if (hr == S_OK)
 	{
-		// Try to get the best effort timestamp for the frame.
-		if (avFrame->best_effort_timestamp != AV_NOPTS_VALUE)
-			framePts = avFrame->best_effort_timestamp;
-		m_interlaced_frame = avFrame->interlaced_frame == 1;
-		m_top_field_first = avFrame->top_field_first == 1;
-		m_chroma_location = avFrame->chroma_location;
-		if (m_config->IsFrameGrabber && !IsCleanSample)
-		{
-			if (m_interlaced_frame)
-			{
-				// for interlaced content we need to decode two frames to get clean image
-				if (!hasFirstInterlacedFrame)
-				{
-					hasFirstInterlacedFrame = true;
-				}
-				else
-				{
-					IsCleanSample = true;
-				}
-			}
-			else
-			{
-				// for progressive video, we need a key frame or b frame
-				IsCleanSample = avFrame->key_frame || avFrame->pict_type == AV_PICTURE_TYPE_B;
-			}
-		}
-
-		// metadata for jpeg and png is only loaded on frame decode. check for orientation now and apply.
-		if (avFrame->metadata && m_pAvCodecCtx->frame_number == 1)
-		{
-			auto entry = av_dict_get(avFrame->metadata, "Orientation", NULL, 0);
-			if (entry)
-			{
-				auto value = atoi(entry->value);
-				uint32 rotationAngle = 0;
-				switch (value)
-				{
-				case 8:
-					rotationAngle = 270;
-					break;
-				case 3:
-					rotationAngle = 180;
-					break;
-				case 6:
-					rotationAngle = 90;
-					break;
-				}
-				if (rotationAngle)
-				{
-					auto videoProperties = ((VideoStreamDescriptor^)this->StreamDescriptor)->EncodingProperties;
-					Platform::Guid MF_MT_VIDEO_ROTATION(0xC380465D, 0x2271, 0x428C, 0x9B, 0x83, 0xEC, 0xEA, 0x3B, 0x4A, 0x85, 0xC1);
-					videoProperties->Properties->Insert(MF_MT_VIDEO_ROTATION, (uint32)rotationAngle);
-				}
-			}
-		}
+		ReadFrameProperties(avFrame, framePts);
 	}
 
 	return hr;
+}
+
+
+void FFmpegInterop::UncompressedVideoSampleProvider::ReadFrameProperties(AVFrame* avFrame, int64_t& framePts)
+{
+	// Try to get the best effort timestamp for the frame.
+	if (avFrame->best_effort_timestamp != AV_NOPTS_VALUE)
+		framePts = avFrame->best_effort_timestamp;
+	m_interlaced_frame = avFrame->interlaced_frame == 1;
+	m_top_field_first = avFrame->top_field_first == 1;
+	m_chroma_location = avFrame->chroma_location;
+	if (m_config->IsFrameGrabber && !IsCleanSample)
+	{
+		if (m_interlaced_frame)
+		{
+			// for interlaced content we need to decode two frames to get clean image
+			if (!hasFirstInterlacedFrame)
+			{
+				hasFirstInterlacedFrame = true;
+			}
+			else
+			{
+				IsCleanSample = true;
+			}
+		}
+		else
+		{
+			// for progressive video, we need a key frame or b frame
+			IsCleanSample = avFrame->key_frame || avFrame->pict_type == AV_PICTURE_TYPE_B;
+		}
+	}
+
+	// metadata for jpeg and png is only loaded on frame decode. check for orientation now and apply.
+	if (avFrame->metadata && m_pAvCodecCtx->frame_number == 1)
+	{
+		auto entry = av_dict_get(avFrame->metadata, "Orientation", NULL, 0);
+		if (entry)
+		{
+			auto value = atoi(entry->value);
+			uint32 rotationAngle = 0;
+			switch (value)
+			{
+			case 8:
+				rotationAngle = 270;
+				break;
+			case 3:
+				rotationAngle = 180;
+				break;
+			case 6:
+				rotationAngle = 90;
+				break;
+			}
+			if (rotationAngle)
+			{
+				auto videoProperties = ((VideoStreamDescriptor^)this->StreamDescriptor)->EncodingProperties;
+				Platform::Guid MF_MT_VIDEO_ROTATION(0xC380465D, 0x2271, 0x428C, 0x9B, 0x83, 0xEC, 0xEA, 0x3B, 0x4A, 0x85, 0xC1);
+				videoProperties->Properties->Insert(MF_MT_VIDEO_ROTATION, (uint32)rotationAngle);
+			}
+		}
+	}
 }
 
 HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample^ sample)

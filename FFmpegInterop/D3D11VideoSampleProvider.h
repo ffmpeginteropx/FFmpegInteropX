@@ -82,6 +82,11 @@ namespace FFmpegInterop
 					*surface = DirectXInteropHelper::GetSurface(finalSurface);
 				}
 
+				if (SUCCEEDED(hr))
+				{
+					ReadFrameProperties(avFrame, framePts);
+				}
+
 				SAFE_RELEASE(finalSurface);
 				SAFE_RELEASE(copy_tex);
 			}
