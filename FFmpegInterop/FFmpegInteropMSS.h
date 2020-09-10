@@ -367,6 +367,7 @@ namespace FFmpegInterop
 		unsigned char* fileStreamBuffer;
 		bool isFirstSeek;
 		AVBufferRef* avHardwareContext;
+		AVBufferRef* avHardwareContextDefault;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
 

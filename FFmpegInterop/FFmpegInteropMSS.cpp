@@ -137,6 +137,10 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 	{
 		av_buffer_unref(&avHardwareContext);
 	}
+	if (avHardwareContextDefault)
+	{
+		av_buffer_unref(&avHardwareContextDefault);
+	}
 	SAFE_RELEASE(device);
 	SAFE_RELEASE(deviceContext);
 	mutexGuard.unlock();
@@ -1217,7 +1221,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 		}
 
 		// create and assign HW device context, if supported and requested
-		if (config->VideoDecoderMode == VideoDecoderMode::Automatic)
+		if (SUCCEEDED(hr) && config->VideoDecoderMode == VideoDecoderMode::Automatic)
 		{
 			int i = 0;
 			while (true)
@@ -1227,14 +1231,31 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 				{
 					if (config->pix_fmt == AV_PIX_FMT_D3D11 && config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
 					{
+						AVBufferRef* hwContext;
 						if (!avHardwareContext)
 						{
 							avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
 						}
 
-						if (avHardwareContext)
+
+						if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VC1 || avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3)
 						{
-							avVideoCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+							// workaround for VC1 and WMV3: use default device context, later replace with actual MSS device context
+							if (!avHardwareContextDefault)
+							{
+								av_hwdevice_ctx_create(&avHardwareContextDefault, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
+								av_hwdevice_ctx_init(avHardwareContextDefault);
+							}
+							hwContext = avHardwareContextDefault;
+						}
+						else
+						{
+							hwContext = avHardwareContext;
+						}
+
+						if (hwContext)
+						{
+							avVideoCodecCtx->hw_device_ctx = av_buffer_ref(hwContext);
 						}
 						else
 						{
@@ -1588,6 +1609,14 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 			{
 				if (stream->m_pAvCodecCtx->hw_device_ctx)
 				{
+					// replace default device context with actual mss device, if required
+					if (stream->m_pAvCodecCtx->hw_device_ctx->data != avHardwareContext->data)
+					{
+						av_buffer_unref(&stream->m_pAvCodecCtx->hw_device_ctx);
+						stream->m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+					}
+
+					// set device pointers to stream
 					stream->SetHardwareDevice(device, deviceContext);
 				}
 			}
