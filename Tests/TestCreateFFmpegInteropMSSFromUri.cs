@@ -100,7 +100,7 @@ namespace UnitTest.Windows
         public async Task CreateFromUri_Force_Video()
         {
             // CreateFromUriAsync should return valid FFmpegInteropMSS object which generates valid MediaStreamSource object
-            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync(Constants.StreamingUriSource, new FFmpegInteropConfig { PassthroughVideoH264 = false });
+            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync(Constants.StreamingUriSource, new FFmpegInteropConfig { VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder });
             Assert.IsNotNull(FFmpegMSS);
 
             // Validate the metadata

@@ -152,7 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX.FFmpegUWP">
-      <Version>4.2.200</Version>
+      <Version>4.3.100-pre</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.9</Version>

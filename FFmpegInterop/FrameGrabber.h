@@ -47,7 +47,7 @@ namespace FFmpegInterop {
 		/// <summary>Gets the current video stream information.</summary>
 		property VideoStreamInfo^ CurrentVideoStream
 		{
-			VideoStreamInfo^ get() { return interopMSS->VideoStream; }
+			VideoStreamInfo^ get() { return interopMSS->CurrentVideoStream; }
 		}
 
 		/// <summary>Creates a new FrameGrabber from the specified stream.</summary>
@@ -57,6 +57,7 @@ namespace FFmpegInterop {
 			{
 				FFmpegInteropConfig^ config = ref new FFmpegInteropConfig();
 				config->IsFrameGrabber = true;
+				config->VideoDecoderMode = VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 
 				auto result = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr, nullptr);
 				if (result == nullptr)

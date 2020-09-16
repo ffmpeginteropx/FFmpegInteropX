@@ -39,8 +39,8 @@ namespace FFmpegInterop
 			int streamIndex,
 			HardwareDecoderStatus hardwareDecoderStatus
 		);
-		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration) override;
-		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) { return E_FAIL; }; // must be overridden by specific decoders
+		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) override;
+		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) { return E_FAIL; }; // must be overridden by specific decoders
 		virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration);
 		virtual HRESULT FeedPacketToDecoder();
 		void SetFilters(IVectorView<AvEffectDefinition^>^ effects) override {
@@ -51,6 +51,7 @@ namespace FFmpegInterop
 			frameProvider->DisableFilter();
 		}
 		UncompressedFrameProvider ^ frameProvider;
+
 
 	public:
 		virtual void Flush() override;

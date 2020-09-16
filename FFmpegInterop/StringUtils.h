@@ -31,7 +31,7 @@ namespace FFmpegInterop
 		static String^ Utf8ToPlatformString(const char* char_array)
 		{
 			auto wid_str = Utf8ToWString(char_array);
-			return ref new String(wid_str.c_str(), wid_str.size());
+			return ref new String(wid_str.c_str(), (int)wid_str.size());
 		}
 
 		static String^ WStringToPlatformString(const std::wstring& input)

@@ -75,6 +75,9 @@ MediaSampleProvider::~MediaSampleProvider()
 
 	avcodec_close(m_pAvCodecCtx);
 	avcodec_free_context(&m_pAvCodecCtx);
+	
+	SAFE_RELEASE(device);
+	SAFE_RELEASE(deviceContext);
 }
 
 HRESULT MediaSampleProvider::Initialize()
@@ -84,6 +87,7 @@ HRESULT MediaSampleProvider::Initialize()
 	{
 		InitializeNameLanguageCodec();
 	}
+	InitializeStreamInfo();
 	return m_streamDescriptor ? S_OK : E_FAIL;
 }
 
@@ -165,6 +169,50 @@ void FFmpegInterop::MediaSampleProvider::InitializeNameLanguageCodec()
 	}
 }
 
+void FFmpegInterop::MediaSampleProvider::InitializeStreamInfo()
+{
+	switch (m_pAvCodecCtx->codec_type)
+	{
+	case AVMEDIA_TYPE_AUDIO:
+	{
+		auto channels = m_pAvStream->codecpar->channels;
+		if (channels == 1 && m_pAvStream->codecpar->codec_id == AV_CODEC_ID_AAC && m_pAvStream->codecpar->profile == FF_PROFILE_AAC_HE_V2)
+		{
+			channels = 2;
+		}
+		auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
+
+		streamInfo = ref new AudioStreamInfo(
+			Name, Language, CodecName, m_pAvStream->codecpar->bit_rate, false, 
+			channels, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder);
+
+		break;
+	}
+	case AVMEDIA_TYPE_VIDEO:
+	{
+		auto streamDescriptor = dynamic_cast<VideoStreamDescriptor^>(StreamDescriptor);
+		auto pixelAspect = (double)streamDescriptor->EncodingProperties->PixelAspectRatio->Numerator / streamDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
+		auto videoAspect = ((double)m_pAvCodecCtx->width / m_pAvCodecCtx->height) / pixelAspect;
+		auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
+
+		streamInfo = ref new VideoStreamInfo(Name, Language, CodecName, m_pAvStream->codecpar->bit_rate, false,
+			m_pAvStream->codecpar->width, m_pAvStream->codecpar->height, videoAspect,
+			bitsPerSample, HardwareAccelerationStatus, Decoder);
+
+		break;
+	}
+	case AVMEDIA_TYPE_SUBTITLE:
+	{
+		auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
+		
+		streamInfo = ref new SubtitleStreamInfo(Name, Language, CodecName,
+			false, forced, ((SubtitleProvider^)this)->SubtitleTrack, m_config->IsExternalSubtitleParser);
+
+		break;
+	}
+	}
+}
+
 MediaStreamSample^ MediaSampleProvider::GetNextSample()
 {
 	DebugMessage(L"GetNextSample\n");
@@ -177,8 +225,8 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 		IBuffer^ buffer = nullptr;
 		LONGLONG pts = 0;
 		LONGLONG dur = 0;
-
-		hr = CreateNextSampleBuffer(&buffer, pts, dur);
+		IDirect3DSurface^ surface;
+		hr = CreateNextSampleBuffer(&buffer, pts, dur, &surface);
 		
 		if (hr == S_OK)
 		{
@@ -186,7 +234,16 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 			dur = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * dur);
 
 			TimeSpan duration = { dur };
-			sample = MediaStreamSample::CreateFromBuffer(buffer, { pts });
+
+			if (surface)
+			{
+				sample = MediaStreamSample::CreateFromDirect3D11Surface(surface, { pts });
+			}
+			else 
+			{
+				sample = MediaStreamSample::CreateFromBuffer(buffer, { pts });
+
+			}
 			sample->Duration = duration;
 			sample->Discontinuous = m_isDiscontinuous;
 
@@ -374,6 +431,14 @@ void MediaSampleProvider::Detach()
 	m_pReader = nullptr;
 	avcodec_close(m_pAvCodecCtx);
 	avcodec_free_context(&m_pAvCodecCtx);
+}
+
+void FFmpegInterop::MediaSampleProvider::SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context)
+{
+	device->AddRef();
+	context->AddRef();
+	this->device = device;
+	this->deviceContext = context;
 }
 
 void free_buffer(void *lpVoid)

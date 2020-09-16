@@ -56,6 +56,8 @@ namespace FFmpegInterop
 				SubtitleTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTrackFailed);
 			}
 
+			InitializeStreamInfo();
+
 			return S_OK;
 		}
 

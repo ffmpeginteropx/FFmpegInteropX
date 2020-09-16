@@ -174,7 +174,7 @@ UncompressedAudioSampleProvider::~UncompressedAudioSampleProvider()
 	swr_free(&m_pSwrCtx);
 }
 
-HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
+HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
 {
 	HRESULT hr = S_OK;
 

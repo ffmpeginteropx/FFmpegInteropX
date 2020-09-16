@@ -47,6 +47,12 @@ namespace FFmpegInterop
 
 		property FFmpegInterop::DecoderEngine DecoderEngine {FFmpegInterop::DecoderEngine get() { return decoderEngine; }}
 
+	internal:
+		void SetDefault()
+		{
+			isDefault = true;
+		}
+
 	private:
 		String ^ name;
 		String^ language;
@@ -94,8 +100,18 @@ namespace FFmpegInterop
 		property int BitsPerSample { int get() { return bitsPerSample; } }
 
 		property FFmpegInterop::HardwareDecoderStatus HardwareDecoderStatus {FFmpegInterop::HardwareDecoderStatus get() { return hardwareDecoderStatus; }}
-		property FFmpegInterop::DecoderEngine DecoderEngine {FFmpegInterop::DecoderEngine get() { return decoderEngine; }}
+		property FFmpegInterop::DecoderEngine DecoderEngine 
+		{
+			FFmpegInterop::DecoderEngine get() { return decoderEngine; }
+		internal:
+			void set(FFmpegInterop::DecoderEngine value) { decoderEngine = value; }
+		}
 
+	internal:
+		void SetDefault()
+		{
+			isDefault = true;
+		}
 	private:
 		String ^ name;
 		String^ language;
@@ -149,6 +165,13 @@ namespace FFmpegInterop
 				track = value;
 			}
 		}
+
+	internal:
+		void SetDefault()
+		{
+			isDefault = true;
+		}
+
 	private:
 		String ^ name;
 		String^ language;

@@ -131,7 +131,7 @@ namespace UnitTest.Windows
             Assert.IsNotNull(readStream);
 
             // CreateFromStreamAsync should return valid FFmpegInteropMSS object which generates valid MediaStreamSource object
-            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, new FFmpegInteropConfig { PassthroughVideoH264 = false });
+            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, new FFmpegInteropConfig { VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder });
             Assert.IsNotNull(FFmpegMSS);
 
             MediaStreamSource mss = FFmpegMSS.GetMediaStreamSource();

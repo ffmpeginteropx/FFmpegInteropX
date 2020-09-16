@@ -52,7 +52,7 @@ CompressedSampleProvider::~CompressedSampleProvider()
 {
 }
 
-HRESULT CompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration)
+HRESULT CompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface)
 {
 	HRESULT hr = S_OK;
 

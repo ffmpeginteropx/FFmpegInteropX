@@ -18,8 +18,11 @@
 
 #include "pch.h"
 #include "UncompressedSampleProvider.h"
+#include <d3d11.h>
+#include <DirectXInteropHelper.h>
 
 using namespace FFmpegInterop;
+
 
 UncompressedSampleProvider::UncompressedSampleProvider(
 	FFmpegReader^ reader,
@@ -33,11 +36,11 @@ UncompressedSampleProvider::UncompressedSampleProvider(
 	decoder = DecoderEngine::FFmpegSoftwareDecoder;
 }
 
-HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration)
+HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface)
 {
 	HRESULT hr = S_OK;
 
-	AVFrame *avFrame = av_frame_alloc();
+	AVFrame* avFrame = av_frame_alloc();
 	unsigned int errorCount = 0;
 
 	if (!avFrame)
@@ -48,6 +51,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 	while (SUCCEEDED(hr))
 	{
 		hr = GetFrameFromFFmpegDecoder(avFrame, samplePts, sampleDuration);
+
 		if (hr == S_FALSE)
 		{
 			// end of stream reached
@@ -56,7 +60,8 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 
 		if (SUCCEEDED(hr))
 		{
-			hr = CreateBufferFromFrame(pBuffer, avFrame, samplePts, sampleDuration);
+			hr = CreateBufferFromFrame(pBuffer, surface, avFrame, samplePts, sampleDuration);
+
 			if (SUCCEEDED(hr))
 			{
 				// sample created. update m_nextFramePts in case pts or duration have changed
@@ -90,8 +95,9 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, 
 
 	while (SUCCEEDED(hr))
 	{
+		HRESULT decodeFrame;
 		// Try to get a frame from the decoder.
-		auto decodeFrame = frameProvider->GetFrameFromCodec(avFrame);
+		decodeFrame = frameProvider->GetFrameFromCodec(avFrame);
 
 		if (decodeFrame == AVERROR(EAGAIN))
 		{
@@ -125,7 +131,7 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, 
 
 			frameDuration = avFrame->pkt_duration;
 			nextFramePts = framePts + frameDuration;
-			
+
 			hr = S_OK;
 			break;
 		}

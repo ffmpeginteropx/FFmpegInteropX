@@ -51,7 +51,7 @@ using namespace Windows::UI::Xaml::Navigation;
 MainPage::MainPage()
 {
 	Config = ref new FFmpegInteropConfig();
-
+	Config->MaxVideoThreads = 12;
 	InitializeComponent();
 
 	// Show the control panel on startup so user can start opening media
@@ -65,8 +65,7 @@ MainPage::MainPage()
 
 	// populate character encodings
 	cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
-	
-	this->KeyDown += ref new Windows::UI::Xaml::Input::KeyEventHandler(this, &MediaPlayerCPP::MainPage::OnKeyDown);
+	Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);
 }
 
 void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -125,6 +124,7 @@ void MainPage::OpenLocalFile(StorageFile^ file)
 					{
 						StorageApplicationPermissions::FutureAccessList->Clear();
 						StorageApplicationPermissions::FutureAccessList->Add(file);
+						
 
 						FFmpegMSS = result;
 						playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
@@ -343,6 +343,7 @@ void MediaPlayerCPP::MainPage::OnResolved(TimedTextSource ^sender, TimedTextSour
 void MainPage::MediaFailed(Platform::Object^ sender, Windows::UI::Xaml::ExceptionRoutedEventArgs^ e)
 {
 	DisplayErrorMessage(e->ErrorMessage);
+	actualFFmpegMSS = nullptr;
 }
 
 void MainPage::DisplayErrorMessage(Platform::String^ message)
@@ -362,14 +363,7 @@ void MediaPlayerCPP::MainPage::CbEncodings_SelectionChanged(Platform::Object^ se
 
 void MediaPlayerCPP::MainPage::PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-	auto passthrough = PassthroughVideo->IsOn;
-	Config->PassthroughVideoH264 = passthrough;
-	Config->PassthroughVideoHEVC = passthrough;
-	Config->PassthroughVideoMPEG2 = passthrough;
-	Config->PassthroughVideoVC1 = passthrough;
-	Config->PassthroughVideoVP9 = passthrough;
-	Config->PassthroughVideoVP8 = passthrough;
-	Config->PassthroughVideoWMV3 = passthrough;
+	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 
@@ -423,13 +417,14 @@ void MediaPlayerCPP::MainPage::QuickenSubtitles(Platform::Object^ sender, Window
 void MediaPlayerCPP::MainPage::MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	tbSubtitleDelay->Text = "Subtitle delay: 0s";
+	actualFFmpegMSS = FFmpegMSS;
 }
 
 
 void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	PassthroughVideo->IsEnabled = !AutoDetect->IsOn;
-	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::AutoDetection : VideoDecoderMode::ManualSelection;
+	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -442,19 +437,22 @@ void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ send
 }
 
 
-void MediaPlayerCPP::MainPage::OnKeyDown(Platform::Object ^sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs ^e)
+
+
+
+void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::KeyEventArgs^ args)
 {
-	if (e->Key == Windows::System::VirtualKey::Enter && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down)
+	if (args->VirtualKey == Windows::System::VirtualKey::Enter && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down)
 		== Windows::UI::Core::CoreVirtualKeyStates::Down && StorageApplicationPermissions::FutureAccessList->Entries->Size == 1)
 	{
 		TryOpenLastFile();
 	}
 
-	if (e->Key == Windows::System::VirtualKey::V)
+	if (args->VirtualKey == Windows::System::VirtualKey::V)
 	{
 		if (playbackItem && playbackItem->VideoTracks->Size > 1)
 		{
-			playbackItem->VideoTracks->SelectedIndex = 
+			playbackItem->VideoTracks->SelectedIndex =
 				(playbackItem->VideoTracks->SelectedIndex + 1) % playbackItem->VideoTracks->Size;
 		}
 	}
