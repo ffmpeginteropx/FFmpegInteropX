@@ -171,7 +171,7 @@ HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired(AVFrame* avF
 		m_pSwsCtx = sws_getContext(
 			m_pAvCodecCtx->width,
 			m_pAvCodecCtx->height,
-			avFrame->pix_fmt,
+			(AVPixelFormat)avFrame->format,
 			TargetWidth,
 			TargetHeight,
 			m_OutputPixelFormat,
