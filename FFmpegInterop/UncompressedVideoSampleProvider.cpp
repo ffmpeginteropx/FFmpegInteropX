@@ -162,7 +162,7 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
 	return ref new VideoStreamDescriptor(videoProperties);
 }
 
-HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired()
+HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired(AVFrame* avFrame)
 {
 	HRESULT hr = S_OK;
 	if (m_bUseScaler && !m_pSwsCtx)
@@ -171,7 +171,7 @@ HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired()
 		m_pSwsCtx = sws_getContext(
 			m_pAvCodecCtx->width,
 			m_pAvCodecCtx->height,
-			m_pAvCodecCtx->pix_fmt,
+			(AVPixelFormat)avFrame->format,
 			TargetWidth,
 			TargetHeight,
 			m_OutputPixelFormat,
@@ -206,7 +206,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 {
 	HRESULT hr = S_OK;
 
-	hr = InitializeScalerIfRequired();
+	hr = InitializeScalerIfRequired(avFrame);
 
 	if (SUCCEEDED(hr))
 	{

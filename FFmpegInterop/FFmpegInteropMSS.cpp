@@ -1296,13 +1296,8 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			{
 				hr = E_FAIL;
 			}
-			else if (avVideoCodecCtx->pix_fmt == AV_PIX_FMT_NONE)
-			{
-				hr = E_FAIL;
-			}
 			else
 			{
-
 				// Detect video format and create video stream descriptor accordingly
 				result = CreateVideoSampleProvider(avStream, avVideoCodecCtx, index);
 			}
