@@ -29,6 +29,8 @@
 
 namespace MediaPlayerCPP
 {
+	using namespace Concurrency;
+
 	public ref class MainPage sealed
 	{
 	public:
@@ -39,16 +41,21 @@ namespace MediaPlayerCPP
 
 	private:
 		void OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
-		void OpenLocalFile(Windows::Storage::StorageFile^ file);
-		void TryOpenLastFile();
+		task<void> OpenLocalFile();
+		task<void> OpenLocalFile(Windows::Storage::StorageFile^ file);
+		task<void> TryOpenLastFile();
 		void URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e);
+		task<void> OpenUriStream(Platform::String^ uri);
 		void MediaFailed(Platform::Object^ sender, Windows::UI::Xaml::ExceptionRoutedEventArgs^ e);
 		void ExtractFrame(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		task<void> ExtractFrame();
 		void DisplayErrorMessage(Platform::String^ message);
 		void Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void OnButtonPressed(Windows::Media::SystemMediaTransportControls ^sender, Windows::Media::SystemMediaTransportControlsButtonPressedEventArgs ^args);
 		void LoadSubtitleFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		task<void> LoadSubtitleFile();
 		void LoadSubtitleFileFFmpeg(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		task<void> LoadSubtitleFileFFmpeg();
 		void OnResolved(Windows::Media::Core::TimedTextSource ^sender, Windows::Media::Core::TimedTextSourceResolveResultEventArgs ^args);
 		void OnTimedMetadataTracksChanged(Windows::Media::Playback::MediaPlaybackItem ^sender, Windows::Foundation::Collections::IVectorChangedEventArgs ^args);
 		void PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
