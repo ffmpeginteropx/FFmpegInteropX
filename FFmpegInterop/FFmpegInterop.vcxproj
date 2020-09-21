@@ -122,6 +122,7 @@
     <ClInclude Include="FrameGrabber.h" />
     <ClInclude Include="H264AVCSampleProvider.h" />
     <ClInclude Include="IAvEffect.h" />
+    <ClInclude Include="IVideoFrameProcessor.h" />
     <ClInclude Include="KeyStringValuePair.h" />
     <ClInclude Include="LanguageTagConverter.h" />
     <ClInclude Include="NALPacketSampleProvider.h" />

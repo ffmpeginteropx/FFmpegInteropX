@@ -187,6 +187,7 @@
     <ClInclude Include="TexturePool.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="IVideoFrameProcessor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\FFmpegConfig.sh">

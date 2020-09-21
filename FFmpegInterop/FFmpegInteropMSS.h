@@ -32,6 +32,7 @@
 #include "CodecChecker.h"
 #include <collection.h>
 #include "MediaMetadata.h"
+#include <IVideoFrameProcessor.h>
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -92,7 +93,7 @@ namespace FFmpegInterop
 		void SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects);
 
 		///<summary>Sets video effects. This replaces any effects which were already set.</summary>
-		void SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects);
+		void SetVideoEffects(IVideoFrameProcessor^ videoEffects);
 
 
 		///<summary>Disables audio effects.</summary>

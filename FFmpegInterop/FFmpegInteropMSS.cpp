@@ -1342,12 +1342,12 @@ void FFmpegInteropMSS::SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEf
 	mutexGuard.unlock();
 }
 
-void FFmpegInteropMSS::SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects)
+void FFmpegInteropMSS::SetVideoEffects(IVideoFrameProcessor^ videoEffects)
 {
 	mutexGuard.lock();
 	if (currentVideoStream)
 	{
-		currentVideoStream->SetFilters(videoEffects);
+		currentVideoStream->SetVideoFilters(videoEffects);
 	}
 	mutexGuard.unlock();
 }

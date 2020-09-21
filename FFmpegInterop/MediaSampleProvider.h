@@ -24,6 +24,7 @@
 #include "Enumerations.h"
 #include "StreamInfo.h"
 #include <d3d11.h>
+#include <IVideoFrameProcessor.h>
 
 
 extern "C"
@@ -103,15 +104,20 @@ namespace FFmpegInterop
 		virtual HRESULT Initialize();
 		void InitializeNameLanguageCodec();
 		virtual void InitializeStreamInfo();
-		virtual void QueuePacket(AVPacket *packet);
+		virtual void QueuePacket(AVPacket* packet);
 		AVPacket* PopPacket();
-		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG & packetPts, LONGLONG & packetDuration);
+		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
 		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) = 0;
 		virtual IMediaStreamDescriptor^ CreateStreamDescriptor() = 0;
 		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
 		void EnableStream();
 		void DisableStream();
-		virtual void SetFilters(IVectorView<AvEffectDefinition^>^ effects) { };// override for setting effects in sample providers
+		virtual void SetFilters(IVectorView<AvEffectDefinition^>^ effects) {  };// override for setting effects in sample providers
+		void SetVideoFilters(IVideoFrameProcessor^ videoEffects) 
+		{
+			videoProcessor = videoEffects; 
+		}
+		
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
 		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
 		virtual void Detach();
@@ -149,8 +155,9 @@ namespace FFmpegInterop
 		DecoderEngine decoder;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
+		IVideoFrameProcessor^ videoProcessor;
 	};
 }
 
 // free AVBufferRef*
-void free_buffer(void *lpVoid);
+void free_buffer(void* lpVoid);
