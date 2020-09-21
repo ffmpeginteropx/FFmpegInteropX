@@ -270,6 +270,11 @@ MediaStreamSource^ FFmpegInteropMSS::GetMediaStreamSource()
 
 MediaSource^ FFmpegInteropMSS::CreateMediaSource()
 {
+	for each (auto stream in sampleProviders)
+	{
+		stream->NotifyCreateSource();
+	}
+
 	if (this->config->IsFrameGrabber) throw ref new Exception(E_UNEXPECTED);
 	MediaSource^ source = MediaSource::CreateFromMediaStreamSource(mss);
 	for each (auto stream in subtitleStreams)
@@ -1724,23 +1729,13 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position)
 	auto hr = S_OK;
 
 	// Select the first valid stream either from video or audio
-	int streamIndex = currentVideoStream ? currentVideoStream->StreamIndex : currentAudioStream ? currentAudioStream->StreamIndex : -1;
+	auto stream = currentVideoStream ? currentVideoStream : currentAudioStream;
 
-	if (streamIndex >= 0)
+	if (stream)
 	{
-		// Compensate for file start_time, then convert to stream time_base
-		int64 correctedPosition;
-		if (avFormatCtx->start_time == AV_NOPTS_VALUE)
-		{
-			correctedPosition = 0;
-		}
-		else
-		{
-			correctedPosition = position.Duration + (avFormatCtx->start_time * 10);
-		}
-		int64_t seekTarget = static_cast<int64_t>(correctedPosition / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
+		int64_t seekTarget = stream->ConvertPosition(position);
 
-		if (av_seek_frame(avFormatCtx, streamIndex, seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
+		if (av_seek_frame(avFormatCtx, stream->StreamIndex, seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
 		{
 			hr = E_FAIL;
 			DebugMessage(L" - ### Error while seeking\n");
