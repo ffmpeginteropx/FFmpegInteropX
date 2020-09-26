@@ -43,7 +43,9 @@ if [ "$variant" == "UWP" ]; then
         $configureArgs \
         --disable-encoders \
         --disable-devices \
-        --disable-hwaccels \
+        --enable-hwaccels \
+        --enable-d3d11va \
+        --disable-dxva2 \
         --disable-programs \
         --extra-ldflags='-APPCONTAINER WindowsApp.lib' \
         "

@@ -111,6 +111,8 @@
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
     <ClInclude Include="CharacterEncoding.h" />
+    <ClInclude Include="D3D11VideoSampleProvider.h" />
+    <ClInclude Include="DirectXInteropHelper.h" />
     <ClInclude Include="Enumerations.h" />
     <ClInclude Include="FFmpegInteropConfig.h" />
     <ClInclude Include="FFmpegInteropLogging.h" />
@@ -135,6 +137,7 @@
     <ClInclude Include="SubtitleProvider.h" />
     <ClInclude Include="SubtitleProviderBitmap.h" />
     <ClInclude Include="SubtitleProviderSsaAss.h" />
+    <ClInclude Include="TexturePool.h" />
     <ClInclude Include="TimeSpanHelpers.h" />
     <ClInclude Include="MediaMetadata.h" />
     <ClInclude Include="UncompressedAudioSampleProvider.h" />
@@ -152,6 +155,7 @@
     <ClCompile Include="BasicVideoEffect.cpp" />
     <ClCompile Include="CompressedSampleProvider.cpp" />
     <ClCompile Include="CharacterEncoding.cpp" />
+    <ClCompile Include="DirectXInteropHelper.cpp" />
     <ClCompile Include="FFmpegInteropLogging.cpp" />
     <ClCompile Include="FFmpegInteropMSS.cpp" />
     <ClCompile Include="FFmpegReader.cpp" />
@@ -186,13 +190,13 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets" Condition="Exists('..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets')" />
-    <Import Project="..\packages\FFmpegInteropX.FFmpegUWP.4.2.200\build\native\FFmpegInteropX.FFmpegUWP.targets" Condition="Exists('..\packages\FFmpegInteropX.FFmpegUWP.4.2.200\build\native\FFmpegInteropX.FFmpegUWP.targets')" />
+    <Import Project="..\packages\FFmpegInteropX.FFmpegUWP.4.3.100-pre\build\native\FFmpegInteropX.FFmpegUWP.targets" Condition="Exists('..\packages\FFmpegInteropX.FFmpegUWP.4.3.100-pre\build\native\FFmpegInteropX.FFmpegUWP.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets'))" />
-    <Error Condition="!Exists('..\packages\FFmpegInteropX.FFmpegUWP.4.2.200\build\native\FFmpegInteropX.FFmpegUWP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FFmpegInteropX.FFmpegUWP.4.2.200\build\native\FFmpegInteropX.FFmpegUWP.targets'))" />
+    <Error Condition="!Exists('..\packages\FFmpegInteropX.FFmpegUWP.4.3.100-pre\build\native\FFmpegInteropX.FFmpegUWP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FFmpegInteropX.FFmpegUWP.4.3.100-pre\build\native\FFmpegInteropX.FFmpegUWP.targets'))" />
   </Target>
 </Project>

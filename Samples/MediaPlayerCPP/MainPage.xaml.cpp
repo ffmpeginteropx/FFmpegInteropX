@@ -51,7 +51,6 @@ using namespace Windows::UI::Xaml::Navigation;
 MainPage::MainPage()
 {
 	Config = ref new FFmpegInteropConfig();
-
 	InitializeComponent();
 
 	// Show the control panel on startup so user can start opening media
@@ -72,8 +71,7 @@ MainPage::MainPage()
 
 	// populate character encodings
 	cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
-	
-	this->KeyDown += ref new Windows::UI::Xaml::Input::KeyEventHandler(this, &MediaPlayerCPP::MainPage::OnKeyDown);
+	Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);
 }
 
 void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -86,74 +84,78 @@ void MediaPlayerCPP::MainPage::OnButtonPressed(Windows::Media::SystemMediaTransp
 {
 }
 
-void MainPage::TryOpenLastFile()
+task<void> MainPage::TryOpenLastFile()
 {
-
+	try
 	{
 		//Try open last file
-		create_task(StorageApplicationPermissions::FutureAccessList->GetFileAsync(
-			StorageApplicationPermissions::FutureAccessList->Entries->GetAt(0).Token)).then([this](StorageFile^ file)
-				{
-					OpenLocalFile(file);
-				});
+		auto file = co_await StorageApplicationPermissions::FutureAccessList->GetFileAsync(
+			StorageApplicationPermissions::FutureAccessList->Entries->GetAt(0).Token);
+		co_await OpenLocalFile(file);
+	}
+	catch (Exception^ ex)
+	{
+		DisplayErrorMessage(ex->Message);
 	}
 }
 
 void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-	FileOpenPicker^ filePicker = ref new FileOpenPicker();
-	filePicker->ViewMode = PickerViewMode::Thumbnail;
-	filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
-	filePicker->FileTypeFilter->Append("*");
-
-	// Show file picker so user can select a file
-	create_task(filePicker->PickSingleFileAsync()).then([this](StorageFile^ file)
-	{
-		if (file != nullptr)
-		{
-			OpenLocalFile(file);
-		}
-	});
+	OpenLocalFile();
 }
 
-void MainPage::OpenLocalFile(StorageFile^ file)
+task<void> MainPage::OpenLocalFile()
+{
+	try
+	{
+		FileOpenPicker^ filePicker = ref new FileOpenPicker();
+		filePicker->ViewMode = PickerViewMode::Thumbnail;
+		filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
+		filePicker->FileTypeFilter->Append("*");
+
+		// Show file picker so user can select a file
+		auto file = co_await filePicker->PickSingleFileAsync();
+		co_await OpenLocalFile(file);
+	}
+	catch (Exception^ ex)
+	{
+		DisplayErrorMessage(ex->Message);
+	}
+}
+
+task<void> MainPage::OpenLocalFile(StorageFile^ file)
 {
 	currentFile = file;
 	mediaPlayer->Source = nullptr;
 
 	// Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
-	create_task(file->OpenAsync(FileAccessMode::Read)).then([this, file](task<IRandomAccessStream^> stream)
-		{
-			try
-			{
-				// Instantiate FFmpegInteropMSS using the opened local file stream
-				IRandomAccessStream^ readStream = stream.get();
-				create_task(FFmpegInteropMSS::CreateFromStreamAsync(readStream, Config)).then([this, file](FFmpegInteropMSS^ result)
-					{
-						StorageApplicationPermissions::FutureAccessList->Clear();
-						StorageApplicationPermissions::FutureAccessList->Add(file);
+	try
+	{
+		auto stream = co_await file->OpenAsync(FileAccessMode::Read);
+		// Instantiate FFmpegInteropMSS using the opened local file stream
+		FFmpegMSS = co_await FFmpegInteropMSS::CreateFromStreamAsync(stream, Config);
 
-						FFmpegMSS = result;
-						playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
+		StorageApplicationPermissions::FutureAccessList->Clear();
+		StorageApplicationPermissions::FutureAccessList->Add(file);
+
+		playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
 
-						// Pass MediaPlaybackItem to Media Element
-						mediaPlayer->Source = playbackItem;
+		// Pass MediaPlaybackItem to Media Element
+		mediaPlayer->Source = playbackItem;
 
-						// Close control panel after file open
-						Splitter->IsPaneOpen = false;
+		// Close control panel after file open
+		Splitter->IsPaneOpen = false;
 
-						auto controls = Windows::Media::SystemMediaTransportControls::GetForCurrentView();
-						controls->IsPlayEnabled = true;
-						controls->IsPauseEnabled = true;
-						controls->PlaybackStatus = Windows::Media::MediaPlaybackStatus::Playing;
-					});
-			}
-			catch (Exception ^ ex)
-			{
-				DisplayErrorMessage(ex->Message);
-			}
-		});
+		auto controls = Windows::Media::SystemMediaTransportControls::GetForCurrentView();
+		controls->IsPlayEnabled = true;
+		controls->IsPauseEnabled = true;
+		controls->PlaybackStatus = Windows::Media::MediaPlaybackStatus::Playing;
+	}
+	catch (Exception^ ex)
+	{
+		DisplayErrorMessage(ex->Message);
+	}
 }
 
 void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e)
@@ -166,27 +168,79 @@ void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::K
 		// Mark event as handled to prevent duplicate event to re-triggered
 		e->Handled = true;
 
-		// Set FFmpeg specific options. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
+		OpenUriStream(uri);
+	}
+}
 
-		// Below are some sample options that you can set to configure RTSP streaming
-		// Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
-		// Config->FFmpegOptions->Insert("stimeout", 100000);
+task<void> MainPage::OpenUriStream(Platform::String^ uri)
+{
+	// Set FFmpeg specific options. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
 
-		// Instantiate FFmpegInteropMSS using the URI
-		mediaPlayer->Source = nullptr;
+	// Below are some sample options that you can set to configure RTSP streaming
+	// Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
+	// Config->FFmpegOptions->Insert("stimeout", 100000);
+
+	// Instantiate FFmpegInteropMSS using the URI
+	mediaPlayer->Source = nullptr;
+	try
+	{
+		FFmpegMSS = co_await FFmpegInteropMSS::CreateFromUriAsync(uri, Config);
+		playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
+
+		// Pass MediaPlaybackItem to Media Element
+		mediaPlayer->Source = playbackItem;
+
+		// Close control panel after opening media
+		Splitter->IsPaneOpen = false;
+	}
+	catch (Exception^ ex)
+	{
+		DisplayErrorMessage(ex->Message);
+	}
+}
+
+void MainPage::ExtractFrame(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	ExtractFrame();
+}
+
+task<void> MainPage::ExtractFrame()
+{
+	if (currentFile == nullptr || !mediaPlayer->PlaybackSession)
+	{
+		DisplayErrorMessage("Please open a video file first.");
+	}
+	else
+	{
+		// open the file that is currently playing
 		try
 		{
-			create_task(FFmpegInteropMSS::CreateFromUriAsync(uri, Config)).then([this](FFmpegInteropMSS^ result)
+			auto stream = co_await currentFile->OpenAsync(FileAccessMode::Read);
+			bool exactSeek = grabFrameExactSeek->IsOn;
+			// extract frame using FFmpegInterop and current position
+			auto frameGrabber = co_await FrameGrabber::CreateFromStreamAsync(stream);
+			auto frame = co_await frameGrabber->ExtractVideoFrameAsync(mediaPlayer->PlaybackSession->Position, exactSeek);
+			auto filePicker = ref new FileSavePicker();
+			filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
+			filePicker->DefaultFileExtension = ".jpg";
+			filePicker->FileTypeChoices->Insert("Jpeg file", ref new Platform::Collections::Vector<String^>(1, ".jpg"));
+
+			// Show file picker so user can select a file
+			auto file = co_await filePicker->PickSaveFileAsync();
+			if (file != nullptr)
 			{
-				FFmpegMSS = result;
-				playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
+				auto stream = co_await file->OpenAsync(FileAccessMode::ReadWrite);
+				// encode frame as jpeg file
+				co_await frame->EncodeAsJpegAsync(stream);
+				stream = nullptr;
 
-				// Pass MediaPlaybackItem to Media Element
-				mediaPlayer->Source = playbackItem;
-
-				// Close control panel after opening media
-				Splitter->IsPaneOpen = false;
-			});
+				// launch file after creation
+				auto launched = co_await Windows::System::Launcher::LaunchFileAsync(file);
+				if (!launched)
+				{
+					DisplayErrorMessage("File has been created:\n" + file->Path);
+				}
+			}
 		}
 		catch (Exception^ ex)
 		{
@@ -195,64 +249,12 @@ void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::K
 	}
 }
 
-void MainPage::ExtractFrame(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void MediaPlayerCPP::MainPage::LoadSubtitleFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-	if (!currentFile || !mediaPlayer->PlaybackSession)
-	{
-		DisplayErrorMessage("Please open a video file first.");
-	}
-	else
-	{
-		// open the file that is currently playing
-		create_task(currentFile->OpenAsync(FileAccessMode::Read)).then([this](IRandomAccessStream^ stream)
-		{
-			try
-			{
-				bool exactSeek = grabFrameExactSeek->IsOn;
-				// extract frame using FFmpegInterop and current position
-				create_task(FrameGrabber::CreateFromStreamAsync(stream)).then([this, exactSeek](FrameGrabber^ frameGrabber)
-				{
-					create_task(frameGrabber->ExtractVideoFrameAsync(mediaPlayer->PlaybackSession->Position, exactSeek)).then([this](VideoFrame^ frame)
-					{
-						auto filePicker = ref new FileSavePicker();
-						filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
-						filePicker->DefaultFileExtension = ".jpg";
-						filePicker->FileTypeChoices->Insert("Jpeg file", ref new Platform::Collections::Vector<String^>(1, ".jpg"));
-
-						// Show file picker so user can select a file
-						create_task(filePicker->PickSaveFileAsync()).then([this, frame](StorageFile^ file)
-						{
-							if (file != nullptr)
-							{
-								create_task(file->OpenAsync(FileAccessMode::ReadWrite)).then([this, frame, file](IRandomAccessStream^ stream)
-								{
-									// encode frame as jpeg file
-									create_task(frame->EncodeAsJpegAsync(stream)).then([this, file]
-									{
-										// launch file after creation
-										create_task(Windows::System::Launcher::LaunchFileAsync(file)).then([this, file](bool launched)
-										{
-											if (!launched)
-											{
-												DisplayErrorMessage("File has been created:\n" + file->Path);
-											}
-										});
-									});
-								});
-							}
-						});
-					});
-				});
-			}
-			catch (Exception^ ex)
-			{
-				DisplayErrorMessage(ex->Message);
-			}
-		});
-	}
+	LoadSubtitleFile();
 }
 
-void MediaPlayerCPP::MainPage::LoadSubtitleFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+task<void> MediaPlayerCPP::MainPage::LoadSubtitleFile()
 {
 	if (playbackItem == nullptr)
 	{
@@ -260,29 +262,37 @@ void MediaPlayerCPP::MainPage::LoadSubtitleFile(Platform::Object^ sender, Window
 	}
 	else
 	{
-		FileOpenPicker^ filePicker = ref new FileOpenPicker();
-		filePicker->ViewMode = PickerViewMode::Thumbnail;
-		filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
-		filePicker->FileTypeFilter->Append("*");
-
-		// Show file picker so user can select a file
-		create_task(filePicker->PickSingleFileAsync()).then([this](StorageFile^ file)
+		try
 		{
+			FileOpenPicker^ filePicker = ref new FileOpenPicker();
+			filePicker->ViewMode = PickerViewMode::Thumbnail;
+			filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
+			filePicker->FileTypeFilter->Append("*");
+
+			// Show file picker so user can select a file
+			auto file = co_await filePicker->PickSingleFileAsync();
 			if (file != nullptr)
 			{
 				// Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
-				create_task(file->OpenAsync(FileAccessMode::Read)).then([this, file](task<IRandomAccessStream^> stream)
-				{
-					auto track = TimedTextSource::CreateFromStream(stream.get());
-					playbackItem->Source->ExternalTimedTextSources->Append(track);
-					track->Resolved += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedTextSource ^, Windows::Media::Core::TimedTextSourceResolveResultEventArgs ^>(this, &MediaPlayerCPP::MainPage::OnResolved);
-				});
+				auto stream = co_await file->OpenAsync(FileAccessMode::Read);
+				auto track = TimedTextSource::CreateFromStream(stream);
+				playbackItem->Source->ExternalTimedTextSources->Append(track);
+				track->Resolved += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedTextSource^, Windows::Media::Core::TimedTextSourceResolveResultEventArgs^>(this, &MediaPlayerCPP::MainPage::OnResolved);
 			}
-		});
+		}
+		catch (Exception^ e)
+		{
+			DisplayErrorMessage(e->Message);
+		}
 	}
 }
 
 void MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	LoadSubtitleFileFFmpeg();
+}
+
+task<void> MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg()
 {
 	if (FFmpegMSS == nullptr)
 	{
@@ -290,28 +300,31 @@ void MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg(Platform::Object^ sender, 
 	}
 	else
 	{
-		FileOpenPicker^ filePicker = ref new FileOpenPicker();
-		filePicker->ViewMode = PickerViewMode::Thumbnail;
-		filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
-		filePicker->FileTypeFilter->Append("*");
-
-		// Show file picker so user can select a file
-		create_task(filePicker->PickSingleFileAsync()).then([this](StorageFile^ file)
+		try
 		{
+			FileOpenPicker^ filePicker = ref new FileOpenPicker();
+			filePicker->ViewMode = PickerViewMode::Thumbnail;
+			filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
+			filePicker->FileTypeFilter->Append("*");
+
+			// Show file picker so user can select a file
+			auto file = co_await filePicker->PickSingleFileAsync();
 			if (file != nullptr)
 			{
 				// Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
-				create_task(file->OpenAsync(FileAccessMode::Read)).then([this, file](task<IRandomAccessStream^> stream)
+				auto stream = co_await file->OpenAsync(FileAccessMode::Read);
+				if (playbackItem != nullptr)
 				{
-					if (playbackItem != nullptr)
-					{
-						timedMetadataTracksChangedToken = playbackItem->TimedMetadataTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem ^, Windows::Foundation::Collections::IVectorChangedEventArgs ^>(this, &MediaPlayerCPP::MainPage::OnTimedMetadataTracksChanged);
-					}
+					timedMetadataTracksChangedToken = playbackItem->TimedMetadataTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem^, Windows::Foundation::Collections::IVectorChangedEventArgs^>(this, &MediaPlayerCPP::MainPage::OnTimedMetadataTracksChanged);
+				}
 
-					this->FFmpegMSS->AddExternalSubtitleAsync(stream.get(), file->Name);
-				});
+				co_await this->FFmpegMSS->AddExternalSubtitleAsync(stream, file->Name);
 			}
-		});
+		}
+		catch (Exception^ e)
+		{
+			DisplayErrorMessage(e->Message);
+		}
 	}
 }
 
@@ -349,6 +362,7 @@ void MediaPlayerCPP::MainPage::OnResolved(TimedTextSource ^sender, TimedTextSour
 
 void MediaPlayerCPP::MainPage::OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args)
 {
+	actualFFmpegMSS = nullptr;
 	Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
 		ref new Windows::UI::Core::DispatchedHandler([this, args]
 			{
@@ -358,9 +372,12 @@ void MediaPlayerCPP::MainPage::OnMediaFailed(Windows::Media::Playback::MediaPlay
 
 void MainPage::DisplayErrorMessage(Platform::String^ message)
 {
-	// Display error message
-	auto errorDialog = ref new MessageDialog(message);
-	errorDialog->ShowAsync();
+	Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal, ref new Windows::UI::Core::DispatchedHandler([this, message]()
+		{
+			// Display error message
+			auto errorDialog = ref new MessageDialog(message);
+			errorDialog->ShowAsync();
+		}));
 }
 
 void MediaPlayerCPP::MainPage::CbEncodings_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e)
@@ -373,14 +390,7 @@ void MediaPlayerCPP::MainPage::CbEncodings_SelectionChanged(Platform::Object^ se
 
 void MediaPlayerCPP::MainPage::PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-	auto passthrough = PassthroughVideo->IsOn;
-	Config->PassthroughVideoH264 = passthrough;
-	Config->PassthroughVideoHEVC = passthrough;
-	Config->PassthroughVideoMPEG2 = passthrough;
-	Config->PassthroughVideoVC1 = passthrough;
-	Config->PassthroughVideoVP9 = passthrough;
-	Config->PassthroughVideoVP8 = passthrough;
-	Config->PassthroughVideoWMV3 = passthrough;
+	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 
@@ -437,6 +447,7 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
 	{
 		FFmpegMSS->Session = session;
 	}
+	actualFFmpegMSS = FFmpegMSS;
 
 	Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
 		ref new Windows::UI::Core::DispatchedHandler([this]
@@ -448,7 +459,7 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
 void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
 	PassthroughVideo->IsEnabled = !AutoDetect->IsOn;
-	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::AutoDetection : VideoDecoderMode::ManualSelection;
+	Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -460,20 +471,19 @@ void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ send
 	}
 }
 
-
-void MediaPlayerCPP::MainPage::OnKeyDown(Platform::Object ^sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs ^e)
+void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::KeyEventArgs^ args)
 {
-	if (e->Key == Windows::System::VirtualKey::Enter && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down)
+	if (args->VirtualKey == Windows::System::VirtualKey::Enter && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) & Windows::UI::Core::CoreVirtualKeyStates::Down)
 		== Windows::UI::Core::CoreVirtualKeyStates::Down && StorageApplicationPermissions::FutureAccessList->Entries->Size == 1)
 	{
 		TryOpenLastFile();
 	}
 
-	if (e->Key == Windows::System::VirtualKey::V)
+	if (args->VirtualKey == Windows::System::VirtualKey::V)
 	{
 		if (playbackItem && playbackItem->VideoTracks->Size > 1)
 		{
-			playbackItem->VideoTracks->SelectedIndex = 
+			playbackItem->VideoTracks->SelectedIndex =
 				(playbackItem->VideoTracks->SelectedIndex + 1) % playbackItem->VideoTracks->Size;
 		}
 	}

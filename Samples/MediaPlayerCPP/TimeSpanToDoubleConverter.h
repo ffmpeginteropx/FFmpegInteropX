@@ -14,7 +14,7 @@ namespace MediaPlayerCPP
 		virtual Platform::Object^ Convert(Platform::Object^ value, Windows::UI::Xaml::Interop::TypeName targetType, Platform::Object^ parameter, Platform::String^ language)
 		{
 			auto box = static_cast<Platform::IBox<TimeSpan>^>(value);
-			return ref new Platform::Box<double>(box->Value.Duration / 10000000);
+			return ref new Platform::Box<double>((double)box->Value.Duration / 10000000);
 		}
 
 		virtual Platform::Object^ ConvertBack(Platform::Object^ value, Windows::UI::Xaml::Interop::TypeName targetType, Platform::Object^ parameter, Platform::String^ language)
