@@ -1788,7 +1788,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 			{
 				max = static_cast<int64_t>((referenceTime.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
 			}
-
+			
 			if (avformat_seek_file(avFormatCtx, streamIndex, min, seekTarget, max, 0) < 0)
 			{
 				hr = E_FAIL;
@@ -1862,11 +1862,10 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 									currentVideoStream->SkipPacketsUntilTimestamp(timestampVideo);
 									currentAudioStream->SkipPacketsUntilTimestamp(audioTarget);
 
-									hr = currentAudioStream->GetNextPacketTimestamp(timestampAudio, timestampAudioDuration);
-									if (hr == S_OK && (timestampAudio + timestampAudioDuration) <= timestampVideo)
+									auto sample = currentAudioStream->GetNextSample();
+									if (sample)
 									{
-										// if possible, decode one audio sample to get clean output
-										currentAudioStream->GetNextSample();
+										actualPosition = sample->Timestamp + sample->Duration;
 									}
 								}
 							}
@@ -1876,10 +1875,14 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 								currentAudioStream->SkipPacketsUntilTimestamp(audioTarget);
 								
 								hr = currentAudioStream->GetNextPacketTimestamp(timestampAudio, timestampAudioDuration);
-								if (hr == S_OK && (timestampAudio + timestampAudioDuration) <= timestampVideo)
+								if (hr == S_OK && (config->FastSeekCleanAudio || (timestampAudio + timestampAudioDuration) <= timestampVideo))
 								{
-									// if possible, decode one audio sample to get clean output
-									currentAudioStream->GetNextSample();
+									// decode one audio sample to get clean output
+									auto sample = currentAudioStream->GetNextSample();
+									if (sample)
+									{
+										actualPosition = sample->Timestamp + sample->Duration;
+									}
 								}
 							}
 						}
