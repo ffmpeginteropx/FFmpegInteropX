@@ -130,7 +130,7 @@ namespace MediaPlayerCS
             // now refresh codec checker, so next file might use HW acceleration (if codec was really installed)
             await CodecChecker.RefreshAsync();
         }
-              
+
 
         private async Task TryOpenLastFile()
         {
@@ -464,6 +464,9 @@ namespace MediaPlayerCS
         {
             tbSubtitleDelay.Text = "Subtitle delay: 0s";
             actualFFmpegMSS = FFmpegMSS;
+            List<AvEffectDefinition> videoFilters = new List<AvEffectDefinition>();
+            videoFilters.Add(new AvEffectDefinition("colorchannelmixer", ".3:.4:.3:0:.3:.4:.3:0:.3:.4:.3"));
+            actualFFmpegMSS.SetVideoEffects(videoFilters.AsReadOnly());
         }
 
 

@@ -29,10 +29,8 @@ using namespace Windows::Storage;
 namespace FFmpegInterop {
 	ref class VideoFilter : public IAvEffect
 	{
-
 		const AVFilter  *AVSource;
 		const AVFilter  *AVSink;
-
 
 		AVFilterGraph	*graph;
 		AVFilterContext *avSource_ctx, *avSink_ctx;
@@ -41,7 +39,6 @@ namespace FFmpegInterop {
 
 		std::vector<const AVFilter*> AVFilters;
 		std::vector<AVFilterContext*> AVFilterContexts;
-
 
 		HRESULT AllocGraph()
 		{
@@ -55,12 +52,11 @@ namespace FFmpegInterop {
 			else return E_FAIL;
 		}
 
-
 		HRESULT AllocSource()
 		{
 			AVDictionary *options_dict = NULL;
 
-			int err;
+			int hr;
 
 			/* Create the buffer filter;
 			* it will be used for feeding the data into the graph. */
@@ -77,7 +73,7 @@ namespace FFmpegInterop {
 			}
 			/* Set the filter options through the AVOptions API. */
 
-			auto hr = av_opt_set_int(avSource_ctx, "width", inputCodecCtx->width, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_int(avSource_ctx, "width", inputCodecCtx->width, AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set_int(avSource_ctx, "height", inputCodecCtx->height, AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set_int(avSource_ctx, "pix_fmt", inputCodecCtx->pix_fmt, AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set_q(avSource_ctx, "time_base", inputCodecCtx->time_base, AV_OPT_SEARCH_CHILDREN);
@@ -86,8 +82,8 @@ namespace FFmpegInterop {
 
 			/* Now initialize the filter; we pass NULL options, since we have already
 			* set all the options above. */
-			err = avfilter_init_str(avSource_ctx, NULL);
-			return err;
+			hr = avfilter_init_str(avSource_ctx, NULL);
+			return hr;
 		}
 
 		HRESULT AllocSink()
@@ -116,7 +112,6 @@ namespace FFmpegInterop {
 			if (SUCCEEDED(hr))
 			{
 				hr = AllocSink();
-
 			}
 
 			return hr;
@@ -125,16 +120,16 @@ namespace FFmpegInterop {
 		HRESULT InitFilterGraph(IVectorView<AvEffectDefinition^>^ effects)
 		{
 			//init graph
-			int error = 0;
+			int hr = 0;
 
-			error = AllocGraph();
-			if (error < 0)
+			hr = AllocGraph();
+			if (hr < 0)
 				return E_FAIL;
 
 			//alloc src and sink
 
-			error = AlocSourceAndSync();
-			if (error < 0)
+			hr = AlocSourceAndSync();
+			if (hr < 0)
 				return E_FAIL;
 
 
@@ -172,25 +167,25 @@ namespace FFmpegInterop {
 			AVFilterContexts.push_back(avSink_ctx);
 
 
-			error = LinkGraph();
-			return error;
+			hr = LinkGraph();
+			return hr;
 		}
 
 		HRESULT LinkGraph()
 		{
-			int err = 0;
+			int hr = 0;
 
 			//link all except last item
 			for (unsigned int i = 0; i < AVFilterContexts.size() - 1; i++)
 			{
-				if (err >= 0)
-					err = avfilter_link(AVFilterContexts[i], 0, AVFilterContexts[i + 1], 0);
+				if (hr >= 0)
+					hr = avfilter_link(AVFilterContexts[i], 0, AVFilterContexts[i + 1], 0);
 			}
 
 			/* Configure the graph. */
-			err = avfilter_graph_config(graph, NULL);
-			if (err < 0) {
-				return err;
+			hr = avfilter_graph_config(graph, NULL);
+			if (hr < 0) {
+				return hr;
 			}
 			return S_OK;
 		}
@@ -202,22 +197,10 @@ namespace FFmpegInterop {
 			this->inputCodecCtx = m_inputCodecCtx;
 		}
 
-
-
-
-
-
-
-
-
-
-
-
 		HRESULT AllocResources(IVectorView<AvEffectDefinition^>^ effects)
 		{
 			return InitFilterGraph(effects);
 		}
-
 
 		HRESULT AddFrame(AVFrame *avFrame) override
 		{
@@ -229,10 +212,12 @@ namespace FFmpegInterop {
 		HRESULT GetFrame(AVFrame *avFrame) override
 		{
 			auto hr = av_buffersink_get_frame(avSink_ctx, avFrame);
-
+			if (hr < 0)
+			{
+				return hr;
+			}
 			return hr;
 		}
-
 
 	public:
 		virtual ~VideoFilter()

@@ -49,15 +49,15 @@ namespace FFmpegInterop {
 		HRESULT InitFilterGraph(IVectorView<AvEffectDefinition^>^ effects)
 		{
 			//init graph
-			int error = 0;
+			int hr = 0;
 
-			error = AllocGraph();
-			if (error < 0)
+			hr = AllocGraph();
+			if (hr < 0)
 				return E_FAIL;
 
 			//alloc src and sink
-			error = AlocSourceAndSync();
-			if (error < 0)
+			hr = AlocSourceAndSync();
+			if (hr < 0)
 				return E_FAIL;
 
 
@@ -96,8 +96,8 @@ namespace FFmpegInterop {
 			AVFilterContexts.push_back(avSink_ctx);
 
 
-			error = LinkGraph();
-			return error;
+			hr = LinkGraph();
+			return hr;
 		}
 
 
@@ -200,9 +200,8 @@ namespace FFmpegInterop {
 			if (hr < 0) 
 			{
 				fprintf(stderr, "Could not initialize the aresample instance.\n");
-				return hr;
 			}
-			return 0;
+			return hr;
 
 		}
 
