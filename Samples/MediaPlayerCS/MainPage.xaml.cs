@@ -330,7 +330,13 @@ namespace MediaPlayerCS
         private async void MediaFailed(object sender, ExceptionRoutedEventArgs e)
         {
             await DisplayErrorMessage(e.ErrorMessage);
-            actualFFmpegMSS = null;
+            if (actualFFmpegMSS != null)
+            {
+                actualFFmpegMSS.Dispose();
+                actualFFmpegMSS = null;
+                FFmpegMSS = null;
+                playbackItem = null;
+            }
         }
 
         private async Task DisplayErrorMessage(string message)
@@ -463,6 +469,10 @@ namespace MediaPlayerCS
         private void MediaOpened(object sender, RoutedEventArgs e)
         {
             tbSubtitleDelay.Text = "Subtitle delay: 0s";
+            if (actualFFmpegMSS != null)
+            {
+                actualFFmpegMSS.Dispose();
+            }
             actualFFmpegMSS = FFmpegMSS;
             List<AvEffectDefinition> videoFilters = new List<AvEffectDefinition>();
             videoFilters.Add(new AvEffectDefinition("colorchannelmixer", ".3:.4:.3:0:.3:.4:.3:0:.3:.4:.3"));
