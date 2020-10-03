@@ -158,7 +158,6 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
 	}
 
 	videoProperties->Properties->Insert(MF_MT_INTERLACE_MODE, (uint32)_MFVideoInterlaceMode::MFVideoInterlace_MixedInterlaceOrProgressive);
-	frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx));
 
 	return ref new VideoStreamDescriptor(videoProperties);
 }
@@ -169,7 +168,8 @@ HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired(AVFrame* avF
 	if (m_bUseScaler)
 	{
 		// Setup software scaler to convert frame to output pixel type
-		m_pSwsCtx = sws_getContext(
+		m_pSwsCtx = sws_getCachedContext(
+			m_pSwsCtx,
 			m_pAvCodecCtx->width,
 			m_pAvCodecCtx->height,
 			(AVPixelFormat)avFrame->format,
