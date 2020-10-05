@@ -168,7 +168,6 @@
     <ClInclude Include="KeyStringValuePair.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="VideoFilter.h" />
     <ClInclude Include="StringUtils.h">
       <Filter>Helpers</Filter>
     </ClInclude>
@@ -186,6 +185,9 @@
     <ClInclude Include="DirectXInteropHelper.h" />
     <ClInclude Include="TexturePool.h">
       <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoFilter.h">
+      <Filter>Effects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -51,7 +51,7 @@ namespace FFmpegInterop
 						hr = E_FAIL;
 					}
 				}
-
+				
 				//cast the AVframe to texture 2D
 				auto nativeSurface = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
 				ID3D11Texture2D* copy_tex = nullptr;

@@ -49,9 +49,9 @@ namespace FFmpegInterop
 			filter = nullptr;
 		}
 
-		HRESULT GetFrameFromCodec(AVFrame *avFrame)
+		HRESULT GetFrameFromCodec(AVFrame** avFrame)
 		{
-			HRESULT hr = avcodec_receive_frame(m_pAvCodecCtx, avFrame);
+			HRESULT hr = avcodec_receive_frame(m_pAvCodecCtx, *avFrame);
 			if (SUCCEEDED(hr))
 			{
 				hadFirstFrame = true;
@@ -62,14 +62,21 @@ namespace FFmpegInterop
 				}
 				if (filter)
 				{
-					hr = filter->AddFrame(avFrame);
+					AVFrame* swFrame = av_frame_alloc();
+					hr = filter->AddFrame(*avFrame, swFrame);
 					if (SUCCEEDED(hr))
 					{
-						hr = filter->GetFrame(avFrame);
+						if (swFrame != NULL)
+						{
+							av_frame_free(avFrame);
+							avFrame = &swFrame;
+						}
+
+						hr = filter->GetFrame(*avFrame);
 					}
 					if (FAILED(hr))
 					{
-						av_frame_unref(avFrame);
+						av_frame_unref(*avFrame);
 					}
 				}
 			}

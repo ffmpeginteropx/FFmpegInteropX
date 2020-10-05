@@ -50,7 +50,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 
 	while (SUCCEEDED(hr))
 	{
-		hr = GetFrameFromFFmpegDecoder(avFrame, samplePts, sampleDuration);
+		hr = GetFrameFromFFmpegDecoder(&avFrame, samplePts, sampleDuration);
 
 		if (hr == S_FALSE)
 		{
@@ -89,7 +89,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 	return hr;
 }
 
-HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
+HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration)
 {
 	HRESULT hr = S_OK;
 
@@ -120,16 +120,16 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame* avFrame, 
 		else
 		{
 			// Update the timestamp
-			if (avFrame->pts != AV_NOPTS_VALUE)
+			if ((*avFrame)->pts != AV_NOPTS_VALUE)
 			{
-				framePts = avFrame->pts;
+				framePts = (*avFrame)->pts;
 			}
 			else
 			{
 				framePts = nextFramePts;
 			}
 
-			frameDuration = avFrame->pkt_duration;
+			frameDuration = (*avFrame)->pkt_duration;
 			nextFramePts = framePts + frameDuration;
 
 			hr = S_OK;

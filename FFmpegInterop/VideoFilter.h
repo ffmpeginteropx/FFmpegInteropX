@@ -29,16 +29,17 @@ using namespace Windows::Storage;
 namespace FFmpegInterop {
 	ref class VideoFilter : public IAvEffect
 	{
-		const AVFilter  *AVSource;
-		const AVFilter  *AVSink;
+		const AVFilter* AVSource;
+		const AVFilter* AVSink;
 
-		AVFilterGraph	*graph;
-		AVFilterContext *avSource_ctx, *avSink_ctx;
+		AVFilterGraph* graph;
+		AVFilterContext* avSource_ctx, * avSink_ctx;
 
-		AVCodecContext *inputCodecCtx;
+		AVCodecContext* inputCodecCtx;
 
 		std::vector<const AVFilter*> AVFilters;
 		std::vector<AVFilterContext*> AVFilterContexts;
+		IVectorView<AvEffectDefinition^>^ currentEffectsDefintions;
 
 		HRESULT AllocGraph()
 		{
@@ -52,9 +53,9 @@ namespace FFmpegInterop {
 			else return E_FAIL;
 		}
 
-		HRESULT AllocSource()
+		HRESULT AllocSource(AVPixelFormat swFrameFormat)
 		{
-			AVDictionary *options_dict = NULL;
+			AVDictionary* options_dict = NULL;
 
 			int hr;
 
@@ -71,11 +72,16 @@ namespace FFmpegInterop {
 				fprintf(stderr, "Could not allocate the abuffer instance.\n");
 				return AVERROR(ENOMEM);
 			}
-			/* Set the filter options through the AVOptions API. */
+
+			AVPixelFormat sourceFormat = inputCodecCtx->pix_fmt;
+			if (inputCodecCtx->pix_fmt != swFrameFormat)
+			{
+				sourceFormat = swFrameFormat;
+			}
 
 			hr = av_opt_set_int(avSource_ctx, "width", inputCodecCtx->width, AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set_int(avSource_ctx, "height", inputCodecCtx->height, AV_OPT_SEARCH_CHILDREN);
-			hr = av_opt_set_int(avSource_ctx, "pix_fmt", inputCodecCtx->pix_fmt, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_int(avSource_ctx, "pix_fmt", sourceFormat, AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set_q(avSource_ctx, "time_base", inputCodecCtx->time_base, AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set_q(avSource_ctx, "frame_rate", inputCodecCtx->framerate, AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set_q(avSource_ctx, "sar", inputCodecCtx->sample_aspect_ratio, AV_OPT_SEARCH_CHILDREN);
@@ -105,10 +111,10 @@ namespace FFmpegInterop {
 
 		}
 
-		HRESULT AlocSourceAndSync()
+		HRESULT AlocSourceAndSync(AVPixelFormat swFrameFormat)
 		{
 			//AVFilterContext *abuffer_ctx;
-			auto hr = AllocSource();
+			auto hr = AllocSource(swFrameFormat);
 			if (SUCCEEDED(hr))
 			{
 				hr = AllocSink();
@@ -117,7 +123,7 @@ namespace FFmpegInterop {
 			return hr;
 		}
 
-		HRESULT InitFilterGraph(IVectorView<AvEffectDefinition^>^ effects)
+		HRESULT InitFilterGraph(IVectorView<AvEffectDefinition^>^ effects, AVPixelFormat swFrameFormat)
 		{
 			//init graph
 			int hr = 0;
@@ -128,7 +134,7 @@ namespace FFmpegInterop {
 
 			//alloc src and sink
 
-			hr = AlocSourceAndSync();
+			hr = AlocSourceAndSync(swFrameFormat);
 			if (hr < 0)
 				return E_FAIL;
 
@@ -152,7 +158,6 @@ namespace FFmpegInterop {
 				if (!filter)
 				{
 					return AVERROR_FILTER_NOT_FOUND;
-
 				}
 				if (avfilter_init_str(ctx, configString.c_str()) < 0)
 				{
@@ -192,24 +197,44 @@ namespace FFmpegInterop {
 
 
 	internal:
-		VideoFilter(AVCodecContext *m_inputCodecCtx)
+		VideoFilter(AVCodecContext* m_inputCodecCtx)
 		{
 			this->inputCodecCtx = m_inputCodecCtx;
 		}
 
 		HRESULT AllocResources(IVectorView<AvEffectDefinition^>^ effects)
 		{
-			return InitFilterGraph(effects);
+			currentEffectsDefintions = effects;
+			return S_OK;
 		}
 
-		HRESULT AddFrame(AVFrame *avFrame) override
+		HRESULT AddFrame(AVFrame* avFrame, AVFrame* outswFrame) override
 		{
-			auto hr = av_buffersrc_add_frame(avSource_ctx, avFrame);
+			AVFrame* targetFrame = NULL;
+			if (avFrame->format == AV_PIX_FMT_D3D11)
+			{
+				av_hwframe_transfer_data(outswFrame, avFrame, 0);
+
+				targetFrame = outswFrame;
+			}
+			else
+			{
+				if (outswFrame)
+					av_frame_unref(outswFrame);
+			}
+
+			if (currentEffectsDefintions)
+			{
+				InitFilterGraph(currentEffectsDefintions, (AVPixelFormat)targetFrame->format);
+				currentEffectsDefintions = nullptr;
+			}
+
+			auto hr = av_buffersrc_add_frame(avSource_ctx, targetFrame);
 
 			return hr;
 		}
 
-		HRESULT GetFrame(AVFrame *avFrame) override
+		HRESULT GetFrame(AVFrame* avFrame) override
 		{
 			auto hr = av_buffersink_get_frame(avSink_ctx, avFrame);
 			if (hr < 0)
