@@ -62,16 +62,19 @@ namespace FFmpegInterop
 				}
 				if (filter)
 				{
-					AVFrame* swFrame = av_frame_alloc();
-					hr = filter->AddFrame(*avFrame, swFrame);
+					if ((*avFrame)->format == AV_PIX_FMT_D3D11)
+					{
+						//this is a hardware frame, replace it with a software copy
+						AVFrame* swFrame = av_frame_alloc();
+						av_hwframe_transfer_data(swFrame, *avFrame, 0);
+						av_frame_copy_props(swFrame, *avFrame);
+						av_frame_free(avFrame);
+						*avFrame = swFrame;
+					}
+
+					hr = filter->AddFrame(*avFrame);
 					if (SUCCEEDED(hr))
 					{
-						if (swFrame != NULL)
-						{
-							av_frame_free(avFrame);
-							avFrame = &swFrame;
-						}
-
 						hr = filter->GetFrame(*avFrame);
 					}
 					if (FAILED(hr))

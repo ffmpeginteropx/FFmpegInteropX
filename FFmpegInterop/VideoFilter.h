@@ -208,29 +208,16 @@ namespace FFmpegInterop {
 			return S_OK;
 		}
 
-		HRESULT AddFrame(AVFrame* avFrame, AVFrame* outswFrame) override
-		{
-			AVFrame* targetFrame = NULL;
-			if (avFrame->format == AV_PIX_FMT_D3D11)
-			{
-				av_hwframe_transfer_data(outswFrame, avFrame, 0);
-
-				targetFrame = outswFrame;
-			}
-			else
-			{
-				if (outswFrame)
-					av_frame_unref(outswFrame);
-			}
-
+		HRESULT AddFrame(AVFrame* avFrame) override
+		{		
 			if (currentEffectsDefintions)
 			{
-				InitFilterGraph(currentEffectsDefintions, (AVPixelFormat)targetFrame->format);
+				InitFilterGraph(currentEffectsDefintions, (AVPixelFormat)avFrame->format);
 				currentEffectsDefintions = nullptr;
 			}
 
-			auto hr = av_buffersrc_add_frame(avSource_ctx, targetFrame);
-
+			auto hr = av_buffersrc_add_frame(avSource_ctx, avFrame);
+		
 			return hr;
 		}
 

@@ -262,12 +262,10 @@ namespace FFmpegInterop {
 		}
 		
 
-		HRESULT AddFrame(AVFrame *avFrame, AVFrame* outswFrame) override
+		HRESULT AddFrame(AVFrame *avFrame) override
 		{
 			auto hr = av_buffersrc_add_frame(avSource_ctx, avFrame);
-			if (outswFrame)
-				av_frame_unref(outswFrame);
-
+		
 			return hr;
 		}
 
