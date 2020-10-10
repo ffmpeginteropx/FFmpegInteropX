@@ -8,6 +8,7 @@ extern "C"
 #include "Enumerations.h"
 #include "CharacterEncoding.h"
 #include "TimeSpanHelpers.h"
+#include "AvEffectDefinition.h"
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -298,6 +299,15 @@ namespace FFmpegInterop
 
 		///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
 		property bool PreventModifiedSubtitleDurationOverlap;
+
+
+		///<summary>Initial FFmpeg video effects. Might be changed later through FFmpegInteropMSS.SetVideoEffects().</summary>
+		///<remarks>Using FFmpeg video effects will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+		property IVectorView<AvEffectDefinition^>^ VideoEffects;
+
+		///<summary>Initial FFmpeg audio effects. Might be changed later through FFmpegInteropMSS.SetAudioEffects().</summary>
+		property IVectorView<AvEffectDefinition^>^ AudioEffects;
+
 
 	internal:
 		/*Internal use:determines if a FFmpegInteropInstance is in frame grabber mode. This mode is used to grab frames from a video stream.*/

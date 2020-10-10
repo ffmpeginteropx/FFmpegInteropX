@@ -917,6 +917,16 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 	subtitleStreamInfos = subtitleStrInfos->GetView();
 	videoStreamInfos = videoStrInfos->GetView();
 
+	if (config->VideoEffects)
+	{
+		SetVideoEffects(config->VideoEffects);
+	}
+
+	if (config->AudioEffects)
+	{
+		SetAudioEffects(config->AudioEffects);
+	}
+
 	if (currentVideoStream)
 	{
 		auto pixelAspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;

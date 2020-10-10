@@ -88,10 +88,11 @@ namespace FFmpegInterop
 		///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
 		void SetSubtitleDelay(TimeSpan delay);
 
-		///<summary>Sets audio effects. This replaces any effects which were already set.</summary>
+		///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
 		void SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects);
 
-		///<summary>Sets video effects. This replaces any effects which were already set.</summary>
+		///<summary>Sets FFmpeg video effects. This replaces any effects which were already set.</summary>
+		///<remarks>Using FFmpeg video effects will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
 		void SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects);
 
 

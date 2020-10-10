@@ -60,6 +60,14 @@ namespace MediaPlayerCS
         public MainPage()
         {
             Config = new FFmpegInteropConfig();
+            Config.VideoOutputAllowBgra8 = true;
+            Config.VideoOutputAllowNv12 = false;
+
+            List<AvEffectDefinition> videoFilters = new List<AvEffectDefinition>();
+            videoFilters.Add(new AvEffectDefinition("format", "pix_fmts=bgra"));
+            videoFilters.Add(new AvEffectDefinition("colorchannelmixer", ".3:.4:.3:0:.3:.4:.3:0:.3:.4:.3"));
+            //videoFilters.Add(new AvEffectDefinition("minterpolate", "fps=60:mi_mode=blend"));
+            Config.VideoEffects = videoFilters.AsReadOnly();
 
             this.InitializeComponent();
 
@@ -474,9 +482,6 @@ namespace MediaPlayerCS
                 actualFFmpegMSS.Dispose();
             }
             actualFFmpegMSS = FFmpegMSS;
-            List<AvEffectDefinition> videoFilters = new List<AvEffectDefinition>();
-            videoFilters.Add(new AvEffectDefinition("colorchannelmixer", ".3:.4:.3:0:.3:.4:.3:0:.3:.4:.3"));
-            actualFFmpegMSS.SetVideoEffects(videoFilters.AsReadOnly());
         }
 
 
