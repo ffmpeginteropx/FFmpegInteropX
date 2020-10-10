@@ -115,7 +115,10 @@ task<void> MainPage::OpenLocalFile()
 
 		// Show file picker so user can select a file
 		auto file = co_await filePicker->PickSingleFileAsync();
-		co_await OpenLocalFile(file);
+		if (file)
+		{
+			co_await OpenLocalFile(file);
+		}
 	}
 	catch (Exception^ ex)
 	{
