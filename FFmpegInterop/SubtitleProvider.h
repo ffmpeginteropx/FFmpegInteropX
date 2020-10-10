@@ -74,12 +74,9 @@ namespace FFmpegInterop
 			{
 				try
 				{
-					TimeSpan position;
-					TimeSpan duration;
+					TimeSpan position = ConvertPosition(packet->pts);
+					TimeSpan duration = ConvertDuration(packet->duration);
 					bool isDurationFixed = false;
-
-					position.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->pts) - m_startOffset;
-					duration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
 
 					auto cue = CreateCue(packet, &position, &duration);
 					if (cue && position.Duration >= 0)

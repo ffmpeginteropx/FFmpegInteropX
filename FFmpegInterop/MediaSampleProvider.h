@@ -117,6 +117,44 @@ namespace FFmpegInterop
 		virtual void Detach();
 		void SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context);
 
+		virtual void NotifyCreateSource()
+		{
+			if (m_pAvFormatCtx->start_time != AV_NOPTS_VALUE)
+			{
+				auto streamStartTime = ConvertDuration(m_pAvStream->start_time);
+
+				if (m_pAvFormatCtx->start_time == streamStartTime.Duration / 10)
+				{
+					// use more precise start time
+					m_startOffset = streamStartTime.Duration;
+				}
+				else
+				{
+					m_startOffset = m_pAvFormatCtx->start_time * 10;
+				}
+			}
+		}
+
+		TimeSpan ConvertPosition(LONGLONG pts)
+		{
+			return TimeSpan{ LONGLONG(timeBaseFactor * pts) - m_startOffset };
+		}
+
+		LONGLONG ConvertPosition(TimeSpan position)
+		{
+			return LONGLONG((position.Duration + m_startOffset) / timeBaseFactor);
+		}
+
+		TimeSpan ConvertDuration(LONGLONG duration)
+		{
+			return TimeSpan{ LONGLONG(timeBaseFactor * duration) };
+		}
+
+		LONGLONG ConvertDuration(TimeSpan duration)
+		{
+			return LONGLONG(duration.Duration / timeBaseFactor);
+		}
+
 	protected private:
 		MediaSampleProvider(
 			FFmpegReader^ reader,
@@ -146,6 +184,7 @@ namespace FFmpegInterop
 		bool m_isDiscontinuous;
 		int m_streamIndex;
 		int64 m_startOffset;
+		double timeBaseFactor;
 		DecoderEngine decoder;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;

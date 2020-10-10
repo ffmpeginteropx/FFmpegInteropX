@@ -41,20 +41,8 @@ MediaSampleProvider::MediaSampleProvider(
 	, hardwareDecoderStatus(hardwareDecoderStatus)
 {
 	DebugMessage(L"MediaSampleProvider\n");
-	if (m_pAvFormatCtx->start_time != AV_NOPTS_VALUE)
-	{
-		auto streamStartTime = (long long)(av_q2d(m_pAvStream->time_base) * m_pAvStream->start_time * 1000000);
 
-		if (m_pAvFormatCtx->start_time == streamStartTime)
-		{
-			// calculate more precise start time
-			m_startOffset = (long long)(av_q2d(m_pAvStream->time_base) * m_pAvStream->start_time * 10000000);
-		}
-		else
-		{
-			m_startOffset = m_pAvFormatCtx->start_time * 10;
-		}
-	}
+	timeBaseFactor = av_q2d(m_pAvStream->time_base) * 10000000;
 
 	// init first packet pts time from start_time
 	if (m_pAvFormatCtx->streams[m_streamIndex]->start_time == AV_NOPTS_VALUE)
@@ -194,10 +182,11 @@ void FFmpegInterop::MediaSampleProvider::InitializeStreamInfo()
 		auto pixelAspect = (double)streamDescriptor->EncodingProperties->PixelAspectRatio->Numerator / streamDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
 		auto videoAspect = ((double)m_pAvCodecCtx->width / m_pAvCodecCtx->height) / pixelAspect;
 		auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
+		auto framesPerSecond = m_pAvStream->avg_frame_rate.num > 0 && m_pAvStream->avg_frame_rate.den > 0 ? av_q2d(m_pAvStream->avg_frame_rate) : 0.0;
 
 		streamInfo = ref new VideoStreamInfo(Name, Language, CodecName, m_pAvStream->codecpar->bit_rate, false,
 			m_pAvStream->codecpar->width, m_pAvStream->codecpar->height, videoAspect,
-			bitsPerSample, HardwareAccelerationStatus, Decoder);
+			bitsPerSample, framesPerSecond, HardwareAccelerationStatus, Decoder);
 
 		break;
 	}
@@ -230,18 +219,16 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 		
 		if (hr == S_OK)
 		{
-			pts = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * pts) - m_startOffset;
-			dur = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * dur);
-
-			TimeSpan duration = { dur };
+			TimeSpan position = ConvertPosition(pts);
+			TimeSpan duration = ConvertDuration(dur);
 
 			if (surface)
 			{
-				sample = MediaStreamSample::CreateFromDirect3D11Surface(surface, { pts });
+				sample = MediaStreamSample::CreateFromDirect3D11Surface(surface, position);
 			}
 			else 
 			{
-				sample = MediaStreamSample::CreateFromBuffer(buffer, { pts });
+				sample = MediaStreamSample::CreateFromBuffer(buffer, position);
 
 			}
 			sample->Duration = duration;
