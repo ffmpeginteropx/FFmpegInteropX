@@ -97,7 +97,7 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame** avFrame,
 	{
 		HRESULT decodeFrame;
 		// Try to get a frame from the decoder.
-		decodeFrame = frameProvider->GetFrameFromCodec(avFrame);
+		decodeFrame = frameProvider->GetFrame(avFrame);
 
 		if (decodeFrame == AVERROR(EAGAIN))
 		{

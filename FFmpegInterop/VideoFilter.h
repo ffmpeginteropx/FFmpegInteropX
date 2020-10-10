@@ -209,25 +209,37 @@ namespace FFmpegInterop {
 		}
 
 		HRESULT AddFrame(AVFrame* avFrame) override
-		{		
+		{	
+			HRESULT hr = S_OK;
+
 			if (currentEffectsDefintions)
 			{
-				InitFilterGraph(currentEffectsDefintions, (AVPixelFormat)avFrame->format);
+				hr = InitFilterGraph(currentEffectsDefintions, (AVPixelFormat)avFrame->format);
 				currentEffectsDefintions = nullptr;
 			}
 
-			auto hr = av_buffersrc_add_frame(avSource_ctx, avFrame);
-		
+			if (SUCCEEDED(hr))
+			{
+				hr = av_buffersrc_add_frame(avSource_ctx, avFrame);
+			}
+
 			return hr;
 		}
 
 		HRESULT GetFrame(AVFrame* avFrame) override
 		{
-			auto hr = av_buffersink_get_frame(avSink_ctx, avFrame);
-			if (hr < 0)
+			HRESULT hr;
+
+			if (currentEffectsDefintions)
 			{
-				return hr;
+				// not initialized: require frame
+				hr = AVERROR(EAGAIN);
 			}
+			else
+			{
+				hr = av_buffersink_get_frame(avSink_ctx, avFrame);
+			}
+
 			return hr;
 		}
 

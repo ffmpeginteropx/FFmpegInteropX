@@ -220,16 +220,6 @@ namespace FFmpegInterop
 			return hr;
 		}
 
-		void SetFilters(IVectorView<AvEffectDefinition^>^ effects) override 
-		{
-			frameProvider->UpdateFilter(effects);
-		}
-
-		void DisableFilters() override
-		{
-			frameProvider->DisableFilter();
-		}
-
 		TexturePool^ texturePool;
 		std::set<IUnknown*> samples;
 
