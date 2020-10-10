@@ -273,6 +273,11 @@ MediaStreamSource^ FFmpegInteropMSS::GetMediaStreamSource()
 
 MediaSource^ FFmpegInteropMSS::CreateMediaSource()
 {
+	for each (auto stream in sampleProviders)
+	{
+		stream->NotifyCreateSource();
+	}
+
 	if (this->config->IsFrameGrabber) throw ref new Exception(E_UNEXPECTED);
 	MediaSource^ source = MediaSource::CreateFromMediaStreamSource(mss);
 	for each (auto stream in subtitleStreams)
@@ -1733,14 +1738,11 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 	auto hr = S_OK;
 
 	// Select the first valid stream either from video or audio
-	int streamIndex = currentVideoStream ? currentVideoStream->StreamIndex : currentAudioStream ? currentAudioStream->StreamIndex : -1;
+	auto stream = currentVideoStream ? currentVideoStream : currentAudioStream;
 
-	if (streamIndex >= 0)
+	if (stream)
 	{
-		// Compensate for file start_time, then convert to stream time_base
-		auto startOffset = avFormatCtx->start_time == AV_NOPTS_VALUE ? (LONGLONG)0 : avFormatCtx->start_time * 10;
-		int64 correctedPosition = position.Duration + startOffset;
-		int64_t seekTarget = static_cast<int64_t>(correctedPosition / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
+		int64_t seekTarget = stream->ConvertPosition(position);
 		auto diffActual = position - actualPosition;
 		auto diffLast = position - lastPosition;
 		bool isSeekBeforeStreamSwitch = Session && config->FastSeekSmartStreamSwitching && diffActual.Duration > 0 && diffActual.Duration < 5000000 && diffLast.Duration > 0 && diffLast.Duration < 10000000;
@@ -1782,14 +1784,14 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 			int64_t max = INT64_MAX;
 			if (seekForward)
 			{
-				min = static_cast<int64_t>((referenceTime.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
+				min = stream->ConvertPosition(referenceTime);
 			}
 			else
 			{
-				max = static_cast<int64_t>((referenceTime.Duration + startOffset) / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
+				max = stream->ConvertPosition(referenceTime);
 			}
 			
-			if (avformat_seek_file(avFormatCtx, streamIndex, min, seekTarget, max, 0) < 0)
+			if (avformat_seek_file(avFormatCtx, stream->StreamIndex, min, seekTarget, max, 0) < 0)
 			{
 				hr = E_FAIL;
 				DebugMessage(L" - ### Error while seeking\n");
@@ -1807,10 +1809,10 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 				while (hr == S_OK && seekForward && timestampVideo < referenceTime)
 				{
 					// our min position was not respected. try again with higher min and target.
-					min += (long long)(5.0 / av_q2d(avFormatCtx->streams[streamIndex]->time_base));
-					seekTarget += (long long)(5.0 / av_q2d(avFormatCtx->streams[streamIndex]->time_base));
+					min += stream->ConvertDuration(TimeSpan{ 50000000 });
+					seekTarget += stream->ConvertDuration(TimeSpan{ 50000000 });
 					
-					if (avformat_seek_file(avFormatCtx, streamIndex, min, seekTarget, max, 0) < 0)
+					if (avformat_seek_file(avFormatCtx, stream->StreamIndex, min, seekTarget, max, 0) < 0)
 					{
 						hr = E_FAIL;
 						DebugMessage(L" - ### Error while seeking\n");
@@ -1847,9 +1849,8 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 							auto audioPreroll = timestampAudio - timestampVideo;
 							if (audioPreroll.Duration > 0 && config->FastSeekCleanAudio)
 							{
-								correctedPosition = audioTarget.Duration - audioPreroll.Duration;
-								seekTarget = static_cast<int64_t>(correctedPosition / (av_q2d(avFormatCtx->streams[streamIndex]->time_base) * 10000000));
-								if (av_seek_frame(avFormatCtx, streamIndex, seekTarget, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_ANY) < 0)
+								seekTarget = stream->ConvertPosition(audioTarget - audioPreroll);
+								if (av_seek_frame(avFormatCtx, stream->StreamIndex, seekTarget, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_ANY) < 0)
 								{
 									hr = E_FAIL;
 									DebugMessage(L" - ### Error while seeking\n");
@@ -1892,7 +1893,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 		}
 		else
 		{
-			if (av_seek_frame(avFormatCtx, streamIndex, seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
+			if (av_seek_frame(avFormatCtx, stream->StreamIndex, seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
 			{
 				hr = E_FAIL;
 				DebugMessage(L" - ### Error while seeking\n");
