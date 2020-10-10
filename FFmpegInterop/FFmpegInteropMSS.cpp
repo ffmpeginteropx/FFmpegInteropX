@@ -275,7 +275,10 @@ MediaSource^ FFmpegInteropMSS::CreateMediaSource()
 {
 	for each (auto stream in sampleProviders)
 	{
-		stream->NotifyCreateSource();
+		if (stream)
+		{
+			stream->NotifyCreateSource();
+		}
 	}
 
 	if (this->config->IsFrameGrabber) throw ref new Exception(E_UNEXPECTED);
