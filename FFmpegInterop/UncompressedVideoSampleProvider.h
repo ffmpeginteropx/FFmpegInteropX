@@ -72,7 +72,6 @@ namespace FFmpegInterop
 		bool m_interlaced_frame;
 		bool m_top_field_first;
 		AVChromaLocation m_chroma_location;
-		bool m_bUseScaler;
 		bool hasFirstInterlacedFrame;
 	};
 }

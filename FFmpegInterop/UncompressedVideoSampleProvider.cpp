@@ -102,30 +102,14 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 	TargetWidth = decoderWidth;
 	TargetHeight = decoderHeight;
 
-	if (m_config->IsFrameGrabber)
+	if (m_pAvCodecCtx->pix_fmt == m_OutputPixelFormat && m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1)
 	{
-		m_bUseScaler = true;
-	}
-	else if (m_pAvCodecCtx->pix_fmt == m_OutputPixelFormat)
-	{
-		if (m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1)
-		{
-			// This codec supports direct buffer decoding.
-			// Get decoder frame size and override get_buffer2...
-			avcodec_align_dimensions(m_pAvCodecCtx, &decoderWidth, &decoderHeight);
+		// This codec supports direct buffer decoding.
+		// Get decoder frame size and override get_buffer2...
+		avcodec_align_dimensions(m_pAvCodecCtx, &decoderWidth, &decoderHeight);
 
-			m_pAvCodecCtx->get_buffer2 = get_buffer2;
-			m_pAvCodecCtx->opaque = (void*)this;
-		}
-		else
-		{
-			m_bUseScaler = true;
-		}
-	}
-	else
-	{
-		// Scaler required to convert pixel format
-		m_bUseScaler = true;
+		m_pAvCodecCtx->get_buffer2 = get_buffer2;
+		m_pAvCodecCtx->opaque = (void*)this;
 	}
 }
 
@@ -165,26 +149,29 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
 HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired(AVFrame* avFrame)
 {
 	HRESULT hr = S_OK;
-	if (m_bUseScaler)
-	{
-		// Setup software scaler to convert frame to output pixel type
-		m_pSwsCtx = sws_getCachedContext(
-			m_pSwsCtx,
-			m_pAvCodecCtx->width,
-			m_pAvCodecCtx->height,
-			(AVPixelFormat)avFrame->format,
-			TargetWidth,
-			TargetHeight,
-			m_OutputPixelFormat,
-			SWS_BICUBIC,
-			NULL,
-			NULL,
-			NULL);
 
-		if (m_pSwsCtx == nullptr)
-		{
-			hr = E_OUTOFMEMORY;
-		}
+	// use bilinear for downscaling, bicubic for upscaling, and point if same resolution
+	int scaler =
+		avFrame->width == TargetWidth && avFrame->height == TargetHeight ? SWS_POINT :
+		avFrame->width < TargetWidth ? SWS_BICUBIC : SWS_BILINEAR;
+
+	// Setup software scaler to convert frame to output pixel type and size
+	m_pSwsCtx = sws_getCachedContext(
+		m_pSwsCtx,
+		avFrame->width,
+		avFrame->height,
+		(AVPixelFormat)avFrame->format,
+		TargetWidth,
+		TargetHeight,
+		m_OutputPixelFormat,
+		scaler,
+		NULL,
+		NULL,
+		NULL);
+
+	if (m_pSwsCtx == nullptr)
+	{
+		hr = E_OUTOFMEMORY;
 	}
 
 	return hr;
@@ -207,24 +194,24 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 {
 	HRESULT hr = S_OK;
 
-	hr = InitializeScalerIfRequired(avFrame);
-
-	if (SUCCEEDED(hr))
+	if (avFrame->format == m_OutputPixelFormat && avFrame->width == decoderWidth && avFrame->height == decoderHeight)
 	{
-		if (!m_bUseScaler)
+		// Using direct buffer: just create a buffer reference to hand out to MSS pipeline
+		auto bufferRef = av_buffer_ref(avFrame->buf[0]);
+		if (bufferRef)
 		{
-			// Using direct buffer: just create a buffer reference to hand out to MSS pipeline
-			auto bufferRef = av_buffer_ref(avFrame->buf[0]);
-			if (bufferRef)
-			{
-				*pBuffer = NativeBufferFactory::CreateNativeBuffer(bufferRef->data, bufferRef->size, free_buffer, bufferRef);
-			}
-			else
-			{
-				hr = E_FAIL;
-			}
+			*pBuffer = NativeBufferFactory::CreateNativeBuffer(bufferRef->data, bufferRef->size, free_buffer, bufferRef);
 		}
 		else
+		{
+			hr = E_FAIL;
+		}
+	}
+	else
+	{
+		hr = InitializeScalerIfRequired(avFrame);
+
+		if (SUCCEEDED(hr))
 		{
 			// Using scaler: allocate a new frame from buffer pool
 			int linesize[4];
@@ -232,6 +219,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 			AVBufferRef* buffer;
 
 			hr = FillLinesAndBuffer(linesize, data, &buffer, TargetWidth, TargetHeight);
+
 			if (SUCCEEDED(hr))
 			{
 				// Convert to output format using FFmpeg software scaler
@@ -253,7 +241,6 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 	{
 		ReadFrameProperties(avFrame, framePts);
 	}
-
 
 	return hr;
 }
@@ -417,8 +404,8 @@ int UncompressedVideoSampleProvider::get_buffer2(AVCodecContext* avCodecContext,
 {
 	// If frame size changes during playback and gets larger than our buffer, we need to switch to sws_scale
 	auto provider = reinterpret_cast<UncompressedVideoSampleProvider^>(avCodecContext->opaque);
-	provider->m_bUseScaler = frame->height > provider->decoderHeight || frame->width > provider->decoderWidth;
-	if (provider->m_bUseScaler)
+	bool frameSizeFailure = frame->height > provider->decoderHeight || frame->width > provider->decoderWidth;
+	if (frameSizeFailure)
 	{
 		return avcodec_default_get_buffer2(avCodecContext, frame, flags);
 	}
