@@ -108,6 +108,16 @@ namespace FFmpegInterop
 							filter = nullptr;
 						}
 					}
+					else if (hr == AVERROR_EOF)
+					{
+						// feed NULL packet to filter to enter draining mode on EOF
+						hr = filter->AddFrame(NULL);
+						if (FAILED(hr))
+						{
+							// add frame failed. clear filter to prevent crashes.
+							filter = nullptr;
+						}
+					}
 				}
 				else
 				{
