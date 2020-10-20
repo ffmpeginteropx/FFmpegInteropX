@@ -21,11 +21,7 @@ namespace FFmpegInterop
 			int numChannels = AvCodecContextHelpers::GetNBChannels(InputContext);
 			auto channel_layout = AvCodecContextHelpers::GetChannelLayout(InputContext, numChannels);
 			AudioFilter^ filter = ref new AudioFilter(InputContext,channel_layout, numChannels);
-			auto hr = filter ? S_OK : E_OUTOFMEMORY;
-			if (SUCCEEDED(hr))
-			{
-				hr = filter->AllocResources(definitions);
-			}
+			auto hr = filter->AllocResources(definitions);
 			if (SUCCEEDED(hr))
 			{
 				return filter;

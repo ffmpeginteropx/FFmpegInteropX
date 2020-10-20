@@ -36,10 +36,15 @@ namespace FFmpegInterop {
 		AVFilterContext* avSource_ctx, * avSink_ctx;
 
 		AVCodecContext* inputCodecCtx;
+		AVStream* inputStream;
 
 		std::vector<const AVFilter*> AVFilters;
 		std::vector<AVFilterContext*> AVFilterContexts;
 		IVectorView<AvEffectDefinition^>^ currentEffectsDefintions;
+
+		AVPixelFormat format;
+		int width;
+		int height;
 
 		HRESULT AllocGraph()
 		{
@@ -53,7 +58,7 @@ namespace FFmpegInterop {
 			else return E_FAIL;
 		}
 
-		HRESULT AllocSource(AVPixelFormat swFrameFormat)
+		HRESULT AllocSource(AVFrame* avFrame)
 		{
 			AVDictionary* options_dict = NULL;
 
@@ -73,17 +78,20 @@ namespace FFmpegInterop {
 				return AVERROR(ENOMEM);
 			}
 
-			AVPixelFormat sourceFormat = inputCodecCtx->pix_fmt;
-			if (inputCodecCtx->pix_fmt != swFrameFormat)
-			{
-				sourceFormat = swFrameFormat;
-			}
+			format = (AVPixelFormat)avFrame->format;
+			width = avFrame->width;
+			height = avFrame->height;
 
-			hr = av_opt_set_int(avSource_ctx, "width", inputCodecCtx->width, AV_OPT_SEARCH_CHILDREN);
-			hr = av_opt_set_int(avSource_ctx, "height", inputCodecCtx->height, AV_OPT_SEARCH_CHILDREN);
-			hr = av_opt_set_int(avSource_ctx, "pix_fmt", sourceFormat, AV_OPT_SEARCH_CHILDREN);
-			hr = av_opt_set_q(avSource_ctx, "time_base", inputCodecCtx->time_base, AV_OPT_SEARCH_CHILDREN);
-			hr = av_opt_set_q(avSource_ctx, "frame_rate", inputCodecCtx->framerate, AV_OPT_SEARCH_CHILDREN);
+			auto framerate = inputCodecCtx->framerate.num > 0 && inputCodecCtx->framerate.den > 0 ? 
+				inputCodecCtx->framerate : inputStream->avg_frame_rate;
+			auto timeBase = inputCodecCtx->time_base.num > 0 && inputCodecCtx->time_base.den > 0 ?
+				inputCodecCtx->time_base : inputStream->time_base;
+
+			hr = av_opt_set_int(avSource_ctx, "width", width, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_int(avSource_ctx, "height", height, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_int(avSource_ctx, "pix_fmt", format, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_q(avSource_ctx, "time_base", timeBase, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_q(avSource_ctx, "frame_rate", framerate, AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set_q(avSource_ctx, "sar", inputCodecCtx->sample_aspect_ratio, AV_OPT_SEARCH_CHILDREN);
 
 			/* Now initialize the filter; we pass NULL options, since we have already
@@ -111,10 +119,10 @@ namespace FFmpegInterop {
 
 		}
 
-		HRESULT AlocSourceAndSync(AVPixelFormat swFrameFormat)
+		HRESULT AlocSourceAndSync(AVFrame* avFrame)
 		{
 			//AVFilterContext *abuffer_ctx;
-			auto hr = AllocSource(swFrameFormat);
+			auto hr = AllocSource(avFrame);
 			if (SUCCEEDED(hr))
 			{
 				hr = AllocSink();
@@ -123,7 +131,7 @@ namespace FFmpegInterop {
 			return hr;
 		}
 
-		HRESULT InitFilterGraph(IVectorView<AvEffectDefinition^>^ effects, AVPixelFormat swFrameFormat)
+		HRESULT InitFilterGraph(IVectorView<AvEffectDefinition^>^ effects, AVFrame* avFrame)
 		{
 			//init graph
 			int hr = 0;
@@ -134,7 +142,7 @@ namespace FFmpegInterop {
 
 			//alloc src and sink
 
-			hr = AlocSourceAndSync(swFrameFormat);
+			hr = AlocSourceAndSync(avFrame);
 			if (hr < 0)
 				return E_FAIL;
 
@@ -197,9 +205,10 @@ namespace FFmpegInterop {
 
 
 	internal:
-		VideoFilter(AVCodecContext* m_inputCodecCtx)
+		VideoFilter(AVCodecContext* m_inputCodecCtx, AVStream* inputStream)
 		{
 			this->inputCodecCtx = m_inputCodecCtx;
+			this->inputStream = inputStream;
 		}
 
 		HRESULT AllocResources(IVectorView<AvEffectDefinition^>^ effects)
@@ -214,8 +223,17 @@ namespace FFmpegInterop {
 
 			if (currentEffectsDefintions)
 			{
-				hr = InitFilterGraph(currentEffectsDefintions, (AVPixelFormat)avFrame->format);
+				hr = InitFilterGraph(currentEffectsDefintions, avFrame);
 				currentEffectsDefintions = nullptr;
+			}
+
+			if (SUCCEEDED(hr))
+			{
+				if (avFrame && (avFrame->format != format || avFrame->width != width || avFrame->height != height))
+				{
+					// dynamic change of input size or format is not supported
+					hr = E_FAIL;
+				}
 			}
 
 			if (SUCCEEDED(hr))
