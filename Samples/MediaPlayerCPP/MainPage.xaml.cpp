@@ -469,3 +469,26 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
 		}
 	}
 }
+
+
+void MediaPlayerCPP::MainPage::enableFFmpegVideoFilters_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	if (enableFFmpegVideoFilters->IsOn)
+	{
+		auto videoEffects = ref new Vector<AvEffectDefinition^>();
+		videoEffects->Append(ref new AvEffectDefinition(ffmpegVideoFilterName->Text, ffmpegVideoFilterParameters->Text));
+		Config->VideoEffects = videoEffects->GetView();
+		if (FFmpegMSS)
+		{
+			FFmpegMSS->SetVideoEffects(videoEffects->GetView());
+		}
+	}
+	else
+	{
+		Config->VideoEffects = nullptr;
+		if (FFmpegMSS)
+		{
+			FFmpegMSS->SetVideoEffects(nullptr);
+		}
+	}
+}
