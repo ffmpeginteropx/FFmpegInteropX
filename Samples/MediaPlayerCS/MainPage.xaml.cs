@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation.Collections;
 using Windows.Media.Core;
 using Windows.Media.Playback;
@@ -506,6 +507,30 @@ namespace MediaPlayerCS
             {
                 Config.VideoEffects = null;
                 FFmpegMSS?.SetVideoEffects(null);
+            }
+        }
+
+        private void Page_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                e.AcceptedOperation = DataPackageOperation.Link;
+            }
+        }
+
+        private async void Page_Drop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                var files = await e.DataView.GetStorageItemsAsync();
+                var first = files.OfType<StorageFile>().FirstOrDefault();
+                if (first != null)
+                {
+                    await OpenLocalFile(first);
+                }
+            }
+            catch
+            {
             }
         }
     }

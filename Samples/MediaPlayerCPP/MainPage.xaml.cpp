@@ -492,3 +492,28 @@ void MediaPlayerCPP::MainPage::enableFFmpegVideoFilters_Toggled(Platform::Object
 		}
 	}
 }
+
+
+void MediaPlayerCPP::MainPage::Page_DragEnter(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e)
+{
+	if (e->DataView->Contains(Windows::ApplicationModel::DataTransfer::StandardDataFormats::StorageItems))
+	{
+		e->AcceptedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Link;
+	}
+}
+
+
+void MediaPlayerCPP::MainPage::Page_Drop(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e)
+{
+	create_task(e->DataView->GetStorageItemsAsync()).then([this](IVectorView<IStorageItem^>^ items) -> task<void>
+		{
+			if (items->Size >= 1)
+			{
+				auto file = dynamic_cast<StorageFile^>(items->GetAt(0));
+				if (file)
+				{
+					co_await OpenLocalFile(file);
+				}
+			}
+		});
+}

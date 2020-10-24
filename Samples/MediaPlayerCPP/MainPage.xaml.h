@@ -76,5 +76,7 @@ namespace MediaPlayerCPP
 		
 		void OnKeyDown(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::KeyEventArgs^ args);
 		void enableFFmpegVideoFilters_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+		void Page_DragEnter(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e);
+		void Page_Drop(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e);
 	};
 }
