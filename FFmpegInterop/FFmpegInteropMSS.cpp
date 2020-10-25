@@ -917,14 +917,14 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 	subtitleStreamInfos = subtitleStrInfos->GetView();
 	videoStreamInfos = videoStrInfos->GetView();
 
-	if (config->VideoEffects)
+	if (config->FFmpegVideoFilters)
 	{
-		SetVideoEffects(config->VideoEffects);
+		SetFFmpegVideoFilters(config->FFmpegVideoFilters);
 	}
 
-	if (config->AudioEffects)
+	if (config->FFmpegAudioFilters)
 	{
-		SetAudioEffects(config->AudioEffects);
+		SetFFmpegAudioFilters(config->FFmpegAudioFilters);
 	}
 
 	if (currentVideoStream)
@@ -1343,6 +1343,26 @@ void FFmpegInteropMSS::SetSubtitleDelay(TimeSpan offset)
 
 void FFmpegInteropMSS::SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects)
 {
+	std::string def;
+	for (unsigned int i = 0; i < audioEffects->Size; i++)
+	{
+		auto effectDefinition = audioEffects->GetAt(i);
+		auto effectName = StringUtils::PlatformStringToUtf8String(effectDefinition->FilterName);
+		auto configString = StringUtils::PlatformStringToUtf8String(effectDefinition->Configuration);
+
+		if (i > 0)
+			def.append(",");
+
+		def.append(effectName);
+		def.append("=");
+		def.append(configString);
+	}
+
+	SetFFmpegAudioFilters(StringUtils::Utf8ToPlatformString(def.c_str()));
+}
+
+void FFmpegInteropMSS::SetFFmpegAudioFilters(String^ audioEffects)
+{
 	mutexGuard.lock();
 	if (currentAudioStream)
 	{
@@ -1354,10 +1374,32 @@ void FFmpegInteropMSS::SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEf
 
 void FFmpegInteropMSS::SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects)
 {
+	std::string def;
+	for (unsigned int i = 0; i < videoEffects->Size; i++)
+	{
+		auto effectDefinition = videoEffects->GetAt(i);
+		auto effectName = StringUtils::PlatformStringToUtf8String(effectDefinition->FilterName);
+		auto configString = StringUtils::PlatformStringToUtf8String(effectDefinition->Configuration);
+
+		if (i > 0)
+			def.append(",");
+
+		def.append(effectName);
+		def.append("=");
+		def.append(configString);
+	}
+
+	SetFFmpegVideoFilters(StringUtils::Utf8ToPlatformString(def.c_str()));
+}
+
+void FFmpegInteropMSS::SetFFmpegVideoFilters(String^ videoEffects)
+{
 	mutexGuard.lock();
 	if (currentVideoStream)
 	{
 		currentVideoStream->SetFilters(videoEffects);
+		//TODO store and apply video effects on video stream change!
+		//currentVideoEffects = videoEffects;
 	}
 	mutexGuard.unlock();
 }

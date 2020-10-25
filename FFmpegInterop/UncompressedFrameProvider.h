@@ -19,7 +19,7 @@ namespace FFmpegInterop
 		AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;
 		AbstractEffectFactory^ m_effectFactory;
-		IVectorView<AvEffectDefinition^>^ pendingEffects;
+		String^ pendingEffects;
 
 	internal:
 
@@ -30,7 +30,7 @@ namespace FFmpegInterop
 			m_effectFactory = p_effectFactory;
 		}
 
-		void UpdateFilter(IVectorView<AvEffectDefinition^>^ effects)
+		void UpdateFilter(String^ effects)
 		{
 			if (effects)
 			{
@@ -55,7 +55,7 @@ namespace FFmpegInterop
 
 			if (pendingEffects)
 			{
-				if (pendingEffects->Size > 0)
+				if (pendingEffects->Length() > 0)
 				{
 					filter = m_effectFactory->CreateEffect(pendingEffects);
 				}

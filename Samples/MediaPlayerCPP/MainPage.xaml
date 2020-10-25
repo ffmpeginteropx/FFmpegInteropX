@@ -99,9 +99,7 @@
                         <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="1" StepFrequency="0.1" Header="Sharpness" Value="{x:Bind Path=VideoEffectConfiguration.Sharpness, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
                         <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="1" StepFrequency="0.1" Header="SharpnessThreshold" Value="{x:Bind Path=VideoEffectConfiguration.SharpnessThreshold, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
 
-                        <ToggleSwitch x:Name="enableFFmpegVideoFilters" Header="Enable FFmpeg software video filters (caution: performance impact)" OffContent="OFF" OnContent="ON" Toggled="enableFFmpegVideoFilters_Toggled" Margin="0,10,0,0" />
-                        <TextBox x:Name="ffmpegVideoFilterName" Header="FFmpeg Video Filter Name:" Text="colorchannelmixer" />
-                        <TextBox x:Name="ffmpegVideoFilterParameters" Header="FFmpeg Video Filter Parameters:" Text=".3:.4:.3:0:.3:.4:.3:0:.3:.4:.3" />
+                        <TextBox x:Name="ffmpegVideoFilters" Header="FFmpeg video filters (caution: performance impact, hit 'return' to apply)" KeyDown="ffmpegVideoFilters_KeyDown" LostFocus="ffmpegVideoFilters_LostFocus" Margin="0,10,0,0" />
 
                     </StackPanel>
                 </ScrollViewer>

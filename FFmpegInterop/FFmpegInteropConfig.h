@@ -301,12 +301,12 @@ namespace FFmpegInterop
 		property bool PreventModifiedSubtitleDurationOverlap;
 
 
-		///<summary>Initial FFmpeg video effects. Might be changed later through FFmpegInteropMSS.SetVideoEffects().</summary>
-		///<remarks>Using FFmpeg video effects will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-		property IVectorView<AvEffectDefinition^>^ VideoEffects;
+		///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegInteropMSS.SetFFmpegVideoFilters().</summary>
+		///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+		property String^ FFmpegVideoFilters;
 
-		///<summary>Initial FFmpeg audio effects. Might be changed later through FFmpegInteropMSS.SetAudioEffects().</summary>
-		property IVectorView<AvEffectDefinition^>^ AudioEffects;
+		///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegInteropMSS.SetFFmpegAudioFilters().</summary>
+		property String^ FFmpegAudioFilters;
 
 
 	internal:

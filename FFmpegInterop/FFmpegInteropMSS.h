@@ -89,12 +89,22 @@ namespace FFmpegInterop
 		void SetSubtitleDelay(TimeSpan delay);
 
 		///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
+		[WFM::Deprecated("Use SetFFmpegAudioFilters method.", WFM::DeprecationType::Deprecate, 0x0)]
 		void SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects);
+
+		///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
+		[WFM::DefaultOverload]
+		void SetFFmpegAudioFilters(String^ audioFilters);
 
 		///<summary>Sets FFmpeg video effects. This replaces any effects which were already set.</summary>
 		///<remarks>Using FFmpeg video effects will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+		[WFM::Deprecated("Use SetFFmpegVideoFilters method.", WFM::DeprecationType::Deprecate, 0x0)]
 		void SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects);
 
+		///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
+		///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+		[WFM::DefaultOverload]
+		void SetFFmpegVideoFilters(String^ videoEffects);
 
 		///<summary>Disables audio effects.</summary>
 		void DisableAudioEffects();
@@ -341,7 +351,7 @@ namespace FFmpegInterop
 
 		MediaSampleProvider^ currentVideoStream;
 		MediaSampleProvider^ currentAudioStream;
-		IVectorView<AvEffectDefinition^>^ currentAudioEffects;
+		String^ currentAudioEffects;
 		int thumbnailStreamIndex;
 
 		EventRegistrationToken audioTracksChangedToken;

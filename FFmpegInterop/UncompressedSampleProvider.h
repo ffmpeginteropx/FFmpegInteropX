@@ -43,7 +43,7 @@ namespace FFmpegInterop
 		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) { return E_FAIL; }; // must be overridden by specific decoders
 		virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration);
 		virtual HRESULT FeedPacketToDecoder();
-		void SetFilters(IVectorView<AvEffectDefinition^>^ effects) override {
+		void SetFilters(String^ effects) override {
 			frameProvider->UpdateFilter(effects);
 		}
 		void DisableFilters() override

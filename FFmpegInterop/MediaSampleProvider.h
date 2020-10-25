@@ -121,7 +121,7 @@ namespace FFmpegInterop
 		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
 		void EnableStream();
 		void DisableStream();
-		virtual void SetFilters(IVectorView<AvEffectDefinition^>^ effects) { };// override for setting effects in sample providers
+		virtual void SetFilters(String^ filterDefinition) { };// override for setting effects in sample providers
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
 		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
 		virtual void Detach();

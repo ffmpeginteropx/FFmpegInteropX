@@ -9,7 +9,6 @@
 
 extern "C"
 {
-#include "libavutil/channel_layout.h"
 #include "libavutil/md5.h"
 #include "libavutil/mem.h"
 #include "libavutil/opt.h"
@@ -17,7 +16,6 @@ extern "C"
 #include "libavfilter/buffersink.h"
 #include "libavfilter/buffersrc.h"
 #include <libavfilter/avfilter.h>
-#include <libswresample/swresample.h>
 }
 
 using namespace Windows::Foundation::Collections;
@@ -38,9 +36,8 @@ namespace FFmpegInterop {
 		AVCodecContext* inputCodecCtx;
 		AVStream* inputStream;
 
-		std::vector<const AVFilter*> AVFilters;
-		std::vector<AVFilterContext*> AVFilterContexts;
-		IVectorView<AvEffectDefinition^>^ currentEffectsDefintions;
+		String^ filterDefinition;
+		bool isInitialized;
 
 		AVPixelFormat format;
 		int width;
@@ -72,9 +69,9 @@ namespace FFmpegInterop {
 				return AVERROR_FILTER_NOT_FOUND;
 			}
 
-			avSource_ctx = avfilter_graph_alloc_filter(graph, AVSource, "avSource_ctx");
+			avSource_ctx = avfilter_graph_alloc_filter(graph, AVSource, "buffer");
 			if (!avSource_ctx) {
-				fprintf(stderr, "Could not allocate the abuffer instance.\n");
+				fprintf(stderr, "Could not allocate the buffer instance.\n");
 				return AVERROR(ENOMEM);
 			}
 
@@ -108,9 +105,9 @@ namespace FFmpegInterop {
 				return AVERROR_FILTER_NOT_FOUND;
 			}
 
-			avSink_ctx = avfilter_graph_alloc_filter(graph, AVSink, "sink");
+			avSink_ctx = avfilter_graph_alloc_filter(graph, AVSink, "buffersink");
 			if (!avSink_ctx) {
-				fprintf(stderr, "Could not allocate the abuffersink instance.\n");
+				fprintf(stderr, "Could not allocate the buffersink instance.\n");
 				return AVERROR(ENOMEM);
 			}
 
@@ -131,7 +128,7 @@ namespace FFmpegInterop {
 			return hr;
 		}
 
-		HRESULT InitFilterGraph(IVectorView<AvEffectDefinition^>^ effects, AVFrame* avFrame)
+		HRESULT InitFilterGraph(AVFrame* avFrame)
 		{
 			//init graph
 			int hr = 0;
@@ -146,57 +143,32 @@ namespace FFmpegInterop {
 			if (hr < 0)
 				return E_FAIL;
 
+			auto in = avfilter_inout_alloc();
+			if (!in)
+				return E_FAIL;
 
-			//dynamic graph
-			AVFilters.push_back(AVSource);
-			AVFilterContexts.push_back(avSource_ctx);
+			in->name = av_strdup("in");
+			in->filter_ctx = avSource_ctx;
+			in->pad_idx = 0;
+			in->next = NULL;
 
-			for (unsigned int i = 0; i < effects->Size; i++)
+			auto out = avfilter_inout_alloc();
+			if (!out)
+				return E_FAIL;
+			
+			out->name = av_strdup("out");
+			out->filter_ctx = avSink_ctx;
+			out->pad_idx = 0;
+			out->next = NULL;
+
+			auto definition = StringUtils::PlatformStringToUtf8String(filterDefinition);
+			hr = avfilter_graph_parse(graph, definition.c_str(), out, in, NULL);
+
+			if (SUCCEEDED(hr))
 			{
-				auto effectDefinition = effects->GetAt(i);
-
-				auto effectName = StringUtils::PlatformStringToUtf8String(effectDefinition->FilterName);
-				auto configString = StringUtils::PlatformStringToUtf8String(effectDefinition->Configuration);
-
-				AVFilterContext* ctx;
-				const AVFilter* filter;
-
-				filter = avfilter_get_by_name(effectName.c_str());
-				ctx = avfilter_graph_alloc_filter(graph, filter, configString.c_str());
-				if (!filter)
-				{
-					return AVERROR_FILTER_NOT_FOUND;
-				}
-				if (avfilter_init_str(ctx, configString.c_str()) < 0)
-				{
-					return E_FAIL;
-				}
-				AVFilters.push_back(filter);
-				AVFilterContexts.push_back(ctx);
+				hr = avfilter_graph_config(graph, NULL);
 			}
 
-
-			AVFilters.push_back(AVSink);
-			AVFilterContexts.push_back(avSink_ctx);
-
-
-			hr = LinkGraph();
-			return hr;
-		}
-
-		HRESULT LinkGraph()
-		{
-			int hr = 0;
-
-			//link all except last item
-			for (unsigned int i = 0; i < AVFilterContexts.size() - 1; i++)
-			{
-				if (hr >= 0)
-					hr = avfilter_link(AVFilterContexts[i], 0, AVFilterContexts[i + 1], 0);
-			}
-
-			/* Configure the graph. */
-			hr = avfilter_graph_config(graph, NULL);
 			if (hr < 0) {
 				return hr;
 			}
@@ -205,26 +177,21 @@ namespace FFmpegInterop {
 
 
 	internal:
-		VideoFilter(AVCodecContext* m_inputCodecCtx, AVStream* inputStream)
+		VideoFilter(AVCodecContext* m_inputCodecCtx, AVStream* inputStream, String^ filterDefinition)
 		{
 			this->inputCodecCtx = m_inputCodecCtx;
 			this->inputStream = inputStream;
-		}
-
-		HRESULT AllocResources(IVectorView<AvEffectDefinition^>^ effects)
-		{
-			currentEffectsDefintions = effects;
-			return S_OK;
+			this->filterDefinition = filterDefinition;
 		}
 
 		HRESULT AddFrame(AVFrame* avFrame) override
 		{	
 			HRESULT hr = S_OK;
 
-			if (currentEffectsDefintions)
+			if (!isInitialized)
 			{
-				hr = InitFilterGraph(currentEffectsDefintions, avFrame);
-				currentEffectsDefintions = nullptr;
+				hr = InitFilterGraph(avFrame);
+				isInitialized = true;
 			}
 
 			if (SUCCEEDED(hr))
@@ -248,7 +215,7 @@ namespace FFmpegInterop {
 		{
 			HRESULT hr;
 
-			if (currentEffectsDefintions)
+			if (!isInitialized)
 			{
 				// not initialized: require frame
 				hr = AVERROR(EAGAIN);
@@ -265,9 +232,6 @@ namespace FFmpegInterop {
 		virtual ~VideoFilter()
 		{
 			avfilter_graph_free(&this->graph);
-
-			AVFilters.clear();
-			AVFilterContexts.clear();
 		}
 	};
 }

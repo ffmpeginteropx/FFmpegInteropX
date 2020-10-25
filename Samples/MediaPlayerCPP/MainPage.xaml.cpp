@@ -387,9 +387,7 @@ void MediaPlayerCPP::MainPage::AddTestFilter(Platform::Object^ sender, Windows::
 {
 	if (FFmpegMSS != nullptr)
 	{
-		Vector<AvEffectDefinition^>^ effects = ref new Vector<AvEffectDefinition^>();
-		effects->Append(ref new AvEffectDefinition("aecho", "0.8:0.9:1000|1800:0.3|0.25"));
-		FFmpegMSS->SetAudioEffects(effects->GetView());
+		FFmpegMSS->SetFFmpegAudioFilters("aecho=0.8:0.9:1000|1800:0.3|0.25");
 	}
 }
 
@@ -398,7 +396,7 @@ void MediaPlayerCPP::MainPage::RemoveTestFilter(Platform::Object^ sender, Window
 {
 	if (FFmpegMSS != nullptr)
 	{
-		FFmpegMSS->DisableAudioEffects();
+		FFmpegMSS->SetFFmpegAudioFilters(nullptr);
 	}
 }
 
@@ -471,29 +469,6 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
 }
 
 
-void MediaPlayerCPP::MainPage::enableFFmpegVideoFilters_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
-{
-	if (enableFFmpegVideoFilters->IsOn)
-	{
-		auto videoEffects = ref new Vector<AvEffectDefinition^>();
-		videoEffects->Append(ref new AvEffectDefinition(ffmpegVideoFilterName->Text, ffmpegVideoFilterParameters->Text));
-		Config->VideoEffects = videoEffects->GetView();
-		if (FFmpegMSS)
-		{
-			FFmpegMSS->SetVideoEffects(videoEffects->GetView());
-		}
-	}
-	else
-	{
-		Config->VideoEffects = nullptr;
-		if (FFmpegMSS)
-		{
-			FFmpegMSS->SetVideoEffects(nullptr);
-		}
-	}
-}
-
-
 void MediaPlayerCPP::MainPage::Page_DragEnter(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e)
 {
 	if (e->DataView->Contains(Windows::ApplicationModel::DataTransfer::StandardDataFormats::StorageItems))
@@ -516,4 +491,23 @@ void MediaPlayerCPP::MainPage::Page_Drop(Platform::Object^ sender, Windows::UI::
 				}
 			}
 		});
+}
+
+
+void MediaPlayerCPP::MainPage::ffmpegVideoFilters_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e)
+{
+	if (e->Key == Windows::System::VirtualKey::Enter)
+	{
+		ffmpegVideoFilters_LostFocus(sender, e);
+	}
+}
+
+
+void MediaPlayerCPP::MainPage::ffmpegVideoFilters_LostFocus(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+	Config->FFmpegVideoFilters = ffmpegVideoFilters->Text;
+	if (FFmpegMSS)
+	{
+		FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text);
+	}
 }

@@ -432,8 +432,7 @@ namespace MediaPlayerCS
         {
             if (FFmpegMSS != null)
             {
-                //
-                FFmpegMSS.SetAudioEffects(new AvEffectDefinition[] { new AvEffectDefinition("aecho", "0.8:0.9:1000|1800:0.3|0.25") });
+                FFmpegMSS.SetFFmpegAudioFilters("aecho=0.8:0.9:1000|1800:0.3|0.25");
             }
 
         }
@@ -494,22 +493,6 @@ namespace MediaPlayerCS
             }
         }
 
-        private void enableFFmpegVideoFilters_Toggled(object sender, RoutedEventArgs e)
-        {
-            if (enableFFmpegVideoFilters.IsOn)
-            {
-                List<AvEffectDefinition> videoFilters = new List<AvEffectDefinition>();
-                videoFilters.Add(new AvEffectDefinition(ffmpegVideoFilterName.Text, ffmpegVideoFilterParameters.Text));
-                Config.VideoEffects = videoFilters.AsReadOnly();
-                FFmpegMSS?.SetVideoEffects(videoFilters.AsReadOnly());
-            }
-            else
-            {
-                Config.VideoEffects = null;
-                FFmpegMSS?.SetVideoEffects(null);
-            }
-        }
-
         private void Page_DragEnter(object sender, DragEventArgs e)
         {
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
@@ -532,6 +515,20 @@ namespace MediaPlayerCS
             catch
             {
             }
+        }
+
+        private void ffmpegVideoFilters_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == VirtualKey.Enter)
+            {
+                ffmpegVideoFilters_LostFocus(sender, e);
+            }
+        }
+
+        private void ffmpegVideoFilters_LostFocus(object sender, RoutedEventArgs e)
+        {
+            Config.FFmpegVideoFilters = ffmpegVideoFilters.Text;
+            FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
         }
     }
 }
