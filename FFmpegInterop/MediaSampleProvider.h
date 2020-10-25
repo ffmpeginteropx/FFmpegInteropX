@@ -52,6 +52,16 @@ namespace FFmpegInterop
 			IMediaStreamDescriptor^ get() { return m_streamDescriptor; }
 		}
 
+		property VideoStreamDescriptor^ VideoDescriptor
+		{
+			VideoStreamDescriptor^ get() { return dynamic_cast<VideoStreamDescriptor^>(m_streamDescriptor); }
+		}
+
+		property AudioStreamDescriptor^ AudioDescriptor
+		{
+			AudioStreamDescriptor^ get() { return dynamic_cast<AudioStreamDescriptor^>(m_streamDescriptor); }
+		}
+
 		property IStreamInfo^ StreamInfo
 		{
 			IStreamInfo^ get() { return streamInfo; }

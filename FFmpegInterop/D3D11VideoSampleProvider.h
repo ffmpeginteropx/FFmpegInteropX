@@ -84,6 +84,7 @@ namespace FFmpegInterop
 
 				if (SUCCEEDED(hr))
 				{
+					CheckFrameSize(avFrame);
 					ReadFrameProperties(avFrame, framePts);
 				}
 
