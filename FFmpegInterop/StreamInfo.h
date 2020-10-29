@@ -20,7 +20,7 @@ namespace FFmpegInterop
 	{
 	public:
 		AudioStreamInfo(String^ name, String^ language, String^ codecName, int64 bitrate, bool isDefault,
-			int channels, int sampleRate, int bitsPerSample, DecoderEngine decoderEngine)
+			int channels, String^ channelLayout, int sampleRate, int bitsPerSample, DecoderEngine decoderEngine)
 		{
 			this->name = name;
 			this->language = language;
@@ -29,9 +29,10 @@ namespace FFmpegInterop
 			this->isDefault = isDefault;
 
 			this->channels = channels;
+			this->channelLayout = channelLayout;
 			this->sampleRate = sampleRate;
 			this->bitsPerSample = bitsPerSample;
-	
+
 			this->decoderEngine = decoderEngine;
 		}
 
@@ -42,6 +43,7 @@ namespace FFmpegInterop
 		virtual property bool IsDefault { bool get() { return isDefault; } }
 
 		property int Channels { int get() { return channels; } }
+		property String^ ChannelLayout { String^ get() { return channelLayout; } }
 		property int SampleRate { int get() { return sampleRate; } }
 		property int BitsPerSample { int get() { return bitsPerSample; } }
 
@@ -61,6 +63,7 @@ namespace FFmpegInterop
 		bool isDefault;
 
 		int channels;
+		String^ channelLayout;
 		int sampleRate;
 		int bitsPerSample;
 	
