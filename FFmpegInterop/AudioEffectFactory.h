@@ -18,9 +18,7 @@ namespace FFmpegInterop
 
 		IAvEffect^ CreateEffect(String^ filterDefinition) override
 		{
-			int numChannels = AvCodecContextHelpers::GetNBChannels(InputContext);
-			auto channel_layout = AvCodecContextHelpers::GetChannelLayout(InputContext, numChannels);
-			return ref new AudioFilter(InputContext,channel_layout, numChannels, filterDefinition);
+			return ref new AudioFilter(InputContext, filterDefinition);
 		}
 	};
 }

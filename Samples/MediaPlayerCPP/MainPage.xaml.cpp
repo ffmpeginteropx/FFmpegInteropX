@@ -498,16 +498,23 @@ void MediaPlayerCPP::MainPage::ffmpegVideoFilters_KeyDown(Platform::Object^ send
 {
 	if (e->Key == Windows::System::VirtualKey::Enter)
 	{
-		ffmpegVideoFilters_LostFocus(sender, e);
+		Config->FFmpegVideoFilters = ffmpegVideoFilters->Text;
+		if (FFmpegMSS)
+		{
+			FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text);
+		}
 	}
 }
 
 
-void MediaPlayerCPP::MainPage::ffmpegVideoFilters_LostFocus(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e)
 {
-	Config->FFmpegVideoFilters = ffmpegVideoFilters->Text;
-	if (FFmpegMSS)
+	if (e->Key == Windows::System::VirtualKey::Enter)
 	{
-		FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text);
+		Config->FFmpegAudioFilters = ffmpegAudioFilters->Text;
+		if (FFmpegMSS)
+		{
+			FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text);
+		}
 	}
 }

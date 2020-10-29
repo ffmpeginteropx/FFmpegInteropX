@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "IAvEffect.h"
 #include "AvEffectDefinition.h"
+#include "AvCodecContextHelpers.h"
 #include <sstream>
 
 extern "C"
@@ -33,8 +34,6 @@ namespace FFmpegInterop {
 		const AVFilter  *AVSource;
 		const AVFilter  *AVSink;
 
-		AVFilterContext *aResampler_ctx;
-		const AVFilter  *aResampler;
 		AVFilterGraph	*graph;
 		AVFilterContext *avSource_ctx, *avSink_ctx;
 
@@ -42,12 +41,9 @@ namespace FFmpegInterop {
 
 		String^ filterDefinition;
 		bool isInitialized;
-
 		char channel_layout_name[256];
-		long long inChannelLayout;
-		int nb_channels;
 
-		HRESULT InitFilterGraph()
+		HRESULT InitFilterGraph(AVFrame* frame)
 		{
 			//init graph
 			int hr = 0;
@@ -57,17 +53,7 @@ namespace FFmpegInterop {
 				return E_FAIL;
 
 			//alloc src and sink
-			hr = AlocSourceAndSync();
-			if (hr < 0)
-				return E_FAIL;
-
-			//alloc resampler
-			hr = AllocResampler();
-			if (hr < 0)
-				return E_FAIL;
-
-			// connect resampler to sink
-			hr = avfilter_link(aResampler_ctx, 0, avSink_ctx, 0);
+			hr = AlocSourceAndSync(frame);
 			if (hr < 0)
 				return E_FAIL;
 
@@ -85,7 +71,7 @@ namespace FFmpegInterop {
 				return E_FAIL;
 
 			out->name = av_strdup("out");
-			out->filter_ctx = aResampler_ctx;
+			out->filter_ctx = avSink_ctx;
 			out->pad_idx = 0;
 			out->next = NULL;
 
@@ -118,11 +104,15 @@ namespace FFmpegInterop {
 		}
 
 
-		HRESULT AllocSource()
+		HRESULT AllocSource(AVFrame* frame)
 		{			
 			int hr;
 
-			av_get_channel_layout_string(channel_layout_name, sizeof(channel_layout_name), nb_channels, inChannelLayout);
+			auto layout = frame->channel_layout ? frame->channel_layout : inputCodecCtx->channel_layout;
+			if (!layout)
+				layout = AvCodecContextHelpers::GetDefaultChannelLayout(frame->channels);
+
+			av_get_channel_layout_string(channel_layout_name, sizeof(channel_layout_name), frame->channels, layout);
 
 			/* Create the abuffer filter;
 			* it will be used for feeding the data into the graph. */
@@ -142,11 +132,10 @@ namespace FFmpegInterop {
 			/* Set the filter options through the AVOptions API. */
 
 			hr = av_opt_set_q(avSource_ctx, "time_base", inputCodecCtx->time_base, AV_OPT_SEARCH_CHILDREN);
-			hr = av_opt_set_int(avSource_ctx, "sample_rate", inputCodecCtx->sample_rate, AV_OPT_SEARCH_CHILDREN);
-			hr = av_opt_set(avSource_ctx, "sample_fmt", av_get_sample_fmt_name(inputCodecCtx->sample_fmt), AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_int(avSource_ctx, "sample_rate", frame->sample_rate, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set(avSource_ctx, "sample_fmt", av_get_sample_fmt_name((AVSampleFormat)frame->format), AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set(avSource_ctx, "channel_layout", channel_layout_name, AV_OPT_SEARCH_CHILDREN);
-
-			hr = av_opt_set_int(avSource_ctx, "channels", inputCodecCtx->channels, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_int(avSource_ctx, "channels", frame->channels, AV_OPT_SEARCH_CHILDREN);
 
 			/* Now initialize the filter; we pass NULL options, since we have already
 			* set all the options above. */
@@ -175,45 +164,10 @@ namespace FFmpegInterop {
 
 		}
 
-		/*example for creating an aresample filter. Not actually used*/
-		HRESULT AllocResampler()
-		{
-			aResampler = avfilter_get_by_name("aresample");
-			if (!aResampler)
-			{
-				fprintf(stderr, "Could not find the aresample filter.\n");
-				return AVERROR_FILTER_NOT_FOUND;
-			}
-
-			aResampler_ctx = avfilter_graph_alloc_filter(graph, aResampler, "aresample");
-			if (!aResampler_ctx) 
-			{
-				fprintf(stderr, "Could not allocate the aresample instance.\n");
-				return AVERROR(ENOMEM);
-			}
-
-			std::stringstream resamplerConfigString;
-
-			resamplerConfigString << "osf=" << av_get_sample_fmt_name(inputCodecCtx->sample_fmt) << ":";
-			resamplerConfigString << "ocl=" << channel_layout_name << ":";
-			resamplerConfigString << "osr=" << inputCodecCtx->sample_rate;
-
-
-			auto configStringC = resamplerConfigString.str();
-			auto configString = configStringC.c_str();
-			auto hr = avfilter_init_str(aResampler_ctx, configString);
-			if (hr < 0) 
-			{
-				fprintf(stderr, "Could not initialize the aresample instance.\n");
-			}
-			return hr;
-
-		}
-
 		///There are 2 mandatory filters: the source, the sink.
-		HRESULT AlocSourceAndSync()
+		HRESULT AlocSourceAndSync(AVFrame* frame)
 		{
-			auto hr = AllocSource();
+			auto hr = AllocSource(frame);
 			if (SUCCEEDED(hr))
 			{
 				hr = AllocSink();
@@ -230,10 +184,8 @@ namespace FFmpegInterop {
 
 	internal:
 
-		AudioFilter(AVCodecContext *m_inputCodecCtx, long long p_inChannelLayout, int p_nb_channels, String^ filterDefinition)
+		AudioFilter(AVCodecContext *m_inputCodecCtx, String^ filterDefinition)
 		{
-			inChannelLayout = p_inChannelLayout;
-			nb_channels = p_nb_channels;
 			this->inputCodecCtx = m_inputCodecCtx;
 			this->filterDefinition = filterDefinition;
 		}
@@ -244,7 +196,7 @@ namespace FFmpegInterop {
 
 			if (!isInitialized)
 			{
-				hr = InitFilterGraph();
+				hr = InitFilterGraph(avFrame);
 				isInitialized = true;
 			}
 

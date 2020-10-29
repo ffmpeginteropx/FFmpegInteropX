@@ -308,6 +308,9 @@ namespace FFmpegInterop
 		///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegInteropMSS.SetFFmpegAudioFilters().</summary>
 		property String^ FFmpegAudioFilters;
 
+		///<summary>Downmix multi-channel audio streams to stereo format.</summary>
+		property bool DownmixAudioStreamsToStereo;
+
 
 	internal:
 		/*Internal use:determines if a FFmpegInteropInstance is in frame grabber mode. This mode is used to grab frames from a video stream.*/

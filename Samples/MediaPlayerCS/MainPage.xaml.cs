@@ -530,5 +530,19 @@ namespace MediaPlayerCS
             Config.FFmpegVideoFilters = ffmpegVideoFilters.Text;
             FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
         }
+
+        private void ffmpegAudioFilters_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == VirtualKey.Enter)
+            {
+                ffmpegAudioFilters_LostFocus(sender, e);
+            }
+        }
+
+        private void ffmpegAudioFilters_LostFocus(object sender, RoutedEventArgs e)
+        {
+            Config.FFmpegAudioFilters = ffmpegAudioFilters.Text;
+            FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
+        }
     }
 }
