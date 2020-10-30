@@ -33,8 +33,12 @@
     </Page.Resources>
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <SplitView x:Name="Splitter">
-
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <SplitView Grid.Row="1" x:Name="Splitter">
+       
             <!-- Control panel -->
             <SplitView.Pane>
                 <ScrollViewer>
@@ -114,7 +118,7 @@
         </SplitView>
 
         <!-- Control panel toggle button -->
-        <ToggleButton VerticalAlignment="Top" Margin="10, 10, 0, 0" IsChecked="{Binding ElementName=Splitter, Path=IsPaneOpen, Mode=TwoWay}">
+        <ToggleButton Grid.Row="0" VerticalAlignment="Top" Margin="2" IsChecked="{Binding ElementName=Splitter, Path=IsPaneOpen, Mode=TwoWay}">
             <ToggleButton.Content>
                 <FontIcon x:Name="Hamburger" FontFamily="Segoe MDL2 Assets" Foreground="White" Glyph="&#xE700;"/>
             </ToggleButton.Content>

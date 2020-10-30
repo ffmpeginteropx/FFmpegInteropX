@@ -34,7 +34,11 @@
     </Page.Resources>
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <SplitView x:Name="Splitter">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <SplitView Grid.Row="1" x:Name="Splitter">
 
             <!-- Control panel -->
             <SplitView.Pane>
@@ -85,7 +89,7 @@
                         <ToggleSwitch Header="Prevent subtitle overlap" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PreventModifiedSubtitleDurationOverlap}"/>
 
                         <TextBlock Text="FFmpeg Effects (software):" Margin="0,20,0,5"/>
-                       
+
                         <TextBox x:Name="ffmpegAudioFilters" Header="FFmpeg audio filters (hit 'return' to apply)" KeyDown="ffmpegAudioFilters_KeyDown" Margin="0,10,0,0" Text="aecho=0.8:0.9:1000|1800:0.3|0.25" />
                         <TextBox x:Name="ffmpegVideoFilters" Header="FFmpeg video filters (hit 'return' to apply)" KeyDown="ffmpegVideoFilters_KeyDown" Margin="0,10,0,0" Text="colorchannelmixer=.3:.4:.3:0:.3:.4:.3:0:.3:.4:.3" />
 
@@ -99,7 +103,7 @@
                         <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Tint" Value="{x:Bind Path=VideoEffectConfiguration.Tint, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
                         <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="1" StepFrequency="0.1" Header="Sharpness" Value="{x:Bind Path=VideoEffectConfiguration.Sharpness, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
                         <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="1" StepFrequency="0.1" Header="SharpnessThreshold" Value="{x:Bind Path=VideoEffectConfiguration.SharpnessThreshold, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
-                        
+
                     </StackPanel>
                 </ScrollViewer>
             </SplitView.Pane>
@@ -108,7 +112,7 @@
             <MediaElement x:Name="mediaElement"
                         AreTransportControlsEnabled="True"
                         AudioCategory="ForegroundOnlyMedia"
-                        AutoPlay="True"
+                        AutoPlay="True"                        
                         MediaFailed="MediaFailed"
                         MediaOpened="MediaOpened"
             />
@@ -116,7 +120,7 @@
         </SplitView>
 
         <!-- Control panel toggle button -->
-        <ToggleButton VerticalAlignment="Top" Margin="10, 10, 0, 0" IsChecked="{Binding ElementName=Splitter, Path=IsPaneOpen, Mode=TwoWay}">
+        <ToggleButton Grid.Row="0" VerticalAlignment="Top" Margin="2" IsChecked="{Binding ElementName=Splitter, Path=IsPaneOpen, Mode=TwoWay}">
             <ToggleButton.Content>
                 <FontIcon x:Name="Hamburger" FontFamily="Segoe MDL2 Assets" Foreground="White" Glyph="&#xE700;"/>
             </ToggleButton.Content>
