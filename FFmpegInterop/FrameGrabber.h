@@ -119,7 +119,7 @@ namespace FFmpegInterop {
 			}
 			sampleProvider->TargetBuffer = pixels;
 
-			return create_async([this, position, exactSeek, maxFrameSkip, width, height, pixelAspectRatio]
+			return create_async([this, position, exactSeek, maxFrameSkip, width, height, pixelAspectRatio, sampleProvider]
 			{
 				bool seekSucceeded = false;
 				if (interopMSS->Duration.Duration >= position.Duration)
@@ -171,7 +171,7 @@ namespace FFmpegInterop {
 					}
 
 					auto result = ref new VideoFrame(sample->Buffer,
-						width, height, pixelAspectRatio,
+						sampleProvider->TargetWidth, sampleProvider->TargetHeight, pixelAspectRatio,
 						sample->Timestamp);
 
 					return result;

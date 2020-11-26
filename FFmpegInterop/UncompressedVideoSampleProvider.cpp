@@ -440,7 +440,8 @@ void FFmpegInterop::UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avF
 	outputDirectBuffer = true;
 	int frameWidth = avFrame->width;
 	int frameHeight = avFrame->height;
-
+	TargetWidth = frameWidth;
+	TargetHeight = frameHeight;
 	// check if format has contiguous buffer for direct buffer approach
 	if (avFrame->format == m_OutputPixelFormat && avFrame->buf && avFrame->buf[0] && avFrame->data && avFrame->linesize)
 	{
