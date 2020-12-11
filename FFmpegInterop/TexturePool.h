@@ -57,7 +57,7 @@ namespace FFmpegInterop
 			desc_shared.SampleDesc.Quality = desc.SampleDesc.Quality;
 			desc_shared.Usage = D3D11_USAGE_DEFAULT;
 			desc_shared.CPUAccessFlags = 0;
-			desc_shared.MiscFlags = 0;
+			desc_shared.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
 			desc_shared.BindFlags = desc.BindFlags;
 
 			// pre-allocate pool

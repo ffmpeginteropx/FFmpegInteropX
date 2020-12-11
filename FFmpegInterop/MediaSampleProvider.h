@@ -47,6 +47,8 @@ namespace FFmpegInterop
 		virtual MediaStreamSample^ GetNextSample();
 		virtual void Flush();
 
+		property MediaStreamSource^ MediaStreamSourceInstance;
+
 		property IMediaStreamDescriptor^ StreamDescriptor
 		{
 			IMediaStreamDescriptor^ get() { return m_streamDescriptor; }
@@ -103,9 +105,9 @@ namespace FFmpegInterop
 		virtual HRESULT Initialize();
 		void InitializeNameLanguageCodec();
 		virtual void InitializeStreamInfo();
-		virtual void QueuePacket(AVPacket *packet);
+		virtual void QueuePacket(AVPacket* packet);
 		AVPacket* PopPacket();
-		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG & packetPts, LONGLONG & packetDuration);
+		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
 		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) = 0;
 		virtual IMediaStreamDescriptor^ CreateStreamDescriptor() = 0;
 		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
@@ -188,8 +190,10 @@ namespace FFmpegInterop
 		DecoderEngine decoder;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
+		ID3D11Device* renderDevice;
+		ID3D11DeviceContext* renderDeviceContext;
 	};
 }
 
 // free AVBufferRef*
-void free_buffer(void *lpVoid);
+void free_buffer(void* lpVoid);
