@@ -47,6 +47,8 @@ namespace FFmpegInterop
 		virtual MediaStreamSample^ GetNextSample();
 		virtual void Flush();
 
+		property MediaStreamSource^ MediaStreamSourceInstance;
+
 		property IMediaStreamDescriptor^ StreamDescriptor
 		{
 			IMediaStreamDescriptor^ get() { return m_streamDescriptor; }
@@ -113,9 +115,9 @@ namespace FFmpegInterop
 		virtual HRESULT Initialize();
 		void InitializeNameLanguageCodec();
 		virtual void InitializeStreamInfo();
-		virtual void QueuePacket(AVPacket *packet);
+		virtual void QueuePacket(AVPacket* packet);
 		AVPacket* PopPacket();
-		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG & packetPts, LONGLONG & packetDuration);
+		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
 		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) = 0;
 		virtual IMediaStreamDescriptor^ CreateStreamDescriptor() = 0;
 		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
@@ -126,6 +128,44 @@ namespace FFmpegInterop
 		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
 		virtual void Detach();
 		void SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context);
+
+		virtual void NotifyCreateSource()
+		{
+			if (m_pAvFormatCtx->start_time != AV_NOPTS_VALUE)
+			{
+				auto streamStartTime = ConvertDuration(m_pAvStream->start_time);
+
+				if (m_pAvFormatCtx->start_time == streamStartTime.Duration / 10)
+				{
+					// use more precise start time
+					m_startOffset = streamStartTime.Duration;
+				}
+				else
+				{
+					m_startOffset = m_pAvFormatCtx->start_time * 10;
+				}
+			}
+		}
+
+		TimeSpan ConvertPosition(LONGLONG pts)
+		{
+			return TimeSpan{ LONGLONG(timeBaseFactor * pts) - m_startOffset };
+		}
+
+		LONGLONG ConvertPosition(TimeSpan position)
+		{
+			return LONGLONG((position.Duration + m_startOffset) / timeBaseFactor);
+		}
+
+		TimeSpan ConvertDuration(LONGLONG duration)
+		{
+			return TimeSpan{ LONGLONG(timeBaseFactor * duration) };
+		}
+
+		LONGLONG ConvertDuration(TimeSpan duration)
+		{
+			return LONGLONG(duration.Duration / timeBaseFactor);
+		}
 
 	protected private:
 		MediaSampleProvider(
@@ -156,6 +196,7 @@ namespace FFmpegInterop
 		bool m_isDiscontinuous;
 		int m_streamIndex;
 		int64 m_startOffset;
+		double timeBaseFactor;
 		DecoderEngine decoder;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
@@ -163,4 +204,4 @@ namespace FFmpegInterop
 }
 
 // free AVBufferRef*
-void free_buffer(void *lpVoid);
+void free_buffer(void* lpVoid);

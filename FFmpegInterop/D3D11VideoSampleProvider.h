@@ -39,7 +39,29 @@ namespace FFmpegInterop
 
 			if (avFrame->format == AV_PIX_FMT_D3D11)
 			{
-				if (!texturePool)
+				bool differentRenderDevice = false;
+				auto desc1 = DirectXInteropHelper::GetDeviceDescription(device);
+				ID3D11Device* newDevice;
+				ID3D11DeviceContext* newContext;
+				ID3D11VideoDevice* videoDevice;
+
+				hr = DirectXInteropHelper::GetDeviceFromStreamSource(MediaStreamSourceInstance, &newDevice, &newContext, &videoDevice);
+				if (SUCCEEDED(hr))
+				{
+					auto desc2 = DirectXInteropHelper::GetDeviceDescription(newDevice);
+					if (desc1.DeviceId != desc2.DeviceId)
+					{
+						OutputDebugStringW(L"\n new device\n");
+						differentRenderDevice = true;
+					}
+					else
+					{
+						SAFE_RELEASE(newDevice);
+						SAFE_RELEASE(newContext);
+						differentRenderDevice = false;
+					}
+				}
+				if (!texturePool || differentRenderDevice)
 				{
 					// init texture pool, fail if we did not get a device ptr
 					if (device && deviceContext)
@@ -51,45 +73,65 @@ namespace FFmpegInterop
 						hr = E_FAIL;
 					}
 				}
-				
-				//cast the AVframe to texture 2D
-				auto nativeSurface = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
-				ID3D11Texture2D* copy_tex = nullptr;
-
-				//get copy texture
-				if (SUCCEEDED(hr))
-				{
-					hr = texturePool->GetCopyTexture(nativeSurface, &copy_tex);
-				}
-
 				//copy texture data
 				if (SUCCEEDED(hr))
 				{
-					deviceContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)(unsigned long long)avFrame->data[1], NULL);
-					deviceContext->Flush();
-				}
+					//when one device decodes and the other renders (i.e laptops with nvidia optimus, amd enduro or desktops with multiple GPUs)
+					if (differentRenderDevice)
+					{
+						AVFrame* cpuFrame = av_frame_alloc();
+						av_hwframe_transfer_data(cpuFrame, avFrame, 0);
+						av_frame_copy_props(cpuFrame, avFrame);
 
-				//create a IDXGISurface from the shared texture
-				IDXGISurface* finalSurface = NULL;
-				if (SUCCEEDED(hr))
-				{
-					hr = copy_tex->QueryInterface(&finalSurface);
-				}
+						hr = UncompressedVideoSampleProvider::CreateBufferFromFrame(pBuffer, surface, cpuFrame, framePts, frameDuration);
+						av_frame_free(&cpuFrame);
+						if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
+						{
+							decoder = DecoderEngine::FFmpegSoftwareDecoder;
+							VideoInfo->DecoderEngine = decoder;
+						}
+					}
+					else
+					{
+						//cast the AVframe to texture 2D
+						auto decodedTexture = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
+						ID3D11Texture2D* renderTexture = nullptr;
+						//happy path:decoding and rendering on same GPU
+						hr = texturePool->GetCopyTexture(decodedTexture, &renderTexture);
+						deviceContext->CopySubresourceRegion(renderTexture, 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
+						deviceContext->Flush();
 
-				//get the IDirect3DSurface pointer
-				if (SUCCEEDED(hr))
-				{
-					*surface = DirectXInteropHelper::GetSurface(finalSurface);
-				}
 
-				if (SUCCEEDED(hr))
-				{
+						//create a IDXGISurface from the shared texture
+						IDXGISurface* finalSurface = NULL;
+						if (SUCCEEDED(hr))
+						{
+							hr = renderTexture->QueryInterface(&finalSurface);
+						}
+
+						//get the IDirect3DSurface pointer
+						if (SUCCEEDED(hr))
+						{
+							*surface = DirectXInteropHelper::GetSurface(finalSurface);
+						}
+
+						if (SUCCEEDED(hr))
+						{
 					CheckFrameSize(avFrame);
-					ReadFrameProperties(avFrame, framePts);
-				}
+							ReadFrameProperties(avFrame, framePts);
+						}
 
-				SAFE_RELEASE(finalSurface);
-				SAFE_RELEASE(copy_tex);
+						SAFE_RELEASE(finalSurface);
+						SAFE_RELEASE(renderTexture);
+						SAFE_RELEASE(newDevice);
+						SAFE_RELEASE(newContext);
+						if (decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
+						{
+							decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
+							VideoInfo->DecoderEngine = decoder;
+						}
+					}
+				}
 			}
 			else
 			{
@@ -142,22 +184,11 @@ namespace FFmpegInterop
 
 		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource^ sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext)
 		{
-			auto unknownMss = reinterpret_cast<IUnknown*>(sender);
-			IMFDXGIDeviceManagerSource* surfaceManager = nullptr;
-			IMFDXGIDeviceManager* deviceManager = nullptr;
-			HANDLE deviceHandle = INVALID_HANDLE_VALUE;
 			ID3D11Device* device = nullptr;
 			ID3D11DeviceContext* deviceContext = nullptr;
 			ID3D11VideoDevice* videoDevice = nullptr;
 			ID3D11VideoContext* videoContext = nullptr;
-
-			HRESULT hr = unknownMss->QueryInterface(&surfaceManager);
-
-			if (SUCCEEDED(hr)) hr = surfaceManager->GetManager(&deviceManager);
-			if (SUCCEEDED(hr)) hr = deviceManager->OpenDeviceHandle(&deviceHandle);
-			if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11Device, (void**)&device);
-			if (SUCCEEDED(hr)) device->GetImmediateContext(&deviceContext);
-			if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
+			HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(sender, &device, &deviceContext, &videoDevice);
 			if (SUCCEEDED(hr)) hr = deviceContext->QueryInterface(&videoContext);
 
 			auto dataBuffer = (AVHWDeviceContext*)avHardwareContext->data;
@@ -166,6 +197,7 @@ namespace FFmpegInterop
 			if (SUCCEEDED(hr))
 			{
 				// give ownership to FFmpeg
+
 				internalDirectXHwContext->device = device;
 				internalDirectXHwContext->device_context = deviceContext;
 				internalDirectXHwContext->video_device = videoDevice;
@@ -209,14 +241,6 @@ namespace FFmpegInterop
 				*outDevice = device;
 				*outDeviceContext = deviceContext;
 			}
-
-			if (deviceManager)
-			{
-				deviceManager->CloseDeviceHandle(deviceHandle);
-			}
-
-			SAFE_RELEASE(deviceManager);
-			SAFE_RELEASE(surfaceManager);
 
 			return hr;
 		}

@@ -56,6 +56,16 @@ namespace FFmpegInterop
 		property int TargetHeight;
 		property byte* TargetBuffer;
 
+		virtual void NotifyCreateSource() override 
+		{			
+			if (VideoInfo->FramesPerSecondOverride > 0 && VideoInfo->FramesPerSecond > 0)
+			{
+				timeBaseFactor *= VideoInfo->FramesPerSecond / VideoInfo->FramesPerSecondOverride;
+			}
+		
+			UncompressedSampleProvider::NotifyCreateSource();
+		}
+
 	private:
 		void SelectOutputFormat();
 		HRESULT InitializeScalerIfRequired(AVFrame* avFrame);

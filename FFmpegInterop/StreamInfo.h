@@ -74,7 +74,7 @@ namespace FFmpegInterop
 	{
 	public:
 		VideoStreamInfo(String^ name, String^ language, String^ codecName, int64 bitrate, bool isDefault,
-			int pixelWidth, int pixelHeight, double displayAspectRatio, int bitsPerSample, HardwareDecoderStatus hwAccel, DecoderEngine decoderEngine)
+			int pixelWidth, int pixelHeight, double displayAspectRatio, int bitsPerSample, double framesPerSecond, HardwareDecoderStatus hwAccel, DecoderEngine decoderEngine)
 		{
 			this->name = name;
 			this->language = language;
@@ -86,6 +86,7 @@ namespace FFmpegInterop
 			this->pixelHeight = pixelHeight;
 			this->displayAspectRatio = displayAspectRatio;
 			this->bitsPerSample = bitsPerSample;
+			this->framesPerSecond = framesPerSecond;
 
 			this->hardwareDecoderStatus = hwAccel;
 			this->decoderEngine = decoderEngine;
@@ -101,6 +102,14 @@ namespace FFmpegInterop
 		property int PixelHeight { int get() { return pixelHeight; } }
 		property double DisplayAspectRatio { double get() { return displayAspectRatio; } }
 		property int BitsPerSample { int get() { return bitsPerSample; } }
+		property double FramesPerSecond { double get() { return framesPerSecond; } }
+
+		///<summary>Override the frame rate of the video stream.</summary>
+		///<remarks>
+		/// This must be set before calling CreatePlaybackItem().
+		/// Setting this can cause A/V desync, since it will only affect this stream.
+		/// </remarks>
+		property double FramesPerSecondOverride;
 
 		property FFmpegInterop::HardwareDecoderStatus HardwareDecoderStatus {FFmpegInterop::HardwareDecoderStatus get() { return hardwareDecoderStatus; }}
 		property FFmpegInterop::DecoderEngine DecoderEngine 
@@ -126,6 +135,7 @@ namespace FFmpegInterop
 		int pixelHeight;
 		double displayAspectRatio;
 		int bitsPerSample;
+		double framesPerSecond;
 
 		FFmpegInterop::HardwareDecoderStatus hardwareDecoderStatus;
 		FFmpegInterop::DecoderEngine decoderEngine;
