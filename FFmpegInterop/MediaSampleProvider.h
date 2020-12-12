@@ -190,8 +190,6 @@ namespace FFmpegInterop
 		DecoderEngine decoder;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
-		ID3D11Device* renderDevice;
-		ID3D11DeviceContext* renderDeviceContext;
 	};
 }
 

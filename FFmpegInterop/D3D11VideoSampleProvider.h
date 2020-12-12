@@ -39,9 +39,6 @@ namespace FFmpegInterop
 
 			if (avFrame->format == AV_PIX_FMT_D3D11)
 			{
-				if (!renderDevice) renderDevice = device;
-				if (!renderDeviceContext) renderDeviceContext = deviceContext;
-
 				bool differentRenderDevice = false;
 				auto desc1 = DirectXInteropHelper::GetDeviceDescription(device);
 				ID3D11Device* newDevice;
@@ -56,8 +53,6 @@ namespace FFmpegInterop
 					{
 						OutputDebugStringW(L"\n new device\n");
 						differentRenderDevice = true;
-						renderDevice = newDevice;
-						renderDeviceContext = newContext;
 					}
 					else
 					{
@@ -69,95 +64,73 @@ namespace FFmpegInterop
 				if (!texturePool || differentRenderDevice)
 				{
 					// init texture pool, fail if we did not get a device ptr
-					if (renderDevice && renderDeviceContext)
+					if (device && deviceContext)
 					{
-						texturePool = ref new TexturePool(renderDevice, 1);
+						texturePool = ref new TexturePool(device, 5);
 					}
 					else
 					{
 						hr = E_FAIL;
 					}
 				}
-
-				//cast the AVframe to texture 2D
-				auto decodedTexture = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
-				ID3D11Texture2D* renderTexture = nullptr;
-
-
-
 				//copy texture data
 				if (SUCCEEDED(hr))
 				{
 					//when one device decodes and the other renders (i.e laptops with nvidia optimus, amd enduro or desktops with multiple GPUs)
 					if (differentRenderDevice)
 					{
-						HANDLE copyHandle;
-						IDXGIResource* dxgiResource;
+						AVFrame* cpuFrame = av_frame_alloc();
+						av_hwframe_transfer_data(cpuFrame, avFrame, 0);
+						av_frame_copy_props(cpuFrame, avFrame);
 
-						ID3D11Texture2D* renderTextureTemp = nullptr;
-						D3D11_TEXTURE2D_DESC desc;
-						decodedTexture->GetDesc(&desc);
-						D3D11_TEXTURE2D_DESC desc_shared;
-						ZeroMemory(&desc_shared, sizeof(desc_shared));
-						desc_shared.Width = desc.Width;
-						desc_shared.Height = desc.Height;
-						desc_shared.MipLevels = desc.MipLevels;
-						desc_shared.ArraySize = 1;
-						desc_shared.Format = desc.Format;
-						desc_shared.SampleDesc.Count = desc.SampleDesc.Count;
-						desc_shared.SampleDesc.Quality = desc.SampleDesc.Quality;
-						desc_shared.Usage = D3D11_USAGE_DEFAULT;
-						desc_shared.CPUAccessFlags = 0;
-						desc_shared.MiscFlags = D3D11_RESOURCE_MISC_SHARED;						
-						desc_shared.BindFlags = desc.BindFlags;
-						
-						hr = renderDevice->CreateTexture2D(&desc_shared, NULL, &renderTextureTemp);
-										
-						renderTextureTemp->QueryInterface(&dxgiResource);
-						dxgiResource->GetSharedHandle(&copyHandle);
-													
-						renderTexture = nullptr;
-
-						hr = device->OpenSharedResource(copyHandle, IID_ID3D11Texture2D, (void**)&renderTexture);
-						deviceContext->Flush();
-						deviceContext->CopySubresourceRegion(renderTexture, 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
-
-						deviceContext->Flush();
-						renderDeviceContext->Flush();
-						SAFE_RELEASE(renderTextureTemp);
-						SAFE_RELEASE(dxgiResource);
+						hr = UncompressedVideoSampleProvider::CreateBufferFromFrame(pBuffer, surface, cpuFrame, framePts, frameDuration);
+						av_frame_free(&cpuFrame);
+						if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
+						{
+							decoder = DecoderEngine::FFmpegSoftwareDecoder;
+							VideoInfo->DecoderEngine = decoder;
+						}
 					}
 					else
 					{
+						//cast the AVframe to texture 2D
+						auto decodedTexture = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
+						ID3D11Texture2D* renderTexture = nullptr;
 						//happy path:decoding and rendering on same GPU
 						hr = texturePool->GetCopyTexture(decodedTexture, &renderTexture);
-						renderDeviceContext->CopySubresourceRegion(renderTexture, 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
-						renderDeviceContext->Flush();
+						deviceContext->CopySubresourceRegion(renderTexture, 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
+						deviceContext->Flush();
+
+
+						//create a IDXGISurface from the shared texture
+						IDXGISurface* finalSurface = NULL;
+						if (SUCCEEDED(hr))
+						{
+							hr = renderTexture->QueryInterface(&finalSurface);
+						}
+
+						//get the IDirect3DSurface pointer
+						if (SUCCEEDED(hr))
+						{
+							*surface = DirectXInteropHelper::GetSurface(finalSurface);
+						}
+
+						if (SUCCEEDED(hr))
+						{
+							ReadFrameProperties(avFrame, framePts);
+						}
+
+						SAFE_RELEASE(finalSurface);
+						SAFE_RELEASE(renderTexture);
+						SAFE_RELEASE(newDevice);
+						SAFE_RELEASE(newContext);
+						if (decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
+						{
+							decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
+							VideoInfo->DecoderEngine = decoder;
+						}
 					}
 				}
-
-				//create a IDXGISurface from the shared texture
-				IDXGISurface* finalSurface = NULL;
-				if (SUCCEEDED(hr))
-				{
-					hr = renderTexture->QueryInterface(&finalSurface);
-				}
-
-				//get the IDirect3DSurface pointer
-				if (SUCCEEDED(hr))
-				{
-					*surface = DirectXInteropHelper::GetSurface(finalSurface);
-				}
-
-				if (SUCCEEDED(hr))
-				{
-					ReadFrameProperties(avFrame, framePts);
-				}
-
-				SAFE_RELEASE(finalSurface);
-				SAFE_RELEASE(renderTexture);
-				SAFE_RELEASE(newDevice);
-				SAFE_RELEASE(newContext);
 			}
 			else
 			{
