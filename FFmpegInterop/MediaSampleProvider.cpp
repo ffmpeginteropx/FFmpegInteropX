@@ -427,14 +427,6 @@ void MediaSampleProvider::Detach()
 	avcodec_free_context(&m_pAvCodecCtx);
 }
 
-void FFmpegInterop::MediaSampleProvider::SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context)
-{
-	device->AddRef();
-	context->AddRef();
-	this->device = device;
-	this->deviceContext = context;
-}
-
 void free_buffer(void *lpVoid)
 {
 	auto buffer = (AVBufferRef *)lpVoid;

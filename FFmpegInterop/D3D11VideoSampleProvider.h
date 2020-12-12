@@ -13,6 +13,8 @@ extern "C"
 #include <libavutil/hwcontext_d3d11va.h>
 }
 
+static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelFormat* fmt);
+
 namespace FFmpegInterop
 {
 	using namespace Platform;
@@ -39,29 +41,7 @@ namespace FFmpegInterop
 
 			if (avFrame->format == AV_PIX_FMT_D3D11)
 			{
-				bool differentRenderDevice = false;
-				auto desc1 = DirectXInteropHelper::GetDeviceDescription(device);
-				ID3D11Device* newDevice;
-				ID3D11DeviceContext* newContext;
-				ID3D11VideoDevice* videoDevice;
-
-				hr = DirectXInteropHelper::GetDeviceFromStreamSource(MediaStreamSourceInstance, &newDevice, &newContext, &videoDevice);
-				if (SUCCEEDED(hr))
-				{
-					auto desc2 = DirectXInteropHelper::GetDeviceDescription(newDevice);
-					if (desc1.DeviceId != desc2.DeviceId)
-					{
-						OutputDebugStringW(L"\n new device\n");
-						differentRenderDevice = true;
-					}
-					else
-					{
-						SAFE_RELEASE(newDevice);
-						SAFE_RELEASE(newContext);
-						differentRenderDevice = false;
-					}
-				}
-				if (!texturePool || differentRenderDevice)
+				if (!texturePool)
 				{
 					// init texture pool, fail if we did not get a device ptr
 					if (device && deviceContext)
@@ -76,22 +56,22 @@ namespace FFmpegInterop
 				//copy texture data
 				if (SUCCEEDED(hr))
 				{
-					//when one device decodes and the other renders (i.e laptops with nvidia optimus, amd enduro or desktops with multiple GPUs)
-					if (differentRenderDevice)
-					{
-						AVFrame* cpuFrame = av_frame_alloc();
-						av_hwframe_transfer_data(cpuFrame, avFrame, 0);
-						av_frame_copy_props(cpuFrame, avFrame);
+					////when one device decodes and the other renders (i.e laptops with nvidia optimus, amd enduro or desktops with multiple GPUs)
+					//if (differentRenderDevice)
+					//{
+					//	AVFrame* cpuFrame = av_frame_alloc();
+					//	av_hwframe_transfer_data(cpuFrame, avFrame, 0);
+					//	av_frame_copy_props(cpuFrame, avFrame);
 
-						hr = UncompressedVideoSampleProvider::CreateBufferFromFrame(pBuffer, surface, cpuFrame, framePts, frameDuration);
-						av_frame_free(&cpuFrame);
-						if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
-						{
-							decoder = DecoderEngine::FFmpegSoftwareDecoder;
-							VideoInfo->DecoderEngine = decoder;
-						}
-					}
-					else
+					//	hr = UncompressedVideoSampleProvider::CreateBufferFromFrame(pBuffer, surface, cpuFrame, framePts, frameDuration);
+					//	av_frame_free(&cpuFrame);
+					//	if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
+					//	{
+					//		decoder = DecoderEngine::FFmpegSoftwareDecoder;
+					//		VideoInfo->DecoderEngine = decoder;
+					//	}
+					//}
+					//else
 					{
 						//cast the AVframe to texture 2D
 						auto decodedTexture = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
@@ -117,14 +97,12 @@ namespace FFmpegInterop
 
 						if (SUCCEEDED(hr))
 						{
-					CheckFrameSize(avFrame);
+							CheckFrameSize(avFrame);
 							ReadFrameProperties(avFrame, framePts);
 						}
 
 						SAFE_RELEASE(finalSurface);
 						SAFE_RELEASE(renderTexture);
-						SAFE_RELEASE(newDevice);
-						SAFE_RELEASE(newContext);
 						if (decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
 						{
 							decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
@@ -180,6 +158,54 @@ namespace FFmpegInterop
 
 			SAFE_RELEASE(surface);
 			SAFE_RELEASE(texture);
+		}
+
+		virtual void SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) override
+		{
+			if (!this->device)
+			{
+				device->AddRef();
+				context->AddRef();
+				this->device = device;
+				this->deviceContext = context;
+
+				if (m_pAvCodecCtx->hw_device_ctx->data != avHardwareContext->data)
+				{
+					av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
+					m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+				}
+			}
+			else
+			{
+				SAFE_RELEASE(this->device);
+				SAFE_RELEASE(this->deviceContext);
+
+				device->AddRef();
+				context->AddRef();
+				this->device = device;
+				this->deviceContext = context;
+
+				auto codec = m_pAvCodecCtx->codec;
+				avcodec_free_context(&m_pAvCodecCtx);
+
+				m_pAvCodecCtx = avcodec_alloc_context3(codec);
+				m_pAvCodecCtx->get_format = &get_format;
+
+				// initialize the stream parameters with demuxer information
+				if (avcodec_parameters_to_context(m_pAvCodecCtx, m_pAvStream->codecpar) < 0)
+				{
+					//hr = E_FAIL;
+				}
+
+				m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+
+				if (avcodec_open2(m_pAvCodecCtx, codec, NULL) < 0)
+				{
+					//hr = E_FAIL;
+				}
+
+				frameProvider->UpdateCodecContext(m_pAvCodecCtx);
+			}
 		}
 
 		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource^ sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext)

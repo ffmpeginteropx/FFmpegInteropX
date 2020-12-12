@@ -47,8 +47,6 @@ namespace FFmpegInterop
 		virtual MediaStreamSample^ GetNextSample();
 		virtual void Flush();
 
-		property MediaStreamSource^ MediaStreamSourceInstance;
-
 		property IMediaStreamDescriptor^ StreamDescriptor
 		{
 			IMediaStreamDescriptor^ get() { return m_streamDescriptor; }
@@ -127,7 +125,7 @@ namespace FFmpegInterop
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
 		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
 		virtual void Detach();
-		void SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context);
+		virtual void SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) { };
 
 		virtual void NotifyCreateSource()
 		{

@@ -30,6 +30,11 @@ namespace FFmpegInterop
 			m_effectFactory = p_effectFactory;
 		}
 
+		void UpdateCodecContext(AVCodecContext* avCodecCtx)
+		{
+			m_pAvCodecCtx = avCodecCtx;
+		}
+
 		void UpdateFilter(String^ effects)
 		{
 			if (effects)

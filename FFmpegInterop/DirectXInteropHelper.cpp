@@ -22,7 +22,7 @@ HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(MediaStreamSource^ sourc
 	HANDLE deviceHandle = INVALID_HANDLE_VALUE;
 	ID3D11Device* device = nullptr;
 	ID3D11DeviceContext* deviceContext = nullptr;
-
+	ID3D11VideoDevice* videoDevice = nullptr;
 	auto unknownMss = reinterpret_cast<IUnknown*>(source);
 
 	HRESULT hr = unknownMss->QueryInterface(&surfaceManager);
@@ -31,7 +31,7 @@ HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(MediaStreamSource^ sourc
 	if (SUCCEEDED(hr)) hr = deviceManager->OpenDeviceHandle(&deviceHandle);
 	if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11Device, (void**)&device);
 	if (SUCCEEDED(hr) && outDeviceContext) device->GetImmediateContext(&deviceContext);
-	if (SUCCEEDED(hr) && outVideoDevice) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11VideoDevice, (void**)&outVideoDevice);
+	if (SUCCEEDED(hr) && outVideoDevice) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
 
 	SAFE_RELEASE(deviceManager);
 	SAFE_RELEASE(surfaceManager);
@@ -40,13 +40,16 @@ HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(MediaStreamSource^ sourc
 	{
 		SAFE_RELEASE(device);
 		SAFE_RELEASE(deviceContext);
-		if (outVideoDevice)
-			delete outVideoDevice;
+		SAFE_RELEASE(videoDevice);
 	}
-
-	*outDevice = device;
-	if (outDeviceContext)
-		*outDeviceContext = deviceContext;
+	else
+	{
+		*outDevice = device;
+		if (outDeviceContext)
+			*outDeviceContext = deviceContext;
+		if (outVideoDevice)
+			*outVideoDevice = videoDevice;
+	}
 
 	return hr;
 }

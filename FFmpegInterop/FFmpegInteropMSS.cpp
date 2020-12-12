@@ -1656,24 +1656,16 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 	if (isFirstSeek && avHardwareContext)
 	{
 		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext);
+		auto desc = DirectXInteropHelper::GetDeviceDescription(device);
+		deviceLuid = desc.AdapterLuid;
 
 		if (SUCCEEDED(hr))
 		{
 			// assign device and context
 			for each (auto stream in videoStreams)
 			{
-				if (stream->m_pAvCodecCtx->hw_device_ctx)
-				{
-					// replace default device context with actual mss device, if required
-					if (stream->m_pAvCodecCtx->hw_device_ctx->data != avHardwareContext->data)
-					{
-						av_buffer_unref(&stream->m_pAvCodecCtx->hw_device_ctx);
-						stream->m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
-					}
-
-					// set device pointers to stream
-					stream->SetHardwareDevice(device, deviceContext);
-				}
+				// set device pointers to stream
+				stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
 			}
 		}
 		else
@@ -1722,12 +1714,16 @@ void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource
 	{
 		if (currentAudioStream && args->Request->StreamDescriptor == currentAudioStream->StreamDescriptor)
 		{
-			args->Request->Sample = currentAudioStream->GetNextSample();
+			auto sample = currentAudioStream->GetNextSample();
+			lastAudioTimestamp = sample->Timestamp;
+			args->Request->Sample = sample;
 		}
 		else if (currentVideoStream && args->Request->StreamDescriptor == currentVideoStream->StreamDescriptor)
 		{
-			currentVideoStream->MediaStreamSourceInstance = sender;
-			args->Request->Sample = currentVideoStream->GetNextSample();
+			CheckVideoDeviceChanged();
+			auto sample = currentVideoStream->GetNextSample();
+			lastVideoTimestamp = sample->Timestamp;
+			args->Request->Sample = sample;
 		}
 		else
 		{
@@ -1735,6 +1731,75 @@ void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource
 		}
 	}
 	mutexGuard.unlock();
+}
+
+void FFmpegInteropMSS::CheckVideoDeviceChanged()
+{
+	bool hasDeviceChanged = false;
+	if (device)
+	{
+		ID3D11Device* newDevice;
+		HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(mss, &newDevice, NULL, NULL);
+
+		if (SUCCEEDED(hr))
+		{
+			auto desc = DirectXInteropHelper::GetDeviceDescription(newDevice);
+			hasDeviceChanged = desc.AdapterLuid.HighPart != deviceLuid.HighPart || desc.AdapterLuid.LowPart != deviceLuid.LowPart;
+		}
+	}
+
+	if (hasDeviceChanged)
+	{
+		av_buffer_unref(&avHardwareContext);
+
+		SAFE_RELEASE(device);
+		SAFE_RELEASE(deviceContext);
+
+		avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
+		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext);
+
+		if (SUCCEEDED(hr))
+		{
+			// assign device and context
+			for each (auto stream in videoStreams)
+			{
+				// set device pointers to stream
+				stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+			}
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			if (mss->CanSeek)
+			{
+				// seek to last keyframe position
+				Seek(lastVideoTimestamp);
+
+				// decode video until we are at target position
+				while (true)
+				{
+					auto sample = currentVideoStream->GetNextSample();
+					if (!sample || sample->Timestamp >= lastVideoTimestamp)
+					{
+						break;
+					}
+				}
+
+				// decode audio until we are at target position
+				if (currentAudioStream)
+				{
+					while (true)
+					{
+						auto sample = currentAudioStream->GetNextSample();
+						if (!sample || sample->Timestamp >= lastAudioTimestamp)
+						{
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void FFmpegInteropMSS::OnSwitchStreamsRequested(MediaStreamSource^ sender, MediaStreamSourceSwitchStreamsRequestedEventArgs^ args)

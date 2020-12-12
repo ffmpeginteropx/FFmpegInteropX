@@ -306,6 +306,7 @@ namespace FFmpegInterop
 		HRESULT ParseOptions(PropertySet^ ffmpegOptions);
 		void OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args);
 		void OnSampleRequested(MediaStreamSource^ sender, MediaStreamSourceSampleRequestedEventArgs^ args);
+		void CheckVideoDeviceChanged();
 		void OnSwitchStreamsRequested(MediaStreamSource^ sender, MediaStreamSourceSwitchStreamsRequestedEventArgs^ args);
 		void OnAudioTracksChanged(MediaPlaybackItem^ sender, IVectorChangedEventArgs^ args);
 		void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList^ sender, TimedMetadataPresentationModeChangedEventArgs^ args);
@@ -381,6 +382,9 @@ namespace FFmpegInterop
 		AVBufferRef* avHardwareContextDefault;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
+		LUID deviceLuid;
+		TimeSpan lastVideoTimestamp;
+		TimeSpan lastAudioTimestamp;
 
 		static CoreDispatcher^ GetCurrentDispatcher();
 	};
