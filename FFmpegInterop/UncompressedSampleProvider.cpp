@@ -48,9 +48,10 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 		hr = E_OUTOFMEMORY;
 	}
 
+	int64_t firstPacketPos = 0;
 	while (SUCCEEDED(hr))
 	{
-		hr = GetFrameFromFFmpegDecoder(&avFrame, samplePts, sampleDuration);
+		hr = GetFrameFromFFmpegDecoder(&avFrame, samplePts, sampleDuration, firstPacketPos);
 
 		if (hr == S_FALSE)
 		{
@@ -61,7 +62,11 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 		if (SUCCEEDED(hr))
 		{
 			hr = CreateBufferFromFrame(pBuffer, surface, avFrame, samplePts, sampleDuration);
-
+			if (avFrame->key_frame)
+			{
+				OutputDebugStringW(L"Key frame");
+				lastKeyFramePosition = firstPacketPos;
+			}
 			if (SUCCEEDED(hr))
 			{
 				// sample created. update m_nextFramePts in case pts or duration have changed
@@ -89,7 +94,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 	return hr;
 }
 
-HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration)
+HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos)
 {
 	HRESULT hr = S_OK;
 
@@ -103,7 +108,7 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame** avFrame,
 		{
 			// The decoder doesn't have enough data to produce a frame,
 			// we need to feed a new packet.
-			hr = FeedPacketToDecoder();
+			hr = FeedPacketToDecoder(firstPacketPos);
 		}
 		else if (decodeFrame == AVERROR_EOF)
 		{
@@ -140,7 +145,7 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame** avFrame,
 	return hr;
 }
 
-HRESULT UncompressedSampleProvider::FeedPacketToDecoder()
+HRESULT UncompressedSampleProvider::FeedPacketToDecoder(int64_t& firstPacketPos)
 {
 	HRESULT hr = S_OK;
 
@@ -167,6 +172,8 @@ HRESULT UncompressedSampleProvider::FeedPacketToDecoder()
 	else if (SUCCEEDED(hr))
 	{
 		// Feed packet to decoder.
+		if (!firstPacketPos)
+			firstPacketPos = avPacket->pos;
 		int sendPacketResult = avcodec_send_packet(m_pAvCodecCtx, avPacket);
 		if (sendPacketResult == AVERROR(EAGAIN))
 		{

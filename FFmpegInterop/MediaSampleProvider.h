@@ -198,6 +198,7 @@ namespace FFmpegInterop
 		DecoderEngine decoder;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
+		int64 lastKeyFramePosition = -1;
 	};
 }
 

@@ -1713,14 +1713,16 @@ void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource
 		if (currentAudioStream && args->Request->StreamDescriptor == currentAudioStream->StreamDescriptor)
 		{
 			auto sample = currentAudioStream->GetNextSample();
-			lastAudioTimestamp = sample->Timestamp;
+			if (sample)
+				lastAudioTimestamp = sample->Timestamp;
 			args->Request->Sample = sample;
 		}
 		else if (currentVideoStream && args->Request->StreamDescriptor == currentVideoStream->StreamDescriptor)
 		{
 			CheckVideoDeviceChanged();
 			auto sample = currentVideoStream->GetNextSample();
-			lastVideoTimestamp = sample->Timestamp;
+			if (sample)
+				lastVideoTimestamp = sample->Timestamp;
 			args->Request->Sample = sample;
 		}
 		else
@@ -1773,7 +1775,7 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 			if (mss->CanSeek)
 			{
 				// seek to last keyframe position
-				Seek(lastVideoTimestamp);
+				SeekInternal(currentVideoStream, currentVideoStream->lastKeyFramePosition, AVSEEK_FLAG_BYTE);
 
 				// decode video until we are at target position
 				while (true)
@@ -1855,32 +1857,38 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position)
 	if (stream)
 	{
 		int64_t seekTarget = stream->ConvertPosition(position);
-
-		if (av_seek_frame(avFormatCtx, stream->StreamIndex, seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
-		{
-			hr = E_FAIL;
-			DebugMessage(L" - ### Error while seeking\n");
-		}
-		else
-		{
-			// Flush all active streams
-			for each (auto stream in sampleProviders)
-			{
-				if (stream)
-				{
-					if (stream->IsEnabled)
-					{
-						stream->Flush();
-					}
-				}
-			}
-		}
+		hr = SeekInternal(stream, seekTarget, AVSEEK_FLAG_BACKWARD);
 	}
 	else
 	{
 		hr = E_FAIL;
 	}
 
+	return hr;
+}
+
+HRESULT FFmpegInterop::FFmpegInteropMSS::SeekInternal(FFmpegInterop::MediaSampleProvider^ stream, const int64_t& seekTarget, int avSeekFlag)
+{
+	HRESULT hr = S_OK;
+	if (av_seek_frame(avFormatCtx, stream->StreamIndex, seekTarget, avSeekFlag) < 0)
+	{
+		hr = E_FAIL;
+		DebugMessage(L" - ### Error while seeking\n");
+	}
+	else
+	{
+		// Flush all active streams
+		for each (auto stream in sampleProviders)
+		{
+			if (stream)
+			{
+				if (stream->IsEnabled)
+				{
+					stream->Flush();
+				}
+			}
+		}
+	}
 	return hr;
 }
 

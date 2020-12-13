@@ -236,7 +236,6 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 			else 
 			{
 				sample = MediaStreamSample::CreateFromBuffer(buffer, position);
-
 			}
 			sample->Duration = duration;
 			sample->Discontinuous = m_isDiscontinuous;

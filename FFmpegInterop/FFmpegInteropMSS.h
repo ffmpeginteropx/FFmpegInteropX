@@ -318,6 +318,8 @@ namespace FFmpegInterop
 		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 		HRESULT Seek(TimeSpan position);
 
+		HRESULT SeekInternal(FFmpegInterop::MediaSampleProvider^ stream, const int64_t& seekTarget, int avSeekFlag);
+
 		property MediaSampleProvider^ VideoSampleProvider
 		{
 			MediaSampleProvider^ get()
