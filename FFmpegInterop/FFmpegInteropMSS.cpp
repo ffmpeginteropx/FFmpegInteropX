@@ -1744,7 +1744,9 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 		if (SUCCEEDED(hr))
 		{
 			auto desc = DirectXInteropHelper::GetDeviceDescription(newDevice);
-			hasDeviceChanged = desc.AdapterLuid.HighPart != deviceLuid.HighPart || desc.AdapterLuid.LowPart != deviceLuid.LowPart;
+			auto descExisting = DirectXInteropHelper::GetDeviceDescription(currentVideoStream->device);
+			hasDeviceChanged = desc.AdapterLuid.HighPart != descExisting.AdapterLuid.HighPart || desc.AdapterLuid.LowPart != descExisting.AdapterLuid.LowPart;
+			SAFE_RELEASE(newDevice);
 		}
 	}
 
