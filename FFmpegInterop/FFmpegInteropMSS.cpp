@@ -1656,8 +1656,6 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 	if (isFirstSeek && avHardwareContext)
 	{
 		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext);
-		auto desc = DirectXInteropHelper::GetDeviceDescription(device);
-		deviceLuid = desc.AdapterLuid;
 
 		if (SUCCEEDED(hr))
 		{
@@ -1736,7 +1734,7 @@ void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource
 void FFmpegInteropMSS::CheckVideoDeviceChanged()
 {
 	bool hasDeviceChanged = false;
-	if (device)
+	if (currentVideoStream->device)
 	{
 		ID3D11Device* newDevice;
 		HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(mss, &newDevice, NULL, NULL);

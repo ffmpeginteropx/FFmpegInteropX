@@ -382,7 +382,6 @@ namespace FFmpegInterop
 		AVBufferRef* avHardwareContextDefault;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
-		LUID deviceLuid;
 		TimeSpan lastVideoTimestamp;
 		TimeSpan lastAudioTimestamp;
 
