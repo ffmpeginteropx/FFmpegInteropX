@@ -206,6 +206,8 @@ namespace FFmpegInterop
 
 				frameProvider->UpdateCodecContext(m_pAvCodecCtx);
 			}
+			delete texturePool;
+			texturePool = nullptr;
 		}
 
 		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource^ sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext)
