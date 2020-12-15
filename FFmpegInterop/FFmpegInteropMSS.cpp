@@ -1775,7 +1775,7 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 			if (mss->CanSeek)
 			{
 				// seek to last keyframe position
-				SeekInternal(currentVideoStream, currentVideoStream->lastKeyFramePosition, AVSEEK_FLAG_BYTE);
+				Seek(lastVideoTimestamp);
 
 				// decode video until we are at target position
 				while (true)
