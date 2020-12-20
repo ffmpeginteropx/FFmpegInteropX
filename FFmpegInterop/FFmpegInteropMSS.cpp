@@ -1663,7 +1663,12 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 			for each (auto stream in videoStreams)
 			{
 				// set device pointers to stream
-				stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+				hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+
+				if (!SUCCEEDED(hr))
+				{
+					break;
+				}
 			}
 		}
 		else
@@ -1766,7 +1771,12 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 			for each (auto stream in videoStreams)
 			{
 				// set device pointers to stream
-				stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+				hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+
+				if (!SUCCEEDED(hr))
+				{
+					break;
+				}
 			}
 		}
 

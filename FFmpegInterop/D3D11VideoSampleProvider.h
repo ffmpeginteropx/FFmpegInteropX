@@ -142,8 +142,10 @@ namespace FFmpegInterop
 			SAFE_RELEASE(texture);
 		}
 
-		virtual void SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) override
+		virtual HRESULT SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) override
 		{
+			HRESULT hr = S_OK;
+
 			if (!this->device)
 			{
 				device->AddRef();
@@ -171,25 +173,32 @@ namespace FFmpegInterop
 				avcodec_free_context(&m_pAvCodecCtx);
 
 				m_pAvCodecCtx = avcodec_alloc_context3(codec);
-				m_pAvCodecCtx->get_format = &get_format;
-
-				// initialize the stream parameters with demuxer information
-				if (avcodec_parameters_to_context(m_pAvCodecCtx, m_pAvStream->codecpar) < 0)
+				if (!m_pAvCodecCtx)
 				{
-					//hr = E_FAIL;
+					hr = E_OUTOFMEMORY;
 				}
 
-				m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
-
-				if (avcodec_open2(m_pAvCodecCtx, codec, NULL) < 0)
+				if (SUCCEEDED(hr))
 				{
-					//hr = E_FAIL;
+					hr = avcodec_parameters_to_context(m_pAvCodecCtx, m_pAvStream->codecpar);
 				}
 
-				frameProvider->UpdateCodecContext(m_pAvCodecCtx);
+				if (SUCCEEDED(hr))
+				{
+					m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+					m_pAvCodecCtx->get_format = &get_format;
+					hr = avcodec_open2(m_pAvCodecCtx, codec, NULL);
+				}
+
+				if (SUCCEEDED(hr))
+				{
+					frameProvider->UpdateCodecContext(m_pAvCodecCtx);
+				}
 			}
 			delete texturePool;
 			texturePool = nullptr;
+
+			return hr;
 		}
 
 		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource^ sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext)
