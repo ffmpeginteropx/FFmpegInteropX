@@ -204,9 +204,9 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 			hr = E_FAIL;
 		}
 	}
-	else if (avFrame->format == m_OutputPixelFormat)
+	else if (avFrame->format == m_OutputPixelFormat && avFrame->width == outputWidth && avFrame->height == outputHeight)
 	{
-		// Same format but non-contiguous buffer: Copy to contiguous buffer
+		// Same format and size but non-contiguous buffer: Copy to contiguous buffer
 		int linesize[4];
 		uint8_t* data[4];
 		AVBufferRef* buffer;
@@ -221,7 +221,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 	}
 	else
 	{
-		// Different format: Use scaler
+		// Different format or size: Use scaler
 		hr = InitializeScalerIfRequired(avFrame);
 
 		if (SUCCEEDED(hr))
@@ -235,7 +235,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 			if (SUCCEEDED(hr))
 			{
 				// Convert to output format using FFmpeg software scaler
-				if (sws_scale(m_pSwsCtx, (const uint8_t**)(avFrame->data), avFrame->linesize, 0, outputHeight, data, linesize) > 0)
+				if (sws_scale(m_pSwsCtx, (const uint8_t**)(avFrame->data), avFrame->linesize, 0, avFrame->height, data, linesize) > 0)
 				{
 					*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, buffer->size, free_buffer, buffer);
 				}
@@ -440,8 +440,7 @@ void FFmpegInterop::UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avF
 	outputDirectBuffer = true;
 	int frameWidth = avFrame->width;
 	int frameHeight = avFrame->height;
-	TargetWidth = frameWidth;
-	TargetHeight = frameHeight;
+
 	// check if format has contiguous buffer for direct buffer approach
 	if (avFrame->format == m_OutputPixelFormat && avFrame->buf && avFrame->buf[0] && avFrame->data && avFrame->linesize)
 	{
@@ -504,7 +503,7 @@ void FFmpegInterop::UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avF
 		outputHeight = outputFrameHeight = TargetHeight;
 		outputDirectBuffer = false;
 	}
-	else if (hasFormatChanged && TargetWidth == 0 && TargetHeight == 0)
+	else if (hasFormatChanged)
 	{
 		// dynamic output size switching
 		outputWidth = avFrame->width;
