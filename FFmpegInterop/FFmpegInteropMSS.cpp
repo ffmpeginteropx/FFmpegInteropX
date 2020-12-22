@@ -142,7 +142,8 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 		av_buffer_unref(&avHardwareContextDefault);
 	}
 
-	deviceManager->CloseDeviceHandle(deviceHandle);
+	if (deviceHandle && deviceManager)
+		deviceManager->CloseDeviceHandle(deviceHandle);
 
 	SAFE_RELEASE(device);
 	SAFE_RELEASE(deviceContext);
@@ -1759,7 +1760,8 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 		SAFE_RELEASE(deviceContext);
 
 		avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
-		deviceManager->CloseDeviceHandle(deviceHandle);
+		if (deviceHandle && deviceManager)
+			deviceManager->CloseDeviceHandle(deviceHandle);
 
 		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
 
