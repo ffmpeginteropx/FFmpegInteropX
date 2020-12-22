@@ -201,13 +201,15 @@ namespace FFmpegInterop
 			return hr;
 		}
 
-		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource^ sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext)
+		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource^ sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, IMFDXGIDeviceManager* deviceManager)
 		{
 			ID3D11Device* device = nullptr;
 			ID3D11DeviceContext* deviceContext = nullptr;
 			ID3D11VideoDevice* videoDevice = nullptr;
 			ID3D11VideoContext* videoContext = nullptr;
-			HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(sender, &device, &deviceContext, &videoDevice);
+
+			HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(deviceManager, &device, &deviceContext, &videoDevice);
+
 			if (SUCCEEDED(hr)) hr = deviceContext->QueryInterface(&videoContext);
 
 			auto dataBuffer = (AVHWDeviceContext*)avHardwareContext->data;

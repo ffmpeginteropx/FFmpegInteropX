@@ -141,8 +141,10 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 	{
 		av_buffer_unref(&avHardwareContextDefault);
 	}
+
 	SAFE_RELEASE(device);
 	SAFE_RELEASE(deviceContext);
+	SAFE_RELEASE(deviceManager);
 	mutexGuard.unlock();
 }
 
@@ -1655,7 +1657,8 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 
 	if (isFirstSeek && avHardwareContext)
 	{
-		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext);
+		HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, &deviceManager);
+		if(SUCCEEDED(hr)) hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext, deviceManager);
 
 		if (SUCCEEDED(hr))
 		{
@@ -1744,7 +1747,7 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 	if (currentVideoStream->device)
 	{
 		ID3D11Device* newDevice;
-		HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(mss, &newDevice, NULL, NULL);
+		HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(deviceManager, &newDevice, NULL, NULL);
 
 		if (SUCCEEDED(hr))
 		{
@@ -1763,7 +1766,7 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 		SAFE_RELEASE(deviceContext);
 
 		avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
-		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext);
+		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager);
 
 		if (SUCCEEDED(hr))
 		{

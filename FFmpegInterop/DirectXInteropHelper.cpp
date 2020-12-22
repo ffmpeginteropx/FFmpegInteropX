@@ -15,25 +15,32 @@ HRESULT DirectXInteropHelper::GetDXGISurface(IDirect3DSurface^ source, IDXGISurf
 	return Windows::Graphics::DirectX::Direct3D11::GetDXGIInterface(source, dxgiSurface);
 }
 
-HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(MediaStreamSource^ source, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, ID3D11VideoDevice** outVideoDevice)
+HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(MediaStreamSource^ source, IMFDXGIDeviceManager** deviceManager)
 {
-	IMFDXGIDeviceManagerSource* surfaceManager = nullptr;
-	IMFDXGIDeviceManager* deviceManager = nullptr;
-	HANDLE deviceHandle = INVALID_HANDLE_VALUE;
-	ID3D11Device* device = nullptr;
-	ID3D11DeviceContext* deviceContext = nullptr;
-	ID3D11VideoDevice* videoDevice = nullptr;
+	IMFDXGIDeviceManagerSource* surfaceManager = nullptr;	
 	auto unknownMss = reinterpret_cast<IUnknown*>(source);
 
 	HRESULT hr = unknownMss->QueryInterface(&surfaceManager);
 
-	if (SUCCEEDED(hr)) hr = surfaceManager->GetManager(&deviceManager);
-	if (SUCCEEDED(hr)) hr = deviceManager->OpenDeviceHandle(&deviceHandle);
+	if (SUCCEEDED(hr)) hr = surfaceManager->GetManager(deviceManager);
+
+	SAFE_RELEASE(surfaceManager);
+	return hr;
+}
+
+HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* deviceManager, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, ID3D11VideoDevice** outVideoDevice)
+{
+	IMFDXGIDeviceManagerSource* surfaceManager = nullptr;
+	HANDLE deviceHandle = INVALID_HANDLE_VALUE;
+	ID3D11Device* device = nullptr;
+	ID3D11DeviceContext* deviceContext = nullptr;
+	ID3D11VideoDevice* videoDevice = nullptr;
+
+	HRESULT hr = deviceManager->OpenDeviceHandle(&deviceHandle);
 	if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11Device, (void**)&device);
 	if (SUCCEEDED(hr) && outDeviceContext) device->GetImmediateContext(&deviceContext);
 	if (SUCCEEDED(hr) && outVideoDevice) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
 
-	SAFE_RELEASE(deviceManager);
 	SAFE_RELEASE(surfaceManager);
 
 	if (!SUCCEEDED(hr))

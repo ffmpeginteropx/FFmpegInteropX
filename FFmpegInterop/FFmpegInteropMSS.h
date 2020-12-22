@@ -32,6 +32,7 @@
 #include "CodecChecker.h"
 #include <collection.h>
 #include "MediaMetadata.h"
+#include <mfidl.h>
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -386,6 +387,8 @@ namespace FFmpegInterop
 		ID3D11DeviceContext* deviceContext;
 		TimeSpan lastVideoTimestamp;
 		TimeSpan lastAudioTimestamp;
+
+		IMFDXGIDeviceManager* deviceManager;
 
 		static CoreDispatcher^ GetCurrentDispatcher();
 	};
