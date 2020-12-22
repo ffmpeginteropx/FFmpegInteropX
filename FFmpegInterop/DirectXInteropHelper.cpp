@@ -28,18 +28,18 @@ HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(MediaStreamSource
 	return hr;
 }
 
-HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* deviceManager, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, ID3D11VideoDevice** outVideoDevice)
+HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* deviceManager, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, ID3D11VideoDevice** outVideoDevice, HANDLE* outDeviceHandle)
 {
 	IMFDXGIDeviceManagerSource* surfaceManager = nullptr;
-	HANDLE deviceHandle = INVALID_HANDLE_VALUE;
+	
 	ID3D11Device* device = nullptr;
 	ID3D11DeviceContext* deviceContext = nullptr;
 	ID3D11VideoDevice* videoDevice = nullptr;
 
-	HRESULT hr = deviceManager->OpenDeviceHandle(&deviceHandle);
-	if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11Device, (void**)&device);
+	HRESULT hr = deviceManager->OpenDeviceHandle(outDeviceHandle);
+	if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11Device, (void**)&device);
 	if (SUCCEEDED(hr) && outDeviceContext) device->GetImmediateContext(&deviceContext);
-	if (SUCCEEDED(hr) && outVideoDevice) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
+	if (SUCCEEDED(hr) && outVideoDevice) hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
 
 	SAFE_RELEASE(surfaceManager);
 

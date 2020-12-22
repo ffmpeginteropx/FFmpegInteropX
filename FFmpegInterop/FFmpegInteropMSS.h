@@ -387,7 +387,7 @@ namespace FFmpegInterop
 		ID3D11DeviceContext* deviceContext;
 		TimeSpan lastVideoTimestamp;
 		TimeSpan lastAudioTimestamp;
-
+		HANDLE deviceHandle;
 		IMFDXGIDeviceManager* deviceManager;
 
 		static CoreDispatcher^ GetCurrentDispatcher();

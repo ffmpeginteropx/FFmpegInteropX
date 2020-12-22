@@ -142,6 +142,8 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 		av_buffer_unref(&avHardwareContextDefault);
 	}
 
+	deviceManager->CloseDeviceHandle(deviceHandle);
+
 	SAFE_RELEASE(device);
 	SAFE_RELEASE(deviceContext);
 	SAFE_RELEASE(deviceManager);
@@ -1658,7 +1660,7 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 	if (isFirstSeek && avHardwareContext)
 	{
 		HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, &deviceManager);
-		if(SUCCEEDED(hr)) hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext, deviceManager);
+		if (SUCCEEDED(hr)) hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
 
 		if (SUCCEEDED(hr))
 		{
@@ -1746,27 +1748,20 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 	bool hasDeviceChanged = false;
 	if (currentVideoStream->device)
 	{
-		ID3D11Device* newDevice;
-		HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(deviceManager, &newDevice, NULL, NULL);
-
-		if (SUCCEEDED(hr))
-		{
-			auto desc = DirectXInteropHelper::GetDeviceDescription(newDevice);
-			auto descExisting = DirectXInteropHelper::GetDeviceDescription(currentVideoStream->device);
-			hasDeviceChanged = desc.AdapterLuid.HighPart != descExisting.AdapterLuid.HighPart || desc.AdapterLuid.LowPart != descExisting.AdapterLuid.LowPart;
-			SAFE_RELEASE(newDevice);
-		}
+		HRESULT hr = deviceManager->TestDevice(deviceHandle);
+		hasDeviceChanged = hr == MF_E_DXGI_NEW_VIDEO_DEVICE;
 	}
 
 	if (hasDeviceChanged)
 	{
 		av_buffer_unref(&avHardwareContext);
-
 		SAFE_RELEASE(device);
 		SAFE_RELEASE(deviceContext);
 
 		avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
-		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager);
+		deviceManager->CloseDeviceHandle(deviceHandle);
+
+		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
 
 		if (SUCCEEDED(hr))
 		{
