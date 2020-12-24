@@ -62,11 +62,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
 		if (SUCCEEDED(hr))
 		{
 			hr = CreateBufferFromFrame(pBuffer, surface, avFrame, samplePts, sampleDuration);
-			if (avFrame->key_frame)
-			{
-				OutputDebugStringW(L"Key frame");
-				lastKeyFramePosition = firstPacketPos;
-			}
+			
 			if (SUCCEEDED(hr))
 			{
 				// sample created. update m_nextFramePts in case pts or duration have changed

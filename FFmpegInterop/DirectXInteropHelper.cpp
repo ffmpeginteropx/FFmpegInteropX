@@ -30,8 +30,6 @@ HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(MediaStreamSource
 
 HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* deviceManager, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, ID3D11VideoDevice** outVideoDevice, HANDLE* outDeviceHandle)
 {
-	IMFDXGIDeviceManagerSource* surfaceManager = nullptr;
-	
 	ID3D11Device* device = nullptr;
 	ID3D11DeviceContext* deviceContext = nullptr;
 	ID3D11VideoDevice* videoDevice = nullptr;
@@ -40,8 +38,6 @@ HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* de
 	if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11Device, (void**)&device);
 	if (SUCCEEDED(hr) && outDeviceContext) device->GetImmediateContext(&deviceContext);
 	if (SUCCEEDED(hr) && outVideoDevice) hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
-
-	SAFE_RELEASE(surfaceManager);
 
 	if (!SUCCEEDED(hr))
 	{
@@ -59,20 +55,4 @@ HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* de
 	}
 
 	return hr;
-}
-
-DXGI_ADAPTER_DESC DirectXInteropHelper::GetDeviceDescription(ID3D11Device* device)
-{
-	IDXGIDevice* dxgiDevice = nullptr;
-	IDXGIAdapter* adapter = nullptr;
-	DXGI_ADAPTER_DESC returnValue;
-
-	HRESULT hr = device->QueryInterface(&dxgiDevice);
-	if (SUCCEEDED(hr)) hr = dxgiDevice->GetAdapter(&adapter);
-	if (SUCCEEDED(hr)) adapter->GetDesc(&returnValue);
-
-	SAFE_RELEASE(dxgiDevice);
-	SAFE_RELEASE(adapter);
-
-	return returnValue;
 }
