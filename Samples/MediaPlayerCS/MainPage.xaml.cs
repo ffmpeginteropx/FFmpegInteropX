@@ -482,7 +482,7 @@ namespace MediaPlayerCS
             var session = sender.PlaybackSession;
             if (session != null && FFmpegMSS != null)
             {
-                FFmpegMSS.Session = session;
+                FFmpegMSS.PlaybackSession = session;
             }
             if (actualFFmpegMSS != null)
             {

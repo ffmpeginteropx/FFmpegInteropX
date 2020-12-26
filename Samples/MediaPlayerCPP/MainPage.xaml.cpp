@@ -446,7 +446,7 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
 	auto session = sender->PlaybackSession;
 	if (FFmpegMSS && session)
 	{
-		FFmpegMSS->Session = session;
+		FFmpegMSS->PlaybackSession = session;
 	}
 	actualFFmpegMSS = FFmpegMSS;
 
