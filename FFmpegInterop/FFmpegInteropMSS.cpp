@@ -1753,17 +1753,25 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 		hasDeviceChanged = hr == MF_E_DXGI_NEW_VIDEO_DEVICE;
 	}
 
-	if (hasDeviceChanged && avHardwareContext)
+	if (hasDeviceChanged)
 	{
 		av_buffer_unref(&avHardwareContext);
 		SAFE_RELEASE(device);
 		SAFE_RELEASE(deviceContext);
 
-		avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
 		if (deviceHandle && deviceManager)
 			deviceManager->CloseDeviceHandle(deviceHandle);
 
 		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
+
+		if (SUCCEEDED(hr))
+		{
+			avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
+			if (!avHardwareContext)
+			{
+				hr = E_OUTOFMEMORY;
+			}
+		}
 
 		if (SUCCEEDED(hr))
 		{
