@@ -13,6 +13,8 @@ extern "C"
 #include <libavutil/hwcontext_d3d11va.h>
 }
 
+static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelFormat* fmt);
+
 namespace FFmpegInterop
 {
 	using namespace Platform;
@@ -51,44 +53,45 @@ namespace FFmpegInterop
 						hr = E_FAIL;
 					}
 				}
-
-				//cast the AVframe to texture 2D
-				auto nativeSurface = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
-				ID3D11Texture2D* copy_tex = nullptr;
-
-				//get copy texture
-				if (SUCCEEDED(hr))
-				{
-					hr = texturePool->GetCopyTexture(nativeSurface, &copy_tex);
-				}
-
 				//copy texture data
 				if (SUCCEEDED(hr))
 				{
-					deviceContext->CopySubresourceRegion(copy_tex, 0, 0, 0, 0, nativeSurface, (UINT)(unsigned long long)avFrame->data[1], NULL);
+					//cast the AVframe to texture 2D
+					auto decodedTexture = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
+					ID3D11Texture2D* renderTexture = nullptr;
+					//happy path:decoding and rendering on same GPU
+					hr = texturePool->GetCopyTexture(decodedTexture, &renderTexture);
+					deviceContext->CopySubresourceRegion(renderTexture, 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
 					deviceContext->Flush();
-				}
 
-				//create a IDXGISurface from the shared texture
-				IDXGISurface* finalSurface = NULL;
-				if (SUCCEEDED(hr))
-				{
-					hr = copy_tex->QueryInterface(&finalSurface);
-				}
 
-				//get the IDirect3DSurface pointer
-				if (SUCCEEDED(hr))
-				{
-					*surface = DirectXInteropHelper::GetSurface(finalSurface);
-				}
+					//create a IDXGISurface from the shared texture
+					IDXGISurface* finalSurface = NULL;
+					if (SUCCEEDED(hr))
+					{
+						hr = renderTexture->QueryInterface(&finalSurface);
+					}
 
-				if (SUCCEEDED(hr))
-				{
-					ReadFrameProperties(avFrame, framePts);
-				}
+					//get the IDirect3DSurface pointer
+					if (SUCCEEDED(hr))
+					{
+						*surface = DirectXInteropHelper::GetSurface(finalSurface);
+					}
 
-				SAFE_RELEASE(finalSurface);
-				SAFE_RELEASE(copy_tex);
+					if (SUCCEEDED(hr))
+					{
+						CheckFrameSize(avFrame);
+						ReadFrameProperties(avFrame, framePts);
+					}
+
+					SAFE_RELEASE(finalSurface);
+					SAFE_RELEASE(renderTexture);
+					if (decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
+					{
+						decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
+						VideoInfo->DecoderEngine = decoder;
+					}
+				}
 			}
 			else
 			{
@@ -139,24 +142,74 @@ namespace FFmpegInterop
 			SAFE_RELEASE(texture);
 		}
 
-		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource^ sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext)
+		virtual HRESULT SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) override
 		{
-			auto unknownMss = reinterpret_cast<IUnknown*>(sender);
-			IMFDXGIDeviceManagerSource* surfaceManager = nullptr;
-			IMFDXGIDeviceManager* deviceManager = nullptr;
-			HANDLE deviceHandle = INVALID_HANDLE_VALUE;
+			HRESULT hr = S_OK;
+
+			if (!this->device)
+			{
+				device->AddRef();
+				context->AddRef();
+				this->device = device;
+				this->deviceContext = context;
+
+				if (m_pAvCodecCtx->hw_device_ctx->data != avHardwareContext->data)
+				{
+					av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
+					m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+				}
+			}
+			else
+			{
+				SAFE_RELEASE(this->device);
+				SAFE_RELEASE(this->deviceContext);
+
+				device->AddRef();
+				context->AddRef();
+				this->device = device;
+				this->deviceContext = context;
+
+				auto codec = m_pAvCodecCtx->codec;
+				avcodec_free_context(&m_pAvCodecCtx);
+
+				m_pAvCodecCtx = avcodec_alloc_context3(codec);
+				if (!m_pAvCodecCtx)
+				{
+					hr = E_OUTOFMEMORY;
+				}
+
+				if (SUCCEEDED(hr))
+				{
+					hr = avcodec_parameters_to_context(m_pAvCodecCtx, m_pAvStream->codecpar);
+				}
+
+				if (SUCCEEDED(hr))
+				{
+					m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+					m_pAvCodecCtx->get_format = &get_format;
+					hr = avcodec_open2(m_pAvCodecCtx, codec, NULL);
+				}
+
+				if (SUCCEEDED(hr))
+				{
+					frameProvider->UpdateCodecContext(m_pAvCodecCtx);
+				}
+			}
+			delete texturePool;
+			texturePool = nullptr;
+
+			return hr;
+		}
+
+		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource^ sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, IMFDXGIDeviceManager* deviceManager, HANDLE* outDeviceHandle)
+		{
 			ID3D11Device* device = nullptr;
 			ID3D11DeviceContext* deviceContext = nullptr;
 			ID3D11VideoDevice* videoDevice = nullptr;
 			ID3D11VideoContext* videoContext = nullptr;
 
-			HRESULT hr = unknownMss->QueryInterface(&surfaceManager);
+			HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(deviceManager, &device, &deviceContext, &videoDevice, outDeviceHandle);
 
-			if (SUCCEEDED(hr)) hr = surfaceManager->GetManager(&deviceManager);
-			if (SUCCEEDED(hr)) hr = deviceManager->OpenDeviceHandle(&deviceHandle);
-			if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11Device, (void**)&device);
-			if (SUCCEEDED(hr)) device->GetImmediateContext(&deviceContext);
-			if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
 			if (SUCCEEDED(hr)) hr = deviceContext->QueryInterface(&videoContext);
 
 			auto dataBuffer = (AVHWDeviceContext*)avHardwareContext->data;
@@ -165,6 +218,7 @@ namespace FFmpegInterop
 			if (SUCCEEDED(hr))
 			{
 				// give ownership to FFmpeg
+
 				internalDirectXHwContext->device = device;
 				internalDirectXHwContext->device_context = deviceContext;
 				internalDirectXHwContext->video_device = videoDevice;
@@ -208,14 +262,6 @@ namespace FFmpegInterop
 				*outDevice = device;
 				*outDeviceContext = deviceContext;
 			}
-
-			if (deviceManager)
-			{
-				deviceManager->CloseDeviceHandle(deviceHandle);
-			}
-
-			SAFE_RELEASE(deviceManager);
-			SAFE_RELEASE(surfaceManager);
 
 			return hr;
 		}

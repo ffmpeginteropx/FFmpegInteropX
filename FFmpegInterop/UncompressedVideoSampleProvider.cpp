@@ -50,7 +50,7 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 		outputMediaSubtype = MediaEncodingSubtypes::Bgra8;
 	}
 	else if (m_config->VideoOutputAllowIyuv && (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P || m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P)
-		&& m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1)
+		&& m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1 && decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
 	{
 		// if format is yuv and yuv is allowed and codec supports direct buffer decoding, use yuv
 		m_OutputPixelFormat = m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P ? AV_PIX_FMT_YUVJ420P : AV_PIX_FMT_YUV420P;
@@ -89,43 +89,22 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
 		outputMediaSubtype = MediaEncodingSubtypes::Nv12;
 	}
 
-	decoderWidth = m_pAvCodecCtx->width;
-	decoderHeight = m_pAvCodecCtx->height;
+	outputWidth = outputFrameWidth = m_pAvCodecCtx->width;
+	outputHeight = outputFrameHeight = m_pAvCodecCtx->height;
 
 	if (m_OutputPixelFormat != AV_PIX_FMT_BGRA)
 	{
 		// only BGRA supports unaligned image sizes, all others require 4 pixel alignment
-		decoderWidth = ((decoderWidth - 1) / 4 * 4) + 4;
-		decoderHeight = ((decoderHeight - 1) / 4 * 4) + 4;
+		outputFrameWidth = ((outputWidth - 1) / 4 * 4) + 4;
+		outputFrameHeight = ((outputHeight - 1) / 4 * 4) + 4;
 	}
 
-	TargetWidth = decoderWidth;
-	TargetHeight = decoderHeight;
+	if (m_pAvCodecCtx->pix_fmt == m_OutputPixelFormat && m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1)
+	{
+		// This codec supports direct buffer decoding.
 
-	if (m_config->IsFrameGrabber)
-	{
-		m_bUseScaler = true;
-	}
-	else if (m_pAvCodecCtx->pix_fmt == m_OutputPixelFormat)
-	{
-		if (m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1)
-		{
-			// This codec supports direct buffer decoding.
-			// Get decoder frame size and override get_buffer2...
-			avcodec_align_dimensions(m_pAvCodecCtx, &decoderWidth, &decoderHeight);
-
-			m_pAvCodecCtx->get_buffer2 = get_buffer2;
-			m_pAvCodecCtx->opaque = (void*)this;
-		}
-		else
-		{
-			m_bUseScaler = true;
-		}
-	}
-	else
-	{
-		// Scaler required to convert pixel format
-		m_bUseScaler = true;
+		m_pAvCodecCtx->get_buffer2 = get_buffer2;
+		m_pAvCodecCtx->opaque = (void*)this;
 	}
 }
 
@@ -133,23 +112,20 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
 {
 	SelectOutputFormat();
 
-	frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx));
+	frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx, m_pAvStream));
 
-	auto videoProperties = VideoEncodingProperties::CreateUncompressed(outputMediaSubtype, decoderWidth, decoderHeight);
+	auto videoProperties = VideoEncodingProperties::CreateUncompressed(outputMediaSubtype, outputFrameWidth, outputFrameHeight);
 
 	SetCommonVideoEncodingProperties(videoProperties, false);
 
-	if (decoderWidth != m_pAvCodecCtx->width || decoderHeight != m_pAvCodecCtx->height)
-	{
-		MFVideoArea area;
-		area.Area.cx = m_pAvCodecCtx->width;
-		area.Area.cy = m_pAvCodecCtx->height;
-		area.OffsetX.fract = 0;
-		area.OffsetX.value = 0;
-		area.OffsetY.fract = 0;
-		area.OffsetY.value = 0;
-		videoProperties->Properties->Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, ref new Array<uint8_t>((byte*)&area, sizeof(MFVideoArea)));
-	}
+	MFVideoArea area;
+	area.Area.cx = outputWidth;
+	area.Area.cy = outputHeight;
+	area.OffsetX.fract = 0;
+	area.OffsetX.value = 0;
+	area.OffsetY.fract = 0;
+	area.OffsetY.value = 0;
+	videoProperties->Properties->Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, ref new Array<uint8_t>((byte*)&area, sizeof(MFVideoArea)));
 
 	if (m_OutputPixelFormat == AV_PIX_FMT_YUVJ420P)
 	{
@@ -165,25 +141,28 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
 HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired(AVFrame* avFrame)
 {
 	HRESULT hr = S_OK;
-	if (m_bUseScaler && !m_pSwsCtx)
-	{
-		// Setup software scaler to convert frame to output pixel type
-		m_pSwsCtx = sws_getContext(
-			m_pAvCodecCtx->width,
-			m_pAvCodecCtx->height,
-			(AVPixelFormat)avFrame->format,
-			TargetWidth,
-			TargetHeight,
-			m_OutputPixelFormat,
-			SWS_BICUBIC,
-			NULL,
-			NULL,
-			NULL);
 
-		if (m_pSwsCtx == nullptr)
-		{
-			hr = E_OUTOFMEMORY;
-		}
+	// use bilinear for downscaling, bicubic for upscaling.
+	// don't use point scaling since format conversions might involve scaling even if resolution is same (chroma subsampling)
+	int scaler = avFrame->width < outputWidth ? SWS_BICUBIC : SWS_BILINEAR;
+
+	// Setup software scaler to convert frame to output pixel type and size
+	m_pSwsCtx = sws_getCachedContext(
+		m_pSwsCtx,
+		avFrame->width,
+		avFrame->height,
+		(AVPixelFormat)avFrame->format,
+		outputWidth,
+		outputHeight,
+		m_OutputPixelFormat,
+		scaler,
+		NULL,
+		NULL,
+		NULL);
+
+	if (m_pSwsCtx == nullptr)
+	{
+		hr = E_OUTOFMEMORY;
 	}
 
 	return hr;
@@ -196,45 +175,67 @@ UncompressedVideoSampleProvider::~UncompressedVideoSampleProvider()
 		sws_freeContext(m_pSwsCtx);
 	}
 
-	if (m_pBufferPool)
+	if (sourceBufferPool)
 	{
-		av_buffer_pool_uninit(&m_pBufferPool);
+		av_buffer_pool_uninit(&sourceBufferPool);
+	}
+
+	if (targetBufferPool)
+	{
+		av_buffer_pool_uninit(&targetBufferPool);
 	}
 }
 
 HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
 {
 	HRESULT hr = S_OK;
+	CheckFrameSize(avFrame);
 
-	hr = InitializeScalerIfRequired(avFrame);
-
-	if (SUCCEEDED(hr))
+	if (outputDirectBuffer)
 	{
-		if (!m_bUseScaler)
+		// Using direct buffer: just create a buffer reference to hand out to MSS pipeline
+		auto bufferRef = av_buffer_ref(avFrame->buf[0]);
+		if (bufferRef)
 		{
-			// Using direct buffer: just create a buffer reference to hand out to MSS pipeline
-			auto bufferRef = av_buffer_ref(avFrame->buf[0]);
-			if (bufferRef)
-			{
-				*pBuffer = NativeBufferFactory::CreateNativeBuffer(bufferRef->data, bufferRef->size, free_buffer, bufferRef);
-			}
-			else
-			{
-				hr = E_FAIL;
-			}
+			*pBuffer = NativeBufferFactory::CreateNativeBuffer(bufferRef->data, bufferRef->size, free_buffer, bufferRef);
 		}
 		else
 		{
-			// Using scaler: allocate a new frame from buffer pool
+			hr = E_FAIL;
+		}
+	}
+	else if (avFrame->format == m_OutputPixelFormat && avFrame->width == outputWidth && avFrame->height == outputHeight)
+	{
+		// Same format and size but non-contiguous buffer: Copy to contiguous buffer
+		int linesize[4];
+		uint8_t* data[4];
+		AVBufferRef* buffer;
+
+		hr = FillLinesAndBuffer(linesize, data, &buffer, outputFrameWidth, outputFrameHeight, false);
+
+		if (SUCCEEDED(hr))
+		{
+			av_image_copy(data, linesize, (const uint8_t**)avFrame->data, avFrame->linesize, m_OutputPixelFormat, outputWidth, outputHeight);
+			*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, buffer->size, free_buffer, buffer);
+		}
+	}
+	else
+	{
+		// Different format or size: Use scaler
+		hr = InitializeScalerIfRequired(avFrame);
+
+		if (SUCCEEDED(hr))
+		{
 			int linesize[4];
 			uint8_t* data[4];
 			AVBufferRef* buffer;
 
-			hr = FillLinesAndBuffer(linesize, data, &buffer, TargetWidth, TargetHeight);
+			hr = FillLinesAndBuffer(linesize, data, &buffer, outputFrameWidth, outputFrameHeight, false);
+
 			if (SUCCEEDED(hr))
 			{
 				// Convert to output format using FFmpeg software scaler
-				if (sws_scale(m_pSwsCtx, (const uint8_t**)(avFrame->data), avFrame->linesize, 0, m_pAvCodecCtx->height, data, linesize) > 0)
+				if (sws_scale(m_pSwsCtx, (const uint8_t**)(avFrame->data), avFrame->linesize, 0, avFrame->height, data, linesize) > 0)
 				{
 					*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, buffer->size, free_buffer, buffer);
 				}
@@ -354,57 +355,63 @@ HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample^ 
 	return S_OK;
 }
 
-HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height)
+HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height, bool isSourceBuffer)
 {
 	if (av_image_fill_linesizes(linesize, m_OutputPixelFormat, width) < 0)
 	{
 		return E_FAIL;
 	}
 
-	auto YBufferSize = linesize[0] * height;
-	auto UBufferSize = linesize[1] * height / 2;
-	auto VBufferSize = linesize[2] * height / 2;
-	auto totalSize = YBufferSize + UBufferSize + VBufferSize;
+	// calculate total size and fill data pointers startig at zero
+	auto totalSize = av_image_fill_pointers(data, m_OutputPixelFormat, height, NULL, linesize);
+	if (totalSize <= 0)
+	{
+		return E_FAIL;
+	}
 
-	buffer[0] = AllocateBuffer(totalSize);
+	// allocate buffer
+	buffer[0] = AllocateBuffer(totalSize, isSourceBuffer ? &sourceBufferPool : &targetBufferPool, isSourceBuffer ? &sourceBufferPoolSize : &targetBufferPoolSize);
 	if (!buffer[0])
 	{
 		return E_OUTOFMEMORY;
 	}
 
-	data[0] = buffer[0]->data;
-	data[1] = UBufferSize > 0 ? buffer[0]->data + YBufferSize : NULL;
-	data[2] = VBufferSize > 0 ? buffer[0]->data + YBufferSize + UBufferSize : NULL;
-	data[3] = NULL;
+	// shift data pointers to true location
+	auto start = (size_t)buffer[0]->data;
+	data[0] += start;
+	if (data[1]) data[1] += start;
+	if (data[2]) data[2] += start;
+	if (data[3]) data[3] += start;
 
 	return S_OK;
 }
 
-AVBufferRef* UncompressedVideoSampleProvider::AllocateBuffer(int totalSize)
+AVBufferRef* UncompressedVideoSampleProvider::AllocateBuffer(int requestedSize, AVBufferPool** bufferPool, int* bufferPoolSize)
 {
 	if (m_config->IsFrameGrabber && TargetBuffer)
 	{
-		auto bufferRef = av_buffer_create(TargetBuffer, totalSize, [](void*, byte*) {}, NULL, 0);
+		auto bufferRef = av_buffer_create(TargetBuffer, requestedSize, [](void*, byte*) {}, NULL, 0);
 		return bufferRef;
 	}
 
-	if (!m_pBufferPool)
+	if (*bufferPool && *bufferPoolSize != requestedSize)
 	{
-		m_pBufferPool = av_buffer_pool_init(totalSize, NULL);
-		if (!m_pBufferPool)
+		av_buffer_pool_uninit(bufferPool);
+	}
+
+	if (!*bufferPool)
+	{
+		*bufferPool = av_buffer_pool_init(requestedSize, NULL);
+		if (!*bufferPool)
 		{
 			return NULL;
 		}
+		*bufferPoolSize = requestedSize;
 	}
 
-	auto buffer = av_buffer_pool_get(m_pBufferPool);
+	auto buffer = av_buffer_pool_get(*bufferPool);
 	if (!buffer)
 	{
-		return NULL;
-	}
-	if (buffer->size != totalSize)
-	{
-		free_buffer(buffer);
 		return NULL;
 	}
 
@@ -413,15 +420,107 @@ AVBufferRef* UncompressedVideoSampleProvider::AllocateBuffer(int totalSize)
 
 int UncompressedVideoSampleProvider::get_buffer2(AVCodecContext* avCodecContext, AVFrame* frame, int flags)
 {
-	// If frame size changes during playback and gets larger than our buffer, we need to switch to sws_scale
 	auto provider = reinterpret_cast<UncompressedVideoSampleProvider^>(avCodecContext->opaque);
-	provider->m_bUseScaler = frame->height > provider->decoderHeight || frame->width > provider->decoderWidth;
-	if (provider->m_bUseScaler)
+
+	if (frame->format == AV_PIX_FMT_D3D11 || frame->format == AV_PIX_FMT_D3D11VA_VLD)
 	{
+		// custom buffer allocation not supported for HW formats. switch to default function.
+		avCodecContext->get_buffer2 = avcodec_default_get_buffer2;
 		return avcodec_default_get_buffer2(avCodecContext, frame, flags);
 	}
 	else
 	{
-		return provider->FillLinesAndBuffer(frame->linesize, frame->data, frame->buf, provider->decoderWidth, provider->decoderHeight);
+		return provider->FillLinesAndBuffer(frame->linesize, frame->data, frame->buf, frame->width, frame->height, true);
+	}
+}
+
+
+void FFmpegInterop::UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame)
+{
+	outputDirectBuffer = true;
+	int frameWidth = avFrame->width;
+	int frameHeight = avFrame->height;
+
+	// check if format has contiguous buffer for direct buffer approach
+	if (avFrame->format == m_OutputPixelFormat && avFrame->buf && avFrame->buf[0] && avFrame->data && avFrame->linesize)
+	{
+		auto firstBufferStart = avFrame->buf[0]->data;
+		auto firstBufferEnd = firstBufferStart + avFrame->buf[0]->size;
+		for (int i = 0; i < 4; i++)
+		{
+			if (avFrame->linesize[i] && !(avFrame->data[i] >= firstBufferStart && avFrame->data[i] <= firstBufferEnd))
+			{
+				outputDirectBuffer = false;
+			}
+		}
+	}
+	else
+	{
+		outputDirectBuffer = false;
+	}
+
+	// if format has more than one plane, calculate true contiguous frame height
+	if (outputDirectBuffer && avFrame->linesize[1])
+	{
+		auto firstPlaneSize = avFrame->data[1] - avFrame->data[0];
+		double calculatedFrameHeight = (double)firstPlaneSize / avFrame->linesize[0];
+		if (calculatedFrameHeight == (int)calculatedFrameHeight)
+		{
+			frameHeight = (int)calculatedFrameHeight;
+		}
+		else
+		{
+			outputDirectBuffer = false;
+		}
+	}
+
+	if (m_OutputPixelFormat != AV_PIX_FMT_BGRA)
+	{
+		// only BGRA supports unaligned image sizes, all others require 4 pixel alignment
+		int frameWidthAligned = ((frameWidth - 1) / 4 * 4) + 4;
+		int frameHeightAligned = ((frameHeight - 1) / 4 * 4) + 4;
+
+		if (frameWidth != frameWidthAligned)
+		{
+			frameWidth = frameWidthAligned;
+			outputDirectBuffer = false;
+		}
+		if (frameHeight != frameHeightAligned)
+		{
+			frameHeight = frameHeightAligned;
+			outputDirectBuffer = false;
+		}
+	}
+
+	bool hasFormatChanged = avFrame->width != outputWidth || avFrame->height != outputHeight ||
+		frameWidth != outputFrameWidth || frameHeight != outputFrameHeight;
+
+	bool isFrameGrabberOverride = TargetWidth > 0 && TargetHeight > 0;
+
+	if (isFrameGrabberOverride)
+	{
+		outputWidth = outputFrameWidth = TargetWidth;
+		outputHeight = outputFrameHeight = TargetHeight;
+		outputDirectBuffer = false;
+	}
+	else if (hasFormatChanged)
+	{
+		// dynamic output size switching
+		outputWidth = avFrame->width;
+		outputHeight = avFrame->height;
+		outputFrameWidth = frameWidth;
+		outputFrameHeight = frameHeight;
+
+		VideoDescriptor->EncodingProperties->Width = outputFrameWidth;
+		VideoDescriptor->EncodingProperties->Height = outputFrameHeight;
+
+		MFVideoArea area;
+		area.Area.cx = outputWidth;
+		area.Area.cy = outputHeight;
+		area.OffsetX.fract = 0;
+		area.OffsetX.value = 0;
+		area.OffsetY.fract = 0;
+		area.OffsetY.value = 0;
+		VideoDescriptor->EncodingProperties->Properties->Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, ref new Array<uint8_t>((byte*)&area, sizeof(MFVideoArea)));
 	}
 }

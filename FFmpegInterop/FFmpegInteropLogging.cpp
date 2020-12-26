@@ -41,6 +41,7 @@ void FFmpegInteropLogging::SetLogLevel(LogLevel level)
 void FFmpegInteropLogging::SetLogProvider(ILogProvider^ logProvider)
 {
 	s_pLogProvider = logProvider;
+
 	av_log_set_callback([](void*avcl, int level, const char *fmt, va_list vl)->void
 	{
 		if (level <= av_log_get_level())

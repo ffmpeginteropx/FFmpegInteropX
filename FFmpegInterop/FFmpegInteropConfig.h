@@ -8,6 +8,7 @@ extern "C"
 #include "Enumerations.h"
 #include "CharacterEncoding.h"
 #include "TimeSpanHelpers.h"
+#include "AvEffectDefinition.h"
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -312,6 +313,18 @@ namespace FFmpegInterop
 
 		///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
 		property bool PreventModifiedSubtitleDurationOverlap;
+
+
+		///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegInteropMSS.SetFFmpegVideoFilters().</summary>
+		///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+		property String^ FFmpegVideoFilters;
+
+		///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegInteropMSS.SetFFmpegAudioFilters().</summary>
+		property String^ FFmpegAudioFilters;
+
+		///<summary>Downmix multi-channel audio streams to stereo format.</summary>
+		property bool DownmixAudioStreamsToStereo;
+
 
 	internal:
 		/*Internal use:determines if a FFmpegInteropInstance is in frame grabber mode. This mode is used to grab frames from a video stream.*/

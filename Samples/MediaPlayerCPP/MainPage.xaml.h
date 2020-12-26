@@ -75,6 +75,10 @@ namespace MediaPlayerCPP
 		void AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		
 		void OnKeyDown(Windows::UI::Core::CoreWindow^ sender, Windows::UI::Core::KeyEventArgs^ args);
+		void Page_DragEnter(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e);
+		void Page_Drop(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e);
+		void ffmpegVideoFilters_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e);
+		void ffmpegAudioFilters_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e);
 		void OnMediaOpened(Windows::Media::Playback::MediaPlayer^ sender, Platform::Object^ args);
 		void OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args);
 	};

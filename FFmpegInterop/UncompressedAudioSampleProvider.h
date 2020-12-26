@@ -40,7 +40,7 @@ namespace FFmpegInterop
 			int streamIndex);
 		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
 		IMediaStreamDescriptor^ CreateStreamDescriptor() override;
-		HRESULT CheckFormatChanged(AVFrame* inputFrame);
+		HRESULT CheckFormatChanged(AVSampleFormat format, int channels, uint64 channelLayout, int sampleRate);
 		HRESULT UpdateResampler();
 	
 
@@ -48,8 +48,10 @@ namespace FFmpegInterop
 		SwrContext* m_pSwrCtx;
 		AVSampleFormat inSampleFormat, outSampleFormat;
 		int inSampleRate, outSampleRate, inChannels, outChannels;
-		int64 inChannelLayout, outChannelLayout;
+		uint64 inChannelLayout, outChannelLayout;
+		int bytesPerSample;
 		bool needsUpdateResampler;
+		bool useResampler;
 	};
 }
 

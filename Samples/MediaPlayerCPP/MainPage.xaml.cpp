@@ -401,9 +401,7 @@ void MediaPlayerCPP::MainPage::AddTestFilter(Platform::Object^ sender, Windows::
 {
 	if (FFmpegMSS != nullptr)
 	{
-		Vector<AvEffectDefinition^>^ effects = ref new Vector<AvEffectDefinition^>();
-		effects->Append(ref new AvEffectDefinition("aecho", "0.8:0.9:1000|1800:0.3|0.25"));
-		FFmpegMSS->SetAudioEffects(effects->GetView());
+		FFmpegMSS->SetFFmpegAudioFilters("aecho=0.8:0.9:1000|1800:0.3|0.25");
 	}
 }
 
@@ -412,7 +410,7 @@ void MediaPlayerCPP::MainPage::RemoveTestFilter(Platform::Object^ sender, Window
 {
 	if (FFmpegMSS != nullptr)
 	{
-		FFmpegMSS->DisableAudioEffects();
+		FFmpegMSS->SetFFmpegAudioFilters(nullptr);
 	}
 }
 
@@ -493,3 +491,52 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
 }
 
 
+void MediaPlayerCPP::MainPage::Page_DragEnter(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e)
+{
+	if (e->DataView->Contains(Windows::ApplicationModel::DataTransfer::StandardDataFormats::StorageItems))
+	{
+		e->AcceptedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Link;
+	}
+}
+
+
+void MediaPlayerCPP::MainPage::Page_Drop(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e)
+{
+	create_task(e->DataView->GetStorageItemsAsync()).then([this](IVectorView<IStorageItem^>^ items) -> task<void>
+		{
+			if (items->Size >= 1)
+			{
+				auto file = dynamic_cast<StorageFile^>(items->GetAt(0));
+				if (file)
+				{
+					co_await OpenLocalFile(file);
+				}
+			}
+		});
+}
+
+
+void MediaPlayerCPP::MainPage::ffmpegVideoFilters_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e)
+{
+	if (e->Key == Windows::System::VirtualKey::Enter)
+	{
+		Config->FFmpegVideoFilters = ffmpegVideoFilters->Text;
+		if (FFmpegMSS)
+		{
+			FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text);
+		}
+	}
+}
+
+
+void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e)
+{
+	if (e->Key == Windows::System::VirtualKey::Enter)
+	{
+		Config->FFmpegAudioFilters = ffmpegAudioFilters->Text;
+		if (FFmpegMSS)
+		{
+			FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text);
+		}
+	}
+}

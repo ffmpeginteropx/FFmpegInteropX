@@ -9,7 +9,6 @@
 
 extern "C"
 {
-#include "libavutil/channel_layout.h"
 #include "libavutil/md5.h"
 #include "libavutil/mem.h"
 #include "libavutil/opt.h"
@@ -17,7 +16,6 @@ extern "C"
 #include "libavfilter/buffersink.h"
 #include "libavfilter/buffersrc.h"
 #include <libavfilter/avfilter.h>
-#include <libswresample/swresample.h>
 }
 
 using namespace Windows::Foundation::Collections;
@@ -29,19 +27,21 @@ using namespace Windows::Storage;
 namespace FFmpegInterop {
 	ref class VideoFilter : public IAvEffect
 	{
+		const AVFilter* AVSource;
+		const AVFilter* AVSink;
 
-		const AVFilter  *AVSource;
-		const AVFilter  *AVSink;
+		AVFilterGraph* graph;
+		AVFilterContext* avSource_ctx, * avSink_ctx;
 
+		AVCodecContext* inputCodecCtx;
+		AVStream* inputStream;
 
-		AVFilterGraph	*graph;
-		AVFilterContext *avSource_ctx, *avSink_ctx;
+		String^ filterDefinition;
+		bool isInitialized;
 
-		AVCodecContext *inputCodecCtx;
-
-		std::vector<const AVFilter*> AVFilters;
-		std::vector<AVFilterContext*> AVFilterContexts;
-
+		AVPixelFormat format;
+		int width;
+		int height;
 
 		HRESULT AllocGraph()
 		{
@@ -55,12 +55,11 @@ namespace FFmpegInterop {
 			else return E_FAIL;
 		}
 
-
-		HRESULT AllocSource()
+		HRESULT AllocSource(AVFrame* avFrame)
 		{
-			AVDictionary *options_dict = NULL;
+			AVDictionary* options_dict = NULL;
 
-			int err;
+			int hr;
 
 			/* Create the buffer filter;
 			* it will be used for feeding the data into the graph. */
@@ -70,24 +69,32 @@ namespace FFmpegInterop {
 				return AVERROR_FILTER_NOT_FOUND;
 			}
 
-			avSource_ctx = avfilter_graph_alloc_filter(graph, AVSource, "avSource_ctx");
+			avSource_ctx = avfilter_graph_alloc_filter(graph, AVSource, "buffer");
 			if (!avSource_ctx) {
-				fprintf(stderr, "Could not allocate the abuffer instance.\n");
+				fprintf(stderr, "Could not allocate the buffer instance.\n");
 				return AVERROR(ENOMEM);
 			}
-			/* Set the filter options through the AVOptions API. */
 
-			auto hr = av_opt_set_int(avSource_ctx, "width", inputCodecCtx->width, AV_OPT_SEARCH_CHILDREN);
-			hr = av_opt_set_int(avSource_ctx, "height", inputCodecCtx->height, AV_OPT_SEARCH_CHILDREN);
-			hr = av_opt_set_int(avSource_ctx, "pix_fmt", inputCodecCtx->pix_fmt, AV_OPT_SEARCH_CHILDREN);
-			hr = av_opt_set_q(avSource_ctx, "time_base", inputCodecCtx->time_base, AV_OPT_SEARCH_CHILDREN);
-			hr = av_opt_set_q(avSource_ctx, "frame_rate", inputCodecCtx->framerate, AV_OPT_SEARCH_CHILDREN);
+			format = (AVPixelFormat)avFrame->format;
+			width = avFrame->width;
+			height = avFrame->height;
+
+			auto framerate = inputCodecCtx->framerate.num > 0 && inputCodecCtx->framerate.den > 0 ? 
+				inputCodecCtx->framerate : inputStream->avg_frame_rate;
+			auto timeBase = inputCodecCtx->time_base.num > 0 && inputCodecCtx->time_base.den > 0 ?
+				inputCodecCtx->time_base : inputStream->time_base;
+
+			hr = av_opt_set_int(avSource_ctx, "width", width, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_int(avSource_ctx, "height", height, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_int(avSource_ctx, "pix_fmt", format, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_q(avSource_ctx, "time_base", timeBase, AV_OPT_SEARCH_CHILDREN);
+			hr = av_opt_set_q(avSource_ctx, "frame_rate", framerate, AV_OPT_SEARCH_CHILDREN);
 			hr = av_opt_set_q(avSource_ctx, "sar", inputCodecCtx->sample_aspect_ratio, AV_OPT_SEARCH_CHILDREN);
 
 			/* Now initialize the filter; we pass NULL options, since we have already
 			* set all the options above. */
-			err = avfilter_init_str(avSource_ctx, NULL);
-			return err;
+			hr = avfilter_init_str(avSource_ctx, NULL);
+			return hr;
 		}
 
 		HRESULT AllocSink()
@@ -98,9 +105,9 @@ namespace FFmpegInterop {
 				return AVERROR_FILTER_NOT_FOUND;
 			}
 
-			avSink_ctx = avfilter_graph_alloc_filter(graph, AVSink, "sink");
+			avSink_ctx = avfilter_graph_alloc_filter(graph, AVSink, "buffersink");
 			if (!avSink_ctx) {
-				fprintf(stderr, "Could not allocate the abuffersink instance.\n");
+				fprintf(stderr, "Could not allocate the buffersink instance.\n");
 				return AVERROR(ENOMEM);
 			}
 
@@ -109,138 +116,122 @@ namespace FFmpegInterop {
 
 		}
 
-		HRESULT AlocSourceAndSync()
+		HRESULT AlocSourceAndSync(AVFrame* avFrame)
 		{
 			//AVFilterContext *abuffer_ctx;
-			auto hr = AllocSource();
+			auto hr = AllocSource(avFrame);
 			if (SUCCEEDED(hr))
 			{
 				hr = AllocSink();
-
 			}
 
 			return hr;
 		}
 
-		HRESULT InitFilterGraph(IVectorView<AvEffectDefinition^>^ effects)
+		HRESULT InitFilterGraph(AVFrame* avFrame)
 		{
 			//init graph
-			int error = 0;
+			int hr = 0;
 
-			error = AllocGraph();
-			if (error < 0)
+			hr = AllocGraph();
+			if (hr < 0)
 				return E_FAIL;
 
 			//alloc src and sink
 
-			error = AlocSourceAndSync();
-			if (error < 0)
+			hr = AlocSourceAndSync(avFrame);
+			if (hr < 0)
 				return E_FAIL;
 
+			auto in = avfilter_inout_alloc();
+			if (!in)
+				return E_FAIL;
 
-			//dynamic graph
-			AVFilters.push_back(AVSource);
-			AVFilterContexts.push_back(avSource_ctx);
+			in->name = av_strdup("in");
+			in->filter_ctx = avSource_ctx;
+			in->pad_idx = 0;
+			in->next = NULL;
 
-			for (unsigned int i = 0; i < effects->Size; i++)
+			auto out = avfilter_inout_alloc();
+			if (!out)
+				return E_FAIL;
+			
+			out->name = av_strdup("out");
+			out->filter_ctx = avSink_ctx;
+			out->pad_idx = 0;
+			out->next = NULL;
+
+			auto definition = StringUtils::PlatformStringToUtf8String(filterDefinition);
+			hr = avfilter_graph_parse(graph, definition.c_str(), out, in, NULL);
+
+			if (SUCCEEDED(hr))
 			{
-				auto effectDefinition = effects->GetAt(i);
-
-				auto effectName = StringUtils::PlatformStringToUtf8String(effectDefinition->FilterName);
-				auto configString = StringUtils::PlatformStringToUtf8String(effectDefinition->Configuration);
-
-				AVFilterContext* ctx;
-				const AVFilter* filter;
-
-				filter = avfilter_get_by_name(effectName.c_str());
-				ctx = avfilter_graph_alloc_filter(graph, filter, configString.c_str());
-				if (!filter)
-				{
-					return AVERROR_FILTER_NOT_FOUND;
-
-				}
-				if (avfilter_init_str(ctx, configString.c_str()) < 0)
-				{
-					return E_FAIL;
-				}
-				AVFilters.push_back(filter);
-				AVFilterContexts.push_back(ctx);
+				hr = avfilter_graph_config(graph, NULL);
 			}
 
-
-			AVFilters.push_back(AVSink);
-			AVFilterContexts.push_back(avSink_ctx);
-
-
-			error = LinkGraph();
-			return error;
-		}
-
-		HRESULT LinkGraph()
-		{
-			int err = 0;
-
-			//link all except last item
-			for (unsigned int i = 0; i < AVFilterContexts.size() - 1; i++)
-			{
-				if (err >= 0)
-					err = avfilter_link(AVFilterContexts[i], 0, AVFilterContexts[i + 1], 0);
-			}
-
-			/* Configure the graph. */
-			err = avfilter_graph_config(graph, NULL);
-			if (err < 0) {
-				return err;
+			if (hr < 0) {
+				return hr;
 			}
 			return S_OK;
 		}
 
 
 	internal:
-		VideoFilter(AVCodecContext *m_inputCodecCtx)
+		VideoFilter(AVCodecContext* m_inputCodecCtx, AVStream* inputStream, String^ filterDefinition)
 		{
 			this->inputCodecCtx = m_inputCodecCtx;
+			this->inputStream = inputStream;
+			this->filterDefinition = filterDefinition;
 		}
 
+		HRESULT AddFrame(AVFrame* avFrame) override
+		{	
+			HRESULT hr = S_OK;
 
+			if (!isInitialized)
+			{
+				hr = InitFilterGraph(avFrame);
+				isInitialized = true;
+			}
 
+			if (SUCCEEDED(hr))
+			{
+				if (avFrame && (avFrame->format != format || avFrame->width != width || avFrame->height != height))
+				{
+					// dynamic change of input size or format is not supported
+					hr = E_FAIL;
+				}
+			}
 
-
-
-
-
-
-
-
-
-		HRESULT AllocResources(IVectorView<AvEffectDefinition^>^ effects)
-		{
-			return InitFilterGraph(effects);
-		}
-
-
-		HRESULT AddFrame(AVFrame *avFrame) override
-		{
-			auto hr = av_buffersrc_add_frame(avSource_ctx, avFrame);
+			if (SUCCEEDED(hr))
+			{
+				hr = av_buffersrc_add_frame(avSource_ctx, avFrame);
+			}
 
 			return hr;
 		}
 
-		HRESULT GetFrame(AVFrame *avFrame) override
+		HRESULT GetFrame(AVFrame* avFrame) override
 		{
-			auto hr = av_buffersink_get_frame(avSink_ctx, avFrame);
+			HRESULT hr;
+
+			if (!isInitialized)
+			{
+				// not initialized: require frame
+				hr = AVERROR(EAGAIN);
+			}
+			else
+			{
+				hr = av_buffersink_get_frame(avSink_ctx, avFrame);
+			}
 
 			return hr;
 		}
-
 
 	public:
 		virtual ~VideoFilter()
 		{
 			avfilter_graph_free(&this->graph);
-
-			AVFilters.clear();
-			AVFilterContexts.clear();
 		}
 	};
 }

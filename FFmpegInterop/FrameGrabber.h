@@ -16,6 +16,9 @@ namespace FFmpegInterop {
 	{
 
 		FFmpegInteropMSS^ interopMSS;
+		MediaRatio^ pixelAspectRatio;
+		int width;
+		int height;
 
 	internal:
 		FrameGrabber(FFmpegInteropMSS^ interopMSS) {
@@ -84,42 +87,9 @@ namespace FFmpegInterop {
 		/// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
 		IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int maxFrameSkip, IBuffer^ targetBuffer)
 		{
-			// the IBuffer from WriteableBitmap can only be accessed on UI thread
-			// so we need to check it and get its pointer here already
+			PrepareDecoding(targetBuffer);
 
-			auto sampleProvider = static_cast<UncompressedVideoSampleProvider^>(interopMSS->VideoSampleProvider);
-			auto streamDescriptor = static_cast<VideoStreamDescriptor^>(interopMSS->VideoSampleProvider->StreamDescriptor);
-			MediaRatio^ pixelAspectRatio = streamDescriptor->EncodingProperties->PixelAspectRatio;
-			if (DecodePixelWidth > 0 &&
-				DecodePixelHeight > 0)
-			{
-				sampleProvider->TargetWidth = DecodePixelWidth;
-				sampleProvider->TargetHeight = DecodePixelHeight;
-				pixelAspectRatio->Numerator = 1;
-				pixelAspectRatio->Denominator = 1;
-			}
-			auto width = sampleProvider->TargetWidth;
-			auto height = sampleProvider->TargetHeight;
-
-			byte* pixels = nullptr;
-			if (targetBuffer)
-			{
-				auto length = targetBuffer->Length;
-				if (length != width * height * 4)
-				{
-					throw ref new InvalidArgumentException();
-				}
-
-				// Query the IBufferByteAccess interface.  
-				Microsoft::WRL::ComPtr<IBufferByteAccess> bufferByteAccess;
-				reinterpret_cast<IInspectable*>(targetBuffer)->QueryInterface(IID_PPV_ARGS(&bufferByteAccess));
-
-				// Retrieve the buffer data.  
-				bufferByteAccess->Buffer(&pixels);
-			}
-			sampleProvider->TargetBuffer = pixels;
-
-			return create_async([this, position, exactSeek, maxFrameSkip, width, height, pixelAspectRatio]
+			return create_async([this, position, exactSeek, maxFrameSkip]
 			{
 				bool seekSucceeded = false;
 				if (interopMSS->Duration.Duration >= position.Duration)
@@ -171,8 +141,11 @@ namespace FFmpegInterop {
 						continue;
 					}
 
-					auto result = ref new VideoFrame(sample->Buffer,
-						width, height, pixelAspectRatio,
+					auto result = ref new VideoFrame(
+						sample->Buffer,
+						width, 
+						height, 
+						pixelAspectRatio,
 						sample->Timestamp);
 
 					return result;
@@ -185,50 +158,20 @@ namespace FFmpegInterop {
 		/// <param name="targetBuffer">The target buffer which shall contain the decoded pixel data.</param>
 		IAsyncOperation<VideoFrame^>^ ExtractNextVideoFrameAsync(IBuffer^ targetBuffer)
 		{
-			// the IBuffer from WriteableBitmap can only be accessed on UI thread
-			// so we need to check it and get its pointer here already
+			PrepareDecoding(targetBuffer);
 
-			auto sampleProvider = static_cast<UncompressedVideoSampleProvider^>(interopMSS->VideoSampleProvider);
-			auto streamDescriptor = static_cast<VideoStreamDescriptor^>(interopMSS->VideoSampleProvider->StreamDescriptor);
-			MediaRatio^ pixelAspectRatio = streamDescriptor->EncodingProperties->PixelAspectRatio;
-			if (DecodePixelWidth > 0 &&
-				DecodePixelHeight > 0)
-			{
-				sampleProvider->TargetWidth = DecodePixelWidth;
-				sampleProvider->TargetHeight = DecodePixelHeight;
-				pixelAspectRatio->Numerator = 1;
-				pixelAspectRatio->Denominator = 1;
-			}
-			auto width = sampleProvider->TargetWidth;
-			auto height = sampleProvider->TargetHeight;
-
-			byte* pixels = nullptr;
-			if (targetBuffer)
-			{
-				auto length = targetBuffer->Length;
-				if (length != width * height * 4)
-				{
-					throw ref new InvalidArgumentException();
-				}
-
-				// Query the IBufferByteAccess interface.  
-				Microsoft::WRL::ComPtr<IBufferByteAccess> bufferByteAccess;
-				reinterpret_cast<IInspectable*>(targetBuffer)->QueryInterface(IID_PPV_ARGS(&bufferByteAccess));
-
-				// Retrieve the buffer data.  
-				bufferByteAccess->Buffer(&pixels);
-			}
-			sampleProvider->TargetBuffer = pixels;
-
-			return create_async([this, width, height, pixelAspectRatio]
+			return create_async([this]
 				{
 					auto sample = interopMSS->VideoSampleProvider->GetNextSample();
 					VideoFrame^ result = nullptr;
 
 					if (sample)
 					{
-						result = ref new VideoFrame(sample->Buffer,
-							width, height, pixelAspectRatio,
+						result = ref new VideoFrame(
+							sample->Buffer,
+							width,
+							height,
+							pixelAspectRatio,
 							sample->Timestamp);
 					}
 
@@ -257,6 +200,53 @@ namespace FFmpegInterop {
 
 		/// <summary>Extracts the next consecutive video frame in the file. Returns <c>null</c> at end of stream.</summary>
 		IAsyncOperation<VideoFrame^>^ ExtractNextVideoFrameAsync() { return ExtractNextVideoFrameAsync(nullptr); };
+
+
+		private:
+
+			void PrepareDecoding(IBuffer^ targetBuffer)
+			{
+				// the IBuffer from WriteableBitmap can only be accessed on UI thread
+				// so we need to check it and get its pointer here already
+
+				auto sampleProvider = static_cast<UncompressedVideoSampleProvider^>(interopMSS->VideoSampleProvider);
+				auto streamDescriptor = static_cast<VideoStreamDescriptor^>(interopMSS->VideoSampleProvider->StreamDescriptor);
+				pixelAspectRatio = streamDescriptor->EncodingProperties->PixelAspectRatio;
+				if (DecodePixelWidth > 0 &&
+					DecodePixelHeight > 0)
+				{
+					sampleProvider->TargetWidth = DecodePixelWidth;
+					sampleProvider->TargetHeight = DecodePixelHeight;
+					pixelAspectRatio->Numerator = 1;
+					pixelAspectRatio->Denominator = 1;
+				}
+				else
+				{
+					// lock frame size - no dynamic size changes during frame grabbing!
+					sampleProvider->TargetWidth = sampleProvider->VideoInfo->PixelWidth;
+					sampleProvider->TargetHeight = sampleProvider->VideoInfo->PixelHeight;
+				}
+				width = sampleProvider->TargetWidth;
+				height = sampleProvider->TargetHeight;
+
+				byte* pixels = nullptr;
+				if (targetBuffer)
+				{
+					auto length = targetBuffer->Length;
+					if (length != width * height * 4)
+					{
+						throw ref new InvalidArgumentException();
+					}
+
+					// Query the IBufferByteAccess interface.  
+					Microsoft::WRL::ComPtr<IBufferByteAccess> bufferByteAccess;
+					reinterpret_cast<IInspectable*>(targetBuffer)->QueryInterface(IID_PPV_ARGS(&bufferByteAccess));
+
+					// Retrieve the buffer data.  
+					bufferByteAccess->Buffer(&pixels);
+				}
+				sampleProvider->TargetBuffer = pixels;
+			}
 	};
 }
 
