@@ -32,6 +32,7 @@
 #include "CodecChecker.h"
 #include <collection.h>
 #include "MediaMetadata.h"
+#include <mfidl.h>
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -88,12 +89,23 @@ namespace FFmpegInterop
 		///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
 		void SetSubtitleDelay(TimeSpan delay);
 
-		///<summary>Sets audio effects. This replaces any effects which were already set.</summary>
+		///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
+		[WFM::Deprecated("Use SetFFmpegAudioFilters method.", WFM::DeprecationType::Deprecate, 0x0)]
 		void SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects);
 
-		///<summary>Sets video effects. This replaces any effects which were already set.</summary>
+		///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
+		[WFM::DefaultOverload]
+		void SetFFmpegAudioFilters(String^ audioFilters);
+
+		///<summary>Sets FFmpeg video effects. This replaces any effects which were already set.</summary>
+		///<remarks>Using FFmpeg video effects will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+		[WFM::Deprecated("Use SetFFmpegVideoFilters method.", WFM::DeprecationType::Deprecate, 0x0)]
 		void SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects);
 
+		///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
+		///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+		[WFM::DefaultOverload]
+		void SetFFmpegVideoFilters(String^ videoEffects);
 
 		///<summary>Disables audio effects.</summary>
 		void DisableAudioEffects();
@@ -295,6 +307,7 @@ namespace FFmpegInterop
 		HRESULT ParseOptions(PropertySet^ ffmpegOptions);
 		void OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args);
 		void OnSampleRequested(MediaStreamSource^ sender, MediaStreamSourceSampleRequestedEventArgs^ args);
+		void CheckVideoDeviceChanged();
 		void OnSwitchStreamsRequested(MediaStreamSource^ sender, MediaStreamSourceSwitchStreamsRequestedEventArgs^ args);
 		void OnAudioTracksChanged(MediaPlaybackItem^ sender, IVectorChangedEventArgs^ args);
 		void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList^ sender, TimedMetadataPresentationModeChangedEventArgs^ args);
@@ -305,6 +318,8 @@ namespace FFmpegInterop
 		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);
 		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 		HRESULT Seek(TimeSpan position);
+
+		HRESULT SeekInternal(FFmpegInterop::MediaSampleProvider^ stream, const int64_t& seekTarget, int avSeekFlag);
 
 		property MediaSampleProvider^ VideoSampleProvider
 		{
@@ -340,7 +355,7 @@ namespace FFmpegInterop
 
 		MediaSampleProvider^ currentVideoStream;
 		MediaSampleProvider^ currentAudioStream;
-		IVectorView<AvEffectDefinition^>^ currentAudioEffects;
+		String^ currentAudioEffects;
 		int thumbnailStreamIndex;
 
 		EventRegistrationToken audioTracksChangedToken;
@@ -370,6 +385,10 @@ namespace FFmpegInterop
 		AVBufferRef* avHardwareContextDefault;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
+		TimeSpan lastVideoTimestamp;
+		TimeSpan lastAudioTimestamp;
+		HANDLE deviceHandle;
+		IMFDXGIDeviceManager* deviceManager;
 
 		static CoreDispatcher^ GetCurrentDispatcher();
 	};

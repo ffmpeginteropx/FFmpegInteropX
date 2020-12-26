@@ -141,8 +141,13 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 	{
 		av_buffer_unref(&avHardwareContextDefault);
 	}
+
+	if (deviceHandle && deviceManager)
+		deviceManager->CloseDeviceHandle(deviceHandle);
+
 	SAFE_RELEASE(device);
 	SAFE_RELEASE(deviceContext);
+	SAFE_RELEASE(deviceManager);
 	mutexGuard.unlock();
 }
 
@@ -925,6 +930,16 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 	subtitleStreamInfos = subtitleStrInfos->GetView();
 	videoStreamInfos = videoStrInfos->GetView();
 
+	if (config->FFmpegVideoFilters)
+	{
+		SetFFmpegVideoFilters(config->FFmpegVideoFilters);
+	}
+
+	if (config->FFmpegAudioFilters)
+	{
+		SetFFmpegAudioFilters(config->FFmpegAudioFilters);
+	}
+
 	if (currentVideoStream)
 	{
 		auto pixelAspect = (double)VideoDescriptor->EncodingProperties->PixelAspectRatio->Numerator / VideoDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
@@ -1341,6 +1356,26 @@ void FFmpegInteropMSS::SetSubtitleDelay(TimeSpan offset)
 
 void FFmpegInteropMSS::SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects)
 {
+	std::string def;
+	for (unsigned int i = 0; i < audioEffects->Size; i++)
+	{
+		auto effectDefinition = audioEffects->GetAt(i);
+		auto effectName = StringUtils::PlatformStringToUtf8String(effectDefinition->FilterName);
+		auto configString = StringUtils::PlatformStringToUtf8String(effectDefinition->Configuration);
+
+		if (i > 0)
+			def.append(",");
+
+		def.append(effectName);
+		def.append("=");
+		def.append(configString);
+	}
+
+	SetFFmpegAudioFilters(StringUtils::Utf8ToPlatformString(def.c_str()));
+}
+
+void FFmpegInteropMSS::SetFFmpegAudioFilters(String^ audioEffects)
+{
 	mutexGuard.lock();
 	if (currentAudioStream)
 	{
@@ -1352,10 +1387,32 @@ void FFmpegInteropMSS::SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEf
 
 void FFmpegInteropMSS::SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects)
 {
+	std::string def;
+	for (unsigned int i = 0; i < videoEffects->Size; i++)
+	{
+		auto effectDefinition = videoEffects->GetAt(i);
+		auto effectName = StringUtils::PlatformStringToUtf8String(effectDefinition->FilterName);
+		auto configString = StringUtils::PlatformStringToUtf8String(effectDefinition->Configuration);
+
+		if (i > 0)
+			def.append(",");
+
+		def.append(effectName);
+		def.append("=");
+		def.append(configString);
+	}
+
+	SetFFmpegVideoFilters(StringUtils::Utf8ToPlatformString(def.c_str()));
+}
+
+void FFmpegInteropMSS::SetFFmpegVideoFilters(String^ videoEffects)
+{
 	mutexGuard.lock();
 	if (currentVideoStream)
 	{
 		currentVideoStream->SetFilters(videoEffects);
+		//TODO store and apply video effects on video stream change!
+		//currentVideoEffects = videoEffects;
 	}
 	mutexGuard.unlock();
 }
@@ -1603,24 +1660,20 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 
 	if (isFirstSeek && avHardwareContext)
 	{
-		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext);
+		HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, &deviceManager);
+		if (SUCCEEDED(hr)) hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
 
 		if (SUCCEEDED(hr))
 		{
 			// assign device and context
 			for each (auto stream in videoStreams)
 			{
-				if (stream->m_pAvCodecCtx->hw_device_ctx)
-				{
-					// replace default device context with actual mss device, if required
-					if (stream->m_pAvCodecCtx->hw_device_ctx->data != avHardwareContext->data)
-					{
-						av_buffer_unref(&stream->m_pAvCodecCtx->hw_device_ctx);
-						stream->m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
-					}
+				// set device pointers to stream
+				hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
 
-					// set device pointers to stream
-					stream->SetHardwareDevice(device, deviceContext);
+				if (!SUCCEEDED(hr))
+				{
+					break;
 				}
 			}
 		}
@@ -1670,11 +1723,18 @@ void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource
 	{
 		if (currentAudioStream && args->Request->StreamDescriptor == currentAudioStream->StreamDescriptor)
 		{
-			args->Request->Sample = currentAudioStream->GetNextSample();
+			auto sample = currentAudioStream->GetNextSample();
+			if (sample)
+				lastAudioTimestamp = sample->Timestamp;
+			args->Request->Sample = sample;
 		}
 		else if (currentVideoStream && args->Request->StreamDescriptor == currentVideoStream->StreamDescriptor)
 		{
-			args->Request->Sample = currentVideoStream->GetNextSample();;
+			CheckVideoDeviceChanged();
+			auto sample = currentVideoStream->GetNextSample();
+			if (sample)
+				lastVideoTimestamp = sample->Timestamp;
+			args->Request->Sample = sample;
 		}
 		else
 		{
@@ -1682,6 +1742,84 @@ void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource
 		}
 	}
 	mutexGuard.unlock();
+}
+
+void FFmpegInteropMSS::CheckVideoDeviceChanged()
+{
+	bool hasDeviceChanged = false;
+	if (currentVideoStream->device)
+	{
+		HRESULT hr = deviceManager->TestDevice(deviceHandle);
+		hasDeviceChanged = hr == MF_E_DXGI_NEW_VIDEO_DEVICE;
+	}
+
+	if (hasDeviceChanged)
+	{
+		av_buffer_unref(&avHardwareContext);
+		SAFE_RELEASE(device);
+		SAFE_RELEASE(deviceContext);
+
+		if (deviceHandle && deviceManager)
+			deviceManager->CloseDeviceHandle(deviceHandle);
+
+		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
+
+		if (SUCCEEDED(hr))
+		{
+			avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
+			if (!avHardwareContext)
+			{
+				hr = E_OUTOFMEMORY;
+			}
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			// assign device and context
+			for each (auto stream in videoStreams)
+			{
+				// set device pointers to stream
+				hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+
+				if (!SUCCEEDED(hr))
+				{
+					break;
+				}
+			}
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			if (mss->CanSeek)
+			{
+				// seek to last keyframe position
+				Seek(lastVideoTimestamp);
+
+				// decode video until we are at target position
+				while (true)
+				{
+					auto sample = currentVideoStream->GetNextSample();
+					if (!sample || sample->Timestamp >= lastVideoTimestamp)
+					{
+						break;
+					}
+				}
+
+				// decode audio until we are at target position
+				if (currentAudioStream)
+				{
+					while (true)
+					{
+						auto sample = currentAudioStream->GetNextSample();
+						if (!sample || sample->Timestamp >= lastAudioTimestamp)
+						{
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void FFmpegInteropMSS::OnSwitchStreamsRequested(MediaStreamSource^ sender, MediaStreamSourceSwitchStreamsRequestedEventArgs^ args)
@@ -1737,32 +1875,38 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position)
 	if (stream)
 	{
 		int64_t seekTarget = stream->ConvertPosition(position);
-
-		if (av_seek_frame(avFormatCtx, stream->StreamIndex, seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
-		{
-			hr = E_FAIL;
-			DebugMessage(L" - ### Error while seeking\n");
-		}
-		else
-		{
-			// Flush all active streams
-			for each (auto stream in sampleProviders)
-			{
-				if (stream)
-				{
-					if (stream->IsEnabled)
-					{
-						stream->Flush();
-					}
-				}
-			}
-		}
+		hr = SeekInternal(stream, seekTarget, AVSEEK_FLAG_BACKWARD);
 	}
 	else
 	{
 		hr = E_FAIL;
 	}
 
+	return hr;
+}
+
+HRESULT FFmpegInterop::FFmpegInteropMSS::SeekInternal(FFmpegInterop::MediaSampleProvider^ stream, const int64_t& seekTarget, int avSeekFlag)
+{
+	HRESULT hr = S_OK;
+	if (av_seek_frame(avFormatCtx, stream->StreamIndex, seekTarget, avSeekFlag) < 0)
+	{
+		hr = E_FAIL;
+		DebugMessage(L" - ### Error while seeking\n");
+	}
+	else
+	{
+		// Flush all active streams
+		for each (auto stream in sampleProviders)
+		{
+			if (stream)
+			{
+				if (stream->IsEnabled)
+				{
+					stream->Flush();
+				}
+			}
+		}
+	}
 	return hr;
 }
 

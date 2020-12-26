@@ -16,24 +16,9 @@ namespace FFmpegInterop
 			InputContext = input_ctx;
 		}
 
-		IAvEffect^ CreateEffect(IVectorView<AvEffectDefinition^>^ definitions) override
+		IAvEffect^ CreateEffect(String^ filterDefinition) override
 		{
-			int numChannels = AvCodecContextHelpers::GetNBChannels(InputContext);
-			auto channel_layout = AvCodecContextHelpers::GetChannelLayout(InputContext, numChannels);
-			AudioFilter^ filter = ref new AudioFilter(InputContext,channel_layout, numChannels);
-			auto hr = filter ? S_OK : E_OUTOFMEMORY;
-			if (SUCCEEDED(hr))
-			{
-				hr = filter->AllocResources(definitions);
-			}
-			if (SUCCEEDED(hr))
-			{
-				return filter;
-			}
-			else
-			{
-				return nullptr;
-			}
+			return ref new AudioFilter(InputContext, filterDefinition);
 		}
 	};
 }

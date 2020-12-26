@@ -21,6 +21,7 @@
 #include "FFmpegInteropMSS.h"
 #include "FFmpegReader.h"
 #include "LanguageTagConverter.h"
+#include "AvCodecContextHelpers.h"
 
 using namespace FFmpegInterop;
 using namespace Windows::Media::MediaProperties;
@@ -163,16 +164,22 @@ void FFmpegInterop::MediaSampleProvider::InitializeStreamInfo()
 	{
 	case AVMEDIA_TYPE_AUDIO:
 	{
-		auto channels = m_pAvStream->codecpar->channels;
-		if (channels == 1 && m_pAvStream->codecpar->codec_id == AV_CODEC_ID_AAC && m_pAvStream->codecpar->profile == FF_PROFILE_AAC_HE_V2)
-		{
-			channels = 2;
-		}
+		auto channels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
 		auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
+
+		String^ channelLayout = "";
+		char* channelLayoutName = new char[256];
+		if (channelLayoutName)
+		{
+			auto layout = m_pAvCodecCtx->channel_layout ? m_pAvCodecCtx->channel_layout : AvCodecContextHelpers::GetDefaultChannelLayout(channels);
+			av_get_channel_layout_string(channelLayoutName, 256, channels, layout);
+			channelLayout = StringUtils::Utf8ToPlatformString(channelLayoutName);
+			delete channelLayoutName;
+		}
 
 		streamInfo = ref new AudioStreamInfo(
 			Name, Language, CodecName, m_pAvStream->codecpar->bit_rate, false, 
-			channels, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder);
+			channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder);
 
 		break;
 	}
@@ -229,7 +236,6 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 			else 
 			{
 				sample = MediaStreamSample::CreateFromBuffer(buffer, position);
-
 			}
 			sample->Duration = duration;
 			sample->Discontinuous = m_isDiscontinuous;
@@ -418,14 +424,6 @@ void MediaSampleProvider::Detach()
 	m_pReader = nullptr;
 	avcodec_close(m_pAvCodecCtx);
 	avcodec_free_context(&m_pAvCodecCtx);
-}
-
-void FFmpegInterop::MediaSampleProvider::SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context)
-{
-	device->AddRef();
-	context->AddRef();
-	this->device = device;
-	this->deviceContext = context;
 }
 
 void free_buffer(void *lpVoid)

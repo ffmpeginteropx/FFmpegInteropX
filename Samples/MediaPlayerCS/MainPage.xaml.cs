@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation.Collections;
 using Windows.Media.Core;
 using Windows.Media.Playback;
@@ -130,7 +131,7 @@ namespace MediaPlayerCS
             // now refresh codec checker, so next file might use HW acceleration (if codec was really installed)
             await CodecChecker.RefreshAsync();
         }
-              
+
 
         private async Task TryOpenLastFile()
         {
@@ -330,7 +331,13 @@ namespace MediaPlayerCS
         private async void MediaFailed(object sender, ExceptionRoutedEventArgs e)
         {
             await DisplayErrorMessage(e.ErrorMessage);
-            actualFFmpegMSS = null;
+            if (actualFFmpegMSS != null)
+            {
+                actualFFmpegMSS.Dispose();
+                actualFFmpegMSS = null;
+                FFmpegMSS = null;
+                playbackItem = null;
+            }
         }
 
         private async Task DisplayErrorMessage(string message)
@@ -425,8 +432,7 @@ namespace MediaPlayerCS
         {
             if (FFmpegMSS != null)
             {
-                //
-                FFmpegMSS.SetAudioEffects(new AvEffectDefinition[] { new AvEffectDefinition("aecho", "0.8:0.9:1000|1800:0.3|0.25") });
+                FFmpegMSS.SetFFmpegAudioFilters("aecho=0.8:0.9:1000|1800:0.3|0.25");
             }
 
         }
@@ -463,6 +469,10 @@ namespace MediaPlayerCS
         private void MediaOpened(object sender, RoutedEventArgs e)
         {
             tbSubtitleDelay.Text = "Subtitle delay: 0s";
+            if (actualFFmpegMSS != null)
+            {
+                actualFFmpegMSS.Dispose();
+            }
             actualFFmpegMSS = FFmpegMSS;
         }
 
@@ -481,6 +491,58 @@ namespace MediaPlayerCS
             {
                 VideoEffectConfiguration.AddVideoEffect(mediaElement);
             }
+        }
+
+        private void Page_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                e.AcceptedOperation = DataPackageOperation.Link;
+            }
+        }
+
+        private async void Page_Drop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                var files = await e.DataView.GetStorageItemsAsync();
+                var first = files.OfType<StorageFile>().FirstOrDefault();
+                if (first != null)
+                {
+                    await OpenLocalFile(first);
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private void ffmpegVideoFilters_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == VirtualKey.Enter)
+            {
+                ffmpegVideoFilters_LostFocus(sender, e);
+            }
+        }
+
+        private void ffmpegVideoFilters_LostFocus(object sender, RoutedEventArgs e)
+        {
+            Config.FFmpegVideoFilters = ffmpegVideoFilters.Text;
+            FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
+        }
+
+        private void ffmpegAudioFilters_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == VirtualKey.Enter)
+            {
+                ffmpegAudioFilters_LostFocus(sender, e);
+            }
+        }
+
+        private void ffmpegAudioFilters_LostFocus(object sender, RoutedEventArgs e)
+        {
+            Config.FFmpegAudioFilters = ffmpegAudioFilters.Text;
+            FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
         }
     }
 }

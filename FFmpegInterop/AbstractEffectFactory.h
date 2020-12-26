@@ -9,7 +9,7 @@ namespace FFmpegInterop {
 	ref class AbstractEffectFactory abstract
 	{
 	internal:
-		virtual IAvEffect^ CreateEffect(IVectorView<AvEffectDefinition^>^ definitions) abstract;
+		virtual IAvEffect^ CreateEffect(String^ definitions) abstract;
 	};
 }
 

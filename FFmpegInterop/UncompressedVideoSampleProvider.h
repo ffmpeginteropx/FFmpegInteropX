@@ -50,6 +50,7 @@ namespace FFmpegInterop
 		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
 		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) override;
 		void ReadFrameProperties(AVFrame* avFrame, int64_t& framePts);
+		void CheckFrameSize(AVFrame* avFrame);
 		AVPixelFormat GetOutputPixelFormat() { return m_OutputPixelFormat; }
 		property int TargetWidth;
 		property int TargetHeight;
@@ -68,21 +69,26 @@ namespace FFmpegInterop
 	private:
 		void SelectOutputFormat();
 		HRESULT InitializeScalerIfRequired(AVFrame* avFrame);
-		HRESULT FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height);
-		AVBufferRef* AllocateBuffer(int totalSize);
+		HRESULT FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height, bool isSourceBuffer);
+		AVBufferRef* AllocateBuffer(int requestedSize, AVBufferPool** bufferPool, int* bufferPoolSize);
 		static int get_buffer2(AVCodecContext *avCodecContext, AVFrame *frame, int flags);
 
 		String^ outputMediaSubtype;
-		int decoderWidth;
-		int decoderHeight;
+		int outputWidth;
+		int outputHeight;
+		int outputFrameHeight;
+		int outputFrameWidth;
+		bool outputDirectBuffer;
 
-		AVBufferPool *m_pBufferPool;
+		AVBufferPool* sourceBufferPool;
+		int sourceBufferPoolSize;
+		AVBufferPool* targetBufferPool;
+		int targetBufferPoolSize;
 		AVPixelFormat m_OutputPixelFormat;
 		SwsContext* m_pSwsCtx;
 		bool m_interlaced_frame;
 		bool m_top_field_first;
 		AVChromaLocation m_chroma_location;
-		bool m_bUseScaler;
 		bool hasFirstInterlacedFrame;
 	};
 }

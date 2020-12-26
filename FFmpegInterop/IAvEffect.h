@@ -13,6 +13,7 @@ namespace FFmpegInterop
 	internal:
 		
 		virtual HRESULT AddFrame(AVFrame* frame) abstract;
+	
 		virtual HRESULT GetFrame(AVFrame* frame) abstract;
 	};
 }
