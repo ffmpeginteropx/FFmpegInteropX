@@ -278,8 +278,12 @@ namespace FFmpegInterop
 		///Use SetSubtitleDelay() on the FFmpegInteropMSS instance if you want to change the delay during playback.</summary>
 		property TimeSpan DefaultSubtitleDelay;
 
-		///<summary>Enables fast seeking when set to true.</summary>
-		///<remarks>Fast seeking will seek to closest previous video keyframe and play from that position. Enabled by default.</remarks>
+		///<summary>FFmpegInteropMSS will seek to the closest previous video keyframe and play from that position, if set to true.</summary>
+		/// <remarks>
+		/// When enabling FastSeek, it is strongly recommended to use MediaPlayer for playback,
+		/// and assign MediaPlayer.PlaybackSession to the FFmpegInteropMSS.PlaybackSession property.
+		/// If the PlaybackSession property is not assigned, precision of FastSeek is reduced.
+		/// </remarks>
 		property bool FastSeek;
 
 		///<summary>Ensure that audio plays without artifacts after fast seeking.</summary>

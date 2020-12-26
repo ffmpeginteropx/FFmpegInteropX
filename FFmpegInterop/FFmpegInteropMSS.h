@@ -291,7 +291,9 @@ namespace FFmpegInterop
 			void set(TimeSpan value) { mss->BufferTime = value; }
 		}
 
-		property Windows::Media::Playback::MediaPlaybackSession^ Session
+		///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
+		///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this property.</remarks>
+		property Windows::Media::Playback::MediaPlaybackSession^ PlaybackSession
 		{
 			MediaPlaybackSession^ get() { return session; }
 			void set(MediaPlaybackSession^ value)

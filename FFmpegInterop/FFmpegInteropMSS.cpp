@@ -149,7 +149,7 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 	SAFE_RELEASE(deviceContext);
 	SAFE_RELEASE(deviceManager);
 
-	Session = nullptr;
+	PlaybackSession = nullptr;
 
 	mutexGuard.unlock();
 }
@@ -1887,12 +1887,12 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 		int64_t seekTarget = stream->ConvertPosition(position);
 		auto diffActual = position - actualPosition;
 		auto diffLast = position - lastPosition;
-		bool isSeekBeforeStreamSwitch = Session && config->FastSeekSmartStreamSwitching && diffActual.Duration > 0 && diffActual.Duration < 5000000 && diffLast.Duration > 0 && diffLast.Duration < 10000000;
+		bool isSeekBeforeStreamSwitch = PlaybackSession && config->FastSeekSmartStreamSwitching && diffActual.Duration > 0 && diffActual.Duration < 5000000 && diffLast.Duration > 0 && diffLast.Duration < 10000000;
 		
 		if (currentVideoStream && config->FastSeek && !isSeekBeforeStreamSwitch && !isFirstSeekAfterStreamSwitch)
 		{
 			// fast seek
-			auto playbackPosition = Session ? lastPosition : currentVideoStream->LastSampleTimestamp;
+			auto playbackPosition = PlaybackSession ? lastPosition : currentVideoStream->LastSampleTimestamp;
 			bool seekForward;
 			TimeSpan referenceTime;
 

@@ -111,10 +111,7 @@
             <!-- Main content -->
             <MediaPlayerElement x:Name="mediaPlayerElement"
                         AreTransportControlsEnabled="True"
-                        AudioCategory="ForegroundOnlyMedia"
                         AutoPlay="True"                        
-                        MediaFailed="MediaFailed"
-                        MediaOpened="MediaOpened"
             />
 
         </SplitView>
