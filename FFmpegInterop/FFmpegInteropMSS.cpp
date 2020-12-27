@@ -1889,7 +1889,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 		auto diffLast = position - lastPosition;
 		bool isSeekBeforeStreamSwitch = PlaybackSession && config->FastSeekSmartStreamSwitching && diffActual.Duration > 0 && diffActual.Duration < 5000000 && diffLast.Duration > 0 && diffLast.Duration < 10000000;
 		
-		if (currentVideoStream && config->FastSeek && !isSeekBeforeStreamSwitch && !isFirstSeekAfterStreamSwitch)
+		if (currentVideoStream && config->FastSeek && PlaybackSession && !isSeekBeforeStreamSwitch && !isFirstSeekAfterStreamSwitch)
 		{
 			// fast seek
 			auto playbackPosition = PlaybackSession ? lastPosition : currentVideoStream->LastSampleTimestamp;
