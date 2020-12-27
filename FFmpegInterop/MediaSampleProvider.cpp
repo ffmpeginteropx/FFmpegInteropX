@@ -331,8 +331,8 @@ HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpa
 		auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
 		if (pts != AV_NOPTS_VALUE)
 		{
-			timestamp.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * pts) - m_startOffset;
-			packetDuration.Duration = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * packet->duration);
+			timestamp = ConvertPosition(pts);
+			packetDuration = ConvertDuration(packet->duration);
 			hr = S_OK;
 		}
 	}
@@ -365,8 +365,8 @@ HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan timestamp)
 			auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
 			if (pts != AV_NOPTS_VALUE && packet->duration != AV_NOPTS_VALUE)
 			{
-				auto packetEnd = LONGLONG(av_q2d(m_pAvStream->time_base) * 10000000 * (pts + packet->duration)) - m_startOffset;
-				if (packet->duration > 0 ? packetEnd <= timestamp.Duration : packetEnd < timestamp.Duration)
+				auto packetEnd = ConvertPosition(pts + packet->duration);
+				if (packet->duration > 0 ? packetEnd <= timestamp : packetEnd < timestamp)
 				{
 					m_packetQueue.pop();
 					av_packet_free(&packet);
