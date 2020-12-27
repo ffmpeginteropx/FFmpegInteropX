@@ -349,7 +349,7 @@ namespace FFmpegInterop
 	internal:
 		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);
 		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
-		HRESULT Seek(TimeSpan position, TimeSpan& actualPosition);
+		HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek);
 
 		property MediaSampleProvider^ VideoSampleProvider
 		{
@@ -416,8 +416,6 @@ namespace FFmpegInterop
 		AVBufferRef* avHardwareContextDefault;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
-		TimeSpan lastVideoTimestamp;
-		TimeSpan lastAudioTimestamp;
 		HANDLE deviceHandle;
 		IMFDXGIDeviceManager* deviceManager;
 

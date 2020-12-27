@@ -1701,7 +1701,7 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 	if (request->StartPosition && request->StartPosition->Value.Duration <= mediaDuration.Duration && (!isFirstSeek || request->StartPosition->Value.Duration > 0))
 	{
 		TimeSpan actualPosition = request->StartPosition->Value;
-		auto hr = Seek(request->StartPosition->Value, actualPosition);
+		auto hr = Seek(request->StartPosition->Value, actualPosition, true);
 		if (SUCCEEDED(hr))
 		{
 			request->SetActualStartPosition(actualPosition);
@@ -1731,16 +1731,12 @@ void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource
 		if (currentAudioStream && args->Request->StreamDescriptor == currentAudioStream->StreamDescriptor)
 		{
 			auto sample = currentAudioStream->GetNextSample();
-			if (sample)
-				lastAudioTimestamp = sample->Timestamp;
 			args->Request->Sample = sample;
 		}
 		else if (currentVideoStream && args->Request->StreamDescriptor == currentVideoStream->StreamDescriptor)
 		{
 			CheckVideoDeviceChanged();
 			auto sample = currentVideoStream->GetNextSample();
-			if (sample)
-				lastVideoTimestamp = sample->Timestamp;
 			args->Request->Sample = sample;
 		}
 		else
@@ -1800,8 +1796,9 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 			if (mss->CanSeek)
 			{
 				// seek to last keyframe position
+				TimeSpan lastVideoTimestamp = currentVideoStream->LastSampleTimestamp;
 				TimeSpan actualPosition;
-				Seek(lastVideoTimestamp, actualPosition);
+				Seek(lastVideoTimestamp, actualPosition, false);
 
 				// decode video until we are at target position
 				while (true)
@@ -1816,6 +1813,7 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 				// decode audio until we are at target position
 				if (currentAudioStream)
 				{
+					TimeSpan lastAudioTimestamp = currentAudioStream->LastSampleTimestamp;
 					while (true)
 					{
 						auto sample = currentAudioStream->GetNextSample();
@@ -1875,7 +1873,7 @@ void FFmpegInteropMSS::OnSwitchStreamsRequested(MediaStreamSource^ sender, Media
 	mutexGuard.unlock();
 }
 
-HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
+HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek)
 {
 	auto hr = S_OK;
 
@@ -1889,7 +1887,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition)
 		auto diffLast = position - lastPosition;
 		bool isSeekBeforeStreamSwitch = PlaybackSession && config->FastSeekSmartStreamSwitching && diffActual.Duration > 0 && diffActual.Duration < 5000000 && diffLast.Duration > 0 && diffLast.Duration < 10000000;
 		
-		if (currentVideoStream && config->FastSeek && PlaybackSession && !isSeekBeforeStreamSwitch && !isFirstSeekAfterStreamSwitch)
+		if (currentVideoStream && config->FastSeek && allowFastSeek && PlaybackSession && !isSeekBeforeStreamSwitch && !isFirstSeekAfterStreamSwitch)
 		{
 			// fast seek
 			auto playbackPosition = PlaybackSession ? lastPosition : currentVideoStream->LastSampleTimestamp;
