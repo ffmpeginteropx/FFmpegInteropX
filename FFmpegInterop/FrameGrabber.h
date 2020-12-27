@@ -95,7 +95,7 @@ namespace FFmpegInterop {
 				if (interopMSS->Duration.Duration >= position.Duration)
 				{
 					TimeSpan actualPosition = position;
-					seekSucceeded = SUCCEEDED(interopMSS->Seek(position, actualPosition));
+					seekSucceeded = SUCCEEDED(interopMSS->Seek(position, actualPosition, false));
 				}
 
 				int framesSkipped = 0;
