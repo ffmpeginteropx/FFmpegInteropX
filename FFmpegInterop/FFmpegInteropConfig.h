@@ -120,7 +120,7 @@ namespace FFmpegInterop
 			AutoCorrectAnsiSubtitles = true;
 			AnsiSubtitleEncoding = CharacterEncoding::GetSystemDefault();
 
-			FastSeek = true;
+			FastSeek = false;
 			FastSeekCleanAudio = true;
 			FastSeekSmartStreamSwitching = true;
 
@@ -278,11 +278,10 @@ namespace FFmpegInterop
 		///Use SetSubtitleDelay() on the FFmpegInteropMSS instance if you want to change the delay during playback.</summary>
 		property TimeSpan DefaultSubtitleDelay;
 
-		///<summary>FFmpegInteropMSS will seek to the closest previous video keyframe and play from that position, if set to true.</summary>
+		/// <summary>FFmpegInteropMSS will seek to the closest video keyframe, if set to true.</summary>
 		/// <remarks>
-		/// When enabling FastSeek, it is strongly recommended to use MediaPlayer for playback,
-		/// and assign MediaPlayer.PlaybackSession to the FFmpegInteropMSS.PlaybackSession property.
-		/// If the PlaybackSession property is not assigned, precision of FastSeek is reduced.
+		/// For FastSeek to work, you must use the MediaPlayer for playback, and assign
+		/// MediaPlayer.PlaybackSession to the FFmpegInteropMSS.PlaybackSession property.
 		/// </remarks>
 		property bool FastSeek;
 
@@ -291,7 +290,6 @@ namespace FFmpegInterop
 		property bool FastSeekCleanAudio;
 
 		///<summary>Try to improve stream switching times when FastSeek is enabled.</summary>
-		///<remarks>You must assign the FFmpegInteropMSS.Session property for this to take effect!</remarks>
 		property bool FastSeekSmartStreamSwitching;
 
 		///<summary>The default name to use for audio streams.</summary>

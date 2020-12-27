@@ -15,31 +15,25 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 - [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.2.200
   - FFmpeg 4.2.2 build for UWP platform
 
-### Some of the important improvements:
+### Some of the important improvements, compared to original version:
 
 - NuGet packages!!
-- Multiple audio stream support
+- Multiple video and audio stream support
 - Subtitle support, including external subtitle files
-- Audio effects (special thanks to [mcosmin222](https://github.com/mcosmin222)!)
-- Stream information retrieval (name, language, format, etc)
-- Passthrough of the following video formats for hardware decoding
-  - HEVC
-  - VC1 (Used in VC1 Advanced Profile)
-  - WMV3 (Used in WMV9 and VC1 Simple and Main Profile)
-  - MPEG2 (Requires "MPEG-2 Video Extensions" from Windows Store)
-  - VP9 (Requires "VP9 Video Extensions" from Windows Store)
+- Native D3D11 hardware decoding for all major formats:
+  - H264, HEVC, VC1, VP8, VP9, WMV3, MPEG2
+- FFmpeg video and audio effects (special thanks to [mcosmin222](https://github.com/mcosmin222)!)
+- Super fast GPU-based video postprocessing effects
 - Major performance improvements (zero-copy data handling in all important areas)
 - Frame grabber support
+- Fast Seeking support (seek to keyframes)
+- Stream information retrieval (name, language, format, etc)
 - Chapter information support
 - API improvements
 - Include zlib and bzlib libraries into ffmpeg for full MKV subtitle support
 - Include iconv for character encoding conversion
 - Include libxml2 for DASH streaming support
 - Lots of bug fixes
-
-### Other changes:
-- Support for Windows 8.x and Windows Phone 8.x has been dropped
-- Visual Studio 2015 support has been dropped
 
 
 ## How to work with FFmpegInteropX
@@ -99,12 +93,17 @@ Note: If your app uses multiple windows using CoreApplication.CreateNewView(), t
 
 A branch exists which makes FFmpegInterop compatible with FFmpegUniversal builds. It is a project which merges the individual ffmpeg dlls into one single file. This can make deployment easier. Check [FFmpegUniversal](https://github.com/M2Team/FFmpegUniversal) for more details.
 
-## Credits / contributors
+## Credits / major contributors
 
 - [lukasf](https://github.com/lukasf)
 - [mcosmin222](https://github.com/mcosmin222)
 - [MouriNaruto](https://github.com/MouriNaruto)
+- [JunielKatarn](https://github.com/JunielKatarn)
 
-Thank you also to Microsoft and the team who developed the original library!
+Many more helped with development, bug reports and suggestions. Thank you all!
+
+Thank you also to the Microsoft team who developed the original library!
 
 ## Your feedback is appreciated!
+
+Feel free to open issues, pull requests, or join discussions.
