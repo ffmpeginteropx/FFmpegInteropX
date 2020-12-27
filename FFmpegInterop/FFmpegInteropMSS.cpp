@@ -1750,9 +1750,10 @@ void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource
 void FFmpegInteropMSS::CheckVideoDeviceChanged()
 {
 	bool hasDeviceChanged = false;
+	HRESULT hr = S_OK;
 	if (currentVideoStream->device)
 	{
-		HRESULT hr = deviceManager->TestDevice(deviceHandle);
+		hr = deviceManager->TestDevice(deviceHandle);
 		hasDeviceChanged = hr == MF_E_DXGI_NEW_VIDEO_DEVICE;
 	}
 
@@ -1765,15 +1766,16 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 		if (deviceHandle && deviceManager)
 			deviceManager->CloseDeviceHandle(deviceHandle);
 
-		HRESULT hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
+		avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
+		
+		if (!avHardwareContext)
+		{
+			hr = E_OUTOFMEMORY;
+		}
 
 		if (SUCCEEDED(hr))
 		{
-			avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
-			if (!avHardwareContext)
-			{
-				hr = E_OUTOFMEMORY;
-			}
+			hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
 		}
 
 		if (SUCCEEDED(hr))
@@ -1886,7 +1888,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition, bool
 		auto diffActual = position - actualPosition;
 		auto diffLast = position - lastPosition;
 		bool isSeekBeforeStreamSwitch = PlaybackSession && config->FastSeekSmartStreamSwitching && diffActual.Duration > 0 && diffActual.Duration < 5000000 && diffLast.Duration > 0 && diffLast.Duration < 10000000;
-		
+
 		if (currentVideoStream && config->FastSeek && allowFastSeek && PlaybackSession && !isSeekBeforeStreamSwitch && !isFirstSeekAfterStreamSwitch)
 		{
 			// fast seek
@@ -1930,7 +1932,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition, bool
 			{
 				max = stream->ConvertPosition(referenceTime);
 			}
-			
+
 			if (avformat_seek_file(avFormatCtx, stream->StreamIndex, min, seekTarget, max, 0) < 0)
 			{
 				hr = E_FAIL;
@@ -1951,7 +1953,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition, bool
 					// our min position was not respected. try again with higher min and target.
 					min += stream->ConvertDuration(TimeSpan{ 50000000 });
 					seekTarget += stream->ConvertDuration(TimeSpan{ 50000000 });
-					
+
 					if (avformat_seek_file(avFormatCtx, stream->StreamIndex, min, seekTarget, max, 0) < 0)
 					{
 						hr = E_FAIL;
@@ -1961,7 +1963,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition, bool
 					{
 						// Flush all active streams
 						FlushStreams();
-				
+
 						// get updated timestamp
 						hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo, timestampVideoDuration);
 					}
@@ -2014,7 +2016,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition, bool
 							{
 								// Negative audio preroll. Just drop all packets until target position.
 								currentAudioStream->SkipPacketsUntilTimestamp(audioTarget);
-								
+
 								hr = currentAudioStream->GetNextPacketTimestamp(timestampAudio, timestampAudioDuration);
 								if (hr == S_OK && (config->FastSeekCleanAudio || (timestampAudio + timestampAudioDuration) <= timestampVideo))
 								{
