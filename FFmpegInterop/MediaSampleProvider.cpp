@@ -240,7 +240,7 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 			sample->Duration = duration;
 			sample->Discontinuous = m_isDiscontinuous;
 
-			LastSampleTimestamp = TimeSpan { pts };
+			LastSampleTimestamp = position;
 
 			hr = SetSampleProperties(sample);
 
