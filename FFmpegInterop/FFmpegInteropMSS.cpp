@@ -1754,8 +1754,9 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 		hasDeviceChanged = hr == MF_E_DXGI_NEW_VIDEO_DEVICE;
 	}
 
-	if (hasDeviceChanged)
+	if (hasDeviceChanged && avHardwareContext)
 	{
+		hr = S_OK;
 		av_buffer_unref(&avHardwareContext);
 		SAFE_RELEASE(device);
 		SAFE_RELEASE(deviceContext);
