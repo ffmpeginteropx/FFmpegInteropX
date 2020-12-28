@@ -1768,7 +1768,7 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 			deviceManager->CloseDeviceHandle(deviceHandle);
 
 		avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
-		
+
 		if (!avHardwareContext)
 		{
 			hr = E_OUTOFMEMORY;
