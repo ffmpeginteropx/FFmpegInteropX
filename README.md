@@ -14,9 +14,10 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
   - FFmpeg video filters
   - Fast seeking to keyframes
   - Stereo downmix option
+  - Improved support for image file formats
 - [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.3.100
   - FFmpeg 4.3.1 build for UWP platform
-  - Hardware acceleration included
+  - D3D11 hardware acceleration enabled
 
 ### Some of the important improvements, compared to original version:
 
@@ -33,6 +34,7 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 - Stream information retrieval (name, language, format, etc)
 - Chapter information support
 - Stereo downmix option
+- Improved support for image file formats
 - API improvements
 - Include zlib and bzlib libraries into ffmpeg for full MKV subtitle support
 - Include iconv for character encoding conversion
