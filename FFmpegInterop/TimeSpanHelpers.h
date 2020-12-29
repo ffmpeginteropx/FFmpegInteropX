@@ -53,6 +53,20 @@ inline TimeSpan& operator-=(TimeSpan& span, const TimeSpan& other)
 	return span;
 }
 
+inline TimeSpan operator*(const TimeSpan& span, const double factor)
+{
+	TimeSpan result;
+	result.Duration = (long long)(span.Duration * factor);
+	return result;
+}
+
+inline TimeSpan operator/(const TimeSpan& span, const double factor)
+{
+	TimeSpan result;
+	result.Duration = (long long)(span.Duration / factor);
+	return result;
+}
+
 inline TimeSpan ToTimeSpan(long long ticks)
 {
 	TimeSpan result;

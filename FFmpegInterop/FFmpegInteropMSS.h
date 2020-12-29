@@ -291,6 +291,26 @@ namespace FFmpegInterop
 			void set(TimeSpan value) { mss->BufferTime = value; }
 		}
 
+		///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
+		///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this property.</remarks>
+		property Windows::Media::Playback::MediaPlaybackSession^ PlaybackSession
+		{
+			MediaPlaybackSession^ get() { return session; }
+			void set(MediaPlaybackSession^ value)
+			{
+				mutexGuard.lock();
+				if (session)
+				{
+					session->PositionChanged -= sessionPositionEvent;
+				}
+				session = value;
+				if (value)
+				{
+					sessionPositionEvent = value->PositionChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackSession^, Platform::Object^>(this, &FFmpegInterop::FFmpegInteropMSS::OnPositionChanged);
+				}
+				mutexGuard.unlock();
+			}
+		}
 
 	private:
 		FFmpegInteropMSS(FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
@@ -314,12 +334,22 @@ namespace FFmpegInterop
 		void InitializePlaybackItem(MediaPlaybackItem^ playbackitem);
 		bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, HardwareDecoderStatus& hardwareDecoderStatus, bool manualStatus, int maxProfile, int maxLevel);
 
+		void FlushStreams()
+		{
+			// Flush all active streams
+			for each (auto stream in sampleProviders)
+			{
+				if (stream && stream->IsEnabled)
+				{
+					stream->Flush();
+				}
+			}
+		}
+
 	internal:
 		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);
 		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
-		HRESULT Seek(TimeSpan position);
-
-		HRESULT SeekInternal(FFmpegInterop::MediaSampleProvider^ stream, const int64_t& seekTarget, int avSeekFlag);
+		HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek);
 
 		property MediaSampleProvider^ VideoSampleProvider
 		{
@@ -373,7 +403,8 @@ namespace FFmpegInterop
 
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher^ dispatcher;
-
+		MediaPlaybackSession^ session;
+		EventRegistrationToken sessionPositionEvent;
 
 		String^ videoCodecName;
 		String^ audioCodecName;
@@ -385,12 +416,19 @@ namespace FFmpegInterop
 		AVBufferRef* avHardwareContextDefault;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
-		TimeSpan lastVideoTimestamp;
-		TimeSpan lastAudioTimestamp;
 		HANDLE deviceHandle;
 		IMFDXGIDeviceManager* deviceManager;
 
+		bool isFirstSeekAfterStreamSwitch;
+		bool isLastSeekForward;
+		TimeSpan lastSeekStart;
+		TimeSpan lastSeekActual;
+
+		TimeSpan actualPosition;
+		TimeSpan lastPosition;
+
 		static CoreDispatcher^ GetCurrentDispatcher();
-	};
+		void OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession^ sender, Platform::Object^ args);
+};
 
 }

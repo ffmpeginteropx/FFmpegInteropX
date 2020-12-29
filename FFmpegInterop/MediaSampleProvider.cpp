@@ -240,6 +240,8 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
 			sample->Duration = duration;
 			sample->Discontinuous = m_isDiscontinuous;
 
+			LastSampleTimestamp = position;
+
 			hr = SetSampleProperties(sample);
 
 			m_isDiscontinuous = false;
@@ -268,7 +270,7 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packe
 	{
 		if (m_pReader->ReadPacket() < 0)
 		{
-			DebugMessage(L"GetNextSample reaching EOF\n");
+			DebugMessage(L"GetNextPacket reaching EOF\n");
 			break;
 		}
 	}
@@ -287,6 +289,12 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packe
 			// Set the PTS for the next sample if it doesn't one.
 			m_nextPacketPts = packetPts + packetDuration;
 		}
+		else if (m_isDiscontinuous && packet->dts != AV_NOPTS_VALUE)
+		{
+			packetPts = packet->dts;
+			// Use DTS instead of PTS after a seek, if PTS is not available (e.g. some WMV files)
+			m_nextPacketPts = packetPts + packetDuration;
+		}
 		else
 		{
 			packetPts = m_nextPacketPts;
@@ -302,6 +310,88 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packe
 	return hr;
 }
 
+HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration)
+{
+	HRESULT hr = S_FALSE;
+
+	// Continue reading until there is an appropriate packet in the stream
+	while (m_packetQueue.empty())
+	{
+		if (m_pReader->ReadPacket() < 0)
+		{
+			DebugMessage(L"GetNextPacketTimestamp reaching EOF\n");
+			break;
+		}
+	}
+
+	if (!m_packetQueue.empty())
+	{
+		// peek next packet and set pts value
+		auto packet = m_packetQueue.front();
+		auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
+		if (pts != AV_NOPTS_VALUE)
+		{
+			timestamp = ConvertPosition(pts);
+			packetDuration = ConvertDuration(packet->duration);
+			hr = S_OK;
+		}
+	}
+
+	return hr;
+}
+
+HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan timestamp)
+{
+	HRESULT hr = S_OK;
+	bool foundPacket = false;
+
+	while (hr == S_OK && !foundPacket)
+	{
+		// Continue reading until there is an appropriate packet in the stream
+		while (m_packetQueue.empty())
+		{
+			if (m_pReader->ReadPacket() < 0)
+			{
+				DebugMessage(L"SkipPacketsUntilTimestamp reaching EOF\n");
+				break;
+			}
+		}
+
+		if (!m_packetQueue.empty())
+		{
+			// peek next packet and check pts value
+			auto packet = m_packetQueue.front();
+
+			auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
+			if (pts != AV_NOPTS_VALUE && packet->duration != AV_NOPTS_VALUE)
+			{
+				auto packetEnd = ConvertPosition(pts + packet->duration);
+				if (packet->duration > 0 ? packetEnd <= timestamp : packetEnd < timestamp)
+				{
+					m_packetQueue.pop();
+					av_packet_free(&packet);
+				}
+				else
+				{
+					foundPacket = true;
+					break;
+				}
+			}
+			else
+			{
+				hr = S_FALSE;
+				break;
+			}
+		}
+		else
+		{
+			// no more packet found
+			hr = S_FALSE;
+		}
+	}
+
+	return hr;
+}
 
 void MediaSampleProvider::QueuePacket(AVPacket *packet)
 {

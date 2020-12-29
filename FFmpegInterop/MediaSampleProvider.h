@@ -107,7 +107,7 @@ namespace FFmpegInterop
 		property String^ Name;
 		property String^ Language;
 		property String^ CodecName;
-
+		property TimeSpan LastSampleTimestamp;
 
 	internal:
 		virtual HRESULT Initialize();
@@ -117,6 +117,8 @@ namespace FFmpegInterop
 		AVPacket* PopPacket();
 		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
 		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) = 0;
+		HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
+		HRESULT SkipPacketsUntilTimestamp(TimeSpan timestamp);
 		virtual IMediaStreamDescriptor^ CreateStreamDescriptor() = 0;
 		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
 		void EnableStream();

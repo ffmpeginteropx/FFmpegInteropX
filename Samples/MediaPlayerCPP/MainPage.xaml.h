@@ -60,6 +60,7 @@ namespace MediaPlayerCPP
 		void OnTimedMetadataTracksChanged(Windows::Media::Playback::MediaPlaybackItem ^sender, Windows::Foundation::Collections::IVectorChangedEventArgs ^args);
 		void PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 
+		Windows::Media::Playback::MediaPlayer^ mediaPlayer;
 		Windows::Storage::StorageFile^ currentFile;
 		FFmpegInterop::FFmpegInteropMSS^ actualFFmpegMSS;
 		FFmpegInterop::FFmpegInteropMSS^ FFmpegMSS;
@@ -70,7 +71,6 @@ namespace MediaPlayerCPP
 		void RemoveTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void DelaySubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void QuickenSubtitles(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
-		void MediaOpened(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		void AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		
@@ -79,5 +79,7 @@ namespace MediaPlayerCPP
 		void Page_Drop(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e);
 		void ffmpegVideoFilters_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e);
 		void ffmpegAudioFilters_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e);
+		void OnMediaOpened(Windows::Media::Playback::MediaPlayer^ sender, Platform::Object^ args);
+		void OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args);
 	};
 }
