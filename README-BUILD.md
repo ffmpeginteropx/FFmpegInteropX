@@ -26,7 +26,7 @@ Either Visual Studio 2019 or Visual Studio 2017 is required to manually build FF
 
 ## FFmpeg Version
 
-Recommended: **FFmpeg 4.2.2**
+Recommended: **FFmpeg 4.3.1**
 
 Minimum: **FFmpeg 4.0**
 
@@ -141,7 +141,7 @@ Note: You need Visual Studio 2017 15.9.0 or higher to build the ARM64 version of
 
 ## Building the FFmpegInterop library
 
-After installing the ffmpeg build tools, you run Build-FFmpeg.ps1 to build FFmpeg.
+Run Build-FFmpegInteropX.ps1 to build the FFmpegInteropX library.
 
 Run the build script from PowerShell:
 

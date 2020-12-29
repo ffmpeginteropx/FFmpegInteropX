@@ -228,5 +228,8 @@
     <None Include="..\NuGet.Config">
       <Filter>NuGet</Filter>
     </None>
+    <None Include="..\FFmpegInteropX.FFmpegUWP.Copy.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
   </ItemGroup>
 </Project>

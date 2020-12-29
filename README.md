@@ -9,11 +9,14 @@ FFmpegInteropX is an open-source project that aims to provide an easy way to use
 FFmpegInteropX is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
 
 #### Latest Releases:
-- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.1
-  - First official NuGet Package!
-  - Fixed Windows Store Compliance in 0.9.1
-- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.2.200
-  - FFmpeg 4.2.2 build for UWP platform
+- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.2
+  - Native D3D11 hardware acceleration!!
+  - FFmpeg video filters
+  - Fast seeking to keyframes
+  - Stereo downmix option
+- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.3.100
+  - FFmpeg 4.3.1 build for UWP platform
+  - Hardware acceleration included
 
 ### Some of the important improvements, compared to original version:
 
@@ -29,6 +32,7 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 - Fast Seeking support (seek to keyframes)
 - Stream information retrieval (name, language, format, etc)
 - Chapter information support
+- Stereo downmix option
 - API improvements
 - Include zlib and bzlib libraries into ffmpeg for full MKV subtitle support
 - Include iconv for character encoding conversion

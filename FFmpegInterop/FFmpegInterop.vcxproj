@@ -177,6 +177,7 @@
     <None Include="..\Build-FFmpegInteropX.ps1" />
     <None Include="..\FFmpegConfig.sh" />
     <None Include="..\AppVeyor_Build.bat" />
+    <None Include="..\FFmpegInteropX.FFmpegUWP.Copy.nuspec" />
     <None Include="..\FFmpegInteropX.FFmpegUWP.nuspec" />
     <None Include="..\FFmpegInteropX.FFmpegUWP.targets" />
     <None Include="..\FFmpegInteropX.nuspec" />
