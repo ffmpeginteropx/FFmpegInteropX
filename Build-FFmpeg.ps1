@@ -366,7 +366,7 @@ foreach ($platform in $Platforms) {
 if ($success -and $NugetPackageVersion)
 {
     nuget pack .\FFmpegInteropX.FFmpegUWP.nuspec `
-        -Properties "id=FFmpegInteropX.FFmpegUWP;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit" `
+        -Properties "id=FFmpegInteropX.FFmpegUWP;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat symbols.nupkg `
         -OutputDirectory "${PSScriptRoot}\Output\NuGet"

@@ -164,7 +164,7 @@ foreach ($platform in $Platforms) {
 if ($success -and $NugetPackageVersion)
 {
     nuget pack .\FFmpegInteropX.nuspec `
-        -Properties "id=FFmpegInteropX;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit" `
+        -Properties "id=FFmpegInteropX;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat symbols.nupkg `
         -OutputDirectory "Output\NuGet"

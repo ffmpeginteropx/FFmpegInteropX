@@ -177,7 +177,6 @@
     <None Include="..\Build-FFmpegInteropX.ps1" />
     <None Include="..\FFmpegConfig.sh" />
     <None Include="..\AppVeyor_Build.bat" />
-    <None Include="..\FFmpegInteropX.FFmpegUWP.Copy.nuspec" />
     <None Include="..\FFmpegInteropX.FFmpegUWP.nuspec" />
     <None Include="..\FFmpegInteropX.FFmpegUWP.targets" />
     <None Include="..\FFmpegInteropX.nuspec" />
@@ -185,6 +184,7 @@
     <None Include="..\NuGet.Config" />
     <None Include="..\README-BUILD.md" />
     <None Include="..\README.md" />
+    <None Include="..\Repack-NuGet.ps1" />
     <None Include="FFmpegInteropLibs.props" />
     <None Include="packages.config" />
   </ItemGroup>
