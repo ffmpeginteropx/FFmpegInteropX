@@ -81,8 +81,6 @@ Use `FFmepgInteropMSS.CreateFromUriAsync()` to create a MediaStreamSource on a s
 
 You can use `FFmpegInteropMSS.GetMediaStreamSource()` to get the MediaStreamSource like in the original version of the library. But when using MediaStreamSource, you won't get subtitles. Subtitle support requires using the MediaPlaybackItem!
 
-You can add a call to `FFmpegVersionInfo.CheckRecommendedVersion()` in your app startup code. This will raise an exception if you are using the lib with a version lower than the recommended version. This can help remind you to update ffmpeg after you updated FFmpegInterop.
-
 Call `FrameGrabber.CreateFromStreamAsync()` to grab one or more frames from a video file.
 
 ## Subtitle Support

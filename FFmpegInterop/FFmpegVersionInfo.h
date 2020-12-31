@@ -44,7 +44,7 @@ void CheckFFmpegVersion(String^ current, String^ min)
 
 namespace FFmpegInterop
 {
-
+	[WFM::Deprecated("Not needed anymore. Version handling is done through NuGet packages now.", WFM::DeprecationType::Deprecate, 0x0)]
 	public ref class FFmpegVersionInfo sealed
 	{
 	public:

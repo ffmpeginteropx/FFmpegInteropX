@@ -24,18 +24,6 @@ Either Visual Studio 2019 or Visual Studio 2017 is required to manually build FF
     - C++ runtime for uwp
   - Visual C++ Redistributable for Visual Studio 2010 [x64](https://www.microsoft.com/en-us/download/details.aspx?id=14632) or [x86](https://www.microsoft.com/de-de/download/details.aspx?id=5555) (only needed for manual FFmpeg builds)
 
-## FFmpeg Version
-
-Recommended: **FFmpeg 4.3.1**
-
-Minimum: **FFmpeg 4.0**
-
-An exception will be thrown if FFmpegInterop is used with anything lower than the minimum version. The recommended version has been tested and is what we currently recommend to use with FFmpegInteropX.
-
-A legacy branch exists which tagets **FFmpeg 3.4.2**.
-
-**Hint:** To update the ffmpeg submodule to the recommended version (after pulling latest FFmpegInterop), use the following command in git bash from FFmpegInterop folder: `git submodule update`. Then rebuild ffmpeg and FFmpegInterop.
-
 ## Getting the sources
 
 FFmpegInteropX uses the following git submodules:
