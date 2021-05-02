@@ -246,16 +246,17 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 		}
 		if (frameDuration != actualDuration)
 		{
-			// compensate for start encoder padding (gapless playback)
-			if (m_pAvStream->nb_decoded_frames == 1 && m_pAvStream->start_skip_samples > 0)
-			{
-				// check if duration difference matches encoder padding
-				auto skipDuration = (long long)m_pAvStream->start_skip_samples * m_pAvStream->time_base.den / (outSampleRate * m_pAvStream->time_base.num);
-				if (skipDuration == frameDuration - actualDuration)
-				{
-					framePts += skipDuration;
-				}
-			}
+			// TODO check if this can be removed. start_skip_samples was made internal in ffmpeg 4.4...
+			//// compensate for start encoder padding (gapless playback)
+			//if (m_pAvStream->nb_decoded_frames == 1 && m_pAvStream->start_skip_samples > 0)
+			//{
+			//	// check if duration difference matches encoder padding
+			//	auto skipDuration = (long long)m_pAvStream->start_skip_samples * m_pAvStream->time_base.den / (outSampleRate * m_pAvStream->time_base.num);
+			//	if (skipDuration == frameDuration - actualDuration)
+			//	{
+			//		framePts += skipDuration;
+			//	}
+			//}
 			frameDuration = actualDuration;
 		}
 	}

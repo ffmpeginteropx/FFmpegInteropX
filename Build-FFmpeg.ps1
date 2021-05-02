@@ -384,6 +384,6 @@ if ($success)
 }
 else
 {
-    Write-Error 'Build failed!'
+    Write-Warning 'Build failed!'
     Exit 1
 }
