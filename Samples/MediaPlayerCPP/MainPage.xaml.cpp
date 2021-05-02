@@ -66,9 +66,6 @@ MainPage::MainPage()
 
 	mediaPlayerElement->SetMediaPlayer(mediaPlayer);
 
-	// optionally check for recommended ffmpeg version
-	//FFmpegVersionInfo::CheckRecommendedVersion();
-
 	// populate character encodings
 	cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
 	Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);

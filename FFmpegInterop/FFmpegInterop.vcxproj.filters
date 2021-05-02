@@ -228,5 +228,8 @@
     <None Include="..\NuGet.Config">
       <Filter>NuGet</Filter>
     </None>
+    <None Include="..\Repack-NuGet.ps1">
+      <Filter>Build</Filter>
+    </None>
   </ItemGroup>
 </Project>

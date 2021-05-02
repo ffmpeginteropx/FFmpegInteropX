@@ -44,12 +44,12 @@ void CheckFFmpegVersion(String^ current, String^ min)
 
 namespace FFmpegInterop
 {
-
+	[WFM::Deprecated("Not needed anymore. Version handling is done through NuGet packages now.", WFM::DeprecationType::Deprecate, 0x0)]
 	public ref class FFmpegVersionInfo sealed
 	{
 	public:
 		static property String^ MinimumVersion { String^ get() { return "4.0"; } };
-		static property String^ RecommendedVersion { String^ get() { return "4.2.1"; } };
+		static property String^ RecommendedVersion { String^ get() { return "4.3.1"; } };
 		static property String^ CurrentVersion 
 		{ 
 			String^ get()

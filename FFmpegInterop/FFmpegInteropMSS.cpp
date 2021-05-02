@@ -77,7 +77,6 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispa
 		{
 			LanguageTagConverter::Initialize();
 			isRegistered = true;
-			FFmpegVersionInfo::CheckMinimumVersion();
 		}
 
 		isRegisteredMutex.unlock();

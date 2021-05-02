@@ -77,9 +77,6 @@ namespace MediaPlayerCS
             mediaPlayer.MediaFailed += MediaPlayer_MediaFailed;
             mediaPlayerElement.SetMediaPlayer(mediaPlayer);
 
-            // optionally check for recommended ffmpeg version
-            //FFmpegVersionInfo.CheckRecommendedVersion();
-
             CodecChecker.CodecRequired += CodecChecker_CodecRequired;
 
             // populate character encodings

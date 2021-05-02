@@ -9,11 +9,15 @@ FFmpegInteropX is an open-source project that aims to provide an easy way to use
 FFmpegInteropX is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
 
 #### Latest Releases:
-- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.1
-  - First official NuGet Package!
-  - Fixed Windows Store Compliance in 0.9.1
-- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.2.200
-  - FFmpeg 4.2.2 build for UWP platform
+- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.2
+  - Native D3D11 hardware acceleration!!
+  - FFmpeg video filters
+  - Fast seeking to keyframes
+  - Stereo downmix option
+  - Improved support for image file formats
+- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.3.100
+  - FFmpeg 4.3.1 build for UWP platform
+  - D3D11 hardware acceleration enabled
 
 ### Some of the important improvements, compared to original version:
 
@@ -29,6 +33,8 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 - Fast Seeking support (seek to keyframes)
 - Stream information retrieval (name, language, format, etc)
 - Chapter information support
+- Stereo downmix option
+- Improved support for image file formats
 - API improvements
 - Include zlib and bzlib libraries into ffmpeg for full MKV subtitle support
 - Include iconv for character encoding conversion
@@ -74,8 +80,6 @@ Using the **FFmpegInteropMSS** object is fairly straightforward and can be obser
 Use `FFmepgInteropMSS.CreateFromUriAsync()` to create a MediaStreamSource on a streaming source (shoutcast for example).
 
 You can use `FFmpegInteropMSS.GetMediaStreamSource()` to get the MediaStreamSource like in the original version of the library. But when using MediaStreamSource, you won't get subtitles. Subtitle support requires using the MediaPlaybackItem!
-
-You can add a call to `FFmpegVersionInfo.CheckRecommendedVersion()` in your app startup code. This will raise an exception if you are using the lib with a version lower than the recommended version. This can help remind you to update ffmpeg after you updated FFmpegInterop.
 
 Call `FrameGrabber.CreateFromStreamAsync()` to grab one or more frames from a video file.
 
