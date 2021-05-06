@@ -25,7 +25,7 @@ param(
         10.0.17763.0
         10.0.18362.0
     #>
-    [version] $WindowsTargetPlatformVersion = '10.0.18362.0',
+    [version] $WindowsTargetPlatformVersion = '10.0.19041.0',
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
@@ -321,6 +321,19 @@ $oldEnv = @{};
 foreach ($item in Get-ChildItem env:)
 {
     $oldEnv.Add($item.Name, $item.Value);
+}
+
+# Check for nuget.exe if package shall be created
+if ($NugetPackageVersion)
+{
+    try
+    {
+        nuget > 0
+    }
+    catch
+    {
+        Write-Error "nuget.exe not found."
+    }
 }
 
 $start = Get-Date

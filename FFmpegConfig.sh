@@ -115,7 +115,8 @@ fi
 
 eval $DIR/Libs/ffmpeg/configure $configureArgs || exit 1
 
-make -j8 || exit
+cores = mumproc
+make -j$mumproc || exit
 make install || exit
 
 exit 0
