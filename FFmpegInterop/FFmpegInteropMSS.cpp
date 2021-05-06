@@ -1289,6 +1289,12 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 						break;
 					}
 				}
+				else if (!config && avVideoCodec->id == AV_CODEC_ID_AV1)
+				{
+					// SW decoding for AV1 not available!
+					hr = E_FAIL;
+					break;
+				}
 				else
 				{
 					break;
