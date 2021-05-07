@@ -61,8 +61,12 @@ function Build-Platform {
         [version] $VcVersion,
         [string] $PlatformToolset,
         [string] $VsLatestPath,
-        [string] $BashExe = 'C:\msys64\usr\bin\bash.exe'
+        [string] $BashExe = 'C:\msys64\usr\bin\bash.exe',
+        [string] $LogFileName
     )
+
+    New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget
+    Start-Transcript -Path $LogFileName
 
     $PSBoundParameters | Out-String
 
@@ -90,9 +94,9 @@ function Build-Platform {
     if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
 
     New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget\$Platform -OutVariable build
-
+    
     New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable target
-
+    
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
         Remove-Item -Force -Recurse $build\*
@@ -275,8 +279,12 @@ function Build-Platform {
     Copy-Item $build\licenses\* $target\licenses\ -Force
 }
 
+$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+
 Write-Host
 Write-Host "Building FFmpeg$WindowsTarget"
+Write-Host
+Write-Host "Timestamp: $timestamp
 Write-Host
 
 # Stop on all PowerShell command errors
@@ -333,7 +341,7 @@ if ($NugetPackageVersion)
 {
     try
     {
-        nuget > 0
+        nuget > $null
     }
     catch
     {
@@ -346,6 +354,10 @@ $success = 1
 
 foreach ($platform in $Platforms) {
 
+    try { Stop-Transcript } catch { }
+    
+    $logFile = "${PSScriptRoot}\Intermediate\FFmpeg$WindowsTarget\Build_" + $timestamp + "_$platform.log"
+
     try
     {
         Build-Platform `
@@ -356,7 +368,8 @@ foreach ($platform in $Platforms) {
             -VcVersion $VcVersion `
             -PlatformToolset $platformToolSet `
             -VsLatestPath $vsLatestPath `
-            -BashExe $BashExe
+            -BashExe $BashExe `
+            -LogFileName $logFile
     }
     catch
     {
@@ -366,6 +379,8 @@ foreach ($platform in $Platforms) {
     }
     finally
     {
+        try { Stop-Transcript } catch { }
+    
         # Restore orignal environment variables
         foreach ($item in $oldEnv.GetEnumerator())
         {
