@@ -146,7 +146,7 @@ function Build-Platform {
             /p:Platform=$Platform `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
             /p:PlatformToolset=$PlatformToolset `
-            /p:ForceImportBeforeCppTargets=$SolutionDir\Libs\LibOverrides.props `
+            /p:ForceImportBeforeCppTargets=$SolutionDir\Libs\build-scripts\LibOverrides.props `
             /p:useenv=true
 
         if ($lastexitcode -ne 0) { throw "Failed to build library $project." }
@@ -171,7 +171,12 @@ function Build-Platform {
     # Fixup libxml2 includes for ffmpeg build
     Copy-Item $build\include\libxml2\libxml $build\include\ -Force -Recurse
 
-
+    # Build dav1d
+    $ErrorActionPreference = "Continue"
+    & $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
+    $ErrorActionPreference = "Stop"
+    if ($lastexitcode -ne 0) { throw "Failed to build library dav1d." }
+    
     if ($WindowsTarget -eq "Desktop") { 
         
         $env:Path += ";$(Split-Path $BashExe)"
@@ -192,7 +197,7 @@ function Build-Platform {
         New-Item -ItemType Directory -Force $build\int\x265
 
         $ErrorActionPreference = "Continue"
-        cmd.exe /C $SolutionDir\Libs\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
+        cmd.exe /C $SolutionDir\Libs\build-scripts\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
         $ErrorActionPreference = "Stop"
         if ($lastexitcode -ne 0) { throw "Failed to build library x264." }
 
