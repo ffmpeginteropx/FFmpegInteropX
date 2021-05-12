@@ -8,6 +8,12 @@ platform=$2
 intDir="$DIR/Intermediate/FFmpeg$variant/$platform/int/dav1d"
 outDir="$DIR/Intermediate/FFmpeg$variant/$platform"
 
+# make sure path to link.exe (same dir as cl.exe) is at start of path variable
+# this avoids conflicts with GNU link.exe
+clpath=$(which cl)
+clpath="${clpath::-3}"
+PATH=$clpath:$PATH
+
 cd Libs/dav1d
 
 rm -rf $intDir
