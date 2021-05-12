@@ -49,7 +49,10 @@ param(
     # FFmpeg NuGet settings
     [string] $FFmpegUrl = 'https://git.ffmpeg.org/ffmpeg.git',
 
-    [string] $FFmpegCommit = $(git --git-dir Libs/ffmpeg/.git rev-parse HEAD)
+    [string] $FFmpegCommit = $(git --git-dir Libs/ffmpeg/.git rev-parse HEAD),
+
+    [switch] $AllowParallelBuilds
+
 )
 
 function Build-Platform {
@@ -284,7 +287,7 @@ $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 Write-Host
 Write-Host "Building FFmpeg$WindowsTarget"
 Write-Host
-Write-Host "Timestamp: $timestamp
+Write-Host "Timestamp: $timestamp"
 Write-Host
 
 # Stop on all PowerShell command errors
@@ -329,13 +332,6 @@ Write-Host "Platform Toolset: [$platformToolSet]"
 # Export full current PATH from environment into MSYS2
 $env:MSYS2_PATH_TYPE = 'inherit'
 
-# Save orignal environment variables
-$oldEnv = @{};
-foreach ($item in Get-ChildItem env:)
-{
-    $oldEnv.Add($item.Name, $item.Value);
-}
-
 # Check for nuget.exe if package shall be created
 if ($NugetPackageVersion)
 {
@@ -352,45 +348,75 @@ if ($NugetPackageVersion)
 $start = Get-Date
 $success = 1
 
-foreach ($platform in $Platforms) {
-
-    try { Stop-Transcript } catch { }
-    
-    $logFile = "${PSScriptRoot}\Intermediate\FFmpeg$WindowsTarget\Build_" + $timestamp + "_$platform.log"
-
-    try
+if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
+{
+    $processes = @{}
+    $clear = ""
+    if ($ClearBuildFolders)
     {
-        Build-Platform `
-            -SolutionDir "${PSScriptRoot}\" `
-            -Platform $platform `
-            -Configuration 'Release' `
-            -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
-            -VcVersion $VcVersion `
-            -PlatformToolset $platformToolSet `
-            -VsLatestPath $vsLatestPath `
-            -BashExe $BashExe `
-            -LogFileName $logFile
+        $clear = "-ClearBuildFolders"
     }
-    catch
-    {
-        Write-Warning "Error occured: $PSItem"
-        $success = 0
-        Break
+    foreach ($platform in $Platforms) {
+        #.\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder $VSInstallerFolder -VsWhereCriteria $VsWhereCriteria -BashExe $BashExe $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit
+        #powershell -File .\Build-FFmpeg.ps1 "-Platforms @($platform) -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder $VSInstallerFolder -VsWhereCriteria $VsWhereCriteria -BashExe $BashExe $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit"
+
+        $proc = Start-Process -PassThru powershell '-File .\Build-FFmpeg.ps1 "-Platforms @($platform) -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder $VSInstallerFolder -VsWhereCriteria $VsWhereCriteria -BashExe $BashExe $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit"'
+        $processes[$platform] = $proc
     }
-    finally
+
+    foreach ($platform in $Platforms) {
+        $processes[$platform].WaitForExit();
+    }
+}
+else
+{
+    # Save orignal environment variables
+    $oldEnv = @{};
+    foreach ($item in Get-ChildItem env:)
     {
+        $oldEnv.Add($item.Name, $item.Value);
+    }
+
+    foreach ($platform in $Platforms) {
+
         try { Stop-Transcript } catch { }
     
-        # Restore orignal environment variables
-        foreach ($item in $oldEnv.GetEnumerator())
+        $logFile = "${PSScriptRoot}\Intermediate\FFmpeg$WindowsTarget\Build_" + $timestamp + "_$platform.log"
+
+        try
         {
-            Set-Item -Path env:"$($item.Name)" -Value $item.Value
+            Build-Platform `
+                -SolutionDir "${PSScriptRoot}\" `
+                -Platform $platform `
+                -Configuration 'Release' `
+                -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
+                -VcVersion $VcVersion `
+                -PlatformToolset $platformToolSet `
+                -VsLatestPath $vsLatestPath `
+                -BashExe $BashExe `
+                -LogFileName $logFile
         }
-        foreach ($item in Get-ChildItem env:)
+        catch
         {
-            if (!$oldEnv.ContainsKey($item.Name))
+            Write-Warning "Error occured: $PSItem"
+            $success = 0
+            Break
+        }
+        finally
+        {
+            try { Stop-Transcript } catch { }
+    
+            # Restore orignal environment variables
+            foreach ($item in $oldEnv.GetEnumerator())
             {
-                 Remove-Item -Path env:"$($item.Name)"
+                Set-Item -Path env:"$($item.Name)" -Value $item.Value
+            }
+            foreach ($item in Get-ChildItem env:)
+            {
+                if (!$oldEnv.ContainsKey($item.Name))
+                {
+                     Remove-Item -Path env:"$($item.Name)"
+                }
             }
         }
     }
