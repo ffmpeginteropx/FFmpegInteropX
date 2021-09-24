@@ -23,8 +23,8 @@ rm -rf $intDir
 cd $intDir
 /mingw64/bin/meson configure -Dbuildtype=release || exit
 /mingw64/bin/meson configure -Ddefault_library=static || exit
-#/mingw64/bin/meson configure "-Dc_args=['-GL', '-DWINAPI_FAMILY=WINAPI_FAMILY_APP']" || exit
-#/mingw64/bin/meson configure "-Dc_link_args=['-APPCONTAINER', 'WindowsApp.lib']" || exit
+/mingw64/bin/meson configure -Denable_tests=false || exit
+/mingw64/bin/meson configure -Denable_asm=true || exit
 
 /mingw64/bin/ninja || exit
 

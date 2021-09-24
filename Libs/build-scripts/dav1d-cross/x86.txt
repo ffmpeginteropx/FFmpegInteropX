@@ -4,14 +4,12 @@ cpp = 'cl'
 ar = 'lib'
 windres = 'rc'
 
-[properties]
-c_args = ['-MD', '-GL', '-DWINAPI_FAMILY=WINAPI_FAMILY_APP']
-c_link_args = ['/APPCONTAINER', '/LTCG', 'WindowsApp.lib']
-cpp_args = ['-MD', '-GL', '-DWINAPI_FAMILY=WINAPI_FAMILY_APP']
-cpp_link_args = ['/APPCONTAINER', '/LTCG', 'WindowsApp.lib']
+[built-in options]
+c_args = ['-MD', '-DWINAPI_FAMILY=WINAPI_FAMILY_APP']
+c_link_args = ['/APPCONTAINER', '/WINMD', 'WindowsApp.lib']
 
 [host_machine]
 system = 'windows'
 cpu_family = 'x86'
-cpu = 'i686'
+cpu = 'x86'
 endian = 'little'
