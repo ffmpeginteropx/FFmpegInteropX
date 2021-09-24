@@ -32,6 +32,7 @@ configureArgs="\
     --enable-libxml2 \
     --enable-iconv \
     --enable-libdav1d  \
+    --enable-openssl \
     --target-os=win32 \
     --pkg-config=$DIR/Intermediate/pkg-config.exe \
     --prefix=$outDir \

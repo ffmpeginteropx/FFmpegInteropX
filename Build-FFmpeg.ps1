@@ -178,6 +178,45 @@ function Build-Platform {
     # Fixup libxml2 includes for ffmpeg build
     Copy-Item $build\include\libxml2\libxml $build\include\ -Force -Recurse
 
+    # Build openssl if not already exists
+	if (!(Test-Path("$build\lib\ssl.lib")) -or !(Test-Path("$build\lib\crypto.lib"))) {
+		
+		Write-Host
+        Write-Host "Building Library openssl..."
+        Write-Host
+		
+		$opensslPlatforms = @{
+			'x86'   = 'VC-WIN32'
+			'x64'   = 'VC-WIN64A'
+			'ARM'   = 'VC-WIN32-ARM'
+			'ARM64' = 'VC-WIN64-ARM'
+		}
+		$opensslPlatform = $opensslPlatforms[$Platform]
+
+		if ($WindowsTarget -eq "UWP") { 
+			$opensslPlatform = $opensslPlatform + "-UWP"
+		}
+		
+		$oldPath = $env:Path
+		$env:Path += ";$SolutionDir\Tools\perl\perl\bin;C$SolutionDir\Tools\perl\c\bin;$SolutionDir\Tools\nasm"
+		cd $SolutionDir\Libs\openssl
+		
+		perl Configure $opensslPlatform --prefix=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests
+		nmake clean
+		nmake
+		nmake install
+
+		Copy-Item -Force license.txt $build\licenses\openssl.txt
+		Copy-Item -Force libssl_static.lib $build\lib\ssl.lib
+		Copy-Item -Force libcrypto_static.lib $build\lib\crypto.lib
+
+		$env:Path = $oldPath
+	} else {
+		Write-Host
+        Write-Host "Openssl already exists in target build configuration. Skipping build."
+		Write-Host
+	}
+
     # Build dav1d
     $ErrorActionPreference = "Continue"
     & $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
@@ -270,7 +309,7 @@ function Build-Platform {
     Write-Host
 
     $ErrorActionPreference = "Continue"
-    & $BashExe --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
+    & $BashExe --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic 2>&1
     $ErrorActionPreference = "Stop"
     if ($lastexitcode -ne 0) { throw "Failed to build FFmpeg." }
 
@@ -298,7 +337,8 @@ if (! (Test-Path $PSScriptRoot\Libs\ffmpeg\configure)) {
     Exit 1
 }
 
-# Search for MSYS locations
+# Check build tools
+
 if (!(Test-Path $BashExe)) {
     $msysFound = $false
     @( 'C:\msys64', 'C:\msys' ) | ForEach-Object {
@@ -311,9 +351,31 @@ if (!(Test-Path $BashExe)) {
     }
 
     if (! $msysFound) {
-        Write-Error "MSYS2 not found."
-        Exit 1;
+        Write-Warning "MSYS2 not found."
+		choice /c YN /m "Do you want to install MSYS2 now to C:\msys64?"
+        if ($LASTEXITCODE -eq 1)
+        {
+            .\InstallTools.ps1 MSYS2
+			$BashExe = "C:\msys64\usr\bin\bash.exe"
+			if (!(Test-Path $BashExe)) {
+				Exit 1
+			}
+        }
+		else
+		{
+			Exit 1
+		}
     }
+}
+
+if (! (Test-Path "$PSScriptRoot\Tools\nasm")) {
+    Write-Warning "NASM not found. Installing..."
+	.\InstallTools.ps1 nasm
+}
+
+if (! (Test-Path "$PSScriptRoot\Tools\perl")) {
+    Write-Warning "Perl not found. Installing..."
+	.\InstallTools.ps1 perl
 }
 
 [System.IO.DirectoryInfo] $vsLatestPath = `
@@ -359,8 +421,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
     foreach ($platform in $Platforms) {
         #.\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder $VSInstallerFolder -VsWhereCriteria $VsWhereCriteria -BashExe $BashExe $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit
         #powershell -File .\Build-FFmpeg.ps1 "-Platforms @($platform) -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder $VSInstallerFolder -VsWhereCriteria $VsWhereCriteria -BashExe $BashExe $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit"
-
-        $proc = Start-Process -PassThru powershell '-File .\Build-FFmpeg.ps1 "-Platforms @($platform) -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder $VSInstallerFolder -VsWhereCriteria $VsWhereCriteria -BashExe $BashExe $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit"'
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit"
         $processes[$platform] = $proc
     }
 

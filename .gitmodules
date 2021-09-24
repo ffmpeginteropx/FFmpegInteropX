@@ -34,3 +34,6 @@
 [submodule "Libs/dav1d"]
 	path = Libs/dav1d
 	url = https://code.videolan.org/videolan/dav1d.git
+[submodule "Libs/openssl"]
+	path = Libs/openssl
+	url = https://github.com/openssl/openssl.git
