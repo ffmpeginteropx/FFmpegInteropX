@@ -146,7 +146,7 @@ function Build-Platform {
         $intDir = "$build\int\$project\"
         $outDir = "$build\$project\"
 
-        MSBuild.exe $SolutionDir\Libs\$folder\SMP\$project.vcxproj `
+        invoke MSBuild.exe $SolutionDir\Libs\$folder\SMP\$project.vcxproj `
             /p:OutDir=$outDir `
             /p:IntDir=$intDir `
             /p:Configuration=$configurationName `
@@ -155,8 +155,6 @@ function Build-Platform {
             /p:PlatformToolset=$PlatformToolset `
             /p:ForceImportBeforeCppTargets=$SolutionDir\Libs\build-scripts\LibOverrides.props `
             /p:useenv=true
-
-        if ($lastexitcode -ne 0) { throw "Failed to build library $project." }
 
         Copy-Item $build\$project\include\* $build\include\ -Recurse -Force
         Copy-Item $build\$project\licenses\* $build\licenses\ -Recurse -Force
@@ -199,29 +197,33 @@ function Build-Platform {
 		
 		$oldPath = $env:Path
 		$env:Path += ";$SolutionDir\Tools\perl\perl\bin;C$SolutionDir\Tools\perl\c\bin;$SolutionDir\Tools\nasm"
-		cd $SolutionDir\Libs\openssl
+        $oldDir = get-location
+		set-location $SolutionDir\Libs\openssl
 		
-		perl Configure $opensslPlatform --prefix=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests
-		nmake clean
-		nmake
-		nmake install
-
+        try {
+		    invoke perl Configure $opensslPlatform --prefix=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests
+		    invoke nmake clean
+		    invoke nmake
+		    invoke nmake install
+        } finally {
+            set-location $oldDir
+      		$env:Path = $oldPath
+        }
+        
 		Copy-Item -Force license.txt $build\licenses\openssl.txt
 		Copy-Item -Force libssl_static.lib $build\lib\ssl.lib
 		Copy-Item -Force libcrypto_static.lib $build\lib\crypto.lib
-
-		$env:Path = $oldPath
 	} else {
 		Write-Host
         Write-Host "Openssl already exists in target build configuration. Skipping build."
 		Write-Host
 	}
 
-    # Build dav1d
-    $ErrorActionPreference = "Continue"
-    & $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
-    $ErrorActionPreference = "Stop"
-    if ($lastexitcode -ne 0) { throw "Failed to build library dav1d." }
+    #Build dav1d
+    Write-Host ""
+    Write-Host "Building Library dav1d..."
+    Write-Host ""
+    invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
     
     if ($WindowsTarget -eq "Desktop") { 
         
@@ -242,11 +244,8 @@ function Build-Platform {
 
         New-Item -ItemType Directory -Force $build\int\x265
 
-        $ErrorActionPreference = "Continue"
-        cmd.exe /C $SolutionDir\Libs\build-scripts\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
-        $ErrorActionPreference = "Stop"
-        if ($lastexitcode -ne 0) { throw "Failed to build library x264." }
-
+        invoke cmd.exe /C $SolutionDir\Libs\build-scripts\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
+        
         Copy-Item $build\int\x265\x265-static.lib $build\lib\x265.lib -Force
         Copy-Item $build\int\x265\include\* $build\include\ -Force
         Copy-Item $SolutionDir\Libs\x265\COPYING $build\licenses\x265.txt -Force
@@ -266,11 +265,7 @@ function Build-Platform {
 
         New-Item -ItemType Directory -Force $build\x264
 
-        $ErrorActionPreference = "Continue"
-        & $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 && make install".Replace("\", "/").Replace(":", "")
-        $ErrorActionPreference = "Stop"
-        if ($lastexitcode -ne 0) { throw "Failed to build library x264." }
-
+       invoke $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 && make install".Replace("\", "/").Replace(":", "")
 
         #Build libvpx
         Write-Host
@@ -294,10 +289,7 @@ function Build-Platform {
 
         New-Item -ItemType Directory -Force $build\libvpx
         
-        $ErrorActionPreference = "Continue"
-        & $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 && make install".Replace("\", "/").Replace(":", "")
-        $ErrorActionPreference = "Stop"
-        if ($lastexitcode -ne 0) { throw "Failed to build library libvpx." }
+        invoke $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 && make install".Replace("\", "/").Replace(":", "")
 
         Move-Item $build\lib\$cmakePlatform\vpxmd.lib $build\lib\vpx.lib -Force
         Remove-Item $build\lib\$cmakePlatform -Force -Recurse
@@ -308,10 +300,7 @@ function Build-Platform {
     Write-Host "Building FFmpeg..."
     Write-Host
 
-    $ErrorActionPreference = "Continue"
-    & $BashExe --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic 2>&1
-    $ErrorActionPreference = "Stop"
-    if ($lastexitcode -ne 0) { throw "Failed to build FFmpeg." }
+    invoke $BashExe --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
 
     # Copy PDBs to built binaries dir
     Get-ChildItem -Recurse -Include '*.pdb' $build\int\ffmpeg\ | Copy-Item -Destination $target\bin\ -Force
@@ -319,6 +308,33 @@ function Build-Platform {
     # Copy license files
     Copy-Item $SolutionDir\Libs\FFmpeg\COPYING.LGPLv2.1 $target\licenses\ffmpeg.txt -Force
     Copy-Item $build\licenses\* $target\licenses\ -Force
+}
+
+function Invoke() {
+    # A handy way to run a command, and automatically throw an error if the
+    # exit code is non-zero.
+
+    if ($args.Count -eq 0) {
+        throw "Must supply some arguments."
+    }
+
+    $command = $args[0]
+    $commandArgs = @()
+    if ($args.Count -gt 1) {
+        $commandArgs = $args[1..($args.Count - 1)]
+    }
+
+    $old = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+
+    & $command $commandArgs | Out-Default
+    $result = $LASTEXITCODE
+
+    $ErrorActionPreference = $old
+
+    if ($result -ne 0) {
+        throw "$command $commandArgs exited with code $result.`r`nOriginal command line:`r`n$command $commandArgs"
+    }
 }
 
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -419,14 +435,22 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
         $clear = "-ClearBuildFolders"
     }
     foreach ($platform in $Platforms) {
-        #.\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder $VSInstallerFolder -VsWhereCriteria $VsWhereCriteria -BashExe $BashExe $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit
-        #powershell -File .\Build-FFmpeg.ps1 "-Platforms @($platform) -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder $VSInstallerFolder -VsWhereCriteria $VsWhereCriteria -BashExe $BashExe $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit"
         $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit"
         $processes[$platform] = $proc
     }
 
     foreach ($platform in $Platforms) {
         $processes[$platform].WaitForExit();
+        $result = $processes[$platform].ExitCode;
+        if ($result -eq 0)
+        {
+            Write-Host "Build for $platform succeeded!"
+        }
+        else
+        {
+            Write-Host "Build for $platform failed with ErrorCode: $result"
+            $success = 0
+        }
     }
 }
 else
