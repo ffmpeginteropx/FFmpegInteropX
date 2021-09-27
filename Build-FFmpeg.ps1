@@ -68,7 +68,7 @@ function Build-Platform {
         [string] $LogFileName
     )
 
-    New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget
+    New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget | Out-Null
     Start-Transcript -Path $LogFileName
 
     $PSBoundParameters | Out-String
@@ -89,16 +89,15 @@ function Build-Platform {
         -DevCmdArguments "-arch=$targetArch -host_arch=$hostArch -winsdk=$WindowsTargetPlatformVersion -vcvars_ver=$VcVersion -app_platform=$WindowsTarget"
 
     # Build pkg-config fake
-    MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
+    invoke MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
         /p:OutputPath="$SolutionDir\Intermediate\" `
         /p:Configuration=$Configuration `
         /p:Platform=${Env:\PreferredToolArchitecture}
 
     if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
 
-    New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget\$Platform -OutVariable build
-    
-    New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable target
+    New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget\$Platform -OutVariable build | Out-Null
+    New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable target | Out-Null
     
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
@@ -107,8 +106,8 @@ function Build-Platform {
     }
 
     ('lib', 'licenses', 'include') | ForEach-Object {
-        New-Item -ItemType Directory -Force $build\$_
-        New-Item -ItemType Directory -Force $target\$_
+        New-Item -ItemType Directory -Force $build\$_ | Out-Null
+        New-Item -ItemType Directory -Force $target\$_ | Out-Null
     }
     
     $env:LIB += ";$build\lib"
@@ -179,41 +178,43 @@ function Build-Platform {
     # Build openssl if not already exists
 	if (!(Test-Path("$build\lib\ssl.lib")) -or !(Test-Path("$build\lib\crypto.lib"))) {
 		
-		Write-Host
+	    Write-Host
         Write-Host "Building Library openssl..."
         Write-Host
 		
-		$opensslPlatforms = @{
-			'x86'   = 'VC-WIN32'
-			'x64'   = 'VC-WIN64A'
-			'ARM'   = 'VC-WIN32-ARM'
-			'ARM64' = 'VC-WIN64-ARM'
-		}
-		$opensslPlatform = $opensslPlatforms[$Platform]
+	    $opensslPlatforms = @{
+		    'x86'   = 'VC-WIN32'
+		    'x64'   = 'VC-WIN64A'
+		    'ARM'   = 'VC-WIN32-ARM'
+		    'ARM64' = 'VC-WIN64-ARM'
+	    }
+	    $opensslPlatform = $opensslPlatforms[$Platform]
 
-		if ($WindowsTarget -eq "UWP") { 
-			$opensslPlatform = $opensslPlatform + "-UWP"
-		}
+	    if ($WindowsTarget -eq "UWP") { 
+		    $opensslPlatform = $opensslPlatform + "-UWP"
+	    }
+
+        New-Item -ItemType Directory -Force $build\int\openssl -OutVariable ssldir | Out-Null
 		
-		$oldPath = $env:Path
-		$env:Path += ";$SolutionDir\Tools\perl\perl\bin;C$SolutionDir\Tools\perl\c\bin;$SolutionDir\Tools\nasm"
+	    $oldPath = $env:Path
+	    $env:Path += ";$SolutionDir\Tools\perl\perl\bin;C$SolutionDir\Tools\perl\c\bin;$SolutionDir\Tools\nasm"
         $oldDir = get-location
-		set-location $SolutionDir\Libs\openssl
+	    set-location "$ssldir"
 		
         try {
-		    invoke perl Configure $opensslPlatform --prefix=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests
+		    invoke perl $SolutionDir\Libs\openssl\Configure $opensslPlatform --prefix=$build --openssldir=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests no-secure-memory
 		    invoke nmake clean
 		    invoke nmake
-		    invoke nmake install
+		    invoke nmake install_sw
         } finally {
             set-location $oldDir
-      		$env:Path = $oldPath
+      	    $env:Path = $oldPath
         }
         
-		Copy-Item -Force license.txt $build\licenses\openssl.txt
-		Copy-Item -Force libssl_static.lib $build\lib\ssl.lib
-		Copy-Item -Force libcrypto_static.lib $build\lib\crypto.lib
-	} else {
+	    Copy-Item -Force $SolutionDir\Libs\openssl\license.txt $build\licenses\openssl.txt
+	    Copy-Item -Force $ssldir\libssl_static.lib $build\lib\ssl.lib
+	    Copy-Item -Force $ssldir\libcrypto_static.lib $build\lib\crypto.lib
+        } else {
 		Write-Host
         Write-Host "Openssl already exists in target build configuration. Skipping build."
 		Write-Host
@@ -265,7 +266,7 @@ function Build-Platform {
 
         New-Item -ItemType Directory -Force $build\x264
 
-       invoke $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 && make install".Replace("\", "/").Replace(":", "")
+        invoke $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 && make install".Replace("\", "/").Replace(":", "")
 
         #Build libvpx
         Write-Host

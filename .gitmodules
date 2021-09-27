@@ -37,3 +37,5 @@
 [submodule "Libs/openssl"]
 	path = Libs/openssl
 	url = https://github.com/openssl/openssl.git
+[submodule "Libs\\libvpx"]
+	url = https://github.com/webmproject/libvpx.git
