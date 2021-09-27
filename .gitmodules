@@ -24,7 +24,7 @@
 	url = https://github.com/videolan/x265.git
 [submodule "Libs/libvpx"]
 	path = Libs/libvpx
-	url = https://chromium.googlesource.com/webm/libvpx
+	url = https://github.com/webmproject/libvpx.git
 [submodule "Libs/x264"]
 	path = Libs/x264
 	url = https://code.videolan.org/videolan/x264.git
@@ -37,5 +37,3 @@
 [submodule "Libs/openssl"]
 	path = Libs/openssl
 	url = https://github.com/openssl/openssl.git
-[submodule "Libs\\libvpx"]
-	url = https://github.com/webmproject/libvpx.git
