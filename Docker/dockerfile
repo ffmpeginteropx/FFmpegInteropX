@@ -1,0 +1,36 @@
+# escape=`
+
+# Use the latest Windows Server Core image with .NET Framework 4.8.
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-20210914-windowsservercore-20H2
+
+# Restore the default Windows shell for correct batch processing.
+SHELL ["cmd", "/S", "/C"]
+
+# Install Build Tools and workloads
+RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/16/release/vs_buildtools.exe `
+    && (start /w vs_buildtools.exe --quiet --wait --norestart --nocache modify `
+        --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools" `
+        --add Microsoft.VisualStudio.Workload.UniversalBuildTools `
+        --add Microsoft.VisualStudio.ComponentGroup.UWP.VC.BuildTools `
+        --includeRecommended `
+        || IF "%ERRORLEVEL%"=="3010" EXIT 0)
+    #&& del /q vs_buildtools.exe
+
+# Download and install git.exe
+RUN curl -SL --output git.zip https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/MinGit-2.33.0.2-64-bit.zip `
+    && powershell -c Expand-Archive -Path git.zip -DestinationPath C:\git `
+	&& del git.zip `
+	&& setx PATH "%PATH%;C:\git\cmd"
+	
+# Clone FFmpegInteropX
+RUN git clone https://github.com/ffmpeginteropx/FFmpegInteropX.git
+RUN cd FFmpegInteropX && git checkout ffmpeg-4.4 && git submodule init && git submodule update
+
+# Install build tools
+RUN cd FFmpegInteropX `
+    && powershell .\InstallTools.ps1 `
+	&& rd /S /Q C:\$Recycle.Bin
+		
+# Define the entry point for the docker container.
+# This entry point starts the developer command prompt and launches the PowerShell shell.
+ENTRYPOINT ["powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass"]
