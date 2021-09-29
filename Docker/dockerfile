@@ -14,7 +14,7 @@ RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/16/release/vs_buildtoo
         --add Microsoft.VisualStudio.ComponentGroup.UWP.VC.BuildTools `
         --includeRecommended `
         || IF "%ERRORLEVEL%"=="3010" EXIT 0)
-    #&& del /q vs_buildtools.exe
+    && del /q vs_buildtools.exe
 
 # Download and install git.exe
 RUN curl -SL --output git.zip https://github.com/git-for-windows/git/releases/download/v2.33.0.windows.2/MinGit-2.33.0.2-64-bit.zip `
@@ -30,7 +30,7 @@ RUN cd FFmpegInteropX && git checkout ffmpeg-4.4 && git submodule init && git su
 RUN cd FFmpegInteropX `
     && powershell .\InstallTools.ps1 `
 	&& rd /S /Q C:\$Recycle.Bin
-		
+	
 # Define the entry point for the docker container.
 # This entry point starts the developer command prompt and launches the PowerShell shell.
 ENTRYPOINT ["powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass"]

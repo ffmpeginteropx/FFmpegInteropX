@@ -8,7 +8,7 @@ param(
 # Stop on all PowerShell command errors
 $ErrorActionPreference = "Stop"
 
-New-Item -ItemType Directory -Path "Tools" -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $PSScriptRoot\Tools -Force -OutVariable root
 
 if ($Tools.Contains("MSYS2"))
 {
@@ -47,14 +47,14 @@ if ($Tools.Contains("nasm"))
 	Write-Host "Installing NASM..."
 	Write-Host
 		
-    $temp = ".\Tools\nasm-$NasmVersion"
-    $target = ".\Tools\nasm"
+    $temp = "$root\nasm-$NasmVersion"
+    $target = "$root\nasm"
 
     Remove-Item $temp -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item $target -Recurse -Force -ErrorAction SilentlyContinue
 
     Invoke-WebRequest https://www.nasm.us/pub/nasm/releasebuilds/$NasmVersion/win64/nasm-$NasmVersion-win64.zip -OutFile nasm.zip
-    Expand-Archive -Path nasm.zip -DestinationPath "Tools"
+    Expand-Archive -Path nasm.zip -DestinationPath $root
     Rename-Item -Path $temp -NewName "nasm"
 
     Remove-Item .\nasm.zip
@@ -66,7 +66,7 @@ if ($Tools.Contains("perl"))
 	Write-Host "Installing Perl..."
 	Write-Host
 	
-    $target = ".\Tools\perl"
+    $target = "$root\perl"
 
     Remove-Item $target -Recurse -Force -ErrorAction SilentlyContinue
 

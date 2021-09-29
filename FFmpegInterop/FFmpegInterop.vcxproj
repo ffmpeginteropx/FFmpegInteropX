@@ -175,16 +175,19 @@
   <ItemGroup>
     <None Include="..\Build-FFmpeg.ps1" />
     <None Include="..\Build-FFmpegInteropX.ps1" />
+    <None Include="..\Docker\dockerfile" />
     <None Include="..\FFmpegConfig.sh" />
     <None Include="..\AppVeyor_Build.bat" />
     <None Include="..\FFmpegInteropX.FFmpegUWP.nuspec" />
     <None Include="..\FFmpegInteropX.FFmpegUWP.targets" />
     <None Include="..\FFmpegInteropX.nuspec" />
     <None Include="..\FFmpegInteropX.targets" />
+    <None Include="..\InstallTools.ps1" />
     <None Include="..\NuGet.Config" />
     <None Include="..\README-BUILD.md" />
     <None Include="..\README.md" />
     <None Include="..\Repack-NuGet.ps1" />
+    <None Include="..\Start-DevShell.ps1" />
     <None Include="FFmpegInteropLibs.props" />
     <None Include="packages.config" />
   </ItemGroup>
