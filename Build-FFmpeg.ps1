@@ -220,12 +220,16 @@ function Build-Platform {
 		Write-Host
 	}
 
-    #Build dav1d
-    Write-Host ""
-    Write-Host "Building Library dav1d..."
-    Write-Host ""
-    invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
-    
+	if('x86' -ne $targetArch){
+		#Build dav1d
+		Write-Host ""
+		Write-Host "Building Library dav1d..."
+		Write-Host ""
+		invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
+    }
+	else{
+		Write-Host "Skipped building dav1d for x86 target"
+	}
     if ($WindowsTarget -eq "Desktop") { 
         
         $env:Path += ";$(Split-Path $BashExe)"

@@ -13,11 +13,17 @@ sharedOrStatic=$3
 
 intDir="$DIR/Intermediate/FFmpeg$variant/$platform/int/ffmpeg"
 outDir="$DIR/Output/FFmpeg$variant/$platform"
+useDav1d="enable"
 
 #Main
 echo "Make $variant $platform $sharedOrStatic $intDir $outDir"
 mkdir -p $intDir
 cd $intDir
+
+if [ "$platform" == "x86" ]; then
+useDav1d="disable"
+
+fi
 
 configureArgs="\
     --toolchain=msvc \
@@ -31,7 +37,7 @@ configureArgs="\
     --enable-lzma \
     --enable-libxml2 \
     --enable-iconv \
-    --enable-libdav1d  \
+    --${useDav1d}-libdav1d  \
     --enable-openssl \
     --target-os=win32 \
     --pkg-config=$DIR/Intermediate/pkg-config.exe \
