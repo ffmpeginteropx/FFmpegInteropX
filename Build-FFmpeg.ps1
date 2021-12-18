@@ -49,7 +49,7 @@ param(
     # FFmpeg NuGet settings
     [string] $FFmpegUrl = 'https://git.ffmpeg.org/ffmpeg.git',
 
-    [string] $FFmpegCommit = $(git --git-dir Libs/ffmpeg/.git rev-parse HEAD),
+    [string] $FFmpegCommit = $(git --git-dir $PSScriptRoot/Libs/ffmpeg/.git rev-parse HEAD),
 
     [switch] $AllowParallelBuilds
 
@@ -75,6 +75,12 @@ function Build-Platform {
 
     $hostArch = ( 'x86', 'x64' )[ [System.Environment]::Is64BitOperatingSystem ]
     $targetArch = $Platform.ToLower()
+
+    # Build x86 with x86 toolchain
+    if ($targetArch -eq 'x86')
+    {
+        $hostArch = 'x86' 
+    }
 
     Write-Host
     Write-Host "Building FFmpeg for Windows 10 ($WindowsTarget) ${Platform}..."
