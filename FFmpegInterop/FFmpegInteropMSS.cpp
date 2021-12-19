@@ -1232,13 +1232,23 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 
 	// Find the video stream and its decoder
 	auto avVideoCodec = avcodec_find_decoder(avStream->codecpar->codec_id);
-
+	
 	if (avVideoCodec)
 	{
+		auto tryAv1hw = avVideoCodec->id == AVCodecID::AV_CODEC_ID_AV1 && avVideoCodec->name != "av1" && config->VideoDecoderMode == VideoDecoderMode::Automatic;
+		auto libdav1d = tryAv1hw ? avVideoCodec : NULL;
+		if (tryAv1hw)
+		{
+			avVideoCodec = avcodec_find_decoder_by_name("av1");
+			if (!avVideoCodec)
+			{
+				tryAv1hw = false;
+				avVideoCodec = libdav1d;
+			}
+		}
+
 		// allocate a new decoding context
 		auto avVideoCodecCtx = avcodec_alloc_context3(avVideoCodec);
-
-
 		if (!avVideoCodecCtx)
 		{
 			DebugMessage(L"Could not allocate a decoding context\n");
@@ -1289,10 +1299,18 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 						break;
 					}
 				}
-				else if (!config && avVideoCodec->id == AV_CODEC_ID_AV1)
+				else if (!config && avVideoCodec->id == AV_CODEC_ID_AV1 && tryAv1hw)
 				{
-					// SW decoding for AV1 not available!
-					hr = E_FAIL;
+					avcodec_free_context(&avVideoCodecCtx);
+
+					// allocate a new decoding context
+					avVideoCodec = libdav1d;
+					avVideoCodecCtx = avcodec_alloc_context3(avVideoCodec);
+					if (!avVideoCodecCtx)
+					{
+						DebugMessage(L"Could not allocate a decoding context\n");
+						hr = E_OUTOFMEMORY;
+					}
 					break;
 				}
 				else
