@@ -21,6 +21,10 @@ namespace FFmpegInterop
 
 	ref class D3D11VideoSampleProvider : UncompressedVideoSampleProvider
 	{
+	private:
+		AVCodec* hwCodec;
+		AVCodec* swCodec;
+
 	internal:
 
 		D3D11VideoSampleProvider(
@@ -33,6 +37,16 @@ namespace FFmpegInterop
 			: UncompressedVideoSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
 		{
 			decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
+			hwCodec = (AVCodec*)avCodecCtx->codec;
+
+			if (avCodecCtx->codec_id == AVCodecID::AV_CODEC_ID_AV1)
+			{
+				swCodec = avcodec_find_decoder_by_name("libdav1d");
+			}
+			else
+			{
+				swCodec = NULL;
+			}
 		}
 
 		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override
@@ -63,7 +77,6 @@ namespace FFmpegInterop
 					hr = texturePool->GetCopyTexture(decodedTexture, &renderTexture);
 					deviceContext->CopySubresourceRegion(renderTexture, 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
 					deviceContext->Flush();
-
 
 					//create a IDXGISurface from the shared texture
 					IDXGISurface* finalSurface = NULL;
@@ -146,57 +159,161 @@ namespace FFmpegInterop
 		{
 			HRESULT hr = S_OK;
 
-			if (!this->device)
-			{
-				device->AddRef();
-				context->AddRef();
-				this->device = device;
-				this->deviceContext = context;
+			bool isCompatible = false;
+			hr = CheckHWAccelerationCompatible(device, isCompatible);
 
-				if (m_pAvCodecCtx->hw_device_ctx->data != avHardwareContext->data)
+			if (SUCCEEDED(hr))
+			{
+				if (isCompatible)
 				{
+					bool needsReinit = this->device;
+
+					SAFE_RELEASE(this->device);
+					SAFE_RELEASE(this->deviceContext);
+
+					device->AddRef();
+					context->AddRef();
+					this->device = device;
+					this->deviceContext = context;
+
+					if (needsReinit)
+					{
+						hr = UpdateCodecContext(hwCodec, avHardwareContext);
+					}
+					else if (!m_pAvCodecCtx->hw_device_ctx || m_pAvCodecCtx->hw_device_ctx->data != avHardwareContext->data)
+					{
+						av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
+						m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+					}
+				}
+				else
+				{
+					SAFE_RELEASE(this->device);
+					SAFE_RELEASE(this->deviceContext);
 					av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
-					m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+
+					if (swCodec)
+					{
+						hr = UpdateCodecContext(swCodec, NULL);
+					}
+					else
+					{
+						hr = E_FAIL;
+					}
 				}
 			}
-			else
-			{
-				SAFE_RELEASE(this->device);
-				SAFE_RELEASE(this->deviceContext);
 
-				device->AddRef();
-				context->AddRef();
-				this->device = device;
-				this->deviceContext = context;
-
-				auto codec = m_pAvCodecCtx->codec;
-				avcodec_free_context(&m_pAvCodecCtx);
-
-				m_pAvCodecCtx = avcodec_alloc_context3(codec);
-				if (!m_pAvCodecCtx)
-				{
-					hr = E_OUTOFMEMORY;
-				}
-
-				if (SUCCEEDED(hr))
-				{
-					hr = avcodec_parameters_to_context(m_pAvCodecCtx, m_pAvStream->codecpar);
-				}
-
-				if (SUCCEEDED(hr))
-				{
-					m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
-					m_pAvCodecCtx->get_format = &get_format;
-					hr = avcodec_open2(m_pAvCodecCtx, codec, NULL);
-				}
-
-				if (SUCCEEDED(hr))
-				{
-					frameProvider->UpdateCodecContext(m_pAvCodecCtx);
-				}
-			}
 			delete texturePool;
 			texturePool = nullptr;
+
+			return hr;
+		}
+
+		HRESULT UpdateCodecContext(AVCodec* codec, AVBufferRef* avHardwareContext)
+		{
+			auto hr = S_OK;
+
+			avcodec_free_context(&m_pAvCodecCtx);
+
+			m_pAvCodecCtx = avcodec_alloc_context3(codec);
+			if (!m_pAvCodecCtx)
+			{
+				hr = E_OUTOFMEMORY;
+			}
+
+			if (SUCCEEDED(hr))
+			{
+				// enable multi threading
+				unsigned threads = std::thread::hardware_concurrency();
+				m_pAvCodecCtx->thread_count = m_config->MaxVideoThreads == 0 ? threads : min(threads, m_config->MaxVideoThreads);
+				m_pAvCodecCtx->thread_type = m_config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
+
+				// initialize the stream parameters with demuxer information
+				hr = avcodec_parameters_to_context(m_pAvCodecCtx, m_pAvStream->codecpar);
+			}
+
+			if (SUCCEEDED(hr))
+			{
+				m_pAvCodecCtx->hw_device_ctx = avHardwareContext ? av_buffer_ref(avHardwareContext) : NULL;
+				m_pAvCodecCtx->get_format = &get_format;
+				hr = avcodec_open2(m_pAvCodecCtx, codec, NULL);
+			}
+
+			if (SUCCEEDED(hr))
+			{
+				frameProvider->UpdateCodecContext(m_pAvCodecCtx);
+			}
+
+			return hr;
+		}
+
+		HRESULT CheckHWAccelerationCompatible(ID3D11Device* device, bool& isCompatible)
+		{
+			HRESULT hr = S_OK;
+			isCompatible = true;
+
+			if (m_pAvCodecCtx->codec->id == AVCodecID::AV_CODEC_ID_AV1)
+			{
+				isCompatible = m_pAvCodecCtx->profile >= 0 && m_pAvCodecCtx->profile <= 2;
+				if (isCompatible)
+				{
+					auto const av1Profiles = new const GUID[]{
+						D3D11_DECODER_PROFILE_AV1_VLD_PROFILE0,
+						D3D11_DECODER_PROFILE_AV1_VLD_PROFILE1,
+						D3D11_DECODER_PROFILE_AV1_VLD_PROFILE2
+					};
+					auto requiredProfile = av1Profiles[m_pAvCodecCtx->profile];
+
+					ID3D11VideoDevice* videoDevice = NULL;
+					hr = device->QueryInterface(&videoDevice);
+					
+					// check profile exists
+					if (SUCCEEDED(hr))
+					{
+						isCompatible = false;
+						GUID profile;
+						int count = videoDevice->GetVideoDecoderProfileCount();
+						for (int i = 0; i < count; i++)
+						{
+							hr = videoDevice->GetVideoDecoderProfile(i, &profile);
+							if (FAILED(hr))
+							{
+								break;
+							}
+							else if (profile == requiredProfile)
+							{
+								isCompatible = true;
+								break;
+							}
+						}
+					}
+
+					// check resolution
+					if (SUCCEEDED(hr) && isCompatible)
+					{
+						D3D11_VIDEO_DECODER_DESC desc;
+						desc.Guid = requiredProfile;
+						desc.OutputFormat = DXGI_FORMAT_NV12;
+
+						desc.SampleWidth = m_pAvCodecCtx->coded_width;
+						desc.SampleHeight = m_pAvCodecCtx->coded_height;
+
+						UINT count;
+						hr = videoDevice->GetVideoDecoderConfigCount(&desc, &count);
+						if (SUCCEEDED(hr))
+						{
+							isCompatible = count > 0;
+						}
+					}
+		
+					SAFE_RELEASE(videoDevice);
+				}
+
+				if (FAILED(hr))
+				{
+					isCompatible = false;
+				}
+			}
 
 			return hr;
 		}
@@ -247,11 +364,7 @@ namespace FFmpegInterop
 
 			if (SUCCEEDED(hr))
 			{
-				auto err = av_hwdevice_ctx_init(avHardwareContext);
-				if (err)
-				{
-					hr = E_FAIL;
-				}
+				hr = av_hwdevice_ctx_init(avHardwareContext);
 			}
 
 			if (SUCCEEDED(hr))
