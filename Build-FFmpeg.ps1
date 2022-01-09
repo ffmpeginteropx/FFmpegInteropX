@@ -25,7 +25,7 @@ param(
         10.0.17763.0
         10.0.18362.0
     #>
-    [version] $WindowsTargetPlatformVersion = '10.0.18362.0',
+    [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
@@ -49,7 +49,10 @@ param(
     # FFmpeg NuGet settings
     [string] $FFmpegUrl = 'https://git.ffmpeg.org/ffmpeg.git',
 
-    [string] $FFmpegCommit = $(git --git-dir Libs/ffmpeg/.git rev-parse HEAD)
+    [string] $FFmpegCommit = $(git --git-dir $PSScriptRoot/Libs/ffmpeg/.git rev-parse HEAD),
+
+    [switch] $AllowParallelBuilds
+
 )
 
 function Build-Platform {
@@ -61,13 +64,23 @@ function Build-Platform {
         [version] $VcVersion,
         [string] $PlatformToolset,
         [string] $VsLatestPath,
-        [string] $BashExe = 'C:\msys64\usr\bin\bash.exe'
+        [string] $BashExe = 'C:\msys64\usr\bin\bash.exe',
+        [string] $LogFileName
     )
+
+    New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget | Out-Null
+    Start-Transcript -Path $LogFileName
 
     $PSBoundParameters | Out-String
 
     $hostArch = ( 'x86', 'x64' )[ [System.Environment]::Is64BitOperatingSystem ]
     $targetArch = $Platform.ToLower()
+
+    # Build x86 with x86 toolchain
+    if ($targetArch -eq 'x86')
+    {
+        $hostArch = 'x86' 
+    }
 
     Write-Host
     Write-Host "Building FFmpeg for Windows 10 ($WindowsTarget) ${Platform}..."
@@ -82,17 +95,16 @@ function Build-Platform {
         -DevCmdArguments "-arch=$targetArch -host_arch=$hostArch -winsdk=$WindowsTargetPlatformVersion -vcvars_ver=$VcVersion -app_platform=$WindowsTarget"
 
     # Build pkg-config fake
-    MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
+    invoke MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
         /p:OutputPath="$SolutionDir\Intermediate\" `
         /p:Configuration=$Configuration `
         /p:Platform=${Env:\PreferredToolArchitecture}
 
     if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
 
-    New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget\$Platform -OutVariable build
-
-    New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable target
-
+    New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget\$Platform -OutVariable build | Out-Null
+    New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable target | Out-Null
+    
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
         Remove-Item -Force -Recurse $build\*
@@ -100,8 +112,8 @@ function Build-Platform {
     }
 
     ('lib', 'licenses', 'include') | ForEach-Object {
-        New-Item -ItemType Directory -Force $build\$_
-        New-Item -ItemType Directory -Force $target\$_
+        New-Item -ItemType Directory -Force $build\$_ | Out-Null
+        New-Item -ItemType Directory -Force $target\$_ | Out-Null
     }
     
     $env:LIB += ";$build\lib"
@@ -139,17 +151,15 @@ function Build-Platform {
         $intDir = "$build\int\$project\"
         $outDir = "$build\$project\"
 
-        MSBuild.exe $SolutionDir\Libs\$folder\SMP\$project.vcxproj `
+        invoke MSBuild.exe $SolutionDir\Libs\$folder\SMP\$project.vcxproj `
             /p:OutDir=$outDir `
             /p:IntDir=$intDir `
             /p:Configuration=$configurationName `
             /p:Platform=$Platform `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
             /p:PlatformToolset=$PlatformToolset `
-            /p:ForceImportBeforeCppTargets=$SolutionDir\Libs\LibOverrides.props `
+            /p:ForceImportBeforeCppTargets=$SolutionDir\Libs\build-scripts\LibOverrides.props `
             /p:useenv=true
-
-        if ($lastexitcode -ne 0) { throw "Failed to build library $project." }
 
         Copy-Item $build\$project\include\* $build\include\ -Recurse -Force
         Copy-Item $build\$project\licenses\* $build\licenses\ -Recurse -Force
@@ -171,7 +181,57 @@ function Build-Platform {
     # Fixup libxml2 includes for ffmpeg build
     Copy-Item $build\include\libxml2\libxml $build\include\ -Force -Recurse
 
+    # Build openssl if not already exists
+	if (!(Test-Path("$build\lib\ssl.lib")) -or !(Test-Path("$build\lib\crypto.lib"))) {
+		
+	    Write-Host
+        Write-Host "Building Library openssl..."
+        Write-Host
+		
+	    $opensslPlatforms = @{
+		    'x86'   = 'VC-WIN32'
+		    'x64'   = 'VC-WIN64A'
+		    'ARM'   = 'VC-WIN32-ARM'
+		    'ARM64' = 'VC-WIN64-ARM'
+	    }
+	    $opensslPlatform = $opensslPlatforms[$Platform]
 
+	    if ($WindowsTarget -eq "UWP") { 
+		    $opensslPlatform = $opensslPlatform + "-UWP"
+	    }
+
+        New-Item -ItemType Directory -Force $build\int\openssl -OutVariable ssldir | Out-Null
+		
+	    $oldPath = $env:Path
+	    $env:Path += ";$SolutionDir\Tools\perl\perl\bin;C$SolutionDir\Tools\perl\c\bin;$SolutionDir\Tools\nasm"
+        $oldDir = get-location
+	    set-location "$ssldir"
+		
+        try {
+		    invoke perl $SolutionDir\Libs\openssl\Configure $opensslPlatform --prefix=$build --openssldir=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests no-secure-memory
+		    invoke nmake clean
+		    invoke nmake
+		    invoke nmake install_sw
+        } finally {
+            set-location $oldDir
+      	    $env:Path = $oldPath
+        }
+        
+	    Copy-Item -Force $SolutionDir\Libs\openssl\license.txt $build\licenses\openssl.txt
+	    Copy-Item -Force $ssldir\libssl_static.lib $build\lib\ssl.lib
+	    Copy-Item -Force $ssldir\libcrypto_static.lib $build\lib\crypto.lib
+        } else {
+		Write-Host
+        Write-Host "Openssl already exists in target build configuration. Skipping build."
+		Write-Host
+	}
+
+    #Build dav1d
+    Write-Host ""
+    Write-Host "Building Library dav1d..."
+    Write-Host ""
+    invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
+    
     if ($WindowsTarget -eq "Desktop") { 
         
         $env:Path += ";$(Split-Path $BashExe)"
@@ -191,11 +251,8 @@ function Build-Platform {
 
         New-Item -ItemType Directory -Force $build\int\x265
 
-        $ErrorActionPreference = "Continue"
-        cmd.exe /C $SolutionDir\Libs\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
-        $ErrorActionPreference = "Stop"
-        if ($lastexitcode -ne 0) { throw "Failed to build library x264." }
-
+        invoke cmd.exe /C $SolutionDir\Libs\build-scripts\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
+        
         Copy-Item $build\int\x265\x265-static.lib $build\lib\x265.lib -Force
         Copy-Item $build\int\x265\include\* $build\include\ -Force
         Copy-Item $SolutionDir\Libs\x265\COPYING $build\licenses\x265.txt -Force
@@ -215,11 +272,7 @@ function Build-Platform {
 
         New-Item -ItemType Directory -Force $build\x264
 
-        $ErrorActionPreference = "Continue"
-        & $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 && make install".Replace("\", "/").Replace(":", "")
-        $ErrorActionPreference = "Stop"
-        if ($lastexitcode -ne 0) { throw "Failed to build library x264." }
-
+        invoke $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
 
         #Build libvpx
         Write-Host
@@ -243,10 +296,7 @@ function Build-Platform {
 
         New-Item -ItemType Directory -Force $build\libvpx
         
-        $ErrorActionPreference = "Continue"
-        & $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 && make install".Replace("\", "/").Replace(":", "")
-        $ErrorActionPreference = "Stop"
-        if ($lastexitcode -ne 0) { throw "Failed to build library libvpx." }
+        invoke $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
 
         Move-Item $build\lib\$cmakePlatform\vpxmd.lib $build\lib\vpx.lib -Force
         Remove-Item $build\lib\$cmakePlatform -Force -Recurse
@@ -257,10 +307,7 @@ function Build-Platform {
     Write-Host "Building FFmpeg..."
     Write-Host
 
-    $ErrorActionPreference = "Continue"
-    & $BashExe --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
-    $ErrorActionPreference = "Stop"
-    if ($lastexitcode -ne 0) { throw "Failed to build FFmpeg." }
+    invoke $BashExe --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
 
     # Copy PDBs to built binaries dir
     Get-ChildItem -Recurse -Include '*.pdb' $build\int\ffmpeg\ | Copy-Item -Destination $target\bin\ -Force
@@ -270,8 +317,39 @@ function Build-Platform {
     Copy-Item $build\licenses\* $target\licenses\ -Force
 }
 
+function Invoke() {
+    # A handy way to run a command, and automatically throw an error if the
+    # exit code is non-zero.
+
+    if ($args.Count -eq 0) {
+        throw "Must supply some arguments."
+    }
+
+    $command = $args[0]
+    $commandArgs = @()
+    if ($args.Count -gt 1) {
+        $commandArgs = $args[1..($args.Count - 1)]
+    }
+
+    $old = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+
+    & $command $commandArgs | Out-Default
+    $result = $LASTEXITCODE
+
+    $ErrorActionPreference = $old
+
+    if ($result -ne 0) {
+        throw "$command $commandArgs exited with code $result.`r`nOriginal command line:`r`n$command $commandArgs"
+    }
+}
+
+$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+
 Write-Host
 Write-Host "Building FFmpeg$WindowsTarget"
+Write-Host
+Write-Host "Timestamp: $timestamp"
 Write-Host
 
 # Stop on all PowerShell command errors
@@ -282,7 +360,8 @@ if (! (Test-Path $PSScriptRoot\Libs\ffmpeg\configure)) {
     Exit 1
 }
 
-# Search for MSYS locations
+# Check build tools
+
 if (!(Test-Path $BashExe)) {
     $msysFound = $false
     @( 'C:\msys64', 'C:\msys' ) | ForEach-Object {
@@ -295,9 +374,31 @@ if (!(Test-Path $BashExe)) {
     }
 
     if (! $msysFound) {
-        Write-Error "MSYS2 not found."
-        Exit 1;
+        Write-Warning "MSYS2 not found."
+		choice /c YN /m "Do you want to install MSYS2 now to C:\msys64?"
+        if ($LASTEXITCODE -eq 1)
+        {
+            .\InstallTools.ps1 MSYS2
+			$BashExe = "C:\msys64\usr\bin\bash.exe"
+			if (!(Test-Path $BashExe)) {
+				Exit 1
+			}
+        }
+		else
+		{
+			Exit 1
+		}
     }
+}
+
+if (! (Test-Path "$PSScriptRoot\Tools\nasm")) {
+    Write-Warning "NASM not found. Installing..."
+	.\InstallTools.ps1 nasm
+}
+
+if (! (Test-Path "$PSScriptRoot\Tools\perl")) {
+    Write-Warning "Perl not found. Installing..."
+	.\InstallTools.ps1 perl
 }
 
 [System.IO.DirectoryInfo] $vsLatestPath = `
@@ -316,48 +417,98 @@ Write-Host "Platform Toolset: [$platformToolSet]"
 # Export full current PATH from environment into MSYS2
 $env:MSYS2_PATH_TYPE = 'inherit'
 
-# Save orignal environment variables
-$oldEnv = @{};
-foreach ($item in Get-ChildItem env:)
+# Check for nuget.exe if package shall be created
+if ($NugetPackageVersion)
 {
-    $oldEnv.Add($item.Name, $item.Value);
+    try
+    {
+        nuget > $null
+    }
+    catch
+    {
+        Write-Error "nuget.exe not found."
+    }
 }
 
 $start = Get-Date
 $success = 1
 
-foreach ($platform in $Platforms) {
+if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
+{
+    $processes = @{}
+    $clear = ""
+    if ($ClearBuildFolders)
+    {
+        $clear = "-ClearBuildFolders"
+    }
+    foreach ($platform in $Platforms) {
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit"
+        $processes[$platform] = $proc
+    }
 
-    try
-    {
-        Build-Platform `
-            -SolutionDir "${PSScriptRoot}\" `
-            -Platform $platform `
-            -Configuration 'Release' `
-            -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
-            -VcVersion $VcVersion `
-            -PlatformToolset $platformToolSet `
-            -VsLatestPath $vsLatestPath `
-            -BashExe $BashExe
-    }
-    catch
-    {
-        Write-Warning "Error occured: $PSItem"
-        $success = 0
-        Break
-    }
-    finally
-    {
-        # Restore orignal environment variables
-        foreach ($item in $oldEnv.GetEnumerator())
+    foreach ($platform in $Platforms) {
+        $processes[$platform].WaitForExit();
+        $result = $processes[$platform].ExitCode;
+        if ($result -eq 0)
         {
-            Set-Item -Path env:"$($item.Name)" -Value $item.Value
+            Write-Host "Build for $platform succeeded!"
         }
-        foreach ($item in Get-ChildItem env:)
+        else
         {
-            if (!$oldEnv.ContainsKey($item.Name))
+            Write-Host "Build for $platform failed with ErrorCode: $result"
+            $success = 0
+        }
+    }
+}
+else
+{
+    # Save orignal environment variables
+    $oldEnv = @{};
+    foreach ($item in Get-ChildItem env:)
+    {
+        $oldEnv.Add($item.Name, $item.Value);
+    }
+
+    foreach ($platform in $Platforms) {
+
+        try { Stop-Transcript } catch { }
+    
+        $logFile = "${PSScriptRoot}\Intermediate\FFmpeg$WindowsTarget\Build_" + $timestamp + "_$platform.log"
+
+        try
+        {
+            Build-Platform `
+                -SolutionDir "${PSScriptRoot}\" `
+                -Platform $platform `
+                -Configuration 'Release' `
+                -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
+                -VcVersion $VcVersion `
+                -PlatformToolset $platformToolSet `
+                -VsLatestPath $vsLatestPath `
+                -BashExe $BashExe `
+                -LogFileName $logFile
+        }
+        catch
+        {
+            Write-Warning "Error occured: $PSItem"
+            $success = 0
+            Break
+        }
+        finally
+        {
+            try { Stop-Transcript } catch { }
+    
+            # Restore orignal environment variables
+            foreach ($item in $oldEnv.GetEnumerator())
             {
-                 Remove-Item -Path env:"$($item.Name)"
+                Set-Item -Path env:"$($item.Name)" -Value $item.Value
+            }
+            foreach ($item in Get-ChildItem env:)
+            {
+                if (!$oldEnv.ContainsKey($item.Name))
+                {
+                     Remove-Item -Path env:"$($item.Name)"
+                }
             }
         }
     }
@@ -384,6 +535,6 @@ if ($success)
 }
 else
 {
-    Write-Error 'Build failed!'
+    Write-Warning 'Build failed!'
     Exit 1
 }

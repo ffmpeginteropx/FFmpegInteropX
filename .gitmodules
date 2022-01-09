@@ -24,10 +24,16 @@
 	url = https://github.com/videolan/x265.git
 [submodule "Libs/libvpx"]
 	path = Libs/libvpx
-	url = https://chromium.googlesource.com/webm/libvpx
+	url = https://github.com/webmproject/libvpx.git
 [submodule "Libs/x264"]
 	path = Libs/x264
 	url = https://code.videolan.org/videolan/x264.git
 [submodule "Libs/gas-preprocessor"]
 	path = Libs/gas-preprocessor
 	url = https://github.com/FFmpeg/gas-preprocessor
+[submodule "Libs/dav1d"]
+	path = Libs/dav1d
+	url = https://code.videolan.org/videolan/dav1d.git
+[submodule "Libs/openssl"]
+	path = Libs/openssl
+	url = https://github.com/openssl/openssl.git

@@ -1,0 +1,15 @@
+[binaries]
+c = 'cl'
+cpp = 'cl'
+ar = 'lib'
+windres = 'rc'
+
+[built-in options]
+c_args = ['-MD', '-DWINAPI_FAMILY=WINAPI_FAMILY_APP']
+c_link_args = ['/APPCONTAINER', '/WINMD', 'WindowsApp.lib']
+
+[host_machine]
+system = 'windows'
+cpu_family = 'x86'
+cpu = 'x86'
+endian = 'little'

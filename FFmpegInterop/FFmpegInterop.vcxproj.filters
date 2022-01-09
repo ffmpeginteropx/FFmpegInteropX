@@ -231,5 +231,14 @@
     <None Include="..\Repack-NuGet.ps1">
       <Filter>Build</Filter>
     </None>
+    <None Include="..\InstallTools.ps1">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Start-DevShell.ps1">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Docker\dockerfile">
+      <Filter>Build</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -31,6 +31,8 @@ configureArgs="\
     --enable-lzma \
     --enable-libxml2 \
     --enable-iconv \
+    --enable-libdav1d  \
+    --enable-openssl \
     --target-os=win32 \
     --pkg-config=$DIR/Intermediate/pkg-config.exe \
     --prefix=$outDir \
@@ -115,7 +117,7 @@ fi
 
 eval $DIR/Libs/ffmpeg/configure $configureArgs || exit 1
 
-make -j8 || exit
+make -j$(nproc) || exit
 make install || exit
 
 exit 0

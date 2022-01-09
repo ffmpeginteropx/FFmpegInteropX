@@ -9,15 +9,18 @@ FFmpegInteropX is an open-source project that aims to provide an easy way to use
 FFmpegInteropX is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
 
 #### Latest Releases:
-- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.2
-  - Native D3D11 hardware acceleration!!
-  - FFmpeg video filters
-  - Fast seeking to keyframes
-  - Stereo downmix option
-  - Improved support for image file formats
-- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.3.100
-  - FFmpeg 4.3.1 build for UWP platform
-  - D3D11 hardware acceleration enabled
+- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.3
+  - Support for AV1 hardware and software decoding
+  - Dynamic detection of AV1 hardware decoding capabilities
+- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.4.100
+  - FFmpeg 4.4.1 build for UWP platform
+  - Added AV1 hardware decoder
+  - Added dav1d library for AV1 software decoding
+  - Added openssl 3.0.1 for secure streaming support (e.g. https, rtmps)
+  - Build system improvements:
+    - Added dockerfile for building inside container (experimental)
+    - Automatic download and installation of all dependencies (both dockerfile and local build)
+    - Support for building all target platforms in parallel
 
 ### Some of the important improvements, compared to original version:
 
@@ -25,7 +28,7 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 - Multiple video and audio stream support
 - Subtitle support, including external subtitle files
 - Native D3D11 hardware decoding for all major formats:
-  - H264, HEVC, VC1, VP8, VP9, WMV3, MPEG2
+  - H264, HEVC, AV1, VC1, VP8, VP9, WMV3, MPEG2
 - FFmpeg video and audio effects (special thanks to [mcosmin222](https://github.com/mcosmin222)!)
 - Super fast GPU-based video postprocessing effects
 - Major performance improvements (zero-copy data handling in all important areas)
@@ -39,6 +42,7 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 - Include zlib and bzlib libraries into ffmpeg for full MKV subtitle support
 - Include iconv for character encoding conversion
 - Include libxml2 for DASH streaming support
+- Include openssl for secure streaming support (e.g. https, rtmps)
 - Lots of bug fixes
 
 
@@ -93,9 +97,16 @@ Some external text subtitle files are stored with ANSI encoding instead of UTF8 
 
 Note: If your app uses multiple windows using CoreApplication.CreateNewView(), then you must create the FFmpegInteropMSS object on the thread of the window where the video is to be shown. Otherwise, subtitles will flicker.
 
-## FFmpegUniversal
-
-A branch exists which makes FFmpegInterop compatible with FFmpegUniversal builds. It is a project which merges the individual ffmpeg dlls into one single file. This can make deployment easier. Check [FFmpegUniversal](https://github.com/M2Team/FFmpegUniversal) for more details.
+#### Version History:
+- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.2
+  - Native D3D11 hardware acceleration!!
+  - FFmpeg video filters
+  - Fast seeking to keyframes
+  - Stereo downmix option
+  - Improved support for image file formats
+- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.3.100
+  - FFmpeg 4.3.1 build for UWP platform
+  - D3D11 hardware acceleration enabled
 
 ## Credits / major contributors
 

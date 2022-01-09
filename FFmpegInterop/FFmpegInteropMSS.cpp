@@ -1232,13 +1232,22 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 
 	// Find the video stream and its decoder
 	auto avVideoCodec = avcodec_find_decoder(avStream->codecpar->codec_id);
-
+	
 	if (avVideoCodec)
 	{
+		auto tryAv1hw = avVideoCodec->id == AVCodecID::AV_CODEC_ID_AV1 && avVideoCodec->name != "av1" && config->VideoDecoderMode == VideoDecoderMode::Automatic;
+		auto libdav1d = tryAv1hw ? avVideoCodec : NULL;
+		if (tryAv1hw)
+		{
+			avVideoCodec = avcodec_find_decoder_by_name("av1");
+			if (!avVideoCodec)
+			{
+				avVideoCodec = libdav1d;
+			}
+		}
+
 		// allocate a new decoding context
 		auto avVideoCodecCtx = avcodec_alloc_context3(avVideoCodec);
-
-
 		if (!avVideoCodecCtx)
 		{
 			DebugMessage(L"Could not allocate a decoding context\n");
@@ -1249,33 +1258,56 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 		if (SUCCEEDED(hr) && config->VideoDecoderMode == VideoDecoderMode::Automatic)
 		{
 			int i = 0;
-			while (true)
+			while (SUCCEEDED(hr))
 			{
 				auto config = avcodec_get_hw_config(avVideoCodec, i++);
 				if (config)
 				{
 					if (config->pix_fmt == AV_PIX_FMT_D3D11 && config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
 					{
-						AVBufferRef* hwContext;
+						AVBufferRef* hwContext = NULL;
 						if (!avHardwareContext)
 						{
 							avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
 						}
 
+						if (!avHardwareContext)
+						{
+							hr = E_FAIL;
+						}
 
 						if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VC1 || avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3)
 						{
 							// workaround for VC1 and WMV3: use default device context, later replace with actual MSS device context
 							if (!avHardwareContextDefault)
 							{
-								av_hwdevice_ctx_create(&avHardwareContextDefault, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
-								av_hwdevice_ctx_init(avHardwareContextDefault);
+								if (SUCCEEDED(hr))
+								{
+									hr = av_hwdevice_ctx_create(&avHardwareContextDefault, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
+								}
+
+								if (SUCCEEDED(hr))
+								{
+									hr = av_hwdevice_ctx_init(avHardwareContextDefault);
+								}
+
+								if (FAILED(hr) && avHardwareContextDefault)
+								{
+									av_buffer_unref(&avHardwareContextDefault);
+								}
 							}
-							hwContext = avHardwareContextDefault;
+
+							if (SUCCEEDED(hr))
+							{
+								hwContext = avHardwareContextDefault;
+							}
 						}
 						else
 						{
-							hwContext = avHardwareContext;
+							if (SUCCEEDED(hr))
+							{
+								hwContext = avHardwareContext;
+							}
 						}
 
 						if (hwContext)
@@ -1301,31 +1333,23 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 			avVideoCodecCtx->get_format = &get_format;
 
 			// initialize the stream parameters with demuxer information
-			if (avcodec_parameters_to_context(avVideoCodecCtx, avStream->codecpar) < 0)
-			{
-				hr = E_FAIL;
-			}
+			hr = avcodec_parameters_to_context(avVideoCodecCtx, avStream->codecpar);
 		}
 
 		if (SUCCEEDED(hr))
 		{
 			// enable multi threading
 			unsigned threads = std::thread::hardware_concurrency();
-			if (threads > 0)
-			{
-				avVideoCodecCtx->thread_count = config->MaxVideoThreads == 0 ? threads : min(threads, config->MaxVideoThreads);
-				avVideoCodecCtx->thread_type = config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
-			}
+			avVideoCodecCtx->thread_count = config->MaxVideoThreads == 0 ? threads : min(threads, config->MaxVideoThreads);
+			avVideoCodecCtx->thread_type = config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
 
-			if (avcodec_open2(avVideoCodecCtx, avVideoCodec, NULL) < 0)
-			{
-				hr = E_FAIL;
-			}
-			else
-			{
-				// Detect video format and create video stream descriptor accordingly
-				result = CreateVideoSampleProvider(avStream, avVideoCodecCtx, index);
-			}
+			hr = avcodec_open2(avVideoCodecCtx, avVideoCodec, NULL);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			// Detect video format and create video stream descriptor accordingly
+			result = CreateVideoSampleProvider(avStream, avVideoCodecCtx, index);
 		}
 
 		// free codec context if failed
