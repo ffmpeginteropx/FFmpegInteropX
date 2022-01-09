@@ -2,27 +2,14 @@
 
 **Prerequisites:**
 
-Either Visual Studio 2019 or Visual Studio 2017 is required to manually build FFmpegInteropX and FFmpeg.
+Visual Studio 2019 is required to manually build FFmpegInteropX and FFmpeg. All other dependencies are installed automatically into the "Tools" subfolder during build. 
 
 - Visual Studio 2019:
   - Select "Universal Windows Platform development" workload in Installer
   - Select "Desktop development with C++" workload in Installer
   - In VS Installer, check "Installation details" area on the right side, expand "Universal Windows Platform development", check "C++ (v142) Universal Windows Platform tools"
   - Visual C++ Redistributable for Visual Studio 2010 [x64](https://www.microsoft.com/en-us/download/details.aspx?id=14632) or [x86](https://www.microsoft.com/de-de/download/details.aspx?id=5555) (only needed for manual FFmpeg builds)
-
-- Visual Studio 2017 (15.9.x or higher):
-  - Select "Universal Windows Platform development" workload in Installer
-  - Select "Desktop development with C++" workload in Installer
-  - Select additional components from Installer:
-    - Universal Windows Platform tools
-    - VC++ 2017 version 15.9 v14.16 latest v141 tools
-    - Win 10 SDK (10.0.17763.0) for uwp: c#, vb, js
-    - Win 10 SDK (10.0.17763.0) for uwp: c++
-    - Visual C++ compilers and libraries for ARM64
-    - Visual C++ compilers and libraries for ARM
-    - C++ UWP tools for ARM64
-    - C++ runtime for uwp
-  - Visual C++ Redistributable for Visual Studio 2010 [x64](https://www.microsoft.com/en-us/download/details.aspx?id=14632) or [x86](https://www.microsoft.com/de-de/download/details.aspx?id=5555) (only needed for manual FFmpeg builds)
+  - For AV1 HW decoding, you need the Windows 11 SDK 10.0.22000.0 (only available on Visual Studio 16.11.8 and higher). HW decoding will also run on Windows 10, the Windows 11 SDK is just required for building.
 
 ## Getting the sources
 
@@ -50,9 +37,7 @@ Your `FFmpegInteropX` folder should look as follows
 
 	FFmpegInteropX\
 	    FFmpegInterop\         - FFmpegInterop WinRT component
-	    Libs\ffmpeg\           - ffmpeg source code from the latest release in git://github.com/FFmpeg/FFmpeg.git
-	    Libs\bzip2\            - bzip2 (bzliib) compression library
-	    Libs\...               - additional libraries required for building FFmpeg
+	    Libs\...               - Multiple Libraries required for building FFmpeg
 	    Samples\               - Sample Media Player applications in C++ and C#
 	    Tests\                 - Unit tests for FFmpegInterop
 	    Build-FFmpeg.ps1       - FFmpeg build file for Visual Studio 2017 and higher
@@ -61,23 +46,8 @@ Your `FFmpegInteropX` folder should look as follows
 	    LICENSE
 	    README.md
 
-## Installing ffmpeg build tools
 
-Now that you have the FFmpeg source code, please carefully follow these instructions:
-
-- Install Visual C++ Redistributable for Visual Studio 2010 [x64](https://www.microsoft.com/en-us/download/details.aspx?id=14632) or [x86](https://www.microsoft.com/de-de/download/details.aspx?id=5555)
-- Download and install [MSYS2](https://www.msys2.org/)
-- Run MSYS2 and execute the following commands, always confirm. In case of error, retry the command. Sometimes the pacman server is too busy.
-  - `pacman -Syu`
-    - After this command completes, close the MSYS2 window with "X" button and start it again!
-  - `pacman -Su`
-  - `pacman -S make`
-  - `pacman -S gcc`
-  - `pacman -S perl`
-  - `pacman -S diffutils`
-  - `pacman -S yasm`
-
-## Building ffmpeg with Visual Studio 2019 / 2017
+## Building ffmpeg with Visual Studio 2019
 
 After installing the ffmpeg build tools, you run Build-FFmpeg.ps1 to build FFmpeg.
 
@@ -104,7 +74,7 @@ Build with PlatformToolset v142 instead of v141:
 
 `.\Build-FFmpeg.ps1 -VcVersion 14.22`
 
-(This requires MSVC v142 build tools "14.22" (exactly!) to be installed. Later versions have a bug that will make ARM/ARM64 compilations fail.)
+(This requires MSVC v142 build tools "14.22" (exactly!) to be installed.)
 
 
 Build using Visual Studio 2017 instead of "latest":

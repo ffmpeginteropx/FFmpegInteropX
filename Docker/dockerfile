@@ -12,6 +12,7 @@ RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/16/release/vs_buildtoo
         --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools" `
         --add Microsoft.VisualStudio.Workload.UniversalBuildTools `
         --add Microsoft.VisualStudio.ComponentGroup.UWP.VC.BuildTools `
+        --add Microsoft.VisualStudio.Component.Windows11SDK.22000 `
         --includeRecommended `
         || IF "%ERRORLEVEL%"=="3010" EXIT 0)
     && del /q vs_buildtools.exe
@@ -24,7 +25,7 @@ RUN curl -SL --output git.zip https://github.com/git-for-windows/git/releases/do
 	
 # Clone FFmpegInteropX
 RUN git clone https://github.com/ffmpeginteropx/FFmpegInteropX.git
-RUN cd FFmpegInteropX && git checkout ffmpeg-4.4 && git submodule init && git submodule update
+RUN cd FFmpegInteropX && git checkout master && git submodule init && git submodule update
 
 # Install build tools
 RUN cd FFmpegInteropX `
