@@ -362,8 +362,8 @@ HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte*
 		return E_FAIL;
 	}
 
-	// calculate total size and fill data pointers startig at zero
-	auto totalSize = av_image_fill_pointers(data, m_OutputPixelFormat, height, NULL, linesize);
+	// calculate total size
+	auto totalSize = av_image_get_buffer_size(m_OutputPixelFormat, width, height, 1);
 	if (totalSize <= 0)
 	{
 		return E_FAIL;
@@ -376,12 +376,12 @@ HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte*
 		return E_OUTOFMEMORY;
 	}
 
-	// shift data pointers to true location
-	auto start = (size_t)buffer[0]->data;
-	data[0] += start;
-	if (data[1]) data[1] += start;
-	if (data[2]) data[2] += start;
-	if (data[3]) data[3] += start;
+	// fill data pointers
+	totalSize = av_image_fill_pointers(data, m_OutputPixelFormat, height, buffer[0]->data, linesize);
+	if (totalSize <= 0)
+	{
+		return E_FAIL;
+	}
 
 	return S_OK;
 }
