@@ -335,7 +335,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 		auto bufferRef = av_buffer_ref(avFrame->buf[0]);
 		if (bufferRef)
 		{
-			*pBuffer = NativeBufferFactory::CreateNativeBuffer(bufferRef->data, bufferRef->size, free_buffer, bufferRef);
+			*pBuffer = NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)bufferRef->size, free_buffer, bufferRef);
 		}
 		else
 		{
@@ -354,7 +354,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 		if (SUCCEEDED(hr))
 		{
 			av_image_copy(data, linesize, (const uint8_t**)avFrame->data, avFrame->linesize, m_OutputPixelFormat, outputWidth, outputHeight);
-			*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, buffer->size, free_buffer, buffer);
+			*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, (UINT32)buffer->size, free_buffer, buffer);
 		}
 	}
 	else
@@ -375,7 +375,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 				// Convert to output format using FFmpeg software scaler
 				if (sws_scale(m_pSwsCtx, (const uint8_t**)(avFrame->data), avFrame->linesize, 0, avFrame->height, data, linesize) > 0)
 				{
-					*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, buffer->size, free_buffer, buffer);
+					*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, (UINT32)buffer->size, free_buffer, buffer);
 				}
 				else
 				{

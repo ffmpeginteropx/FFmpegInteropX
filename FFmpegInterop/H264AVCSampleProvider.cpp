@@ -37,7 +37,7 @@ H264AVCSampleProvider::~H264AVCSampleProvider()
 {
 }
 
-HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, int length)
+HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length)
 {
 	HRESULT hr = S_OK;
 	int spsLength = 0;
@@ -60,7 +60,7 @@ HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* 
 		int nalsize = ReadMultiByteValue(buf, pos, 2);
 		pos += 2;
 
-		if (length - pos < nalsize) {
+		if (length - pos < (UINT32) nalsize) {
 			return E_FAIL;
 		}
 
@@ -82,7 +82,7 @@ HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* 
 		int nalsize = ReadMultiByteValue(buf, pos, 2);
 		pos += 2;
 
-		if (length - pos < nalsize) {
+		if (length - pos < (UINT32)nalsize) {
 			return E_FAIL;
 		}
 
