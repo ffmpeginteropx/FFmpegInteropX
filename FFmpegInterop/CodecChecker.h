@@ -6,6 +6,7 @@
 #include <mutex>
 #include <pplawait.h>
 
+#include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
 
 namespace FFmpegInterop

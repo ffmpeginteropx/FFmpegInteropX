@@ -24,6 +24,27 @@ extern "C"
 #include <libswscale/swscale.h>
 }
 
+#pragma region Desktop Family
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+
+// {47537213-8cfb-4722-aa34-fbc9e24d77b8}   MF_MT_CUSTOM_VIDEO_PRIMARIES    {BLOB (MT_CUSTOM_VIDEO_PRIMARIES)}
+DEFINE_GUID(MF_MT_CUSTOM_VIDEO_PRIMARIES,
+	0x47537213, 0x8cfb, 0x4722, 0xaa, 0x34, 0xfb, 0xc9, 0xe2, 0x4d, 0x77, 0xb8);
+
+typedef struct _MT_CUSTOM_VIDEO_PRIMARIES {
+	float fRx;
+	float fRy;
+	float fGx;
+	float fGy;
+	float fBx;
+	float fBy;
+	float fWx;
+	float fWy;
+} MT_CUSTOM_VIDEO_PRIMARIES;
+
+#endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP | WINAPI_PARTITION_GAMES) */
+#pragma endregion
+
 using namespace Platform;
 
 namespace FFmpegInterop

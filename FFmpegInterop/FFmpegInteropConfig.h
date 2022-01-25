@@ -47,7 +47,7 @@ namespace FFmpegInterop
 #pragma warning (default: 4973)
 
 			VideoOutputAllowIyuv = false;
-			VideoOutputAllow10bit = false;
+			VideoOutputAllow10bit = true;
 			VideoOutputAllowBgra8 = false;
 			VideoOutputAllowNv12 = true;
 

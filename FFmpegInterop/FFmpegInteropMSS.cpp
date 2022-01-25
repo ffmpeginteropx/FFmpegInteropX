@@ -813,7 +813,7 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 		avFormatCtx->start_time = AV_NOPTS_VALUE;
 	}
 
-	AVCodec* avVideoCodec;
+	const AVCodec* avVideoCodec;
 	auto videoStreamIndex = av_find_best_stream(avFormatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &avVideoCodec, 0);
 	auto audioStreamIndex = av_find_best_stream(avFormatCtx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
 	auto subtitleStreamIndex = av_find_best_stream(avFormatCtx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0);

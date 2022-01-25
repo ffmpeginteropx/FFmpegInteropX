@@ -1,7 +1,9 @@
 #pragma once
 extern "C"
 {
+#include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
+#include <libavutil/channel_layout.h>
 }
 namespace FFmpegInterop
 {

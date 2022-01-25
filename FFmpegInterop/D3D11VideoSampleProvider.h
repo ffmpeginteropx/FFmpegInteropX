@@ -22,8 +22,8 @@ namespace FFmpegInterop
 	ref class D3D11VideoSampleProvider : UncompressedVideoSampleProvider
 	{
 	private:
-		AVCodec* hwCodec;
-		AVCodec* swCodec;
+		const AVCodec* hwCodec;
+		const AVCodec* swCodec;
 
 	internal:
 
@@ -37,7 +37,7 @@ namespace FFmpegInterop
 			: UncompressedVideoSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
 		{
 			decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
-			hwCodec = (AVCodec*)avCodecCtx->codec;
+			hwCodec = avCodecCtx->codec;
 
 			if (avCodecCtx->codec_id == AVCodecID::AV_CODEC_ID_AV1)
 			{
@@ -209,7 +209,7 @@ namespace FFmpegInterop
 			return hr;
 		}
 
-		HRESULT UpdateCodecContext(AVCodec* codec, AVBufferRef* avHardwareContext)
+		HRESULT UpdateCodecContext(const AVCodec* codec, AVBufferRef* avHardwareContext)
 		{
 			auto hr = S_OK;
 
