@@ -495,16 +495,35 @@ HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample^ 
 
 HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height, bool isSourceBuffer)
 {
-	if (av_image_fill_linesizes(linesize, m_OutputPixelFormat, width) < 0)
+	// this method more or less follows the ffmpeg av_image_alloc() implementation
+
+	ptrdiff_t linesizes1[4];
+	size_t sizes[4];
+	int totalSize = 0;
+
+	if (av_image_check_size(width, height, 0, NULL) < 0)
 	{
 		return E_FAIL;
 	}
 
-	// calculate total size and fill data pointers startig at zero
-	auto totalSize = av_image_fill_pointers(data, m_OutputPixelFormat, height, NULL, linesize);
-	if (totalSize <= 0)
+	if (av_image_fill_linesizes(linesize, m_OutputPixelFormat, width) < 0)
 	{
 		return E_FAIL;
+	}
+	
+	for (int i = 0; i < 4; i++) {
+		linesizes1[i] = linesize[i];
+	}
+
+	if (av_image_fill_plane_sizes(sizes, m_OutputPixelFormat, height, linesizes1) < 0)
+	{
+		return E_FAIL;
+	}
+
+	for (int i = 0; i < 4; i++) {
+		if (sizes[i] > INT_MAX - totalSize)
+			return AVERROR(EINVAL);
+		totalSize += (int)sizes[i];
 	}
 
 	// allocate buffer
@@ -514,8 +533,8 @@ HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte*
 		return E_OUTOFMEMORY;
 	}
 
-	totalSize = av_image_fill_pointers(data, m_OutputPixelFormat, height, buffer[0]->data, linesize);
-	if (totalSize <= 0)
+	// fill pointers
+	if (av_image_fill_pointers(data, m_OutputPixelFormat, height, buffer[0]->data, linesize) < 0)
 	{
 		return E_FAIL;
 	}
