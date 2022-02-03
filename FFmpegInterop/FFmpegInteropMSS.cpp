@@ -1338,10 +1338,13 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 
 		if (SUCCEEDED(hr))
 		{
-			// enable multi threading
-			unsigned threads = std::thread::hardware_concurrency();
-			avVideoCodecCtx->thread_count = config->MaxVideoThreads == 0 ? threads : min(threads, config->MaxVideoThreads);
-			avVideoCodecCtx->thread_type = config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
+			// enable multi threading only for SW decoders
+			if (!avVideoCodecCtx->hw_device_ctx)
+			{
+				unsigned threads = std::thread::hardware_concurrency();
+				avVideoCodecCtx->thread_count = config->MaxVideoThreads == 0 ? threads : min(threads, config->MaxVideoThreads);
+				avVideoCodecCtx->thread_type = config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
+			}
 
 			hr = avcodec_open2(avVideoCodecCtx, avVideoCodec, NULL);
 		}

@@ -223,10 +223,13 @@ namespace FFmpegInterop
 
 			if (SUCCEEDED(hr))
 			{
-				// enable multi threading
-				unsigned threads = std::thread::hardware_concurrency();
-				m_pAvCodecCtx->thread_count = m_config->MaxVideoThreads == 0 ? threads : min(threads, m_config->MaxVideoThreads);
-				m_pAvCodecCtx->thread_type = m_config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
+				// enable multi threading only for SW decoders
+				if (!avHardwareContext)
+				{
+					unsigned threads = std::thread::hardware_concurrency();
+					m_pAvCodecCtx->thread_count = m_config->MaxVideoThreads == 0 ? threads : min(threads, m_config->MaxVideoThreads);
+					m_pAvCodecCtx->thread_type = m_config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
+				}
 
 				// initialize the stream parameters with demuxer information
 				hr = avcodec_parameters_to_context(m_pAvCodecCtx, m_pAvStream->codecpar);
