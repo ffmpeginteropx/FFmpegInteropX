@@ -453,6 +453,59 @@ void FFmpegInterop::UncompressedVideoSampleProvider::ReadFrameProperties(AVFrame
 			}
 		}
 	}
+
+	auto sideData = av_frame_get_side_data(avFrame, AV_FRAME_DATA_CONTENT_LIGHT_LEVEL);
+	if (sideData)
+	{
+		auto contentLightMetadata = reinterpret_cast<AVContentLightMetadata*>(sideData->data);
+		maxCLL = PropertyValue::CreateUInt32(contentLightMetadata->MaxCLL);
+		maxFALL = PropertyValue::CreateUInt32(contentLightMetadata->MaxFALL);
+	}
+	else
+	{
+		maxCLL = maxFALL = nullptr;
+	}
+
+	sideData = av_frame_get_side_data(avFrame, AV_FRAME_DATA_MASTERING_DISPLAY_METADATA);
+	if (sideData)
+	{
+		auto masteringDisplayMetadata = reinterpret_cast<AVMasteringDisplayMetadata*>(sideData->data);
+		if (masteringDisplayMetadata->has_luminance)
+		{
+			constexpr uint32_t MASTERING_DISP_LUMINANCE_SCALE{ 10000 };
+			minLuminance = PropertyValue::CreateUInt32(static_cast<uint32_t>(MASTERING_DISP_LUMINANCE_SCALE * av_q2d(masteringDisplayMetadata->min_luminance)));
+			maxLuminance = PropertyValue::CreateUInt32(static_cast<uint32_t>(av_q2d(masteringDisplayMetadata->max_luminance)));
+		}
+		else
+		{
+			minLuminance = maxLuminance = nullptr;
+		}
+
+		if (masteringDisplayMetadata->has_primaries)
+		{
+			MT_CUSTOM_VIDEO_PRIMARIES customVideoPrimaries
+			{
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[0][0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[0][1])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[1][0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[1][1])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[2][0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[2][1])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->white_point[0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->white_point[1]))
+			};
+			auto data = Platform::ArrayReference<uint8_t>(reinterpret_cast<uint8_t*>(&customVideoPrimaries), sizeof(customVideoPrimaries));
+			customPrimaries = PropertyValue::CreateUInt8Array(data);
+		}
+		else
+		{
+			customPrimaries = nullptr;
+		}
+	}
+	else
+	{
+		minLuminance = maxLuminance = customPrimaries = nullptr;
+	}
 }
 
 HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample^ sample)
@@ -488,6 +541,23 @@ HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample^ 
 		break;
 	default:
 		break;
+	}
+
+	if (maxCLL && maxFALL)
+	{
+		sample->ExtendedProperties->Insert(MF_MT_MAX_LUMINANCE_LEVEL, maxCLL);
+		sample->ExtendedProperties->Insert(MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, maxFALL);
+	}
+
+	if (minLuminance && maxLuminance)
+	{
+		sample->ExtendedProperties->Insert(MF_MT_MIN_MASTERING_LUMINANCE, minLuminance);
+		sample->ExtendedProperties->Insert(MF_MT_MAX_MASTERING_LUMINANCE, maxLuminance);
+	}
+
+	if (customPrimaries)
+	{
+		sample->ExtendedProperties->Insert(MF_MT_CUSTOM_VIDEO_PRIMARIES, customPrimaries);
 	}
 
 	return S_OK;

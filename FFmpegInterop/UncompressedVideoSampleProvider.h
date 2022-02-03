@@ -111,6 +111,11 @@ namespace FFmpegInterop
 		bool m_top_field_first;
 		AVChromaLocation m_chroma_location;
 		bool hasFirstInterlacedFrame;
+		Object^ maxCLL;
+		Object^ maxFALL;
+		Object^ minLuminance;
+		Object^ maxLuminance;
+		Object^ customPrimaries;
 	};
 }
 
