@@ -408,6 +408,10 @@ if (! (Test-Path "$PSScriptRoot\Tools\perl")) {
     -products * `
     -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
 
+if (!$vsLatestPath){
+    Write-Error "Visual Studio not found!"
+}
+
 Write-Host "Visual Studio Installation folder: [$vsLatestPath]"
 
 # 14.16.27023 => v141

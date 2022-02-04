@@ -1,20 +1,20 @@
 # escape=`
 
 # Use the latest Windows Server Core image with .NET Framework 4.8.
-FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-20210914-windowsservercore-20H2
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-20H2
 
 # Restore the default Windows shell for correct batch processing.
 SHELL ["cmd", "/S", "/C"]
 
 # Install Build Tools and workloads
-RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/16/release/vs_buildtools.exe `
+RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/17/release/vs_buildtools.exe `
     && (start /w vs_buildtools.exe --quiet --wait --norestart --nocache modify `
-        --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools" `
+        --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools" `
         --add Microsoft.VisualStudio.Workload.UniversalBuildTools `
         --add Microsoft.VisualStudio.ComponentGroup.UWP.VC.BuildTools `
         --add Microsoft.VisualStudio.Component.Windows11SDK.22000 `
         --includeRecommended `
-        || IF "%ERRORLEVEL%"=="3010" EXIT 0)
+        || IF "%ERRORLEVEL%"=="3010" EXIT 0) `
     && del /q vs_buildtools.exe
 
 # Download and install git.exe
@@ -24,8 +24,7 @@ RUN curl -SL --output git.zip https://github.com/git-for-windows/git/releases/do
 	&& setx PATH "%PATH%;C:\git\cmd"
 	
 # Clone FFmpegInteropX
-RUN git clone https://github.com/ffmpeginteropx/FFmpegInteropX.git
-RUN cd FFmpegInteropX && git checkout master && git submodule init && git submodule update
+RUN git clone https://github.com/ffmpeginteropx/FFmpegInteropX.git --recursive
 
 # Install build tools
 RUN cd FFmpegInteropX `
