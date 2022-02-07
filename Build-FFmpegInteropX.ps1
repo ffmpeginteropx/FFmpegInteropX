@@ -22,7 +22,7 @@ param(
         10.0.17763.0
         10.0.18362.0
     #>
-    [version] $WindowsTargetPlatformVersion = '10.0.18362.0',
+    [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
@@ -78,7 +78,7 @@ function Build-Platform {
         Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Output\FFmpegInterop\$Platform\*
     }
 
-    MSBuild.exe $SolutionDir\FFmpegInterop\FFmpegInterop.vcxproj `
+    MSBuild.exe $SolutionDir\Source\FFmpegInteropX.vcxproj `
         /restore `
         /p:Configuration=$Configuration `
         /p:Platform=$Platform `
@@ -86,7 +86,7 @@ function Build-Platform {
         /p:PlatformToolset=$PlatformToolset `
         /p:useenv=true
 
-    if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInterop.vcxproj." }
+    if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.vcxproj." }
 
 }
 
@@ -124,7 +124,7 @@ $start = Get-Date
 $success = 1
 
 # Restore nuget packets for solution
-nuget.exe restore ${PSScriptRoot}\FFmpegInterop.sln
+nuget.exe restore ${PSScriptRoot}\FFmpegInteropX.sln
 
 foreach ($platform in $Platforms) {
 
@@ -163,7 +163,7 @@ foreach ($platform in $Platforms) {
 
 if ($success -and $NugetPackageVersion)
 {
-    nuget pack .\FFmpegInteropX.nuspec `
+    nuget pack .\Build\FFmpegInteropX.nuspec `
         -Properties "id=FFmpegInteropX;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat symbols.nupkg `

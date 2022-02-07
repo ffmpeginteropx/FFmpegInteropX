@@ -64,7 +64,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <PackageCertificateKeyFile>$(SolutionDir)FFmpegInteropX.pfx</PackageCertificateKeyFile>
+    <PackageCertificateKeyFile>$(SolutionDir)Build\FFmpegInteropX.pfx</PackageCertificateKeyFile>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <AppxBundle>Always</AppxBundle>
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
@@ -109,7 +109,7 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <None Include="$(SolutionDir)FFmpegInteropX.pfx" />
+    <None Include="$(SolutionDir)Build\FFmpegInteropX.pfx" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

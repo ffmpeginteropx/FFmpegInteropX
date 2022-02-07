@@ -8,7 +8,7 @@ param(
 # Stop on all PowerShell command errors
 $ErrorActionPreference = "Stop"
 
-New-Item -ItemType Directory -Path $PSScriptRoot\Tools -Force -OutVariable root
+New-Item -ItemType Directory -Path $PSScriptRoot\..\Tools -Force -OutVariable root
 
 if ($Tools.Contains("MSYS2"))
 {

@@ -191,7 +191,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\FFmpegConfig.sh">
+    <None Include="..\Build\FFmpegConfig.sh">
       <Filter>Build</Filter>
     </None>
     <None Include="..\README.md">
@@ -213,28 +213,28 @@
     <None Include="..\Build-FFmpegInteropX.ps1">
       <Filter>Build</Filter>
     </None>
-    <None Include="..\FFmpegInteropX.FFmpegUWP.nuspec">
+    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.nuspec">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\FFmpegInteropX.FFmpegUWP.targets">
+    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.targets">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\FFmpegInteropX.nuspec">
+    <None Include="..\Build\FFmpegInteropX.nuspec">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\FFmpegInteropX.targets">
+    <None Include="..\Build\FFmpegInteropX.targets">
       <Filter>NuGet</Filter>
     </None>
     <None Include="..\NuGet.Config">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\Repack-NuGet.ps1">
+    <None Include="..\Build\Repack-NuGet.ps1">
       <Filter>Build</Filter>
     </None>
-    <None Include="..\InstallTools.ps1">
+    <None Include="..\Build\InstallTools.ps1">
       <Filter>Build</Filter>
     </None>
-    <None Include="..\Start-DevShell.ps1">
+    <None Include="..\Build\Start-DevShell.ps1">
       <Filter>Build</Filter>
     </None>
     <None Include="..\Docker\dockerfile">
