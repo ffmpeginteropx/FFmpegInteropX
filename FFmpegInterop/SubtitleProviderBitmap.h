@@ -3,7 +3,7 @@
 #include "SubtitleProvider.h"
 #include <MemoryBuffer.h>
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class SubtitleProviderBitmap : SubtitleProvider
 	{

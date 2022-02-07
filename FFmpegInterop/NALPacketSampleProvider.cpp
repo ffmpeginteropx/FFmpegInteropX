@@ -19,7 +19,7 @@
 #include "pch.h"
 #include "NALPacketSampleProvider.h"
 
-using namespace FFmpegInterop;
+using namespace FFmpegInteropX;
 
 NALPacketSampleProvider::NALPacketSampleProvider(
 	FFmpegReader^ reader,

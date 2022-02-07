@@ -9,12 +9,12 @@
 
 extern "C"
 {
-#include "libavutil/md5.h"
-#include "libavutil/mem.h"
-#include "libavutil/opt.h"
-#include "libavutil/samplefmt.h"
-#include "libavfilter/buffersink.h"
-#include "libavfilter/buffersrc.h"
+#include <libavutil/md5.h>
+#include <libavutil/mem.h>
+#include <libavutil/opt.h>
+#include <libavutil/samplefmt.h>
+#include <libavfilter/buffersink.h>
+#include <libavfilter/buffersrc.h>
 #include <libavfilter/avfilter.h>
 }
 
@@ -24,7 +24,7 @@ using namespace Windows::Foundation;
 using namespace Platform;
 using namespace Windows::Storage;
 
-namespace FFmpegInterop {
+namespace FFmpegInteropX {
 	ref class VideoFilter : public IAvEffect
 	{
 		const AVFilter* AVSource;

@@ -20,7 +20,7 @@
 #include "pch.h"
 #include "FFmpegInteropLogging.h"
 
-using namespace FFmpegInterop;
+using namespace FFmpegInteropX;
 
 extern "C"
 {

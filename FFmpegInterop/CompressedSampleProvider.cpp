@@ -5,7 +5,7 @@
 #include "CompressedSampleProvider.h"
 #include "NativeBufferFactory.h"
 
-using namespace FFmpegInterop;
+using namespace FFmpegInteropX;
 
 CompressedSampleProvider::CompressedSampleProvider(
 	FFmpegReader^ reader,

@@ -16,7 +16,7 @@
 //
 //*****************************************************************************
 
-using FFmpegInterop;
+using FFmpegInteropX;
 using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 using System;
 using System.Threading.Tasks;

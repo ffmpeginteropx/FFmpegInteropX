@@ -1,6 +1,5 @@
 #pragma once
 #include <pch.h>
-#include <collection.h>
 
 using namespace Platform;
 using namespace Platform::Collections;
@@ -9,7 +8,7 @@ using namespace Windows::Foundation::Collections;
 using namespace Windows::Media::Core;
 
 
-namespace FFmpegInterop {
+namespace FFmpegInteropX {
 
 	[Windows::UI::Xaml::Data::Bindable]
 	public ref class CharacterEncoding sealed

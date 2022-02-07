@@ -67,7 +67,9 @@
     <ClCompile Include="BasicVideoEffect.cpp">
       <Filter>Effects</Filter>
     </ClCompile>
-    <ClCompile Include="DirectXInteropHelper.cpp" />
+    <ClCompile Include="DirectXInteropHelper.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -146,7 +148,6 @@
     <ClInclude Include="LanguageTagConverter.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="FFmpegVersionInfo.h" />
     <ClInclude Include="ReferenceCue.h">
       <Filter>Subtitles</Filter>
     </ClInclude>
@@ -182,12 +183,14 @@
     <ClInclude Include="D3D11VideoSampleProvider.h">
       <Filter>SampleProviders</Filter>
     </ClInclude>
-    <ClInclude Include="DirectXInteropHelper.h" />
     <ClInclude Include="TexturePool.h">
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="VideoFilter.h">
       <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectXInteropHelper.h">
+      <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

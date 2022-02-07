@@ -1,7 +1,7 @@
 #pragma once
 #include <VideoEffectConfiguration.h>
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	using namespace Platform::Collections;
 	using namespace Windows::Media::Effects;

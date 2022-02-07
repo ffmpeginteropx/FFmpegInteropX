@@ -29,13 +29,8 @@
 #include "SubtitleProviderBitmap.h"
 #include "CritSec.h"
 #include "shcore.h"
-#include <mfapi.h>
-#include <dshow.h>
 #include "LanguageTagConverter.h"
-#include "FFmpegVersionInfo.h"
-#include "collection.h"
 #include <ppl.h>
-#include <Mfidl.h>
 
 extern "C"
 {
@@ -45,7 +40,7 @@ extern "C"
 }
 
 using namespace concurrency;
-using namespace FFmpegInterop;
+using namespace FFmpegInteropX;
 using namespace Platform;
 using namespace Platform::Collections;
 using namespace Windows::Storage::Streams;
@@ -473,8 +468,8 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 
 void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 {
-	audioTracksChangedToken = playbackitem->AudioTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem^, Windows::Foundation::Collections::IVectorChangedEventArgs^>(this, &FFmpegInterop::FFmpegInteropMSS::OnAudioTracksChanged);
-	subtitlePresentationModeChangedToken = playbackitem->TimedMetadataTracks->PresentationModeChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackTimedMetadataTrackList^, Windows::Media::Playback::TimedMetadataPresentationModeChangedEventArgs^>(this, &FFmpegInterop::FFmpegInteropMSS::OnPresentationModeChanged);
+	audioTracksChangedToken = playbackitem->AudioTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem^, Windows::Foundation::Collections::IVectorChangedEventArgs^>(this, &FFmpegInteropX::FFmpegInteropMSS::OnAudioTracksChanged);
+	subtitlePresentationModeChangedToken = playbackitem->TimedMetadataTracks->PresentationModeChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackTimedMetadataTrackList^, Windows::Media::Playback::TimedMetadataPresentationModeChangedEventArgs^>(this, &FFmpegInteropX::FFmpegInteropMSS::OnPresentationModeChanged);
 
 	if (config->AutoSelectForcedSubtitles)
 	{
@@ -2082,7 +2077,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition, bool
 	return hr;
 }
 
-CoreDispatcher^ FFmpegInterop::FFmpegInteropMSS::GetCurrentDispatcher()
+CoreDispatcher^ FFmpegInteropX::FFmpegInteropMSS::GetCurrentDispatcher()
 {
 	try {
 		//try get the current view

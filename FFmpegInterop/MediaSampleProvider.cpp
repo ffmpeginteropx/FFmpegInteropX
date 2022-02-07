@@ -23,7 +23,7 @@
 #include "LanguageTagConverter.h"
 #include "AvCodecContextHelpers.h"
 
-using namespace FFmpegInterop;
+using namespace FFmpegInteropX;
 using namespace Windows::Media::MediaProperties;
 
 MediaSampleProvider::MediaSampleProvider(
@@ -80,7 +80,7 @@ HRESULT MediaSampleProvider::Initialize()
 	return m_streamDescriptor ? S_OK : E_FAIL;
 }
 
-void FFmpegInterop::MediaSampleProvider::InitializeNameLanguageCodec()
+void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
 {
 	// unfortunately, setting Name or Language on MediaStreamDescriptor does not have any effect, they are not shown in track selection list
 	auto title = av_dict_get(m_pAvStream->metadata, "title", NULL, 0);
@@ -158,7 +158,7 @@ void FFmpegInterop::MediaSampleProvider::InitializeNameLanguageCodec()
 	}
 }
 
-void FFmpegInterop::MediaSampleProvider::InitializeStreamInfo()
+void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 {
 	switch (m_pAvCodecCtx->codec_type)
 	{

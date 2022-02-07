@@ -21,7 +21,7 @@
 #include <d3d11.h>
 #include <DirectXInteropHelper.h>
 
-using namespace FFmpegInterop;
+using namespace FFmpegInteropX;
 
 
 UncompressedSampleProvider::UncompressedSampleProvider(

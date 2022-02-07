@@ -19,7 +19,7 @@
 #pragma once
 #include "CompressedSampleProvider.h"
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class NALPacketSampleProvider :
 		public CompressedSampleProvider

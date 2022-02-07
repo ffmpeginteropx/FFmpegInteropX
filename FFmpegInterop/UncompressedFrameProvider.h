@@ -11,7 +11,7 @@ extern "C"
 
 using namespace Windows::Foundation::Collections;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class UncompressedFrameProvider sealed
 	{

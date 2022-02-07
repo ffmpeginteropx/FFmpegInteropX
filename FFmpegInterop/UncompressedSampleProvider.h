@@ -20,13 +20,7 @@
 #include "MediaSampleProvider.h"
 #include "UncompressedFrameProvider.h"
 
-
-extern "C"
-{
-#include <libswresample/swresample.h>
-}
-
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class UncompressedSampleProvider abstract : public MediaSampleProvider
 	{

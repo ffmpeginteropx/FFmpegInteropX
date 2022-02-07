@@ -5,7 +5,7 @@ extern "C"
 #include <libavformat/avformat.h>
 #include <libavutil/channel_layout.h>
 }
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 
 	ref class AvCodecContextHelpers

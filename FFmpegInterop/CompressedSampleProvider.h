@@ -2,7 +2,7 @@
 
 #include "MediaSampleProvider.h"
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class CompressedSampleProvider : MediaSampleProvider
 	{

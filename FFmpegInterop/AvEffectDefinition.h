@@ -1,7 +1,7 @@
 #pragma once
 using namespace Platform;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	public ref class AvEffectDefinition sealed
 	{

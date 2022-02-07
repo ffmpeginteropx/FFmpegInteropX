@@ -146,7 +146,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)FFmpegInterop\FFmpegInterop.vcxproj">
+    <ProjectReference Include="..\..\FFmpegInterop\FFmpegInteropX.vcxproj">
       <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
       <Name>FFmpegInterop</Name>
     </ProjectReference>

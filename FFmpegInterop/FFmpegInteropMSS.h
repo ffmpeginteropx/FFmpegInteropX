@@ -17,9 +17,7 @@
 //*****************************************************************************
 
 #pragma once
-#include <queue>
 #include <mutex>
-#include <pplawait.h>
 #include "Enumerations.h"
 #include "FFmpegReader.h"
 #include "MediaSampleProvider.h"
@@ -32,7 +30,6 @@
 #include "CodecChecker.h"
 #include <collection.h>
 #include "MediaMetadata.h"
-#include <mfidl.h>
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -49,7 +46,7 @@ extern "C"
 #include <libavformat/avformat.h>
 }
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	enum ByteOrderMark
 	{
@@ -306,7 +303,7 @@ namespace FFmpegInterop
 				session = value;
 				if (value)
 				{
-					sessionPositionEvent = value->PositionChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackSession^, Platform::Object^>(this, &FFmpegInterop::FFmpegInteropMSS::OnPositionChanged);
+					sessionPositionEvent = value->PositionChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackSession^, Platform::Object^>(this, &FFmpegInteropX::FFmpegInteropMSS::OnPositionChanged);
 				}
 				mutexGuard.unlock();
 			}

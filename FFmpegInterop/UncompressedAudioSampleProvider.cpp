@@ -30,7 +30,7 @@ extern "C"
 #include <libswresample/swresample.h>
 }
 
-using namespace FFmpegInterop;
+using namespace FFmpegInteropX;
 
 UncompressedAudioSampleProvider::UncompressedAudioSampleProvider(
 	FFmpegReader^ reader,

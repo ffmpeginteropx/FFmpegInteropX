@@ -6,7 +6,7 @@
 #include <robuffer.h>
 
 
-namespace FFmpegInterop {
+namespace FFmpegInteropX {
 
 	using namespace concurrency;
 	using namespace Windows::Storage::Streams;

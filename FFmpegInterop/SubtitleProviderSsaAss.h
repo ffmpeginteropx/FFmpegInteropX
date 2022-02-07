@@ -5,7 +5,7 @@
 #include <string>
 #include <codecvt>
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class SubtitleProviderSsaAss : SubtitleProvider
 	{

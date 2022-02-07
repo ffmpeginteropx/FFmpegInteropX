@@ -1,6 +1,6 @@
 #pragma once
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	namespace WFM = Windows::Foundation::Metadata;
 

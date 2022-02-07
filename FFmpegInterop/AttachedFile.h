@@ -1,6 +1,9 @@
 #pragma once
 
-#include "libavformat\avformat.h"
+extern "C"
+{
+#include <libavformat\avformat.h>
+}
 
 #include "NativeBufferFactory.h"
 
@@ -8,7 +11,7 @@ using namespace Platform;
 using namespace Windows::Storage;
 using namespace Windows::Storage::Streams;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	public ref class AttachedFile sealed
 	{

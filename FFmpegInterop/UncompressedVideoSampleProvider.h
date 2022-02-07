@@ -19,11 +19,6 @@
 #pragma once
 #include "UncompressedSampleProvider.h"
 
-extern "C"
-{
-#include <libswscale/swscale.h>
-}
-
 #pragma region Desktop Family
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 
@@ -47,7 +42,7 @@ typedef struct _MT_CUSTOM_VIDEO_PRIMARIES {
 
 using namespace Platform;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class UncompressedVideoSampleProvider: UncompressedSampleProvider
 	{

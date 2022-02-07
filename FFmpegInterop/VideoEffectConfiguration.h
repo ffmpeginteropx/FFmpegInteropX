@@ -1,5 +1,5 @@
 #pragma once
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	using namespace Windows::Foundation::Collections;
 	using namespace Windows::Media::Playback;

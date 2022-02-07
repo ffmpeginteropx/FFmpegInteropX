@@ -2,7 +2,7 @@
 #include "AbstractEffectFactory.h"
 #include "VideoFilter.h"
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class VideoEffectFactory : public AbstractEffectFactory
 	{

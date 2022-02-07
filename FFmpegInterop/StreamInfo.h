@@ -5,7 +5,7 @@
 
 using namespace Platform;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	public interface class IStreamInfo
 	{
@@ -47,7 +47,7 @@ namespace FFmpegInterop
 		property int SampleRate { int get() { return sampleRate; } }
 		property int BitsPerSample { int get() { return bitsPerSample; } }
 
-		property FFmpegInterop::DecoderEngine DecoderEngine {FFmpegInterop::DecoderEngine get() { return decoderEngine; }}
+		property FFmpegInteropX::DecoderEngine DecoderEngine {FFmpegInteropX::DecoderEngine get() { return decoderEngine; }}
 
 	internal:
 		void SetDefault()
@@ -67,7 +67,7 @@ namespace FFmpegInterop
 		int sampleRate;
 		int bitsPerSample;
 	
-		FFmpegInterop::DecoderEngine decoderEngine;
+		FFmpegInteropX::DecoderEngine decoderEngine;
 	};
 
 	public ref class VideoStreamInfo sealed : public IStreamInfo
@@ -111,12 +111,12 @@ namespace FFmpegInterop
 		/// </remarks>
 		property double FramesPerSecondOverride;
 
-		property FFmpegInterop::HardwareDecoderStatus HardwareDecoderStatus {FFmpegInterop::HardwareDecoderStatus get() { return hardwareDecoderStatus; }}
-		property FFmpegInterop::DecoderEngine DecoderEngine 
+		property FFmpegInteropX::HardwareDecoderStatus HardwareDecoderStatus {FFmpegInteropX::HardwareDecoderStatus get() { return hardwareDecoderStatus; }}
+		property FFmpegInteropX::DecoderEngine DecoderEngine 
 		{
-			FFmpegInterop::DecoderEngine get() { return decoderEngine; }
+			FFmpegInteropX::DecoderEngine get() { return decoderEngine; }
 		internal:
-			void set(FFmpegInterop::DecoderEngine value) { decoderEngine = value; }
+			void set(FFmpegInteropX::DecoderEngine value) { decoderEngine = value; }
 		}
 
 	internal:
@@ -137,8 +137,8 @@ namespace FFmpegInterop
 		int bitsPerSample;
 		double framesPerSecond;
 
-		FFmpegInterop::HardwareDecoderStatus hardwareDecoderStatus;
-		FFmpegInterop::DecoderEngine decoderEngine;
+		FFmpegInteropX::HardwareDecoderStatus hardwareDecoderStatus;
+		FFmpegInteropX::DecoderEngine decoderEngine;
 	};
 
 

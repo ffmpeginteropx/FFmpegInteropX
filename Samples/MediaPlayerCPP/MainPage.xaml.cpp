@@ -25,7 +25,7 @@
 #include "MainPage.xaml.h"
 #include <collection.h>
 
-using namespace FFmpegInterop;
+using namespace FFmpegInteropX;
 using namespace MediaPlayerCPP;
 
 using namespace concurrency;

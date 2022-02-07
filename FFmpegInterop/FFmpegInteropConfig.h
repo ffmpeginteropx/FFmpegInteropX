@@ -17,7 +17,7 @@ using namespace Windows::Media::Core;
 
 namespace WFM = Windows::Foundation::Metadata;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	///<summary>This class allows configuring the FFmpegInteropMSS instance.</summary>
 	public ref class FFmpegInteropConfig sealed
@@ -28,7 +28,7 @@ namespace FFmpegInterop
 			PassthroughAudioMP3 = false;
 			PassthroughAudioAAC = false;
 
-			VideoDecoderMode = FFmpegInterop::VideoDecoderMode::Automatic;
+			VideoDecoderMode = FFmpegInteropX::VideoDecoderMode::Automatic;
 
 #pragma warning (disable: 4973)
 
@@ -146,7 +146,7 @@ namespace FFmpegInterop
 		property bool PassthroughAudioAAC;
 
 		///<summary>Sets the video decoder mode. Default is AutoDetection.</summary>
-		property FFmpegInterop::VideoDecoderMode VideoDecoderMode;
+		property FFmpegInteropX::VideoDecoderMode VideoDecoderMode;
 
 		///<summary>Allow passthrough for H264 video.</summary>
 		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]

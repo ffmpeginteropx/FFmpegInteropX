@@ -2,11 +2,7 @@
 
 #include "UncompressedVideoSampleProvider.h"
 #include "TexturePool.h"
-
-#include <d3d11.h>
-#include <mfidl.h>
 #include <DirectXInteropHelper.h>
-#include <set>
 
 extern "C"
 {
@@ -15,7 +11,7 @@ extern "C"
 
 static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelFormat* fmt);
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	using namespace Platform;
 

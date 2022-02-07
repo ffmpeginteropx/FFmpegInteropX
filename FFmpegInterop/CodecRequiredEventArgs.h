@@ -1,6 +1,6 @@
 #pragma once
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	using namespace Platform;
 	using namespace Windows::Foundation;

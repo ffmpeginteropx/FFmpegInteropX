@@ -12,7 +12,7 @@
 using namespace Windows::UI::Core;
 using namespace Windows::Media::Playback;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class SubtitleProvider abstract : CompressedSampleProvider
 	{
@@ -51,9 +51,9 @@ namespace FFmpegInterop
 				if (Windows::Foundation::Metadata::ApiInformation::IsEnumNamedValuePresent("Windows.Media.Core.TimedMetadataKind", "ImageSubtitle") &&
 					timedMetadataKind == TimedMetadataKind::ImageSubtitle)
 				{
-					SubtitleTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnCueEntered);
+					SubtitleTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInteropX::SubtitleProvider::OnCueEntered);
 				}
-				SubtitleTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTrackFailed);
+				SubtitleTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInteropX::SubtitleProvider::OnTrackFailed);
 			}
 
 			InitializeStreamInfo();
@@ -340,7 +340,7 @@ namespace FFmpegInterop
 						{
 							thisInstance->timer = ref new Windows::UI::Xaml::DispatcherTimer();
 							thisInstance->timer->Interval = ToTimeSpan(10000);
-							thisInstance->timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(thisInstance, &FFmpegInterop::SubtitleProvider::OnTick);
+							thisInstance->timer->Tick += ref new Windows::Foundation::EventHandler<Platform::Object ^>(thisInstance, &FFmpegInteropX::SubtitleProvider::OnTick);
 						}
 						thisInstance->timer->Start();
 					}
@@ -460,9 +460,9 @@ namespace FFmpegInterop
 			if (referenceTrack == nullptr)
 			{
 				referenceTrack = ref new TimedMetadataTrack("ReferenceTrack_" + Name, "", TimedMetadataKind::Custom);
-				referenceTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnRefCueEntered);
+				referenceTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInteropX::SubtitleProvider::OnRefCueEntered);
 
-				PlaybackItem->TimedMetadataTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem ^, Windows::Foundation::Collections::IVectorChangedEventArgs ^>(this, &FFmpegInterop::SubtitleProvider::OnTimedMetadataTracksChanged);
+				PlaybackItem->TimedMetadataTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem ^, Windows::Foundation::Collections::IVectorChangedEventArgs ^>(this, &FFmpegInteropX::SubtitleProvider::OnTimedMetadataTracksChanged);
 				PlaybackItem->Source->ExternalTimedMetadataTracks->Append(referenceTrack);
 			}
 		}

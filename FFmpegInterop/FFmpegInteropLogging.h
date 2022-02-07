@@ -19,7 +19,7 @@
 #pragma once
 #include "ILogProvider.h"
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	public ref class FFmpegInteropLogging sealed
 	{

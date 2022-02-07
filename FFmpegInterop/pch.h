@@ -18,9 +18,24 @@
 
 #pragma once
 
+#include <queue>
+#include <set>
+#include <vector>
 #include <collection.h>
 #include <ppltasks.h>
 #include <StringUtils.h>
+
+#include <d3d11.h>
+#include <mfapi.h>
+
+extern "C"
+{
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+#include <libswresample/swresample.h>
+}
+
 // Disable debug string output on non-debug build
 #if !_DEBUG
 #define DebugMessage(x)

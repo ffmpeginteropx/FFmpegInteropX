@@ -17,26 +17,18 @@
 //*****************************************************************************
 
 #pragma once
-#include <queue>
 #include "FFmpegInteropConfig.h"
 #include "AvEffectDefinition.h"
 #include "TimeSpanHelpers.h"
 #include "Enumerations.h"
 #include "StreamInfo.h"
-#include <d3d11.h>
-
-
-extern "C"
-{
-#include <libavformat/avformat.h>
-}
 
 using namespace Windows::Storage::Streams;
 using namespace Windows::Media::Core;
 using namespace Windows::Media::MediaProperties;
 using namespace Windows::Graphics::DirectX::Direct3D11;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class FFmpegReader;
 

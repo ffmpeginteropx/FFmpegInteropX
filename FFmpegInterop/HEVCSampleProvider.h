@@ -19,7 +19,7 @@
 #pragma once
 #include "H264AVCSampleProvider.h"
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class HEVCSampleProvider :
 		public H264AVCSampleProvider

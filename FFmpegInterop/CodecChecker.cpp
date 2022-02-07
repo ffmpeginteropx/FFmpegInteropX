@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "CodecChecker.h"
 
-using namespace FFmpegInterop;
+using namespace FFmpegInteropX;
 
 std::mutex CodecChecker::mutex;
 

@@ -16,7 +16,7 @@
 //
 //*****************************************************************************
 
-using FFmpegInterop;
+using FFmpegInteropX;
 
 using System;
 using System.Collections.Generic;

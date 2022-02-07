@@ -3,7 +3,7 @@
 
 using namespace Platform;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class StringUtils sealed
 	{

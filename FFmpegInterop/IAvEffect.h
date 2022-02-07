@@ -3,7 +3,7 @@ extern "C"
 {
 #include <libavformat/avformat.h>
 }
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class IAvEffect abstract
 	{

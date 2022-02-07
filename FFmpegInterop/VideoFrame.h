@@ -9,7 +9,7 @@ using namespace Windows::Media::MediaProperties;
 using namespace Windows::Storage::Streams;
 using namespace Concurrency;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	public ref class VideoFrame sealed
 	{

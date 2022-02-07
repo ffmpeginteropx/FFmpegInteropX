@@ -2,7 +2,7 @@
 using namespace Platform;
 using namespace Windows::Foundation::Collections;
 
-namespace FFmpegInterop {
+namespace FFmpegInteropX {
 	ref class KeyStringValuePair sealed : IKeyValuePair<String^,String^>
 	{
 		String ^key, ^value;

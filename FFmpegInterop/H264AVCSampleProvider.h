@@ -19,7 +19,7 @@
 #pragma once
 #include "NALPacketSampleProvider.h"
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class H264AVCSampleProvider :
 		public NALPacketSampleProvider

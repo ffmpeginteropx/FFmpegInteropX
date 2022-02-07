@@ -3,7 +3,7 @@
 #include "AudioFilter.h"
 #include "AvCodecContextHelpers.h"
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class AudioEffectFactory : public AbstractEffectFactory
 	{

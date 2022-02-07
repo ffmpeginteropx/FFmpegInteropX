@@ -6,10 +6,13 @@
 #include <mutex>
 #include <pplawait.h>
 
-#include "libavcodec/avcodec.h"
-#include "libavformat/avformat.h"
+extern "C"
+{
+#include <libavcodec\avcodec.h>
+#include <libavformat\avformat.h>
+}
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	using namespace Platform;
 	using namespace Platform::Collections;

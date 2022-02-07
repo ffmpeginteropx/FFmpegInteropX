@@ -20,7 +20,7 @@
 
 using namespace Platform;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	// Level values from ffmpeg: libavutil/log.h
 	public enum class LogLevel

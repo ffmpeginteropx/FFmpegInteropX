@@ -19,7 +19,7 @@
 #include "pch.h"
 #include "FFmpegReader.h"
 
-using namespace FFmpegInterop;
+using namespace FFmpegInteropX;
 
 FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<MediaSampleProvider^>* initProviders)
 	: m_pAvFormatCtx(avFormatCtx)

@@ -20,7 +20,7 @@
 using namespace Platform;
 using namespace Windows::Storage::Streams;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	public ref class MediaThumbnailData sealed
 	{

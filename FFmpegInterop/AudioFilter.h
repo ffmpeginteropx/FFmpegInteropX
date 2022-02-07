@@ -28,7 +28,7 @@ using namespace Windows::Storage;
 
 
 
-namespace FFmpegInterop {
+namespace FFmpegInteropX {
 	ref class AudioFilter : public IAvEffect
 	{
 		const AVFilter  *AVSource;

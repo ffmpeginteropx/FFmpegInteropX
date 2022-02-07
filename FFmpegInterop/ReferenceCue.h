@@ -4,7 +4,7 @@ using namespace Platform;
 using namespace Windows::Foundation;
 using namespace Windows::Media::Core;
 
-namespace FFmpegInterop {
+namespace FFmpegInteropX {
 	ref class ReferenceCue : IMediaCue
 	{
 	internal:

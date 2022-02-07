@@ -1,20 +1,13 @@
 #pragma once
 #include <pch.h>
-#include <vector>
-#include <collection.h>
 #include "KeyStringValuePair.h"
-
-extern "C"
-{
-#include <libavformat/avformat.h>
-}
 
 using namespace Platform;
 using namespace Platform::Collections;
 using namespace Windows::Foundation;
 using namespace Windows::Foundation::Collections;
 
-namespace FFmpegInterop {
+namespace FFmpegInteropX {
 
 	ref class MediaMetadata sealed
 	{

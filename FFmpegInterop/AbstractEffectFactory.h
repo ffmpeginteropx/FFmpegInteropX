@@ -5,7 +5,7 @@
 using namespace Windows::Foundation::Collections;
 
 
-namespace FFmpegInterop {
+namespace FFmpegInteropX {
 	ref class AbstractEffectFactory abstract
 	{
 	internal:

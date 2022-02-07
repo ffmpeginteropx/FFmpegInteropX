@@ -2,7 +2,11 @@
 
 #include <collection.h>
 #include <pplawait.h>
-#include "libavformat\avformat.h"
+
+extern "C"
+{
+#include <libavformat\avformat.h>
+}
 
 #include "AttachedFile.h"
 
@@ -13,7 +17,7 @@ using namespace Windows::Storage::Streams;
 
 using namespace Concurrency;
 
-namespace FFmpegInterop
+namespace FFmpegInteropX
 {
 	ref class AttachedFileHelper sealed
 	{
