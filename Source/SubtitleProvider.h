@@ -23,7 +23,7 @@ namespace FFmpegInteropX
 		SubtitleProvider(FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			FFmpegInteropConfig^ config,
+			MediaSourceConfig^ config,
 			int index,
 			TimedMetadataKind timedMetadataKind,
 			CoreDispatcher^ dispatcher)

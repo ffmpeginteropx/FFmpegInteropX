@@ -12,7 +12,7 @@ namespace FFmpegInteropX
 		SubtitleProviderBitmap(FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			FFmpegInteropConfig^ config,
+			MediaSourceConfig^ config,
 			int index,
 			CoreDispatcher^ dispatcher)
 			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::ImageSubtitle, dispatcher)

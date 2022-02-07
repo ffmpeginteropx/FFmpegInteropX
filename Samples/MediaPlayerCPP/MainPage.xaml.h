@@ -36,7 +36,7 @@ namespace MediaPlayerCPP
 	public:
 		MainPage();
 
-		property FFmpegInteropX::FFmpegInteropConfig^ Config;
+		property FFmpegInteropX::MediaSourceConfig^ Config;
 		property FFmpegInteropX::VideoEffectConfiguration^ VideoEffectConfiguration;
 
 	private:
@@ -62,8 +62,8 @@ namespace MediaPlayerCPP
 
 		Windows::Media::Playback::MediaPlayer^ mediaPlayer;
 		Windows::Storage::StorageFile^ currentFile;
-		FFmpegInteropX::FFmpegInteropMSS^ actualFFmpegMSS;
-		FFmpegInteropX::FFmpegInteropMSS^ FFmpegMSS;
+		FFmpegInteropX::FFmpegMediaSource^ actualFFmpegMSS;
+		FFmpegInteropX::FFmpegMediaSource^ FFmpegMSS;
 		Windows::Media::Playback::MediaPlaybackItem^ playbackItem;
 		Windows::Foundation::EventRegistrationToken timedMetadataTracksChangedToken;
 		void CbEncodings_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e);

@@ -29,7 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="FFmpegInteropMSS.cpp" />
+    <ClCompile Include="FFmpegMediaSource.cpp" />
     <ClCompile Include="FFmpegReader.cpp" />
     <ClCompile Include="FFmpegInteropLogging.cpp" />
     <ClCompile Include="FrameGrabber.cpp" />
@@ -73,13 +73,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="FFmpegInteropMSS.h" />
+    <ClInclude Include="FFmpegMediaSource.h" />
     <ClInclude Include="FFmpegReader.h" />
     <ClInclude Include="ILogProvider.h" />
     <ClInclude Include="FFmpegInteropLogging.h" />
     <ClInclude Include="MediaThumbnailData.h" />
     <ClInclude Include="VideoFrame.h" />
-    <ClInclude Include="FFmpegInteropConfig.h" />
+    <ClInclude Include="MediaSourceConfig.h" />
     <ClInclude Include="StreamInfo.h" />
     <ClInclude Include="FrameGrabber.h" />
     <ClInclude Include="AbstractEffectFactory.h">

@@ -18,7 +18,7 @@
 
 #include "pch.h"
 #include "MediaSampleProvider.h"
-#include "FFmpegInteropMSS.h"
+#include "FFmpegMediaSource.h"
 #include "FFmpegReader.h"
 #include "LanguageTagConverter.h"
 #include "AvCodecContextHelpers.h"
@@ -30,7 +30,7 @@ MediaSampleProvider::MediaSampleProvider(
 	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
-	FFmpegInteropConfig^ config,
+	MediaSourceConfig^ config,
 	int streamIndex,
 	HardwareDecoderStatus hardwareDecoderStatus)
 	: m_pReader(reader)

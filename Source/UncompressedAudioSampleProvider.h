@@ -31,7 +31,7 @@ namespace FFmpegInteropX
 			FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			FFmpegInteropConfig^ config, 
+			MediaSourceConfig^ config, 
 			int streamIndex);
 		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
 		IMediaStreamDescriptor^ CreateStreamDescriptor() override;

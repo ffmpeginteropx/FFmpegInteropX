@@ -17,7 +17,7 @@
 //*****************************************************************************
 
 #include "pch.h"
-#include "FFmpegInteropMSS.h"
+#include "FFmpegMediaSource.h"
 #include "CompressedSampleProvider.h"
 #include "H264AVCSampleProvider.h"
 #include "NALPacketSampleProvider.h"
@@ -59,7 +59,7 @@ std::mutex isRegisteredMutex;
 std::map<String^, LanguageEntry^> LanguageTagConverter::map;
 
 // Initialize an FFmpegInteropObject
-FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispatcher^ dispatcher)
+FFmpegMediaSource::FFmpegMediaSource(MediaSourceConfig^ interopConfig, CoreDispatcher^ dispatcher)
 	: config(interopConfig)
 	, thumbnailStreamIndex(AVERROR_STREAM_NOT_FOUND)
 	, isFirstSeek(true)
@@ -87,7 +87,7 @@ FFmpegInteropMSS::FFmpegInteropMSS(FFmpegInteropConfig^ interopConfig, CoreDispa
 	}
 }
 
-FFmpegInteropMSS::~FFmpegInteropMSS()
+FFmpegMediaSource::~FFmpegMediaSource()
 {
 	mutexGuard.lock();
 	if (mss)
@@ -148,7 +148,7 @@ FFmpegInteropMSS::~FFmpegInteropMSS()
 	mutexGuard.unlock();
 }
 
-IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromStreamAsync(IRandomAccessStream^ stream, FFmpegInteropConfig^ config)
+IAsyncOperation<FFmpegMediaSource^>^ FFmpegMediaSource::CreateFromStreamAsync(IRandomAccessStream^ stream, MediaSourceConfig^ config)
 {
 	auto dispatcher = GetCurrentDispatcher();
 	return create_async([stream, config, dispatcher]
@@ -157,7 +157,7 @@ IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromStreamAsync(IRan
 		});
 };
 
-IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromUriAsync(String^ uri, FFmpegInteropConfig^ config)
+IAsyncOperation<FFmpegMediaSource^>^ FFmpegMediaSource::CreateFromUriAsync(String^ uri, MediaSourceConfig^ config)
 {
 	auto dispatcher = GetCurrentDispatcher();
 	return create_async([uri, config, dispatcher]
@@ -166,9 +166,9 @@ IAsyncOperation<FFmpegInteropMSS^>^ FFmpegInteropMSS::CreateFromUriAsync(String^
 		});
 };
 
-FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher)
+FFmpegMediaSource^ FFmpegMediaSource::CreateFromStream(IRandomAccessStream^ stream, MediaSourceConfig^ config, CoreDispatcher^ dispatcher)
 {
-	auto interopMSS = ref new FFmpegInteropMSS(config, dispatcher);
+	auto interopMSS = ref new FFmpegMediaSource(config, dispatcher);
 	auto hr = interopMSS->CreateMediaStreamSource(stream);
 	if (!SUCCEEDED(hr))
 	{
@@ -177,9 +177,9 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromStream(IRandomAccessStream^ stream
 	return interopMSS;
 }
 
-FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher)
+FFmpegMediaSource^ FFmpegMediaSource::CreateFromUri(String^ uri, MediaSourceConfig^ config, CoreDispatcher^ dispatcher)
 {
-	auto interopMSS = ref new FFmpegInteropMSS(config, dispatcher);
+	auto interopMSS = ref new FFmpegMediaSource(config, dispatcher);
 	auto hr = interopMSS->CreateMediaStreamSource(uri);
 	if (!SUCCEEDED(hr))
 	{
@@ -188,13 +188,13 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromUri(String^ uri, FFmpegInteropConf
 	return interopMSS;
 }
 
-MediaStreamSource^ FFmpegInteropMSS::GetMediaStreamSource()
+MediaStreamSource^ FFmpegMediaSource::GetMediaStreamSource()
 {
 	if (this->config->IsFrameGrabber) throw ref new Exception(E_UNEXPECTED);
 	return mss;
 }
 
-MediaSource^ FFmpegInteropMSS::CreateMediaSource()
+MediaSource^ FFmpegMediaSource::CreateMediaSource()
 {
 	for each (auto stream in sampleProviders)
 	{
@@ -234,7 +234,7 @@ MediaSource^ FFmpegInteropMSS::CreateMediaSource()
 	return source;
 }
 
-MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem()
+MediaPlaybackItem^ FFmpegMediaSource::CreateMediaPlaybackItem()
 {
 	mutexGuard.lock();
 	try
@@ -252,7 +252,7 @@ MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem()
 	}
 }
 
-MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem(TimeSpan startTime)
+MediaPlaybackItem^ FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan startTime)
 {
 	mutexGuard.lock();
 	try
@@ -270,7 +270,7 @@ MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem(TimeSpan startTime)
 	}
 }
 
-MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem(TimeSpan startTime, TimeSpan durationLimit)
+MediaPlaybackItem^ FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan startTime, TimeSpan durationLimit)
 {
 	mutexGuard.lock();
 	try
@@ -288,11 +288,11 @@ MediaPlaybackItem^ FFmpegInteropMSS::CreateMediaPlaybackItem(TimeSpan startTime,
 	}
 }
 
-IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName)
+IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName)
 {
 	return create_async([this, stream, streamName]
 		{
-			auto subConfig = ref new FFmpegInteropConfig();
+			auto subConfig = ref new MediaSourceConfig();
 			subConfig->IsExternalSubtitleParser = true;
 			subConfig->DefaultSubtitleStreamName = streamName;
 			subConfig->DefaultSubtitleDelay = this->SubtitleDelay;
@@ -315,7 +315,7 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 				subConfig->AdditionalFFmpegSubtitleOptions->Insert("subfps",
 					videoDescriptor->EncodingProperties->FrameRate->Numerator.ToString() + "/" + videoDescriptor->EncodingProperties->FrameRate->Denominator.ToString());
 			}
-			auto externalSubsParser = FFmpegInteropMSS::CreateFromStream(stream, subConfig, nullptr);
+			auto externalSubsParser = FFmpegMediaSource::CreateFromStream(stream, subConfig, nullptr);
 
 			if (externalSubsParser->SubtitleStreams->Size > 0)
 			{
@@ -391,10 +391,10 @@ IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegInteropMSS::AddExterna
 		});
 }
 
-void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
+void FFmpegMediaSource::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 {
-	audioTracksChangedToken = playbackitem->AudioTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem^, Windows::Foundation::Collections::IVectorChangedEventArgs^>(this, &FFmpegInteropX::FFmpegInteropMSS::OnAudioTracksChanged);
-	subtitlePresentationModeChangedToken = playbackitem->TimedMetadataTracks->PresentationModeChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackTimedMetadataTrackList^, Windows::Media::Playback::TimedMetadataPresentationModeChangedEventArgs^>(this, &FFmpegInteropX::FFmpegInteropMSS::OnPresentationModeChanged);
+	audioTracksChangedToken = playbackitem->AudioTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem^, Windows::Foundation::Collections::IVectorChangedEventArgs^>(this, &FFmpegInteropX::FFmpegMediaSource::OnAudioTracksChanged);
+	subtitlePresentationModeChangedToken = playbackitem->TimedMetadataTracks->PresentationModeChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackTimedMetadataTrackList^, Windows::Media::Playback::TimedMetadataPresentationModeChangedEventArgs^>(this, &FFmpegInteropX::FFmpegMediaSource::OnPresentationModeChanged);
 
 	if (config->AutoSelectForcedSubtitles)
 	{
@@ -417,7 +417,7 @@ void FFmpegInteropMSS::InitializePlaybackItem(MediaPlaybackItem^ playbackitem)
 	}
 }
 
-bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel)
+bool FFmpegMediaSource::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel)
 {
 	bool result = false;
 	if (!config->IsFrameGrabber)
@@ -453,7 +453,7 @@ bool FFmpegInteropMSS::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, 
 }
 
 
-void FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList^ sender, TimedMetadataPresentationModeChangedEventArgs^ args)
+void FFmpegMediaSource::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList^ sender, TimedMetadataPresentationModeChangedEventArgs^ args)
 {
 	mutexGuard.lock();
 	int index = 0;
@@ -476,7 +476,7 @@ void FFmpegInteropMSS::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrack
 	mutexGuard.unlock();
 }
 
-void FFmpegInteropMSS::OnAudioTracksChanged(MediaPlaybackItem^ sender, IVectorChangedEventArgs^ args)
+void FFmpegMediaSource::OnAudioTracksChanged(MediaPlaybackItem^ sender, IVectorChangedEventArgs^ args)
 {
 	mutexGuard.lock();
 	if (sender->AudioTracks->Size == AudioStreams->Size)
@@ -498,7 +498,7 @@ void FFmpegInteropMSS::OnAudioTracksChanged(MediaPlaybackItem^ sender, IVectorCh
 	mutexGuard.unlock();
 }
 
-HRESULT FFmpegInteropMSS::CreateMediaStreamSource(String^ uri)
+HRESULT FFmpegMediaSource::CreateMediaStreamSource(String^ uri)
 {
 	HRESULT hr = S_OK;
 	if (!uri)
@@ -549,7 +549,7 @@ HRESULT FFmpegInteropMSS::CreateMediaStreamSource(String^ uri)
 	return hr;
 }
 
-HRESULT FFmpegInteropMSS::CreateMediaStreamSource(IRandomAccessStream^ stream)
+HRESULT FFmpegMediaSource::CreateMediaStreamSource(IRandomAccessStream^ stream)
 {
 	HRESULT hr = S_OK;
 	if (!stream)
@@ -684,7 +684,7 @@ static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelForm
 	}
 }
 
-HRESULT FFmpegInteropMSS::InitFFmpegContext()
+HRESULT FFmpegMediaSource::InitFFmpegContext()
 {
 	HRESULT hr = S_OK;
 
@@ -947,16 +947,16 @@ HRESULT FFmpegInteropMSS::InitFFmpegContext()
 				mss->CanSeek = true;
 			}
 
-			startingRequestedToken = mss->Starting += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceStartingEventArgs^>(this, &FFmpegInteropMSS::OnStarting);
-			sampleRequestedToken = mss->SampleRequested += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceSampleRequestedEventArgs^>(this, &FFmpegInteropMSS::OnSampleRequested);
-			switchStreamRequestedToken = mss->SwitchStreamsRequested += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceSwitchStreamsRequestedEventArgs^>(this, &FFmpegInteropMSS::OnSwitchStreamsRequested);
+			startingRequestedToken = mss->Starting += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceStartingEventArgs^>(this, &FFmpegMediaSource::OnStarting);
+			sampleRequestedToken = mss->SampleRequested += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceSampleRequestedEventArgs^>(this, &FFmpegMediaSource::OnSampleRequested);
+			switchStreamRequestedToken = mss->SwitchStreamsRequested += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceSwitchStreamsRequestedEventArgs^>(this, &FFmpegMediaSource::OnSwitchStreamsRequested);
 		}
 	}
 
 	return hr;
 }
 
-SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream* avStream, int index)
+SubtitleProvider^ FFmpegMediaSource::CreateSubtitleSampleProvider(AVStream* avStream, int index)
 {
 	HRESULT hr = S_OK;
 	SubtitleProvider^ avSubsStream = nullptr;
@@ -1048,7 +1048,7 @@ SubtitleProvider^ FFmpegInteropMSS::CreateSubtitleSampleProvider(AVStream* avStr
 	return avSubsStream;
 }
 
-MediaSampleProvider^ FFmpegInteropMSS::CreateAudioStream(AVStream* avStream, int index)
+MediaSampleProvider^ FFmpegMediaSource::CreateAudioStream(AVStream* avStream, int index)
 {
 	HRESULT hr = S_OK;
 	MediaSampleProvider^ audioStream = nullptr;
@@ -1124,7 +1124,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateAudioStream(AVStream* avStream, int
 	return audioStream;
 }
 
-MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int index)
+MediaSampleProvider^ FFmpegMediaSource::CreateVideoStream(AVStream* avStream, int index)
 {
 	HRESULT hr = S_OK;
 	MediaSampleProvider^ result = nullptr;
@@ -1264,7 +1264,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoStream(AVStream* avStream, int
 	return result;
 }
 
-void FFmpegInteropMSS::SetSubtitleDelay(TimeSpan offset)
+void FFmpegMediaSource::SetSubtitleDelay(TimeSpan offset)
 {
 	mutexGuard.lock();
 	try
@@ -1282,7 +1282,7 @@ void FFmpegInteropMSS::SetSubtitleDelay(TimeSpan offset)
 	mutexGuard.unlock();
 }
 
-void FFmpegInteropMSS::SetFFmpegAudioFilters(String^ audioEffects)
+void FFmpegMediaSource::SetFFmpegAudioFilters(String^ audioEffects)
 {
 	mutexGuard.lock();
 	if (currentAudioStream)
@@ -1293,7 +1293,7 @@ void FFmpegInteropMSS::SetFFmpegAudioFilters(String^ audioEffects)
 	mutexGuard.unlock();
 }
 
-void FFmpegInteropMSS::SetFFmpegVideoFilters(String^ videoEffects)
+void FFmpegMediaSource::SetFFmpegVideoFilters(String^ videoEffects)
 {
 	mutexGuard.lock();
 	if (currentVideoStream)
@@ -1305,7 +1305,7 @@ void FFmpegInteropMSS::SetFFmpegVideoFilters(String^ videoEffects)
 	mutexGuard.unlock();
 }
 
-void FFmpegInteropMSS::DisableAudioEffects()
+void FFmpegMediaSource::DisableAudioEffects()
 {
 	mutexGuard.lock();
 	if (currentAudioStream)
@@ -1316,7 +1316,7 @@ void FFmpegInteropMSS::DisableAudioEffects()
 	mutexGuard.unlock();
 }
 
-void FFmpegInteropMSS::DisableVideoEffects()
+void FFmpegMediaSource::DisableVideoEffects()
 {
 	mutexGuard.lock();
 	if (currentVideoStream)
@@ -1326,7 +1326,7 @@ void FFmpegInteropMSS::DisableVideoEffects()
 	mutexGuard.unlock();
 }
 
-MediaThumbnailData^ FFmpegInteropMSS::ExtractThumbnail()
+MediaThumbnailData^ FFmpegMediaSource::ExtractThumbnail()
 {
 	if (thumbnailStreamIndex != AVERROR_STREAM_NOT_FOUND)
 	{
@@ -1359,7 +1359,7 @@ MediaThumbnailData^ FFmpegInteropMSS::ExtractThumbnail()
 	return nullptr;
 }
 
-MediaSampleProvider^ FFmpegInteropMSS::CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avAudioCodecCtx, int index)
+MediaSampleProvider^ FFmpegMediaSource::CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avAudioCodecCtx, int index)
 {
 	MediaSampleProvider^ audioSampleProvider;
 	if (avAudioCodecCtx->codec_id == AV_CODEC_ID_AAC && config->PassthroughAudioAAC)
@@ -1394,7 +1394,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateAudioSampleProvider(AVStream* avStr
 	return audioSampleProvider;
 }
 
-MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index)
+MediaSampleProvider^ FFmpegMediaSource::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index)
 {
 	MediaSampleProvider^ videoSampleProvider;
 	VideoEncodingProperties^ videoProperties;
@@ -1514,7 +1514,7 @@ MediaSampleProvider^ FFmpegInteropMSS::CreateVideoSampleProvider(AVStream* avStr
 	return videoSampleProvider;
 }
 
-HRESULT FFmpegInteropMSS::ParseOptions(PropertySet^ ffmpegOptions)
+HRESULT FFmpegMediaSource::ParseOptions(PropertySet^ ffmpegOptions)
 {
 	HRESULT hr = S_OK;
 
@@ -1542,7 +1542,7 @@ HRESULT FFmpegInteropMSS::ParseOptions(PropertySet^ ffmpegOptions)
 	return hr;
 }
 
-void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args)
+void FFmpegMediaSource::OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args)
 {
 	mutexGuard.lock();
 	MediaStreamSourceStartingRequest^ request = args->Request;
@@ -1608,7 +1608,7 @@ void FFmpegInteropMSS::OnStarting(MediaStreamSource^ sender, MediaStreamSourceSt
 	mutexGuard.unlock();
 }
 
-void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource^ sender, MediaStreamSourceSampleRequestedEventArgs^ args)
+void FFmpegMediaSource::OnSampleRequested(Windows::Media::Core::MediaStreamSource^ sender, MediaStreamSourceSampleRequestedEventArgs^ args)
 {
 	mutexGuard.lock();
 	if (mss != nullptr)
@@ -1632,7 +1632,7 @@ void FFmpegInteropMSS::OnSampleRequested(Windows::Media::Core::MediaStreamSource
 	mutexGuard.unlock();
 }
 
-void FFmpegInteropMSS::CheckVideoDeviceChanged()
+void FFmpegMediaSource::CheckVideoDeviceChanged()
 {
 	bool hasDeviceChanged = false;
 	HRESULT hr = S_OK;
@@ -1716,7 +1716,7 @@ void FFmpegInteropMSS::CheckVideoDeviceChanged()
 	}
 }
 
-void FFmpegInteropMSS::OnSwitchStreamsRequested(MediaStreamSource^ sender, MediaStreamSourceSwitchStreamsRequestedEventArgs^ args)
+void FFmpegMediaSource::OnSwitchStreamsRequested(MediaStreamSource^ sender, MediaStreamSourceSwitchStreamsRequestedEventArgs^ args)
 {
 	mutexGuard.lock();
 
@@ -1761,7 +1761,7 @@ void FFmpegInteropMSS::OnSwitchStreamsRequested(MediaStreamSource^ sender, Media
 	mutexGuard.unlock();
 }
 
-HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek)
+HRESULT FFmpegMediaSource::Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek)
 {
 	auto hr = S_OK;
 
@@ -1941,7 +1941,7 @@ HRESULT FFmpegInteropMSS::Seek(TimeSpan position, TimeSpan& actualPosition, bool
 	return hr;
 }
 
-CoreDispatcher^ FFmpegInteropX::FFmpegInteropMSS::GetCurrentDispatcher()
+CoreDispatcher^ FFmpegInteropX::FFmpegMediaSource::GetCurrentDispatcher()
 {
 	try {
 		//try get the current view
@@ -1962,7 +1962,7 @@ CoreDispatcher^ FFmpegInteropX::FFmpegInteropMSS::GetCurrentDispatcher()
 
 }
 
-void FFmpegInteropMSS::OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession^ sender, Platform::Object^ args)
+void FFmpegMediaSource::OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession^ sender, Platform::Object^ args)
 {
 	mutexGuard.lock();
 	lastPosition = actualPosition;
@@ -1973,7 +1973,7 @@ void FFmpegInteropMSS::OnPositionChanged(Windows::Media::Playback::MediaPlayback
 // Static function to read file stream and pass data to FFmpeg. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
 static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
 {
-	FFmpegInteropMSS^ mss = reinterpret_cast<FFmpegInteropMSS^>(ptr);
+	FFmpegMediaSource^ mss = reinterpret_cast<FFmpegMediaSource^>(ptr);
 	ULONG bytesRead = 0;
 	HRESULT hr = mss->fileStreamData->Read(buf, bufSize, &bytesRead);
 
@@ -2015,7 +2015,7 @@ static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
 // Static function to seek in file stream. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
 static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence)
 {
-	FFmpegInteropMSS^ mss = reinterpret_cast<FFmpegInteropMSS^>(ptr);
+	FFmpegMediaSource^ mss = reinterpret_cast<FFmpegMediaSource^>(ptr);
 	if (whence == AVSEEK_SIZE)
 	{
 		// get stream size

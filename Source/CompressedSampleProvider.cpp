@@ -11,7 +11,7 @@ CompressedSampleProvider::CompressedSampleProvider(
 	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
-	FFmpegInteropConfig^ config,
+	MediaSourceConfig^ config,
 	int streamIndex,
 	VideoEncodingProperties^ encodingProperties,
 	HardwareDecoderStatus hardwareDecoderStatus) :
@@ -25,7 +25,7 @@ CompressedSampleProvider::CompressedSampleProvider(
 	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
-	FFmpegInteropConfig^ config,
+	MediaSourceConfig^ config,
 	int streamIndex,
 	AudioEncodingProperties^ encodingProperties,
 	HardwareDecoderStatus hardwareDecoderStatus) :
@@ -40,7 +40,7 @@ CompressedSampleProvider::CompressedSampleProvider(
 	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
-	FFmpegInteropConfig^ config,
+	MediaSourceConfig^ config,
 	int streamIndex,
 	HardwareDecoderStatus hardwareDecoderStatus) :
 	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)

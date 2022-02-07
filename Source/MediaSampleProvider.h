@@ -17,7 +17,7 @@
 //*****************************************************************************
 
 #pragma once
-#include "FFmpegInteropConfig.h"
+#include "MediaSourceConfig.h"
 #include "TimeSpanHelpers.h"
 #include "Enumerations.h"
 #include "StreamInfo.h"
@@ -163,7 +163,7 @@ namespace FFmpegInteropX
 			FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			FFmpegInteropConfig^ config,
+			MediaSourceConfig^ config,
 			int streamIndex,
 			HardwareDecoderStatus hardwareDecoderStatus);
 
@@ -177,7 +177,7 @@ namespace FFmpegInteropX
 		// The FFmpeg context. Because they are complex types
 		// we declare them as internal so they don't get exposed
 		// externally
-		FFmpegInteropConfig^ m_config;
+		MediaSourceConfig^ m_config;
 		FFmpegReader^ m_pReader;
 		AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;

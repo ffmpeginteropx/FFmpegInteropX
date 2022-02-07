@@ -1,6 +1,6 @@
 #pragma once
-#include "FFmpegInteropMSS.h"
-#include "FFmpegInteropConfig.h"
+#include "FFmpegMediaSource.h"
+#include "MediaSourceConfig.h"
 #include "UncompressedVideoSampleProvider.h"
 #include <ppl.h>
 #include <robuffer.h>
@@ -15,13 +15,13 @@ namespace FFmpegInteropX {
 	public ref class FrameGrabber sealed
 	{
 
-		FFmpegInteropMSS^ interopMSS;
+		FFmpegMediaSource^ interopMSS;
 		MediaRatio^ pixelAspectRatio;
 		int width;
 		int height;
 
 	internal:
-		FrameGrabber(FFmpegInteropMSS^ interopMSS) {
+		FrameGrabber(FFmpegMediaSource^ interopMSS) {
 			this->interopMSS = interopMSS;
 		}
 
@@ -58,11 +58,11 @@ namespace FFmpegInteropX {
 		{
 			return create_async([stream]
 			{
-				FFmpegInteropConfig^ config = ref new FFmpegInteropConfig();
+				MediaSourceConfig^ config = ref new MediaSourceConfig();
 				config->IsFrameGrabber = true;
 				config->VideoDecoderMode = VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 
-				auto result = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr);
+				auto result = FFmpegMediaSource::CreateFromStream(stream, config, nullptr);
 				if (result == nullptr)
 				{
 					throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");

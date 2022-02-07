@@ -34,7 +34,7 @@ namespace UnitTest.Windows
             // CreateFromUriAsync should throw if uri is blank with default parameter
             try
             {
-                FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync(string.Empty);
+                FFmpegMediaSource FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(string.Empty);
                 Assert.Fail("Expected exception");
             }
             catch (Exception)
@@ -48,7 +48,7 @@ namespace UnitTest.Windows
             // CreateFromUriAsync should throw when given bad uri
             try
             {
-                FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync("http://This.is.a.bad.uri");
+                FFmpegMediaSource FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync("http://This.is.a.bad.uri");
                 Assert.Fail("Expected exception");
             }
             catch (Exception)
@@ -59,8 +59,8 @@ namespace UnitTest.Windows
         [TestMethod]
         public async Task CreateFromUri_Default()
         {
-            // CreateFromUriAsync should return valid FFmpegInteropMSS object which generates valid MediaStreamSource object
-            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync(Constants.StreamingUriSource);
+            // CreateFromUriAsync should return valid FFmpegMediaSource object which generates valid MediaStreamSource object
+            FFmpegMediaSource FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(Constants.StreamingUriSource);
             Assert.IsNotNull(FFmpegMSS);
 
             // Validate the metadata
@@ -79,8 +79,8 @@ namespace UnitTest.Windows
         [TestMethod]
         public async Task CreateFromUri_Passthrough_Audio()
         {
-            // CreateFromUriAsync should return valid FFmpegInteropMSS object which generates valid MediaStreamSource object
-            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync(Constants.StreamingUriSource, new FFmpegInteropConfig { PassthroughAudioAAC = true });
+            // CreateFromUriAsync should return valid FFmpegMediaSource object which generates valid MediaStreamSource object
+            FFmpegMediaSource FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(Constants.StreamingUriSource, new MediaSourceConfig { PassthroughAudioAAC = true });
             Assert.IsNotNull(FFmpegMSS);
 
             // Validate the metadata
@@ -99,8 +99,8 @@ namespace UnitTest.Windows
         [TestMethod]
         public async Task CreateFromUri_Force_Video()
         {
-            // CreateFromUriAsync should return valid FFmpegInteropMSS object which generates valid MediaStreamSource object
-            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync(Constants.StreamingUriSource, new FFmpegInteropConfig { VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder });
+            // CreateFromUriAsync should return valid FFmpegMediaSource object which generates valid MediaStreamSource object
+            FFmpegMediaSource FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(Constants.StreamingUriSource, new MediaSourceConfig { VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder });
             Assert.IsNotNull(FFmpegMSS);
 
             // Validate the metadata
@@ -125,8 +125,8 @@ namespace UnitTest.Windows
             options.Add("stimeout", 100000);
             Assert.IsNotNull(options);
 
-            // CreateFromUriAsync should return valid FFmpegInteropMSS object which generates valid MediaStreamSource object
-            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync(Constants.StreamingUriSource, new FFmpegInteropConfig { FFmpegOptions = options });
+            // CreateFromUriAsync should return valid FFmpegMediaSource object which generates valid MediaStreamSource object
+            FFmpegMediaSource FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(Constants.StreamingUriSource, new MediaSourceConfig { FFmpegOptions = options });
             Assert.IsNotNull(FFmpegMSS);
 
             // Validate the metadata

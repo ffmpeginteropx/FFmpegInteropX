@@ -36,7 +36,7 @@ UncompressedAudioSampleProvider::UncompressedAudioSampleProvider(
 	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
-	FFmpegInteropConfig^ config,
+	MediaSourceConfig^ config,
 	int streamIndex)
 	: UncompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, HardwareDecoderStatus::Unknown)
 	, m_pSwrCtx(nullptr)

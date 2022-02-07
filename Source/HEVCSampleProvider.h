@@ -32,7 +32,7 @@ namespace FFmpegInteropX
 			FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			FFmpegInteropConfig^ config, 
+			MediaSourceConfig^ config, 
 			int streamIndex,
 			VideoEncodingProperties^ encodingProperties,
 			HardwareDecoderStatus hardwareDecoderStatus);

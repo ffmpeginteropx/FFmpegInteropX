@@ -13,7 +13,7 @@ namespace FFmpegInteropX
 		SubtitleProviderSsaAss(FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			FFmpegInteropConfig^ config,
+			MediaSourceConfig^ config,
 			int index,
 			CoreDispatcher^ dispatcher,
 			AttachedFileHelper^ attachedFileHelper)

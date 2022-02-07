@@ -32,7 +32,7 @@ namespace FFmpegInteropX
 
 	internal:
 
-		AttachedFileHelper(FFmpegInteropConfig^ config)
+		AttachedFileHelper(MediaSourceConfig^ config)
 		{
 			this->config = config;
 		}
@@ -95,7 +95,7 @@ namespace FFmpegInteropX
 	private:
 		std::map<String^, StorageFile^> extractedFiles;
 		Vector<AttachedFile^>^ attachedFiles = ref new Vector<AttachedFile^>();
-		FFmpegInteropConfig^ config;
+		MediaSourceConfig^ config;
 		String^ instanceId;
 	};
 

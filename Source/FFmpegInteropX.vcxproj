@@ -113,9 +113,9 @@
     <ClInclude Include="D3D11VideoSampleProvider.h" />
     <ClInclude Include="DirectXInteropHelper.h" />
     <ClInclude Include="Enumerations.h" />
-    <ClInclude Include="FFmpegInteropConfig.h" />
+    <ClInclude Include="MediaSourceConfig.h" />
     <ClInclude Include="FFmpegInteropLogging.h" />
-    <ClInclude Include="FFmpegInteropMSS.h" />
+    <ClInclude Include="FFmpegMediaSource.h" />
     <ClInclude Include="FFmpegReader.h" />
     <ClInclude Include="FrameGrabber.h" />
     <ClInclude Include="H264AVCSampleProvider.h" />
@@ -155,7 +155,7 @@
     <ClCompile Include="CharacterEncoding.cpp" />
     <ClCompile Include="DirectXInteropHelper.cpp" />
     <ClCompile Include="FFmpegInteropLogging.cpp" />
-    <ClCompile Include="FFmpegInteropMSS.cpp" />
+    <ClCompile Include="FFmpegMediaSource.cpp" />
     <ClCompile Include="FFmpegReader.cpp" />
     <ClCompile Include="FrameGrabber.cpp" />
     <ClCompile Include="H264AVCSampleProvider.cpp" />

@@ -56,20 +56,20 @@ namespace FFmpegInteropX
 	};
 
 	///<summary>This is the main class that allows media playback with ffmpeg.</summary>
-	public ref class FFmpegInteropMSS sealed
+	public ref class FFmpegMediaSource sealed
 	{
 	public:
-		///<summary>Creates a FFmpegInteropMSS from a stream.</summary>
-		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromStreamAsync(IRandomAccessStream^ stream, FFmpegInteropConfig^ config);
+		///<summary>Creates a FFmpegMediaSource from a stream.</summary>
+		static IAsyncOperation<FFmpegMediaSource^>^ CreateFromStreamAsync(IRandomAccessStream^ stream, MediaSourceConfig^ config);
 
-		///<summary>Creates a FFmpegInteropMSS from a stream.</summary>
-		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromStreamAsync(IRandomAccessStream^ stream) { return CreateFromStreamAsync(stream, ref new FFmpegInteropConfig()); }
+		///<summary>Creates a FFmpegMediaSource from a stream.</summary>
+		static IAsyncOperation<FFmpegMediaSource^>^ CreateFromStreamAsync(IRandomAccessStream^ stream) { return CreateFromStreamAsync(stream, ref new MediaSourceConfig()); }
 
-		///<summary>Creates a FFmpegInteropMSS from a Uri.</summary>
-		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromUriAsync(String^ uri, FFmpegInteropConfig^ config);
+		///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
+		static IAsyncOperation<FFmpegMediaSource^>^ CreateFromUriAsync(String^ uri, MediaSourceConfig^ config);
 
-		///<summary>Creates a FFmpegInteropMSS from a Uri.</summary>
-		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromUriAsync(String^ uri) { return CreateFromUriAsync(uri, ref new FFmpegInteropConfig()); }
+		///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
+		static IAsyncOperation<FFmpegMediaSource^>^ CreateFromUriAsync(String^ uri) { return CreateFromUriAsync(uri, ref new MediaSourceConfig()); }
 
 		///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
 		void SetSubtitleDelay(TimeSpan delay);
@@ -116,15 +116,15 @@ namespace FFmpegInteropX
 			return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName);
 		}
 
-		///<summary>Destroys the FFmpegInteropMSS instance and releases all resources.</summary>
-		virtual ~FFmpegInteropMSS();
+		///<summary>Destroys the FFmpegMediaSource instance and releases all resources.</summary>
+		virtual ~FFmpegMediaSource();
 
 		// Properties
 
 		///<summary>Gets the configuration that has been passed when creating the MSS instance.</summary>
-		property FFmpegInteropConfig^ Configuration
+		property MediaSourceConfig^ Configuration
 		{
-			FFmpegInteropConfig^ get()
+			MediaSourceConfig^ get()
 			{
 				return config;
 			}
@@ -236,14 +236,14 @@ namespace FFmpegInteropX
 				session = value;
 				if (value)
 				{
-					sessionPositionEvent = value->PositionChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackSession^, Platform::Object^>(this, &FFmpegInteropX::FFmpegInteropMSS::OnPositionChanged);
+					sessionPositionEvent = value->PositionChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackSession^, Platform::Object^>(this, &FFmpegInteropX::FFmpegMediaSource::OnPositionChanged);
 				}
 				mutexGuard.unlock();
 			}
 		}
 
 	private:
-		FFmpegInteropMSS(FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
+		FFmpegMediaSource(MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
 
 		HRESULT CreateMediaStreamSource(IRandomAccessStream^ stream);
 		HRESULT CreateMediaStreamSource(String^ uri);
@@ -277,8 +277,8 @@ namespace FFmpegInteropX
 		}
 
 	internal:
-		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
-		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
+		static FFmpegMediaSource^ CreateFromStream(IRandomAccessStream^ stream, MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
+		static FFmpegMediaSource^ CreateFromUri(String^ uri, MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
 		HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek);
 
 		property MediaSampleProvider^ VideoSampleProvider
@@ -295,7 +295,7 @@ namespace FFmpegInteropX
 		AVFormatContext* avFormatCtx;
 		IStream* fileStreamData;
 		ByteOrderMark streamByteOrderMark;
-		FFmpegInteropConfig^ config;
+		MediaSourceConfig^ config;
 
 	private:
 

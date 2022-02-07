@@ -18,11 +18,11 @@ namespace WFM = Windows::Foundation::Metadata;
 
 namespace FFmpegInteropX
 {
-	///<summary>This class allows configuring the FFmpegInteropMSS instance.</summary>
-	public ref class FFmpegInteropConfig sealed
+	///<summary>This class allows configuring the FFmpegMediaSource instance.</summary>
+	public ref class MediaSourceConfig sealed
 	{
 	public:
-		FFmpegInteropConfig()
+		MediaSourceConfig()
 		{
 			PassthroughAudioMP3 = false;
 			PassthroughAudioAAC = false;
@@ -223,13 +223,13 @@ namespace FFmpegInteropX
 		}
 
 		///<summary>The subtitle delay will be initially applied to all subtitle tracks.
-		///Use SetSubtitleDelay() on the FFmpegInteropMSS instance if you want to change the delay during playback.</summary>
+		///Use SetSubtitleDelay() on the FFmpegMediaSource instance if you want to change the delay during playback.</summary>
 		property TimeSpan DefaultSubtitleDelay;
 
-		/// <summary>FFmpegInteropMSS will seek to the closest video keyframe, if set to true.</summary>
+		/// <summary>FFmpegMediaSource will seek to the closest video keyframe, if set to true.</summary>
 		/// <remarks>
 		/// For FastSeek to work, you must use the MediaPlayer for playback, and assign
-		/// MediaPlayer.PlaybackSession to the FFmpegInteropMSS.PlaybackSession property.
+		/// MediaPlayer.PlaybackSession to the FFmpegMediaSource.PlaybackSession property.
 		/// </remarks>
 		property bool FastSeek;
 
@@ -265,11 +265,11 @@ namespace FFmpegInteropX
 		property bool PreventModifiedSubtitleDurationOverlap;
 
 
-		///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegInteropMSS.SetFFmpegVideoFilters().</summary>
+		///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
 		///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
 		property String^ FFmpegVideoFilters;
 
-		///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegInteropMSS.SetFFmpegAudioFilters().</summary>
+		///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegMediaSource.SetFFmpegAudioFilters().</summary>
 		property String^ FFmpegAudioFilters;
 
 		///<summary>Downmix multi-channel audio streams to stereo format.</summary>

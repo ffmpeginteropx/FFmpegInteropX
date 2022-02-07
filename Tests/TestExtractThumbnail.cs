@@ -39,8 +39,8 @@ namespace UnitTest.Windows
             var file = await StorageFile.GetFileFromApplicationUriAsync(uri);
             var stream = await file.OpenAsync(FileAccessMode.Read);
 
-            // CreateFFmpegInteropMSSFromUri should return null if uri is blank with default parameter
-            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(stream);
+            // CreateFFmpegMediaSourceFromUri should return null if uri is blank with default parameter
+            FFmpegMediaSource FFmpegMSS = await FFmpegMediaSource.CreateFromStreamAsync(stream);
             Assert.IsNotNull(FFmpegMSS);
 
             var thumbnailData = FFmpegMSS.ExtractThumbnail();
@@ -69,7 +69,7 @@ namespace UnitTest.Windows
             IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
             Assert.IsNotNull(readStream);
 
-            // CreateFromStreamAsync should return valid FFmpegInteropMSS object which generates valid MediaStreamSource object
+            // CreateFromStreamAsync should return valid FFmpegMediaSource object which generates valid MediaStreamSource object
             var frameGrabber = await FrameGrabber.CreateFromStreamAsync(readStream);
             var frame = await frameGrabber.ExtractVideoFrameAsync(TimeSpan.Zero);
             Assert.IsNotNull(frame);

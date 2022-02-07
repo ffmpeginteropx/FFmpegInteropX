@@ -42,8 +42,8 @@ namespace MediaPlayerCS
 {
     public sealed partial class MainPage : Page
     {
-        private FFmpegInteropMSS FFmpegMSS;
-        private FFmpegInteropMSS actualFFmpegMSS;
+        private FFmpegMediaSource FFmpegMSS;
+        private FFmpegMediaSource actualFFmpegMSS;
         private StorageFile currentFile;
         private MediaPlaybackItem playbackItem;
         private MediaPlayer mediaPlayer;
@@ -62,7 +62,7 @@ namespace MediaPlayerCS
 
         public MainPage()
         {
-            Config = new FFmpegInteropConfig();
+            Config = new MediaSourceConfig();
 
             this.InitializeComponent();
 
@@ -152,7 +152,7 @@ namespace MediaPlayerCS
             }
         }
 
-        public FFmpegInteropConfig Config { get; set; }
+        public MediaSourceConfig Config { get; set; }
 
         private async void OpenLocalFile(object sender, RoutedEventArgs e)
         {
@@ -175,7 +175,7 @@ namespace MediaPlayerCS
             currentFile = file;
             mediaPlayer.Source = null;
 
-            // Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
+            // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
             IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
 
             try
@@ -183,8 +183,8 @@ namespace MediaPlayerCS
                 StorageApplicationPermissions.FutureAccessList.Clear();
                 StorageApplicationPermissions.FutureAccessList.Add(file);
 
-                // Instantiate FFmpegInteropMSS using the opened local file stream
-                FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, Config);
+                // Instantiate FFmpegMediaSource using the opened local file stream
+                FFmpegMSS = await FFmpegMediaSource.CreateFromStreamAsync(readStream, Config);
                 var tags = FFmpegMSS.MetadataTags.ToArray();
                 if (AutoCreatePlaybackItem)
                 {
@@ -233,9 +233,9 @@ namespace MediaPlayerCS
                     // Config.FFmpegOptions.Add("rtsp_flags", "prefer_tcp");
                     // Config.FFmpegOptions.Add("stimeout", 100000);
 
-                    // Instantiate FFmpegInteropMSS using the URI
+                    // Instantiate FFmpegMediaSource using the URI
                     mediaPlayer.Source = null;
-                    FFmpegMSS = await FFmpegInteropMSS.CreateFromUriAsync(uri, Config);
+                    FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
 
                     var source = FFmpegMSS.CreateMediaPlaybackItem();
 

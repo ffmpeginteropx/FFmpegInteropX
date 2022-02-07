@@ -36,7 +36,7 @@ namespace UnitTest.Windows
             // CreateFromStreamAsync should throw if stream is null with default parameter
             try
             {
-                await FFmpegInteropMSS.CreateFromStreamAsync(null);
+                await FFmpegMediaSource.CreateFromStreamAsync(null);
                 Assert.Fail("Expected exception");
             }
             catch (Exception)
@@ -59,7 +59,7 @@ namespace UnitTest.Windows
             // CreateFromStreamAsync should throw since test.txt is not a valid media file
             try
             {
-                await FFmpegInteropMSS.CreateFromStreamAsync(readStream);
+                await FFmpegMediaSource.CreateFromStreamAsync(readStream);
                 Assert.Fail("Expected exception");
             }
             catch (Exception)
@@ -80,8 +80,8 @@ namespace UnitTest.Windows
             IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
             Assert.IsNotNull(readStream);
 
-            // CreateFromStreamAsync should return valid FFmpegInteropMSS object which generates valid MediaStreamSource object
-            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream);
+            // CreateFromStreamAsync should return valid FFmpegMediaSource object which generates valid MediaStreamSource object
+            FFmpegMediaSource FFmpegMSS = await FFmpegMediaSource.CreateFromStreamAsync(readStream);
             Assert.IsNotNull(FFmpegMSS);
 
             MediaStreamSource mss = FFmpegMSS.GetMediaStreamSource();
@@ -105,8 +105,8 @@ namespace UnitTest.Windows
             IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
             Assert.IsNotNull(readStream);
 
-            // CreateFromStreamAsync should return valid FFmpegInteropMSS object which generates valid MediaStreamSource object
-            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, new FFmpegInteropConfig { PassthroughAudioAAC = true });
+            // CreateFromStreamAsync should return valid FFmpegMediaSource object which generates valid MediaStreamSource object
+            FFmpegMediaSource FFmpegMSS = await FFmpegMediaSource.CreateFromStreamAsync(readStream, new MediaSourceConfig { PassthroughAudioAAC = true });
             Assert.IsNotNull(FFmpegMSS);
 
             MediaStreamSource mss = FFmpegMSS.GetMediaStreamSource();
@@ -130,8 +130,8 @@ namespace UnitTest.Windows
             IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
             Assert.IsNotNull(readStream);
 
-            // CreateFromStreamAsync should return valid FFmpegInteropMSS object which generates valid MediaStreamSource object
-            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, new FFmpegInteropConfig { VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder });
+            // CreateFromStreamAsync should return valid FFmpegMediaSource object which generates valid MediaStreamSource object
+            FFmpegMediaSource FFmpegMSS = await FFmpegMediaSource.CreateFromStreamAsync(readStream, new MediaSourceConfig { VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder });
             Assert.IsNotNull(FFmpegMSS);
 
             MediaStreamSource mss = FFmpegMSS.GetMediaStreamSource();
@@ -161,8 +161,8 @@ namespace UnitTest.Windows
             options.Add("stimeout", 100000);
             Assert.IsNotNull(options);
 
-            // CreateFromStreamAsync should return valid FFmpegInteropMSS object which generates valid MediaStreamSource object
-            FFmpegInteropMSS FFmpegMSS = await FFmpegInteropMSS.CreateFromStreamAsync(readStream, new FFmpegInteropConfig { FFmpegOptions = options });
+            // CreateFromStreamAsync should return valid FFmpegMediaSource object which generates valid MediaStreamSource object
+            FFmpegMediaSource FFmpegMSS = await FFmpegMediaSource.CreateFromStreamAsync(readStream, new MediaSourceConfig { FFmpegOptions = options });
             Assert.IsNotNull(FFmpegMSS);
 
             // Validate the metadata

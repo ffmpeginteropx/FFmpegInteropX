@@ -36,7 +36,7 @@ UncompressedVideoSampleProvider::UncompressedVideoSampleProvider(
 	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
-	FFmpegInteropConfig^ config,
+	MediaSourceConfig^ config,
 	int streamIndex,
 	HardwareDecoderStatus hardwareDecoderStatus)
 	: UncompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
