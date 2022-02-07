@@ -70,7 +70,7 @@ namespace FFmpegInteropX
 
 				extractedFiles[attachment->Name] = file;
 			}
-			return file;
+			co_return file;
 		};
 
 		static task<void> CleanupTempFiles(String^ folderName, String^ instanceId)

@@ -52,7 +52,7 @@
     <AppxManifest Include="Package.appxmanifest" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(SolutionDir)FFmpegInterop.pfx" />
+    <None Include="$(SolutionDir)FFmpegInteropX.pfx" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
