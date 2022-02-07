@@ -18,7 +18,6 @@
 
 #pragma once
 #include "FFmpegInteropConfig.h"
-#include "AvEffectDefinition.h"
 #include "TimeSpanHelpers.h"
 #include "Enumerations.h"
 #include "StreamInfo.h"

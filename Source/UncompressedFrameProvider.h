@@ -1,6 +1,5 @@
 #pragma once
 #include "IAvEffect.h"
-#include "AvEffectDefinition.h"
 #include "AbstractEffectFactory.h"
 #include <mutex>
 

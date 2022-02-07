@@ -8,7 +8,6 @@ extern "C"
 #include "Enumerations.h"
 #include "CharacterEncoding.h"
 #include "TimeSpanHelpers.h"
-#include "AvEffectDefinition.h"
 
 using namespace Platform;
 using namespace Windows::Foundation;
@@ -30,22 +29,10 @@ namespace FFmpegInteropX
 
 			VideoDecoderMode = FFmpegInteropX::VideoDecoderMode::Automatic;
 
-#pragma warning (disable: 4973)
-
-			PassthroughVideoH264 = true;
-			PassthroughVideoH264MaxProfile = FF_PROFILE_H264_HIGH;
-			PassthroughVideoH264MaxLevel = 41;
-			PassthroughVideoHEVC = true;
-			PassthroughVideoHEVCMaxProfile = FF_PROFILE_HEVC_MAIN_10;
-			PassthroughVideoHEVCMaxLevel = -1;
-			PassthroughVideoWMV3 = true;
-			PassthroughVideoVC1 = true;
-			PassthroughVideoMPEG2 = false;
-			PassthroughVideoVP9 = false;
-			PassthroughVideoVP8 = false;
-			
-#pragma warning (default: 4973)
-
+			SystemDecoderH264MaxProfile = FF_PROFILE_H264_HIGH;
+			SystemDecoderH264MaxLevel = 41;
+			SystemDecoderHEVCMaxProfile = FF_PROFILE_HEVC_MAIN_10;
+			SystemDecoderHEVCMaxLevel = -1;
 			VideoOutputAllowIyuv = false;
 			VideoOutputAllow10bit = true;
 			VideoOutputAllowBgra8 = false;
@@ -148,59 +135,21 @@ namespace FFmpegInteropX
 		///<summary>Sets the video decoder mode. Default is AutoDetection.</summary>
 		property FFmpegInteropX::VideoDecoderMode VideoDecoderMode;
 
-		///<summary>Allow passthrough for H264 video.</summary>
-		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]
-		property bool PassthroughVideoH264;
+		///<summary>Max profile allowed for H264 system decoder. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
+		property int SystemDecoderH264MaxProfile;
 
-		///<summary>Allow passthrough for H264 video (High10 Profile - 10 Bit). Not recommended: Neither Windows codecs nor known HW decoders support Hi10P!</summary>
-		[WFM::Deprecated("Use PassthroughVideoH264MaxProfile and PassthroughVideoH264MaxLevel.", WFM::DeprecationType::Deprecate, 0x0)]
-		property bool PassthroughVideoH264Hi10P;
-
-		///<summary>Max profile allowed for H264 passthrough. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
-		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]
-		property int PassthroughVideoH264MaxProfile;
-
-		///<summary>Max level allowed for H264 passthrough. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
+		///<summary>Max level allowed for H264 system decoder. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
 		///<remarks>Most H264 HW decoders only support Level 4.1, so this is the default.</remarks>
-		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]
-		property int PassthroughVideoH264MaxLevel;
+		property int SystemDecoderH264MaxLevel;
 
-		///<summary>Allow passthrough for HEVC video.</summary>
-		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]
-		property bool PassthroughVideoHEVC;
 
-		///<summary>Max profile allowed for HEVC passthrough. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
-		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]
-		property int PassthroughVideoHEVCMaxProfile;
+		///<summary>Max profile allowed for HEVC system decoder. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
+		property int SystemDecoderHEVCMaxProfile;
 
-		///<summary>Max level allowed for HEVC passthrough. Default: Disabled (-1).</summary>
+		///<summary>Max level allowed for HEVC system decoder. Default: Disabled (-1).</summary>
 		///<remarks>Encoded as: 30*Major + 3*Minor. So Level 6.0 = 30*6 = 180, 5.1 = 30*5 + 3*1 = 163, 4.1 = 123.
 		///Many HEVC HW decoders support even very high levels, so we disable the check by default.</remarks>
-		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]
-		property int PassthroughVideoHEVCMaxLevel;
-
-		///<summary>Allow passthrough for WMV3 video.</summary>
-		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]
-		property bool PassthroughVideoWMV3;
-
-		///<summary>Allow passthrough for VC-1 video.</summary>
-		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]
-		property bool PassthroughVideoVC1;
-
-		///<summary>Allow passthrough for MPEG-2 video. Requires "MPEG-2 Video Extension" from Windows Store.</summary>
-		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]
-		property bool PassthroughVideoMPEG2;
-
-		///<summary>Allow passthrough for VP9 video. Requires "VP9 Video Extensions" from Windows Store.</summary>
-		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]
-		property bool PassthroughVideoVP9;
-
-		///<summary>Allow passthrough for VP8 video. Requires "VP9 Video Extensions" from Windows Store.</summary>
-		[WFM::Deprecated("Manual selection of passthrough to system decoders is deprecated. Use VideoDecoderMode.AutomaticSystemDecoder or VideoDecoderMode.ForceSystemDecoder.", WFM::DeprecationType::Deprecate, 0x0)]
-		property bool PassthroughVideoVP8;
-
-
-
+		property int SystemDecoderHEVCMaxLevel;
 		///<summary>Allow video output in IYuv format.</summary>
 		property bool VideoOutputAllowIyuv;
 		
@@ -212,7 +161,6 @@ namespace FFmpegInteropX
 		
 		///<summary>Allow video output in NV12 format.</summary>
 		property bool VideoOutputAllowNv12;
-
 
 
 		///<summary>The maximum number of broken frames to skipp in a stream before stopping decoding.</summary>

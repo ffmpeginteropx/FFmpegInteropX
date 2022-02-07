@@ -18,17 +18,17 @@
 
 #pragma once
 #include <mutex>
+#include <collection.h>
+
 #include "Enumerations.h"
 #include "FFmpegReader.h"
 #include "MediaSampleProvider.h"
 #include "MediaThumbnailData.h"
 #include "VideoFrame.h"
-#include "AvEffectDefinition.h"
 #include "StreamInfo.h"
 #include "SubtitleProvider.h"
 #include "AttachedFileHelper.h"
 #include "CodecChecker.h"
-#include <collection.h>
 #include "MediaMetadata.h"
 
 using namespace Platform;
@@ -71,33 +71,12 @@ namespace FFmpegInteropX
 		///<summary>Creates a FFmpegInteropMSS from a Uri.</summary>
 		static IAsyncOperation<FFmpegInteropMSS^>^ CreateFromUriAsync(String^ uri) { return CreateFromUriAsync(uri, ref new FFmpegInteropConfig()); }
 
-		[WFM::Deprecated("Use the CreateFromStreamAsync method.", WFM::DeprecationType::Deprecate, 0x0)]
-		static FFmpegInteropMSS^ CreateFFmpegInteropMSSFromStream(IRandomAccessStream^ stream, bool forceAudioDecode, bool forceVideoDecode, PropertySet^ ffmpegOptions, MediaStreamSource^ mss);
-		[WFM::Deprecated("Use the CreateFromStreamAsync method.", WFM::DeprecationType::Deprecate, 0x0)]
-		static FFmpegInteropMSS^ CreateFFmpegInteropMSSFromStream(IRandomAccessStream^ stream, bool forceAudioDecode, bool forceVideoDecode, PropertySet^ ffmpegOptions);
-		[WFM::Deprecated("Use the CreateFromStreamAsync method.", WFM::DeprecationType::Deprecate, 0x0)]
-		static FFmpegInteropMSS^ CreateFFmpegInteropMSSFromStream(IRandomAccessStream^ stream, bool forceAudioDecode, bool forceVideoDecode);
-
-		[WFM::Deprecated("Use the CreateFromUriAsync method.", WFM::DeprecationType::Deprecate, 0x0)]
-		static FFmpegInteropMSS^ CreateFFmpegInteropMSSFromUri(String^ uri, bool forceAudioDecode, bool forceVideoDecode, PropertySet^ ffmpegOptions);
-		[WFM::Deprecated("Use the CreateFromUriAsync method.", WFM::DeprecationType::Deprecate, 0x0)]
-		static FFmpegInteropMSS^ CreateFFmpegInteropMSSFromUri(String^ uri, bool forceAudioDecode, bool forceVideoDecode);
-
 		///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
 		void SetSubtitleDelay(TimeSpan delay);
 
 		///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
-		[WFM::Deprecated("Use SetFFmpegAudioFilters method.", WFM::DeprecationType::Deprecate, 0x0)]
-		void SetAudioEffects(IVectorView<AvEffectDefinition^>^ audioEffects);
-
-		///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
 		[WFM::DefaultOverload]
 		void SetFFmpegAudioFilters(String^ audioFilters);
-
-		///<summary>Sets FFmpeg video effects. This replaces any effects which were already set.</summary>
-		///<remarks>Using FFmpeg video effects will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-		[WFM::Deprecated("Use SetFFmpegVideoFilters method.", WFM::DeprecationType::Deprecate, 0x0)]
-		void SetVideoEffects(IVectorView<AvEffectDefinition^>^ videoEffects);
 
 		///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
 		///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
@@ -169,16 +148,6 @@ namespace FFmpegInteropX
 			};
 		};
 
-		///<summary>Gets the first video stream information.</summary>
-		[WFM::Deprecated("Use the CurrentVideoStream property.", WFM::DeprecationType::Deprecate, 0x0)]
-		property VideoStreamInfo^ VideoStream
-		{
-			VideoStreamInfo^ get()
-			{
-				return videoStrInfos->Size > 0 ? videoStrInfos->GetAt(0) : nullptr;
-			}
-		}
-
 		///<summary>Gets the current video stream information.</summary>
 		property VideoStreamInfo^ CurrentVideoStream
 		{
@@ -229,42 +198,6 @@ namespace FFmpegInteropX
 			bool get() { return thumbnailStreamIndex; }
 		}
 
-		[WFM::Deprecated("Use the AudioStreams property.", WFM::DeprecationType::Deprecate, 0x0)]
-		property AudioStreamDescriptor^ AudioDescriptor
-		{
-			AudioStreamDescriptor^ get()
-			{
-				return currentAudioStream ? dynamic_cast<AudioStreamDescriptor^>(currentAudioStream->StreamDescriptor) : nullptr;
-			};
-		};
-
-		[WFM::Deprecated("Use the VideoStream property.", WFM::DeprecationType::Deprecate, 0x0)]
-		property VideoStreamDescriptor^ VideoDescriptor
-		{
-			VideoStreamDescriptor^ get()
-			{
-				return currentVideoStream ? dynamic_cast<VideoStreamDescriptor^>(currentVideoStream->StreamDescriptor) : nullptr;
-			};
-		};
-
-		[WFM::Deprecated("Use the VideoStream property.", WFM::DeprecationType::Deprecate, 0x0)]
-		property String^ VideoCodecName
-		{
-			String^ get()
-			{
-				return currentVideoStream ? currentVideoStream->CodecName : nullptr;
-			};
-		};
-
-		[WFM::Deprecated("Use the AudioStreams property.", WFM::DeprecationType::Deprecate, 0x0)]
-		property String^ AudioCodecName
-		{
-			String^ get()
-			{
-				return audioStreamInfos->Size > 0 ? audioStreamInfos->GetAt(0)->CodecName : nullptr;
-			};
-		};
-
 		///<summary>Gets the MediaPlaybackItem that was created before by using CreateMediaPlaybackItem.</summary>
 		property MediaPlaybackItem^ PlaybackItem
 		{
@@ -312,7 +245,7 @@ namespace FFmpegInteropX
 	private:
 		FFmpegInteropMSS(FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 
-		HRESULT CreateMediaStreamSource(IRandomAccessStream^ stream, MediaStreamSource^ mss);
+		HRESULT CreateMediaStreamSource(IRandomAccessStream^ stream);
 		HRESULT CreateMediaStreamSource(String^ uri);
 		HRESULT InitFFmpegContext();
 		MediaSource^ CreateMediaSource();
@@ -329,7 +262,7 @@ namespace FFmpegInteropX
 		void OnAudioTracksChanged(MediaPlaybackItem^ sender, IVectorChangedEventArgs^ args);
 		void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList^ sender, TimedMetadataPresentationModeChangedEventArgs^ args);
 		void InitializePlaybackItem(MediaPlaybackItem^ playbackitem);
-		bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, HardwareDecoderStatus& hardwareDecoderStatus, bool manualStatus, int maxProfile, int maxLevel);
+		bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
 
 		void FlushStreams()
 		{
@@ -344,7 +277,7 @@ namespace FFmpegInteropX
 		}
 
 	internal:
-		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, MediaStreamSource^ mss, CoreDispatcher^ dispatcher);
+		static FFmpegInteropMSS^ CreateFromStream(IRandomAccessStream^ stream, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config, CoreDispatcher^ dispatcher);
 		HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek);
 

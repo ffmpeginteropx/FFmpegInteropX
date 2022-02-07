@@ -62,14 +62,10 @@ namespace FFmpegInteropX {
 				config->IsFrameGrabber = true;
 				config->VideoDecoderMode = VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 
-				auto result = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr, nullptr);
+				auto result = FFmpegInteropMSS::CreateFromStream(stream, config, nullptr);
 				if (result == nullptr)
 				{
 					throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
-				}
-				if (result->VideoStream == nullptr)
-				{
-					throw ref new Exception(E_FAIL, "No video stream found in file (or no suitable decoder available).");
 				}
 				if (result->VideoSampleProvider == nullptr)
 				{

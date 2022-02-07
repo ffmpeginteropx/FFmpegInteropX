@@ -91,9 +91,6 @@
     <ClInclude Include="AudioFilter.h">
       <Filter>Effects</Filter>
     </ClInclude>
-    <ClInclude Include="AvEffectDefinition.h">
-      <Filter>Effects</Filter>
-    </ClInclude>
     <ClInclude Include="IAvEffect.h">
       <Filter>Effects</Filter>
     </ClInclude>

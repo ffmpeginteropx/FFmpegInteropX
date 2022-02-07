@@ -1,5 +1,4 @@
 #pragma once
-#include "AvEffectDefinition.h"
 #include "IAvEffect.h"
 
 using namespace Windows::Foundation::Collections;

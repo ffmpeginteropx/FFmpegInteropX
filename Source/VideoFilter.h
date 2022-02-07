@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "IAvEffect.h"
-#include "AvEffectDefinition.h"
 #include <sstream>
 
 extern "C"

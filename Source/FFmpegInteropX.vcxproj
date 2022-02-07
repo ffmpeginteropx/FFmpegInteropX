@@ -104,7 +104,6 @@
     <ClInclude Include="AudioEffectFactory.h" />
     <ClInclude Include="AudioFilter.h" />
     <ClInclude Include="AvCodecContextHelpers.h" />
-    <ClInclude Include="AvEffectDefinition.h" />
     <ClInclude Include="CodecChecker.h" />
     <ClInclude Include="BasicVideoEffect.h" />
     <ClInclude Include="CodecRequiredEventArgs.h" />
