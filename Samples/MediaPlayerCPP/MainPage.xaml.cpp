@@ -57,7 +57,7 @@ MainPage::MainPage()
 	Splitter->IsPaneOpen = true;
 	AutoDetect->IsOn = true;
 
-	VideoEffectConfiguration = ref new FFmpegInterop::VideoEffectConfiguration();
+	VideoEffectConfiguration = ref new FFmpegInteropX::VideoEffectConfiguration();
 
 	mediaPlayer = ref new MediaPlayer();
 	mediaPlayer->AudioCategory = Windows::Media::Playback::MediaPlayerAudioCategory::Movie;
