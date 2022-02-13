@@ -4,28 +4,35 @@
 
 ## Welcome to FFmpegInteropX
 
-FFmpegInteropX is an open-source project that aims to provide an easy way to use **FFmpeg** in **Windows 10 UWP Apps**. This allows you to decode a lot of formats that are not natively supported on Windows 10.
+FFmpegInteropX is an open-source project that aims to provide an easy way to use **FFmpeg** in **Windows 10/11 UWP Apps**. This allows you to decode a lot of formats that are not natively supported on Windows 10/11.
 
 FFmpegInteropX is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
 
 #### Latest Releases:
-- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.3
-  - Support for AV1 hardware and software decoding
-  - Dynamic detection of AV1 hardware decoding capabilities
-- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.4.100
-  - FFmpeg 4.4.1 build for UWP platform
-  - Added AV1 hardware decoder
-  - Added dav1d library for AV1 software decoding
-  - Added openssl 3.0.1 for secure streaming support (e.g. https, rtmps)
-  - Build system improvements:
-    - Added dockerfile for building inside container (experimental)
-    - Automatic download and installation of all dependencies (both dockerfile and local build)
-    - Support for building all target platforms in parallel
+- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX):
+  - 0.9.4
+    - Support for HDR video!
+  - 0.9.3
+    - Support for AV1 hardware and software decoding
+    - Dynamic detection of AV1 hardware decoding capabilities
+- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 
+  - 5.0.0
+    - FFmpeg 5.0.0 build for UWP platform
+  - 4.4.100
+    - FFmpeg 4.4.1 build for UWP platform
+    - Added AV1 hardware decoder
+    - Added dav1d library for AV1 software decoding
+    - Added openssl 3.0.1 for secure streaming support (e.g. https, rtmps)
+    - Build system improvements:
+      - Added dockerfile for building inside container (experimental)
+      - Automatic download and installation of all dependencies (both dockerfile and local build)
+      - Support for building all target platforms in parallel
 
 ### Some of the important improvements, compared to original version:
 
 - NuGet packages!!
 - Multiple video and audio stream support
+- Support for HDR video
 - Subtitle support, including external subtitle files
 - Native D3D11 hardware decoding for all major formats:
   - H264, HEVC, AV1, VC1, VP8, VP9, WMV3, MPEG2
