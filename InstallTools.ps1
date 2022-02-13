@@ -19,7 +19,7 @@ if ($Tools.Contains("MSYS2"))
         Write-Host
 		
         # Download and install MSYS2
-        Invoke-WebRequest https://repo.msys2.org/distrib/msys2-x86_64-latest.sfx.exe -OutFile msys2-x86_64-latest.sfx.exe
+        curl.exe -SL --output msys2-x86_64-latest.sfx.exe https://repo.msys2.org/distrib/msys2-x86_64-latest.sfx.exe
         .\msys2-x86_64-latest.sfx.exe -oC:\
 
         Remove-Item .\msys2-x86_64-latest.sfx.exe
@@ -53,7 +53,7 @@ if ($Tools.Contains("nasm"))
     Remove-Item $temp -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item $target -Recurse -Force -ErrorAction SilentlyContinue
 
-    Invoke-WebRequest https://www.nasm.us/pub/nasm/releasebuilds/$NasmVersion/win64/nasm-$NasmVersion-win64.zip -OutFile nasm.zip
+    curl.exe -SL --output nasm.zip https://www.nasm.us/pub/nasm/releasebuilds/$NasmVersion/win64/nasm-$NasmVersion-win64.zip
     Expand-Archive -Path nasm.zip -DestinationPath $root
     Rename-Item -Path $temp -NewName "nasm"
 
@@ -70,7 +70,7 @@ if ($Tools.Contains("perl"))
 
     Remove-Item $target -Recurse -Force -ErrorAction SilentlyContinue
 
-    Invoke-WebRequest https://strawberryperl.com/download/$PerlVersion/strawberry-perl-$PerlVersion-64bit-portable.zip -OutFile perl.zip
+    curl.exe -SL --output perl.zip https://strawberryperl.com/download/$PerlVersion/strawberry-perl-$PerlVersion-64bit-portable.zip
     Expand-Archive -Path perl.zip -DestinationPath $target
 
     Remove-Item .\perl.zip

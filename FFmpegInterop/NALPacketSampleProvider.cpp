@@ -61,13 +61,13 @@ HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuf
 		// Check for extradata changes during playback
 		for (int i = 0; i < avPacket->side_data_elems; i++)
 		{
-			if (avPacket->side_data[i].type == AV_PKT_DATA_NEW_EXTRADATA)
+			if (avPacket->side_data[i].type == AV_PKT_DATA_NEW_EXTRADATA && avPacket->side_data[i].size < UINT32_MAX)
 			{
 				if (dataWriter == nullptr)
 				{
 					dataWriter = ref new DataWriter();
 				}
-				hr = GetSPSAndPPSBuffer(dataWriter, avPacket->side_data[i].data, avPacket->side_data[i].size);
+				hr = GetSPSAndPPSBuffer(dataWriter, avPacket->side_data[i].data, (UINT32)avPacket->side_data[i].size);
 				break;
 			}
 		}
@@ -96,7 +96,7 @@ HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuf
 	return hr;
 }
 
-HRESULT NALPacketSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, int length)
+HRESULT NALPacketSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length)
 {
 	HRESULT hr = S_OK;
 

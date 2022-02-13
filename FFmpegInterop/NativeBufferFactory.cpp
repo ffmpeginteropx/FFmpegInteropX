@@ -5,18 +5,18 @@
 
 using namespace NativeBuffer;
 
-Windows::Storage::Streams::IBuffer^ NativeBufferFactory::CreateNativeBuffer(DWORD nNumberOfBytes)
+Windows::Storage::Streams::IBuffer^ NativeBufferFactory::CreateNativeBuffer(UINT32 nNumberOfBytes)
 {
 	auto lpBuffer = (byte*)malloc(nNumberOfBytes);
 	return CreateNativeBuffer(lpBuffer, nNumberOfBytes, &free, lpBuffer);
 }
 
-Windows::Storage::Streams::IBuffer^ NativeBufferFactory::CreateNativeBuffer(LPVOID lpBuffer, DWORD nNumberOfBytes)
+Windows::Storage::Streams::IBuffer^ NativeBufferFactory::CreateNativeBuffer(LPVOID lpBuffer, UINT32 nNumberOfBytes)
 {
 	return CreateNativeBuffer(lpBuffer, nNumberOfBytes, NULL, NULL);
 }
 
-Windows::Storage::Streams::IBuffer^ NativeBufferFactory::CreateNativeBuffer(LPVOID lpBuffer, DWORD nNumberOfBytes, void(*free)(void *opaque), void *opaque)
+Windows::Storage::Streams::IBuffer^ NativeBufferFactory::CreateNativeBuffer(LPVOID lpBuffer, UINT32 nNumberOfBytes, void(*free)(void *opaque), void *opaque)
 {
 	Microsoft::WRL::ComPtr<NativeBuffer> nativeBuffer;
 	Microsoft::WRL::Details::MakeAndInitialize<NativeBuffer>(&nativeBuffer, (byte *)lpBuffer, nNumberOfBytes, free, opaque);
@@ -26,7 +26,7 @@ Windows::Storage::Streams::IBuffer^ NativeBufferFactory::CreateNativeBuffer(LPVO
 	return buffer;
 }
 
-Windows::Storage::Streams::IBuffer^ NativeBufferFactory::CreateNativeBuffer(LPVOID lpBuffer, DWORD nNumberOfBytes, Platform::Object^ pObject)
+Windows::Storage::Streams::IBuffer^ NativeBufferFactory::CreateNativeBuffer(LPVOID lpBuffer, UINT32 nNumberOfBytes, Platform::Object^ pObject)
 {
 	Microsoft::WRL::ComPtr<NativeBuffer> nativeBuffer;
 	Microsoft::WRL::Details::MakeAndInitialize<NativeBuffer>(&nativeBuffer, (byte *)lpBuffer, nNumberOfBytes, pObject);

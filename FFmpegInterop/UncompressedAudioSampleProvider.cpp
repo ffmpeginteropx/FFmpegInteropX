@@ -227,7 +227,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 			if (bufferRef)
 			{
 				auto size = min(bufferRef->size, avFrame->nb_samples * outChannels * bytesPerSample);
-				*pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(bufferRef->data, size, free_buffer, bufferRef);
+				*pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)size, free_buffer, bufferRef);
 			}
 			else
 			{

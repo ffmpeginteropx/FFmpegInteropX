@@ -22,8 +22,8 @@ namespace FFmpegInterop
 	ref class D3D11VideoSampleProvider : UncompressedVideoSampleProvider
 	{
 	private:
-		AVCodec* hwCodec;
-		AVCodec* swCodec;
+		const AVCodec* hwCodec;
+		const AVCodec* swCodec;
 
 	internal:
 
@@ -37,7 +37,7 @@ namespace FFmpegInterop
 			: UncompressedVideoSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
 		{
 			decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
-			hwCodec = (AVCodec*)avCodecCtx->codec;
+			hwCodec = avCodecCtx->codec;
 
 			if (avCodecCtx->codec_id == AVCodecID::AV_CODEC_ID_AV1)
 			{
@@ -209,7 +209,7 @@ namespace FFmpegInterop
 			return hr;
 		}
 
-		HRESULT UpdateCodecContext(AVCodec* codec, AVBufferRef* avHardwareContext)
+		HRESULT UpdateCodecContext(const AVCodec* codec, AVBufferRef* avHardwareContext)
 		{
 			auto hr = S_OK;
 
@@ -223,10 +223,13 @@ namespace FFmpegInterop
 
 			if (SUCCEEDED(hr))
 			{
-				// enable multi threading
-				unsigned threads = std::thread::hardware_concurrency();
-				m_pAvCodecCtx->thread_count = m_config->MaxVideoThreads == 0 ? threads : min(threads, m_config->MaxVideoThreads);
-				m_pAvCodecCtx->thread_type = m_config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
+				// enable multi threading only for SW decoders
+				if (!avHardwareContext)
+				{
+					unsigned threads = std::thread::hardware_concurrency();
+					m_pAvCodecCtx->thread_count = m_config->MaxVideoThreads == 0 ? threads : min(threads, m_config->MaxVideoThreads);
+					m_pAvCodecCtx->thread_type = m_config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
+				}
 
 				// initialize the stream parameters with demuxer information
 				hr = avcodec_parameters_to_context(m_pAvCodecCtx, m_pAvStream->codecpar);

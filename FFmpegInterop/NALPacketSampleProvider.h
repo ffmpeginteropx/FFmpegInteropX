@@ -38,7 +38,7 @@ namespace FFmpegInterop
 			VideoEncodingProperties^ encodingProperties,
 			HardwareDecoderStatus hardwareDecoderStatus);
 		virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer) override;
-		virtual HRESULT GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, int length);
+		virtual HRESULT GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length);
 		virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer^* pBuffer);
 		virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter^ dataWriter);
 

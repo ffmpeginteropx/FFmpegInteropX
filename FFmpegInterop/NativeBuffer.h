@@ -26,7 +26,7 @@ namespace NativeBuffer
 		}
 
 
-		STDMETHODIMP RuntimeClassInitialize(byte *buffer, UINT totalSize)
+		STDMETHODIMP RuntimeClassInitialize(byte *buffer, UINT32 totalSize)
 		{
 			m_length = totalSize;
 			m_buffer = buffer;
@@ -37,7 +37,7 @@ namespace NativeBuffer
 			return S_OK;
 		}
 
-		STDMETHODIMP RuntimeClassInitialize(byte *buffer, UINT totalSize, void(*free)(void *opaque), void *opaque)
+		STDMETHODIMP RuntimeClassInitialize(byte *buffer, UINT32 totalSize, void(*free)(void *opaque), void *opaque)
 		{
 			m_length = totalSize;
 			m_buffer = buffer;
@@ -48,7 +48,7 @@ namespace NativeBuffer
 			return S_OK;
 		}
 
-		STDMETHODIMP RuntimeClassInitialize(byte *buffer, UINT totalSize, Platform::Object^ pObject)
+		STDMETHODIMP RuntimeClassInitialize(byte *buffer, UINT32 totalSize, Platform::Object^ pObject)
 		{
 			m_length = totalSize;
 			m_buffer = buffer;

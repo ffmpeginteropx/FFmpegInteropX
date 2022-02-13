@@ -25,6 +25,7 @@
 extern "C"
 {
 #include <libavutil/imgutils.h>
+#include <libavutil/mastering_display_metadata.h>
 }
 
 using namespace FFmpegInterop;
@@ -115,6 +116,8 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
 	frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx, m_pAvStream));
 
 	auto videoProperties = VideoEncodingProperties::CreateUncompressed(outputMediaSubtype, outputFrameWidth, outputFrameHeight);
+	auto properties = videoProperties->Properties;
+	auto codecPar = m_pAvStream->codecpar;
 
 	SetCommonVideoEncodingProperties(videoProperties, false);
 
@@ -125,12 +128,147 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
 	area.OffsetX.value = 0;
 	area.OffsetY.fract = 0;
 	area.OffsetY.value = 0;
-	videoProperties->Properties->Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, ref new Array<uint8_t>((byte*)&area, sizeof(MFVideoArea)));
+	properties->Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, ref new Array<uint8_t>((byte*)&area, sizeof(MFVideoArea)));
 
-	if (m_OutputPixelFormat == AV_PIX_FMT_YUVJ420P)
+	if (codecPar->color_primaries != AVCOL_PRI_UNSPECIFIED)
 	{
-		// YUVJ420P uses full range values
-		videoProperties->Properties->Insert(MF_MT_VIDEO_NOMINAL_RANGE, (uint32)MFNominalRange_0_255);
+		MFVideoPrimaries videoPrimaries{ MFVideoPrimaries_Unknown };
+		switch (codecPar->color_primaries)
+		{
+		case AVCOL_PRI_RESERVED0:
+		case AVCOL_PRI_RESERVED:
+			videoPrimaries = MFVideoPrimaries_reserved;
+			break;
+
+		case AVCOL_PRI_BT709:
+			videoPrimaries = MFVideoPrimaries_BT709;
+			break;
+
+		case  AVCOL_PRI_BT470M:
+			videoPrimaries = MFVideoPrimaries_BT470_2_SysM;
+			break;
+
+		case AVCOL_PRI_BT470BG:
+			videoPrimaries = MFVideoPrimaries_BT470_2_SysBG;
+			break;
+
+		case AVCOL_PRI_SMPTE170M:
+			videoPrimaries = MFVideoPrimaries_SMPTE170M;
+			break;
+
+		case AVCOL_PRI_SMPTE240M:
+			videoPrimaries = MFVideoPrimaries_SMPTE240M;
+			break;
+
+		case AVCOL_PRI_FILM:
+			videoPrimaries = MFVideoPrimaries_SMPTE_C;
+			break;
+
+		case AVCOL_PRI_BT2020:
+			videoPrimaries = MFVideoPrimaries_BT2020;
+			break;
+
+		default:
+			break;
+		}
+
+		properties->Insert(MF_MT_VIDEO_PRIMARIES, PropertyValue::CreateUInt32(videoPrimaries));
+	}
+
+	if (codecPar->color_trc != AVCOL_TRC_UNSPECIFIED)
+	{
+		MFVideoTransferFunction videoTransferFunc{ MFVideoTransFunc_Unknown };
+		switch (codecPar->color_trc)
+		{
+		case AVCOL_TRC_BT709:
+		case AVCOL_TRC_GAMMA22:
+		case AVCOL_TRC_SMPTE170M:
+			videoTransferFunc = MFVideoTransFunc_22;
+			break;
+
+		case AVCOL_TRC_GAMMA28:
+			videoTransferFunc = MFVideoTransFunc_28;
+			break;
+
+		case AVCOL_TRC_SMPTE240M:
+			videoTransferFunc = MFVideoTransFunc_240M;
+			break;
+
+		case AVCOL_TRC_LINEAR:
+			videoTransferFunc = MFVideoTransFunc_10;
+			break;
+
+		case AVCOL_TRC_LOG:
+			videoTransferFunc = MFVideoTransFunc_Log_100;
+			break;
+
+		case AVCOL_TRC_LOG_SQRT:
+			videoTransferFunc = MFVideoTransFunc_Log_316;
+			break;
+
+		case AVCOL_TRC_BT1361_ECG:
+			videoTransferFunc = MFVideoTransFunc_709;
+			break;
+
+		case AVCOL_TRC_BT2020_10:
+		case AVCOL_TRC_BT2020_12:
+			videoTransferFunc = MFVideoTransFunc_2020;
+			break;
+
+		case AVCOL_TRC_SMPTEST2084:
+			videoTransferFunc = MFVideoTransFunc_2084;
+			break;
+
+		case AVCOL_TRC_ARIB_STD_B67:
+			videoTransferFunc = MFVideoTransFunc_HLG;
+			break;
+
+		default:
+			break;
+		}
+
+		properties->Insert(MF_MT_TRANSFER_FUNCTION, PropertyValue::CreateUInt32(videoTransferFunc));
+	}
+
+	if (codecPar->color_range != AVCOL_RANGE_UNSPECIFIED)
+	{
+		MFNominalRange nominalRange{ codecPar->color_range == AVCOL_RANGE_JPEG ? MFNominalRange_0_255 : MFNominalRange_16_235 };
+		properties->Insert(MF_MT_VIDEO_NOMINAL_RANGE, PropertyValue::CreateUInt32(nominalRange));
+	}
+
+	AVContentLightMetadata* contentLightMetadata{ reinterpret_cast<AVContentLightMetadata*>(av_stream_get_side_data(m_pAvStream, AV_PKT_DATA_CONTENT_LIGHT_LEVEL, nullptr)) };
+	if (contentLightMetadata != nullptr)
+	{
+		properties->Insert(MF_MT_MAX_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxCLL));
+		properties->Insert(MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxFALL));
+	}
+
+	AVMasteringDisplayMetadata* masteringDisplayMetadata{ reinterpret_cast<AVMasteringDisplayMetadata*>(av_stream_get_side_data(m_pAvStream, AV_PKT_DATA_MASTERING_DISPLAY_METADATA, nullptr)) };
+	if (masteringDisplayMetadata != nullptr)
+	{
+		if (masteringDisplayMetadata->has_luminance)
+		{
+			constexpr uint32_t MASTERING_DISP_LUMINANCE_SCALE{ 10000 };
+			properties->Insert(MF_MT_MIN_MASTERING_LUMINANCE, PropertyValue::CreateUInt32(static_cast<uint32_t>(MASTERING_DISP_LUMINANCE_SCALE * av_q2d(masteringDisplayMetadata->min_luminance))));
+			properties->Insert(MF_MT_MAX_MASTERING_LUMINANCE, PropertyValue::CreateUInt32(static_cast<uint32_t>(av_q2d(masteringDisplayMetadata->max_luminance))));
+		}
+
+		if (masteringDisplayMetadata->has_primaries)
+		{
+			MT_CUSTOM_VIDEO_PRIMARIES customVideoPrimaries
+			{
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[0][0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[0][1])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[1][0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[1][1])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[2][0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[2][1])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->white_point[0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->white_point[1]))
+			};
+			auto data = Platform::ArrayReference<uint8_t>(reinterpret_cast<uint8_t*>(&customVideoPrimaries), sizeof(customVideoPrimaries));
+			properties->Insert(MF_MT_CUSTOM_VIDEO_PRIMARIES, PropertyValue::CreateUInt8Array(data));
+		}
 	}
 
 	videoProperties->Properties->Insert(MF_MT_INTERLACE_MODE, (uint32)_MFVideoInterlaceMode::MFVideoInterlace_MixedInterlaceOrProgressive);
@@ -197,7 +335,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 		auto bufferRef = av_buffer_ref(avFrame->buf[0]);
 		if (bufferRef)
 		{
-			*pBuffer = NativeBufferFactory::CreateNativeBuffer(bufferRef->data, bufferRef->size, free_buffer, bufferRef);
+			*pBuffer = NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)bufferRef->size, free_buffer, bufferRef);
 		}
 		else
 		{
@@ -216,7 +354,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 		if (SUCCEEDED(hr))
 		{
 			av_image_copy(data, linesize, (const uint8_t**)avFrame->data, avFrame->linesize, m_OutputPixelFormat, outputWidth, outputHeight);
-			*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, buffer->size, free_buffer, buffer);
+			*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, (UINT32)buffer->size, free_buffer, buffer);
 		}
 	}
 	else
@@ -237,7 +375,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 				// Convert to output format using FFmpeg software scaler
 				if (sws_scale(m_pSwsCtx, (const uint8_t**)(avFrame->data), avFrame->linesize, 0, avFrame->height, data, linesize) > 0)
 				{
-					*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, buffer->size, free_buffer, buffer);
+					*pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, (UINT32)buffer->size, free_buffer, buffer);
 				}
 				else
 				{
@@ -315,6 +453,59 @@ void FFmpegInterop::UncompressedVideoSampleProvider::ReadFrameProperties(AVFrame
 			}
 		}
 	}
+
+	auto sideData = av_frame_get_side_data(avFrame, AV_FRAME_DATA_CONTENT_LIGHT_LEVEL);
+	if (sideData)
+	{
+		auto contentLightMetadata = reinterpret_cast<AVContentLightMetadata*>(sideData->data);
+		maxCLL = PropertyValue::CreateUInt32(contentLightMetadata->MaxCLL);
+		maxFALL = PropertyValue::CreateUInt32(contentLightMetadata->MaxFALL);
+	}
+	else
+	{
+		maxCLL = maxFALL = nullptr;
+	}
+
+	sideData = av_frame_get_side_data(avFrame, AV_FRAME_DATA_MASTERING_DISPLAY_METADATA);
+	if (sideData)
+	{
+		auto masteringDisplayMetadata = reinterpret_cast<AVMasteringDisplayMetadata*>(sideData->data);
+		if (masteringDisplayMetadata->has_luminance)
+		{
+			constexpr uint32_t MASTERING_DISP_LUMINANCE_SCALE{ 10000 };
+			minLuminance = PropertyValue::CreateUInt32(static_cast<uint32_t>(MASTERING_DISP_LUMINANCE_SCALE * av_q2d(masteringDisplayMetadata->min_luminance)));
+			maxLuminance = PropertyValue::CreateUInt32(static_cast<uint32_t>(av_q2d(masteringDisplayMetadata->max_luminance)));
+		}
+		else
+		{
+			minLuminance = maxLuminance = nullptr;
+		}
+
+		if (masteringDisplayMetadata->has_primaries)
+		{
+			MT_CUSTOM_VIDEO_PRIMARIES customVideoPrimaries
+			{
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[0][0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[0][1])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[1][0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[1][1])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[2][0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->display_primaries[2][1])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->white_point[0])),
+				static_cast<float>(av_q2d(masteringDisplayMetadata->white_point[1]))
+			};
+			auto data = Platform::ArrayReference<uint8_t>(reinterpret_cast<uint8_t*>(&customVideoPrimaries), sizeof(customVideoPrimaries));
+			customPrimaries = PropertyValue::CreateUInt8Array(data);
+		}
+		else
+		{
+			customPrimaries = nullptr;
+		}
+	}
+	else
+	{
+		minLuminance = maxLuminance = customPrimaries = nullptr;
+	}
 }
 
 HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample^ sample)
@@ -352,21 +543,57 @@ HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample^ 
 		break;
 	}
 
+	if (maxCLL && maxFALL)
+	{
+		sample->ExtendedProperties->Insert(MF_MT_MAX_LUMINANCE_LEVEL, maxCLL);
+		sample->ExtendedProperties->Insert(MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, maxFALL);
+	}
+
+	if (minLuminance && maxLuminance)
+	{
+		sample->ExtendedProperties->Insert(MF_MT_MIN_MASTERING_LUMINANCE, minLuminance);
+		sample->ExtendedProperties->Insert(MF_MT_MAX_MASTERING_LUMINANCE, maxLuminance);
+	}
+
+	if (customPrimaries)
+	{
+		sample->ExtendedProperties->Insert(MF_MT_CUSTOM_VIDEO_PRIMARIES, customPrimaries);
+	}
+
 	return S_OK;
 }
 
 HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height, bool isSourceBuffer)
 {
-	if (av_image_fill_linesizes(linesize, m_OutputPixelFormat, width) < 0)
+	// this method more or less follows the ffmpeg av_image_alloc() implementation
+
+	ptrdiff_t linesizes1[4];
+	size_t sizes[4];
+	int totalSize = 0;
+
+	if (av_image_check_size(width, height, 0, NULL) < 0)
 	{
 		return E_FAIL;
 	}
 
-	// calculate total size and fill data pointers startig at zero
-	auto totalSize = av_image_fill_pointers(data, m_OutputPixelFormat, height, NULL, linesize);
-	if (totalSize <= 0)
+	if (av_image_fill_linesizes(linesize, m_OutputPixelFormat, width) < 0)
 	{
 		return E_FAIL;
+	}
+	
+	for (int i = 0; i < 4; i++) {
+		linesizes1[i] = linesize[i];
+	}
+
+	if (av_image_fill_plane_sizes(sizes, m_OutputPixelFormat, height, linesizes1) < 0)
+	{
+		return E_FAIL;
+	}
+
+	for (int i = 0; i < 4; i++) {
+		if (sizes[i] > INT_MAX - totalSize)
+			return AVERROR(EINVAL);
+		totalSize += (int)sizes[i];
 	}
 
 	// allocate buffer
@@ -376,12 +603,11 @@ HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte*
 		return E_OUTOFMEMORY;
 	}
 
-	// shift data pointers to true location
-	auto start = (size_t)buffer[0]->data;
-	data[0] += start;
-	if (data[1]) data[1] += start;
-	if (data[2]) data[2] += start;
-	if (data[3]) data[3] += start;
+	// fill pointers
+	if (av_image_fill_pointers(data, m_OutputPixelFormat, height, buffer[0]->data, linesize) < 0)
+	{
+		return E_FAIL;
+	}
 
 	return S_OK;
 }

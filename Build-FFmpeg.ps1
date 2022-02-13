@@ -51,7 +51,9 @@ param(
 
     [string] $FFmpegCommit = $(git --git-dir $PSScriptRoot/Libs/ffmpeg/.git rev-parse HEAD),
 
-    [switch] $AllowParallelBuilds
+    [switch] $AllowParallelBuilds,
+
+    [switch] $SkipBuildPkgConfigFake
 
 )
 
@@ -65,7 +67,8 @@ function Build-Platform {
         [string] $PlatformToolset,
         [string] $VsLatestPath,
         [string] $BashExe = 'C:\msys64\usr\bin\bash.exe',
-        [string] $LogFileName
+        [string] $LogFileName,
+        [bool] $SkipBuildPkgConfigFake
     )
 
     New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget | Out-Null
@@ -95,12 +98,14 @@ function Build-Platform {
         -DevCmdArguments "-arch=$targetArch -host_arch=$hostArch -winsdk=$WindowsTargetPlatformVersion -vcvars_ver=$VcVersion -app_platform=$WindowsTarget"
 
     # Build pkg-config fake
-    invoke MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
-        /p:OutputPath="$SolutionDir\Intermediate\" `
-        /p:Configuration=$Configuration `
-        /p:Platform=${Env:\PreferredToolArchitecture}
+    if (! $SkipBuildPkgConfigFake) {
+        invoke MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
+            /p:OutputPath="$SolutionDir\Intermediate\" `
+            /p:Configuration=$Configuration `
+            /p:Platform=${Env:\PreferredToolArchitecture}
 
-    if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
+        if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
+    }
 
     New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget\$Platform -OutVariable build | Out-Null
     New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable target | Out-Null
@@ -408,6 +413,10 @@ if (! (Test-Path "$PSScriptRoot\Tools\perl")) {
     -products * `
     -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
 
+if (!$vsLatestPath){
+    Write-Error "Visual Studio not found!"
+}
+
 Write-Host "Visual Studio Installation folder: [$vsLatestPath]"
 
 # 14.16.27023 => v141
@@ -441,9 +450,18 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
     {
         $clear = "-ClearBuildFolders"
     }
+
+    $skip = ""
     foreach ($platform in $Platforms) {
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit"
+        if ($SkipBuildPkgConfigFake)
+        {
+            $skip
+        }
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skip"
         $processes[$platform] = $proc
+    
+        # only build PkgConfigFake once
+        $skip = "-SkipBuildPkgConfigFake"
     }
 
     foreach ($platform in $Platforms) {
@@ -486,7 +504,8 @@ else
                 -PlatformToolset $platformToolSet `
                 -VsLatestPath $vsLatestPath `
                 -BashExe $BashExe `
-                -LogFileName $logFile
+                -LogFileName $logFile `
+                -SkipBuildPkgConfigFake $SkipBuildPkgConfigFake
         }
         catch
         {
@@ -511,6 +530,9 @@ else
                 }
             }
         }
+   
+        # only build PkgConfigFake once
+        $BuildPkgConfigFake = $false;
     }
 }
 

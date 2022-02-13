@@ -37,7 +37,7 @@ HEVCSampleProvider::~HEVCSampleProvider()
 {
 }
 
-HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, int length)
+HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length)
 {
 	HRESULT hr = S_OK;
 	int spsLength = 0;
@@ -69,7 +69,7 @@ HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf
 					int nalsize = ReadMultiByteValue(buf, pos, 2);
 					pos += 2;
 
-					if (length - pos < nalsize) {
+					if (length - pos < (UINT32)nalsize) {
 						return E_FAIL;
 					}
 
