@@ -9,11 +9,11 @@
 #include "NativeBufferFactory.h"
 #include "ReferenceCue.h"
 
-using namespace Windows::UI::Core;
-using namespace Windows::Media::Playback;
-
 namespace FFmpegInteropX
 {
+	using namespace Windows::UI::Core;
+	using namespace Windows::Media::Playback;
+
 	ref class SubtitleProvider abstract : CompressedSampleProvider
 	{
 

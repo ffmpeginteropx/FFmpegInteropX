@@ -1,10 +1,10 @@
 #include <string.h>
 #include <codecvt>
 
-using namespace Platform;
-
 namespace FFmpegInteropX
 {
+	using namespace Platform;
+	
 	ref class StringUtils sealed
 	{
 	internal:

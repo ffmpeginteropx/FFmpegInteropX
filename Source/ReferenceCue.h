@@ -1,10 +1,12 @@
 #pragma once
 #include<pch.h>
-using namespace Platform;
-using namespace Windows::Foundation;
-using namespace Windows::Media::Core;
 
-namespace FFmpegInteropX {
+namespace FFmpegInteropX
+{
+	using namespace Platform;
+	using namespace Windows::Foundation;
+	using namespace Windows::Media::Core;
+
 	ref class ReferenceCue : IMediaCue
 	{
 	internal:

@@ -3,7 +3,9 @@
 #include <windows.graphics.directx.direct3d11.interop.h>
 #include <d3d11.h>
 #include <mfidl.h>
+
 using namespace Windows::Media::Core;
+using namespace FFmpegInteropX;
 
 IDirect3DSurface^ DirectXInteropHelper::GetSurface(IDXGISurface* source)
 {

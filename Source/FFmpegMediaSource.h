@@ -31,16 +31,6 @@
 #include "CodecChecker.h"
 #include "MediaMetadata.h"
 
-using namespace Platform;
-using namespace Windows::Foundation;
-using namespace Windows::Foundation::Collections;
-using namespace Windows::Media::Core;
-using namespace Windows::Media::Playback;
-using namespace Platform::Collections;
-using namespace Windows::UI::Core;
-using namespace Windows::UI::Xaml;
-namespace WFM = Windows::Foundation::Metadata;
-
 extern "C"
 {
 #include <libavformat/avformat.h>
@@ -48,6 +38,16 @@ extern "C"
 
 namespace FFmpegInteropX
 {
+	using namespace Platform;
+	using namespace Windows::Foundation;
+	using namespace Windows::Foundation::Collections;
+	using namespace Windows::Media::Core;
+	using namespace Windows::Media::Playback;
+	using namespace Platform::Collections;
+	using namespace Windows::UI::Core;
+	using namespace Windows::UI::Xaml;
+	namespace WFM = Windows::Foundation::Metadata;
+
 	enum ByteOrderMark
 	{
 		Unchecked,

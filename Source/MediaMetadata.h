@@ -2,12 +2,12 @@
 #include <pch.h>
 #include "KeyStringValuePair.h"
 
-using namespace Platform;
-using namespace Platform::Collections;
-using namespace Windows::Foundation;
-using namespace Windows::Foundation::Collections;
-
-namespace FFmpegInteropX {
+namespace FFmpegInteropX
+{
+	using namespace Platform;
+	using namespace Platform::Collections;
+	using namespace Windows::Foundation;
+	using namespace Windows::Foundation::Collections;
 
 	ref class MediaMetadata sealed
 	{

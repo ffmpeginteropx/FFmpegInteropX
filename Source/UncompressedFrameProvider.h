@@ -8,10 +8,10 @@ extern "C"
 #include <libavformat/avformat.h>
 }
 
-using namespace Windows::Foundation::Collections;
-
 namespace FFmpegInteropX
 {
+	using namespace Windows::Foundation::Collections;
+	
 	ref class UncompressedFrameProvider sealed
 	{
 		IAvEffect^ filter;

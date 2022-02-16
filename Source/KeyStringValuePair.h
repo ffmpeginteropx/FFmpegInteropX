@@ -1,8 +1,10 @@
 #pragma once
-using namespace Platform;
-using namespace Windows::Foundation::Collections;
 
-namespace FFmpegInteropX {
+namespace FFmpegInteropX
+{
+	using namespace Platform;
+	using namespace Windows::Foundation::Collections;
+
 	ref class KeyStringValuePair sealed : IKeyValuePair<String^,String^>
 	{
 		String ^key, ^value;

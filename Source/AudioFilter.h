@@ -19,15 +19,14 @@ extern "C"
 #include <libswresample/swresample.h>
 }
 
-using namespace Windows::Foundation::Collections;
-using namespace Windows::Media::Playback;
-using namespace Windows::Foundation;
-using namespace Platform;
-using namespace Windows::Storage;
+namespace FFmpegInteropX
+{
+	using namespace Windows::Foundation::Collections;
+	using namespace Windows::Media::Playback;
+	using namespace Windows::Foundation;
+	using namespace Platform;
+	using namespace Windows::Storage;
 
-
-
-namespace FFmpegInteropX {
 	ref class AudioFilter : public IAvEffect
 	{
 		const AVFilter  *AVSource;

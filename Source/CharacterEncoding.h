@@ -1,14 +1,13 @@
 #pragma once
 #include <pch.h>
 
-using namespace Platform;
-using namespace Platform::Collections;
-using namespace Windows::Foundation;
-using namespace Windows::Foundation::Collections;
-using namespace Windows::Media::Core;
-
-
-namespace FFmpegInteropX {
+namespace FFmpegInteropX
+{
+	using namespace Platform;
+	using namespace Platform::Collections;
+	using namespace Windows::Foundation;
+	using namespace Windows::Foundation::Collections;
+	using namespace Windows::Media::Core;
 
 	[Windows::UI::Xaml::Data::Bindable]
 	public ref class CharacterEncoding sealed

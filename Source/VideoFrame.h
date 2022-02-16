@@ -3,14 +3,14 @@
 #include <robuffer.h>
 #include <pplawait.h>
 
-using namespace Windows::Foundation;
-using namespace Windows::Graphics::Imaging;
-using namespace Windows::Media::MediaProperties;
-using namespace Windows::Storage::Streams;
-using namespace Concurrency;
-
 namespace FFmpegInteropX
 {
+	using namespace Windows::Foundation;
+	using namespace Windows::Graphics::Imaging;
+	using namespace Windows::Media::MediaProperties;
+	using namespace Windows::Storage::Streams;
+	using namespace Concurrency;
+
 	public ref class VideoFrame sealed
 	{
 	public:

@@ -40,10 +40,10 @@ typedef struct _MT_CUSTOM_VIDEO_PRIMARIES {
 #endif /* WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP | WINAPI_PARTITION_GAMES) */
 #pragma endregion
 
-using namespace Platform;
-
 namespace FFmpegInteropX
 {
+	using namespace Platform;
+
 	ref class UncompressedVideoSampleProvider: UncompressedSampleProvider
 	{
 	public:

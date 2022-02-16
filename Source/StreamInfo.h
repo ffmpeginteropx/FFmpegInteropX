@@ -3,10 +3,11 @@
 #include "pch.h"
 #include "Enumerations.h"
 
-using namespace Platform;
 
 namespace FFmpegInteropX
 {
+	using namespace Platform;
+	
 	public interface class IStreamInfo
 	{
 		property String^ Name { String^ get(); }

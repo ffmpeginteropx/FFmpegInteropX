@@ -18,10 +18,10 @@
 
 #pragma once
 
-using namespace Platform;
-
 namespace FFmpegInteropX
 {
+	using namespace Platform;
+	
 	// Level values from ffmpeg: libavutil/log.h
 	public enum class LogLevel
 	{

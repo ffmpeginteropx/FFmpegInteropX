@@ -9,15 +9,16 @@ extern "C"
 #include "CharacterEncoding.h"
 #include "TimeSpanHelpers.h"
 
-using namespace Platform;
-using namespace Windows::Foundation;
-using namespace Windows::Foundation::Collections;
-using namespace Windows::Media::Core;
-
-namespace WFM = Windows::Foundation::Metadata;
 
 namespace FFmpegInteropX
 {
+	using namespace Platform;
+	using namespace Windows::Foundation;
+	using namespace Windows::Foundation::Collections;
+	using namespace Windows::Media::Core;
+
+	namespace WFM = Windows::Foundation::Metadata;
+
 	///<summary>This class allows configuring the FFmpegMediaSource instance.</summary>
 	public ref class MediaSourceConfig sealed
 	{

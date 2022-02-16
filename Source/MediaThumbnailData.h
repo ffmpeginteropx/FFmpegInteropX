@@ -17,11 +17,12 @@
 //*****************************************************************************
 
 #pragma once
-using namespace Platform;
-using namespace Windows::Storage::Streams;
 
 namespace FFmpegInteropX
 {
+	using namespace Platform;
+	using namespace Windows::Storage::Streams;
+
 	public ref class MediaThumbnailData sealed
 	{
 		IBuffer^ _buffer;

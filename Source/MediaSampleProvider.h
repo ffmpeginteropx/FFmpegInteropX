@@ -22,13 +22,13 @@
 #include "Enumerations.h"
 #include "StreamInfo.h"
 
-using namespace Windows::Storage::Streams;
-using namespace Windows::Media::Core;
-using namespace Windows::Media::MediaProperties;
-using namespace Windows::Graphics::DirectX::Direct3D11;
-
 namespace FFmpegInteropX
 {
+	using namespace Windows::Storage::Streams;
+	using namespace Windows::Media::Core;
+	using namespace Windows::Media::MediaProperties;
+	using namespace Windows::Graphics::DirectX::Direct3D11;
+
 	ref class FFmpegReader;
 
 	ref class MediaSampleProvider abstract
