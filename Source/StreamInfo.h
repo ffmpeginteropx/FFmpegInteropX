@@ -215,4 +215,27 @@ namespace FFmpegInteropX
 		TimeSpan startTime;
 		TimeSpan duration;
 	};
+
+	public ref class FormatInfo sealed
+	{
+	public:
+		FormatInfo(String^ title, String^ formatName, TimeSpan duration, int64 bitrate)
+		{
+			this->title = title;
+			this->formatName = formatName;
+			this->duration = duration;
+			this->bitrate = bitrate;
+		}
+
+		property String^ Title { String^ get() { return title; } }
+		property String^ FormatName { String^ get() { return formatName; } }
+		property TimeSpan Duration { TimeSpan get() { return duration; } }
+		property int64 Bitrate { int64 get() { return bitrate; } }
+
+	private:
+		String^ title;
+		String^ formatName;
+		TimeSpan duration;
+		int64 bitrate;
+	};
 }

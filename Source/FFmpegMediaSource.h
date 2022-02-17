@@ -192,6 +192,12 @@ namespace FFmpegInteropX
 			IVectorView<ChapterInfo^>^ get() { return chapterInfos; }
 		}
 
+		///<summary>Gets chapter information.</summary>
+		property FormatInfo^ FormatInfo
+		{
+			FFmpegInteropX::FormatInfo^ get() { return formatInfo; }
+		}
+
 		///<summary>Gets a boolean indication if a thumbnail is embedded in the file.</summary>
 		property bool HasThumbnail
 		{
@@ -326,6 +332,7 @@ namespace FFmpegInteropX
 		IVectorView<AudioStreamInfo^>^ audioStreamInfos;
 		IVectorView<SubtitleStreamInfo^>^ subtitleStreamInfos;
 		IVectorView<ChapterInfo^>^ chapterInfos;
+		FFmpegInteropX::FormatInfo^ formatInfo;
 
 		AttachedFileHelper^ attachedFileHelper;
 

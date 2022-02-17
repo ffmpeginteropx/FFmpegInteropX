@@ -947,6 +947,11 @@ HRESULT FFmpegMediaSource::InitFFmpegContext()
 				mss->CanSeek = true;
 			}
 
+			auto title = av_dict_get(avFormatCtx->metadata, "title", NULL, 0);
+			auto titleStr = title ? StringUtils::Utf8ToPlatformString(title->value) : "";
+			auto codecStr = StringUtils::Utf8ToPlatformString(avFormatCtx->iformat->name);
+			formatInfo = ref new FFmpegInteropX::FormatInfo(titleStr, codecStr, mediaDuration, avFormatCtx->bit_rate);
+
 			startingRequestedToken = mss->Starting += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceStartingEventArgs^>(this, &FFmpegMediaSource::OnStarting);
 			sampleRequestedToken = mss->SampleRequested += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceSampleRequestedEventArgs^>(this, &FFmpegMediaSource::OnSampleRequested);
 			switchStreamRequestedToken = mss->SwitchStreamsRequested += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceSwitchStreamsRequestedEventArgs^>(this, &FFmpegMediaSource::OnSwitchStreamsRequested);
