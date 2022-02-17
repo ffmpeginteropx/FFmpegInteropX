@@ -178,7 +178,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 		}
 
 		streamInfo = ref new AudioStreamInfo(
-			Name, Language, CodecName, m_pAvStream->codecpar->bit_rate, false, 
+			Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false, 
 			channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder);
 
 		break;
@@ -191,7 +191,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 		auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
 		auto framesPerSecond = m_pAvStream->avg_frame_rate.num > 0 && m_pAvStream->avg_frame_rate.den > 0 ? av_q2d(m_pAvStream->avg_frame_rate) : 0.0;
 
-		streamInfo = ref new VideoStreamInfo(Name, Language, CodecName, m_pAvStream->codecpar->bit_rate, false,
+		streamInfo = ref new VideoStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
 			m_pAvStream->codecpar->width, m_pAvStream->codecpar->height, videoAspect,
 			bitsPerSample, framesPerSecond, HardwareAccelerationStatus, Decoder);
 
@@ -201,7 +201,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 	{
 		auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
 		
-		streamInfo = ref new SubtitleStreamInfo(Name, Language, CodecName,
+		streamInfo = ref new SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
 			false, forced, ((SubtitleProvider^)this)->SubtitleTrack, m_config->IsExternalSubtitleParser);
 
 		break;

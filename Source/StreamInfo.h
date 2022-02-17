@@ -13,6 +13,7 @@ namespace FFmpegInteropX
 		property String^ Name { String^ get(); }
 		property String^ Language { String^ get(); }
 		property String^ CodecName { String^ get(); }
+		property StreamDisposition Disposition { StreamDisposition get(); }
 		property int64 Bitrate { int64 get(); }
 		property bool IsDefault { bool get(); }
 	};
@@ -20,12 +21,13 @@ namespace FFmpegInteropX
 	public ref class AudioStreamInfo sealed : public IStreamInfo
 	{
 	public:
-		AudioStreamInfo(String^ name, String^ language, String^ codecName, int64 bitrate, bool isDefault,
+		AudioStreamInfo(String^ name, String^ language, String^ codecName, StreamDisposition disposition, int64 bitrate, bool isDefault,
 			int channels, String^ channelLayout, int sampleRate, int bitsPerSample, DecoderEngine decoderEngine)
 		{
 			this->name = name;
 			this->language = language;
 			this->codecName = codecName;
+			this->disposition = disposition;
 			this->bitrate = bitrate;
 			this->isDefault = isDefault;
 
@@ -40,6 +42,7 @@ namespace FFmpegInteropX
 		virtual property String^ Name { String^ get() { return name; } }
 		virtual property String^ Language { String^ get() { return language; } }
 		virtual property String^ CodecName { String^ get() { return codecName; } }
+		virtual property StreamDisposition Disposition { StreamDisposition get() { return disposition; } }
 		virtual property int64 Bitrate { int64 get() { return bitrate; } }
 		virtual property bool IsDefault { bool get() { return isDefault; } }
 
@@ -60,6 +63,7 @@ namespace FFmpegInteropX
 		String ^ name;
 		String^ language;
 		String^ codecName;
+		StreamDisposition disposition;
 		int64 bitrate;
 		bool isDefault;
 
@@ -74,12 +78,13 @@ namespace FFmpegInteropX
 	public ref class VideoStreamInfo sealed : public IStreamInfo
 	{
 	public:
-		VideoStreamInfo(String^ name, String^ language, String^ codecName, int64 bitrate, bool isDefault,
+		VideoStreamInfo(String^ name, String^ language, String^ codecName, StreamDisposition disposition, int64 bitrate, bool isDefault,
 			int pixelWidth, int pixelHeight, double displayAspectRatio, int bitsPerSample, double framesPerSecond, HardwareDecoderStatus hwAccel, DecoderEngine decoderEngine)
 		{
 			this->name = name;
 			this->language = language;
 			this->codecName = codecName;
+			this->disposition = disposition;
 			this->bitrate = bitrate;
 			this->isDefault = isDefault;
 
@@ -96,6 +101,7 @@ namespace FFmpegInteropX
 		virtual property String^ Name { String^ get() { return name; } }
 		virtual property String^ Language { String^ get() { return language; } }
 		virtual property String^ CodecName { String^ get() { return codecName; } }
+		virtual property StreamDisposition Disposition { StreamDisposition get() { return disposition; } }
 		virtual property int64 Bitrate { int64 get() { return bitrate; } }
 		virtual property bool IsDefault { bool get() { return isDefault; } }
 
@@ -129,6 +135,7 @@ namespace FFmpegInteropX
 		String ^ name;
 		String^ language;
 		String^ codecName;
+		StreamDisposition disposition;
 		int64 bitrate;
 		bool isDefault;
 
@@ -146,11 +153,12 @@ namespace FFmpegInteropX
 	public ref class SubtitleStreamInfo sealed : public IStreamInfo
 	{
 	public:
-		SubtitleStreamInfo(String^ name, String^ language, String^ codecName, bool isDefault, bool isForced, TimedMetadataTrack^ track, bool isExternal)
+		SubtitleStreamInfo(String^ name, String^ language, String^ codecName, StreamDisposition disposition, bool isDefault, bool isForced, TimedMetadataTrack^ track, bool isExternal)
 		{
 			this->name = name;
 			this->language = language;
 			this->codecName = codecName;
+			this->disposition = disposition;
 			this->isDefault = isDefault;
 			this->isForced = isForced;
 			this->track = track;
@@ -160,6 +168,7 @@ namespace FFmpegInteropX
 		virtual property String^ Name { String^ get() { return name; } }
 		virtual property String^ Language { String^ get() { return language; } }
 		virtual property String^ CodecName { String^ get() { return codecName; } }
+		virtual property StreamDisposition Disposition { StreamDisposition get() { return disposition; } }
 		virtual property int64 Bitrate { int64 get() { return 0; } }
 		virtual property bool IsDefault { bool get() { return isDefault; } }
 
@@ -190,6 +199,7 @@ namespace FFmpegInteropX
 		String ^ name;
 		String^ language;
 		String^ codecName;
+		StreamDisposition disposition;
 		bool isDefault;
 		bool isForced;
 		TimedMetadataTrack^ track;
