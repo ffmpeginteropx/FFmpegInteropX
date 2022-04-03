@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.136
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32228.343
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFmpegInterop", "Source\FFmpegInteropX.vcxproj", "{9CFA3B3E-B7AF-4629-84E2-C962C5B046B1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFmpegInteropX", "Source\FFmpegInteropX.vcxproj", "{9CFA3B3E-B7AF-4629-84E2-C962C5B046B1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MediaPlayerCPP", "Samples\MediaPlayerCPP\MediaPlayerCPP.vcxproj", "{9C0EB7EC-6FED-46E7-9CC9-F36132050AA1}"
 EndProject
@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaPlayerCS", "Samples\Me
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "Tests\UnitTest.csproj", "{F1ECBD62-71FE-47FB-B588-1E331A375B59}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MFMediaPlayerWrapper", "MFMediaPlayerWrapper\MFMediaPlayerWrapper.vcxproj", "{F441BA9E-E939-49C8-AEB8-4CD155789348}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -107,6 +109,18 @@ Global
 		{F1ECBD62-71FE-47FB-B588-1E331A375B59}.Release|x86.ActiveCfg = Release|x86
 		{F1ECBD62-71FE-47FB-B588-1E331A375B59}.Release|x86.Build.0 = Release|x86
 		{F1ECBD62-71FE-47FB-B588-1E331A375B59}.Release|x86.Deploy.0 = Release|x86
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Debug|ARM.ActiveCfg = Debug|Win32
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Debug|x64.ActiveCfg = Debug|x64
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Debug|x64.Build.0 = Debug|x64
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Debug|x86.ActiveCfg = Debug|Win32
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Debug|x86.Build.0 = Debug|Win32
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Release|ARM.ActiveCfg = Release|Win32
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Release|ARM64.ActiveCfg = Release|Win32
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Release|x64.ActiveCfg = Release|x64
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Release|x64.Build.0 = Release|x64
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Release|x86.ActiveCfg = Release|Win32
+		{F441BA9E-E939-49C8-AEB8-4CD155789348}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

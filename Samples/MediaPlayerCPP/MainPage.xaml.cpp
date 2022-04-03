@@ -24,6 +24,7 @@
 #include "pch.h"
 #include "MainPage.xaml.h"
 #include <collection.h>
+#include <mfapi.h>
 
 using namespace FFmpegInteropX;
 using namespace MediaPlayerCPP;
@@ -139,8 +140,11 @@ task<void> MainPage::OpenLocalFile(StorageFile^ file)
 		StorageApplicationPermissions::FutureAccessList->Add(file);
 
 		playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
-
-
+		auto unknownPbi = reinterpret_cast<IUnknown*>(FFmpegMSS->GetMediaStreamSource());
+		IMFGetService* imfSource;
+		unknownPbi->QueryInterface(&imfSource);
+		void* IMfmediaInterface;
+		auto servcieResult = imfSource->GetService(MF_MEDIASOURCE_SERVICE, IID_IMFMediaSource, &IMfmediaInterface);
 		// Pass MediaPlaybackItem to Media Element
 		mediaPlayer->Source = playbackItem;
 
