@@ -1,7 +1,7 @@
 ﻿#include "pch.h"
-#include "Class.h"
-#if __has_include("Class.g.cpp")
-#include "Class.g.cpp"
+#include "MediaPlayerX.h"
+#if __has_include("MediaPlayerX.g.cpp")
+#include "MediaPlayerX.g.cpp"
 #endif
 
 // To learn more about WinUI, the WinUI project structure,
@@ -9,12 +9,12 @@
 
 namespace winrt::MFMediaPlayerX::implementation
 {
-    int32_t Class::MyProperty()
+    int32_t MediaPlayerX::MyProperty()
     {
         throw hresult_not_implemented();
     }
 
-    void Class::MyProperty(int32_t /* value */)
+    void MediaPlayerX::MyProperty(int32_t /* value */)
     {
         throw hresult_not_implemented();
     }

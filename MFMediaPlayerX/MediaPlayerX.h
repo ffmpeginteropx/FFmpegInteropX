@@ -1,12 +1,12 @@
 ﻿#pragma once
 
-#include "Class.g.h"
+#include "MediaPlayerX.g.h"
 
 namespace winrt::MFMediaPlayerX::implementation
 {
-    struct Class : ClassT<Class>
+    struct MediaPlayerX : MediaPlayerXT<MediaPlayerX>
     {
-        Class() = default;
+        MediaPlayerX() = default;
 
         int32_t MyProperty();
         void MyProperty(int32_t value);
@@ -15,7 +15,7 @@ namespace winrt::MFMediaPlayerX::implementation
 
 namespace winrt::MFMediaPlayerX::factory_implementation
 {
-    struct Class : ClassT<Class, implementation::Class>
+    struct MediaPlayerX :MediaPlayerXT<MediaPlayerX, implementation::MediaPlayerX>
     {
     };
 }
