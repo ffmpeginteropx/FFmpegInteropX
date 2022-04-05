@@ -1,9 +1,0 @@
-namespace MFMediaPlayerX
-{
-    [default_interface]
-    runtimeclass MediaPlayerX
-    {
-        MediaPlayerX();
-        Int32 MyProperty;
-    }
-}
