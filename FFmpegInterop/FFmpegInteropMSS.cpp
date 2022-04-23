@@ -193,6 +193,18 @@ FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromUri(String^ uri, FFmpegInteropConf
 	return interopMSS;
 }
 
+FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromUri(String^ uri, FFmpegInteropConfig^ config)
+{
+	auto dispatcher = GetCurrentDispatcher();
+	auto interopMSS = ref new FFmpegInteropMSS(config, dispatcher);
+	auto hr = interopMSS->CreateMediaStreamSource(uri);
+	if (!SUCCEEDED(hr))
+	{
+		throw ref new Exception(hr, "Failed to open media.");
+	}
+	return interopMSS;
+}
+
 FFmpegInteropMSS^ FFmpegInteropMSS::CreateFFmpegInteropMSSFromStream(IRandomAccessStream^ stream, bool forceAudioDecode, bool forceVideoDecode, PropertySet^ ffmpegOptions, MediaStreamSource^ mss)
 {
 #pragma warning (disable: 4973)

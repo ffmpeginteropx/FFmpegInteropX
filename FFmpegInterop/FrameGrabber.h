@@ -79,6 +79,32 @@ namespace FFmpegInterop {
 			});
 		}
 
+		/// <summary>Creates a new FrameGrabber from the specified uri.</summary>
+		static IAsyncOperation<FrameGrabber^>^ CreateFromUriAsync(String^ uri)
+		{
+			return create_async([uri]
+			{
+				FFmpegInteropConfig^ config = ref new FFmpegInteropConfig();
+				config->IsFrameGrabber = true;
+				config->VideoDecoderMode = VideoDecoderMode::ForceFFmpegSoftwareDecoder;
+
+				auto result = FFmpegInteropMSS::CreateFromUri(uri, config);
+				if (result == nullptr)
+				{
+					throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
+				}
+				if (result->VideoStream == nullptr)
+				{
+					throw ref new Exception(E_FAIL, "No video stream found in file (or no suitable decoder available).");
+				}
+				if (result->VideoSampleProvider == nullptr)
+				{
+					throw ref new Exception(E_FAIL, "No video stream found in file (or no suitable decoder available).");
+				}
+				return ref new FrameGrabber(result);
+			});
+		}
+
 		/// <summary>Extracts a video frame at the specififed position.</summary>
 		/// <param name="position">The position of the requested frame.</param>
 		/// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
