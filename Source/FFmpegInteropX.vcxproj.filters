@@ -26,6 +26,9 @@
     <Filter Include="NuGet">
       <UniqueIdentifier>{6ec5dc49-1ce3-43ae-8a32-385d881df05e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Subtitles\Rendering">
+      <UniqueIdentifier>{dc2a7df3-7065-4426-acf3-b91e2bfe6164}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -188,6 +191,9 @@
     </ClInclude>
     <ClInclude Include="DirectXInteropHelper.h">
       <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="SubtitleRenderer.h">
+      <Filter>Subtitles\Rendering</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
