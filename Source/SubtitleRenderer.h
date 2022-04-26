@@ -21,6 +21,32 @@ namespace FFmpegInteropX
 			ds->Blend = CanvasBlend::Copy;
 			ds->DrawImage(bitmap);
 
+			for (unsigned int i = 0; i < item->TimedMetadataTracks->Size; i++)
+			{
+				auto track = item->TimedMetadataTracks->GetAt(i);
+				if (item->TimedMetadataTracks->GetPresentationMode(i) != TimedMetadataTrackPresentationMode::PlatformPresented)
+					continue;
+
+				auto renderer = GetRenderer(track);
+
+				auto activeCues = track->ActiveCues;
+				for (auto ac : activeCues)
+				{
+
+				}
+			}
+		}
+
+	private:
+		SubtitleRendererInternal^ GetRenderer(TimedMetadataTrack^ track)
+		{
+			switch (track->TimedMetadataKind)
+			{
+				case TimedMetadataKind::ImageSubtitle: return ref new BitmapSubtitleRenderer();
+				case TimedMetadataKind::Subtitle: return ref new AssSsaSubtitleRenderer();
+			}
+
+			return nullptr;
 		}
 
 	};
@@ -30,25 +56,25 @@ namespace FFmpegInteropX
 
 	};
 
-	class SubtitleRendererInternal abstract
+	ref class SubtitleRendererInternal abstract
 	{
 	public:
 		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session) = 0;
 	};
 
-	class AssSsaSubtitleRenderer : public SubtitleRendererInternal
+	ref class AssSsaSubtitleRenderer : public SubtitleRendererInternal
 	{
 	public:
-		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session)
+		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session) override
 		{
 
 		}
 	};
 
-	class BitmapSubtitleRenderer : public SubtitleRendererInternal
+	ref class BitmapSubtitleRenderer : public SubtitleRendererInternal
 	{
 	public:
-		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session)
+		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session) override
 		{
 
 		}
