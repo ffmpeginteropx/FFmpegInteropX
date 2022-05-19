@@ -111,9 +111,8 @@
             </SplitView.Pane>
 
             <!-- Main content -->
-            <MediaPlayerElement x:Name="mediaPlayerElement"
+            <local:MediaPlayerElementX x:Name="mediaPlayerElement"
                         AreTransportControlsEnabled="True"
-                        AutoPlay="True"                        
             />
 
         </SplitView>

@@ -1,0 +1,61 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+    xmlns:local="using:MediaPlayerCS">
+    <Style TargetType="local:MediaPlayerElementX">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Setter Property="IsTabStop" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:MediaPlayerElementX">
+                    <Grid x:Name="LayoutRoot" HorizontalAlignment="{TemplateBinding HorizontalAlignment}" VerticalAlignment="{TemplateBinding VerticalAlignment}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="SizeModes">
+                                <VisualState x:Name="NormalSizeMode"></VisualState>
+                                <VisualState x:Name="CompactSizeMode">
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" Storyboard.TargetName="PosterImage2">
+                                            <DiscreteObjectKeyFrame KeyTime="0">
+                                                <DiscreteObjectKeyFrame.Value>
+                                                    <Visibility>Collapsed</Visibility>
+                                                </DiscreteObjectKeyFrame.Value>
+                                            </DiscreteObjectKeyFrame>
+                                        </ObjectAnimationUsingKeyFrames>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" Storyboard.TargetName="PosterImageCompact">
+                                            <DiscreteObjectKeyFrame KeyTime="0">
+                                                <DiscreteObjectKeyFrame.Value>
+                                                    <Visibility>Visible</Visibility>
+                                                </DiscreteObjectKeyFrame.Value>
+                                            </DiscreteObjectKeyFrame>
+                                        </ObjectAnimationUsingKeyFrames>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" Storyboard.TargetName="TimedTextSourcePresenter">
+                                            <DiscreteObjectKeyFrame KeyTime="0">
+                                                <DiscreteObjectKeyFrame.Value>
+                                                    <Visibility>Collapsed</Visibility>
+                                                </DiscreteObjectKeyFrame.Value>
+                                            </DiscreteObjectKeyFrame>
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Border Background="Transparent"/>
+                        <Rectangle Grid.Column="1" x:Name="MediaPlayerPresenter" Fill="AliceBlue" HorizontalAlignment="{TemplateBinding HorizontalAlignment}" VerticalAlignment="{TemplateBinding VerticalAlignment}"/>
+                        <Image x:Name="PosterImage2" Grid.Column="1" Stretch="{TemplateBinding Stretch}" Source="{TemplateBinding PosterSource}" Visibility="Visible"/>
+                        <Image x:Name="SubtitlesTexture" Grid.Column="1" Stretch="{TemplateBinding Stretch}" Width="100" Height="100" />
+                        <Image Height="100" HorizontalAlignment="Left" Width="180" x:Name="PosterImageCompact" Visibility="Collapsed" Grid.Column="0" Stretch="{TemplateBinding Stretch}" Source="{TemplateBinding PosterSource}"/>
+
+                        <ContentPresenter Margin="0" Grid.Column="1" x:Name="TransportControlsPresenter" Visibility="{TemplateBinding AreTransportControlsEnabled}"/>
+                        <Grid Grid.Column="1" x:Name="TimedTextSourcePresenter"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

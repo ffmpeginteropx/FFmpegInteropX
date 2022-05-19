@@ -164,6 +164,7 @@
     <ClCompile Include="HEVCSampleProvider.cpp" />
     <ClCompile Include="MediaSampleProvider.cpp" />
     <ClCompile Include="NativeBufferFactory.cpp" />
+    <ClCompile Include="SubtitleRenderer.cpp" />
     <ClCompile Include="UncompressedAudioSampleProvider.cpp" />
     <ClCompile Include="UncompressedSampleProvider.cpp" />
     <ClCompile Include="UncompressedVideoSampleProvider.cpp" />

@@ -14,8 +14,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaPlayerCS", "Samples\Me
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "Tests\UnitTest.csproj", "{F1ECBD62-71FE-47FB-B588-1E331A375B59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaPlayer.Desktop.WinUI", "MediaPlayer.Desktop.WinUI\MediaPlayer.Desktop.WinUI.csproj", "{01337CED-7A66-41B2-8C62-84A5035EDD6F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -109,30 +107,6 @@ Global
 		{F1ECBD62-71FE-47FB-B588-1E331A375B59}.Release|x86.ActiveCfg = Release|x86
 		{F1ECBD62-71FE-47FB-B588-1E331A375B59}.Release|x86.Build.0 = Release|x86
 		{F1ECBD62-71FE-47FB-B588-1E331A375B59}.Release|x86.Deploy.0 = Release|x86
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|ARM.ActiveCfg = Debug|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|ARM.Build.0 = Debug|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|ARM.Deploy.0 = Debug|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|ARM64.ActiveCfg = Debug|arm64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|ARM64.Build.0 = Debug|arm64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|ARM64.Deploy.0 = Debug|arm64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|x64.ActiveCfg = Debug|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|x64.Build.0 = Debug|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|x64.Deploy.0 = Debug|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|x86.ActiveCfg = Debug|x86
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|x86.Build.0 = Debug|x86
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Debug|x86.Deploy.0 = Debug|x86
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|ARM.ActiveCfg = Release|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|ARM.Build.0 = Release|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|ARM.Deploy.0 = Release|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|ARM64.ActiveCfg = Release|arm64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|ARM64.Build.0 = Release|arm64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|ARM64.Deploy.0 = Release|arm64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|x64.ActiveCfg = Release|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|x64.Build.0 = Release|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|x64.Deploy.0 = Release|x64
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|x86.ActiveCfg = Release|x86
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|x86.Build.0 = Release|x86
-		{01337CED-7A66-41B2-8C62-84A5035EDD6F}.Release|x86.Deploy.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

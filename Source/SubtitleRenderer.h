@@ -4,9 +4,70 @@ using namespace Windows::Media::Core;
 using namespace Windows::Media::Playback;
 using namespace Windows::Graphics::DirectX::Direct3D11;
 using namespace Microsoft::Graphics::Canvas;
+using namespace Microsoft::Graphics::Canvas::Text;
+using namespace Windows::UI;
+using namespace Windows::UI::Core;
 
 namespace FFmpegInteropX
 {
+	public ref class SubtitleRenderingResult sealed
+	{
+
+	};
+
+	interface class SubtitleRendererInternal
+	{
+		void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session, CanvasBitmap^ inputBitmap);
+	};
+
+	ref class AssSsaSubtitleRenderer : public SubtitleRendererInternal
+	{
+	public:
+		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session, CanvasBitmap^ inputBitmap)
+		{
+			auto activeCues = track->ActiveCues;
+			for (auto ac : activeCues)
+			{
+				auto textCue = dynamic_cast<TimedTextCue^>(ac);
+
+				auto cue = textCue;
+				//render each line, bottom up
+				for (int j = cue->Lines->Size - 1; j > 0; j--)
+				{
+					auto line = cue->Lines->GetAt(j);
+					auto lineText = line->Text;
+
+					auto canvasFormat = ref new CanvasTextFormat();
+					canvasFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
+					canvasFormat->HorizontalAlignment = CanvasHorizontalAlignment::Center;
+
+					auto textLayout = ref new CanvasTextLayout(session->Device, lineText, canvasFormat, (float)inputBitmap->Size.Width, (float)inputBitmap->Size.Height);
+
+					/*auto theRectYouAreLookingFor = ref new Rect(xLoc + textLayout.DrawBounds.X,
+						yLoc + textLayout.DrawBounds.Y,
+						textLayout.DrawBounds.Width,
+						textLayout.DrawBounds.Height);*/
+					session->DrawTextLayout(textLayout, 0, 0, Colors::White);
+				}
+			}
+		}
+	};
+
+	ref class BitmapSubtitleRenderer : public SubtitleRendererInternal
+	{
+	public:
+		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session, CanvasBitmap^ inputBitmap)
+		{
+			auto activeCues = track->ActiveCues;
+			for (auto ac : activeCues)
+			{
+				auto imageCue = dynamic_cast<ImageCue^>(ac);
+				auto bitmap = CanvasBitmap::CreateFromSoftwareBitmap(session->Device, imageCue->SoftwareBitmap);
+
+			}
+		}
+	};
+
 	public ref class SubtitleRenderer sealed
 	{
 
@@ -23,60 +84,32 @@ namespace FFmpegInteropX
 
 			for (unsigned int i = 0; i < item->TimedMetadataTracks->Size; i++)
 			{
-				auto track = item->TimedMetadataTracks->GetAt(i);
 				if (item->TimedMetadataTracks->GetPresentationMode(i) != TimedMetadataTrackPresentationMode::PlatformPresented)
 					continue;
 
+				auto track = item->TimedMetadataTracks->GetAt(i);
+
 				auto renderer = GetRenderer(track);
 
-				auto activeCues = track->ActiveCues;
-				for (auto ac : activeCues)
-				{
-
-				}
+				renderer->RenderSubtitle(track, ds, bitmap);
 			}
+
+			return ref new SubtitleRenderingResult();
 		}
 
 	private:
 		SubtitleRendererInternal^ GetRenderer(TimedMetadataTrack^ track)
 		{
-			switch (track->TimedMetadataKind)
+			if (track->TimedMetadataKind == TimedMetadataKind::ImageSubtitle)
 			{
-				case TimedMetadataKind::ImageSubtitle: return ref new BitmapSubtitleRenderer();
-				case TimedMetadataKind::Subtitle: return ref new AssSsaSubtitleRenderer();
+				return ref new BitmapSubtitleRenderer();
+			}
+			if (track->TimedMetadataKind == TimedMetadataKind::Subtitle)
+			{
+				return ref new AssSsaSubtitleRenderer();
 			}
 
 			return nullptr;
-		}
-
-	};
-
-	public ref class SubtitleRenderingResult sealed
-	{
-
-	};
-
-	ref class SubtitleRendererInternal abstract
-	{
-	public:
-		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session) = 0;
-	};
-
-	ref class AssSsaSubtitleRenderer : public SubtitleRendererInternal
-	{
-	public:
-		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session) override
-		{
-
-		}
-	};
-
-	ref class BitmapSubtitleRenderer : public SubtitleRendererInternal
-	{
-	public:
-		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session) override
-		{
-
 		}
 	};
 }

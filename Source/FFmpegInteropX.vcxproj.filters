@@ -73,6 +73,9 @@
     <ClCompile Include="DirectXInteropHelper.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="SubtitleRenderer.cpp">
+      <Filter>Subtitles\Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
