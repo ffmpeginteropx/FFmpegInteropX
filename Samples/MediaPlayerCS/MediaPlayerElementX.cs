@@ -179,12 +179,8 @@ namespace MediaPlayerCS
                 using (CanvasDrawingSession ds = canvasImageSource.CreateDrawingSession(Colors.Black))
                 {
                     sender.CopyFrameToVideoSurface(inputBitmap);
-
-
-
                     ds.DrawImage(inputBitmap);
                     ds.Flush();
-
                     FrameServerImage.Source = canvasImageSource;
                 }
 
@@ -202,6 +198,7 @@ namespace MediaPlayerCS
         {
             try
             {
+                var subRenderer = new FFmpegInteropX.SubtitleRenderer();
                 canvasDevice = CanvasDevice.GetSharedDevice();
 
                 if (sender.PlaybackSession.PlaybackState == MediaPlaybackState.Paused) return;
@@ -221,16 +218,9 @@ namespace MediaPlayerCS
                     SubtitleTexture.Source = subtitleImageSource;
                 }
 
-                Rect subtitleTargetRect = new Rect(0, 0, 100, 100);
-
                 using (CanvasBitmap inputBitmap = CanvasBitmap.CreateFromSoftwareBitmap(canvasDevice, subtitleDest))
                 {
-                    using (CanvasDrawingSession ds = subtitleImageSource.CreateDrawingSession(Colors.Transparent))
-                    {
-                        RenderSubtitlesToSurface(inputBitmap, ds, sender);
-                        ds.DrawImage(inputBitmap);
-                        ds.Flush();
-                    }
+                    subRenderer.RenderSubtitleToSurface(sender.Source as MediaPlaybackItem, inputBitmap);
                 }
             }
             catch (Exception ex)

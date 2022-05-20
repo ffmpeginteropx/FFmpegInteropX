@@ -7,12 +7,34 @@ using namespace Microsoft::Graphics::Canvas;
 using namespace Microsoft::Graphics::Canvas::Text;
 using namespace Windows::UI;
 using namespace Windows::UI::Core;
+using namespace Windows::UI::Xaml::Media;
+using namespace Microsoft::Graphics::Canvas::UI::Xaml;
+using namespace Windows::Graphics::Imaging;
 
 namespace FFmpegInteropX
 {
 	public ref class SubtitleRenderingResult sealed
 	{
+	private:
+		CanvasImageSource^ imageSource;
 
+	public:
+		property ImageSource^ BitmapImageSource
+		{
+			public: ImageSource^ get()
+			{
+				return imageSource;
+			}
+		}
+
+		SubtitleRenderingResult() 
+		{
+		}
+
+		SubtitleRenderingResult(CanvasImageSource^ _imageSource)
+		{
+			imageSource = _imageSource;
+		}
 	};
 
 	interface class SubtitleRendererInternal
@@ -70,17 +92,30 @@ namespace FFmpegInteropX
 
 	public ref class SubtitleRenderer sealed
 	{
+	private:
+		SoftwareBitmap^ subtitleDest;
+		CanvasImageSource^ subtitleImageSource;
 
 	public:
-		SubtitleRenderingResult^ RenderSubtitleToSurface(MediaPlaybackItem^ item, IDirect3DSurface^ surface)
+		SubtitleRenderingResult^ RenderSubtitleToSurface(MediaPlaybackItem^ item, float width, float height)
 		{
 			auto canvasDevice = CanvasDevice::GetSharedDevice();
-			auto bitmap = CanvasBitmap::CreateFromDirect3D11Surface(canvasDevice, surface);
-			auto renderTarget = CanvasRenderTarget::CreateFromDirect3D11Surface(canvasDevice, surface);
-			auto ds = renderTarget->CreateDrawingSession();
+
+			if (subtitleDest == nullptr || (subtitleDest->PixelWidth != width) || (subtitleDest->PixelHeight != height))
+			{
+				subtitleDest = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, (int)width, (int)height, BitmapAlphaMode::Premultiplied);
+			}
+
+			if (subtitleImageSource == nullptr || (subtitleImageSource->Size.Width != width) || (subtitleImageSource->Size.Height != height))
+			{
+				subtitleImageSource = ref new  CanvasImageSource(canvasDevice, (float)width, (float)height, 96, CanvasAlphaMode::Premultiplied);
+			}
+
+			CanvasBitmap^ inputBitmap = CanvasBitmap::CreateFromSoftwareBitmap(canvasDevice, subtitleDest);
+			CanvasDrawingSession^ ds = subtitleImageSource->CreateDrawingSession(Colors::Transparent);
+			
 			ds->Antialiasing = CanvasAntialiasing::Aliased;
 			ds->Blend = CanvasBlend::Copy;
-			ds->DrawImage(bitmap);
 
 			for (unsigned int i = 0; i < item->TimedMetadataTracks->Size; i++)
 			{
@@ -91,10 +126,11 @@ namespace FFmpegInteropX
 
 				auto renderer = GetRenderer(track);
 
-				renderer->RenderSubtitle(track, ds, bitmap);
+				renderer->RenderSubtitle(track, ds, nullptr);
 			}
+			ds->DrawImage(inputBitmap);
 
-			return ref new SubtitleRenderingResult();
+			return ref new SubtitleRenderingResult(subtitleImageSource);
 		}
 
 	private:

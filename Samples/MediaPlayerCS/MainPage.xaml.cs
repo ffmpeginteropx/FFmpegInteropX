@@ -490,9 +490,13 @@ namespace MediaPlayerCS
                 () =>
                 {
                     tbSubtitleDelay.Text = "Subtitle delay: 0s";
+                    if (playbackItem.TimedMetadataTracks.Count > 0)
+                    {
+                        playbackItem.TimedMetadataTracks.SetPresentationMode(0, TimedMetadataTrackPresentationMode.PlatformPresented);
+                    }
                 }));
         }
-      
+
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
         {
             PassthroughVideo.IsEnabled = !AutoDetect.IsOn;
