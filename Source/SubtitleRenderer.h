@@ -10,6 +10,7 @@ using namespace Windows::UI::Core;
 using namespace Windows::UI::Xaml::Media;
 using namespace Microsoft::Graphics::Canvas::UI::Xaml;
 using namespace Windows::Graphics::Imaging;
+using namespace Windows::Foundation;
 
 namespace FFmpegInteropX
 {
@@ -21,13 +22,13 @@ namespace FFmpegInteropX
 	public:
 		property ImageSource^ BitmapImageSource
 		{
-			public: ImageSource^ get()
-			{
-				return imageSource;
-			}
+		public: ImageSource^ get()
+		{
+			return imageSource;
+		}
 		}
 
-		SubtitleRenderingResult() 
+		SubtitleRenderingResult()
 		{
 		}
 
@@ -39,37 +40,42 @@ namespace FFmpegInteropX
 
 	interface class SubtitleRendererInternal
 	{
-		void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session, CanvasBitmap^ inputBitmap);
+		void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session, CanvasBitmap^ inputBitmap, float width, float height);
 	};
 
 	ref class AssSsaSubtitleRenderer : public SubtitleRendererInternal
 	{
 	public:
-		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session, CanvasBitmap^ inputBitmap)
+		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session, CanvasBitmap^ inputBitmap, float width, float height)
 		{
 			auto activeCues = track->ActiveCues;
+			float xLoc = 0.0f;
+			float yLoc = 0.0f;
 			for (auto ac : activeCues)
 			{
 				auto textCue = dynamic_cast<TimedTextCue^>(ac);
-
 				auto cue = textCue;
+				OutputDebugString((L"\n lines in cue " + cue->Lines->Size.ToString())->Data());
 				//render each line, bottom up
-				for (int j = cue->Lines->Size - 1; j > 0; j--)
+				for (int i = textCue->Lines->Size - 1; i >= 0; i--)
 				{
-					auto line = cue->Lines->GetAt(j);
-					auto lineText = line->Text;
 
-					auto canvasFormat = ref new CanvasTextFormat();
-					canvasFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
-					canvasFormat->HorizontalAlignment = CanvasHorizontalAlignment::Center;
+					for (int k = 0; k < 4; k++) {
+						auto line = textCue->Lines->GetAt(i);
+						auto lineText = line->Text + k.ToString();
 
-					auto textLayout = ref new CanvasTextLayout(session->Device, lineText, canvasFormat, (float)inputBitmap->Size.Width, (float)inputBitmap->Size.Height);
+						auto canvasFormat = ref new CanvasTextFormat();
+						canvasFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
+						canvasFormat->HorizontalAlignment = CanvasHorizontalAlignment::Center;
+						canvasFormat->FontSize = 44;
 
-					/*auto theRectYouAreLookingFor = ref new Rect(xLoc + textLayout.DrawBounds.X,
-						yLoc + textLayout.DrawBounds.Y,
-						textLayout.DrawBounds.Width,
-						textLayout.DrawBounds.Height);*/
-					session->DrawTextLayout(textLayout, 0, 0, Colors::White);
+						auto textLayout = ref new CanvasTextLayout(session->Device, lineText, canvasFormat, width, height);
+
+						session->DrawTextLayout(textLayout, xLoc, yLoc, Colors::White);
+						yLoc -= textLayout->DrawBounds.Height;
+						OutputDebugString((L"\n DrawBounds.Width " + textLayout->DrawBounds.Width.ToString() + L"\n")->Data());
+						OutputDebugString((L"\n DrawBounds.Height " + textLayout->DrawBounds.Height.ToString() + L"\n")->Data());
+					}
 				}
 			}
 		}
@@ -78,7 +84,7 @@ namespace FFmpegInteropX
 	ref class BitmapSubtitleRenderer : public SubtitleRendererInternal
 	{
 	public:
-		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session, CanvasBitmap^ inputBitmap)
+		virtual void RenderSubtitle(TimedMetadataTrack^ track, CanvasDrawingSession^ session, CanvasBitmap^ inputBitmap, float width, float height)
 		{
 			auto activeCues = track->ActiveCues;
 			for (auto ac : activeCues)
@@ -113,7 +119,7 @@ namespace FFmpegInteropX
 
 			CanvasBitmap^ inputBitmap = CanvasBitmap::CreateFromSoftwareBitmap(canvasDevice, subtitleDest);
 			CanvasDrawingSession^ ds = subtitleImageSource->CreateDrawingSession(Colors::Transparent);
-			
+
 			ds->Antialiasing = CanvasAntialiasing::Aliased;
 			ds->Blend = CanvasBlend::Copy;
 
@@ -126,10 +132,10 @@ namespace FFmpegInteropX
 
 				auto renderer = GetRenderer(track);
 
-				renderer->RenderSubtitle(track, ds, nullptr);
+				renderer->RenderSubtitle(track, ds, nullptr, width, height);
 			}
-			ds->DrawImage(inputBitmap);
-
+			//ds->DrawImage(inputBitmap);
+			ds->Flush();
 			return ref new SubtitleRenderingResult(subtitleImageSource);
 		}
 

@@ -17,11 +17,15 @@ using Windows.Graphics.Imaging;
 using Windows.UI.Core;
 using Windows.Media.Core;
 using Windows.UI;
+using FFmpegInteropX;
 
 namespace MediaPlayerCS
 {
     internal class MediaPlayerElementX : Control
     {
+
+        SubtitleRenderer subRenderer = new SubtitleRenderer();
+
         public Image FrameServerImage
         {
             get;
@@ -198,30 +202,13 @@ namespace MediaPlayerCS
         {
             try
             {
-                var subRenderer = new FFmpegInteropX.SubtitleRenderer();
                 canvasDevice = CanvasDevice.GetSharedDevice();
 
                 if (sender.PlaybackSession.PlaybackState == MediaPlaybackState.Paused) return;
                 SubtitleTexture.Width = MediaPlayerPresenter.ActualWidth;
                 SubtitleTexture.Height = MediaPlayerPresenter.ActualHeight;
                 //if (!Window.Current.Visible || SubtitleTexture.Width == 0 || SubtitleTexture.Height == 0) return;
-
-                if (subtitleDest == null || (subtitleDest.PixelWidth != SubtitleTexture.Width) || (subtitleDest.PixelHeight != SubtitleTexture.Height))
-                {
-                    subtitleDest?.Dispose();
-                    // SubtitleTexture in this example is a XAML image control
-                    subtitleDest = new SoftwareBitmap(BitmapPixelFormat.Bgra8, (int)SubtitleTexture.Width, (int)SubtitleTexture.Height, BitmapAlphaMode.Premultiplied);
-                }
-                if (subtitleImageSource == null || (subtitleImageSource.Size.Width != SubtitleTexture.Width) || (subtitleImageSource.Size.Height != SubtitleTexture.Height))
-                {
-                    subtitleImageSource = new CanvasImageSource(canvasDevice, (float)SubtitleTexture.Width, (float)SubtitleTexture.Height, 96, CanvasAlphaMode.Premultiplied);
-                    SubtitleTexture.Source = subtitleImageSource;
-                }
-
-                using (CanvasBitmap inputBitmap = CanvasBitmap.CreateFromSoftwareBitmap(canvasDevice, subtitleDest))
-                {
-                    subRenderer.RenderSubtitleToSurface(sender.Source as MediaPlaybackItem, inputBitmap);
-                }
+                SubtitleTexture.Source = subRenderer.RenderSubtitleToSurface(sender.Source as MediaPlaybackItem, (float)SubtitleTexture.Width, (float)SubtitleTexture.Height).BitmapImageSource;
             }
             catch (Exception ex)
             {
