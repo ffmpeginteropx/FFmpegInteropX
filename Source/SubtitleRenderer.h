@@ -141,13 +141,7 @@ namespace FFmpegInteropX
 				return CanvasTextDirection::RightToLeftThenTopToBottom;
 
 			case TimedTextWritingMode::TopBottom:
-				switch (cueFlowDirection)
-				{
-				case Windows::Media::Core::TimedTextFlowDirection::LeftToRight:
-					return CanvasTextDirection::LeftToRightThenTopToBottom;
-				case Windows::Media::Core::TimedTextFlowDirection::RightToLeft:
-					return CanvasTextDirection::RightToLeftThenTopToBottom;
-				}
+				return CanvasTextDirection::TopToBottomThenLeftToRight;
 
 			case TimedTextWritingMode::TopBottomLeftRight:
 				return CanvasTextDirection::TopToBottomThenLeftToRight;
