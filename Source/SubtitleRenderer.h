@@ -83,7 +83,7 @@ namespace FFmpegInteropX
 							canvasFormat->FontSize = GetFontSize(subFormatStyle, width, height);
 							canvasFormat->FontFamily = subFormatStyle->FontFamily;
 							canvasFormat->FontStyle = GetFontStyle(subFormatStyle);
-							canvasFormat->Direction = GetTextFlowDirection(subFormatStyle);
+							canvasFormat->Direction = GetTextFlowDirection(subFormatStyle, regionStyle);
 							canvasFormat->FontWeight = GetFontWeight(subFormatStyle);
 
 							auto textLayout = ref new CanvasTextLayout(session->Device, lineText, canvasFormat, width, height);
@@ -122,14 +122,41 @@ namespace FFmpegInteropX
 			}
 		}
 
-		CanvasTextDirection GetTextFlowDirection(TimedTextStyle^ cueStyle)
+		CanvasTextDirection GetTextFlowDirection(TimedTextStyle^ cueStyle, TimedTextRegion^ cueRegion)
 		{
 			auto cueFlowDirection = cueStyle->FlowDirection;
-			switch (cueFlowDirection)
+			auto writingMode = cueRegion->WritingMode;
+			switch (writingMode)
 			{
-			case TimedTextFlowDirection::LeftToRight: return CanvasTextDirection::LeftToRightThenTopToBottom;
-			case TimedTextFlowDirection::RightToLeft: return CanvasTextDirection::RightToLeftThenTopToBottom;
+			case TimedTextWritingMode::LeftRight:
+				return CanvasTextDirection::LeftToRightThenTopToBottom;
 
+			case TimedTextWritingMode::LeftRightTopBottom:
+				return CanvasTextDirection::LeftToRightThenTopToBottom;
+
+			case TimedTextWritingMode::RightLeft:
+				return CanvasTextDirection::RightToLeftThenTopToBottom;
+
+			case TimedTextWritingMode::RightLeftTopBottom:
+				return CanvasTextDirection::RightToLeftThenTopToBottom;
+
+			case TimedTextWritingMode::TopBottom:
+				switch (cueFlowDirection)
+				{
+				case Windows::Media::Core::TimedTextFlowDirection::LeftToRight:
+					return CanvasTextDirection::LeftToRightThenTopToBottom;
+				case Windows::Media::Core::TimedTextFlowDirection::RightToLeft:
+					return CanvasTextDirection::RightToLeftThenTopToBottom;
+				}
+
+			case TimedTextWritingMode::TopBottomLeftRight:
+				return CanvasTextDirection::TopToBottomThenLeftToRight;
+
+			case TimedTextWritingMode::TopBottomRightLeft:
+				return CanvasTextDirection::TopToBottomThenRightToLeft;
+
+			default:
+				break;
 			}
 		}
 
