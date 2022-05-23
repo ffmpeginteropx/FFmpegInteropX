@@ -144,27 +144,102 @@ namespace FFmpegInteropX
 			}
 		}
 
-		/// <summary>
-		/// me thinks the display alignment of the image should be not be handled at subtitle drawing time
-		/// </summary>
-		/// <param name="textFormat"></param>
-		/// <param name="cueRegion"></param>
+		
 		void SetDisplayAlignment(CanvasTextFormat^ textFormat, TimedTextRegion^ cueRegion, TimedTextStyle^ cueStyle)
 		{
+			//TimedTextDisplayAlignment -> VerticalAlignment -> TimedTextWritingMode 
 			if (cueRegion->DisplayAlignment == TimedTextDisplayAlignment::Center)
 			{
-				textFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
-				textFormat->HorizontalAlignment = CanvasHorizontalAlignment::Center;
+				textFormat->VerticalAlignment = CanvasVerticalAlignment::Center;
 			}
 			else if (cueRegion->DisplayAlignment == TimedTextDisplayAlignment::Before)
 			{
-				textFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
-				textFormat->HorizontalAlignment = CanvasHorizontalAlignment::Center;
+				switch (cueRegion->WritingMode)
+				{
+				case TimedTextWritingMode::LeftRight:
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
+					break;
+				case TimedTextWritingMode::LeftRightTopBottom: 
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
+					break;
+				case TimedTextWritingMode::RightLeft: 
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
+					break;
+				case TimedTextWritingMode::RightLeftTopBottom:
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
+					break;
+				case TimedTextWritingMode::TopBottom: 
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
+					break;
+				case TimedTextWritingMode::TopBottomLeftRight:
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
+					break;
+				case TimedTextWritingMode::TopBottomRightLeft: 
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
+					break;
+				default:
+					break;
+				}
 			}
 			else if (cueRegion->DisplayAlignment == TimedTextDisplayAlignment::After)
 			{
-				textFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
+				switch (cueRegion->WritingMode)
+				{
+				case TimedTextWritingMode::LeftRight:
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
+					break;
+				case TimedTextWritingMode::LeftRightTopBottom:
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
+					break;
+				case TimedTextWritingMode::RightLeft:
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
+					break;
+				case TimedTextWritingMode::RightLeftTopBottom:
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
+					break;
+				case TimedTextWritingMode::TopBottom:
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
+					break;
+				case TimedTextWritingMode::TopBottomLeftRight:
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
+					break;
+				case TimedTextWritingMode::TopBottomRightLeft:
+					textFormat->VerticalAlignment = CanvasVerticalAlignment::Bottom;
+					break;
+				default:
+					break;
+				}
+			}
+
+			//TimedTextLineAlignment    -> HorizontalAlignment -> TimedTextFlowDirection
+
+			if (cueStyle->LineAlignment == TimedTextLineAlignment::Center)
+			{
 				textFormat->HorizontalAlignment = CanvasHorizontalAlignment::Center;
+			}
+			else if (cueStyle->LineAlignment == TimedTextLineAlignment::Start)
+			{
+				switch (cueStyle->FlowDirection)
+				{
+					case TimedTextFlowDirection::LeftToRight:
+					textFormat->HorizontalAlignment = CanvasHorizontalAlignment::Left;
+					break;
+				case TimedTextFlowDirection::RightToLeft:
+					textFormat->HorizontalAlignment = CanvasHorizontalAlignment::Right;
+					break;
+				}
+			}
+			else if (cueStyle->LineAlignment == TimedTextLineAlignment::End)
+			{
+				switch (cueStyle->FlowDirection)
+				{
+				case TimedTextFlowDirection::LeftToRight:
+					textFormat->HorizontalAlignment = CanvasHorizontalAlignment::Right;
+					break;
+				case TimedTextFlowDirection::RightToLeft:
+					textFormat->HorizontalAlignment = CanvasHorizontalAlignment::Left;
+					break;
+				}
 			}
 		}
 	};
