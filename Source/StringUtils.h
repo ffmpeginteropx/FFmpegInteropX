@@ -47,5 +47,11 @@ namespace FFmpegInteropX
 			return myconv.to_bytes(strW);
 		}
 
+		static std::wstring PlatformStringToWString(String^ value)
+		{
+			std::wstring strW(value->Begin(), value->Length());
+			return strW;
+		}
+
 	};
 }
