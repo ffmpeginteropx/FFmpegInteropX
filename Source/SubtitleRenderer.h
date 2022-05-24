@@ -156,62 +156,7 @@ namespace FFmpegInteropX
 			}
 			return 0;
 		}
-
-		void GetLineStartingPositions(
-			float* xCurrent, 
-			float* yCurrent, 
-			float xStart, 
-			float yStart, 
-			TimedTextRegion^ cueRegion, 
-			CanvasTextLayout^ textLayout)
-		{
-			auto writingMode = cueRegion->WritingMode;
-
-			switch (writingMode)
-			{
-			case TimedTextWritingMode::LeftRight:
-			case TimedTextWritingMode::LeftRightTopBottom:
-			case TimedTextWritingMode::RightLeft:
-			case TimedTextWritingMode::RightLeftTopBottom:
-			{
-				switch (textLayout->VerticalAlignment)
-				{
-				case CanvasVerticalAlignment::Bottom: yCurrent = yCurrent; break;
-				case CanvasVerticalAlignment::Center:yCurrent = yCurrent; break;
-				case CanvasVerticalAlignment::Top:yCurrent = yCurrent;  break;
-				}
-				switch (textLayout->HorizontalAlignment)
-				{
-				case CanvasHorizontalAlignment::Left:xCurrent = &xStart; break;
-				case CanvasHorizontalAlignment::Center:xCurrent = &xStart; break;
-				case CanvasHorizontalAlignment::Right:xCurrent = &xStart; break;
-				}
-				break;
-			}
-			case TimedTextWritingMode::TopBottomLeftRight:
-			case TimedTextWritingMode::TopBottomRightLeft:
-			case TimedTextWritingMode::TopBottom:
-			{
-				switch (textLayout->VerticalAlignment)
-				{
-				case CanvasVerticalAlignment::Bottom:*yCurrent = yStart;  break;
-				case CanvasVerticalAlignment::Center: *yCurrent = yStart; break;
-				case CanvasVerticalAlignment::Top: *yCurrent =yStart; break;
-				}
-				switch (textLayout->HorizontalAlignment)
-				{
-				case CanvasHorizontalAlignment::Left:*xCurrent = xStart; break;
-				case CanvasHorizontalAlignment::Center:*xCurrent = xStart; break;
-				case CanvasHorizontalAlignment::Right:*xCurrent = xStart; break;
-				}
-				break;
-			}
-
-			default:
-				break;
-			}
-		}
-
+				
 		float UpdateYWritingPosition(float currentLineIndex, TimedTextRegion^ cueRegion, CanvasTextLayout^ textLayout)
 		{
 			auto writingMode = cueRegion->WritingMode;
