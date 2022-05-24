@@ -63,6 +63,8 @@ namespace MediaPlayerCS
         public MainPage()
         {
             Config = new MediaSourceConfig();
+            Config.SubtitleRegion.WritingMode = TimedTextWritingMode.TopBottom;
+            Config.SubtitleStyle.FlowDirection = TimedTextFlowDirection.LeftToRight;
 
             this.InitializeComponent();
 

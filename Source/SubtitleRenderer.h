@@ -61,8 +61,8 @@ namespace FFmpegInteropX
 				//render each line, bottom up
 
 				//X and Y location of each line
-				float xLoc = regionStyle->Position.X;
-				float yLoc = regionStyle->Position.Y;
+				float xLoc = (float)regionStyle->Position.X;
+				float yLoc = (float)regionStyle->Position.Y;
 
 				for (int i = textCue->Lines->Size - 1; i >= 0; i--)
 				{
@@ -73,7 +73,7 @@ namespace FFmpegInteropX
 						for (auto subFormat : line->Subformats)
 						{
 							//this is used to compute the position inside the line for subformats
-							float xSubFormatLineLoc = xLoc;
+							//it can be either moving on the X or on the Y axis
 							auto lineText = line->Text + k.ToString();
 							auto wLineText = StringUtils::PlatformStringToWString(lineText);
 							auto subFormatStyle = subFormat->SubformatStyle;
@@ -88,14 +88,197 @@ namespace FFmpegInteropX
 
 							auto textLayout = ref new CanvasTextLayout(session->Device, lineText, canvasFormat, width, height);
 
-							session->DrawTextLayout(textLayout, xSubFormatLineLoc, yLoc, Colors::White);
-							yLoc -= textLayout->DrawBounds.Height;
-							xSubFormatLineLoc += textLayout->DrawBounds.Width;
+							xLoc = ResetXLocation(xLoc, regionStyle, textLayout);
+							yLoc = ResetYLocation(yLoc, regionStyle, textLayout);
+
+							session->DrawTextLayout(textLayout, xLoc, yLoc, Colors::White);
+							//TODO: handle alignment
+							//yLoc -= textLayout->DrawBounds.Height;
+							yLoc = UpdateYWritingPosition(yLoc, regionStyle, textLayout);
+							//lineSubFormatIndex += textLayout->DrawBounds.Width;
+							xLoc = UpdateXWritingPosition(xLoc, regionStyle, textLayout);
 							OutputDebugString((L"\n DrawBounds.Width " + textLayout->DrawBounds.Width.ToString() + L"\n")->Data());
 							OutputDebugString((L"\n DrawBounds.Height " + textLayout->DrawBounds.Height.ToString() + L"\n")->Data());
 						}
 					}
 				}
+			}
+		}
+
+		float ResetXLocation(float xLoc, TimedTextRegion^ cueRegion, CanvasTextLayout^ textLayout)
+		{
+			auto writingMode = cueRegion->WritingMode;
+
+			switch (writingMode)
+			{
+			case TimedTextWritingMode::LeftRight:
+			case TimedTextWritingMode::LeftRightTopBottom:
+			case TimedTextWritingMode::RightLeft:
+			case TimedTextWritingMode::RightLeftTopBottom:
+			{
+				return 0;
+			}
+			case TimedTextWritingMode::TopBottomLeftRight:
+			case TimedTextWritingMode::TopBottomRightLeft:
+			case TimedTextWritingMode::TopBottom:
+			{
+				return xLoc;
+			}
+
+			default:
+				break;
+			}
+			return 0;
+		}
+
+		float ResetYLocation(float yLoc, TimedTextRegion^ cueRegion, CanvasTextLayout^ textLayout)
+		{
+			auto writingMode = cueRegion->WritingMode;
+
+			switch (writingMode)
+			{
+			case TimedTextWritingMode::LeftRight:
+			case TimedTextWritingMode::LeftRightTopBottom:
+			case TimedTextWritingMode::RightLeft:
+			case TimedTextWritingMode::RightLeftTopBottom:
+			{
+				return yLoc;
+			}
+			case TimedTextWritingMode::TopBottomLeftRight:
+			case TimedTextWritingMode::TopBottomRightLeft:
+			case TimedTextWritingMode::TopBottom:
+			{
+				return 0;
+			}
+
+			default:
+				break;
+			}
+			return 0;
+		}
+
+		void GetLineStartingPositions(
+			float* xCurrent, 
+			float* yCurrent, 
+			float xStart, 
+			float yStart, 
+			TimedTextRegion^ cueRegion, 
+			CanvasTextLayout^ textLayout)
+		{
+			auto writingMode = cueRegion->WritingMode;
+
+			switch (writingMode)
+			{
+			case TimedTextWritingMode::LeftRight:
+			case TimedTextWritingMode::LeftRightTopBottom:
+			case TimedTextWritingMode::RightLeft:
+			case TimedTextWritingMode::RightLeftTopBottom:
+			{
+				switch (textLayout->VerticalAlignment)
+				{
+				case CanvasVerticalAlignment::Bottom: yCurrent = yCurrent; break;
+				case CanvasVerticalAlignment::Center:yCurrent = yCurrent; break;
+				case CanvasVerticalAlignment::Top:yCurrent = yCurrent;  break;
+				}
+				switch (textLayout->HorizontalAlignment)
+				{
+				case CanvasHorizontalAlignment::Left:xCurrent = &xStart; break;
+				case CanvasHorizontalAlignment::Center:xCurrent = &xStart; break;
+				case CanvasHorizontalAlignment::Right:xCurrent = &xStart; break;
+				}
+				break;
+			}
+			case TimedTextWritingMode::TopBottomLeftRight:
+			case TimedTextWritingMode::TopBottomRightLeft:
+			case TimedTextWritingMode::TopBottom:
+			{
+				switch (textLayout->VerticalAlignment)
+				{
+				case CanvasVerticalAlignment::Bottom:*yCurrent = yStart;  break;
+				case CanvasVerticalAlignment::Center: *yCurrent = yStart; break;
+				case CanvasVerticalAlignment::Top: *yCurrent =yStart; break;
+				}
+				switch (textLayout->HorizontalAlignment)
+				{
+				case CanvasHorizontalAlignment::Left:*xCurrent = xStart; break;
+				case CanvasHorizontalAlignment::Center:*xCurrent = xStart; break;
+				case CanvasHorizontalAlignment::Right:*xCurrent = xStart; break;
+				}
+				break;
+			}
+
+			default:
+				break;
+			}
+		}
+
+		float UpdateYWritingPosition(float currentLineIndex, TimedTextRegion^ cueRegion, CanvasTextLayout^ textLayout)
+		{
+			auto writingMode = cueRegion->WritingMode;
+			switch (writingMode)
+			{
+			case TimedTextWritingMode::LeftRight:
+			case TimedTextWritingMode::LeftRightTopBottom:
+			case TimedTextWritingMode::RightLeft:
+			case TimedTextWritingMode::RightLeftTopBottom:
+			{
+				switch (textLayout->VerticalAlignment)
+				{
+				case CanvasVerticalAlignment::Bottom: return currentLineIndex - textLayout->DrawBounds.Height;
+				case CanvasVerticalAlignment::Center:return currentLineIndex - textLayout->DrawBounds.Height;
+				case CanvasVerticalAlignment::Top: return currentLineIndex + textLayout->DrawBounds.Height;
+				}
+			}
+			case TimedTextWritingMode::TopBottomLeftRight:
+			case TimedTextWritingMode::TopBottomRightLeft:
+			case TimedTextWritingMode::TopBottom:
+			{
+				switch (textLayout->VerticalAlignment)
+				{
+				case CanvasVerticalAlignment::Bottom: return currentLineIndex + textLayout->DrawBounds.Height;
+				case CanvasVerticalAlignment::Center:return currentLineIndex + textLayout->DrawBounds.Height;
+				case CanvasVerticalAlignment::Top: return currentLineIndex - textLayout->DrawBounds.Height;
+				}
+			}
+
+			default:
+				return currentLineIndex;
+				break;
+			}
+		}
+
+		float UpdateXWritingPosition(float currentLineIndex, TimedTextRegion^ cueRegion, CanvasTextLayout^ textLayout)
+		{
+			auto writingMode = cueRegion->WritingMode;
+			switch (writingMode)
+			{
+			case TimedTextWritingMode::LeftRightTopBottom:
+			case TimedTextWritingMode::RightLeft:
+			case TimedTextWritingMode::LeftRight:
+			case TimedTextWritingMode::RightLeftTopBottom:
+			{
+				switch (textLayout->HorizontalAlignment)
+				{
+				case CanvasHorizontalAlignment::Left:return currentLineIndex + textLayout->DrawBounds.Width;
+				case CanvasHorizontalAlignment::Center:return currentLineIndex + textLayout->DrawBounds.Width;
+				case CanvasHorizontalAlignment::Right:return currentLineIndex - textLayout->DrawBounds.Width;
+				}
+			}break;
+
+			case TimedTextWritingMode::TopBottomLeftRight:
+			case TimedTextWritingMode::TopBottomRightLeft:
+			case TimedTextWritingMode::TopBottom:
+
+				switch (textLayout->HorizontalAlignment)
+				{
+				case CanvasHorizontalAlignment::Left:return currentLineIndex + textLayout->DrawBounds.Width;
+				case CanvasHorizontalAlignment::Center:return currentLineIndex + textLayout->DrawBounds.Width;
+				case CanvasHorizontalAlignment::Right:return currentLineIndex - textLayout->DrawBounds.Width;
+				}break;
+
+			default:
+				return currentLineIndex;
+				break;
 			}
 		}
 
@@ -165,7 +348,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		
+
 		void SetDisplayAlignment(CanvasTextFormat^ textFormat, TimedTextRegion^ cueRegion, TimedTextStyle^ cueStyle)
 		{
 			//TimedTextDisplayAlignment -> VerticalAlignment -> TimedTextWritingMode 
@@ -180,22 +363,22 @@ namespace FFmpegInteropX
 				case TimedTextWritingMode::LeftRight:
 					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
 					break;
-				case TimedTextWritingMode::LeftRightTopBottom: 
+				case TimedTextWritingMode::LeftRightTopBottom:
 					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
 					break;
-				case TimedTextWritingMode::RightLeft: 
+				case TimedTextWritingMode::RightLeft:
 					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
 					break;
 				case TimedTextWritingMode::RightLeftTopBottom:
 					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
 					break;
-				case TimedTextWritingMode::TopBottom: 
+				case TimedTextWritingMode::TopBottom:
 					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
 					break;
 				case TimedTextWritingMode::TopBottomLeftRight:
 					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
 					break;
-				case TimedTextWritingMode::TopBottomRightLeft: 
+				case TimedTextWritingMode::TopBottomRightLeft:
 					textFormat->VerticalAlignment = CanvasVerticalAlignment::Top;
 					break;
 				default:
@@ -242,7 +425,7 @@ namespace FFmpegInteropX
 			{
 				switch (cueStyle->FlowDirection)
 				{
-					case TimedTextFlowDirection::LeftToRight:
+				case TimedTextFlowDirection::LeftToRight:
 					textFormat->HorizontalAlignment = CanvasHorizontalAlignment::Left;
 					break;
 				case TimedTextFlowDirection::RightToLeft:
