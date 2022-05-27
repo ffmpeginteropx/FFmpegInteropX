@@ -61,13 +61,25 @@ namespace FFmpegInteropX
 				//render each line, bottom up
 
 				//X and Y location of each line
-				float xLoc = (float)regionStyle->Position.X;
-				float yLoc = (float)regionStyle->Position.Y;
+				float xLoc = 0;// (float)regionStyle->Position.X;
+				float yLoc = 0;// (float)regionStyle->Position.Y;
+				bool isFirstLine = true;
 
 				for (int i = textCue->Lines->Size - 1; i >= 0; i--)
 				{
 					for (int k = 0; k < 4; k++) //this is for testing multiple lines. To be REMOVED later
 					{
+						if (isFirstLine)
+						{
+							isFirstLine = false;
+							xLoc = 0;// GetXStartPosition(regionStyle, textLayout, width, height);
+							yLoc = 0;//GetYStartPosition(regionStyle, textLayout, width, height);
+						}
+						else
+						{
+							xLoc = ResetXLocation(xLoc, regionStyle);
+							yLoc = ResetYLocation(yLoc, regionStyle);
+						}
 						auto line = textCue->Lines->GetAt(i);
 						// each subformat has its own style that needs to be rendered separatly
 						for (auto subFormat : line->Subformats)
@@ -85,12 +97,8 @@ namespace FFmpegInteropX
 							canvasFormat->FontStyle = GetFontStyle(subFormatStyle);
 							canvasFormat->Direction = GetTextFlowDirection(subFormatStyle, regionStyle);
 							canvasFormat->FontWeight = GetFontWeight(subFormatStyle);
-
 							auto textLayout = ref new CanvasTextLayout(session->Device, lineText, canvasFormat, width, height);
-
-							xLoc = ResetXLocation(xLoc, regionStyle, textLayout);
-							yLoc = ResetYLocation(yLoc, regionStyle, textLayout);
-
+							
 							session->DrawTextLayout(textLayout, xLoc, yLoc, Colors::White);
 							//TODO: handle alignment
 							//yLoc -= textLayout->DrawBounds.Height;
@@ -105,7 +113,29 @@ namespace FFmpegInteropX
 			}
 		}
 
-		float ResetXLocation(float xLoc, TimedTextRegion^ cueRegion, CanvasTextLayout^ textLayout)
+		float GetXStartPosition(TimedTextRegion^ cueRegion, CanvasTextLayout^ textLayout, float width, float hight)
+		{
+			switch (textLayout->HorizontalAlignment)
+			{
+			case CanvasHorizontalAlignment::Left:return 0;
+			case CanvasHorizontalAlignment::Center:return GetAbsolutePixelSizeWidth(cueRegion->Extent, width, hight) / 2;
+			case CanvasHorizontalAlignment::Right:return GetAbsolutePixelSizeWidth(cueRegion->Extent, width, hight);
+
+			}
+		}
+
+		float GetYStartPosition(TimedTextRegion^ cueRegion, CanvasTextLayout^ textLayout, float width, float hight)
+		{
+			switch (textLayout->VerticalAlignment)
+			{
+			case CanvasVerticalAlignment::Bottom:return GetAbsolutePixelSizeHeight(cueRegion->Extent, width, hight);;
+			case CanvasVerticalAlignment::Center:return GetAbsolutePixelSizeHeight(cueRegion->Extent, width, hight) / 2;
+			case CanvasVerticalAlignment::Top:return 0;
+
+			}
+		}
+
+		float ResetXLocation(float xLoc, TimedTextRegion^ cueRegion)
 		{
 			auto writingMode = cueRegion->WritingMode;
 
@@ -131,7 +161,7 @@ namespace FFmpegInteropX
 			return 0;
 		}
 
-		float ResetYLocation(float yLoc, TimedTextRegion^ cueRegion, CanvasTextLayout^ textLayout)
+		float ResetYLocation(float yLoc, TimedTextRegion^ cueRegion)
 		{
 			auto writingMode = cueRegion->WritingMode;
 
@@ -156,7 +186,7 @@ namespace FFmpegInteropX
 			}
 			return 0;
 		}
-				
+
 		float UpdateYWritingPosition(float currentLineIndex, TimedTextRegion^ cueRegion, CanvasTextLayout^ textLayout)
 		{
 			auto writingMode = cueRegion->WritingMode;
@@ -209,15 +239,22 @@ namespace FFmpegInteropX
 				case CanvasHorizontalAlignment::Right:return currentLineIndex - textLayout->DrawBounds.Width;
 				}
 			}break;
+			
 
-			case TimedTextWritingMode::TopBottomLeftRight:
 			case TimedTextWritingMode::TopBottomRightLeft:
-			case TimedTextWritingMode::TopBottom:
-
 				switch (textLayout->HorizontalAlignment)
 				{
 				case CanvasHorizontalAlignment::Left:return currentLineIndex + textLayout->DrawBounds.Width;
 				case CanvasHorizontalAlignment::Center:return currentLineIndex + textLayout->DrawBounds.Width;
+				case CanvasHorizontalAlignment::Right:return currentLineIndex - textLayout->DrawBounds.Width;
+				}break;
+			case TimedTextWritingMode::TopBottomLeftRight:			
+			case TimedTextWritingMode::TopBottom:
+
+				switch (textLayout->HorizontalAlignment)
+				{
+				case CanvasHorizontalAlignment::Left:return currentLineIndex - textLayout->DrawBounds.Width;
+				case CanvasHorizontalAlignment::Center:return currentLineIndex - textLayout->DrawBounds.Width;
 				case CanvasHorizontalAlignment::Right:return currentLineIndex - textLayout->DrawBounds.Width;
 				}break;
 
@@ -237,6 +274,33 @@ namespace FFmpegInteropX
 				return (fontSize.Value * width) / 100;
 			}
 			return fontSize.Value;
+		}
+
+		float GetAbsolutePixelSize(TimedTextDouble value, float width, float height)
+		{
+			if (value.Unit == TimedTextUnit::Percentage)
+			{
+				return (value.Value * width) / 100;
+			}
+			return value.Value;
+		}
+
+		float GetAbsolutePixelSizeWidth(TimedTextSize value, float width, float height)
+		{
+			if (value.Unit == TimedTextUnit::Percentage)
+			{
+				return (value.Width * width) / 100;
+			}
+			return value.Width;
+		}
+
+		float GetAbsolutePixelSizeHeight(TimedTextSize value, float width, float height)
+		{
+			if (value.Unit == TimedTextUnit::Percentage)
+			{
+				return (value.Height * height) / 100;
+			}
+			return value.Height;
 		}
 
 		FontStyle GetFontStyle(TimedTextStyle^ cueStyle)
