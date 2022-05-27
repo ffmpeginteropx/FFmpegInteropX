@@ -246,7 +246,7 @@ namespace FFmpegInteropX
 				{
 				case CanvasHorizontalAlignment::Left:return currentLineIndex + textLayout->DrawBounds.Width;
 				case CanvasHorizontalAlignment::Center:return currentLineIndex + textLayout->DrawBounds.Width;
-				case CanvasHorizontalAlignment::Right:return currentLineIndex - textLayout->DrawBounds.Width;
+				case CanvasHorizontalAlignment::Right:return currentLineIndex + textLayout->DrawBounds.Width;
 				}break;
 			case TimedTextWritingMode::TopBottomLeftRight:			
 			case TimedTextWritingMode::TopBottom:
