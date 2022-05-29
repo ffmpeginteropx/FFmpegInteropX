@@ -80,16 +80,16 @@ namespace FFmpegInteropX {
 		{
 			return create_async([uri]
 			{
-				FFmpegInteropConfig^ config = ref new FFmpegInteropConfig();
+				MediaSourceConfig^ config = ref new MediaSourceConfig();
 				config->IsFrameGrabber = true;
 				config->VideoDecoderMode = VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 
-				auto result = FFmpegInteropMSS::CreateFromUri(uri, config);
+				auto result = FFmpegMediaSource::CreateFromUri(uri, config);
 				if (result == nullptr)
 				{
 					throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
 				}
-				if (result->VideoStream == nullptr)
+				if (result->CurrentVideoStream == nullptr)
 				{
 					throw ref new Exception(E_FAIL, "No video stream found in file (or no suitable decoder available).");
 				}

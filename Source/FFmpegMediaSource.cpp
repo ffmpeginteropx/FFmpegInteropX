@@ -188,10 +188,10 @@ FFmpegMediaSource^ FFmpegMediaSource::CreateFromUri(String^ uri, MediaSourceConf
 	return interopMSS;
 }
 
-FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromUri(String^ uri, FFmpegInteropConfig^ config)
+FFmpegMediaSource^ FFmpegMediaSource::CreateFromUri(String^ uri, MediaSourceConfig^ config)
 {
 	auto dispatcher = GetCurrentDispatcher();
-	auto interopMSS = ref new FFmpegInteropMSS(config, dispatcher);
+	auto interopMSS = ref new FFmpegMediaSource(config, dispatcher);
 	auto hr = interopMSS->CreateMediaStreamSource(uri);
 	if (!SUCCEEDED(hr))
 	{
