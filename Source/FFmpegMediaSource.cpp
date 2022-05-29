@@ -188,6 +188,18 @@ FFmpegMediaSource^ FFmpegMediaSource::CreateFromUri(String^ uri, MediaSourceConf
 	return interopMSS;
 }
 
+FFmpegInteropMSS^ FFmpegInteropMSS::CreateFromUri(String^ uri, FFmpegInteropConfig^ config)
+{
+	auto dispatcher = GetCurrentDispatcher();
+	auto interopMSS = ref new FFmpegInteropMSS(config, dispatcher);
+	auto hr = interopMSS->CreateMediaStreamSource(uri);
+	if (!SUCCEEDED(hr))
+	{
+		throw ref new Exception(hr, "Failed to open media.");
+	}
+	return interopMSS;
+}
+
 MediaStreamSource^ FFmpegMediaSource::GetMediaStreamSource()
 {
 	if (this->config->IsFrameGrabber) throw ref new Exception(E_UNEXPECTED);

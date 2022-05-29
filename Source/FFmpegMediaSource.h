@@ -285,6 +285,7 @@ namespace FFmpegInteropX
 	internal:
 		static FFmpegMediaSource^ CreateFromStream(IRandomAccessStream^ stream, MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
 		static FFmpegMediaSource^ CreateFromUri(String^ uri, MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
+		static FFmpegInteropMSS^ CreateFromUri(String^ uri, FFmpegInteropConfig^ config);
 		HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek);
 
 		property MediaSampleProvider^ VideoSampleProvider
