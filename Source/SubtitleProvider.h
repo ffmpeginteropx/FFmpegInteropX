@@ -16,8 +16,6 @@ namespace FFmpegInteropX
 
 	ref class SubtitleProvider abstract : CompressedSampleProvider
 	{
-
-
 	internal:
 
 		SubtitleProvider(FFmpegReader^ reader,

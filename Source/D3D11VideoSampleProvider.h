@@ -56,7 +56,7 @@ namespace FFmpegInteropX
 					// init texture pool, fail if we did not get a device ptr
 					if (device && deviceContext)
 					{
-						texturePool = ref new TexturePool(device, 5);
+						texturePool = std::unique_ptr<TexturePool>(new TexturePool(device, 5));
 					}
 					else
 					{
@@ -199,8 +199,8 @@ namespace FFmpegInteropX
 				}
 			}
 
-			delete texturePool;
-			texturePool = nullptr;
+			texturePool.reset();
+			//texturePool = nullptr;
 
 			return hr;
 		}
@@ -378,7 +378,7 @@ namespace FFmpegInteropX
 			return hr;
 		}
 
-		TexturePool^ texturePool;
+		std::unique_ptr<TexturePool> texturePool;
 		std::set<IUnknown*> samples;
 
 	};

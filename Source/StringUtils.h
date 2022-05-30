@@ -5,9 +5,9 @@ namespace FFmpegInteropX
 {
 	using namespace Platform;
 	
-	ref class StringUtils sealed
+	class StringUtils
 	{
-	internal:
+	public:
 		static String^ AnsiStringToPlatformString(const char * char_array)
 		{
 			if (!char_array) return "";

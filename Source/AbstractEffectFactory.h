@@ -2,10 +2,10 @@
 #include "IAvEffect.h"
 
 namespace FFmpegInteropX {
-	ref class AbstractEffectFactory abstract
+	class AbstractEffectFactory abstract
 	{
-	internal:
-		virtual IAvEffect^ CreateEffect(String^ definitions) abstract;
+	public:		
+		virtual std::shared_ptr<IAvEffect> CreateEffect(String^ definitions) abstract;
 	};
 }
 

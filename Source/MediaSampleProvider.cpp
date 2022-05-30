@@ -100,12 +100,12 @@ void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
 			{
 				try
 				{
-					auto winLanguage = ref new Windows::Globalization::Language(entry->TwoLetterCode);
+					auto winLanguage = ref new Windows::Globalization::Language(entry->TwoLetterCode());
 					Language = winLanguage->DisplayName;
 				}
 				catch (...)
 				{
-					Language = entry->EnglishName;
+					Language = entry->EnglishName();
 				}
 			}
 		}

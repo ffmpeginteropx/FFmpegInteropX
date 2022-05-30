@@ -7,9 +7,9 @@ namespace FFmpegInteropX
 	using namespace Windows::Graphics::DirectX::Direct3D11;
 	using namespace Windows::Media::Core;
 
-	ref class DirectXInteropHelper
+	class DirectXInteropHelper
 	{
-	internal:
+	public:
 		static IDirect3DSurface^ GetSurface(IDXGISurface* source);
 		static HRESULT GetDXGISurface(IDirect3DSurface^ source, IDXGISurface** dxgiSurface);
 		static HRESULT GetDeviceFromStreamSource(IMFDXGIDeviceManager* deviceManager, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, ID3D11VideoDevice** outVideoDevice, HANDLE* outDeviceHandle);

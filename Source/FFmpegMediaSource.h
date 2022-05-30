@@ -135,7 +135,7 @@ namespace FFmpegInteropX
 			IVectorView<IKeyValuePair<String^, String^>^>^ get()
 			{
 				metadata->LoadMetadataTags(avFormatCtx);
-				return metadata->MetadataTags;
+				return metadata->MetadataTags();
 			}
 		}
 
@@ -337,7 +337,7 @@ namespace FFmpegInteropX
 
 		AttachedFileHelper^ attachedFileHelper;
 
-		MediaMetadata^ metadata;
+		std::shared_ptr<MediaMetadata> metadata;
 
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher^ dispatcher;

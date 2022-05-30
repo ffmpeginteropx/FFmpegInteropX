@@ -9,20 +9,20 @@ namespace FFmpegInteropX
 	using namespace Windows::Foundation;
 	using namespace Windows::Foundation::Collections;
 
-	ref class MediaMetadata sealed
+	class MediaMetadata
 	{
 		Vector<IKeyValuePair<String^, String^>^>^ entries;
 		bool tagsLoaded = false;
-	internal:
+	public:
 
 		MediaMetadata()
 		{
 			entries = ref new Vector<IKeyValuePair<String^, String^>^>();
 		}
 
-		void LoadMetadataTags(AVFormatContext *m_pAvFormatCtx)
+		void LoadMetadataTags(AVFormatContext* m_pAvFormatCtx)
 		{
-			if (!tagsLoaded) 
+			if (!tagsLoaded)
 			{
 				if (m_pAvFormatCtx->metadata)
 				{
@@ -38,21 +38,15 @@ namespace FFmpegInteropX
 					} while (entry);
 				}
 				tagsLoaded = true;
-			}			
-		}
-	
-
-		property IVectorView<IKeyValuePair<String^, String^>^>^ MetadataTags
-		{
-			IVectorView<IKeyValuePair<String^, String^>^>^ get()
-			{
-				return entries->GetView();
 			}
 		}
-	
+
+
+		IVectorView<IKeyValuePair<String^, String^>^>^ MetadataTags()
+		{
+			return entries->GetView();
+		}
 	};
-
-
 }
 
 

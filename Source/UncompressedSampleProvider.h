@@ -37,14 +37,18 @@ namespace FFmpegInteropX
 		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) { return E_FAIL; }; // must be overridden by specific decoders
 		virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos);
 		virtual HRESULT FeedPacketToDecoder(int64_t& firstPacketPos);
-		void SetFilters(String^ effects) override {
+
+		void SetFilters(String^ effects) override 
+		{
 			frameProvider->UpdateFilter(effects);
 		}
+
 		void DisableFilters() override
 		{
 			frameProvider->DisableFilter();
 		}
-		UncompressedFrameProvider ^ frameProvider;
+
+		std::shared_ptr<UncompressedFrameProvider> frameProvider;
 
 
 	public:

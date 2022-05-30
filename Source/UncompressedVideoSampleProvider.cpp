@@ -113,7 +113,7 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
 {
 	SelectOutputFormat();
 
-	frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx, m_pAvStream));
+	frameProvider = std::shared_ptr<UncompressedFrameProvider>(new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, std::shared_ptr< VideoEffectFactory>(new VideoEffectFactory(m_pAvCodecCtx, m_pAvStream))));
 
 	auto videoProperties = VideoEncodingProperties::CreateUncompressed(outputMediaSubtype, outputFrameWidth, outputFrameHeight);
 	auto properties = videoProperties->Properties;

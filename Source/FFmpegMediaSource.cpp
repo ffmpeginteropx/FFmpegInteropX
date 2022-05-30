@@ -56,7 +56,7 @@ static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence);
 static bool isRegistered = false;
 std::mutex isRegisteredMutex;
 
-std::map<String^, LanguageEntry^> LanguageTagConverter::map;
+std::map<String^, std::shared_ptr<LanguageEntry>> LanguageTagConverter::map;
 
 // Initialize an FFmpegInteropObject
 FFmpegMediaSource::FFmpegMediaSource(MediaSourceConfig^ interopConfig, CoreDispatcher^ dispatcher)
@@ -83,7 +83,7 @@ FFmpegMediaSource::FFmpegMediaSource(MediaSourceConfig^ interopConfig, CoreDispa
 
 	if (!config->IsExternalSubtitleParser && !config->IsFrameGrabber)
 	{
-		metadata = ref new MediaMetadata();
+		metadata = std::shared_ptr<MediaMetadata>(new MediaMetadata());
 	}
 }
 

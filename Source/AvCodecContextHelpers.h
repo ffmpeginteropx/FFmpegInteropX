@@ -8,9 +8,9 @@ extern "C"
 namespace FFmpegInteropX
 {
 
-	ref class AvCodecContextHelpers
+	class AvCodecContextHelpers
 	{
-	internal:
+	public:
 		static int GetNBChannels(AVCodecContext* m_pAvCodecCtx)
 		{
 			return m_pAvCodecCtx->profile == FF_PROFILE_AAC_HE_V2 && m_pAvCodecCtx->channels == 1 ? 2 : m_pAvCodecCtx->channels;
