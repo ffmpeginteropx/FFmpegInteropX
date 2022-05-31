@@ -18,7 +18,7 @@ namespace FFmpegInteropX
 	{
 	internal:
 
-		SubtitleProvider(FFmpegReader^ reader,
+		SubtitleProvider(std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config,

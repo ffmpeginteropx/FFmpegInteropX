@@ -30,7 +30,7 @@ namespace FFmpegInteropX
 
 	internal:
 		NALPacketSampleProvider(
-			FFmpegReader^ reader,
+			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config, 

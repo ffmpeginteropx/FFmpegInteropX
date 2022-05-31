@@ -24,7 +24,7 @@ namespace FFmpegInteropX
 	internal:
 
 		D3D11VideoSampleProvider(
-			FFmpegReader^ reader,
+			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config,

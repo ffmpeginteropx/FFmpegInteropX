@@ -296,7 +296,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		FFmpegReader^ m_pReader;
+		std::shared_ptr<FFmpegReader> m_pReader;
 		AVDictionary* avDict;
 		AVIOContext* avIOCtx;
 		AVFormatContext* avFormatCtx;

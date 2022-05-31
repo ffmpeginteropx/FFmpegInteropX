@@ -29,7 +29,7 @@ namespace FFmpegInteropX
 	using namespace Windows::Media::MediaProperties;
 	using namespace Windows::Graphics::DirectX::Direct3D11;
 
-	ref class FFmpegReader;
+	class FFmpegReader;
 
 	ref class MediaSampleProvider abstract
 	{
@@ -160,7 +160,7 @@ namespace FFmpegInteropX
 
 	protected private:
 		MediaSampleProvider(
-			FFmpegReader^ reader,
+			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config,
@@ -178,7 +178,7 @@ namespace FFmpegInteropX
 		// we declare them as internal so they don't get exposed
 		// externally
 		MediaSourceConfig^ m_config;
-		FFmpegReader^ m_pReader;
+		std::shared_ptr<FFmpegReader> m_pReader;
 		AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;
 		AVStream* m_pAvStream;

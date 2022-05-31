@@ -22,14 +22,12 @@
 
 namespace FFmpegInteropX
 {
-
-	ref class FFmpegReader
+	class FFmpegReader
 	{
 	public:
 		virtual ~FFmpegReader();
 		int ReadPacket();
 
-	internal:
 		FFmpegReader(AVFormatContext* avFormatCtx, std::vector<MediaSampleProvider^>* sampleProviders);
 
 	private:

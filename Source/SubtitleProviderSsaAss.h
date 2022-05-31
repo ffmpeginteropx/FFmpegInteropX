@@ -10,7 +10,7 @@ namespace FFmpegInteropX
 	ref class SubtitleProviderSsaAss : SubtitleProvider
 	{
 	internal:
-		SubtitleProviderSsaAss(FFmpegReader^ reader,
+		SubtitleProviderSsaAss(std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config,

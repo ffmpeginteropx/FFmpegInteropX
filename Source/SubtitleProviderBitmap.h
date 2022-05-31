@@ -9,7 +9,7 @@ namespace FFmpegInteropX
 	{
 
 	internal:
-		SubtitleProviderBitmap(FFmpegReader^ reader,
+		SubtitleProviderBitmap(std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config,

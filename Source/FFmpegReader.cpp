@@ -29,6 +29,7 @@ FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<MediaSample
 
 FFmpegReader::~FFmpegReader()
 {
+	DebugMessage(L"FFMpeg reader destroyed\n");
 }
 
 // Read the next packet from the stream and push it into the appropriate

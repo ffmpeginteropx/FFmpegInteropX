@@ -27,7 +27,7 @@ using namespace FFmpegInteropX;
 using namespace Windows::Media::MediaProperties;
 
 MediaSampleProvider::MediaSampleProvider(
-	FFmpegReader^ reader,
+	std::shared_ptr<FFmpegReader> reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	MediaSourceConfig^ config,

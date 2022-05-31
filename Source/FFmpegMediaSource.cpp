@@ -111,7 +111,7 @@ FFmpegMediaSource::~FFmpegMediaSource()
 
 	if (m_pReader != nullptr)
 	{
-		m_pReader = nullptr;
+		m_pReader.reset();
 	}
 
 	subtitleStreams.clear();
@@ -710,7 +710,7 @@ HRESULT FFmpegMediaSource::InitFFmpegContext()
 
 	if (SUCCEEDED(hr))
 	{
-		m_pReader = ref new FFmpegReader(avFormatCtx, &sampleProviders);
+		m_pReader = std::shared_ptr<FFmpegReader>(new FFmpegReader(avFormatCtx, &sampleProviders));
 		if (m_pReader == nullptr)
 		{
 			hr = E_OUTOFMEMORY;

@@ -33,7 +33,7 @@ using namespace NativeBuffer;
 using namespace Windows::Media::MediaProperties;
 
 UncompressedVideoSampleProvider::UncompressedVideoSampleProvider(
-	FFmpegReader^ reader,
+	std::shared_ptr<FFmpegReader> reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	MediaSourceConfig^ config,

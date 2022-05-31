@@ -26,7 +26,7 @@ namespace FFmpegInteropX
 	{
 	internal:
 		UncompressedSampleProvider(
-			FFmpegReader^ reader,
+			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config,

@@ -29,7 +29,7 @@ namespace FFmpegInteropX
 
 	internal:
 		HEVCSampleProvider(
-			FFmpegReader^ reader,
+			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config, 
