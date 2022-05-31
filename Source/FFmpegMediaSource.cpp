@@ -728,7 +728,7 @@ HRESULT FFmpegMediaSource::InitFFmpegContext()
 	auto audioStreamIndex = av_find_best_stream(avFormatCtx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
 	auto subtitleStreamIndex = av_find_best_stream(avFormatCtx, AVMEDIA_TYPE_SUBTITLE, -1, -1, NULL, 0);
 
-	attachedFileHelper = ref new AttachedFileHelper(config);
+	attachedFileHelper = std::shared_ptr<AttachedFileHelper>(new AttachedFileHelper(config));
 
 	// first parse attached files, so they are available for subtitle streams during initialize
 	if (config->UseEmbeddedSubtitleFonts)

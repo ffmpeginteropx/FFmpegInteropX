@@ -332,7 +332,7 @@ namespace FFmpegInteropX
 		IVectorView<ChapterInfo^>^ chapterInfos;
 		FFmpegInteropX::FormatInfo^ formatInfo;
 
-		AttachedFileHelper^ attachedFileHelper;
+		std::shared_ptr<AttachedFileHelper> attachedFileHelper;
 
 		std::shared_ptr<MediaMetadata> metadata;
 

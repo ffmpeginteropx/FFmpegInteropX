@@ -19,32 +19,31 @@ using namespace Concurrency;
 
 namespace FFmpegInteropX
 {
-	ref class AttachedFileHelper sealed
+	class AttachedFileHelper sealed
 	{
 	public:
 		virtual ~AttachedFileHelper()
 		{
 			if (extractedFiles.size() > 0)
 			{
-				CleanupTempFiles(config->AttachmentCacheFolderName, InstanceId);
+				CleanupTempFiles(config->AttachmentCacheFolderName, InstanceId());
 			}
 		}
 
-	internal:
 
 		AttachedFileHelper(MediaSourceConfig^ config)
 		{
 			this->config = config;
 		}
 
-		property Vector<AttachedFile^>^ AttachedFiles { Vector<AttachedFile^>^ get() { return attachedFiles; } }
-		property String^ InstanceId { String^ get() { return instanceId; } }
+		Vector<AttachedFile^>^ AttachedFiles() { return attachedFiles; }
+		String^ InstanceId() { return instanceId; }
 
 		void AddAttachedFile(AttachedFile^ file)
 		{
 			attachedFiles->Append(file);
 		}
-		
+
 		task<StorageFile^> ExtractFileAsync(AttachedFile^ attachment)
 		{
 			StorageFile^ file;

@@ -16,7 +16,7 @@ namespace FFmpegInteropX
 			MediaSourceConfig^ config,
 			int index,
 			CoreDispatcher^ dispatcher,
-			AttachedFileHelper^ attachedFileHelper)
+			std::shared_ptr<AttachedFileHelper> attachedFileHelper)
 			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::Subtitle, dispatcher)
 		{
 			this->attachedFileHelper = attachedFileHelper;
@@ -897,7 +897,7 @@ namespace FFmpegInteropX
 			{
 				try
 				{
-					for each (auto attachment in attachedFileHelper->AttachedFiles)
+					for each (auto attachment in attachedFileHelper->AttachedFiles())
 					{
 						std::wstring mime(attachment->MimeType->Data());
 						if (mime.find(L"font") != mime.npos)
@@ -912,7 +912,7 @@ namespace FFmpegInteropX
 								auto fontFamily = std::wstring(title->Data());
 								if (str.compare(fontFamily) == 0)
 								{
-									result = "ms-appdata:///temp/" + m_config->AttachmentCacheFolderName + "/" + attachedFileHelper->InstanceId + "/" + attachment->Name + "#" + StringUtils::WStringToPlatformString(str);
+									result = "ms-appdata:///temp/" + m_config->AttachmentCacheFolderName + "/" + attachedFileHelper->InstanceId() + "/" + attachment->Name + "#" + StringUtils::WStringToPlatformString(str);
 									break;
 								}
 							}
@@ -1015,6 +1015,6 @@ namespace FFmpegInteropX
 		int regionIndex = 1;
 		std::map<String^, SsaStyleDefinition^> styles;
 		std::map<std::wstring, String^> fonts;
-		AttachedFileHelper^ attachedFileHelper;
+		std::shared_ptr<AttachedFileHelper> attachedFileHelper;
 	};
 }
