@@ -14,9 +14,9 @@ namespace FFmpegInteropX
 	using namespace Windows::UI::Core;
 	using namespace Windows::Media::Playback;
 
-	ref class SubtitleProvider abstract : CompressedSampleProvider
+	class SubtitleProvider abstract : public CompressedSampleProvider
 	{
-	internal:
+	public:
 
 		SubtitleProvider(std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
@@ -31,11 +31,11 @@ namespace FFmpegInteropX
 			this->dispatcher = dispatcher;
 		}
 
-		property TimedMetadataTrack^ SubtitleTrack;
+		TimedMetadataTrack^ SubtitleTrack;
 
-		property MediaPlaybackItem^ PlaybackItem;
+		MediaPlaybackItem^ PlaybackItem;
 
-		property TimeSpan SubtitleDelay;
+		TimeSpan SubtitleDelay;
 
 		virtual HRESULT Initialize() override
 		{
@@ -70,7 +70,7 @@ namespace FFmpegInteropX
 			return S_OK;
 		}
 
-	internal:
+	public:
 		virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio)
 		{
 		}
@@ -339,11 +339,12 @@ namespace FFmpegInteropX
 		{
 			if (dispatcher != nullptr && IsEnabled)
 			{
-				WeakReference wr(this);
+				auto thisPointer = std::make_shared<SubtitleProvider>(this);
+				std::weak_ptr<SubtitleProvider> wr = thisPointer;
 				dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
 					ref new Windows::UI::Core::DispatchedHandler([wr]
 						{
-							auto thisInstance = wr.Resolve<SubtitleProvider>();
+							auto thisInstance = wr.lock();
 							if (thisInstance != nullptr) {
 								if (thisInstance->timer == nullptr)
 								{
@@ -474,13 +475,13 @@ namespace FFmpegInteropX
 			if (referenceTrack == nullptr)
 			{
 				referenceTrack = ref new TimedMetadataTrack("ReferenceTrack_" + Name, "", TimedMetadataKind::Custom);
-				
+
 				auto OnRefCueEntered_handler = [this](TimedMetadataTrack^ sender, MediaCueEventArgs^ args)
 				{
 					this->OnRefCueEntered(sender, args);
 				};
 
-				auto OnTimedMetadataTracksChanged_handler = [this](Windows::Media::Playback::MediaPlaybackItem^ sender, Windows::Foundation::Collections::IVectorChangedEventArgs^ args) 
+				auto OnTimedMetadataTracksChanged_handler = [this](Windows::Media::Playback::MediaPlaybackItem^ sender, Windows::Foundation::Collections::IVectorChangedEventArgs^ args)
 				{
 					this->OnTimedMetadataTracksChanged(sender, args);
 				};

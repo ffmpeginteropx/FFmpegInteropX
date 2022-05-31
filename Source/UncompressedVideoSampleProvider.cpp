@@ -447,7 +447,7 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::ReadFrameProperties(AVFram
 			}
 			if (rotationAngle)
 			{
-				auto videoProperties = ((VideoStreamDescriptor^)this->StreamDescriptor)->EncodingProperties;
+				auto videoProperties = ((VideoStreamDescriptor^)this->StreamDescriptor())->EncodingProperties;
 				Platform::Guid MF_MT_VIDEO_ROTATION(0xC380465D, 0x2271, 0x428C, 0x9B, 0x83, 0xEC, 0xEA, 0x3B, 0x4A, 0x85, 0xC1);
 				videoProperties->Properties->Insert(MF_MT_VIDEO_ROTATION, (uint32)rotationAngle);
 			}
@@ -646,7 +646,7 @@ AVBufferRef* UncompressedVideoSampleProvider::AllocateBuffer(int requestedSize, 
 
 int UncompressedVideoSampleProvider::get_buffer2(AVCodecContext* avCodecContext, AVFrame* frame, int flags)
 {
-	auto provider = reinterpret_cast<UncompressedVideoSampleProvider^>(avCodecContext->opaque);
+	auto provider = reinterpret_cast<UncompressedVideoSampleProvider*>(avCodecContext->opaque);
 
 	if (frame->format == AV_PIX_FMT_D3D11 || frame->format == AV_PIX_FMT_D3D11VA_VLD)
 	{
@@ -737,8 +737,8 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* av
 		outputFrameWidth = frameWidth;
 		outputFrameHeight = frameHeight;
 
-		VideoDescriptor->EncodingProperties->Width = outputFrameWidth;
-		VideoDescriptor->EncodingProperties->Height = outputFrameHeight;
+		VideoDescriptor()->EncodingProperties->Width = outputFrameWidth;
+		VideoDescriptor()->EncodingProperties->Height = outputFrameHeight;
 
 		MFVideoArea area;
 		area.Area.cx = outputWidth;
@@ -747,6 +747,6 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* av
 		area.OffsetX.value = 0;
 		area.OffsetY.fract = 0;
 		area.OffsetY.value = 0;
-		VideoDescriptor->EncodingProperties->Properties->Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, ref new Array<uint8_t>((byte*)&area, sizeof(MFVideoArea)));
+		VideoDescriptor()->EncodingProperties->Properties->Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, ref new Array<uint8_t>((byte*)&area, sizeof(MFVideoArea)));
 	}
 }

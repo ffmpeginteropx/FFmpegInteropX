@@ -5,10 +5,10 @@
 
 namespace FFmpegInteropX
 {
-	ref class SubtitleProviderBitmap : SubtitleProvider
+	class SubtitleProviderBitmap : public SubtitleProvider
 	{
 
-	internal:
+	public:
 		SubtitleProviderBitmap(std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,

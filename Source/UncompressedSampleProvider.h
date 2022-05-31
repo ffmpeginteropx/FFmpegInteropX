@@ -22,9 +22,9 @@
 
 namespace FFmpegInteropX
 {
-	ref class UncompressedSampleProvider abstract : public MediaSampleProvider
+	class UncompressedSampleProvider abstract : public MediaSampleProvider
 	{
-	internal:
+	public:
 		UncompressedSampleProvider(
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,

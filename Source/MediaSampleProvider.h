@@ -31,76 +31,75 @@ namespace FFmpegInteropX
 
 	class FFmpegReader;
 
-	ref class MediaSampleProvider abstract
+	class MediaSampleProvider abstract
 	{
 	public:
 		virtual ~MediaSampleProvider();
 		virtual MediaStreamSample^ GetNextSample();
 		virtual void Flush();
 
-		property IMediaStreamDescriptor^ StreamDescriptor
+		IMediaStreamDescriptor^ StreamDescriptor()
 		{
-			IMediaStreamDescriptor^ get() { return m_streamDescriptor; }
+			return m_streamDescriptor;
 		}
 
-		property VideoStreamDescriptor^ VideoDescriptor
+		VideoStreamDescriptor^ VideoDescriptor()
 		{
-			VideoStreamDescriptor^ get() { return dynamic_cast<VideoStreamDescriptor^>(m_streamDescriptor); }
+			return dynamic_cast<VideoStreamDescriptor^>(m_streamDescriptor);
 		}
 
-		property AudioStreamDescriptor^ AudioDescriptor
+		AudioStreamDescriptor^ AudioDescriptor()
 		{
-			AudioStreamDescriptor^ get() { return dynamic_cast<AudioStreamDescriptor^>(m_streamDescriptor); }
+			return dynamic_cast<AudioStreamDescriptor^>(m_streamDescriptor);
 		}
 
-		property IStreamInfo^ StreamInfo
+		IStreamInfo^ StreamInfo()
 		{
-			IStreamInfo^ get() { return streamInfo; }
+			return streamInfo;
 		}
 
-		property AudioStreamInfo^ AudioInfo
+		AudioStreamInfo^ AudioInfo()
 		{
-			AudioStreamInfo^ get() { return dynamic_cast<AudioStreamInfo^>(streamInfo); }
+			return dynamic_cast<AudioStreamInfo^>(streamInfo);
 		}
 
-		property VideoStreamInfo^ VideoInfo
+		VideoStreamInfo^ VideoInfo()
 		{
-			VideoStreamInfo^ get() { return dynamic_cast<VideoStreamInfo^>(streamInfo); }
+			return dynamic_cast<VideoStreamInfo^>(streamInfo);
 		}
 
-		property SubtitleStreamInfo^ SubtitleInfo
+		SubtitleStreamInfo^ SubtitleInfo()
 		{
-			SubtitleStreamInfo^ get() { return dynamic_cast<SubtitleStreamInfo^>(streamInfo); }
+			return dynamic_cast<SubtitleStreamInfo^>(streamInfo);
 		}
 
-		property int StreamIndex
+		int StreamIndex()
 		{
-			int get() { return m_streamIndex; }
+			return m_streamIndex;
 		}
 
-		property bool IsEnabled
+		bool IsEnabled()
 		{
-			bool get() { return m_isEnabled; }
+			return m_isEnabled;
 		}
 
-		property HardwareDecoderStatus HardwareAccelerationStatus
+		HardwareDecoderStatus HardwareAccelerationStatus()
 		{
-			HardwareDecoderStatus get() { return hardwareDecoderStatus; }
+			return hardwareDecoderStatus;
 		}
 
-		property DecoderEngine Decoder
+		DecoderEngine Decoder()
 		{
-			DecoderEngine get() { return decoder; }
+			return decoder;
 		}
 
-		property bool IsCleanSample;
+		bool IsCleanSample;
 
-		property String^ Name;
-		property String^ Language;
-		property String^ CodecName;
-		property TimeSpan LastSampleTimestamp;
+		String^ Name;
+		String^ Language;
+		String^ CodecName;
+		TimeSpan LastSampleTimestamp;
 
-	internal:
 		virtual HRESULT Initialize();
 		void InitializeNameLanguageCodec();
 		virtual void InitializeStreamInfo();
@@ -158,7 +157,7 @@ namespace FFmpegInteropX
 			return LONGLONG(duration.Duration / timeBaseFactor);
 		}
 
-	protected private:
+	protected:
 		MediaSampleProvider(
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
@@ -173,7 +172,7 @@ namespace FFmpegInteropX
 		IMediaStreamDescriptor^ m_streamDescriptor;
 		HardwareDecoderStatus hardwareDecoderStatus;
 
-	internal:
+	public:
 		// The FFmpeg context. Because they are complex types
 		// we declare them as internal so they don't get exposed
 		// externally
@@ -191,7 +190,7 @@ namespace FFmpegInteropX
 		DecoderEngine decoder;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
-		
+
 	};
 }
 

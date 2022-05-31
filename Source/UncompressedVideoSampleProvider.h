@@ -44,7 +44,7 @@ namespace FFmpegInteropX
 {
 	using namespace Platform;
 
-	ref class UncompressedVideoSampleProvider: UncompressedSampleProvider
+	class UncompressedVideoSampleProvider : public UncompressedSampleProvider
 	{
 	public:
 		virtual ~UncompressedVideoSampleProvider();
@@ -54,12 +54,11 @@ namespace FFmpegInteropX
 			UncompressedSampleProvider::Flush();
 		}
 
-	internal:
 		UncompressedVideoSampleProvider(
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config, 
+			MediaSourceConfig^ config,
 			int streamIndex,
 			HardwareDecoderStatus hardwareDecoderStatus);
 		IMediaStreamDescriptor^ CreateStreamDescriptor() override;
@@ -68,17 +67,17 @@ namespace FFmpegInteropX
 		void ReadFrameProperties(AVFrame* avFrame, int64_t& framePts);
 		void CheckFrameSize(AVFrame* avFrame);
 		AVPixelFormat GetOutputPixelFormat() { return m_OutputPixelFormat; }
-		property int TargetWidth;
-		property int TargetHeight;
-		property byte* TargetBuffer;
+		int TargetWidth;
+		int TargetHeight;
+		byte* TargetBuffer;
 
-		virtual void NotifyCreateSource() override 
-		{			
-			if (VideoInfo->FramesPerSecondOverride > 0 && VideoInfo->FramesPerSecond > 0)
+		virtual void NotifyCreateSource() override
+		{
+			if (VideoInfo()->FramesPerSecondOverride > 0 && VideoInfo()->FramesPerSecond > 0)
 			{
-				timeBaseFactor *= VideoInfo->FramesPerSecond / VideoInfo->FramesPerSecondOverride;
+				timeBaseFactor *= VideoInfo()->FramesPerSecond / VideoInfo()->FramesPerSecondOverride;
 			}
-		
+
 			UncompressedSampleProvider::NotifyCreateSource();
 		}
 
@@ -87,7 +86,7 @@ namespace FFmpegInteropX
 		HRESULT InitializeScalerIfRequired(AVFrame* avFrame);
 		HRESULT FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height, bool isSourceBuffer);
 		AVBufferRef* AllocateBuffer(int requestedSize, AVBufferPool** bufferPool, int* bufferPoolSize);
-		static int get_buffer2(AVCodecContext *avCodecContext, AVFrame *frame, int flags);
+		static int get_buffer2(AVCodecContext* avCodecContext, AVFrame* frame, int flags);
 
 		String^ outputMediaSubtype;
 		int outputWidth;

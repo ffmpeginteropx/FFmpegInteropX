@@ -4,12 +4,11 @@
 
 namespace FFmpegInteropX
 {
-	ref class CompressedSampleProvider : MediaSampleProvider
+	class CompressedSampleProvider : public MediaSampleProvider
 	{
 	public:
 		virtual ~CompressedSampleProvider();
 
-	internal:
 		CompressedSampleProvider(std::shared_ptr<FFmpegReader> reader, AVFormatContext* avFormatCtx, AVCodecContext* avCodecCtx, MediaSourceConfig^ config, int streamIndex, HardwareDecoderStatus hardwareDecoderStatus);
 		CompressedSampleProvider(std::shared_ptr<FFmpegReader> reader, AVFormatContext* avFormatCtx, AVCodecContext* avCodecCtx, MediaSourceConfig^ config, int streamIndex, VideoEncodingProperties^ encodingProperties, HardwareDecoderStatus hardwareDecoderStatus);
 		CompressedSampleProvider(std::shared_ptr<FFmpegReader> reader, AVFormatContext* avFormatCtx, AVCodecContext* avCodecCtx, MediaSourceConfig^ config, int streamIndex, AudioEncodingProperties^ encodingProperties, HardwareDecoderStatus hardwareDecoderStatus);

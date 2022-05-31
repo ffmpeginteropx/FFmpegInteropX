@@ -15,13 +15,13 @@ namespace FFmpegInteropX
 {
 	using namespace Platform;
 
-	ref class D3D11VideoSampleProvider : UncompressedVideoSampleProvider
+	class D3D11VideoSampleProvider : public UncompressedVideoSampleProvider
 	{
 	private:
 		const AVCodec* hwCodec;
 		const AVCodec* swCodec;
 
-	internal:
+	public:
 
 		D3D11VideoSampleProvider(
 			std::shared_ptr<FFmpegReader> reader,
@@ -98,7 +98,7 @@ namespace FFmpegInteropX
 					if (decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
 					{
 						decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
-						VideoInfo->DecoderEngine = decoder;
+						VideoInfo()->DecoderEngine = decoder;
 					}
 				}
 			}
@@ -109,7 +109,7 @@ namespace FFmpegInteropX
 				if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
 				{
 					decoder = DecoderEngine::FFmpegSoftwareDecoder;
-					VideoInfo->DecoderEngine = decoder;
+					VideoInfo()->DecoderEngine = decoder;
 				}
 			}
 
@@ -120,8 +120,12 @@ namespace FFmpegInteropX
 		{
 			if (sample->Direct3D11Surface)
 			{
+				auto OnProcessed_handler = [this](Windows::Media::Core::MediaStreamSample^ sender, Platform::Object^ args)
+				{
+					this->OnProcessed(sender, args);
+				};
 				samples.insert(reinterpret_cast<IUnknown*>(sample));
-				sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(this, &D3D11VideoSampleProvider::OnProcessed);
+				sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(OnProcessed_handler);
 			}
 
 			return UncompressedVideoSampleProvider::SetSampleProperties(sample);
@@ -265,7 +269,7 @@ namespace FFmpegInteropX
 
 					ID3D11VideoDevice* videoDevice = NULL;
 					hr = device->QueryInterface(&videoDevice);
-					
+
 					// check profile exists
 					if (SUCCEEDED(hr))
 					{
@@ -304,7 +308,7 @@ namespace FFmpegInteropX
 							isCompatible = count > 0;
 						}
 					}
-		
+
 					SAFE_RELEASE(videoDevice);
 				}
 

@@ -21,12 +21,11 @@
 
 namespace FFmpegInteropX
 {
-	ref class UncompressedAudioSampleProvider: UncompressedSampleProvider
+	class UncompressedAudioSampleProvider: public UncompressedSampleProvider
 	{
 	public:
 		virtual ~UncompressedAudioSampleProvider();
 
-	internal:
 		UncompressedAudioSampleProvider(
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,

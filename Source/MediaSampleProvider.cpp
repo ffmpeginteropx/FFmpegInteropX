@@ -136,7 +136,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
 			if (m_pAvFormatCtx->streams[i]->codecpar->codec_type == m_pAvStream->codecpar->codec_type)
 			{
 				count++;
-				if (i == StreamIndex)
+				if (i == StreamIndex())
 				{
 					number = count;
 				}
@@ -179,13 +179,13 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 
 		streamInfo = ref new AudioStreamInfo(
 			Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false, 
-			channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder);
+			channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder());
 
 		break;
 	}
 	case AVMEDIA_TYPE_VIDEO:
 	{
-		auto streamDescriptor = dynamic_cast<VideoStreamDescriptor^>(StreamDescriptor);
+		auto streamDescriptor = dynamic_cast<VideoStreamDescriptor^>(StreamDescriptor());
 		auto pixelAspect = (double)streamDescriptor->EncodingProperties->PixelAspectRatio->Numerator / streamDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
 		auto videoAspect = ((double)m_pAvCodecCtx->width / m_pAvCodecCtx->height) / pixelAspect;
 		auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
@@ -193,7 +193,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 
 		streamInfo = ref new VideoStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
 			m_pAvStream->codecpar->width, m_pAvStream->codecpar->height, videoAspect,
-			bitsPerSample, framesPerSecond, HardwareAccelerationStatus, Decoder);
+			bitsPerSample, framesPerSecond, HardwareAccelerationStatus(), Decoder());
 
 		break;
 	}
