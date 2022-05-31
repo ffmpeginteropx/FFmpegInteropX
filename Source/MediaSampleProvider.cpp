@@ -202,7 +202,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 		auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
 		
 		streamInfo = ref new SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
-			false, forced, ((SubtitleProvider^)this)->SubtitleTrack, m_config->IsExternalSubtitleParser);
+			false, forced, ((SubtitleProvider*)this)->SubtitleTrack, m_config->IsExternalSubtitleParser);
 
 		break;
 	}

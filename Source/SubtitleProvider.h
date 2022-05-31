@@ -14,7 +14,7 @@ namespace FFmpegInteropX
 	using namespace Windows::UI::Core;
 	using namespace Windows::Media::Playback;
 
-	class SubtitleProvider abstract : public CompressedSampleProvider
+	class SubtitleProvider abstract : public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
 	{
 	public:
 
@@ -337,10 +337,10 @@ namespace FFmpegInteropX
 
 		void StartTimer()
 		{
-			if (dispatcher != nullptr && IsEnabled)
+			if (dispatcher != nullptr && IsEnabled())
 			{
-				auto thisPointer = std::make_shared<SubtitleProvider>(this);
-				std::weak_ptr<SubtitleProvider> wr = thisPointer;
+				//auto thisPointer = std::make_shared<SubtitleProvider>(&this);
+				std::weak_ptr<SubtitleProvider> wr = weak_from_this();
 				dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
 					ref new Windows::UI::Core::DispatchedHandler([wr]
 						{

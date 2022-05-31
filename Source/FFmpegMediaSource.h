@@ -154,7 +154,7 @@ namespace FFmpegInteropX
 			VideoStreamInfo^ get()
 			{
 				auto stream = currentVideoStream;
-				return stream ? stream->VideoInfo : nullptr;
+				return stream ? stream->VideoInfo() : nullptr;
 			}
 		}
 
@@ -164,7 +164,7 @@ namespace FFmpegInteropX
 			AudioStreamInfo^ get()
 			{
 				auto stream = currentAudioStream;
-				return stream ? stream->AudioInfo : nullptr;
+				return stream ? stream->AudioInfo() : nullptr;
 			}
 		}
 
@@ -255,11 +255,11 @@ namespace FFmpegInteropX
 		HRESULT CreateMediaStreamSource(String^ uri);
 		HRESULT InitFFmpegContext();
 		MediaSource^ CreateMediaSource();
-		MediaSampleProvider^ CreateAudioStream(AVStream* avStream, int index);
-		MediaSampleProvider^ CreateVideoStream(AVStream* avStream, int index);
-		SubtitleProvider^ CreateSubtitleSampleProvider(AVStream* avStream, int index);
-		MediaSampleProvider^ CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
-		MediaSampleProvider^ CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
+		std::shared_ptr<MediaSampleProvider> CreateAudioStream(AVStream* avStream, int index);
+		std::shared_ptr<MediaSampleProvider> CreateVideoStream(AVStream* avStream, int index);
+		std::shared_ptr<SubtitleProvider> CreateSubtitleSampleProvider(AVStream* avStream, int index);
+		std::shared_ptr<MediaSampleProvider> CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
+		std::shared_ptr<MediaSampleProvider> CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
 		HRESULT ParseOptions(PropertySet^ ffmpegOptions);
 		void OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args);
 		void OnSampleRequested(MediaStreamSource^ sender, MediaStreamSourceSampleRequestedEventArgs^ args);
@@ -275,7 +275,7 @@ namespace FFmpegInteropX
 			// Flush all active streams
 			for each (auto stream in sampleProviders)
 			{
-				if (stream && stream->IsEnabled)
+				if (stream && stream->IsEnabled())
 				{
 					stream->Flush();
 				}
@@ -288,12 +288,9 @@ namespace FFmpegInteropX
 		static FFmpegMediaSource^ CreateFromUri(String^ uri, MediaSourceConfig^ config);
 		HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek);
 
-		property MediaSampleProvider^ VideoSampleProvider
+		std::shared_ptr<MediaSampleProvider> VideoSampleProvider()
 		{
-			MediaSampleProvider^ get()
-			{
-				return currentVideoStream;
-			}
+			return currentVideoStream;
 		}
 
 		std::shared_ptr<FFmpegReader> m_pReader;
@@ -315,13 +312,13 @@ namespace FFmpegInteropX
 		Vector<SubtitleStreamInfo^>^ subtitleStrInfos;
 		Vector<VideoStreamInfo^>^ videoStrInfos;
 
-		std::vector<MediaSampleProvider^> sampleProviders;
-		std::vector<MediaSampleProvider^> audioStreams;
-		std::vector<SubtitleProvider^> subtitleStreams;
-		std::vector<MediaSampleProvider^> videoStreams;
+		std::vector<std::shared_ptr<MediaSampleProvider>> sampleProviders;
+		std::vector<std::shared_ptr<MediaSampleProvider>> audioStreams;
+		std::vector<std::shared_ptr<SubtitleProvider>> subtitleStreams;
+		std::vector<std::shared_ptr<MediaSampleProvider>> videoStreams;
 
-		MediaSampleProvider^ currentVideoStream;
-		MediaSampleProvider^ currentAudioStream;
+		std::shared_ptr<MediaSampleProvider> currentVideoStream;
+		std::shared_ptr<MediaSampleProvider> currentAudioStream;
 		String^ currentAudioEffects;
 		int thumbnailStreamIndex;
 
@@ -367,6 +364,6 @@ namespace FFmpegInteropX
 
 		static CoreDispatcher^ GetCurrentDispatcher();
 		void OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession^ sender, Platform::Object^ args);
-};
+	};
 
 }

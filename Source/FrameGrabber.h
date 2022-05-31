@@ -4,6 +4,7 @@
 #include "UncompressedVideoSampleProvider.h"
 #include <ppl.h>
 #include <robuffer.h>
+#include <memory>
 
 
 namespace FFmpegInteropX {
@@ -67,7 +68,7 @@ namespace FFmpegInteropX {
 				{
 					throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
 				}
-				if (result->VideoSampleProvider == nullptr)
+				if (result->VideoSampleProvider() == nullptr)
 				{
 					throw ref new Exception(E_FAIL, "No video stream found in file (or no suitable decoder available).");
 				}
@@ -93,7 +94,7 @@ namespace FFmpegInteropX {
 				{
 					throw ref new Exception(E_FAIL, "No video stream found in file (or no suitable decoder available).");
 				}
-				if (result->VideoSampleProvider == nullptr)
+				if (result->VideoSampleProvider() == nullptr)
 				{
 					throw ref new Exception(E_FAIL, "No video stream found in file (or no suitable decoder available).");
 				}
@@ -128,7 +129,7 @@ namespace FFmpegInteropX {
 				{
 					interruption_point();
 					
-					auto sample = interopMSS->VideoSampleProvider->GetNextSample();
+					auto sample = interopMSS->VideoSampleProvider()->GetNextSample();
 					if (sample == nullptr)
 					{
 						// if we hit end of stream, use last decoded sample (if any), otherwise fail
@@ -156,7 +157,7 @@ namespace FFmpegInteropX {
 					}
 
 					//  make sure we have a clean sample (key frame, no half interlaced frame)
-					if (gotSample && !interopMSS->VideoSampleProvider->IsCleanSample &&
+					if (gotSample && !interopMSS->VideoSampleProvider()->IsCleanSample &&
 						(maxFrameSkip <= 0 || framesSkipped < maxFrameSkip))
 					{
 						framesSkipped++;
@@ -184,7 +185,7 @@ namespace FFmpegInteropX {
 
 			return create_async([this]
 				{
-					auto sample = interopMSS->VideoSampleProvider->GetNextSample();
+					auto sample = interopMSS->VideoSampleProvider()->GetNextSample();
 					VideoFrame^ result = nullptr;
 
 					if (sample)
@@ -231,8 +232,8 @@ namespace FFmpegInteropX {
 				// the IBuffer from WriteableBitmap can only be accessed on UI thread
 				// so we need to check it and get its pointer here already
 
-				auto sampleProvider = static_cast<UncompressedVideoSampleProvider^>(interopMSS->VideoSampleProvider);
-				auto streamDescriptor = static_cast<VideoStreamDescriptor^>(interopMSS->VideoSampleProvider->StreamDescriptor);
+				auto sampleProvider = std::static_pointer_cast<UncompressedVideoSampleProvider>(interopMSS->VideoSampleProvider());
+				auto streamDescriptor = static_cast<VideoStreamDescriptor^>(interopMSS->VideoSampleProvider()->StreamDescriptor());
 				pixelAspectRatio = streamDescriptor->EncodingProperties->PixelAspectRatio;
 				if (DecodePixelWidth > 0 &&
 					DecodePixelHeight > 0)
@@ -245,8 +246,8 @@ namespace FFmpegInteropX {
 				else
 				{
 					// lock frame size - no dynamic size changes during frame grabbing!
-					sampleProvider->TargetWidth = sampleProvider->VideoInfo->PixelWidth;
-					sampleProvider->TargetHeight = sampleProvider->VideoInfo->PixelHeight;
+					sampleProvider->TargetWidth = sampleProvider->VideoInfo()->PixelWidth;
+					sampleProvider->TargetHeight = sampleProvider->VideoInfo()->PixelHeight;
 				}
 				width = sampleProvider->TargetWidth;
 				height = sampleProvider->TargetHeight;
