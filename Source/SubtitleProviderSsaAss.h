@@ -48,7 +48,7 @@ namespace FFmpegInteropX
 							}
 						}
 					}
-					
+
 					int w, h;
 					auto resx = str.find("\nPlayResX: ");
 					auto resy = str.find("\nPlayResY: ");
@@ -119,7 +119,7 @@ namespace FFmpegInteropX
 			videoHeight = height;
 		}
 
-		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) override
+		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) override
 		{
 			ParseHeaders();
 
@@ -129,7 +129,7 @@ namespace FFmpegInteropX
 			if (result > 0 && gotSubtitle && subtitle.num_rects > 0)
 			{
 				auto str = StringUtils::Utf8ToWString(subtitle.rects[0]->ass);
-				
+
 				int startStyle = -1;
 				int endStyle = -1;
 				int lastComma = -1;
@@ -179,7 +179,7 @@ namespace FFmpegInteropX
 					}
 				}
 
-				SsaStyleDefinition^ style = nullptr;
+				std::shared_ptr<SsaStyleDefinition> style = nullptr;
 				if (!hasError && startStyle > 0 && endStyle > 0)
 				{
 					auto styleName = StringUtils::WStringToPlatformString(str.substr(startStyle, endStyle - startStyle));
@@ -245,7 +245,7 @@ namespace FFmpegInteropX
 									subFormat->SubformatStyle = cueStyle;
 									subFormat->StartIndex = 0;
 								}
-							
+
 								// apply previous subformat, if any
 								if (subFormat != nullptr)
 								{
@@ -262,7 +262,7 @@ namespace FFmpegInteropX
 								bool hasPosition = false;
 								double posX = 0, posY = 0;
 
-								auto effectContent = str[nextEffect+1] == L'\\' ? str.substr(nextEffect + 2, endEffect - nextEffect - 2) : str.substr(nextEffect + 1, endEffect - nextEffect - 1);
+								auto effectContent = str[nextEffect + 1] == L'\\' ? str.substr(nextEffect + 2, endEffect - nextEffect - 2) : str.substr(nextEffect + 1, endEffect - nextEffect - 1);
 								std::vector<std::wstring> tags;
 								auto start = 0U;
 								auto end = effectContent.find(L"\\");
@@ -426,7 +426,7 @@ namespace FFmpegInteropX
 								{
 									double x = min(posX / width, 1);
 									double y = min(posY / height, 1);
-									
+
 									TimedTextPadding padding;
 									padding.Unit = TimedTextUnit::Percentage;
 
@@ -691,10 +691,10 @@ namespace FFmpegInteropX
 			}
 		}
 
-		void StoreSubtitleStyle(char* name, char *font, float size, int color, int outlineColor, int bold, int italic, int underline, int strikeout, float outline, Windows::Media::Core::TimedTextLineAlignment horizontalAlignment, Windows::Media::Core::TimedTextDisplayAlignment verticalAlignment, float marginL, float marginR, float marginV)
+		void StoreSubtitleStyle(char* name, char* font, float size, int color, int outlineColor, int bold, int italic, int underline, int strikeout, float outline, Windows::Media::Core::TimedTextLineAlignment horizontalAlignment, Windows::Media::Core::TimedTextDisplayAlignment verticalAlignment, float marginL, float marginR, float marginV)
 		{
 			auto wname = StringUtils::Utf8ToWString(name);
-			
+
 			auto SubtitleRegion = ref new TimedTextRegion();
 			SubtitleRegion->Name = StringUtils::WStringToPlatformString(wname);
 
@@ -770,7 +770,7 @@ namespace FFmpegInteropX
 			// sanity check style parameters
 			if (wname.size() > 0 && SubtitleStyle->FontFamily->Length() > 0 && SubtitleStyle->FontSize.Value > 0)
 			{
-				auto style = ref new SsaStyleDefinition();
+				auto style = std::shared_ptr<SsaStyleDefinition>(new SsaStyleDefinition());
 				style->Name = StringUtils::WStringToPlatformString(wname);
 				style->Region = SubtitleRegion;
 				style->Style = SubtitleStyle;
@@ -994,13 +994,21 @@ namespace FFmpegInteropX
 			return ltrim(rtrim(s, t), t);
 		}
 
-		ref class SsaStyleDefinition
+		class SsaStyleDefinition
 		{
 		public:
-			property String^ Name;
-			property TimedTextRegion^ Region;
-			property TimedTextStyle^ Style;
+			String^ Name;
+			TimedTextRegion^ Region;
+			TimedTextStyle^ Style;
 		};
+
+		~SubtitleProviderSsaAss()
+		{
+			for (auto s : styles)
+			{
+				s.second.reset();
+			}
+		}
 
 	private:
 		bool hasParsedHeaders;
@@ -1013,7 +1021,7 @@ namespace FFmpegInteropX
 		int videoWidth;
 		int videoHeight;
 		int regionIndex = 1;
-		std::map<String^, SsaStyleDefinition^> styles;
+		std::map<String^, std::shared_ptr<SsaStyleDefinition>> styles;
 		std::map<std::wstring, String^> fonts;
 		std::shared_ptr<AttachedFileHelper> attachedFileHelper;
 	};
