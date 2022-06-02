@@ -2,7 +2,7 @@
 #include <d3d11.h>
 #include <DirectXInteropHelper.h>
 
-using namespace Platform;
+
 
 namespace FFmpegInteropX
 {

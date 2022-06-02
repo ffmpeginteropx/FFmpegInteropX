@@ -4,41 +4,47 @@ extern "C"
 {
 #include <libavformat\avformat.h>
 }
+#include "AttachedFile.g.h"
+#include <NativeBufferFactory.h>
 
-#include "NativeBufferFactory.h"
 
-using namespace Platform;
-using namespace Windows::Storage;
-using namespace Windows::Storage::Streams;
+using namespace winrt::Windows::Storage;
+using namespace winrt::Windows::Storage::Streams;
+using namespace NativeBuffer;
 
-namespace FFmpegInteropX
+namespace winrt::FFmpegInteropX::implementation
 {
-	public ref class AttachedFile sealed
+	struct AttachedFile: AttachedFileT<AttachedFile>
 	{
 	public:
-		property String^ Name { String^ get() { return name; } };
-		property String^ MimeType { String^ get() { return mimeType; } };
-		property uint64 Size { uint64 get() { return stream->codecpar->extradata_size; }}
+		 hstring Name() { return name; } 
+		 hstring MimeType() { return mimeType; } 
+		 DWORD Size() { return stream->codecpar->extradata_size; }
 
-	internal:
-
-		AttachedFile(String^ name, String^ mimeType, AVStream* stream)
+		AttachedFile(hstring name, hstring mimeType, AVStream* stream)
 		{
 			this->name = name;
 			this->mimeType = mimeType;
 			this->stream = stream;
 		}
 
-		IBuffer^ GetBuffer()
+		IBuffer GetBuffer()
 		{
-			return NativeBuffer::NativeBufferFactory::CreateNativeBuffer(stream->codecpar->extradata, (DWORD)Size);
+			return NativeBufferFactory::CreateNativeBuffer(stream->codecpar->extradata, (DWORD)Size);
 		}
 
 	private:
-		String^ name;
-		String^ mimeType;
+		hstring name;
+		hstring mimeType;
 
 		AVStream* stream;
 	};
 
+}
+
+namespace winrt::FFmpegInteropX::factory_implementation
+{
+	struct AttachedFile : AttachedFileT<AttachedFile, implementation::AttachedFile>
+	{
+	};
 }

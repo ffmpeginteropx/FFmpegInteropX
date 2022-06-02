@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "pch.h"
-using namespace Platform;
+
 
 
 namespace FFmpegInteropX
@@ -9,27 +9,27 @@ namespace FFmpegInteropX
 	class LanguageEntry
 	{
 	public:
-		String^ TwoLetterCode() { return twoLetterCode; }
-		String^ EnglishName() { return englishName; }
+		winrt::hstring TwoLetterCode() { return twoLetterCode; }
+		winrt::hstring EnglishName() { return englishName; }
 
-		LanguageEntry(String^ twoLetterCode, String^ englishName)
+		LanguageEntry(winrt::hstring twoLetterCode, winrt::hstring englishName)
 		{
 			this->twoLetterCode = twoLetterCode;
 			this->englishName = englishName;
 		}
 
 	private:
-		String^ twoLetterCode;
-		String^ englishName;
+		winrt::hstring twoLetterCode;
+		winrt::hstring englishName;
 	};
 
 	class LanguageTagConverter
 	{
 	private:
-		static std::map<String^, std::shared_ptr<LanguageEntry>> map;
+		static std::map<winrt::hstring, std::shared_ptr<LanguageEntry>> map;
 
 	public:
-		static std::shared_ptr<LanguageEntry> TryGetLanguage(String^ languageTag)
+		static std::shared_ptr<LanguageEntry> TryGetLanguage(winrt::hstring languageTag)
 		{
 			auto result = map.find(languageTag);
 			if (result != map.end())

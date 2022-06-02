@@ -18,7 +18,7 @@
 
 #pragma once
 #include <mutex>
-#include <collection.h>
+#include <winrt/Windows.Foundation.Collections.h>
 
 #include "Enumerations.h"
 #include "FFmpegReader.h"
@@ -38,7 +38,7 @@ extern "C"
 
 namespace FFmpegInteropX
 {
-	using namespace Platform;
+	
 	using namespace Windows::Foundation;
 	using namespace Windows::Foundation::Collections;
 	using namespace Windows::Media::Core;
@@ -66,22 +66,22 @@ namespace FFmpegInteropX
 		static IAsyncOperation<FFmpegMediaSource^>^ CreateFromStreamAsync(IRandomAccessStream^ stream) { return CreateFromStreamAsync(stream, ref new MediaSourceConfig()); }
 
 		///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-		static IAsyncOperation<FFmpegMediaSource^>^ CreateFromUriAsync(String^ uri, MediaSourceConfig^ config);
+		static IAsyncOperation<FFmpegMediaSource^>^ CreateFromUriAsync(winrt::hstring uri, MediaSourceConfig^ config);
 
 		///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-		static IAsyncOperation<FFmpegMediaSource^>^ CreateFromUriAsync(String^ uri) { return CreateFromUriAsync(uri, ref new MediaSourceConfig()); }
+		static IAsyncOperation<FFmpegMediaSource^>^ CreateFromUriAsync(winrt::hstring uri) { return CreateFromUriAsync(uri, ref new MediaSourceConfig()); }
 
 		///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
 		void SetSubtitleDelay(TimeSpan delay);
 
 		///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
 		[WFM::DefaultOverload]
-		void SetFFmpegAudioFilters(String^ audioFilters);
+		void SetFFmpegAudioFilters(winrt::hstring audioFilters);
 
 		///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
 		///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
 		[WFM::DefaultOverload]
-		void SetFFmpegVideoFilters(String^ videoEffects);
+		void SetFFmpegVideoFilters(winrt::hstring videoEffects);
 
 		///<summary>Disables audio effects.</summary>
 		void DisableAudioEffects();
@@ -107,7 +107,7 @@ namespace FFmpegInteropX
 		///<summary>Adds an external subtitle from a stream.</summary>
 		///<param name="stream">The subtitle stream.</param>
 		///<param name="streamName">The name to use for the subtitle.</param>
-		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName);
+		IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, winrt::hstring streamName);
 
 		///<summary>Adds an external subtitle from a stream.</summary>
 		///<param name="stream">The subtitle stream.</param>
@@ -130,9 +130,9 @@ namespace FFmpegInteropX
 			}
 		}
 
-		property IVectorView<IKeyValuePair<String^, String^>^>^ MetadataTags
+		property IVectorView<IKeyValuePair<winrt::hstring, winrt::hstring>^>^ MetadataTags
 		{
-			IVectorView<IKeyValuePair<String^, String^>^>^ get()
+			IVectorView<IKeyValuePair<winrt::hstring, winrt::hstring>^>^ get()
 			{
 				metadata->LoadMetadataTags(avFormatCtx);
 				return metadata->MetadataTags();
@@ -252,7 +252,7 @@ namespace FFmpegInteropX
 		FFmpegMediaSource(MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
 
 		HRESULT CreateMediaStreamSource(IRandomAccessStream^ stream);
-		HRESULT CreateMediaStreamSource(String^ uri);
+		HRESULT CreateMediaStreamSource(winrt::hstring uri);
 		HRESULT InitFFmpegContext();
 		MediaSource^ CreateMediaSource();
 		std::shared_ptr<MediaSampleProvider> CreateAudioStream(AVStream* avStream, int index);
@@ -284,8 +284,8 @@ namespace FFmpegInteropX
 
 	internal:
 		static FFmpegMediaSource^ CreateFromStream(IRandomAccessStream^ stream, MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
-		static FFmpegMediaSource^ CreateFromUri(String^ uri, MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
-		static FFmpegMediaSource^ CreateFromUri(String^ uri, MediaSourceConfig^ config);
+		static FFmpegMediaSource^ CreateFromUri(winrt::hstring uri, MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
+		static FFmpegMediaSource^ CreateFromUri(winrt::hstring uri, MediaSourceConfig^ config);
 		HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek);
 
 		std::shared_ptr<MediaSampleProvider> VideoSampleProvider()
@@ -319,7 +319,7 @@ namespace FFmpegInteropX
 
 		std::shared_ptr<MediaSampleProvider> currentVideoStream;
 		std::shared_ptr<MediaSampleProvider> currentAudioStream;
-		String^ currentAudioEffects;
+		winrt::hstring currentAudioEffects;
 		int thumbnailStreamIndex;
 
 		EventRegistrationToken audioTracksChangedToken;
@@ -341,8 +341,8 @@ namespace FFmpegInteropX
 		MediaPlaybackSession^ session;
 		EventRegistrationToken sessionPositionEvent;
 
-		String^ videoCodecName;
-		String^ audioCodecName;
+		winrt::hstring videoCodecName;
+		winrt::hstring audioCodecName;
 		TimeSpan mediaDuration;
 		TimeSpan subtitleDelay;
 		unsigned char* fileStreamBuffer;

@@ -20,13 +20,13 @@
 
 namespace FFmpegInteropX
 {
-	using namespace Platform;
+	
 	using namespace Windows::Storage::Streams;
 
 	public ref class MediaThumbnailData sealed
 	{
 		IBuffer^ _buffer;
-		String^ _extension;
+		winrt::hstring _extension;
 
 	public:
 
@@ -37,15 +37,15 @@ namespace FFmpegInteropX
 				return _buffer;
 			}
 		}
-		property String^ Extension
+		property winrt::hstring Extension
 		{
-			String^ get()
+			winrt::hstring get()
 			{
 				return _extension;
 			}
 		}
 
-		MediaThumbnailData(IBuffer^ buffer, String^ extension)
+		MediaThumbnailData(IBuffer^ buffer, winrt::hstring extension)
 		{
 			this->_buffer = buffer;
 			this->_extension = extension;

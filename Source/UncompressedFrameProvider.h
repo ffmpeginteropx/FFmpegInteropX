@@ -18,7 +18,7 @@ namespace FFmpegInteropX
 		AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;
 		std::shared_ptr<AbstractEffectFactory> m_effectFactory;
-		String^ pendingEffects;
+		winrt::hstring pendingEffects;
 
 	public:
 		UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, std::shared_ptr<AbstractEffectFactory> p_effectFactory)
@@ -33,7 +33,7 @@ namespace FFmpegInteropX
 			m_pAvCodecCtx = avCodecCtx;
 		}
 
-		void UpdateFilter(String^ effects)
+		void UpdateFilter(winrt::hstring effects)
 		{
 			if (effects)
 			{

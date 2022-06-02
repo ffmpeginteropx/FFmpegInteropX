@@ -4,20 +4,20 @@
 #include <d3d11.h>
 #include <mfidl.h>
 
-using namespace Windows::Media::Core;
+using namespace winrt::Windows::Media::Core;
 using namespace FFmpegInteropX;
 
-IDirect3DSurface^ DirectXInteropHelper::GetSurface(IDXGISurface* source)
+IDirect3DSurface DirectXInteropHelper::GetSurface(IDXGISurface* source)
 {
-	return Windows::Graphics::DirectX::Direct3D11::CreateDirect3DSurface(source);
+	return winrt::Windows::Graphics::DirectX::Direct3D11::CreateDirect3DSurface(source);
 }
 
-HRESULT DirectXInteropHelper::GetDXGISurface(IDirect3DSurface^ source, IDXGISurface** dxgiSurface)
+HRESULT DirectXInteropHelper::GetDXGISurface(IDirect3DSurface source, IDXGISurface** dxgiSurface)
 {
-	return Windows::Graphics::DirectX::Direct3D11::GetDXGIInterface(source, dxgiSurface);
+	return winrt::Windows::Graphics::DirectX::Direct3D11::GetDXGIInterface(source, dxgiSurface);
 }
 
-HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(MediaStreamSource^ source, IMFDXGIDeviceManager** deviceManager)
+HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(MediaStreamSource source, IMFDXGIDeviceManager** deviceManager)
 {
 	IMFDXGIDeviceManagerSource* surfaceManager = nullptr;	
 	auto unknownMss = reinterpret_cast<IUnknown*>(source);

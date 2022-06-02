@@ -41,7 +41,7 @@ extern "C"
 
 using namespace concurrency;
 using namespace FFmpegInteropX;
-using namespace Platform;
+
 using namespace Platform::Collections;
 using namespace Windows::Storage::Streams;
 using namespace Windows::Media::MediaProperties;
@@ -56,7 +56,7 @@ static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence);
 static bool isRegistered = false;
 std::mutex isRegisteredMutex;
 
-std::map<String^, std::shared_ptr<LanguageEntry>> LanguageTagConverter::map;
+std::map<winrt::hstring, std::shared_ptr<LanguageEntry>> LanguageTagConverter::map;
 
 // Initialize an FFmpegInteropObject
 FFmpegMediaSource::FFmpegMediaSource(MediaSourceConfig^ interopConfig, CoreDispatcher^ dispatcher)
@@ -157,7 +157,7 @@ IAsyncOperation<FFmpegMediaSource^>^ FFmpegMediaSource::CreateFromStreamAsync(IR
 		});
 };
 
-IAsyncOperation<FFmpegMediaSource^>^ FFmpegMediaSource::CreateFromUriAsync(String^ uri, MediaSourceConfig^ config)
+IAsyncOperation<FFmpegMediaSource^>^ FFmpegMediaSource::CreateFromUriAsync(winrt::hstring uri, MediaSourceConfig^ config)
 {
 	auto dispatcher = GetCurrentDispatcher();
 	return create_async([uri, config, dispatcher]
@@ -177,7 +177,7 @@ FFmpegMediaSource^ FFmpegMediaSource::CreateFromStream(IRandomAccessStream^ stre
 	return interopMSS;
 }
 
-FFmpegMediaSource^ FFmpegMediaSource::CreateFromUri(String^ uri, MediaSourceConfig^ config, CoreDispatcher^ dispatcher)
+FFmpegMediaSource^ FFmpegMediaSource::CreateFromUri(winrt::hstring uri, MediaSourceConfig^ config, CoreDispatcher^ dispatcher)
 {
 	auto interopMSS = ref new FFmpegMediaSource(config, dispatcher);
 	auto hr = interopMSS->CreateMediaStreamSource(uri);
@@ -188,7 +188,7 @@ FFmpegMediaSource^ FFmpegMediaSource::CreateFromUri(String^ uri, MediaSourceConf
 	return interopMSS;
 }
 
-FFmpegMediaSource^ FFmpegMediaSource::CreateFromUri(String^ uri, MediaSourceConfig^ config)
+FFmpegMediaSource^ FFmpegMediaSource::CreateFromUri(winrt::hstring uri, MediaSourceConfig^ config)
 {
 	auto dispatcher = GetCurrentDispatcher();
 	auto interopMSS = ref new FFmpegMediaSource(config, dispatcher);
@@ -300,7 +300,7 @@ MediaPlaybackItem^ FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan startTime
 	}
 }
 
-IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName)
+IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream^ stream, winrt::hstring streamName)
 {
 	return create_async([this, stream, streamName]
 		{
@@ -510,7 +510,7 @@ void FFmpegMediaSource::OnAudioTracksChanged(MediaPlaybackItem^ sender, IVectorC
 	mutexGuard.unlock();
 }
 
-HRESULT FFmpegMediaSource::CreateMediaStreamSource(String^ uri)
+HRESULT FFmpegMediaSource::CreateMediaStreamSource(winrt::hstring uri)
 {
 	HRESULT hr = S_OK;
 	if (!uri)
@@ -991,7 +991,7 @@ std::shared_ptr<SubtitleProvider> FFmpegMediaSource::CreateSubtitleSampleProvide
 		//inject custom properties
 		if (config->AutoCorrectAnsiSubtitles && config->IsExternalSubtitleParser && streamByteOrderMark != ByteOrderMark::UTF8)
 		{
-			String^ key = config->AnsiSubtitleEncoding->Name;
+			winrt::hstring key = config->AnsiSubtitleEncoding->Name;
 			std::string keyA = StringUtils::PlatformStringToUtf8String(key);
 			const char* keyChar = keyA.c_str();
 
@@ -1299,7 +1299,7 @@ void FFmpegMediaSource::SetSubtitleDelay(TimeSpan offset)
 	mutexGuard.unlock();
 }
 
-void FFmpegMediaSource::SetFFmpegAudioFilters(String^ audioEffects)
+void FFmpegMediaSource::SetFFmpegAudioFilters(winrt::hstring audioEffects)
 {
 	mutexGuard.lock();
 	if (currentAudioStream)
@@ -1310,7 +1310,7 @@ void FFmpegMediaSource::SetFFmpegAudioFilters(String^ audioEffects)
 	mutexGuard.unlock();
 }
 
-void FFmpegMediaSource::SetFFmpegVideoFilters(String^ videoEffects)
+void FFmpegMediaSource::SetFFmpegVideoFilters(winrt::hstring videoEffects)
 {
 	mutexGuard.lock();
 	if (currentVideoStream)
@@ -1353,7 +1353,7 @@ MediaThumbnailData^ FFmpegMediaSource::ExtractThumbnail()
 		{
 			auto imageStream = avFormatCtx->streams[thumbnailStreamIndex];
 			//save album art to file.
-			String^ extension = ".jpeg";
+			winrt::hstring extension = ".jpeg";
 			switch (imageStream->codecpar->codec_id)
 			{
 			case AV_CODEC_ID_MJPEG:

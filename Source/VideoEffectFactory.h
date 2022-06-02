@@ -17,7 +17,7 @@ namespace FFmpegInteropX
 			this->inputStream = inputStream;
 		}
 
-		std::shared_ptr<IAvEffect> CreateEffect(String^ filterDefinition) override
+		std::shared_ptr<IAvEffect> CreateEffect(winrt::hstring filterDefinition) override
 		{
 			/*Since video often requires HW acceleration for acceptable framerates,
 			we used IBasicVodeoEffect to implement video filters,

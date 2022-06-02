@@ -21,7 +21,6 @@
 #include <queue>
 #include <set>
 #include <vector>
-#include <collection.h>
 #include <ppltasks.h>
 #include <StringUtils.h>
 
@@ -43,3 +42,16 @@ extern "C"
 #define DebugMessage(x) OutputDebugString(x)
 #endif
 #define SAFE_RELEASE(p)      { if (p) { (p)->Release(); (p)=nullptr; } }
+
+// C++/winRT
+#include <unknwn.h>
+#include <winrt/base.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Windows.Media.Core.h>
+#include <winrt/Windows.Media.Playback.h>
+#include "winrt/Windows.System.h"
+#include <NativeBuffer.h>
+#include <NativeBufferFactory.h>
+#include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.Graphics.DirectX.Direct3D11.h>

@@ -13,7 +13,7 @@ static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelForm
 
 namespace FFmpegInteropX
 {
-	using namespace Platform;
+	
 
 	class D3D11VideoSampleProvider : public UncompressedVideoSampleProvider
 	{

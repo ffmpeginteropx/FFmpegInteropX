@@ -4,20 +4,20 @@
 
 namespace FFmpegInteropX
 {
-	using namespace Platform;
+	
 	using namespace Platform::Collections;
 	using namespace Windows::Foundation;
 	using namespace Windows::Foundation::Collections;
 
 	class MediaMetadata
 	{
-		Vector<IKeyValuePair<String^, String^>^>^ entries;
+		Vector<IKeyValuePair<winrt::hstring, winrt::hstring>^>^ entries;
 		bool tagsLoaded = false;
 	public:
 
 		MediaMetadata()
 		{
-			entries = ref new Vector<IKeyValuePair<String^, String^>^>();
+			entries = ref new Vector<IKeyValuePair<winrt::hstring, winrt::hstring>^>();
 		}
 
 		void LoadMetadataTags(AVFormatContext* m_pAvFormatCtx)
@@ -42,7 +42,7 @@ namespace FFmpegInteropX
 		}
 
 
-		IVectorView<IKeyValuePair<String^, String^>^>^ MetadataTags()
+		IVectorView<IKeyValuePair<winrt::hstring, winrt::hstring>^>^ MetadataTags()
 		{
 			return entries->GetView();
 		}

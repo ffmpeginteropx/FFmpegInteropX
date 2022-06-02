@@ -22,12 +22,14 @@
 #include "Enumerations.h"
 #include "StreamInfo.h"
 
+using namespace winrt::Windows::Storage::Streams;
+using namespace winrt::Windows::Media::Core;
+using namespace winrt::Windows::Media::MediaProperties;
+using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
+
 namespace FFmpegInteropX
 {
-	using namespace Windows::Storage::Streams;
-	using namespace Windows::Media::Core;
-	using namespace Windows::Media::MediaProperties;
-	using namespace Windows::Graphics::DirectX::Direct3D11;
+	
 
 	class FFmpegReader;
 
@@ -95,9 +97,9 @@ namespace FFmpegInteropX
 
 		bool IsCleanSample;
 
-		String^ Name;
-		String^ Language;
-		String^ CodecName;
+		winrt::hstring Name;
+		winrt::hstring Language;
+		winrt::hstring CodecName;
 		TimeSpan LastSampleTimestamp;
 
 		virtual HRESULT Initialize();
@@ -113,7 +115,7 @@ namespace FFmpegInteropX
 		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
 		void EnableStream();
 		void DisableStream();
-		virtual void SetFilters(String^ filterDefinition) { };// override for setting effects in sample providers
+		virtual void SetFilters(winrt::hstring filterDefinition) { };// override for setting effects in sample providers
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
 		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
 		virtual void Detach();

@@ -143,7 +143,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
 			}
 		}
 
-		String^ name = m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ? m_config->DefaultAudioStreamName : m_config->DefaultSubtitleStreamName;
+		winrt::hstring name = m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ? m_config->DefaultAudioStreamName : m_config->DefaultSubtitleStreamName;
 		if (count > 1)
 		{
 			name = name + " " + number.ToString();
@@ -167,7 +167,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 		auto channels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
 		auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
 
-		String^ channelLayout = "";
+		winrt::hstring channelLayout = "";
 		char* channelLayoutName = new char[256];
 		if (channelLayoutName)
 		{

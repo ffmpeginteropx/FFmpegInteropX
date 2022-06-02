@@ -875,13 +875,13 @@ namespace FFmpegInteropX
 			}
 		}
 
-		String^ GetFontFamily(char* str)
+		winrt::hstring GetFontFamily(char* str)
 		{
 			auto wstr = StringUtils::Utf8ToWString(str);
 			return GetFontFamily(wstr);
 		}
 
-		String^ GetFontFamily(std::wstring str)
+		winrt::hstring GetFontFamily(std::wstring str)
 		{
 			str = trim(str);
 
@@ -891,7 +891,7 @@ namespace FFmpegInteropX
 				return existing->second;
 			}
 
-			String^ result;
+			winrt::hstring result;
 
 			if (m_config->UseEmbeddedSubtitleFonts)
 			{
@@ -903,10 +903,10 @@ namespace FFmpegInteropX
 						if (mime.find(L"font") != mime.npos)
 						{
 							auto file = attachedFileHelper->ExtractFileAsync(attachment).get();
-							auto names = ref new Vector<String^>();
+							auto names = ref new Vector<winrt::hstring>();
 							names->Append("System.Title");
 							auto properties = create_task(file->Properties->RetrievePropertiesAsync(names)).get();
-							auto title = dynamic_cast<String^>(properties->Lookup("System.Title"));
+							auto title = dynamic_cast<winrt::hstring>(properties->Lookup("System.Title"));
 							if (title != nullptr)
 							{
 								auto fontFamily = std::wstring(title->Data());
@@ -997,7 +997,7 @@ namespace FFmpegInteropX
 		class SsaStyleDefinition
 		{
 		public:
-			String^ Name;
+			winrt::hstring Name;
 			TimedTextRegion^ Region;
 			TimedTextStyle^ Style;
 		};
@@ -1021,8 +1021,8 @@ namespace FFmpegInteropX
 		int videoWidth;
 		int videoHeight;
 		int regionIndex = 1;
-		std::map<String^, std::shared_ptr<SsaStyleDefinition>> styles;
-		std::map<std::wstring, String^> fonts;
+		std::map<winrt::hstring, std::shared_ptr<SsaStyleDefinition>> styles;
+		std::map<std::wstring, winrt::hstring> fonts;
 		std::shared_ptr<AttachedFileHelper> attachedFileHelper;
 	};
 }

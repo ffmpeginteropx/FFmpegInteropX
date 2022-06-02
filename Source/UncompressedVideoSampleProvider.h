@@ -42,7 +42,7 @@ typedef struct _MT_CUSTOM_VIDEO_PRIMARIES {
 
 namespace FFmpegInteropX
 {
-	using namespace Platform;
+	
 
 	class UncompressedVideoSampleProvider : public UncompressedSampleProvider
 	{
@@ -88,7 +88,7 @@ namespace FFmpegInteropX
 		AVBufferRef* AllocateBuffer(int requestedSize, AVBufferPool** bufferPool, int* bufferPoolSize);
 		static int get_buffer2(AVCodecContext* avCodecContext, AVFrame* frame, int flags);
 
-		String^ outputMediaSubtype;
+		winrt::hstring outputMediaSubtype;
 		int outputWidth;
 		int outputHeight;
 		int outputFrameHeight;

@@ -2,27 +2,45 @@
 
 #include "pch.h"
 #include "Enumerations.h"
+#include "AudioStreamInfo.g.h"
+#include "VideoStreamInfo.g.h"
+#include "SubtitleStreamInfo.g.h"
+#include "ChapterInfo.g.h"
+#include "FormatInfo.g.h"
 
+using namespace winrt;
 
-namespace FFmpegInteropX
+namespace winrt::FFmpegInteropX::implementation
 {
-	using namespace Platform;
 	
-	public interface class IStreamInfo
+	using namespace Windows::Media::Core;
+	using namespace Windows::Media::Playback;
+
+	interface IStreamInfo
 	{
-		property String^ Name { String^ get(); }
-		property String^ Language { String^ get(); }
-		property String^ CodecName { String^ get(); }
-		property StreamDisposition Disposition { StreamDisposition get(); }
-		property int64 Bitrate { int64 get(); }
-		property bool IsDefault { bool get(); }
+		hstring Name();
+		hstring Language();
+		hstring CodecName();
+		StreamDisposition Disposition();
+		INT64 Bitrate();
+		bool IsDefault();
 	};
 
-	public ref class AudioStreamInfo sealed : public IStreamInfo
+	struct AudioStreamInfo : public AudioStreamInfoT<AudioStreamInfo>, public IStreamInfo
 	{
 	public:
-		AudioStreamInfo(String^ name, String^ language, String^ codecName, StreamDisposition disposition, int64 bitrate, bool isDefault,
-			int channels, String^ channelLayout, int sampleRate, int bitsPerSample, DecoderEngine decoderEngine)
+		AudioStreamInfo(
+			hstring name,
+			hstring language,
+			hstring codecName,
+			StreamDisposition disposition,
+			INT64 bitrate,
+			bool isDefault,
+			int channels,
+			hstring channelLayout,
+			int sampleRate,
+			int bitsPerSample,
+			DecoderEngine decoderEngine)
 		{
 			this->name = name;
 			this->language = language;
@@ -39,47 +57,56 @@ namespace FFmpegInteropX
 			this->decoderEngine = decoderEngine;
 		}
 
-		virtual property String^ Name { String^ get() { return name; } }
-		virtual property String^ Language { String^ get() { return language; } }
-		virtual property String^ CodecName { String^ get() { return codecName; } }
-		virtual property StreamDisposition Disposition { StreamDisposition get() { return disposition; } }
-		virtual property int64 Bitrate { int64 get() { return bitrate; } }
-		virtual property bool IsDefault { bool get() { return isDefault; } }
+		virtual  hstring Name() { return name; }
+		virtual  hstring Language() { return language; }
+		virtual  hstring CodecName() { return codecName; }
+		virtual  StreamDisposition Disposition() { return disposition; }
+		virtual  INT64 Bitrate() { return bitrate; }
+		virtual  bool IsDefault() { return isDefault; }
+		int Channels() { return channels; }
+		hstring ChannelLayout() { return channelLayout; }
+		int SampleRate() { return sampleRate; }
+		int BitsPerSample() { return bitsPerSample; }
 
-		property int Channels { int get() { return channels; } }
-		property String^ ChannelLayout { String^ get() { return channelLayout; } }
-		property int SampleRate { int get() { return sampleRate; } }
-		property int BitsPerSample { int get() { return bitsPerSample; } }
+		DecoderEngine DecoderEngine() { return decoderEngine; }
 
-		property FFmpegInteropX::DecoderEngine DecoderEngine {FFmpegInteropX::DecoderEngine get() { return decoderEngine; }}
-
-	internal:
 		void SetDefault()
 		{
 			isDefault = true;
 		}
 
 	private:
-		String ^ name;
-		String^ language;
-		String^ codecName;
+		hstring name;
+		hstring language;
+		hstring codecName;
 		StreamDisposition disposition;
-		int64 bitrate;
+		INT64 bitrate;
 		bool isDefault;
 
 		int channels;
-		String^ channelLayout;
+		hstring channelLayout;
 		int sampleRate;
 		int bitsPerSample;
-	
-		FFmpegInteropX::DecoderEngine decoderEngine;
+
+		winrt::FFmpegInteropX::implementation::DecoderEngine decoderEngine;
 	};
 
-	public ref class VideoStreamInfo sealed : public IStreamInfo
+	struct VideoStreamInfo : public VideoStreamInfoT<VideoStreamInfo>, public IStreamInfo
 	{
 	public:
-		VideoStreamInfo(String^ name, String^ language, String^ codecName, StreamDisposition disposition, int64 bitrate, bool isDefault,
-			int pixelWidth, int pixelHeight, double displayAspectRatio, int bitsPerSample, double framesPerSecond, HardwareDecoderStatus hwAccel, DecoderEngine decoderEngine)
+		VideoStreamInfo(hstring name,
+			hstring language,
+			hstring codecName,
+			StreamDisposition disposition,
+			INT64 bitrate,
+			bool isDefault,
+			int pixelWidth,
+			int pixelHeight,
+			double displayAspectRatio,
+			int bitsPerSample,
+			double framesPerSecond,
+			HardwareDecoderStatus hwAccel,
+			DecoderEngine decoderEngine)
 		{
 			this->name = name;
 			this->language = language;
@@ -98,45 +125,54 @@ namespace FFmpegInteropX
 			this->decoderEngine = decoderEngine;
 		}
 
-		virtual property String^ Name { String^ get() { return name; } }
-		virtual property String^ Language { String^ get() { return language; } }
-		virtual property String^ CodecName { String^ get() { return codecName; } }
-		virtual property StreamDisposition Disposition { StreamDisposition get() { return disposition; } }
-		virtual property int64 Bitrate { int64 get() { return bitrate; } }
-		virtual property bool IsDefault { bool get() { return isDefault; } }
+		virtual  hstring Name() { return name; }
+		virtual  hstring Language() { return language; }
+		virtual  hstring CodecName() { return codecName; }
+		virtual  StreamDisposition Disposition() { return disposition; }
+		virtual  INT64 Bitrate() { return bitrate; }
+		virtual  bool IsDefault() { return isDefault; }
 
-		property int PixelWidth { int get() { return pixelWidth; } }
-		property int PixelHeight { int get() { return pixelHeight; } }
-		property double DisplayAspectRatio { double get() { return displayAspectRatio; } }
-		property int BitsPerSample { int get() { return bitsPerSample; } }
-		property double FramesPerSecond { double get() { return framesPerSecond; } }
+		int PixelWidth() { return pixelWidth; }
+		int PixelHeight() { return pixelHeight; }
+		double DisplayAspectRatio() { return displayAspectRatio; }
+		int BitsPerSample() { return bitsPerSample; }
+		double FramesPerSecond() { return framesPerSecond; }
 
 		///<summary>Override the frame rate of the video stream.</summary>
 		///<remarks>
 		/// This must be set before calling CreatePlaybackItem().
 		/// Setting this can cause A/V desync, since it will only affect this stream.
 		/// </remarks>
-		property double FramesPerSecondOverride;
-
-		property FFmpegInteropX::HardwareDecoderStatus HardwareDecoderStatus {FFmpegInteropX::HardwareDecoderStatus get() { return hardwareDecoderStatus; }}
-		property FFmpegInteropX::DecoderEngine DecoderEngine 
+		double FramesPerSecondOverride()
 		{
-			FFmpegInteropX::DecoderEngine get() { return decoderEngine; }
-		internal:
-			void set(FFmpegInteropX::DecoderEngine value) { decoderEngine = value; }
+			return framesPerSecondOverride;
 		}
 
-	internal:
+		void FramesPerSecondOverride(double value)
+		{
+			framesPerSecondOverride = value;
+		}
+
+		HardwareDecoderStatus HardwareDecoderStatus() { return hardwareDecoderStatus; }
+
+		DecoderEngine DecoderEngine() { return decoderEngine; }
+
+		void DecoderEngine(winrt::FFmpegInteropX::implementation::DecoderEngine value)
+		{
+			decoderEngine = value;
+		}
+
 		void SetDefault()
 		{
 			isDefault = true;
 		}
+
 	private:
-		String ^ name;
-		String^ language;
-		String^ codecName;
+		hstring  name;
+		hstring language;
+		hstring codecName;
 		StreamDisposition disposition;
-		int64 bitrate;
+		INT64 bitrate;
 		bool isDefault;
 
 		int pixelWidth;
@@ -144,16 +180,23 @@ namespace FFmpegInteropX
 		double displayAspectRatio;
 		int bitsPerSample;
 		double framesPerSecond;
-
-		FFmpegInteropX::HardwareDecoderStatus hardwareDecoderStatus;
-		FFmpegInteropX::DecoderEngine decoderEngine;
+		double framesPerSecondOverride = 0;
+		winrt::FFmpegInteropX::implementation::HardwareDecoderStatus hardwareDecoderStatus;
+		winrt::FFmpegInteropX::implementation::DecoderEngine decoderEngine;
 	};
 
 
-	public ref class SubtitleStreamInfo sealed : public IStreamInfo
+	struct SubtitleStreamInfo : public SubtitleStreamInfoT<SubtitleStreamInfo>, public IStreamInfo
 	{
 	public:
-		SubtitleStreamInfo(String^ name, String^ language, String^ codecName, StreamDisposition disposition, bool isDefault, bool isForced, TimedMetadataTrack^ track, bool isExternal)
+		SubtitleStreamInfo(hstring name,
+			hstring language,
+			hstring codecName,
+			StreamDisposition disposition,
+			bool isDefault,
+			bool isForced,
+			TimedMetadataTrack track,
+			bool isExternal)
 		{
 			this->name = name;
 			this->language = language;
@@ -165,71 +208,68 @@ namespace FFmpegInteropX
 			this->isExternal = isExternal;
 		}
 
-		virtual property String^ Name { String^ get() { return name; } }
-		virtual property String^ Language { String^ get() { return language; } }
-		virtual property String^ CodecName { String^ get() { return codecName; } }
-		virtual property StreamDisposition Disposition { StreamDisposition get() { return disposition; } }
-		virtual property int64 Bitrate { int64 get() { return 0; } }
-		virtual property bool IsDefault { bool get() { return isDefault; } }
+		virtual  hstring Name() { return name; }
+		virtual  hstring Language() { return language; }
+		virtual  hstring CodecName() { return codecName; }
+		virtual  StreamDisposition Disposition() { return disposition; }
+		virtual  INT64 Bitrate() { return 0; }
+		virtual  bool IsDefault() { return isDefault; }
 
-		property bool IsExternal {bool get() { return isExternal; }}
-		property bool IsForced { bool get() { return isForced; } }
+		bool IsExternal() { return isExternal; }
+		bool IsForced() { return isForced; }
 
-		property TimedMetadataTrack^ SubtitleTrack
-		{
-			TimedMetadataTrack^ get()
-			{
-				return track;
-			}
-
-		internal:
-			void set(TimedMetadataTrack^ value)
-			{
-				track = value;
-			}
+		TimedMetadataTrack SubtitleTrack() {
+			return track;
 		}
 
-	internal:
+		void SubtitleTrack(TimedMetadataTrack value)
+		{
+			track = value;
+		}
+
 		void SetDefault()
 		{
 			isDefault = true;
 		}
 
 	private:
-		String ^ name;
-		String^ language;
-		String^ codecName;
+		hstring  name;
+		hstring language;
+		hstring codecName;
 		StreamDisposition disposition;
 		bool isDefault;
 		bool isForced;
-		TimedMetadataTrack^ track;
+		TimedMetadataTrack track;
 		bool isExternal;
 	};
 
-	public ref class ChapterInfo sealed
+	struct ChapterInfo : ChapterInfoT<ChapterInfo>
 	{
 	public:
-		ChapterInfo(String^ title, TimeSpan startTime, TimeSpan duration)
+		ChapterInfo(hstring title, Windows::Foundation::TimeSpan startTime, Windows::Foundation::TimeSpan duration)
 		{
 			this->title = title;
 			this->startTime = startTime;
 			this->duration = duration;
 		}
 
-		property String^ Title { String^ get() { return title; } }
-		property TimeSpan StartTime { TimeSpan get() { return startTime; } }
-		property TimeSpan Duration { TimeSpan get() { return duration; } }
+		hstring Title() { return title; } 
+		Windows::Foundation::TimeSpan StartTime() { return startTime; } 
+		Windows::Foundation::TimeSpan Duration() { return duration; }
 
 	private:
-		String^ title;
-		TimeSpan startTime;
-		TimeSpan duration;
+		hstring title;
+		Windows::Foundation::TimeSpan startTime;
+		Windows::Foundation::TimeSpan duration;
 	};
 
-	public ref class FormatInfo sealed
+	struct FormatInfo : FormatInfoT<FormatInfo>
 	{
 	public:
-		FormatInfo(String^ title, String^ formatName, TimeSpan duration, int64 bitrate)
+		FormatInfo(hstring title,
+			hstring formatName, 
+			Windows::Foundation::TimeSpan duration,
+			INT64 bitrate)
 		{
 			this->title = title;
 			this->formatName = formatName;
@@ -237,15 +277,42 @@ namespace FFmpegInteropX
 			this->bitrate = bitrate;
 		}
 
-		property String^ Title { String^ get() { return title; } }
-		property String^ FormatName { String^ get() { return formatName; } }
-		property TimeSpan Duration { TimeSpan get() { return duration; } }
-		property int64 Bitrate { int64 get() { return bitrate; } }
+		hstring Title() { return title; } 
+		hstring FormatName() { return formatName; } 
+		Windows::Foundation::TimeSpan Duration() { return duration; }
+		INT64 Bitrate() { return bitrate; } 
 
 	private:
-		String^ title;
-		String^ formatName;
-		TimeSpan duration;
-		int64 bitrate;
+		hstring title;
+		hstring formatName;
+		Windows::Foundation::TimeSpan duration;
+		INT64 bitrate;
+	};
+}
+
+namespace winrt::FFmpegInteropX::factory_implementation
+{
+	struct AudioStreamInfo : AudioStreamInfoT<AudioStreamInfo, implementation::AudioStreamInfo>
+	{
+	};
+
+	struct VideoStreamInfo : AudioStreamInfoT<VideoStreamInfo, implementation::VideoStreamInfo>
+	{
+	};
+
+	struct SubtitleStreamInfo : SubtitleStreamInfoT<SubtitleStreamInfo, implementation::SubtitleStreamInfo>
+	{
+	};
+
+	struct AudioStreamInfo : AudioStreamInfoT<AudioStreamInfo, implementation::AudioStreamInfo>
+	{
+	};
+
+	struct ChapterInfo : ChapterInfoT<ChapterInfo, implementation::ChapterInfo>
+	{
+	};
+
+	struct FormatInfo : FormatInfoT<FormatInfo, implementation::FormatInfo>
+	{
 	};
 }

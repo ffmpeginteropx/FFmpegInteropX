@@ -77,7 +77,7 @@ namespace FFmpegInteropX {
 		}
 
 		/// <summary>Creates a new FrameGrabber from the specified uri.</summary>
-		static IAsyncOperation<FrameGrabber^>^ CreateFromUriAsync(String^ uri)
+		static IAsyncOperation<FrameGrabber^>^ CreateFromUriAsync(winrt::hstring uri)
 		{
 			return create_async([uri]
 			{

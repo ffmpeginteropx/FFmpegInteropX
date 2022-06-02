@@ -2,7 +2,6 @@
 
 #include <string>
 #include <codecvt>
-#include <collection.h>
 
 #include "CompressedSampleProvider.h"
 #include "StreamInfo.h"

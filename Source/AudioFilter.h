@@ -24,7 +24,7 @@ namespace FFmpegInteropX
 	using namespace Windows::Foundation::Collections;
 	using namespace Windows::Media::Playback;
 	using namespace Windows::Foundation;
-	using namespace Platform;
+	
 	using namespace Windows::Storage;
 
 	class AudioFilter : public IAvEffect
@@ -37,7 +37,7 @@ namespace FFmpegInteropX
 
 		AVCodecContext* inputCodecCtx;
 
-		String^ filterDefinition;
+		winrt::hstring filterDefinition;
 		bool isInitialized = false;
 		char channel_layout_name[256];
 
@@ -180,7 +180,7 @@ namespace FFmpegInteropX
 		}
 
 
-		AudioFilter(AVCodecContext* m_inputCodecCtx, String^ filterDefinition)
+		AudioFilter(AVCodecContext* m_inputCodecCtx, winrt::hstring filterDefinition)
 		{
 			this->inputCodecCtx = m_inputCodecCtx;
 			this->filterDefinition = filterDefinition;

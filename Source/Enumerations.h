@@ -1,24 +1,22 @@
 #pragma once
 
-namespace FFmpegInteropX
+namespace winrt::FFmpegInteropX::implementation
 {
-	namespace WFM = Windows::Foundation::Metadata;
-
-	public enum class HardwareDecoderStatus
+	enum class HardwareDecoderStatus
 	{
 		Unknown,
 		Available,
 		NotAvailable
 	};
 
-	public enum class DecoderEngine
+	enum class DecoderEngine
 	{
 		SystemDecoder,
 		FFmpegSoftwareDecoder,
 		FFmpegD3D11HardwareDecoder
 	};
 
-	public enum class VideoDecoderMode
+	enum class VideoDecoderMode
 	{
 		///<summary>Use FFmpeg D3D11 hardware acceleration, if available. Otherwise, use FFmpeg software decoder</summary>
 		///<remarks>The VideoStreamInfo will show the actual decoder only after playback has started.</remarks>
@@ -34,7 +32,7 @@ namespace FFmpegInteropX
 
 	///<summary>This flags enumeration describes the content or intention of a stream.</summary>
 	[Platform::Metadata::Flags]
-	public enum class StreamDisposition : unsigned int
+	enum class StreamDisposition : unsigned int
 	{
 		///<summary>Unknown disposition.</summary>
 		Unknown = 0,

@@ -14,12 +14,12 @@ extern "C"
 
 namespace FFmpegInteropX
 {
-	using namespace Platform;
+	
 	using namespace Platform::Collections;
-	using namespace Windows::Foundation;
-	using namespace Windows::Foundation::Collections;
-	using namespace Windows::Media::Core;
-	using namespace Windows::System;
+	using namespace winrt::Windows::Foundation;
+	using namespace winrt::Windows::Foundation::Collections;
+	using namespace winrt::Windows::Media::Core;
+	using namespace winrt::Windows::System;
 	using namespace Concurrency;
 
 	enum VideoResolution
@@ -184,7 +184,7 @@ namespace FFmpegInteropX
 				hasCheckedHEVCExtension, isHEVCExtensionInstalled);
 		}
 
-		static bool CheckIsVideoExtensionInstalled(String^ appId, bool& hasCheckedExtension, bool& isExtensionInstalled)
+		static bool CheckIsVideoExtensionInstalled(winrt::hstring appId, bool& hasCheckedExtension, bool& isExtensionInstalled)
 		{
 			if (!hasCheckedExtension)
 			{
@@ -210,7 +210,7 @@ namespace FFmpegInteropX
 			return isExtensionInstalled;
 		}
 
-		static void RaiseCodecRequired(CodecRequiredReason reason, String^ codecName, String^ storeEntryName, String^ uri)
+		static void RaiseCodecRequired(CodecRequiredReason reason, winrt::hstring codecName, winrt::hstring storeEntryName, winrt::hstring uri)
 		{
 			CodecRequired(ref new CodecRequiredEventArgs(reason, codecName, storeEntryName, uri));
 		}
@@ -415,7 +415,7 @@ namespace FFmpegInteropX
 					result &= CheckIsVP9VideoExtensionInstalled();
 					if (!result && !hasAskedInstallVP9Extension)
 					{
-						String^ codecName = codecId == AV_CODEC_ID_VP9 ? "VP9" : "VP8";
+						winrt::hstring codecName = codecId == AV_CODEC_ID_VP9 ? "VP9" : "VP8";
 						RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, codecName, "VP9 Video Extensions", "9n4d0msmp0pt");
 						hasAskedInstallVP9Extension = true;
 					}
@@ -569,7 +569,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		static task<bool> IsAppInstalledAsync(String^ packageName)
+		static task<bool> IsAppInstalledAsync(winrt::hstring packageName)
 		{
 			using namespace Windows::System;
 			return create_task(Launcher::QueryUriSupportAsync(ref new Uri("mailto:dummy@mail.com"), LaunchQuerySupportType::Uri, packageName)).then(
@@ -597,7 +597,7 @@ namespace FFmpegInteropX
 		}
 
 		//// this works, but it takes 500ms on first call, so not using it right now...
-		//static task<bool> IsVideoCodecInstalledAsync(String^ videoCodecSubtype)
+		//static task<bool> IsVideoCodecInstalledAsync(winrt::hstring videoCodecSubtype)
 		//{
 		//	auto query = ref new CodecQuery();
 		//	auto codecs = co_await query->FindAllAsync(CodecKind::Video, CodecCategory::Decoder, videoCodecSubtype);

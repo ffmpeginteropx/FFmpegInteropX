@@ -2,32 +2,32 @@
 
 namespace FFmpegInteropX
 {
-	using namespace Platform;
+	
 	using namespace Windows::Foundation::Collections;
 
-	ref class KeyStringValuePair sealed : IKeyValuePair<String^,String^>
+	ref class KeyStringValuePair sealed : IKeyValuePair<winrt::hstring,winrt::hstring>
 	{
 		String ^key, ^value;
 
 	public:
 
-		property String^ Key
+		property winrt::hstring Key
 		{
-			virtual String^ get()
+			virtual winrt::hstring get()
 			{
 				return key;
 			}
 		}
 
-		property String^ Value
+		property winrt::hstring Value
 		{
-			virtual String^ get()
+			virtual winrt::hstring get()
 			{
 				return value;
 			}
 		}
 
-		KeyStringValuePair(String^ key, String^ value)
+		KeyStringValuePair(winrt::hstring key, winrt::hstring value)
 		{
 			this->key = key;
 			this->value = value;

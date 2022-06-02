@@ -121,7 +121,7 @@ IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor(
 	return ref new AudioStreamDescriptor(encodingProperties);
 }
 
-HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, uint64 channelLayout, int sampleRate)
+HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate)
 {
 	HRESULT hr = S_OK;
 

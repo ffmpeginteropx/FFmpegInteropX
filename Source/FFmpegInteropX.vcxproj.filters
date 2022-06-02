@@ -70,6 +70,8 @@
     <ClCompile Include="DirectXInteropHelper.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="StreamInfo.cpp" />
+    <ClCompile Include="AttachedFile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -240,5 +242,8 @@
     <None Include="..\Docker\dockerfile">
       <Filter>Build</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="FFmpegInteropX.idl" />
   </ItemGroup>
 </Project>
