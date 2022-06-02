@@ -632,12 +632,17 @@ Boolean PassthroughAudioMP3{ get; set; };
 
 							///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
 							///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-							 String FFmpegVideoFilters{ get; set; };
+							String FFmpegVideoFilters{ get; set; };
 
-							 ///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegMediaSource.SetFFmpegAudioFilters().</summary>
-							  String FFmpegAudioFilters{ get; set; };
+							///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegMediaSource.SetFFmpegAudioFilters().</summary>
+							String FFmpegAudioFilters{ get; set; };
 
-							  ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
-							   Boolean DownmixAudioStreamsToStereo{ get; set; };
-				  }
+							///<summary>Downmix multi-channel audio streams to stereo format.</summary>
+							Boolean DownmixAudioStreamsToStereo{ get; set; };
+							}
+
+	runtimeclass KeyStringValuePair: Windows.Foundation.Collections.IKeyValuePair<String, String>
+	{
+
+	}
 }

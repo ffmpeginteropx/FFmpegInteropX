@@ -72,6 +72,9 @@
     </ClCompile>
     <ClCompile Include="StreamInfo.cpp" />
     <ClCompile Include="AttachedFile.cpp" />
+    <ClCompile Include="KeyStringValuePair.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

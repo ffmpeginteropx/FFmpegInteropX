@@ -1,23 +1,22 @@
 #pragma once
 #include <pch.h>
-#include "KeyStringValuePair.h"
+#include <KeyStringValuePair.h>
 
 namespace FFmpegInteropX
 {
-	
-	using namespace Platform::Collections;
-	using namespace Windows::Foundation;
-	using namespace Windows::Foundation::Collections;
+	using namespace winrt::Windows::Foundation;
+	using namespace winrt::Windows::Foundation::Collections;
+	using namespace winrt::FFmpegInteropX;
 
 	class MediaMetadata
 	{
-		Vector<IKeyValuePair<winrt::hstring, winrt::hstring>^>^ entries;
+		IVector<IKeyValuePair<winrt::hstring, winrt::hstring>> entries;
 		bool tagsLoaded = false;
 	public:
 
 		MediaMetadata()
 		{
-			entries = ref new Vector<IKeyValuePair<winrt::hstring, winrt::hstring>^>();
+			entries = winrt::single_threaded_vector<IKeyValuePair<winrt::hstring, winrt::hstring>>();
 		}
 
 		void LoadMetadataTags(AVFormatContext* m_pAvFormatCtx)
@@ -31,7 +30,7 @@ namespace FFmpegInteropX
 					do {
 						entry = av_dict_get(m_pAvFormatCtx->metadata, "", entry, AV_DICT_IGNORE_SUFFIX);
 						if (entry)
-							entries->Append(ref new KeyStringValuePair(
+							entries->Append(KeyStringValuePair(
 								StringUtils::Utf8ToPlatformString(entry->key),
 								StringUtils::Utf8ToPlatformString(entry->value)));
 
@@ -42,7 +41,7 @@ namespace FFmpegInteropX
 		}
 
 
-		IVectorView<IKeyValuePair<winrt::hstring, winrt::hstring>^>^ MetadataTags()
+		IVectorView<IKeyValuePair<winrt::hstring, winrt::hstring>> MetadataTags()
 		{
 			return entries->GetView();
 		}

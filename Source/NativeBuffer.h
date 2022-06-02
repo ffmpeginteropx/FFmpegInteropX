@@ -1,5 +1,6 @@
 #pragma once
 
+#include <pch.h>
 #include <wrl.h>
 #include <wrl/implements.h>
 #include <windows.storage.streams.h>
@@ -9,11 +10,9 @@
 namespace NativeBuffer
 {
 	class NativeBuffer :
-		public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::RuntimeClassType::WinRtClassicComMix>,
-		ABI::Windows::Storage::Streams::IBuffer,
-		Windows::Storage::Streams::IBufferByteAccess>
+		winrt::Windows::Storage::Streams::IBuffer,
+		Windows::Storage::Streams::IBufferByteAccess
 	{
-		InspectableClass(L"NativeBuffer.NativeBuffer", BaseTrust)
 
 	public:
 		virtual ~NativeBuffer()
@@ -22,41 +21,36 @@ namespace NativeBuffer
 			{
 				m_free(m_opaque);
 			}
-			m_pObject = nullptr;
+			m_pObject = { nullptr };
 		}
 
 
-		STDMETHODIMP RuntimeClassInitialize(byte *buffer, UINT32 totalSize)
+		NativeBuffer(byte *buffer, UINT32 totalSize)
 		{
 			m_length = totalSize;
 			m_buffer = buffer;
 			m_free = NULL;
 			m_opaque = NULL;
-			m_pObject = nullptr;
+			m_pObject = { nullptr };
 
-			return S_OK;
 		}
 
-		STDMETHODIMP RuntimeClassInitialize(byte *buffer, UINT32 totalSize, void(*free)(void *opaque), void *opaque)
+		NativeBuffer(byte *buffer, UINT32 totalSize, void(*free)(void *opaque), void *opaque)
 		{
 			m_length = totalSize;
 			m_buffer = buffer;
 			m_free = free;
 			m_opaque = opaque;
-			m_pObject = nullptr;
-
-			return S_OK;
+			m_pObject = { nullptr };
 		}
 
-		STDMETHODIMP RuntimeClassInitialize(byte *buffer, UINT32 totalSize, Platform::Object^ pObject)
+		NativeBuffer(byte *buffer, UINT32 totalSize, IInspectable pObject)
 		{
 			m_length = totalSize;
 			m_buffer = buffer;
 			m_free = NULL;
 			m_opaque = NULL;
 			m_pObject = pObject;
-
-			return S_OK;
 		}
 
 		STDMETHODIMP Buffer(byte **value)
@@ -91,6 +85,6 @@ namespace NativeBuffer
 		byte *m_buffer;
 		void(*m_free)(void *opaque);
 		void *m_opaque;
-		Platform::Object^ m_pObject;
+		IInspectable m_pObject {nullptr};
 	};
 }
