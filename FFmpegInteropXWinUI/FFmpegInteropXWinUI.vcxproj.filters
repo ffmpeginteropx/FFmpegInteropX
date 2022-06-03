@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>accd3aa8-1ba0-4223-9bbe-0c431709210b</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{926ab91d-31b4-48c3-b9a4-e681349f27f0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="Class.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="AudioStreamInfo.cpp" />
+    <ClCompile Include="AttachedFile.cpp" />
+    <ClCompile Include="BasicVideoEffect.cpp" />
+    <ClCompile Include="ChapterInfo.cpp" />
+    <ClCompile Include="CharacterEncoding.cpp" />
+    <ClCompile Include="CodecChecker.cpp" />
+    <ClCompile Include="CodecRequiredEventArgs.cpp" />
+    <ClCompile Include="FFmpegInteropLogging.cpp" />
+    <ClCompile Include="FFmpegMediaSource.cpp" />
+    <ClCompile Include="FormatInfo.cpp" />
+    <ClCompile Include="FrameGrabber.cpp" />
+    <ClCompile Include="KeyStringValuePair.cpp" />
+    <ClCompile Include="MediaSourceConfig.cpp" />
+    <ClCompile Include="MediaThumbnailData.cpp" />
+    <ClCompile Include="SubtitleStreamInfo.cpp" />
+    <ClCompile Include="VideoFrame.cpp" />
+    <ClCompile Include="VideoStreamInfo.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="AudioStreamInfo.h" />
+    <ClInclude Include="AttachedFile.h" />
+    <ClInclude Include="BasicVideoEffect.h" />
+    <ClInclude Include="ChapterInfo.h" />
+    <ClInclude Include="CharacterEncoding.h" />
+    <ClInclude Include="CodecChecker.h" />
+    <ClInclude Include="CodecRequiredEventArgs.h" />
+    <ClInclude Include="FFmpegInteropLogging.h" />
+    <ClInclude Include="FFmpegMediaSource.h" />
+    <ClInclude Include="FormatInfo.h" />
+    <ClInclude Include="FrameGrabber.h" />
+    <ClInclude Include="KeyStringValuePair.h" />
+    <ClInclude Include="MediaSourceConfig.h" />
+    <ClInclude Include="MediaThumbnailData.h" />
+    <ClInclude Include="SubtitleStreamInfo.h" />
+    <ClInclude Include="VideoFrame.h" />
+    <ClInclude Include="VideoStreamInfo.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="Class.idl" />
+    <Midl Include="FFmpegInteropXWinUI.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FFmpegInteropXWinUI.def" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
+  </ItemGroup>
+</Project>

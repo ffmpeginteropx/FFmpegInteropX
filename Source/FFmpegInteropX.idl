@@ -241,7 +241,7 @@ namespace FFmpegInteropX
 		 static CharacterEncoding GetSystemDefault();
 	 }
 
-	[default_interface]
+	 [default_interface]
 	 runtimeclass CodecRequiredEventArgs
 	 {
 		 ///<summary>The reason why a new codec extension is recommended.</summary>
