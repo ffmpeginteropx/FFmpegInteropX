@@ -328,4 +328,5 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     {
         throw hresult_not_implemented();
     }
+
 }

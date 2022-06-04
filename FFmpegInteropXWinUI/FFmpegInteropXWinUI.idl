@@ -649,4 +649,10 @@ namespace FFmpegInteropXWinUI
 	{
 
 	}
+
+	[default_interface]
+	runtimeclass ReferenceCue : Windows.Media.Core.IMediaCue
+	{
+		ReferenceCue(Windows.Media.Core.IMediaCue other);
+	}
 }

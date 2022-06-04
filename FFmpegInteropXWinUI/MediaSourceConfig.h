@@ -1,6 +1,7 @@
 #pragma once
+#include <pch.h>
 #include "MediaSourceConfig.g.h"
-
+using namespace winrt::Windows::Foundation::Collections;
 // Note: Remove this static_assert after copying these generated source files to your project.
 // This assertion exists to avoid compiling these generated source files directly.
 //static_assert(false, "Do not compile generated C++/WinRT source files directly");
@@ -9,6 +10,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 {
     struct MediaSourceConfig : MediaSourceConfigT<MediaSourceConfig>
     {
+    public:
         MediaSourceConfig() = default;
 
         bool PassthroughAudioMP3();
@@ -91,6 +93,14 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         void FFmpegAudioFilters(hstring const& value);
         bool DownmixAudioStreamsToStereo();
         void DownmixAudioStreamsToStereo(bool value);
+
+        //internal:
+        bool IsFrameGrabber;
+        /*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
+        bool IsExternalSubtitleParser;
+
+        /*Used to pass additional, specific options to external sub parsers*/
+        PropertySet AdditionalFFmpegSubtitleOptions;
     };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation

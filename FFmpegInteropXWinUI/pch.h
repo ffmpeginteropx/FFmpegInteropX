@@ -1,7 +1,13 @@
 ﻿#pragma once
+#include <memory>
 #include <unknwn.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Windows.Media.Playback.h>
+#include <winrt/Windows.Storage.h>
+#include <d3d11.h>
+#include <queue>
+#include "StringUtils.h"
 #include <winrt/Microsoft.UI.Composition.h>
 #include <winrt/Microsoft.UI.Xaml.h>
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
@@ -11,3 +17,44 @@
 #include <winrt/Microsoft.UI.Xaml.Navigation.h>
 #include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/microsoft.ui.dispatching.co_await.h>
+#include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
+#include <winrt/Windows.Graphics.DirectX.h>
+#include <winrt/Windows.Globalization.h>
+#include <winrt/Windows.Foundation.Metadata.h>
+#include <winrt/Windows.UI.Xaml.h>
+extern "C"
+{
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+#include <libswresample/swresample.h>
+}
+
+#include "MediaSourceConfig.h"
+#include "TimeSpanHelpers.h"
+#include "AudioStreamInfo.h"
+#include "VideoStreamInfo.h"
+#include "SubtitleStreamInfo.h"
+#include <vector>
+// Disable debug string output on non-debug build
+#if !_DEBUG
+#define DebugMessage(x)
+#else
+#define DebugMessage(x) OutputDebugString(x)
+#endif
+#define SAFE_RELEASE(p)      { if (p) { (p)->Release(); (p)=nullptr; } }
+
+template<class T>
+std::vector<T> to_vector(IVector<T> input)
+{
+	return to_vector(input.GetView())
+}
+
+template<class T>
+std::vector<T> to_vector(IVectorView<T> input)
+{
+	std::vector<T> output;
+	for (auto i : input)
+		output.emplace_back(i);
+	return output;
+}

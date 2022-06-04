@@ -30,6 +30,12 @@
     <ClCompile Include="SubtitleStreamInfo.cpp" />
     <ClCompile Include="VideoFrame.cpp" />
     <ClCompile Include="VideoStreamInfo.cpp" />
+    <ClCompile Include="DirectXInteropHelper.cpp" />
+    <ClCompile Include="FFmpegReader.cpp" />
+    <ClCompile Include="MediaSampleProvider.cpp" />
+    <ClCompile Include="CompressedSampleProvider.cpp" />
+    <ClCompile Include="NativeBufferFactory.cpp" />
+    <ClCompile Include="ReferenceCue.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -50,6 +56,23 @@
     <ClInclude Include="SubtitleStreamInfo.h" />
     <ClInclude Include="VideoFrame.h" />
     <ClInclude Include="VideoStreamInfo.h" />
+    <ClInclude Include="AbstractEffectFactory.h" />
+    <ClInclude Include="IAvEffect.h" />
+    <ClInclude Include="AudioEffectFactory.h" />
+    <ClInclude Include="AvCodecContextHelpers.h" />
+    <ClInclude Include="AudioFilter.h" />
+    <ClInclude Include="StringUtils.h" />
+    <ClInclude Include="VideoFilter.h" />
+    <ClInclude Include="VideoEffectFactory.h" />
+    <ClInclude Include="CritSec.h" />
+    <ClInclude Include="DirectXInteropHelper.h" />
+    <ClInclude Include="FFmpegReader.h" />
+    <ClInclude Include="MediaSampleProvider.h" />
+    <ClInclude Include="SubtitleProvider.h" />
+    <ClInclude Include="CompressedSampleProvider.h" />
+    <ClInclude Include="NativeBufferFactory.h" />
+    <ClInclude Include="NativeBuffer.h" />
+    <ClInclude Include="ReferenceCue.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Class.idl" />

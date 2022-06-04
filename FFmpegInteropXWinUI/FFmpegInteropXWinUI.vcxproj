@@ -125,25 +125,42 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AbstractEffectFactory.h" />
     <ClInclude Include="AttachedFile.h" />
+    <ClInclude Include="AudioEffectFactory.h" />
+    <ClInclude Include="AudioFilter.h" />
     <ClInclude Include="AudioStreamInfo.h" />
+    <ClInclude Include="AvCodecContextHelpers.h" />
     <ClInclude Include="BasicVideoEffect.h" />
     <ClInclude Include="ChapterInfo.h" />
     <ClInclude Include="CharacterEncoding.h" />
     <ClInclude Include="CodecChecker.h" />
     <ClInclude Include="CodecRequiredEventArgs.h" />
+    <ClInclude Include="CompressedSampleProvider.h" />
+    <ClInclude Include="CritSec.h" />
+    <ClInclude Include="DirectXInteropHelper.h" />
     <ClInclude Include="FFmpegInteropLogging.h" />
     <ClInclude Include="FFmpegMediaSource.h" />
+    <ClInclude Include="FFmpegReader.h" />
     <ClInclude Include="FormatInfo.h" />
     <ClInclude Include="FrameGrabber.h" />
+    <ClInclude Include="IAvEffect.h" />
     <ClInclude Include="KeyStringValuePair.h" />
+    <ClInclude Include="MediaSampleProvider.h" />
     <ClInclude Include="MediaSourceConfig.h" />
     <ClInclude Include="MediaThumbnailData.h" />
+    <ClInclude Include="NativeBuffer.h" />
+    <ClInclude Include="NativeBufferFactory.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Class.h">
       <DependentUpon>Class.cpp</DependentUpon>
     </ClInclude>
+    <ClInclude Include="ReferenceCue.h" />
+    <ClInclude Include="StringUtils.h" />
+    <ClInclude Include="SubtitleProvider.h" />
     <ClInclude Include="SubtitleStreamInfo.h" />
+    <ClInclude Include="VideoEffectFactory.h" />
+    <ClInclude Include="VideoFilter.h" />
     <ClInclude Include="VideoFrame.h" />
     <ClInclude Include="VideoStreamInfo.h" />
   </ItemGroup>
@@ -155,18 +172,24 @@
     <ClCompile Include="CharacterEncoding.cpp" />
     <ClCompile Include="CodecChecker.cpp" />
     <ClCompile Include="CodecRequiredEventArgs.cpp" />
+    <ClCompile Include="CompressedSampleProvider.cpp" />
+    <ClCompile Include="DirectXInteropHelper.cpp" />
     <ClCompile Include="FFmpegInteropLogging.cpp" />
     <ClCompile Include="FFmpegMediaSource.cpp" />
+    <ClCompile Include="FFmpegReader.cpp" />
     <ClCompile Include="FormatInfo.cpp" />
     <ClCompile Include="FrameGrabber.cpp" />
     <ClCompile Include="KeyStringValuePair.cpp" />
+    <ClCompile Include="MediaSampleProvider.cpp" />
     <ClCompile Include="MediaSourceConfig.cpp" />
     <ClCompile Include="MediaThumbnailData.cpp" />
+    <ClCompile Include="NativeBufferFactory.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Class.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="ReferenceCue.cpp" />
     <ClCompile Include="SubtitleStreamInfo.cpp" />
     <ClCompile Include="VideoFrame.cpp" />
     <ClCompile Include="VideoStreamInfo.cpp" />
