@@ -93,14 +93,14 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         void FFmpegAudioFilters(hstring const& value);
         bool DownmixAudioStreamsToStereo();
         void DownmixAudioStreamsToStereo(bool value);
-
+    public:
         //internal:
-        bool IsFrameGrabber;
+        bool IsFrameGrabber();
         /*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
-        bool IsExternalSubtitleParser;
+        bool IsExternalSubtitleParser();
 
         /*Used to pass additional, specific options to external sub parsers*/
-        PropertySet AdditionalFFmpegSubtitleOptions;
+        PropertySet AdditionalFFmpegSubtitleOptions();
     };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation

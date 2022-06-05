@@ -1,11 +1,6 @@
 #pragma once
 
 #include <pch.h>
-#include <wrl.h>
-#include <wrl/implements.h>
-#include <windows.storage.streams.h>
-#include <robuffer.h>
-#include <vector>
 
 namespace NativeBuffer
 {

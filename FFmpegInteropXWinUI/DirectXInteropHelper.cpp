@@ -1,14 +1,8 @@
 #include "pch.h"
 #include "DirectXInteropHelper.h"
-#include <windows.graphics.directx.direct3d11.interop.h>
-#include <pch.h>
-#include <d3d11.h>
-#include <mfidl.h>
-#include <d3d11_4.h>
 
 using namespace winrt::Windows::Media::Core;
 using namespace FFmpegInteropX;
-using namespace winrt;
 
 //TODO: review this file later
 IDirect3DSurface DirectXInteropHelper::GetSurface(IDXGISurface* source)

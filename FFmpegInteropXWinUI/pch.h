@@ -22,6 +22,13 @@
 #include <winrt/Windows.Globalization.h>
 #include <winrt/Windows.Foundation.Metadata.h>
 #include <winrt/Windows.UI.Xaml.h>
+#include <winrt/Windows.Media.Core.h>
+#include <winrt/Windows.Media.MediaProperties.h>
+#include <windows.graphics.directx.direct3d11.interop.h>
+#include <mfidl.h>
+#include <robuffer.h>
+#include <mfapi.h>
+
 extern "C"
 {
 #include <libavcodec/avcodec.h>

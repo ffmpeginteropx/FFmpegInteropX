@@ -19,17 +19,14 @@
 #pragma once
 #include <pch.h>
 
-
-using namespace winrt::Windows::Storage::Streams;
-using namespace winrt::Windows::Media::Core;
-using namespace winrt::Windows::Media::MediaProperties;
-using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
-using namespace winrt::FFmpegInteropXWinUI;
-using namespace std;
-
 namespace FFmpegInteropX
 {
-
+	/*using namespace winrt::Windows::Storage::Streams;
+	using namespace winrt::Windows::Media::Core;
+	using namespace winrt::Windows::Media::MediaProperties;
+	using namespace winrt::Windows::Graphics::DirectX::Direct3D11;*/
+	using namespace winrt::FFmpegInteropXWinUI;
+	using namespace std;
 
 	class FFmpegReader;
 
@@ -37,22 +34,22 @@ namespace FFmpegInteropX
 	{
 	public:
 		virtual ~MediaSampleProvider();
-		virtual MediaStreamSample GetNextSample();
+		virtual winrt::Windows::Media::Core::MediaStreamSample GetNextSample();
 		virtual void Flush();
 
-		IMediaStreamDescriptor StreamDescriptor()
+		winrt::Windows::Media::Core::IMediaStreamDescriptor StreamDescriptor()
 		{
 			return m_streamDescriptor;
 		}
 
-		VideoStreamDescriptor VideoDescriptor()
+		winrt::Windows::Media::Core::VideoStreamDescriptor VideoDescriptor()
 		{
-			return m_streamDescriptor.as<VideoStreamDescriptor>();
+			return m_streamDescriptor.as<winrt::Windows::Media::Core::VideoStreamDescriptor>();
 		}
 
-		AudioStreamDescriptor AudioDescriptor()
+		winrt::Windows::Media::Core::AudioStreamDescriptor AudioDescriptor()
 		{
-			return m_streamDescriptor.as<AudioStreamDescriptor>();
+			return m_streamDescriptor.as<winrt::Windows::Media::Core::AudioStreamDescriptor>();
 		}
 
 		IStreamInfo StreamInfo()
@@ -108,16 +105,16 @@ namespace FFmpegInteropX
 		virtual void QueuePacket(AVPacket* packet);
 		AVPacket* PopPacket();
 		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
-		virtual HRESULT CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface) = 0;
+		virtual HRESULT CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface) = 0;
 		HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
 		HRESULT SkipPacketsUntilTimestamp(TimeSpan timestamp);
-		virtual IMediaStreamDescriptor CreateStreamDescriptor() = 0;
-		virtual HRESULT SetSampleProperties(MediaStreamSample sample) { return S_OK; }; // can be overridded for setting extended properties
+		virtual winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() = 0;
+		virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample sample) { return S_OK; }; // can be overridded for setting extended properties
 		void EnableStream();
 		void DisableStream();
 		virtual void SetFilters(winrt::hstring filterDefinition) { };// override for setting effects in sample providers
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
-		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties videoEncodingProperties, bool isCompressedFormat);
+		virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties videoEncodingProperties, bool isCompressedFormat);
 		virtual void Detach();
 		virtual HRESULT SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) { return S_OK; };
 
@@ -171,7 +168,7 @@ namespace FFmpegInteropX
 	private:
 		std::queue<AVPacket*> m_packetQueue;
 		INT64 m_nextPacketPts;
-		IMediaStreamDescriptor m_streamDescriptor;
+		winrt::Windows::Media::Core::IMediaStreamDescriptor m_streamDescriptor;
 		HardwareDecoderStatus hardwareDecoderStatus;
 
 	public:

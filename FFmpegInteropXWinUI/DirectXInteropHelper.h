@@ -1,13 +1,11 @@
 #pragma once
 #include <pch.h>
-#include <d3d11.h>
-#include <mfidl.h>
+
 
 namespace FFmpegInteropX
 {
 	using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
 	using namespace winrt::Windows::Media::Core;
-	using namespace winrt;
 
 	class DirectXInteropHelper
 	{

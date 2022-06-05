@@ -23,10 +23,12 @@
 #include "LanguageTagConverter.h"
 #include "AvCodecContextHelpers.h"
 #include "SubtitleProvider.h"
+#include "Mfapi.h";
 
 using namespace FFmpegInteropX;
 using namespace winrt::Windows::Media::MediaProperties;
 using namespace winrt::Windows::Globalization;
+using namespace winrt::Windows::Media::Core;
 
 MediaSampleProvider::MediaSampleProvider(
 	std::shared_ptr<FFmpegReader> reader,
@@ -204,7 +206,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 		auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
 		
 		streamInfo = SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
-			false, forced, ((SubtitleProvider*)this)->SubtitleTrack, m_config.IsExternalSubtitleParser);
+			false, forced, ((SubtitleProvider*)this)->SubtitleTrack, m_config.as<implementation::MediaSourceConfig>().IsExternalSubtitleParser());
 
 		break;
 	}
@@ -217,7 +219,7 @@ MediaStreamSample MediaSampleProvider::GetNextSample()
 
 	HRESULT hr = S_OK;
 
-	MediaStreamSample sample;
+	MediaStreamSample sample = { nullptr };
 	if (m_isEnabled)
 	{
 		IBuffer buffer = nullptr;
@@ -239,8 +241,8 @@ MediaStreamSample MediaSampleProvider::GetNextSample()
 			{
 				sample = MediaStreamSample::CreateFromBuffer(buffer, position);
 			}
-			sample->Duration = duration;
-			sample->Discontinuous = m_isDiscontinuous;
+			sample.Duration(duration);
+			sample.Discontinuous(m_isDiscontinuous);
 
 			LastSampleTimestamp = position;
 
@@ -458,22 +460,22 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
 {
 	if (isCompressedFormat)
 	{
-		videoProperties->Width = m_pAvCodecCtx->width;
-		videoProperties->Height = m_pAvCodecCtx->height;
-		videoProperties->ProfileId = m_pAvCodecCtx->profile;
+		videoProperties.Width(m_pAvCodecCtx->width);
+		videoProperties.Height(m_pAvCodecCtx->height);
+		videoProperties.ProfileId(m_pAvCodecCtx->profile);
 	}
 
 	if (m_pAvCodecCtx->sample_aspect_ratio.num > 0 &&
 		m_pAvCodecCtx->sample_aspect_ratio.den > 0 &&
 		m_pAvCodecCtx->sample_aspect_ratio.num != m_pAvCodecCtx->sample_aspect_ratio.den)
 	{
-		videoProperties->PixelAspectRatio->Numerator = m_pAvCodecCtx->sample_aspect_ratio.num;
-		videoProperties->PixelAspectRatio->Denominator = m_pAvCodecCtx->sample_aspect_ratio.den;
+		videoProperties.PixelAspectRatio().Numerator(m_pAvCodecCtx->sample_aspect_ratio.num);
+		videoProperties.PixelAspectRatio().Denominator(m_pAvCodecCtx->sample_aspect_ratio.den);
 	}
 	else
 	{
-		videoProperties->PixelAspectRatio->Numerator = 1;
-		videoProperties->PixelAspectRatio->Denominator = 1;
+		videoProperties.PixelAspectRatio().Numerator(1);
+		videoProperties.PixelAspectRatio().Denominator(1);
 	}
 
 	// set video rotation
@@ -491,23 +493,22 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
 	}
 	if (rotateVideo)
 	{
-		Platform::Guid MF_MT_VIDEO_ROTATION(0xC380465D, 0x2271, 0x428C, 0x9B, 0x83, 0xEC, 0xEA, 0x3B, 0x4A, 0x85, 0xC1);
-		videoProperties->Properties->Insert(MF_MT_VIDEO_ROTATION, (uint32)rotationAngle);
+		videoProperties.Properties().Insert(MF_MT_VIDEO_ROTATION, winrt::box_value((UINT32)rotationAngle));
 	}
 
 	// Detect the correct framerate
 	if (m_pAvCodecCtx->framerate.num != 0 || m_pAvCodecCtx->framerate.den != 1)
 	{
-		videoProperties->FrameRate->Numerator = m_pAvCodecCtx->framerate.num;
-		videoProperties->FrameRate->Denominator = m_pAvCodecCtx->framerate.den;
+		videoProperties.FrameRate().Numerator(m_pAvCodecCtx->framerate.num);
+		videoProperties.FrameRate().Denominator(m_pAvCodecCtx->framerate.den);
 	}
 	else if (m_pAvStream->avg_frame_rate.num != 0 || m_pAvStream->avg_frame_rate.den != 0)
 	{
-		videoProperties->FrameRate->Numerator = m_pAvStream->avg_frame_rate.num;
-		videoProperties->FrameRate->Denominator = m_pAvStream->avg_frame_rate.den;
+		videoProperties.FrameRate().Numerator(m_pAvStream->avg_frame_rate.num);
+		videoProperties.FrameRate().Denominator(m_pAvStream->avg_frame_rate.den);
 	}
 
-	videoProperties->Bitrate = (unsigned int)m_pAvCodecCtx->bit_rate;
+	videoProperties.Bitrate((unsigned int)m_pAvCodecCtx->bit_rate);
 }
 
 void MediaSampleProvider::Detach()

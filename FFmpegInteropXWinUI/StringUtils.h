@@ -1,6 +1,7 @@
 #include "pch.h"
 #include <string.h>
 #include <codecvt>
+#define  _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
 namespace FFmpegInteropX
 {
