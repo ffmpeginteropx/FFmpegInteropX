@@ -5,8 +5,8 @@
 namespace NativeBuffer
 {
 	class NativeBuffer :
-		winrt::Windows::Storage::Streams::IBuffer,
-		Windows::Storage::Streams::IBufferByteAccess
+		winrt::Windows::Storage::Streams::IBuffer
+		//Windows::Storage::Streams::IBufferByteAccess
 	{
 
 	public:
@@ -48,28 +48,28 @@ namespace NativeBuffer
 			m_pObject = pObject;
 		}
 
-		STDMETHODIMP Buffer(byte **value)
+		HRESULT Buffer(byte **value)
 		{
 			*value = m_buffer;
 
 			return S_OK;
 		}
 
-		STDMETHODIMP get_Capacity(UINT32 *value)
+		HRESULT get_Capacity(UINT32 *value)
 		{
 			*value = m_length;
 
 			return S_OK;
 		}
 
-		STDMETHODIMP get_Length(UINT32 *value)
+		HRESULT get_Length(UINT32 *value)
 		{
 			*value = m_length;
 
 			return S_OK;
 		}
 
-		STDMETHODIMP put_Length(UINT32 value)
+		HRESULT put_Length(UINT32 value)
 		{
 			return E_FAIL;
 		}

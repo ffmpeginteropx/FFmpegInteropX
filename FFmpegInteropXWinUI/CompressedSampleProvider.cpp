@@ -3,6 +3,7 @@
 #include "NativeBufferFactory.h"
 
 using namespace FFmpegInteropX;
+using namespace winrt::FFmpegInteropXWinUI;
 
 CompressedSampleProvider::CompressedSampleProvider(
 	std::shared_ptr<FFmpegReader> reader,

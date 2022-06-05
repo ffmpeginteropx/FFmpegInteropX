@@ -328,19 +328,4 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 	{
 		throw hresult_not_implemented();
 	}
-
-	//internal:
-	bool MediaSourceConfig::IsFrameGrabber() {
-		throw hresult_not_implemented();
-
-	}
-	/*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
-	bool MediaSourceConfig::IsExternalSubtitleParser() {
-		throw hresult_not_implemented();
-	}
-
-	/*Used to pass additional, specific options to external sub parsers*/
-	PropertySet MediaSourceConfig::AdditionalFFmpegSubtitleOptions() {
-		throw hresult_not_implemented();
-	}
 }

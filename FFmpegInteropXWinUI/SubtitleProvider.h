@@ -21,27 +21,27 @@ namespace FFmpegInteropX
 		SubtitleProvider(std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			MediaSourceConfig config,
+			winrt::FFmpegInteropXWinUI::MediaSourceConfig &config,
 			int index,
-			winrt::Windows::Media::Core::TimedMetadataKind timedMetadataKind,
-			CoreDispatcher dispatcher)
+			winrt::Windows::Media::Core::TimedMetadataKind &timedMetadataKind{ nullptr },
+			winrt::Windows::UI::Core::CoreDispatcher& dispatcher{nullptr})
 			: CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, index, HardwareDecoderStatus::Unknown)
 		{
 			this->timedMetadataKind = timedMetadataKind;
 			this->dispatcher = dispatcher;
 		}
 
-		TimedMetadataTrack SubtitleTrack;
+		winrt::Windows::Media::Core::TimedMetadataTrack SubtitleTrack = { nullptr };
 
-		MediaPlaybackItem PlaybackItem;
+		winrt::Windows::Media::Playback::MediaPlaybackItem PlaybackItem = { nullptr };
 
-		TimeSpan SubtitleDelay;
+		winrt::Windows::Foundation::TimeSpan SubtitleDelay;
 
 		virtual HRESULT Initialize() override
 		{
 			InitializeNameLanguageCodec();
 
-			SubtitleTrack = TimedMetadataTrack(Name, Language, timedMetadataKind);
+			SubtitleTrack = winrt::Windows::Media::Core::TimedMetadataTrack(Name, Language, timedMetadataKind);
 			SubtitleTrack.Label(Name.empty() ? Name : Language);
 
 			auto OnCueEntered_handler = [this](winrt::Windows::Media::Core::TimedMetadataTrack sender, winrt::Windows::Media::Core::MediaCueEventArgs args)
@@ -49,20 +49,20 @@ namespace FFmpegInteropX
 				OnCueEntered(sender, args);
 			};
 
-			auto OnTrackFailed_handler = [this](TimedMetadataTrack sender, TimedMetadataTrackFailedEventArgs args)
+			auto OnTrackFailed_handler = [this](winrt::Windows::Media::Core::TimedMetadataTrack sender, winrt::Windows::Media::Core::TimedMetadataTrackFailedEventArgs args)
 			{
 				OnTrackFailed(sender, args);
 			};
 
 
-			if (!m_config.as<implementation::MediaSourceConfig>().IsExternalSubtitleParser())
+			if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
 			{
 				if (winrt::Windows::Foundation::Metadata::ApiInformation::IsEnumNamedValuePresent(L"Windows.Media.Core.TimedMetadataKind", L"ImageSubtitle") &&
-					timedMetadataKind == TimedMetadataKind::ImageSubtitle)
+					timedMetadataKind == winrt::Windows::Media::Core::TimedMetadataKind::ImageSubtitle)
 				{
-					SubtitleTrack.CueEntered(winrt::Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack, Windows::Media::Core::MediaCueEventArgs>(OnCueEntered_handler));
+					SubtitleTrack.CueEntered(winrt::Windows::Foundation::TypedEventHandler<winrt::Windows::Media::Core::TimedMetadataTrack, winrt::Windows::Media::Core::MediaCueEventArgs>(OnCueEntered_handler));
 				}
-				SubtitleTrack.TrackFailed(winrt::Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack, Windows::Media::Core::TimedMetadataTrackFailedEventArgs>(OnTrackFailed_handler));
+				SubtitleTrack.TrackFailed(winrt::Windows::Foundation::TypedEventHandler<winrt::Windows::Media::Core::TimedMetadataTrack, winrt::Windows::Media::Core::TimedMetadataTrackFailedEventArgs>(OnTrackFailed_handler));
 			}
 
 			InitializeStreamInfo();
@@ -75,7 +75,7 @@ namespace FFmpegInteropX
 		{
 		}
 
-		virtual IMediaCue CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) = 0;
+		virtual winrt::Windows::Media::Core::IMediaCue CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) = 0;
 
 		virtual void QueuePacket(AVPacket* packet) override
 		{
@@ -107,7 +107,7 @@ namespace FFmpegInteropX
 							if (newDuration.count() > 0)
 							{
 								lastExtendedDurationCue.Duration() = newDuration;
-								if (!m_config.as<implementation::MediaSourceConfig>().IsExternalSubtitleParser())
+								if (!m_config.as<implementation::MediaSourceConfig>().get()->IsExternalSubtitleParser)
 								{
 									pendingChangedDurationCues.push_back(lastExtendedDurationCue);
 								}
@@ -142,7 +142,7 @@ namespace FFmpegInteropX
 						cue.Duration(duration);
 						AddCue(cue);
 
-						if (!m_config.as<implementation::MediaSourceConfig>().IsExternalSubtitleParser())
+						if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
 						{
 							isPreviousCueInfiniteDuration = duration.count() >= InfiniteDuration;
 						}
@@ -223,7 +223,7 @@ namespace FFmpegInteropX
 
 	private:
 
-		void AddCue(IMediaCue cue)
+		void AddCue(winrt::Windows::Media::Core::IMediaCue cue)
 		{
 			mutex.lock();
 			try
@@ -233,16 +233,16 @@ namespace FFmpegInteropX
 					/*This is a fix only to work around a bug in windows phones: when 2 different cues have the exact same start position and length, the runtime panics and throws an exception
 					The problem has only been observed in external subtitles so far, and only on phones. Might also be present on ARM64 devices*/
 					bool individualCue = true;
-					if (this->timedMetadataKind == TimedMetadataKind::Subtitle)
+					if (this->timedMetadataKind == winrt::Windows::Media::Core::TimedMetadataKind::Subtitle)
 					{
 						for (int i = SubtitleTrack.Cues().Size() - 1; i >= 0; i--)
 						{
-							auto existingSub = SubtitleTrack.Cues().GetAt(i).as<TimedTextCue>();
+							auto existingSub = SubtitleTrack.Cues().GetAt(i).as<winrt::Windows::Media::Core::TimedTextCue>();
 
 							if (existingSub.StartTime() == cue.StartTime() && existingSub.Duration() == cue.Duration())
 							{
 								individualCue = false;
-								auto timedTextCue = cue.as<TimedTextCue>();
+								auto timedTextCue = cue.as<winrt::Windows::Media::Core::TimedTextCue>();
 								for (auto l : timedTextCue.Lines())
 								{
 									existingSub.Lines().Append(l);
@@ -269,9 +269,9 @@ namespace FFmpegInteropX
 			mutex.unlock();
 		}
 
-		void DispatchCueToTrack(IMediaCue cue)
+		void DispatchCueToTrack(winrt::Windows::Media::Core::IMediaCue cue)
 		{
-			if (m_config.as<implementation::MediaSourceConfig>().IsExternalSubtitleParser())
+			if (m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
 			{
 				SubtitleTrack.AddCue(cue);
 			}
@@ -287,7 +287,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		void OnRefCueEntered(TimedMetadataTrack sender, MediaCueEventArgs args)
+		void OnRefCueEntered(winrt::Windows::Media::Core::TimedMetadataTrack sender, winrt::Windows::Media::Core::MediaCueEventArgs args)
 		{
 			mutex.lock();
 			try {
@@ -312,7 +312,7 @@ namespace FFmpegInteropX
 			try
 			{
 				//cleanup old cues to free memory
-				std::vector<IMediaCue> remove;
+				std::vector<winrt::Windows::Media::Core::IMediaCue> remove;
 				for (auto cue : SubtitleTrack.Cues())
 				{
 					if (cue.StartTime() + cue.Duration() < args.Cue().StartTime())
@@ -346,14 +346,14 @@ namespace FFmpegInteropX
 							if (thisInstance != nullptr) {
 								if (thisInstance->timer == nullptr)
 								{
-									auto OnTick_handler = [thisInstance](IInspectable sender, IInspectable args)
+									auto OnTick_handler = [thisInstance](winrt::Windows::Foundation::IInspectable sender, winrt::Windows::Foundation::IInspectable args)
 									{
 										if (thisInstance != nullptr)
 											thisInstance->OnTick(sender, args);
 									};
 									thisInstance->timer = winrt::Windows::UI::Xaml::DispatcherTimer();
 									thisInstance->timer.Interval(TimeSpan(10000));
-									thisInstance->timer.Tick(winrt::Windows::Foundation::EventHandler<IInspectable>(OnTick_handler));
+									thisInstance->timer.Tick(winrt::Windows::Foundation::EventHandler<winrt::Windows::Foundation::IInspectable>(OnTick_handler));
 								}
 								thisInstance->timer.Start();
 							}
@@ -365,7 +365,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		void OnTick(IInspectable sender, IInspectable args)
+		void OnTick(winrt::Windows::Foundation::IInspectable sender, winrt::Windows::Foundation::IInspectable args)
 		{
 			mutex.lock();
 
@@ -424,13 +424,13 @@ namespace FFmpegInteropX
 		void UpdateCuePositions()
 		{
 			auto track = SubtitleTrack;
-			auto cues = to_vector<IMediaCue>(track.Cues());
+			auto cues = to_vector<winrt::Windows::Media::Core::IMediaCue>(track.Cues());
 			while (track.Cues().Size() > 0)
 			{
 				track.RemoveCue(track.Cues().GetAt(0));
 			}
 
-			std::vector<std::pair<IMediaCue, long long>> newNegativePositionCues;
+			std::vector<std::pair<winrt::Windows::Media::Core::IMediaCue, long long>> newNegativePositionCues;
 
 			for each (auto c in cues)
 			{
@@ -472,9 +472,9 @@ namespace FFmpegInteropX
 		{
 			if (referenceTrack == nullptr)
 			{
-				referenceTrack = TimedMetadataTrack(L"ReferenceTrack_" + Name, L"", TimedMetadataKind::Custom);
+				referenceTrack = winrt::Windows::Media::Core::TimedMetadataTrack(L"ReferenceTrack_" + Name, L"", winrt::Windows::Media::Core::TimedMetadataKind::Custom);
 
-				auto OnRefCueEntered_handler = [this](TimedMetadataTrack sender, MediaCueEventArgs args)
+				auto OnRefCueEntered_handler = [this](winrt::Windows::Media::Core::TimedMetadataTrack sender, winrt::Windows::Media::Core::MediaCueEventArgs args)
 				{
 					this->OnRefCueEntered(sender, args);
 				};
@@ -502,7 +502,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		void OnTrackFailed(TimedMetadataTrack sender, TimedMetadataTrackFailedEventArgs args)
+		void OnTrackFailed(winrt::Windows::Media::Core::TimedMetadataTrack sender, winrt::Windows::Media::Core::TimedMetadataTrackFailedEventArgs args)
 		{
 			OutputDebugString(L"Subtitle track error.");
 		}
@@ -511,7 +511,7 @@ namespace FFmpegInteropX
 
 		void Flush() override
 		{
-			if (!m_config.as<implementation::MediaSourceConfig>().IsExternalSubtitleParser())
+			if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
 			{
 				CompressedSampleProvider::Flush();
 
@@ -549,18 +549,18 @@ namespace FFmpegInteropX
 
 		std::recursive_mutex mutex;
 		int cueCount;
-		std::vector<IMediaCue> pendingCues;
-		std::vector<IMediaCue> pendingRefCues;
-		std::vector<IMediaCue> pendingChangedDurationCues;
-		TimedMetadataKind timedMetadataKind;
+		std::vector<winrt::Windows::Media::Core::IMediaCue> pendingCues;
+		std::vector<winrt::Windows::Media::Core::IMediaCue> pendingRefCues;
+		std::vector<winrt::Windows::Media::Core::IMediaCue> pendingChangedDurationCues;
+		winrt::Windows::Media::Core::TimedMetadataKind timedMetadataKind;
 		winrt::Windows::UI::Core::CoreDispatcher dispatcher;
 		winrt::Windows::UI::Xaml::DispatcherTimer timer;
 		TimeSpan newDelay;
-		std::vector<std::pair<IMediaCue, long long>> negativePositionCues;
+		std::vector<std::pair<winrt::Windows::Media::Core::IMediaCue, long long>> negativePositionCues;
 		bool isPreviousCueInfiniteDuration;
-		IMediaCue infiniteDurationCue;
-		IMediaCue lastExtendedDurationCue;
-		TimedMetadataTrack referenceTrack;
+		winrt::Windows::Media::Core::IMediaCue infiniteDurationCue;
+		winrt::Windows::Media::Core::IMediaCue lastExtendedDurationCue;
+		winrt::Windows::Media::Core::TimedMetadataTrack referenceTrack;
 		const long long InfiniteDuration = ((long long)0xFFFFFFFF) * 10000;
 
 	};

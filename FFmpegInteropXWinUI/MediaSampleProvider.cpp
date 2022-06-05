@@ -29,6 +29,8 @@ using namespace FFmpegInteropX;
 using namespace winrt::Windows::Media::MediaProperties;
 using namespace winrt::Windows::Globalization;
 using namespace winrt::Windows::Media::Core;
+using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
+using namespace winrt::Windows::Storage::Streams;
 
 MediaSampleProvider::MediaSampleProvider(
 	std::shared_ptr<FFmpegReader> reader,
@@ -206,7 +208,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 		auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
 		
 		streamInfo = SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
-			false, forced, ((SubtitleProvider*)this)->SubtitleTrack, m_config.as<implementation::MediaSourceConfig>().IsExternalSubtitleParser());
+			false, forced, ((SubtitleProvider*)this)->SubtitleTrack, m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser);
 
 		break;
 	}

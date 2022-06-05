@@ -28,6 +28,7 @@
 #include <mfidl.h>
 #include <robuffer.h>
 #include <mfapi.h>
+#include <winrt/Windows.UI.Core.h>
 
 extern "C"
 {
