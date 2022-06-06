@@ -27,6 +27,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         FFmpegInteropXWinUI::StreamDisposition Disposition();
         int64_t Bitrate();
         bool IsDefault();
+        FFmpegInteropXWinUI::DecoderEngine _DecoderEngine;
     };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation

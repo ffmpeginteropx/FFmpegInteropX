@@ -39,6 +39,8 @@
     <ClCompile Include="LanguageTagConverter.cpp" />
     <ClCompile Include="UncompressedSampleProvider.cpp" />
     <ClCompile Include="UncompressedVideoSampleProvider.cpp" />
+    <ClCompile Include="D3D11VideoSampleProvider.cpp" />
+    <ClCompile Include="FFmpegUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -82,6 +84,8 @@
     <ClInclude Include="UncompressedSampleProvider.h" />
     <ClInclude Include="UncompressedFrameProvider.h" />
     <ClInclude Include="UncompressedVideoSampleProvider.h" />
+    <ClInclude Include="D3D11VideoSampleProvider.h" />
+    <ClInclude Include="FFmpegUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Class.idl" />

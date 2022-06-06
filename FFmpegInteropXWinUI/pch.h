@@ -33,6 +33,7 @@
 #include <vector>
 #include <map>
 #include <array>
+#include <set>
 
 extern "C"
 {
@@ -40,6 +41,9 @@ extern "C"
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
+#include <libavutil/imgutils.h>
+#include <libavutil/opt.h>
+#include <libavutil/hwcontext_d3d11va.h>
 }
 
 #include "MediaSourceConfig.h"

@@ -141,10 +141,12 @@
     <ClInclude Include="CodecRequiredEventArgs.h" />
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="CritSec.h" />
+    <ClInclude Include="D3D11VideoSampleProvider.h" />
     <ClInclude Include="DirectXInteropHelper.h" />
     <ClInclude Include="FFmpegInteropLogging.h" />
     <ClInclude Include="FFmpegMediaSource.h" />
     <ClInclude Include="FFmpegReader.h" />
+    <ClInclude Include="FFmpegUtils.h" />
     <ClInclude Include="FormatInfo.h" />
     <ClInclude Include="FrameGrabber.h" />
     <ClInclude Include="IAvEffect.h" />
@@ -182,10 +184,12 @@
     <ClCompile Include="CodecChecker.cpp" />
     <ClCompile Include="CodecRequiredEventArgs.cpp" />
     <ClCompile Include="CompressedSampleProvider.cpp" />
+    <ClCompile Include="D3D11VideoSampleProvider.cpp" />
     <ClCompile Include="DirectXInteropHelper.cpp" />
     <ClCompile Include="FFmpegInteropLogging.cpp" />
     <ClCompile Include="FFmpegMediaSource.cpp" />
     <ClCompile Include="FFmpegReader.cpp" />
+    <ClCompile Include="FFmpegUtils.cpp" />
     <ClCompile Include="FormatInfo.cpp" />
     <ClCompile Include="FrameGrabber.cpp" />
     <ClCompile Include="KeyStringValuePair.cpp" />

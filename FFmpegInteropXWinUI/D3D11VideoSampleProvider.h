@@ -1,5 +1,5 @@
 #pragma once
-
+#include "pch.h"
 #include "UncompressedVideoSampleProvider.h"
 #include "TexturePool.h"
 #include <DirectXInteropHelper.h>
@@ -7,14 +7,12 @@
 extern "C"
 {
 #include <libavutil/hwcontext_d3d11va.h>
+#include <FFmpegUtils.h>
 }
 
-static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelFormat* fmt);
 
 namespace FFmpegInteropX
 {
-	
-
 	class D3D11VideoSampleProvider : public UncompressedVideoSampleProvider
 	{
 	private:
@@ -27,7 +25,7 @@ namespace FFmpegInteropX
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config,
+			MediaSourceConfig const& config,
 			int streamIndex,
 			HardwareDecoderStatus hardwareDecoderStatus)
 			: UncompressedVideoSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
@@ -45,7 +43,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override
+		virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override
 		{
 			HRESULT hr = S_OK;
 
@@ -98,7 +96,7 @@ namespace FFmpegInteropX
 					if (decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
 					{
 						decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
-						VideoInfo()->DecoderEngine = decoder;
+						VideoInfo().as<implementation::VideoStreamInfo>()->_DecoderEngine = decoder;
 					}
 				}
 			}
@@ -109,35 +107,35 @@ namespace FFmpegInteropX
 				if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
 				{
 					decoder = DecoderEngine::FFmpegSoftwareDecoder;
-					VideoInfo()->DecoderEngine = decoder;
+					VideoInfo().as<implementation::VideoStreamInfo>()->_DecoderEngine = decoder;
 				}
 			}
 
 			return hr;
 		}
 
-		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) override
+		virtual HRESULT SetSampleProperties(MediaStreamSample sample) override
 		{
-			if (sample->Direct3D11Surface)
+			if (sample.Direct3D11Surface())
 			{
-				auto OnProcessed_handler = [this](Windows::Media::Core::MediaStreamSample^ sender, Platform::Object^ args)
+				auto OnProcessed_handler = [this](winrt::Windows::Media::Core::MediaStreamSample sender, winrt::Windows::Foundation::IInspectable args)
 				{
 					this->OnProcessed(sender, args);
 				};
-				samples.insert(reinterpret_cast<IUnknown*>(sample));
-				sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(OnProcessed_handler);
+				samples.insert(sample.as<winrt::Windows::Foundation::IUnknown>());
+				sample.Processed(winrt::Windows::Foundation::TypedEventHandler<winrt::Windows::Media::Core::MediaStreamSample, winrt::Windows::Foundation::IInspectable>(OnProcessed_handler));
 			}
 
 			return UncompressedVideoSampleProvider::SetSampleProperties(sample);
 		};
 
-		void OnProcessed(Windows::Media::Core::MediaStreamSample^ sender, Platform::Object^ args)
+		void OnProcessed(winrt::Windows::Media::Core::MediaStreamSample sender, winrt::Windows::Foundation::IInspectable args)
 		{
-			auto unknown = reinterpret_cast<IUnknown*>(sender->Direct3D11Surface);
+			auto unknown = sender.Direct3D11Surface().as<winrt::Windows::Foundation::IUnknown>();
 			IDXGISurface* surface = NULL;
 			ID3D11Texture2D* texture = NULL;
 
-			HRESULT hr = DirectXInteropHelper::GetDXGISurface(sender->Direct3D11Surface, &surface);
+			HRESULT hr = DirectXInteropHelper::GetDXGISurface2(sender.Direct3D11Surface(), &surface);
 
 			if (SUCCEEDED(hr))
 			{
@@ -149,7 +147,7 @@ namespace FFmpegInteropX
 				texturePool->ReturnTexture(texture);
 			}
 
-			samples.erase(reinterpret_cast<IUnknown*>(sender));
+			samples.erase(sender.as<winrt::Windows::Foundation::IUnknown>());
 
 			SAFE_RELEASE(surface);
 			SAFE_RELEASE(texture);
@@ -227,8 +225,8 @@ namespace FFmpegInteropX
 				if (!avHardwareContext)
 				{
 					unsigned threads = std::thread::hardware_concurrency();
-					m_pAvCodecCtx->thread_count = m_config->MaxVideoThreads == 0 ? threads : min(threads, m_config->MaxVideoThreads);
-					m_pAvCodecCtx->thread_type = m_config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
+					m_pAvCodecCtx->thread_count = m_config.MaxVideoThreads() == 0 ? threads : min(threads, m_config.MaxVideoThreads());
+					m_pAvCodecCtx->thread_type = m_config.as<implementation::MediaSourceConfig>()->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
 				}
 
 				// initialize the stream parameters with demuxer information
@@ -238,7 +236,7 @@ namespace FFmpegInteropX
 			if (SUCCEEDED(hr))
 			{
 				m_pAvCodecCtx->hw_device_ctx = avHardwareContext ? av_buffer_ref(avHardwareContext) : NULL;
-				m_pAvCodecCtx->get_format = &get_format;
+				m_pAvCodecCtx->get_format = &FFmpegUtils::get_format;
 				hr = avcodec_open2(m_pAvCodecCtx, codec, NULL);
 			}
 
@@ -260,7 +258,7 @@ namespace FFmpegInteropX
 				isCompatible = m_pAvCodecCtx->profile >= 0 && m_pAvCodecCtx->profile <= 2;
 				if (isCompatible)
 				{
-					auto const av1Profiles = new const GUID[]{
+					auto const av1Profiles = new const GUID[3]{
 						D3D11_DECODER_PROFILE_AV1_VLD_PROFILE0,
 						D3D11_DECODER_PROFILE_AV1_VLD_PROFILE1,
 						D3D11_DECODER_PROFILE_AV1_VLD_PROFILE2
@@ -321,7 +319,7 @@ namespace FFmpegInteropX
 			return hr;
 		}
 
-		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource^ sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, IMFDXGIDeviceManager* deviceManager, HANDLE* outDeviceHandle)
+		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, IMFDXGIDeviceManager* deviceManager, HANDLE* outDeviceHandle)
 		{
 			ID3D11Device* device = nullptr;
 			ID3D11DeviceContext* deviceContext = nullptr;
@@ -383,7 +381,7 @@ namespace FFmpegInteropX
 		}
 
 		std::unique_ptr<TexturePool> texturePool;
-		std::set<IUnknown*> samples;
+		std::set<winrt::Windows::Foundation::IUnknown> samples;
 
 	};
 }
