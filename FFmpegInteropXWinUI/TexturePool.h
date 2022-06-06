@@ -2,8 +2,6 @@
 #include <d3d11.h>
 #include <DirectXInteropHelper.h>
 
-
-
 namespace FFmpegInteropX
 {
 	class TexturePool

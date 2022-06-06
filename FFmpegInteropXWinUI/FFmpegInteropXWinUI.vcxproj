@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props')" />
   <Import Project="..\packages\Microsoft.Windows.SDK.BuildTools.10.0.20348.19\build\Microsoft.Windows.SDK.BuildTools.props" Condition="Exists('..\packages\Microsoft.Windows.SDK.BuildTools.10.0.20348.19\build\Microsoft.Windows.SDK.BuildTools.props')" />
   <Import Project="..\packages\Microsoft.WindowsAppSDK.InteractiveExperiences.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.InteractiveExperiences.props" Condition="Exists('..\packages\Microsoft.WindowsAppSDK.InteractiveExperiences.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.InteractiveExperiences.props')" />
   <Import Project="..\packages\Microsoft.WindowsAppSDK.WinUI.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.WinUI.props" Condition="Exists('..\packages\Microsoft.WindowsAppSDK.WinUI.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.WinUI.props')" />
   <Import Project="..\packages\Microsoft.WindowsAppSDK.Foundation.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.Foundation.props" Condition="Exists('..\packages\Microsoft.WindowsAppSDK.Foundation.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.Foundation.props')" />
-  <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.210211.2\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.210211.2\build\native\Microsoft.Windows.CppWinRT.props')" />
   <PropertyGroup Label="Globals">
     <CppWinRTOptimized>true</CppWinRTOptimized>
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
@@ -163,6 +163,11 @@
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="SubtitleProvider.h" />
     <ClInclude Include="SubtitleStreamInfo.h" />
+    <ClInclude Include="TexturePool.h" />
+    <ClInclude Include="TimeSpanHelpers.h" />
+    <ClInclude Include="UncompressedFrameProvider.h" />
+    <ClInclude Include="UncompressedSampleProvider.h" />
+    <ClInclude Include="UncompressedVideoSampleProvider.h" />
     <ClInclude Include="VideoEffectFactory.h" />
     <ClInclude Include="VideoFilter.h" />
     <ClInclude Include="VideoFrame.h" />
@@ -196,6 +201,8 @@
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="ReferenceCue.cpp" />
     <ClCompile Include="SubtitleStreamInfo.cpp" />
+    <ClCompile Include="UncompressedSampleProvider.cpp" />
+    <ClCompile Include="UncompressedVideoSampleProvider.cpp" />
     <ClCompile Include="VideoFrame.cpp" />
     <ClCompile Include="VideoStreamInfo.cpp" />
   </ItemGroup>
@@ -217,18 +224,16 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.210211.2\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.210211.2\build\native\Microsoft.Windows.CppWinRT.targets')" />
     <Import Project="..\packages\Microsoft.WindowsAppSDK.Foundation.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.Foundation.targets" Condition="Exists('..\packages\Microsoft.WindowsAppSDK.Foundation.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.Foundation.targets')" />
     <Import Project="..\packages\Microsoft.WindowsAppSDK.WinUI.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.WinUI.targets" Condition="Exists('..\packages\Microsoft.WindowsAppSDK.WinUI.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.WinUI.targets')" />
     <Import Project="..\packages\Microsoft.WindowsAppSDK.InteractiveExperiences.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.InteractiveExperiences.targets" Condition="Exists('..\packages\Microsoft.WindowsAppSDK.InteractiveExperiences.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.InteractiveExperiences.targets')" />
     <Import Project="..\packages\FFmpegInteropX.FFmpegUWP.5.0.0\build\native\FFmpegInteropX.FFmpegUWP.targets" Condition="Exists('..\packages\FFmpegInteropX.FFmpegUWP.5.0.0\build\native\FFmpegInteropX.FFmpegUWP.targets')" />
+    <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.210211.2\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.210211.2\build\native\Microsoft.Windows.CppWinRT.props'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.210211.2\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.210211.2\build\native\Microsoft.Windows.CppWinRT.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.WindowsAppSDK.Foundation.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.Foundation.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.WindowsAppSDK.Foundation.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.Foundation.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.WindowsAppSDK.Foundation.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.Foundation.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.WindowsAppSDK.Foundation.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.Foundation.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.WindowsAppSDK.WinUI.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.WinUI.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.WindowsAppSDK.WinUI.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.WinUI.props'))" />
@@ -237,5 +242,7 @@
     <Error Condition="!Exists('..\packages\Microsoft.WindowsAppSDK.InteractiveExperiences.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.InteractiveExperiences.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.WindowsAppSDK.InteractiveExperiences.1.0.0-experimental1\build\native\Microsoft.WindowsAppSDK.InteractiveExperiences.targets'))" />
     <Error Condition="!Exists('..\packages\FFmpegInteropX.FFmpegUWP.5.0.0\build\native\FFmpegInteropX.FFmpegUWP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FFmpegInteropX.FFmpegUWP.5.0.0\build\native\FFmpegInteropX.FFmpegUWP.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.SDK.BuildTools.10.0.20348.19\build\Microsoft.Windows.SDK.BuildTools.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.SDK.BuildTools.10.0.20348.19\build\Microsoft.Windows.SDK.BuildTools.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220531.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
   </Target>
 </Project>

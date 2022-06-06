@@ -17,6 +17,7 @@
 //*****************************************************************************
 
 #pragma once
+#include "pch.h"
 #include "MediaSampleProvider.h"
 #include "UncompressedFrameProvider.h"
 
@@ -29,12 +30,12 @@ namespace FFmpegInteropX
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config,
+			MediaSourceConfig config,
 			int streamIndex,
 			HardwareDecoderStatus hardwareDecoderStatus
 		);
-		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) override;
-		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) { return E_FAIL; }; // must be overridden by specific decoders
+		virtual HRESULT CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface) override;
+		virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) { return E_FAIL; }; // must be overridden by specific decoders
 		virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos);
 		virtual HRESULT FeedPacketToDecoder(int64_t& firstPacketPos);
 
@@ -55,7 +56,7 @@ namespace FFmpegInteropX
 		virtual void Flush() override;
 
 	private:
-		int64 nextFramePts;
+		INT64 nextFramePts;
 		bool hasNextFramePts;
 	};
 }

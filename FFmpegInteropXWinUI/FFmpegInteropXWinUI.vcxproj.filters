@@ -37,6 +37,8 @@
     <ClCompile Include="NativeBufferFactory.cpp" />
     <ClCompile Include="ReferenceCue.cpp" />
     <ClCompile Include="LanguageTagConverter.cpp" />
+    <ClCompile Include="UncompressedSampleProvider.cpp" />
+    <ClCompile Include="UncompressedVideoSampleProvider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -75,6 +77,11 @@
     <ClInclude Include="NativeBuffer.h" />
     <ClInclude Include="ReferenceCue.h" />
     <ClInclude Include="LanguageTagConverter.h" />
+    <ClInclude Include="TimeSpanHelpers.h" />
+    <ClInclude Include="TexturePool.h" />
+    <ClInclude Include="UncompressedSampleProvider.h" />
+    <ClInclude Include="UncompressedFrameProvider.h" />
+    <ClInclude Include="UncompressedVideoSampleProvider.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Class.idl" />

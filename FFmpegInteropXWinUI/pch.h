@@ -32,6 +32,7 @@
 #include <guiddef.h>
 #include <vector>
 #include <map>
+#include <array>
 
 extern "C"
 {

@@ -58,24 +58,24 @@ namespace FFmpegInteropX
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config,
+			MediaSourceConfig const& config,
 			int streamIndex,
 			HardwareDecoderStatus hardwareDecoderStatus);
-		IMediaStreamDescriptor^ CreateStreamDescriptor() override;
-		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
-		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) override;
+		IMediaStreamDescriptor CreateStreamDescriptor() override;
+		virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
+		virtual HRESULT SetSampleProperties(MediaStreamSample sample) override;
 		void ReadFrameProperties(AVFrame* avFrame, int64_t& framePts);
 		void CheckFrameSize(AVFrame* avFrame);
 		AVPixelFormat GetOutputPixelFormat() { return m_OutputPixelFormat; }
 		int TargetWidth;
 		int TargetHeight;
-		byte* TargetBuffer;
+		BYTE* TargetBuffer;
 
 		virtual void NotifyCreateSource() override
 		{
-			if (VideoInfo()->FramesPerSecondOverride > 0 && VideoInfo()->FramesPerSecond > 0)
+			if (VideoInfo().FramesPerSecondOverride() > 0 && VideoInfo().FramesPerSecond() > 0)
 			{
-				timeBaseFactor *= VideoInfo()->FramesPerSecond / VideoInfo()->FramesPerSecondOverride;
+				timeBaseFactor *= VideoInfo().FramesPerSecond() / VideoInfo().FramesPerSecondOverride();
 			}
 
 			UncompressedSampleProvider::NotifyCreateSource();
@@ -84,7 +84,7 @@ namespace FFmpegInteropX
 	private:
 		void SelectOutputFormat();
 		HRESULT InitializeScalerIfRequired(AVFrame* avFrame);
-		HRESULT FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height, bool isSourceBuffer);
+		HRESULT FillLinesAndBuffer(int* linesize, BYTE** data, AVBufferRef** buffer, int width, int height, bool isSourceBuffer);
 		AVBufferRef* AllocateBuffer(int requestedSize, AVBufferPool** bufferPool, int* bufferPoolSize);
 		static int get_buffer2(AVCodecContext* avCodecContext, AVFrame* frame, int flags);
 
@@ -105,11 +105,11 @@ namespace FFmpegInteropX
 		bool m_top_field_first;
 		AVChromaLocation m_chroma_location;
 		bool hasFirstInterlacedFrame;
-		Object^ maxCLL;
-		Object^ maxFALL;
-		Object^ minLuminance;
-		Object^ maxLuminance;
-		Object^ customPrimaries;
+		winrt::Windows::Foundation::IInspectable maxCLL;
+		winrt::Windows::Foundation::IInspectable maxFALL;
+		winrt::Windows::Foundation::IInspectable minLuminance;
+		winrt::Windows::Foundation::IInspectable maxLuminance;
+		winrt::Windows::Foundation::IInspectable customPrimaries;
 	};
 }
 
