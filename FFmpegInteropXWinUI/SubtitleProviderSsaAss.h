@@ -13,9 +13,9 @@ namespace FFmpegInteropX
 		SubtitleProviderSsaAss(std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config,
+			MediaSourceConfig const& config,
 			int index,
-			CoreDispatcher^ dispatcher,
+			CoreDispatcher dispatcher,
 			std::shared_ptr<AttachedFileHelper> attachedFileHelper)
 			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::Subtitle, dispatcher)
 		{
@@ -119,7 +119,7 @@ namespace FFmpegInteropX
 			videoHeight = height;
 		}
 
-		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) override
+		virtual IMediaCue CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) override
 		{
 			ParseHeaders();
 
@@ -192,7 +192,7 @@ namespace FFmpegInteropX
 
 				auto cueStyle = !m_config->OverrideSubtitleStyles && style ? style->Style : m_config->SubtitleStyle;
 				auto cueRegion = !m_config->OverrideSubtitleStyles && style ? style->Region : m_config->SubtitleRegion;
-				TimedTextRegion^ subRegion = nullptr;
+				TimedTextRegion subRegion = nullptr;
 
 				if ((marginL > 0 || marginR > 0 || marginV > 0) && width > 0 && height > 0)
 				{
@@ -216,15 +216,15 @@ namespace FFmpegInteropX
 					find_and_replace(str, L"\\h", L" ");
 					str.erase(str.find_last_not_of(L" \n\r") + 1);
 
-					TimedTextCue^ cue = ref new TimedTextCue();
+					TimedTextCue cue = ref new TimedTextCue();
 					cue->CueRegion = cueRegion;
 					cue->CueStyle = cueStyle;
 
-					TimedTextLine^ textLine = ref new TimedTextLine();
+					TimedTextLine textLine = ref new TimedTextLine();
 					cue->Lines->Append(textLine);
 
-					TimedTextStyle^ subStyle = nullptr;
-					TimedTextSubformat^ subFormat = nullptr;
+					TimedTextStyle subStyle = nullptr;
+					TimedTextSubformat subFormat = nullptr;
 
 					bool isDrawing = false;
 					size_t drawingStart = 0;
@@ -594,7 +594,7 @@ namespace FFmpegInteropX
 
 					// try with hex colors
 					auto count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-						"%[^,],%[^,],%f,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
+						"%[,],%[,],%f,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
 						name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
 						&size, &color, &secondaryColor, &outlineColor, &backColor,
 						&bold, &italic, &underline, &strikeout,
@@ -606,7 +606,7 @@ namespace FFmpegInteropX
 					{
 						// try with decimal colors
 						auto count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-							"%[^,],%[^,],%f,%i,%i,%i,%i,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
+							"%[,],%[,],%f,%i,%i,%i,%i,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
 							name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
 							&size, &color, &secondaryColor, &outlineColor, &backColor,
 							&bold, &italic, &underline, &strikeout,
@@ -657,7 +657,7 @@ namespace FFmpegInteropX
 					int encoding;
 
 					auto count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-						"%[^,],%[^,],%f,%i,%i,%i,%i,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
+						"%[,],%[,],%f,%i,%i,%i,%i,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
 						name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
 						&size, &color, &secondaryColor, &outlineColor, &backColor,
 						&bold, &italic, &borderstyle,
@@ -668,7 +668,7 @@ namespace FFmpegInteropX
 					{
 						// try with hex colors
 						count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-							"%[^,],%[^,],%f,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
+							"%[,],%[,],%f,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
 							name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
 							&size, &color, &secondaryColor, &outlineColor, &backColor,
 							&bold, &italic, &borderstyle,
@@ -779,7 +779,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		TimedTextStyle^ CopyStyle(TimedTextStyle^ style)
+		TimedTextStyle CopyStyle(TimedTextStyle style)
 		{
 			auto copy = ref new TimedTextStyle();
 			copy->Background = style->Background;
@@ -811,7 +811,7 @@ namespace FFmpegInteropX
 			return copy;
 		}
 
-		TimedTextRegion^ CopyRegion(TimedTextRegion^ region)
+		TimedTextRegion CopyRegion(TimedTextRegion region)
 		{
 			auto copy = ref new TimedTextRegion();
 			copy->Background = region->Background;
@@ -998,8 +998,8 @@ namespace FFmpegInteropX
 		{
 		public:
 			winrt::hstring Name;
-			TimedTextRegion^ Region;
-			TimedTextStyle^ Style;
+			TimedTextRegion Region;
+			TimedTextStyle Style;
 		};
 
 		~SubtitleProviderSsaAss()

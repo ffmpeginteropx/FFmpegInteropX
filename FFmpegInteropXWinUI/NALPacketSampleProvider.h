@@ -32,14 +32,14 @@ namespace FFmpegInteropX
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config, 
+			MediaSourceConfig const& config, 
 			int streamIndex,
-			VideoEncodingProperties^ encodingProperties,
+			VideoEncodingProperties encodingProperties,
 			HardwareDecoderStatus hardwareDecoderStatus);
-		virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer) override;
-		virtual HRESULT GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length);
-		virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer^* pBuffer);
-		virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter^ dataWriter);
+		virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer* pBuffer) override;
+		virtual HRESULT GetSPSAndPPSBuffer(DataWriter dataWriter, BYTE* buf, UINT32 length);
+		virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer* pBuffer);
+		virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter dataWriter);
 
 	private:
 		bool m_bHasSentExtradata;

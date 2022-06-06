@@ -34,6 +34,8 @@
 #include <map>
 #include <array>
 #include <set>
+#include <winrt/Windows.Storage.Streams.h>
+#include <ppltasks.h>
 
 extern "C"
 {

@@ -1,8 +1,6 @@
 #pragma once
 
-#include <winrt/Windows.Foundation.Collections.h>
-#include <pplawait.h>
-#include <winrt/FFmpegInteropX.h>
+#include "pch.h"
 
 extern "C"
 {
@@ -11,12 +9,9 @@ extern "C"
 
 #include "AttachedFile.h"
 
-
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::Storage::Streams;
-using namespace winrt::FFmpegInteropX::implementation;
-using namespace Concurrency;
 
 namespace FFmpegInteropX
 {
@@ -31,30 +26,30 @@ namespace FFmpegInteropX
 			}
 		}
 
-		AttachedFileHelper(MediaSourceConfig config)
+		AttachedFileHelper(winrt::FFmpegInteropXWinUI::MediaSourceConfig const& config)
 		{
 			this->config = config;
 		}
 
-		Vector<AttachedFile> AttachedFiles() { return attachedFiles; }
-		String InstanceId() { return instanceId; }
+		winrt::Windows::Foundation::Collections::IVector<winrt::FFmpegInteropXWinUI::AttachedFile> AttachedFiles() { return attachedFiles; }
+		winrt::hstring InstanceId() { return instanceId; }
 
-		void AddAttachedFile(AttachedFile file)
+		void AddAttachedFile(winrt::FFmpegInteropXWinUI::AttachedFile file)
 		{
 			attachedFiles->Append(file);
 		}
 
-		task<StorageFile> ExtractFileAsync(AttachedFile attachment)
+		concurrency::task<StorageFile> ExtractFileAsync(winrt::FFmpegInteropXWinUI::AttachedFile attachment)
 		{
 			StorageFile file;
-			auto result = extractedFiles.find(attachment->Name);
+			auto result = extractedFiles.find(attachment.Name());
 			if (result != extractedFiles.end())
 			{
 				file = result->second;
 			}
 			else
 			{
-				if (this->instanceId == nullptr)
+				if (this->instanceId.empty())
 				{
 					GUID gdn;
 					CoCreateGuid(&gdn);
@@ -72,7 +67,7 @@ namespace FFmpegInteropX
 			co_return file;
 		};
 
-		static task<void> CleanupTempFiles(String folderName, String instanceId)
+		static task<void> CleanupTempFiles(winrt::hstring folderName, winrt::hstring instanceId)
 		{
 			try
 			{
@@ -92,10 +87,10 @@ namespace FFmpegInteropX
 		}
 
 	private:
-		std::map<String, StorageFile> extractedFiles;
+		std::map<winrt::hstring, StorageFile> extractedFiles;
 		Vector<AttachedFile> attachedFiles = ref new Vector<AttachedFile>();
 		MediaSourceConfig config;
-		String instanceId;
+		winrt::hstring instanceId;
 	};
 
 }
