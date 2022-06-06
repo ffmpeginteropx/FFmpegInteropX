@@ -44,6 +44,8 @@
     <ClCompile Include="NALPacketSampleProvider.cpp" />
     <ClCompile Include="H264AVCSampleProvider.cpp" />
     <ClCompile Include="HEVCSampleProvider.cpp" />
+    <ClCompile Include="AttachedFileHelper.cpp" />
+    <ClCompile Include="SubtitleProviderSsaAss.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

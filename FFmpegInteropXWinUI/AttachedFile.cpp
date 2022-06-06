@@ -20,4 +20,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     {
         throw hresult_not_implemented();
     }
+
+    winrt::Windows::Storage::Streams::IBuffer AttachedFile::GetBuffer()
+    {
+        throw hresult_not_implemented();
+        //return NativeBuffer::NativeBufferFactory::CreateNativeBuffer(stream->codecpar->extradata, (DWORD)Size);
+    }
 }

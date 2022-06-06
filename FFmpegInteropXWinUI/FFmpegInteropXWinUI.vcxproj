@@ -182,6 +182,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AttachedFile.cpp" />
+    <ClCompile Include="AttachedFileHelper.cpp" />
     <ClCompile Include="AudioStreamInfo.cpp" />
     <ClCompile Include="BasicVideoEffect.cpp" />
     <ClCompile Include="ChapterInfo.cpp" />
@@ -212,6 +213,7 @@
     <ClCompile Include="Class.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="ReferenceCue.cpp" />
+    <ClCompile Include="SubtitleProviderSsaAss.cpp" />
     <ClCompile Include="SubtitleStreamInfo.cpp" />
     <ClCompile Include="UncompressedSampleProvider.cpp" />
     <ClCompile Include="UncompressedVideoSampleProvider.cpp" />

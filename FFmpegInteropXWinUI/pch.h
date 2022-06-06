@@ -36,6 +36,7 @@
 #include <set>
 #include <winrt/Windows.Storage.Streams.h>
 #include <ppltasks.h>
+#include <winrt/Windows.Storage.h>
 
 extern "C"
 {

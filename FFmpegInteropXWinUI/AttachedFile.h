@@ -14,5 +14,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         hstring Name();
         hstring MimeType();
         uint64_t Size();
+
+        winrt::Windows::Storage::Streams::IBuffer GetBuffer();
     };
 }
