@@ -103,13 +103,13 @@
       <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</SDLCheck>
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|arm64'">avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|arm64'">avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
@@ -149,6 +149,7 @@
     <ClInclude Include="FrameGrabber.h" />
     <ClInclude Include="IAvEffect.h" />
     <ClInclude Include="KeyStringValuePair.h" />
+    <ClInclude Include="LanguageTagConverter.h" />
     <ClInclude Include="MediaSampleProvider.h" />
     <ClInclude Include="MediaSourceConfig.h" />
     <ClInclude Include="MediaThumbnailData.h" />
@@ -183,6 +184,7 @@
     <ClCompile Include="FormatInfo.cpp" />
     <ClCompile Include="FrameGrabber.cpp" />
     <ClCompile Include="KeyStringValuePair.cpp" />
+    <ClCompile Include="LanguageTagConverter.cpp" />
     <ClCompile Include="MediaSampleProvider.cpp" />
     <ClCompile Include="MediaSourceConfig.cpp" />
     <ClCompile Include="MediaThumbnailData.cpp" />

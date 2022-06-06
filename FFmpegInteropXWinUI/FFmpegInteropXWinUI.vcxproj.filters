@@ -36,6 +36,7 @@
     <ClCompile Include="CompressedSampleProvider.cpp" />
     <ClCompile Include="NativeBufferFactory.cpp" />
     <ClCompile Include="ReferenceCue.cpp" />
+    <ClCompile Include="LanguageTagConverter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -73,6 +74,7 @@
     <ClInclude Include="NativeBufferFactory.h" />
     <ClInclude Include="NativeBuffer.h" />
     <ClInclude Include="ReferenceCue.h" />
+    <ClInclude Include="LanguageTagConverter.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Class.idl" />

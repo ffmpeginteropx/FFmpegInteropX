@@ -21,10 +21,10 @@
 
 namespace FFmpegInteropX
 {
-	/*using namespace winrt::Windows::Storage::Streams;
+	using namespace winrt::Windows::Storage::Streams;
 	using namespace winrt::Windows::Media::Core;
 	using namespace winrt::Windows::Media::MediaProperties;
-	using namespace winrt::Windows::Graphics::DirectX::Direct3D11;*/
+	using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
 	using namespace winrt::FFmpegInteropXWinUI;
 	using namespace std;
 
@@ -161,7 +161,7 @@ namespace FFmpegInteropX
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			MediaSourceConfig config,
+			MediaSourceConfig const& config,
 			int streamIndex,
 			HardwareDecoderStatus hardwareDecoderStatus);
 

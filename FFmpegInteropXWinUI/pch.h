@@ -29,6 +29,9 @@
 #include <robuffer.h>
 #include <mfapi.h>
 #include <winrt/Windows.UI.Core.h>
+#include <guiddef.h>
+#include <vector>
+#include <map>
 
 extern "C"
 {
@@ -43,7 +46,6 @@ extern "C"
 #include "AudioStreamInfo.h"
 #include "VideoStreamInfo.h"
 #include "SubtitleStreamInfo.h"
-#include <vector>
 // Disable debug string output on non-debug build
 #if !_DEBUG
 #define DebugMessage(x)

@@ -7,12 +7,14 @@
 #include "NativeBufferFactory.h"
 #include "ReferenceCue.h"
 #include <mutex>
+#include "AvCodecContextHelpers.h"
 
 namespace FFmpegInteropX
 {
 	using namespace winrt::Windows::UI::Core;
 	using namespace winrt::Windows::Media::Playback;
 	using namespace winrt::FFmpegInteropXWinUI;
+	using namespace winrt::Windows::Media::Core;
 
 	class SubtitleProvider abstract : public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
 	{
@@ -21,14 +23,16 @@ namespace FFmpegInteropX
 		SubtitleProvider(std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			winrt::FFmpegInteropXWinUI::MediaSourceConfig &config,
+			winrt::FFmpegInteropXWinUI::MediaSourceConfig const& config,
 			int index,
-			winrt::Windows::Media::Core::TimedMetadataKind &timedMetadataKind{ nullptr },
-			winrt::Windows::UI::Core::CoreDispatcher& dispatcher{nullptr})
-			: CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, index, HardwareDecoderStatus::Unknown)
+			winrt::Windows::Media::Core::TimedMetadataKind const& ptimedMetadataKind,
+			winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher)
+			: CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, index, HardwareDecoderStatus::Unknown),
+			timedMetadataKind(ptimedMetadataKind),
+			dispatcher(pdispatcher)
 		{
-			this->timedMetadataKind = timedMetadataKind;
-			this->dispatcher = dispatcher;
+			//this->timedMetadataKind = timedMetadataKind;
+			//this->dispatcher = dispatcher;
 		}
 
 		winrt::Windows::Media::Core::TimedMetadataTrack SubtitleTrack = { nullptr };
@@ -71,6 +75,15 @@ namespace FFmpegInteropX
 		}
 
 	public:
+
+		virtual void InitializeStreamInfo() override
+		{
+			auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
+
+			streamInfo = SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
+				false, forced, SubtitleTrack, m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser);
+		}
+
 		virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio)
 		{
 		}

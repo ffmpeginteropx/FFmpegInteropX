@@ -22,7 +22,7 @@
 #include "FFmpegReader.h"
 #include "LanguageTagConverter.h"
 #include "AvCodecContextHelpers.h"
-#include "SubtitleProvider.h"
+//#include "SubtitleProvider.h"
 #include "Mfapi.h";
 
 using namespace FFmpegInteropX;
@@ -36,7 +36,7 @@ MediaSampleProvider::MediaSampleProvider(
 	std::shared_ptr<FFmpegReader> reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
-	MediaSourceConfig config,
+	winrt::FFmpegInteropXWinUI::MediaSourceConfig const& config,
 	int streamIndex,
 	HardwareDecoderStatus hardwareDecoderStatus)
 	: m_pReader(reader)
@@ -70,7 +70,7 @@ MediaSampleProvider::~MediaSampleProvider()
 
 	avcodec_close(m_pAvCodecCtx);
 	avcodec_free_context(&m_pAvCodecCtx);
-	
+
 	SAFE_RELEASE(device);
 	SAFE_RELEASE(deviceContext);
 }
@@ -101,7 +101,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
 		Language = StringUtils::Utf8ToPlatformString(language->value);
 		if (Language.size() == 3)
 		{
-			auto entry = LanguageTagConverter::TryGetLanguage(Language);
+			auto entry = FFmpegInteropX::LanguageTagConverter::TryGetLanguage(Language);
 			if (entry != nullptr)
 			{
 				try
@@ -184,7 +184,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 		}
 
 		streamInfo = AudioStreamInfo(
-			Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false, 
+			Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
 			channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder());
 
 		break;
@@ -200,15 +200,6 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 		streamInfo = VideoStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
 			m_pAvStream->codecpar->width, m_pAvStream->codecpar->height, videoAspect,
 			bitsPerSample, framesPerSecond, HardwareAccelerationStatus(), Decoder());
-
-		break;
-	}
-	case AVMEDIA_TYPE_SUBTITLE:
-	{
-		auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
-		
-		streamInfo = SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
-			false, forced, ((SubtitleProvider*)this)->SubtitleTrack, m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser);
 
 		break;
 	}
@@ -229,7 +220,7 @@ MediaStreamSample MediaSampleProvider::GetNextSample()
 		LONGLONG dur = 0;
 		IDirect3DSurface surface;
 		hr = CreateNextSampleBuffer(&buffer, pts, dur, &surface);
-		
+
 		if (hr == S_OK)
 		{
 			TimeSpan position = ConvertPosition(pts);
@@ -239,7 +230,7 @@ MediaStreamSample MediaSampleProvider::GetNextSample()
 			{
 				sample = MediaStreamSample::CreateFromDirect3D11Surface(surface, position);
 			}
-			else 
+			else
 			{
 				sample = MediaStreamSample::CreateFromBuffer(buffer, position);
 			}
@@ -267,7 +258,7 @@ MediaStreamSample MediaSampleProvider::GetNextSample()
 	return sample;
 }
 
-HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packetPts, LONGLONG & packetDuration)
+HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration)
 {
 	HRESULT hr = S_OK;
 
@@ -288,7 +279,7 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packe
 		*avPacket = packet;
 
 		packetDuration = packet->duration;
-		
+
 		if (packet->pts != AV_NOPTS_VALUE)
 		{
 			packetPts = packet->pts;
@@ -399,7 +390,7 @@ HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan timestamp)
 	return hr;
 }
 
-void MediaSampleProvider::QueuePacket(AVPacket *packet)
+void MediaSampleProvider::QueuePacket(AVPacket* packet)
 {
 	DebugMessage(L" - QueuePacket\n");
 
@@ -432,7 +423,7 @@ void MediaSampleProvider::Flush()
 	DebugMessage(L"Flush\n");
 	while (!m_packetQueue.empty())
 	{
-		AVPacket *avPacket = PopPacket();
+		AVPacket* avPacket = PopPacket();
 		av_packet_free(&avPacket);
 	}
 	if (m_pAvCodecCtx)
@@ -482,8 +473,8 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
 
 	// set video rotation
 	bool rotateVideo = false;
-	int rotationAngle;
-	AVDictionaryEntry *rotate_tag = av_dict_get(m_pAvStream->metadata, "rotate", NULL, 0);
+	int rotationAngle = 0;
+	AVDictionaryEntry* rotate_tag = av_dict_get(m_pAvStream->metadata, "rotate", NULL, 0);
 	if (rotate_tag != NULL)
 	{
 		rotateVideo = true;
@@ -521,8 +512,8 @@ void MediaSampleProvider::Detach()
 	avcodec_free_context(&m_pAvCodecCtx);
 }
 
-void free_buffer(void *lpVoid)
+void free_buffer(void* lpVoid)
 {
-	auto buffer = (AVBufferRef *)lpVoid;
+	auto buffer = (AVBufferRef*)lpVoid;
 	av_buffer_unref(&buffer);
 }

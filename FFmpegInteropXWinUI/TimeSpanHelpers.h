@@ -2,13 +2,13 @@
 
 using namespace winrt::Windows::Foundation;
 
-inline bool operator<(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline bool operator < (const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
 {
-	return span < other;
+	return span.count() < other.count();
 }
-inline bool operator<=(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline bool operator <= (const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
 {
-	return span <= other;
+	return span.count() <= other.count();
 }
 inline bool operator>(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
 {

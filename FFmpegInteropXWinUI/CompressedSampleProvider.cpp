@@ -9,9 +9,9 @@ CompressedSampleProvider::CompressedSampleProvider(
 	std::shared_ptr<FFmpegReader> reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
-	MediaSourceConfig config,
+	MediaSourceConfig const& config,
 	int streamIndex,
-	winrt::Windows::Media::MediaProperties::VideoEncodingProperties encodingProperties,
+	winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& encodingProperties,
 	HardwareDecoderStatus hardwareDecoderStatus) :
 	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus),
 	videoEncodingProperties(encodingProperties)
@@ -23,9 +23,9 @@ CompressedSampleProvider::CompressedSampleProvider(
 	std::shared_ptr<FFmpegReader> reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
-	MediaSourceConfig config,
+	MediaSourceConfig const& config,
 	int streamIndex,
-	winrt::Windows::Media::MediaProperties::AudioEncodingProperties encodingProperties,
+	winrt::Windows::Media::MediaProperties::AudioEncodingProperties const& encodingProperties,
 	HardwareDecoderStatus hardwareDecoderStatus) :
 	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus),
 	audioEncodingProperties(encodingProperties)
@@ -38,7 +38,7 @@ CompressedSampleProvider::CompressedSampleProvider(
 	std::shared_ptr<FFmpegReader> reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
-	MediaSourceConfig config,
+	MediaSourceConfig const& config,
 	int streamIndex,
 	HardwareDecoderStatus hardwareDecoderStatus) :
 	MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
@@ -112,6 +112,7 @@ winrt::Windows::Media::Core::IMediaStreamDescriptor CompressedSampleProvider::Cr
 		// Set channel layout
 		if (m_pAvCodecCtx->channel_layout > 0 && m_pAvCodecCtx->channel_layout < 0x20000000)
 		{
+			
 			audioEncodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value((UINT32)m_pAvCodecCtx->channel_layout));
 		}
 
