@@ -46,6 +46,7 @@
     <ClCompile Include="HEVCSampleProvider.cpp" />
     <ClCompile Include="AttachedFileHelper.cpp" />
     <ClCompile Include="SubtitleProviderSsaAss.cpp" />
+    <ClCompile Include="SubtitleProvider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

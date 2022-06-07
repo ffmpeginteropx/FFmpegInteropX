@@ -32,6 +32,7 @@ using namespace FFmpegInteropX;
 using namespace NativeBuffer;
 using namespace winrt::Windows::Media::MediaProperties;
 using namespace winrt::Windows::Foundation;
+using namespace winrt::Windows::Media::Core;
 
 UncompressedVideoSampleProvider::UncompressedVideoSampleProvider(
 	std::shared_ptr<FFmpegReader> reader,

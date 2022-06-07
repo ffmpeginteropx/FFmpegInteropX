@@ -61,9 +61,9 @@ namespace FFmpegInteropX
 			MediaSourceConfig const& config,
 			int streamIndex,
 			HardwareDecoderStatus hardwareDecoderStatus);
-		IMediaStreamDescriptor CreateStreamDescriptor() override;
-		virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
-		virtual HRESULT SetSampleProperties(MediaStreamSample sample) override;
+		winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
+		virtual HRESULT CreateBufferFromFrame(winrt::Windows::Storage::Streams::IBuffer* pBuffer, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
+		virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample sample) override;
 		void ReadFrameProperties(AVFrame* avFrame, int64_t& framePts);
 		void CheckFrameSize(AVFrame* avFrame);
 		AVPixelFormat GetOutputPixelFormat() { return m_OutputPixelFormat; }

@@ -2,7 +2,7 @@
 #include "pch.h"
 #include <string>
 #include <codecvt>
-
+#include <winrt/Windows.Media.Core.h>
 #include "CompressedSampleProvider.h"
 #include "NativeBufferFactory.h"
 #include "ReferenceCue.h"
@@ -11,35 +11,31 @@
 
 namespace FFmpegInteropX
 {
-	using namespace winrt::Windows::UI::Core;
-	using namespace winrt::Windows::Media::Playback;
-	using namespace winrt::FFmpegInteropXWinUI;
-	using namespace winrt::Windows::Media::Core;
+	//using namespace winrt::Windows::UI::Core;
+	//using namespace winrt::Windows::Media::Playback;
+	//using namespace winrt::FFmpegInteropXWinUI;
+	//using namespace winrt::Windows::Media::Core;
+	//using namespace winrt::Windows::Foundation;
+	//using namespace winrt::FFmpegInteropXWinUI;
 
-	class SubtitleProvider abstract : public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
+	class SubtitleProvider abstract :
+		public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
 	{
 	public:
+		winrt::Windows::Media::Core::TimedMetadataTrack SubtitleTrack{ nullptr };
+
+		winrt::Windows::Media::Playback::MediaPlaybackItem PlaybackItem{ nullptr };
+
+		winrt::Windows::Foundation::TimeSpan SubtitleDelay;
 
 		SubtitleProvider(std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			winrt::FFmpegInteropXWinUI::MediaSourceConfig const& config,
+			MediaSourceConfig const& config,
 			int index,
 			winrt::Windows::Media::Core::TimedMetadataKind const& ptimedMetadataKind,
-			winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher)
-			: CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, index, HardwareDecoderStatus::Unknown),
-			timedMetadataKind(ptimedMetadataKind),
-			dispatcher(pdispatcher)
-		{
-			//this->timedMetadataKind = timedMetadataKind;
-			//this->dispatcher = dispatcher;
-		}
-
-		winrt::Windows::Media::Core::TimedMetadataTrack SubtitleTrack = { nullptr };
-
-		winrt::Windows::Media::Playback::MediaPlaybackItem PlaybackItem = { nullptr };
-
-		winrt::Windows::Foundation::TimeSpan SubtitleDelay;
+			winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher);
+			
 
 		virtual HRESULT Initialize() override
 		{

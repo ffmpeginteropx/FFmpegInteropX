@@ -9,12 +9,12 @@ extern "C"
 #include <ppltasks.h>
 #include "AttachedFile.h"
 
-using namespace winrt::Windows::Foundation;
-using namespace winrt::Windows::Storage;
-using namespace winrt::Windows::Storage::Streams;
-
 namespace FFmpegInteropX
 {
+	using namespace winrt::Windows::Foundation;
+	using namespace winrt::Windows::Storage;
+	using namespace winrt::Windows::Storage::Streams;
+
 	class AttachedFileHelper sealed
 	{
 	public:

@@ -213,6 +213,7 @@
     <ClCompile Include="Class.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="ReferenceCue.cpp" />
+    <ClCompile Include="SubtitleProvider.cpp" />
     <ClCompile Include="SubtitleProviderSsaAss.cpp" />
     <ClCompile Include="SubtitleStreamInfo.cpp" />
     <ClCompile Include="UncompressedSampleProvider.cpp" />

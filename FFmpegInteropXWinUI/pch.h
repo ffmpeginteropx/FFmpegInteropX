@@ -36,7 +36,9 @@
 #include <set>
 #include <winrt/Windows.Storage.Streams.h>
 #include <ppltasks.h>
-#include <winrt/Windows.Storage.h>
+#include <winrt/Windows.UI.h>
+#include <winrt/Windows.Storage.FileProperties.h>
+#include <winrt/Windows.Media.h>
 
 extern "C"
 {
