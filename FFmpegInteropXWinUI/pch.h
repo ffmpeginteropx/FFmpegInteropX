@@ -39,6 +39,8 @@
 #include <winrt/Windows.UI.h>
 #include <winrt/Windows.Storage.FileProperties.h>
 #include <winrt/Windows.Media.h>
+#include <winrt/Windows.UI.Core.Preview.h>
+#include <winrt/Windows.Media.Core.h>
 
 extern "C"
 {

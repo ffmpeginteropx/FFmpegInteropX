@@ -11,6 +11,19 @@ using namespace std;
 using namespace winrt::FFmpegInteropXWinUI;
 using namespace winrt::Windows::Media::Core;
 
+//FFmpegInteropX::SubtitleProvider::SubtitleProvider(std::shared_ptr<FFmpegReader> reader,
+//	AVFormatContext* avFormatCtx,
+//	AVCodecContext* avCodecCtx,
+//	MediaSourceConfig const& config,
+//	int index,
+//	winrt::Windows::Media::Core::TimedMetadataKind const& ptimedMetadataKind,
+//	winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher)
+//	
+//	timedMetadataKind(ptimedMetadataKind),
+//	dispatcher(pdispatcher),
+//{
+//}
+
 FFmpegInteropX::SubtitleProvider::SubtitleProvider(std::shared_ptr<FFmpegReader> reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
@@ -18,10 +31,13 @@ FFmpegInteropX::SubtitleProvider::SubtitleProvider(std::shared_ptr<FFmpegReader>
 	int index,
 	winrt::Windows::Media::Core::TimedMetadataKind const& ptimedMetadataKind,
 	winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher)
-	: CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, index, HardwareDecoderStatus::Unknown()),
-	timedMetadataKind(ptimedMetadataKind),
+	: CompressedSampleProvider(reader,
+		avFormatCtx,
+		avCodecCtx,
+		config, 
+		index, 
+		HardwareDecoderStatus::Unknown()),
 	dispatcher(pdispatcher)
 {
-	SubtitleTrack = { nullptr };
+	timedMetadataKind = ptimedMetadataKind;
 }
-
