@@ -8,6 +8,7 @@
 #include "ReferenceCue.h"
 #include <mutex>
 #include "AvCodecContextHelpers.h"
+#include <winrt/FFmpegInteropXWinUI.h>
 
 namespace FFmpegInteropX
 {
@@ -22,9 +23,9 @@ namespace FFmpegInteropX
 		public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
 	{
 	public:
-		winrt::Windows::Media::Core::TimedMetadataTrack SubtitleTrack{ nullptr };
+		winrt::Windows::Media::Core::TimedMetadataTrack SubtitleTrack = {nullptr};
 
-		winrt::Windows::Media::Playback::MediaPlaybackItem PlaybackItem{ nullptr };
+		winrt::Windows::Media::Playback::MediaPlaybackItem PlaybackItem = { nullptr };
 
 		winrt::Windows::Foundation::TimeSpan SubtitleDelay;
 

@@ -97,6 +97,7 @@
     <ClInclude Include="HEVCSampleProvider.h" />
     <ClInclude Include="SubtitleProviderSsaAss.h" />
     <ClInclude Include="AttachedFileHelper.h" />
+    <ClInclude Include="SubtitleProviderBitmap.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Class.idl" />

@@ -5,6 +5,7 @@
 #include "winrt/FFmpegInteropXWinUI.h"
 #include "MediaSourceConfig.h"
 #include "winrt/Windows.Media.Core.h"
+#include "SubtitleProviderBitmap.h"
 
 using namespace FFmpegInteropX;
 using namespace std;

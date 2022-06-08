@@ -3,18 +3,18 @@
 
 using namespace winrt::Windows::Media::Core;
 using namespace FFmpegInteropX;
-
+using namespace winrt;
 //TODO: review this file later
 IDirect3DSurface DirectXInteropHelper::GetSurface(IDXGISurface* source)
 {
-	/*com_ptr<IDirect3DSurface> result;
-	com_ptr<IInspectable> inspectableSurface;
-	if (SUCCEEDED(CreateDirect3D11SurfaceFromDXGISurface(source, inspectableSurface.put())))
+	IDirect3DSurface result;
+	com_ptr<::IInspectable> inspectableSurface;
+	if (winrt::check_hresult(CreateDirect3D11SurfaceFromDXGISurface(source, reinterpret_cast<::IInspectable**>(winrt::put_abi(inspectableSurface)))))
 	{
 		inspectableSurface.as(result);
 		return result;
 	}
-	*/
+	
 	return nullptr;
 }
 

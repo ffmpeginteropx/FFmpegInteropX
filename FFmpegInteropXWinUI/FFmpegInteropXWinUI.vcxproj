@@ -101,6 +101,9 @@
       <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Debug|arm64'">false</SDLCheck>
       <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</SDLCheck>
       <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</SDLCheck>
+      <CompileAsWinRT Condition="'$(Configuration)|$(Platform)'=='Debug|arm64'">false</CompileAsWinRT>
+      <CompileAsWinRT Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsWinRT>
+      <CompileAsWinRT Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsWinRT>
     </ClCompile>
     <Link>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|arm64'">avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;mfuuid.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -168,6 +171,7 @@
     <ClInclude Include="ReferenceCue.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="SubtitleProvider.h" />
+    <ClInclude Include="SubtitleProviderBitmap.h" />
     <ClInclude Include="SubtitleProviderSsaAss.h" />
     <ClInclude Include="SubtitleStreamInfo.h" />
     <ClInclude Include="TexturePool.h" />

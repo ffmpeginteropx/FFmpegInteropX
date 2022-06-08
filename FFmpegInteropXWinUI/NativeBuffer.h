@@ -1,12 +1,20 @@
 #pragma once
 
 #include <pch.h>
+//#include <wrl.h>
+//#include <wrl/implements.h>
 
 namespace NativeBuffer
 {
+	struct __declspec(uuid("905a0fef-bc53-11df-8c49-001e4fc686da")) IBufferByteAccess : ::IUnknown
+	{
+		virtual HRESULT __stdcall Buffer(uint8_t** value) = 0;
+	};
+
 	class NativeBuffer :
-		winrt::Windows::Storage::Streams::IBuffer
-		//Windows::Storage::Streams::IBufferByteAccess
+		//public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::RuntimeClassType::WinRtClassicComMix>>,
+		winrt::Windows::Storage::Streams::IBuffer,
+		IBufferByteAccess
 	{
 
 	public:
