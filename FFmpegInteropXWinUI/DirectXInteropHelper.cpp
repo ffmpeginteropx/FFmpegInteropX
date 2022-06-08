@@ -1,14 +1,16 @@
 #include "pch.h"
 #include "DirectXInteropHelper.h"
-
-using namespace winrt::Windows::Media::Core;
+extern "C" {
+#include <Windows.Graphics.DirectX.Direct3D11.interop.h>
+}
 using namespace FFmpegInteropX;
-using namespace winrt;
 //TODO: review this file later
-IDirect3DSurface DirectXInteropHelper::GetSurface(IDXGISurface* source)
+
+
+winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface DirectXInteropHelper::GetSurface(IDXGISurface* source)
 {
-	IDirect3DSurface result;
-	com_ptr<::IInspectable> inspectableSurface;
+	winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface result;
+	winrt::com_ptr<::IInspectable> inspectableSurface;
 	if (winrt::check_hresult(CreateDirect3D11SurfaceFromDXGISurface(source, reinterpret_cast<::IInspectable**>(winrt::put_abi(inspectableSurface)))))
 	{
 		inspectableSurface.as(result);
@@ -18,21 +20,25 @@ IDirect3DSurface DirectXInteropHelper::GetSurface(IDXGISurface* source)
 	return nullptr;
 }
 
-HRESULT DirectXInteropHelper::GetDXGISurface2(IDirect3DSurface source, IDXGISurface** dxgiSurface)
+HRESULT DirectXInteropHelper::GetDXGISurface2(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface source, IDXGISurface** dxgiSurface)
 {
+	using IUnknown = ::IUnknown;
+
 	//TODO: this most likely doesn't work, but I left it this way to allow the project to build.
-	//com_ptr<IDXGISurface> resultSurface;
-	//winrt::com_ptr<winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess> dxgiInterfaceAccess
-	//{
-	//   source.as<winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess>()
-	//};
-	//return winrt::Windows::Graphics::DirectX::Direct3D11::GetDXGIInterface(source, dxgiSurface);
-	/*source.as(resultSurface);
-	dxgiSurface = resultSurface.put();*/
-	return E_NOTIMPL;
+	winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice d3dDevice /* = ... */;
+	winrt::com_ptr<::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess> dxgiInterfaceAccess{
+		d3dDevice.as<::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess>()
+	};
+	winrt::com_ptr<::IDXGISurface> nativeSurface;
+	winrt::check_hresult(dxgiInterfaceAccess->GetInterface(
+		__uuidof(nativeSurface),
+		nativeSurface.put_void()));
+
+	*dxgiSurface = nativeSurface.get();
+	return S_OK;
 }
 
-HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(MediaStreamSource source, IMFDXGIDeviceManager** deviceManager)
+HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(winrt::Windows::Media::Core::MediaStreamSource source, IMFDXGIDeviceManager** deviceManager)
 {
 	//com_ptr<IMFDXGIDeviceManagerSource> surfaceManager;
 	//com_ptr<IUnknown> unknownMss;

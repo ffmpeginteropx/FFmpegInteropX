@@ -114,7 +114,7 @@ namespace FFmpegInteropX
 			return hr;
 		}
 
-		virtual HRESULT SetSampleProperties(MediaStreamSample sample) override
+		virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample sample) override
 		{
 			if (sample.Direct3D11Surface())
 			{
@@ -319,7 +319,7 @@ namespace FFmpegInteropX
 			return hr;
 		}
 
-		static HRESULT InitializeHardwareDeviceContext(MediaStreamSource sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, IMFDXGIDeviceManager* deviceManager, HANDLE* outDeviceHandle)
+		static HRESULT InitializeHardwareDeviceContext(winrt::Windows::Media::Core::MediaStreamSource sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, IMFDXGIDeviceManager* deviceManager, HANDLE* outDeviceHandle)
 		{
 			ID3D11Device* device = nullptr;
 			ID3D11DeviceContext* deviceContext = nullptr;
