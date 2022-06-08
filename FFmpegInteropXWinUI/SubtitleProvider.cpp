@@ -38,7 +38,8 @@ FFmpegInteropX::SubtitleProvider::SubtitleProvider(std::shared_ptr<FFmpegReader>
 		config, 
 		index, 
 		HardwareDecoderStatus::Unknown()),
-	dispatcher(pdispatcher)
+	dispatcher(pdispatcher),
+	SubtitleTrack(winrt::Windows::Media::Core::TimedMetadataTrack(L"a", L"winrt lalalalalalalala", winrt::Windows::Media::Core::TimedMetadataKind::Subtitle))
 {
 	timedMetadataKind = ptimedMetadataKind;
 }

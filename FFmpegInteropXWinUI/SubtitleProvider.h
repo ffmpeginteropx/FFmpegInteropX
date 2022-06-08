@@ -23,7 +23,7 @@ namespace FFmpegInteropX
 		public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
 	{
 	public:
-		winrt::Windows::Media::Core::TimedMetadataTrack SubtitleTrack = {nullptr};
+		winrt::Windows::Media::Core::TimedMetadataTrack SubtitleTrack = { nullptr };
 
 		winrt::Windows::Media::Playback::MediaPlaybackItem PlaybackItem = { nullptr };
 
@@ -36,7 +36,7 @@ namespace FFmpegInteropX
 			int index,
 			winrt::Windows::Media::Core::TimedMetadataKind const& ptimedMetadataKind,
 			winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher);
-			
+
 
 		virtual HRESULT Initialize() override
 		{
