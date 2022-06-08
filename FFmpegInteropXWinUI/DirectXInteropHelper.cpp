@@ -16,7 +16,7 @@ winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface DirectXInteropHe
 		inspectableSurface.as(result);
 		return result;
 	}
-	
+
 	return nullptr;
 }
 
@@ -40,45 +40,39 @@ HRESULT DirectXInteropHelper::GetDXGISurface2(winrt::Windows::Graphics::DirectX:
 
 HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(winrt::Windows::Media::Core::MediaStreamSource source, IMFDXGIDeviceManager** deviceManager)
 {
-	//com_ptr<IMFDXGIDeviceManagerSource> surfaceManager;
-	//com_ptr<IUnknown> unknownMss;
-	//source.as(unknownMss);
-
-	//HRESULT hr = unknownMss.get()->QueryInterface(surfaceManager.put_void());
-
-	//if (SUCCEEDED(hr)) hr = surfaceManager->GetManager(deviceManager);
-
-	////SAFE_RELEASE(surfaceManager);
-	//return hr;
-	return E_NOTIMPL;
+	winrt::com_ptr<::IMFDXGIDeviceManagerSource> surfaceManager;
+	source.as(surfaceManager);
+	auto hr = surfaceManager->GetManager(deviceManager);
+	return hr;
 }
 
 HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* deviceManager, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, ID3D11VideoDevice** outVideoDevice, HANDLE* outDeviceHandle)
 {
-	//com_ptr<ID3D11Device> device;
-	//com_ptr<ID3D11DeviceContext> deviceContext;
-	//com_ptr<ID3D11VideoDevice> videoDevice;
+	ID3D11Device* device;
+	ID3D11DeviceContext* deviceContext;
+	ID3D11VideoDevice* videoDevice;
 
-	//HRESULT hr = deviceManager->OpenDeviceHandle(outDeviceHandle);
-	//if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11Device, (void**)&device);
-	//if (SUCCEEDED(hr) && outDeviceContext) device->GetImmediateContext(deviceContext.put());
-	//if (SUCCEEDED(hr) && outVideoDevice) hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
+	HRESULT hr = deviceManager->OpenDeviceHandle(outDeviceHandle);
+	if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11Device, (void**)&device);
+	if (SUCCEEDED(hr) && outDeviceContext) device->GetImmediateContext(&deviceContext);
+	if (SUCCEEDED(hr) && outVideoDevice) hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
 
-	//if (!SUCCEEDED(hr))
-	//{
-	//	/*SAFE_RELEASE(device);
-	//	SAFE_RELEASE(deviceContext);
-	//	SAFE_RELEASE(videoDevice);*/
-	//}
-	//else
-	//{
-	//	*outDevice = device.get();
-	//	if (outDeviceContext)
-	//		*outDeviceContext = deviceContext.get();
-	//	if (outVideoDevice)
-	//		*outVideoDevice = videoDevice.get();
-	//}
+	if (!SUCCEEDED(hr))
+	{
+		SAFE_RELEASE(device);
+		SAFE_RELEASE(deviceContext);
+		SAFE_RELEASE(videoDevice);
+	}
+	else
+	{
+		if (device)
+			*outDevice = device;
+		if (deviceContext)
+			*outDeviceContext = deviceContext;
+		if (videoDevice)
+			*outVideoDevice = videoDevice;
+	}
 
-	return E_NOTIMPL;
+	return hr;
 
 }
