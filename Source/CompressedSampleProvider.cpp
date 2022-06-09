@@ -8,7 +8,7 @@
 using namespace FFmpegInteropX;
 
 CompressedSampleProvider::CompressedSampleProvider(
-	std::shared_ptr<FFmpegReader> reader,
+	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	MediaSourceConfig^ config,
@@ -22,7 +22,7 @@ CompressedSampleProvider::CompressedSampleProvider(
 }
 
 CompressedSampleProvider::CompressedSampleProvider(
-	std::shared_ptr<FFmpegReader> reader,
+	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	MediaSourceConfig^ config,
@@ -37,7 +37,7 @@ CompressedSampleProvider::CompressedSampleProvider(
 
 
 CompressedSampleProvider::CompressedSampleProvider(
-	std::shared_ptr<FFmpegReader> reader,
+	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	MediaSourceConfig^ config,

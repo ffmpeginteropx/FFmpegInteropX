@@ -20,7 +20,7 @@
 
 namespace FFmpegInteropX
 {
-	
+	using namespace Platform;
 	
 	// Level values from ffmpeg: libavutil/log.h
 	public enum class LogLevel
@@ -37,7 +37,7 @@ namespace FFmpegInteropX
 
 	public interface class ILogProvider
 	{
-		void Log(LogLevel level, winrt::hstring message);
+		void Log(LogLevel level, String^ message);
 	};
 }
 

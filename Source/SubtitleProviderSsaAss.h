@@ -7,16 +7,16 @@
 
 namespace FFmpegInteropX
 {
-	class SubtitleProviderSsaAss : public SubtitleProvider
+	ref class SubtitleProviderSsaAss : SubtitleProvider
 	{
-	public:
-		SubtitleProviderSsaAss(std::shared_ptr<FFmpegReader> reader,
+	internal:
+		SubtitleProviderSsaAss(FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config,
 			int index,
 			CoreDispatcher^ dispatcher,
-			std::shared_ptr<AttachedFileHelper> attachedFileHelper)
+			AttachedFileHelper^ attachedFileHelper)
 			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::Subtitle, dispatcher)
 		{
 			this->attachedFileHelper = attachedFileHelper;
@@ -48,7 +48,7 @@ namespace FFmpegInteropX
 							}
 						}
 					}
-
+					
 					int w, h;
 					auto resx = str.find("\nPlayResX: ");
 					auto resy = str.find("\nPlayResY: ");
@@ -119,7 +119,7 @@ namespace FFmpegInteropX
 			videoHeight = height;
 		}
 
-		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) override
+		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) override
 		{
 			ParseHeaders();
 
@@ -129,7 +129,7 @@ namespace FFmpegInteropX
 			if (result > 0 && gotSubtitle && subtitle.num_rects > 0)
 			{
 				auto str = StringUtils::Utf8ToWString(subtitle.rects[0]->ass);
-
+				
 				int startStyle = -1;
 				int endStyle = -1;
 				int lastComma = -1;
@@ -179,7 +179,7 @@ namespace FFmpegInteropX
 					}
 				}
 
-				std::shared_ptr<SsaStyleDefinition> style = nullptr;
+				SsaStyleDefinition^ style = nullptr;
 				if (!hasError && startStyle > 0 && endStyle > 0)
 				{
 					auto styleName = StringUtils::WStringToPlatformString(str.substr(startStyle, endStyle - startStyle));
@@ -245,7 +245,7 @@ namespace FFmpegInteropX
 									subFormat->SubformatStyle = cueStyle;
 									subFormat->StartIndex = 0;
 								}
-
+							
 								// apply previous subformat, if any
 								if (subFormat != nullptr)
 								{
@@ -262,7 +262,7 @@ namespace FFmpegInteropX
 								bool hasPosition = false;
 								double posX = 0, posY = 0;
 
-								auto effectContent = str[nextEffect + 1] == L'\\' ? str.substr(nextEffect + 2, endEffect - nextEffect - 2) : str.substr(nextEffect + 1, endEffect - nextEffect - 1);
+								auto effectContent = str[nextEffect+1] == L'\\' ? str.substr(nextEffect + 2, endEffect - nextEffect - 2) : str.substr(nextEffect + 1, endEffect - nextEffect - 1);
 								std::vector<std::wstring> tags;
 								auto start = 0U;
 								auto end = effectContent.find(L"\\");
@@ -426,7 +426,7 @@ namespace FFmpegInteropX
 								{
 									double x = min(posX / width, 1);
 									double y = min(posY / height, 1);
-
+									
 									TimedTextPadding padding;
 									padding.Unit = TimedTextUnit::Percentage;
 
@@ -691,10 +691,10 @@ namespace FFmpegInteropX
 			}
 		}
 
-		void StoreSubtitleStyle(char* name, char* font, float size, int color, int outlineColor, int bold, int italic, int underline, int strikeout, float outline, Windows::Media::Core::TimedTextLineAlignment horizontalAlignment, Windows::Media::Core::TimedTextDisplayAlignment verticalAlignment, float marginL, float marginR, float marginV)
+		void StoreSubtitleStyle(char* name, char *font, float size, int color, int outlineColor, int bold, int italic, int underline, int strikeout, float outline, Windows::Media::Core::TimedTextLineAlignment horizontalAlignment, Windows::Media::Core::TimedTextDisplayAlignment verticalAlignment, float marginL, float marginR, float marginV)
 		{
 			auto wname = StringUtils::Utf8ToWString(name);
-
+			
 			auto SubtitleRegion = ref new TimedTextRegion();
 			SubtitleRegion->Name = StringUtils::WStringToPlatformString(wname);
 
@@ -770,7 +770,7 @@ namespace FFmpegInteropX
 			// sanity check style parameters
 			if (wname.size() > 0 && SubtitleStyle->FontFamily->Length() > 0 && SubtitleStyle->FontSize.Value > 0)
 			{
-				auto style = std::shared_ptr<SsaStyleDefinition>(new SsaStyleDefinition());
+				auto style = ref new SsaStyleDefinition();
 				style->Name = StringUtils::WStringToPlatformString(wname);
 				style->Region = SubtitleRegion;
 				style->Style = SubtitleStyle;
@@ -875,13 +875,13 @@ namespace FFmpegInteropX
 			}
 		}
 
-		winrt::hstring GetFontFamily(char* str)
+		String^ GetFontFamily(char* str)
 		{
 			auto wstr = StringUtils::Utf8ToWString(str);
 			return GetFontFamily(wstr);
 		}
 
-		winrt::hstring GetFontFamily(std::wstring str)
+		String^ GetFontFamily(std::wstring str)
 		{
 			str = trim(str);
 
@@ -891,28 +891,28 @@ namespace FFmpegInteropX
 				return existing->second;
 			}
 
-			winrt::hstring result;
+			String^ result;
 
 			if (m_config->UseEmbeddedSubtitleFonts)
 			{
 				try
 				{
-					for each (auto attachment in attachedFileHelper->AttachedFiles())
+					for each (auto attachment in attachedFileHelper->AttachedFiles)
 					{
 						std::wstring mime(attachment->MimeType->Data());
 						if (mime.find(L"font") != mime.npos)
 						{
 							auto file = attachedFileHelper->ExtractFileAsync(attachment).get();
-							auto names = ref new Vector<winrt::hstring>();
+							auto names = ref new Vector<String^>();
 							names->Append("System.Title");
 							auto properties = create_task(file->Properties->RetrievePropertiesAsync(names)).get();
-							auto title = dynamic_cast<winrt::hstring>(properties->Lookup("System.Title"));
+							auto title = dynamic_cast<String^>(properties->Lookup("System.Title"));
 							if (title != nullptr)
 							{
 								auto fontFamily = std::wstring(title->Data());
 								if (str.compare(fontFamily) == 0)
 								{
-									result = "ms-appdata:///temp/" + m_config->AttachmentCacheFolderName + "/" + attachedFileHelper->InstanceId() + "/" + attachment->Name + "#" + StringUtils::WStringToPlatformString(str);
+									result = "ms-appdata:///temp/" + m_config->AttachmentCacheFolderName + "/" + attachedFileHelper->InstanceId + "/" + attachment->Name + "#" + StringUtils::WStringToPlatformString(str);
 									break;
 								}
 							}
@@ -994,21 +994,13 @@ namespace FFmpegInteropX
 			return ltrim(rtrim(s, t), t);
 		}
 
-		class SsaStyleDefinition
+		ref class SsaStyleDefinition
 		{
 		public:
-			winrt::hstring Name;
-			TimedTextRegion^ Region;
-			TimedTextStyle^ Style;
+			property String^ Name;
+			property TimedTextRegion^ Region;
+			property TimedTextStyle^ Style;
 		};
-
-		~SubtitleProviderSsaAss()
-		{
-			for (auto s : styles)
-			{
-				s.second.reset();
-			}
-		}
 
 	private:
 		bool hasParsedHeaders;
@@ -1021,8 +1013,8 @@ namespace FFmpegInteropX
 		int videoWidth;
 		int videoHeight;
 		int regionIndex = 1;
-		std::map<winrt::hstring, std::shared_ptr<SsaStyleDefinition>> styles;
-		std::map<std::wstring, winrt::hstring> fonts;
-		std::shared_ptr<AttachedFileHelper> attachedFileHelper;
+		std::map<String^, SsaStyleDefinition^> styles;
+		std::map<std::wstring, String^> fonts;
+		AttachedFileHelper^ attachedFileHelper;
 	};
 }

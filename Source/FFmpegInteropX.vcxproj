@@ -45,7 +45,7 @@
     <ApplicationType>Windows Store</ApplicationType>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' &gt;= '16.0'">10.0</WindowsTargetPlatformVersion>
-    <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
+    <WindowsTargetPlatformMinVersion>10.0.10240.0</WindowsTargetPlatformMinVersion>
     <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
@@ -149,7 +149,6 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AttachedFile.cpp" />
     <ClCompile Include="CodecChecker.cpp" />
     <ClCompile Include="BasicVideoEffect.cpp" />
     <ClCompile Include="CompressedSampleProvider.cpp" />
@@ -160,12 +159,10 @@
     <ClCompile Include="FFmpegReader.cpp" />
     <ClCompile Include="FrameGrabber.cpp" />
     <ClCompile Include="H264AVCSampleProvider.cpp" />
-    <ClCompile Include="KeyStringValuePair.cpp" />
     <ClCompile Include="NALPacketSampleProvider.cpp" />
     <ClCompile Include="HEVCSampleProvider.cpp" />
     <ClCompile Include="MediaSampleProvider.cpp" />
     <ClCompile Include="NativeBufferFactory.cpp" />
-    <ClCompile Include="StreamInfo.cpp" />
     <ClCompile Include="UncompressedAudioSampleProvider.cpp" />
     <ClCompile Include="UncompressedSampleProvider.cpp" />
     <ClCompile Include="UncompressedVideoSampleProvider.cpp" />
@@ -191,9 +188,6 @@
     <None Include="..\Build\Start-DevShell.ps1" />
     <None Include="FFmpegInteropLibs.props" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Midl Include="FFmpegInteropX.idl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -12,7 +12,7 @@ extern "C"
 
 namespace FFmpegInteropX
 {
-	
+	using namespace Platform;
 	using namespace Windows::Foundation;
 	using namespace Windows::Foundation::Collections;
 	using namespace Windows::Media::Core;
@@ -242,19 +242,19 @@ namespace FFmpegInteropX
 		property bool FastSeekSmartStreamSwitching;
 
 		///<summary>The default name to use for audio streams.</summary>
-		property winrt::hstring DefaultAudioStreamName;
+		property String^ DefaultAudioStreamName;
 
 		///<summary>The default name to use for subtitle streams.</summary>
-		property winrt::hstring DefaultSubtitleStreamName;
+		property String^ DefaultSubtitleStreamName;
 
 		///<summary>The default name to use for external subtitle streams.</summary>
-		property winrt::hstring DefaultExternalSubtitleStreamName;
+		property String^ DefaultExternalSubtitleStreamName;
 
 		///<summary>Use subtitle font files that are embedded in the media file.</summary>
 		property bool UseEmbeddedSubtitleFonts;
 		
 		///<summary>The folder where attachments such as fonts are stored (inside the app's temp folder).</summary>
-		property winrt::hstring AttachmentCacheFolderName;
+		property String^ AttachmentCacheFolderName;
 
 		///<summary>The minimum amount of time a subtitle should be shown. Default is 0.</summary>
 		property TimeSpan MinimumSubtitleDuration;
@@ -268,10 +268,10 @@ namespace FFmpegInteropX
 
 		///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
 		///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-		property winrt::hstring FFmpegVideoFilters;
+		property String^ FFmpegVideoFilters;
 
 		///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegMediaSource.SetFFmpegAudioFilters().</summary>
-		property winrt::hstring FFmpegAudioFilters;
+		property String^ FFmpegAudioFilters;
 
 		///<summary>Downmix multi-channel audio streams to stereo format.</summary>
 		property bool DownmixAudioStreamsToStereo;

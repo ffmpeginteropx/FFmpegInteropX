@@ -3,7 +3,7 @@
 
 namespace FFmpegInteropX
 {
-	
+	using namespace Platform;
 	using namespace Windows::Foundation;
 	using namespace Windows::Media::Core;
 
@@ -20,7 +20,7 @@ namespace FFmpegInteropX
 		}
 
 	public:
-		virtual property winrt::hstring Id;
+		virtual property String^ Id;
 
 		virtual property TimeSpan Duration;
 

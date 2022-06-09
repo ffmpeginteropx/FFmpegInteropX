@@ -22,7 +22,7 @@
 using namespace FFmpegInteropX;
 
 H264AVCSampleProvider::H264AVCSampleProvider(
-	std::shared_ptr<FFmpegReader> reader,
+	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	MediaSourceConfig^ config,

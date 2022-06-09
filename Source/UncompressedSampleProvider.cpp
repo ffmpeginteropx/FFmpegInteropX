@@ -25,7 +25,7 @@ using namespace FFmpegInteropX;
 
 
 UncompressedSampleProvider::UncompressedSampleProvider(
-	std::shared_ptr<FFmpegReader> reader,
+	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	MediaSourceConfig^ config,

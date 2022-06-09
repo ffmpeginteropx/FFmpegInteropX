@@ -1,13 +1,12 @@
 #pragma once
-#include "CodecRequiredEventArgs.g.h"
 
-namespace winrt::FFmpegInteropX::implementation
+namespace FFmpegInteropX
 {
-	
+	using namespace Platform;
 	using namespace Windows::Foundation;
 
 	///<summary>Specifies the reason why a codec extension installation is recommended.</summary>
-	enum CodecRequiredReason
+	public enum class CodecRequiredReason
 	{
 		///<summary>Unknown.</summary>
 		Unknown = 0x00,
@@ -16,28 +15,29 @@ namespace winrt::FFmpegInteropX::implementation
 		HardwareAcceleration = 0x01
 	};
 
-	struct CodecRequiredEventArgs : CodecRequiredEventArgsT< CodecRequiredEventArgs>
+	public ref class CodecRequiredEventArgs sealed
 	{
 	public:
 		///<summary>The reason why a new codec extension is recommended.</summary>
-		CodecRequiredReason Reason() { return reason; }
-
+		property CodecRequiredReason Reason { CodecRequiredReason get() { return reason; } }
+		
 		///<summary>The name of the video or audio format (e.g. "HEVC" or "VP9").</summary>
-		hstring FormatName() { return codecName; }
-
+		property String^ FormatName { String^ get() { return codecName; } }
+		
 		///<summary>The non-localized name of the proposed extension in the Windows Store.</summary>
-		hstring StoreExtensionName() { return storeExtensionName; }
-
+		property String^ StoreExtensionName { String^ get() { return storeExtensionName; } }
+		
 		///<summary>The ProductId of the proposed extension.</summary>
-		hstring ProductId() { return productId; }
+		property String^ ProductId { String^ get() { return productId; } }
 
 		///<summary>This will open the Windows Store page of the proposed codec extension.</summary>
-		IAsyncOperation<bool> OpenStorePageAsync()
+		IAsyncOperation<bool>^ OpenStorePageAsync()
 		{
-			return winrt::Windows::System::Launcher::LaunchUriAsync(Uri(L"ms-windows-store://pdp/?ProductId=" + productId));
+			return Windows::System::Launcher::LaunchUriAsync(ref new Uri("ms-windows-store://pdp/?ProductId=" + productId));
 		}
 
-		CodecRequiredEventArgs(CodecRequiredReason reason, hstring codecName, hstring storeExtensionName, hstring productId)
+	internal:
+		CodecRequiredEventArgs(CodecRequiredReason reason, String^ codecName, String^ storeExtensionName, String^ productId)
 		{
 			this->reason = reason;
 			this->codecName = codecName;
@@ -47,15 +47,9 @@ namespace winrt::FFmpegInteropX::implementation
 
 	private:
 		CodecRequiredReason reason;
-		hstring codecName;
-		hstring storeExtensionName;
-		hstring productId;
+		String^ codecName;
+		String^ storeExtensionName;
+		String^ productId;
 	};
-}
 
-namespace winrt::FFmpegInteropX::factory_implementation
-{
-	struct CodecRequiredEventArgs : CodecRequiredEventArgsT<CodecRequiredEventArgs, implementation::CodecRequiredEventArgs>
-	{
-	};
 }

@@ -5,20 +5,20 @@
 
 namespace FFmpegInteropX
 {
-	class AudioEffectFactory : public AbstractEffectFactory
+	ref class AudioEffectFactory : public AbstractEffectFactory
 	{
 		AVCodecContext* InputContext;	
 
-	public:
+	internal:
 
 		AudioEffectFactory(AVCodecContext* input_ctx)
 		{
 			InputContext = input_ctx;
 		}
 
-		std::shared_ptr<IAvEffect> CreateEffect(winrt::hstring filterDefinition) override
+		IAvEffect^ CreateEffect(String^ filterDefinition) override
 		{
-			return std::shared_ptr<AudioFilter>(new AudioFilter(InputContext, filterDefinition));
+			return ref new AudioFilter(InputContext, filterDefinition);
 		}
 	};
 }

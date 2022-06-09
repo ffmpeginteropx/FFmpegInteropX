@@ -22,7 +22,7 @@
 using namespace FFmpegInteropX;
 
 HEVCSampleProvider::HEVCSampleProvider(
-	std::shared_ptr<FFmpegReader> reader,
+	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	MediaSourceConfig^ config,

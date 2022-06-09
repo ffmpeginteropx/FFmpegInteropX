@@ -22,10 +22,10 @@ namespace FFmpegInteropX
 	using namespace Windows::Foundation::Collections;
 	using namespace Windows::Media::Playback;
 	using namespace Windows::Foundation;
-	
+	using namespace Platform;
 	using namespace Windows::Storage;
 
-	class VideoFilter : public IAvEffect
+	ref class VideoFilter : public IAvEffect
 	{
 		const AVFilter* AVSource;
 		const AVFilter* AVSink;
@@ -36,8 +36,8 @@ namespace FFmpegInteropX
 		AVCodecContext* inputCodecCtx;
 		AVStream* inputStream;
 
-		winrt::hstring filterDefinition;
-		bool isInitialized = false;
+		String^ filterDefinition;
+		bool isInitialized;
 
 		AVPixelFormat format;
 		int width;
@@ -176,8 +176,8 @@ namespace FFmpegInteropX
 		}
 
 
-	public:
-		VideoFilter(AVCodecContext* m_inputCodecCtx, AVStream* inputStream, winrt::hstring filterDefinition)
+	internal:
+		VideoFilter(AVCodecContext* m_inputCodecCtx, AVStream* inputStream, String^ filterDefinition)
 		{
 			this->inputCodecCtx = m_inputCodecCtx;
 			this->inputStream = inputStream;

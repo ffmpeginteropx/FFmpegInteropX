@@ -21,15 +21,16 @@
 
 namespace FFmpegInteropX
 {
-	class NALPacketSampleProvider :
+	ref class NALPacketSampleProvider :
 		public CompressedSampleProvider
 	{
 	public:
 		virtual ~NALPacketSampleProvider();
 		virtual void Flush() override;
 
+	internal:
 		NALPacketSampleProvider(
-			std::shared_ptr<FFmpegReader> reader,
+			FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config, 

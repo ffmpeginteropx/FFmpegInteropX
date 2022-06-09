@@ -22,7 +22,7 @@
 using namespace FFmpegInteropX;
 
 NALPacketSampleProvider::NALPacketSampleProvider(
-	std::shared_ptr<FFmpegReader> reader,
+	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	MediaSourceConfig^ config,

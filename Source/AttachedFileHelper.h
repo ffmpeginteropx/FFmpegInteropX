@@ -1,8 +1,7 @@
 #pragma once
 
-#include <winrt/Windows.Foundation.Collections.h>
+#include <collection.h>
 #include <pplawait.h>
-#include <winrt/FFmpegInteropX.h>
 
 extern "C"
 {
@@ -11,42 +10,44 @@ extern "C"
 
 #include "AttachedFile.h"
 
+using namespace Platform;
+using namespace Windows::Foundation;
+using namespace Windows::Storage;
+using namespace Windows::Storage::Streams;
 
-using namespace winrt::Windows::Foundation;
-using namespace winrt::Windows::Storage;
-using namespace winrt::Windows::Storage::Streams;
-using namespace winrt::FFmpegInteropX::implementation;
 using namespace Concurrency;
 
 namespace FFmpegInteropX
 {
-	class AttachedFileHelper sealed
+	ref class AttachedFileHelper sealed
 	{
 	public:
 		virtual ~AttachedFileHelper()
 		{
 			if (extractedFiles.size() > 0)
 			{
-				CleanupTempFiles(config->AttachmentCacheFolderName, InstanceId());
+				CleanupTempFiles(config->AttachmentCacheFolderName, InstanceId);
 			}
 		}
 
-		AttachedFileHelper(MediaSourceConfig config)
+	internal:
+
+		AttachedFileHelper(MediaSourceConfig^ config)
 		{
 			this->config = config;
 		}
 
-		Vector<AttachedFile> AttachedFiles() { return attachedFiles; }
-		String InstanceId() { return instanceId; }
+		property Vector<AttachedFile^>^ AttachedFiles { Vector<AttachedFile^>^ get() { return attachedFiles; } }
+		property String^ InstanceId { String^ get() { return instanceId; } }
 
-		void AddAttachedFile(AttachedFile file)
+		void AddAttachedFile(AttachedFile^ file)
 		{
 			attachedFiles->Append(file);
 		}
-
-		task<StorageFile> ExtractFileAsync(AttachedFile attachment)
+		
+		task<StorageFile^> ExtractFileAsync(AttachedFile^ attachment)
 		{
-			StorageFile file;
+			StorageFile^ file;
 			auto result = extractedFiles.find(attachment->Name);
 			if (result != extractedFiles.end())
 			{
@@ -72,7 +73,7 @@ namespace FFmpegInteropX
 			co_return file;
 		};
 
-		static task<void> CleanupTempFiles(String folderName, String instanceId)
+		static task<void> CleanupTempFiles(String^ folderName, String^ instanceId)
 		{
 			try
 			{
@@ -92,10 +93,10 @@ namespace FFmpegInteropX
 		}
 
 	private:
-		std::map<String, StorageFile> extractedFiles;
-		Vector<AttachedFile> attachedFiles = ref new Vector<AttachedFile>();
-		MediaSourceConfig config;
-		String instanceId;
+		std::map<String^, StorageFile^> extractedFiles;
+		Vector<AttachedFile^>^ attachedFiles = ref new Vector<AttachedFile^>();
+		MediaSourceConfig^ config;
+		String^ instanceId;
 	};
 
 }

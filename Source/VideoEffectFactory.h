@@ -4,12 +4,12 @@
 
 namespace FFmpegInteropX
 {
-	class VideoEffectFactory : public AbstractEffectFactory
+	ref class VideoEffectFactory : public AbstractEffectFactory
 	{
 		AVCodecContext* inputContext;
 		AVStream* inputStream;
 
-	public:
+	internal:
 
 		VideoEffectFactory(AVCodecContext* input_ctx, AVStream* inputStream)
 		{
@@ -17,7 +17,7 @@ namespace FFmpegInteropX
 			this->inputStream = inputStream;
 		}
 
-		std::shared_ptr<IAvEffect> CreateEffect(winrt::hstring filterDefinition) override
+		IAvEffect^ CreateEffect(String^ filterDefinition) override
 		{
 			/*Since video often requires HW acceleration for acceptable framerates,
 			we used IBasicVodeoEffect to implement video filters,
@@ -26,7 +26,7 @@ namespace FFmpegInteropX
 			hence it is unsuitable for real time playback. There could be scenarios 
 			in which the extensive video filer library of FFmpeg could be used (i.e transcoding).*/
 
-			return std::shared_ptr<VideoFilter>(new VideoFilter(inputContext, inputStream, filterDefinition));
+			return ref new VideoFilter(inputContext, inputStream, filterDefinition);
 		}
 	};
 }

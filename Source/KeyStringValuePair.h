@@ -1,38 +1,36 @@
 #pragma once
-#include "pch.h"
-#include "KeyStringValuePair.g.h"
 
-namespace winrt::FFmpegInteropX::implementation
+namespace FFmpegInteropX
 {
-	using namespace winrt::Windows::Foundation::Collections;
+	using namespace Platform;
+	using namespace Windows::Foundation::Collections;
 
-	struct KeyStringValuePair : KeyStringValuePairT<KeyStringValuePair>, IKeyValuePair<winrt::hstring, winrt::hstring>
+	ref class KeyStringValuePair sealed : IKeyValuePair<String^,String^>
 	{
-		winrt::hstring key, value;
+		String ^key, ^value;
 
 	public:
 
-		winrt::hstring Key()
+		property String^ Key
 		{
-			return key;
+			virtual String^ get()
+			{
+				return key;
+			}
 		}
 
-		winrt::hstring Value()
+		property String^ Value
 		{
-			return value;
+			virtual String^ get()
+			{
+				return value;
+			}
 		}
 
-		KeyStringValuePair(winrt::hstring key, winrt::hstring value)
+		KeyStringValuePair(String^ key, String^ value)
 		{
 			this->key = key;
 			this->value = value;
 		}
-	};
-}
-
-namespace winrt::FFmpegInteropX::factory_implementation
-{
-	struct KeyStringValuePair : KeyStringValuePairT<KeyStringValuePair, implementation::KeyStringValuePair>
-	{
-	};
+	};	
 }

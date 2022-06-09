@@ -24,21 +24,21 @@ namespace FFmpegInteropX
 	using namespace Windows::Foundation::Collections;
 	using namespace Windows::Media::Playback;
 	using namespace Windows::Foundation;
-	
+	using namespace Platform;
 	using namespace Windows::Storage;
 
-	class AudioFilter : public IAvEffect
+	ref class AudioFilter : public IAvEffect
 	{
-		const AVFilter* AVSource;
-		const AVFilter* AVSink;
+		const AVFilter  *AVSource;
+		const AVFilter  *AVSink;
 
-		AVFilterGraph* graph;
-		AVFilterContext* avSource_ctx, * avSink_ctx;
+		AVFilterGraph	*graph;
+		AVFilterContext *avSource_ctx, *avSink_ctx;
 
-		AVCodecContext* inputCodecCtx;
+		AVCodecContext *inputCodecCtx;
 
-		winrt::hstring filterDefinition;
-		bool isInitialized = false;
+		String^ filterDefinition;
+		bool isInitialized;
 		char channel_layout_name[256];
 
 		HRESULT InitFilterGraph(AVFrame* frame)
@@ -103,7 +103,7 @@ namespace FFmpegInteropX
 
 
 		HRESULT AllocSource(AVFrame* frame)
-		{
+		{			
 			int hr;
 
 			auto layout = frame->channel_layout ? frame->channel_layout : inputCodecCtx->channel_layout;
@@ -115,14 +115,14 @@ namespace FFmpegInteropX
 			/* Create the abuffer filter;
 			* it will be used for feeding the data into the graph. */
 			AVSource = avfilter_get_by_name("abuffer");
-			if (!AVSource)
+			if (!AVSource) 
 			{
 				fprintf(stderr, "Could not find the abuffer filter.\n");
 				return AVERROR_FILTER_NOT_FOUND;
 			}
 
 			avSource_ctx = avfilter_graph_alloc_filter(graph, AVSource, "avSource_ctx");
-			if (!avSource_ctx)
+			if (!avSource_ctx) 
 			{
 				fprintf(stderr, "Could not allocate the abuffer instance.\n");
 				return AVERROR(ENOMEM);
@@ -144,14 +144,14 @@ namespace FFmpegInteropX
 		HRESULT AllocSink()
 		{
 			AVSink = avfilter_get_by_name("abuffersink");
-			if (!AVSink)
+			if (!AVSink) 
 			{
 				fprintf(stderr, "Could not find the abuffersink filter.\n");
 				return AVERROR_FILTER_NOT_FOUND;
 			}
 
 			avSink_ctx = avfilter_graph_alloc_filter(graph, AVSink, "abuffersink");
-			if (!avSink_ctx)
+			if (!avSink_ctx) 
 			{
 				fprintf(stderr, "Could not allocate the abuffersink instance.\n");
 				return AVERROR(ENOMEM);
@@ -180,13 +180,15 @@ namespace FFmpegInteropX
 		}
 
 
-		AudioFilter(AVCodecContext* m_inputCodecCtx, winrt::hstring filterDefinition)
+	internal:
+
+		AudioFilter(AVCodecContext *m_inputCodecCtx, String^ filterDefinition)
 		{
 			this->inputCodecCtx = m_inputCodecCtx;
 			this->filterDefinition = filterDefinition;
 		}
 
-		HRESULT AddFrame(AVFrame* avFrame) override
+		HRESULT AddFrame(AVFrame *avFrame) override
 		{
 			HRESULT hr = S_OK;
 
@@ -204,7 +206,7 @@ namespace FFmpegInteropX
 			return hr;
 		}
 
-		HRESULT GetFrame(AVFrame* avFrame) override
+		HRESULT GetFrame(AVFrame *avFrame) override
 		{
 			HRESULT hr;
 			if (!isInitialized)

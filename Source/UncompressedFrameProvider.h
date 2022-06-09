@@ -11,17 +11,18 @@ extern "C"
 namespace FFmpegInteropX
 {
 	using namespace Windows::Foundation::Collections;
-
-	class UncompressedFrameProvider sealed
+	
+	ref class UncompressedFrameProvider sealed
 	{
-		std::shared_ptr<IAvEffect> filter;
+		IAvEffect^ filter;
 		AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;
-		std::shared_ptr<AbstractEffectFactory> m_effectFactory;
-		winrt::hstring pendingEffects;
+		AbstractEffectFactory^ m_effectFactory;
+		String^ pendingEffects;
 
-	public:
-		UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, std::shared_ptr<AbstractEffectFactory> p_effectFactory)
+	internal:
+
+		UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, AbstractEffectFactory^ p_effectFactory)
 		{
 			m_pAvCodecCtx = p_pAvCodecCtx;
 			m_pAvFormatCtx = p_pAvFormatCtx;
@@ -33,7 +34,7 @@ namespace FFmpegInteropX
 			m_pAvCodecCtx = avCodecCtx;
 		}
 
-		void UpdateFilter(winrt::hstring effects)
+		void UpdateFilter(String^ effects)
 		{
 			if (effects)
 			{

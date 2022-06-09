@@ -27,7 +27,7 @@ using namespace FFmpegInteropX;
 using namespace Windows::Media::MediaProperties;
 
 MediaSampleProvider::MediaSampleProvider(
-	std::shared_ptr<FFmpegReader> reader,
+	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	MediaSourceConfig^ config,
@@ -100,12 +100,12 @@ void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
 			{
 				try
 				{
-					auto winLanguage = ref new Windows::Globalization::Language(entry->TwoLetterCode());
+					auto winLanguage = ref new Windows::Globalization::Language(entry->TwoLetterCode);
 					Language = winLanguage->DisplayName;
 				}
 				catch (...)
 				{
-					Language = entry->EnglishName();
+					Language = entry->EnglishName;
 				}
 			}
 		}
@@ -136,14 +136,14 @@ void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
 			if (m_pAvFormatCtx->streams[i]->codecpar->codec_type == m_pAvStream->codecpar->codec_type)
 			{
 				count++;
-				if (i == StreamIndex())
+				if (i == StreamIndex)
 				{
 					number = count;
 				}
 			}
 		}
 
-		winrt::hstring name = m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ? m_config->DefaultAudioStreamName : m_config->DefaultSubtitleStreamName;
+		String^ name = m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ? m_config->DefaultAudioStreamName : m_config->DefaultSubtitleStreamName;
 		if (count > 1)
 		{
 			name = name + " " + number.ToString();
@@ -167,7 +167,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 		auto channels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
 		auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
 
-		winrt::hstring channelLayout = "";
+		String^ channelLayout = "";
 		char* channelLayoutName = new char[256];
 		if (channelLayoutName)
 		{
@@ -179,13 +179,13 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 
 		streamInfo = ref new AudioStreamInfo(
 			Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false, 
-			channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder());
+			channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder);
 
 		break;
 	}
 	case AVMEDIA_TYPE_VIDEO:
 	{
-		auto streamDescriptor = dynamic_cast<VideoStreamDescriptor^>(StreamDescriptor());
+		auto streamDescriptor = dynamic_cast<VideoStreamDescriptor^>(StreamDescriptor);
 		auto pixelAspect = (double)streamDescriptor->EncodingProperties->PixelAspectRatio->Numerator / streamDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
 		auto videoAspect = ((double)m_pAvCodecCtx->width / m_pAvCodecCtx->height) / pixelAspect;
 		auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
@@ -193,7 +193,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 
 		streamInfo = ref new VideoStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
 			m_pAvStream->codecpar->width, m_pAvStream->codecpar->height, videoAspect,
-			bitsPerSample, framesPerSecond, HardwareAccelerationStatus(), Decoder());
+			bitsPerSample, framesPerSecond, HardwareAccelerationStatus, Decoder);
 
 		break;
 	}
@@ -202,7 +202,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 		auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
 		
 		streamInfo = ref new SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
-			false, forced, ((SubtitleProvider*)this)->SubtitleTrack, m_config->IsExternalSubtitleParser);
+			false, forced, ((SubtitleProvider^)this)->SubtitleTrack, m_config->IsExternalSubtitleParser);
 
 		break;
 	}

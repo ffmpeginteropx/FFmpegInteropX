@@ -33,7 +33,7 @@ extern "C"
 using namespace FFmpegInteropX;
 
 UncompressedAudioSampleProvider::UncompressedAudioSampleProvider(
-	std::shared_ptr<FFmpegReader> reader,
+	FFmpegReader^ reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
 	MediaSourceConfig^ config,
@@ -45,7 +45,7 @@ UncompressedAudioSampleProvider::UncompressedAudioSampleProvider(
 
 IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor()
 {
-	frameProvider = std::shared_ptr<UncompressedFrameProvider>(new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, std::shared_ptr<AudioEffectFactory>(new AudioEffectFactory(m_pAvCodecCtx))));
+	frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new AudioEffectFactory(m_pAvCodecCtx));
 
 	auto format = m_pAvCodecCtx->sample_fmt != AV_SAMPLE_FMT_NONE ? m_pAvCodecCtx->sample_fmt : AV_SAMPLE_FMT_S16;
 	auto channels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
@@ -121,7 +121,7 @@ IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor(
 	return ref new AudioStreamDescriptor(encodingProperties);
 }
 
-HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate)
+HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, uint64 channelLayout, int sampleRate)
 {
 	HRESULT hr = S_OK;
 

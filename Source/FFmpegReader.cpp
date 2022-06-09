@@ -21,7 +21,7 @@
 
 using namespace FFmpegInteropX;
 
-FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* initProviders)
+FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<MediaSampleProvider^>* initProviders)
 	: m_pAvFormatCtx(avFormatCtx)
 	, sampleProviders(initProviders)
 {
@@ -29,7 +29,6 @@ FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared
 
 FFmpegReader::~FFmpegReader()
 {
-	DebugMessage(L"FFMpeg reader destroyed\n");
 }
 
 // Read the next packet from the stream and push it into the appropriate
@@ -63,7 +62,7 @@ int FFmpegReader::ReadPacket()
 		return E_FAIL;
 	}
 
-	std::shared_ptr<MediaSampleProvider> provider = sampleProviders->at(avPacket->stream_index);
+	MediaSampleProvider^ provider = sampleProviders->at(avPacket->stream_index);
 	if (provider)
 	{
 		provider->QueuePacket(avPacket);

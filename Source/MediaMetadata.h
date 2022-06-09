@@ -1,27 +1,28 @@
 #pragma once
 #include <pch.h>
-#include <KeyStringValuePair.h>
+#include "KeyStringValuePair.h"
 
 namespace FFmpegInteropX
 {
-	using namespace winrt::Windows::Foundation;
-	using namespace winrt::Windows::Foundation::Collections;
-	using namespace winrt::FFmpegInteropX;
+	using namespace Platform;
+	using namespace Platform::Collections;
+	using namespace Windows::Foundation;
+	using namespace Windows::Foundation::Collections;
 
-	class MediaMetadata
+	ref class MediaMetadata sealed
 	{
-		IVector<IKeyValuePair<winrt::hstring, winrt::hstring>> entries;
+		Vector<IKeyValuePair<String^, String^>^>^ entries;
 		bool tagsLoaded = false;
-	public:
+	internal:
 
 		MediaMetadata()
 		{
-			entries = winrt::single_threaded_vector<IKeyValuePair<winrt::hstring, winrt::hstring>>();
+			entries = ref new Vector<IKeyValuePair<String^, String^>^>();
 		}
 
-		void LoadMetadataTags(AVFormatContext* m_pAvFormatCtx)
+		void LoadMetadataTags(AVFormatContext *m_pAvFormatCtx)
 		{
-			if (!tagsLoaded)
+			if (!tagsLoaded) 
 			{
 				if (m_pAvFormatCtx->metadata)
 				{
@@ -30,22 +31,28 @@ namespace FFmpegInteropX
 					do {
 						entry = av_dict_get(m_pAvFormatCtx->metadata, "", entry, AV_DICT_IGNORE_SUFFIX);
 						if (entry)
-							entries->Append(KeyStringValuePair(
+							entries->Append(ref new KeyStringValuePair(
 								StringUtils::Utf8ToPlatformString(entry->key),
 								StringUtils::Utf8ToPlatformString(entry->value)));
 
 					} while (entry);
 				}
 				tagsLoaded = true;
+			}			
+		}
+	
+
+		property IVectorView<IKeyValuePair<String^, String^>^>^ MetadataTags
+		{
+			IVectorView<IKeyValuePair<String^, String^>^>^ get()
+			{
+				return entries->GetView();
 			}
 		}
-
-
-		IVectorView<IKeyValuePair<winrt::hstring, winrt::hstring>> MetadataTags()
-		{
-			return entries->GetView();
-		}
+	
 	};
+
+
 }
 
 

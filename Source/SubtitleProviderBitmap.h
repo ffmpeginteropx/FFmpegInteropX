@@ -5,11 +5,11 @@
 
 namespace FFmpegInteropX
 {
-	class SubtitleProviderBitmap : public SubtitleProvider
+	ref class SubtitleProviderBitmap : SubtitleProvider
 	{
 
-	public:
-		SubtitleProviderBitmap(std::shared_ptr<FFmpegReader> reader,
+	internal:
+		SubtitleProviderBitmap(FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config,
@@ -36,7 +36,7 @@ namespace FFmpegInteropX
 		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) override
 		{
 			// only decode image subtitles if the stream is selected
-			if (!IsEnabled())
+			if (!IsEnabled)
 			{
 				return nullptr;
 			}

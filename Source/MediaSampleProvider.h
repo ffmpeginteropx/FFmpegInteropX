@@ -22,86 +22,85 @@
 #include "Enumerations.h"
 #include "StreamInfo.h"
 
-using namespace winrt::Windows::Storage::Streams;
-using namespace winrt::Windows::Media::Core;
-using namespace winrt::Windows::Media::MediaProperties;
-using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
-
 namespace FFmpegInteropX
 {
-	
+	using namespace Windows::Storage::Streams;
+	using namespace Windows::Media::Core;
+	using namespace Windows::Media::MediaProperties;
+	using namespace Windows::Graphics::DirectX::Direct3D11;
 
-	class FFmpegReader;
+	ref class FFmpegReader;
 
-	class MediaSampleProvider abstract
+	ref class MediaSampleProvider abstract
 	{
 	public:
 		virtual ~MediaSampleProvider();
 		virtual MediaStreamSample^ GetNextSample();
 		virtual void Flush();
 
-		IMediaStreamDescriptor^ StreamDescriptor()
+		property IMediaStreamDescriptor^ StreamDescriptor
 		{
-			return m_streamDescriptor;
+			IMediaStreamDescriptor^ get() { return m_streamDescriptor; }
 		}
 
-		VideoStreamDescriptor^ VideoDescriptor()
+		property VideoStreamDescriptor^ VideoDescriptor
 		{
-			return dynamic_cast<VideoStreamDescriptor^>(m_streamDescriptor);
+			VideoStreamDescriptor^ get() { return dynamic_cast<VideoStreamDescriptor^>(m_streamDescriptor); }
 		}
 
-		AudioStreamDescriptor^ AudioDescriptor()
+		property AudioStreamDescriptor^ AudioDescriptor
 		{
-			return dynamic_cast<AudioStreamDescriptor^>(m_streamDescriptor);
+			AudioStreamDescriptor^ get() { return dynamic_cast<AudioStreamDescriptor^>(m_streamDescriptor); }
 		}
 
-		IStreamInfo^ StreamInfo()
+		property IStreamInfo^ StreamInfo
 		{
-			return streamInfo;
+			IStreamInfo^ get() { return streamInfo; }
 		}
 
-		AudioStreamInfo^ AudioInfo()
+		property AudioStreamInfo^ AudioInfo
 		{
-			return dynamic_cast<AudioStreamInfo^>(streamInfo);
+			AudioStreamInfo^ get() { return dynamic_cast<AudioStreamInfo^>(streamInfo); }
 		}
 
-		VideoStreamInfo^ VideoInfo()
+		property VideoStreamInfo^ VideoInfo
 		{
-			return dynamic_cast<VideoStreamInfo^>(streamInfo);
+			VideoStreamInfo^ get() { return dynamic_cast<VideoStreamInfo^>(streamInfo); }
 		}
 
-		SubtitleStreamInfo^ SubtitleInfo()
+		property SubtitleStreamInfo^ SubtitleInfo
 		{
-			return dynamic_cast<SubtitleStreamInfo^>(streamInfo);
+			SubtitleStreamInfo^ get() { return dynamic_cast<SubtitleStreamInfo^>(streamInfo); }
 		}
 
-		int StreamIndex()
+		property int StreamIndex
 		{
-			return m_streamIndex;
+			int get() { return m_streamIndex; }
 		}
 
-		bool IsEnabled()
+		property bool IsEnabled
 		{
-			return m_isEnabled;
+			bool get() { return m_isEnabled; }
 		}
 
-		HardwareDecoderStatus HardwareAccelerationStatus()
+		property HardwareDecoderStatus HardwareAccelerationStatus
 		{
-			return hardwareDecoderStatus;
+			HardwareDecoderStatus get() { return hardwareDecoderStatus; }
 		}
 
-		DecoderEngine Decoder()
+		property DecoderEngine Decoder
 		{
-			return decoder;
+			DecoderEngine get() { return decoder; }
 		}
 
-		bool IsCleanSample;
+		property bool IsCleanSample;
 
-		winrt::hstring Name;
-		winrt::hstring Language;
-		winrt::hstring CodecName;
-		TimeSpan LastSampleTimestamp;
+		property String^ Name;
+		property String^ Language;
+		property String^ CodecName;
+		property TimeSpan LastSampleTimestamp;
 
+	internal:
 		virtual HRESULT Initialize();
 		void InitializeNameLanguageCodec();
 		virtual void InitializeStreamInfo();
@@ -115,7 +114,7 @@ namespace FFmpegInteropX
 		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
 		void EnableStream();
 		void DisableStream();
-		virtual void SetFilters(winrt::hstring filterDefinition) { };// override for setting effects in sample providers
+		virtual void SetFilters(String^ filterDefinition) { };// override for setting effects in sample providers
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
 		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
 		virtual void Detach();
@@ -159,9 +158,9 @@ namespace FFmpegInteropX
 			return LONGLONG(duration.Duration / timeBaseFactor);
 		}
 
-	protected:
+	protected private:
 		MediaSampleProvider(
-			std::shared_ptr<FFmpegReader> reader,
+			FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config,
@@ -174,12 +173,12 @@ namespace FFmpegInteropX
 		IMediaStreamDescriptor^ m_streamDescriptor;
 		HardwareDecoderStatus hardwareDecoderStatus;
 
-	public:
+	internal:
 		// The FFmpeg context. Because they are complex types
 		// we declare them as internal so they don't get exposed
 		// externally
 		MediaSourceConfig^ m_config;
-		std::shared_ptr<FFmpegReader> m_pReader;
+		FFmpegReader^ m_pReader;
 		AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;
 		AVStream* m_pAvStream;
@@ -192,7 +191,7 @@ namespace FFmpegInteropX
 		DecoderEngine decoder;
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
-
+		
 	};
 }
 

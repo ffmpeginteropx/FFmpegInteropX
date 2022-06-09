@@ -3,17 +3,19 @@
 
 namespace FFmpegInteropX
 {
-	class StringUtils
+	using namespace Platform;
+	
+	ref class StringUtils sealed
 	{
-	public:
-		static winrt::hstring AnsiStringToPlatformString(const char * char_array)
+	internal:
+		static String^ AnsiStringToPlatformString(const char * char_array)
 		{
-			if (!char_array) return winrt::hstring(L"");
+			if (!char_array) return "";
 
 			std::string s_str = std::string(char_array);
 			std::wstring wid_str = std::wstring(s_str.begin(), s_str.end());
 			const wchar_t* w_char = wid_str.c_str();
-			return winrt::hstring(w_char);
+			return ref new String(w_char);
 		}
 
 		static std::wstring Utf8ToWString(const char* char_array)
@@ -26,24 +28,23 @@ namespace FFmpegInteropX
 			return wid_str;
 		}
 
-		static winrt::hstring Utf8ToPlatformString(const char* char_array)
+		static String^ Utf8ToPlatformString(const char* char_array)
 		{
 			auto wid_str = Utf8ToWString(char_array);
-			return winrt::hstring(wid_str.c_str(), (int)wid_str.size());
+			return ref new String(wid_str.c_str(), (int)wid_str.size());
 		}
 
-		static winrt::hstring WStringToPlatformString(const std::wstring& input)
+		static String^ WStringToPlatformString(const std::wstring& input)
 		{
-			return winrt::hstring(input.c_str(), (unsigned int)input.length());
+			return ref new Platform::String(input.c_str(), (unsigned int)input.length());
 		}
 
 
-		static std::string PlatformStringToUtf8String(winrt::hstring value)
+		static std::string PlatformStringToUtf8String(String^ value)
 		{
-			return to_string(value);
-			/*std::wstring strW(value->Begin(), value->Length());
+			std::wstring strW(value->Begin(), value->Length());
 			std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-			return myconv.to_bytes(strW);*/
+			return myconv.to_bytes(strW);
 		}
 
 	};

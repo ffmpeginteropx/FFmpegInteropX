@@ -13,18 +13,18 @@ static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelForm
 
 namespace FFmpegInteropX
 {
-	
+	using namespace Platform;
 
-	class D3D11VideoSampleProvider : public UncompressedVideoSampleProvider
+	ref class D3D11VideoSampleProvider : UncompressedVideoSampleProvider
 	{
 	private:
 		const AVCodec* hwCodec;
 		const AVCodec* swCodec;
 
-	public:
+	internal:
 
 		D3D11VideoSampleProvider(
-			std::shared_ptr<FFmpegReader> reader,
+			FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config,
@@ -56,7 +56,7 @@ namespace FFmpegInteropX
 					// init texture pool, fail if we did not get a device ptr
 					if (device && deviceContext)
 					{
-						texturePool = std::unique_ptr<TexturePool>(new TexturePool(device, 5));
+						texturePool = ref new TexturePool(device, 5);
 					}
 					else
 					{
@@ -98,7 +98,7 @@ namespace FFmpegInteropX
 					if (decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
 					{
 						decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
-						VideoInfo()->DecoderEngine = decoder;
+						VideoInfo->DecoderEngine = decoder;
 					}
 				}
 			}
@@ -109,7 +109,7 @@ namespace FFmpegInteropX
 				if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
 				{
 					decoder = DecoderEngine::FFmpegSoftwareDecoder;
-					VideoInfo()->DecoderEngine = decoder;
+					VideoInfo->DecoderEngine = decoder;
 				}
 			}
 
@@ -120,12 +120,8 @@ namespace FFmpegInteropX
 		{
 			if (sample->Direct3D11Surface)
 			{
-				auto OnProcessed_handler = [this](Windows::Media::Core::MediaStreamSample^ sender, Platform::Object^ args)
-				{
-					this->OnProcessed(sender, args);
-				};
 				samples.insert(reinterpret_cast<IUnknown*>(sample));
-				sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(OnProcessed_handler);
+				sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(this, &D3D11VideoSampleProvider::OnProcessed);
 			}
 
 			return UncompressedVideoSampleProvider::SetSampleProperties(sample);
@@ -203,8 +199,8 @@ namespace FFmpegInteropX
 				}
 			}
 
-			texturePool.reset();
-			//texturePool = nullptr;
+			delete texturePool;
+			texturePool = nullptr;
 
 			return hr;
 		}
@@ -269,7 +265,7 @@ namespace FFmpegInteropX
 
 					ID3D11VideoDevice* videoDevice = NULL;
 					hr = device->QueryInterface(&videoDevice);
-
+					
 					// check profile exists
 					if (SUCCEEDED(hr))
 					{
@@ -308,7 +304,7 @@ namespace FFmpegInteropX
 							isCompatible = count > 0;
 						}
 					}
-
+		
 					SAFE_RELEASE(videoDevice);
 				}
 
@@ -382,7 +378,7 @@ namespace FFmpegInteropX
 			return hr;
 		}
 
-		std::unique_ptr<TexturePool> texturePool;
+		TexturePool^ texturePool;
 		std::set<IUnknown*> samples;
 
 	};

@@ -21,14 +21,15 @@
 
 namespace FFmpegInteropX
 {
-	 class H264AVCSampleProvider :
+	ref class H264AVCSampleProvider :
 		public NALPacketSampleProvider
 	{
 	public:
 		virtual ~H264AVCSampleProvider();
 
+	internal:
 		H264AVCSampleProvider(
-			std::shared_ptr<FFmpegReader> reader,
+			FFmpegReader^ reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
 			MediaSourceConfig^ config, 

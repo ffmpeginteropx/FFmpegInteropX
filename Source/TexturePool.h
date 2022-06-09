@@ -2,13 +2,13 @@
 #include <d3d11.h>
 #include <DirectXInteropHelper.h>
 
-
-
 namespace FFmpegInteropX
 {
-	class TexturePool
+	using namespace Platform;
+
+	ref class TexturePool
 	{
-	public:
+	internal:
 
 		TexturePool(ID3D11Device* device, int initialPoolSize)
 		{
@@ -17,14 +17,14 @@ namespace FFmpegInteropX
 			this->initialPoolSize = initialPoolSize;
 		}
 
-	public:
+	private:
 		~TexturePool()
 		{
 			Clear();
 			SAFE_RELEASE(device);
 		}
 
-	public:
+	internal:
 
 		void Clear()
 		{

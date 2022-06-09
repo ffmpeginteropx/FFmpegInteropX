@@ -1,67 +1,75 @@
 #pragma once
 
-using namespace winrt::Windows::Foundation;
+using namespace Windows::Foundation;
 
-inline bool operator<(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline bool operator<(const TimeSpan& span, const TimeSpan& other)
 {
-	return span < other;
+	return span.Duration < other.Duration;
 }
-inline bool operator<=(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline bool operator<=(const TimeSpan& span, const TimeSpan& other)
 {
-	return span <= other;
+	return span.Duration <= other.Duration;
 }
-inline bool operator>(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline bool operator>(const TimeSpan& span, const TimeSpan& other)
 {
-	return span > other;
+	return span.Duration > other.Duration;
 }
-inline bool operator>=(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline bool operator>=(const TimeSpan& span, const TimeSpan& other)
 {
-	return span >= other;
+	return span.Duration >= other.Duration;
 }
-inline bool operator==(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline bool operator==(const TimeSpan& span, const TimeSpan& other)
 {
-	return span == other;
+	return span.Duration == other.Duration;
 }
-inline bool operator!=(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline bool operator!=(const TimeSpan& span, const TimeSpan& other)
 {
-	return span != other;
+	return span.Duration != other.Duration;
 }
 
-inline winrt::Windows::Foundation::TimeSpan operator+(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline TimeSpan operator+(const TimeSpan& span, const TimeSpan& other)
 {
-	winrt::Windows::Foundation::TimeSpan result;
-	result = span + other;
+	TimeSpan result;
+	result.Duration = span.Duration + other.Duration;
 	return result;
 }
 
-inline winrt::Windows::Foundation::TimeSpan operator-(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline TimeSpan operator-(const TimeSpan& span, const TimeSpan& other)
 {
-	winrt::Windows::Foundation::TimeSpan result;
-	result = span - other;
+	TimeSpan result;
+	result.Duration = span.Duration - other.Duration;
 	return result;
 }
 
-inline winrt::Windows::Foundation::TimeSpan& operator+=(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline TimeSpan& operator+=(TimeSpan& span, const TimeSpan& other)
 {
-	return span += other;
+	span.Duration += other.Duration;
+	return span;
 }
 
-inline winrt::Windows::Foundation::TimeSpan& operator-=(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline TimeSpan& operator-=(TimeSpan& span, const TimeSpan& other)
 {
-	return span -= other;
+	span.Duration -= other.Duration;
+	return span;
 }
 
-inline winrt::Windows::Foundation::TimeSpan operator*(const winrt::Windows::Foundation::TimeSpan& span, const double factor)
+inline TimeSpan operator*(const TimeSpan& span, const double factor)
 {
-	return (span * factor);
+	TimeSpan result;
+	result.Duration = (long long)(span.Duration * factor);
+	return result;
 }
 
-inline winrt::Windows::Foundation::TimeSpan operator/(const winrt::Windows::Foundation::TimeSpan& span, const double factor)
+inline TimeSpan operator/(const TimeSpan& span, const double factor)
 {
-	return (span / factor);
+	TimeSpan result;
+	result.Duration = (long long)(span.Duration / factor);
+	return result;
 }
 
-//inline winrt::Windows::Foundation::TimeSpan TowinrtTimeSpan(long long ticks)
-//{
-//	return std::chrono::duration<long, long> a(ticks)
-//}
+inline TimeSpan ToTimeSpan(long long ticks)
+{
+	TimeSpan result;
+	result.Duration = ticks;
+	return result;
+}
