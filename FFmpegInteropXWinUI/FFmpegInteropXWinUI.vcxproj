@@ -176,6 +176,7 @@
     <ClInclude Include="SubtitleStreamInfo.h" />
     <ClInclude Include="TexturePool.h" />
     <ClInclude Include="TimeSpanHelpers.h" />
+    <ClInclude Include="UncompressedAudioSampleProvider.h" />
     <ClInclude Include="UncompressedFrameProvider.h" />
     <ClInclude Include="UncompressedSampleProvider.h" />
     <ClInclude Include="UncompressedVideoSampleProvider.h" />
@@ -220,6 +221,7 @@
     <ClCompile Include="SubtitleProvider.cpp" />
     <ClCompile Include="SubtitleProviderSsaAss.cpp" />
     <ClCompile Include="SubtitleStreamInfo.cpp" />
+    <ClCompile Include="UncompressedAudioSampleProvider.cpp" />
     <ClCompile Include="UncompressedSampleProvider.cpp" />
     <ClCompile Include="UncompressedVideoSampleProvider.cpp" />
     <ClCompile Include="VideoFrame.cpp" />

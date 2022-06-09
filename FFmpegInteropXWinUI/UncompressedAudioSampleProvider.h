@@ -17,6 +17,7 @@
 //*****************************************************************************
 
 #pragma once
+#include <winrt/FFmpegInteropXWinUI.h>
 #include "UncompressedSampleProvider.h"
 
 namespace FFmpegInteropX
@@ -30,10 +31,10 @@ namespace FFmpegInteropX
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config, 
+			winrt::FFmpegInteropXWinUI::MediaSourceConfig const& config, 
 			int streamIndex);
-		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
-		IMediaStreamDescriptor^ CreateStreamDescriptor() override;
+		virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
+		winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
 		HRESULT CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate);
 		HRESULT UpdateResampler();
 	

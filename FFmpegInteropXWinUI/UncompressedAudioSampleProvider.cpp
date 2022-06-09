@@ -36,14 +36,14 @@ UncompressedAudioSampleProvider::UncompressedAudioSampleProvider(
 	std::shared_ptr<FFmpegReader> reader,
 	AVFormatContext* avFormatCtx,
 	AVCodecContext* avCodecCtx,
-	MediaSourceConfig^ config,
+	winrt::FFmpegInteropXWinUI::MediaSourceConfig const& config,
 	int streamIndex)
 	: UncompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, HardwareDecoderStatus::Unknown)
 	, m_pSwrCtx(nullptr)
 {
 }
 
-IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor()
+winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvider::CreateStreamDescriptor()
 {
 	frameProvider = std::shared_ptr<UncompressedFrameProvider>(new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, std::shared_ptr<AudioEffectFactory>(new AudioEffectFactory(m_pAvCodecCtx))));
 
@@ -68,7 +68,7 @@ IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor(
 	outChannels = inChannels;
 	outChannelLayout = inChannelLayout;
 
-	if (m_config->DownmixAudioStreamsToStereo && outChannelLayout > AV_CH_LAYOUT_STEREO)
+	if (m_config.DownmixAudioStreamsToStereo() && outChannelLayout > AV_CH_LAYOUT_STEREO)
 	{
 		// use existing downmix channels, if available, otherwise perform manual downmix using resampler
 		if (outChannelLayout & AV_CH_LAYOUT_STEREO_DOWNMIX)
@@ -110,15 +110,15 @@ IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor(
 		: (UINT32)outChannelLayout;
 
 	// set encoding properties
-	auto encodingProperties = ref new AudioEncodingProperties();
-	encodingProperties->Subtype = outSampleFormat == AV_SAMPLE_FMT_FLT ? MediaEncodingSubtypes::Float : MediaEncodingSubtypes::Pcm;
-	encodingProperties->BitsPerSample = bitsPerSample;
-	encodingProperties->SampleRate = outSampleRate;
-	encodingProperties->ChannelCount = outChannels;
-	encodingProperties->Bitrate = bitsPerSample * outSampleRate * outChannels;
-	encodingProperties->Properties->Insert(MF_MT_AUDIO_CHANNEL_MASK, reportedChannelLayout);
+	auto encodingProperties = winrt::Windows::Media::MediaProperties::AudioEncodingProperties();
+	encodingProperties.Subtype(outSampleFormat == AV_SAMPLE_FMT_FLT ? MediaEncodingSubtypes::Float() : MediaEncodingSubtypes::Pcm());
+	encodingProperties.BitsPerSample(bitsPerSample);
+	encodingProperties.SampleRate(outSampleRate);
+	encodingProperties.ChannelCount(outChannels);
+	encodingProperties.Bitrate(bitsPerSample * outSampleRate * outChannels);
+	encodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value(reportedChannelLayout));
 
-	return ref new AudioStreamDescriptor(encodingProperties);
+	return winrt::Windows::Media::Core::AudioStreamDescriptor(encodingProperties);
 }
 
 HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate)
@@ -190,7 +190,7 @@ UncompressedAudioSampleProvider::~UncompressedAudioSampleProvider()
 	swr_free(&m_pSwrCtx);
 }
 
-HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
+HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
 {
 	HRESULT hr = S_OK;
 
@@ -217,7 +217,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 			else
 			{
 				auto size = min(aBufferSize, (unsigned int)(resampledDataSize * outChannels * bytesPerSample));
-				*pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(resampledData[0], size, av_freep, resampledData);
+				*pBuffer = *NativeBuffer::NativeBufferFactory::CreateNativeBuffer(resampledData[0], size, av_freep, resampledData);
 			}
 		}
 		else
@@ -227,7 +227,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 			if (bufferRef)
 			{
 				auto size = min(bufferRef->size, avFrame->nb_samples * outChannels * bytesPerSample);
-				*pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)size, free_buffer, bufferRef);
+				*pBuffer = *NativeBuffer::NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)size, free_buffer, bufferRef);
 			}
 			else
 			{
