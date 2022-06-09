@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <unknwn.h>
 #include <memory>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -41,6 +42,7 @@
 #include <winrt/Windows.UI.Core.Preview.h>
 #include <winrt/Windows.Media.Core.h>
 #include <winrt/Windows.Graphics.Imaging.h>
+#include <mfidl.h>
 extern "C"
 {
 #include <libavcodec/avcodec.h>
@@ -79,3 +81,4 @@ std::vector<T> to_vector(IVectorView<T> input)
 		output.emplace_back(i);
 	return output;
 }
+

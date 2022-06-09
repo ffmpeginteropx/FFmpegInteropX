@@ -19,12 +19,12 @@ namespace FFmpegInteropX
 	//using namespace winrt::Windows::Foundation;
 	//using namespace winrt::FFmpegInteropXWinUI;
 
-	class SubtitleProvider abstract :
+	class SubtitleProvider :
 		public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
 	{
 	public:
 		winrt::Windows::Media::Core::TimedMetadataTrack SubtitleTrack = { nullptr };
-
+		
 		winrt::Windows::Media::Playback::MediaPlaybackItem PlaybackItem = { nullptr };
 
 		winrt::Windows::Foundation::TimeSpan SubtitleDelay;
@@ -35,8 +35,19 @@ namespace FFmpegInteropX
 			MediaSourceConfig const& config,
 			int index,
 			winrt::Windows::Media::Core::TimedMetadataKind const& ptimedMetadataKind,
-			winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher);
-
+			winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher,
+			winrt::Windows::Media::Core::TimedMetadataTrack const& pTrack)
+			: CompressedSampleProvider(reader,
+				avFormatCtx,
+				avCodecCtx,
+				config,
+				index,
+				HardwareDecoderStatus::Unknown),
+			dispatcher(pdispatcher),
+			SubtitleTrack(pTrack),
+			timedMetadataKind(ptimedMetadataKind)
+		{
+		}
 
 		virtual HRESULT Initialize() override
 		{
@@ -564,14 +575,14 @@ namespace FFmpegInteropX
 		std::vector<winrt::Windows::Media::Core::IMediaCue> pendingRefCues;
 		std::vector<winrt::Windows::Media::Core::IMediaCue> pendingChangedDurationCues;
 		winrt::Windows::Media::Core::TimedMetadataKind timedMetadataKind;
-		winrt::Windows::UI::Core::CoreDispatcher dispatcher;
-		winrt::Windows::UI::Xaml::DispatcherTimer timer;
+		winrt::Windows::UI::Core::CoreDispatcher dispatcher = {nullptr};
+		winrt::Windows::UI::Xaml::DispatcherTimer timer = { nullptr };
 		TimeSpan newDelay;
 		std::vector<std::pair<winrt::Windows::Media::Core::IMediaCue, long long>> negativePositionCues;
 		bool isPreviousCueInfiniteDuration;
-		winrt::Windows::Media::Core::IMediaCue infiniteDurationCue;
-		winrt::Windows::Media::Core::IMediaCue lastExtendedDurationCue;
-		winrt::Windows::Media::Core::TimedMetadataTrack referenceTrack;
+		winrt::Windows::Media::Core::IMediaCue infiniteDurationCue = { nullptr };
+		winrt::Windows::Media::Core::IMediaCue lastExtendedDurationCue = { nullptr };
+		winrt::Windows::Media::Core::TimedMetadataTrack referenceTrack = { nullptr };
 		const long long InfiniteDuration = ((long long)0xFFFFFFFF) * 10000;
 
 	};

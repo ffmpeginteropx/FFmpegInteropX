@@ -11,13 +11,10 @@ winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface DirectXInteropHe
 {
 	winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface result;
 	winrt::com_ptr<::IInspectable> inspectableSurface;
-	if (winrt::check_hresult(CreateDirect3D11SurfaceFromDXGISurface(source, reinterpret_cast<::IInspectable**>(winrt::put_abi(inspectableSurface)))))
-	{
-		inspectableSurface.as(result);
-		return result;
-	}
+	winrt::check_hresult(CreateDirect3D11SurfaceFromDXGISurface(source, reinterpret_cast<::IInspectable**>(winrt::put_abi(inspectableSurface))));
 
-	return nullptr;
+	inspectableSurface.as(result);
+	return result;
 }
 
 HRESULT DirectXInteropHelper::GetDXGISurface2(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface source, IDXGISurface** dxgiSurface)

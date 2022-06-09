@@ -41,12 +41,12 @@
     <ClCompile Include="UncompressedVideoSampleProvider.cpp" />
     <ClCompile Include="D3D11VideoSampleProvider.cpp" />
     <ClCompile Include="FFmpegUtils.cpp" />
-    <ClCompile Include="NALPacketSampleProvider.cpp" />
     <ClCompile Include="H264AVCSampleProvider.cpp" />
     <ClCompile Include="HEVCSampleProvider.cpp" />
     <ClCompile Include="AttachedFileHelper.cpp" />
     <ClCompile Include="SubtitleProviderSsaAss.cpp" />
     <ClCompile Include="SubtitleProvider.cpp" />
+    <ClCompile Include="NALPacketSampleProvider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -92,12 +92,12 @@
     <ClInclude Include="UncompressedVideoSampleProvider.h" />
     <ClInclude Include="D3D11VideoSampleProvider.h" />
     <ClInclude Include="FFmpegUtils.h" />
-    <ClInclude Include="NALPacketSampleProvider.h" />
     <ClInclude Include="H264AVCSampleProvider.h" />
     <ClInclude Include="HEVCSampleProvider.h" />
     <ClInclude Include="SubtitleProviderSsaAss.h" />
     <ClInclude Include="AttachedFileHelper.h" />
     <ClInclude Include="SubtitleProviderBitmap.h" />
+    <ClInclude Include="NALPacketSampleProvider.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Class.idl" />

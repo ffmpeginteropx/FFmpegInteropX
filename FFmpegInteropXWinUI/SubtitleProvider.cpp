@@ -24,22 +24,3 @@ using namespace winrt::Windows::Media::Core;
 //	dispatcher(pdispatcher),
 //{
 //}
-
-FFmpegInteropX::SubtitleProvider::SubtitleProvider(std::shared_ptr<FFmpegReader> reader,
-	AVFormatContext* avFormatCtx,
-	AVCodecContext* avCodecCtx,
-	MediaSourceConfig const& config,
-	int index,
-	winrt::Windows::Media::Core::TimedMetadataKind const& ptimedMetadataKind,
-	winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher)
-	: CompressedSampleProvider(reader,
-		avFormatCtx,
-		avCodecCtx,
-		config, 
-		index, 
-		HardwareDecoderStatus::Unknown()),
-	dispatcher(pdispatcher),
-	SubtitleTrack(winrt::Windows::Media::Core::TimedMetadataTrack(L"a", L"winrt lalalalalalalala", winrt::Windows::Media::Core::TimedMetadataKind::Subtitle))
-{
-	timedMetadataKind = ptimedMetadataKind;
-}

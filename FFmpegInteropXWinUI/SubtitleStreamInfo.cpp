@@ -22,7 +22,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     }
     Windows::Media::Core::TimedMetadataTrack SubtitleStreamInfo::SubtitleTrack()
     {
-        throw hresult_not_implemented();
+        return Windows::Media::Core::TimedMetadataTrack{ nullptr };
     }
     hstring SubtitleStreamInfo::Name()
     {
