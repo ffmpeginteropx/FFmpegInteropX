@@ -22,7 +22,24 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         hstring CodecName();
         FFmpegInteropXWinUI::StreamDisposition Disposition();
         int64_t Bitrate();
+    public:
         bool IsDefault();
+
+
+    private:
+        hstring name;
+        hstring language;
+        hstring codecName;
+        StreamDisposition disposition;
+        int64_t bitrate;
+        bool isDefault;
+
+        int channels;
+        hstring channelLayout;
+        int sampleRate;
+        int bitsPerSample;
+
+        FFmpegInteropXWinUI::DecoderEngine decoderEngine;
     };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation

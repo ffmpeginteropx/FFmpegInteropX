@@ -10,50 +10,73 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 {
     AudioStreamInfo::AudioStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropXWinUI::StreamDisposition const& disposition, int64_t bitrate, bool isDefault, int32_t channels, hstring const& channelLayout, int32_t sampleRate, int32_t bitsPerSample, FFmpegInteropXWinUI::DecoderEngine const& decoderEngine)
     {
-        throw hresult_not_implemented();
+        this->name = name;
+        this->language = language;
+        this->codecName = codecName;
+        this->disposition = disposition;
+        this->bitrate = bitrate;
+        this->isDefault = isDefault;
+
+        this->channels = channels;
+        this->channelLayout = channelLayout;
+        this->sampleRate = sampleRate;
+        this->bitsPerSample = bitsPerSample;
+
+        this->decoderEngine = decoderEngine;
     }
+
     int32_t AudioStreamInfo::Channels()
     {
-        throw hresult_not_implemented();
+        return channels;
     }
+    
     hstring AudioStreamInfo::ChannelLayout()
     {
-        throw hresult_not_implemented();
+        return channelLayout;
     }
+    
     int32_t AudioStreamInfo::SampleRate()
     {
-        throw hresult_not_implemented();
+        return sampleRate;
     }
+    
     int32_t AudioStreamInfo::BitsPerSample()
     {
-        throw hresult_not_implemented();
+        return bitsPerSample;
     }
+    
     FFmpegInteropXWinUI::DecoderEngine AudioStreamInfo::DecoderEngine()
     {
-        throw hresult_not_implemented();
+        return decoderEngine;
     }
+    
     hstring AudioStreamInfo::Name()
     {
-        throw hresult_not_implemented();
+        return name;
     }
+    
     hstring AudioStreamInfo::Language()
     {
-        throw hresult_not_implemented();
+        return language;
     }
+    
     hstring AudioStreamInfo::CodecName()
     {
-        throw hresult_not_implemented();
+        return codecName;
     }
+    
     FFmpegInteropXWinUI::StreamDisposition AudioStreamInfo::Disposition()
     {
-        throw hresult_not_implemented();
+        return disposition;
     }
+    
     int64_t AudioStreamInfo::Bitrate()
     {
-        throw hresult_not_implemented();
+        return bitrate;
     }
+    
     bool AudioStreamInfo::IsDefault()
     {
-        throw hresult_not_implemented();
+        return isDefault;
     }
 }

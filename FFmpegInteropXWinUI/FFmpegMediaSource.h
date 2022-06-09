@@ -42,6 +42,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         Windows::Foundation::TimeSpan SubtitleDelay();
         Windows::Foundation::TimeSpan BufferTime();
         Windows::Media::Playback::MediaPlaybackSession PlaybackSession();
+        void FFmpegMediaSource::Close();
     };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation

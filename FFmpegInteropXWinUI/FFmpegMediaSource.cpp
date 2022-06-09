@@ -132,4 +132,8 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     {
         throw hresult_not_implemented();
     }
+    void FFmpegMediaSource::Close()
+    {
+        throw hresult_not_implemented();
+    }
 }
