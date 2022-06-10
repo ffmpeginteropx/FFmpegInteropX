@@ -97,14 +97,14 @@
 
                         <TextBlock Text="GPU Video Postprocessing:" Margin="0,20,0,5"/>
 
-                        <ToggleSwitch x:Name="enableVideoEffects" Header="Enable GPU video postprocessing (applied on next file)" OffContent="OFF" OnContent="ON" Toggled="EnableVideoEffects_Toggled" Margin="0,10,0,0" />
+                        <!--<ToggleSwitch x:Name="enableVideoEffects" Header="Enable GPU video postprocessing (applied on next file)" OffContent="OFF" OnContent="ON" Toggled="EnableVideoEffects_Toggled" Margin="0,10,0,0" />
                         <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Contrast" Value="{x:Bind Path=VideoEffectConfiguration.Contrast, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
                         <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Brightness" Value="{x:Bind Path=VideoEffectConfiguration.Brightness, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
                         <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Saturation" Value="{x:Bind Path=VideoEffectConfiguration.Saturation, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
                         <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Temperature" Value="{x:Bind Path=VideoEffectConfiguration.Temperature, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
                         <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Tint" Value="{x:Bind Path=VideoEffectConfiguration.Tint, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
                         <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="1" StepFrequency="0.1" Header="Sharpness" Value="{x:Bind Path=VideoEffectConfiguration.Sharpness, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
-                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="1" StepFrequency="0.1" Header="SharpnessThreshold" Value="{x:Bind Path=VideoEffectConfiguration.SharpnessThreshold, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="1" StepFrequency="0.1" Header="SharpnessThreshold" Value="{x:Bind Path=VideoEffectConfiguration.SharpnessThreshold, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />-->
 
                     </StackPanel>
                 </ScrollViewer>

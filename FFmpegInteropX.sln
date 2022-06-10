@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "Tests\UnitTest.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFmpegInteropXWinUI", "FFmpegInteropXWinUI\FFmpegInteropXWinUI.vcxproj", "{B236EDC3-0DFD-4CD0-AC98-E57133505297}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaPlayerWinUI", "MediaPlayerWinUI\MediaPlayerWinUI.csproj", "{2B91C84C-1C45-4E16-B8E4-A959BED66152}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -125,6 +127,30 @@ Global
 		{B236EDC3-0DFD-4CD0-AC98-E57133505297}.Release|x64.Build.0 = Release|x64
 		{B236EDC3-0DFD-4CD0-AC98-E57133505297}.Release|x86.ActiveCfg = Release|Win32
 		{B236EDC3-0DFD-4CD0-AC98-E57133505297}.Release|x86.Build.0 = Release|Win32
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|ARM.ActiveCfg = Debug|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|ARM.Build.0 = Debug|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|ARM.Deploy.0 = Debug|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|ARM64.ActiveCfg = Debug|arm64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|ARM64.Build.0 = Debug|arm64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|ARM64.Deploy.0 = Debug|arm64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|x64.ActiveCfg = Debug|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|x64.Build.0 = Debug|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|x64.Deploy.0 = Debug|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|x86.ActiveCfg = Debug|x86
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|x86.Build.0 = Debug|x86
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Debug|x86.Deploy.0 = Debug|x86
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|ARM.ActiveCfg = Release|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|ARM.Build.0 = Release|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|ARM.Deploy.0 = Release|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|ARM64.ActiveCfg = Release|arm64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|ARM64.Build.0 = Release|arm64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|ARM64.Deploy.0 = Release|arm64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|x64.ActiveCfg = Release|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|x64.Build.0 = Release|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|x64.Deploy.0 = Release|x64
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|x86.ActiveCfg = Release|x86
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|x86.Build.0 = Release|x86
+		{2B91C84C-1C45-4E16-B8E4-A959BED66152}.Release|x86.Deploy.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

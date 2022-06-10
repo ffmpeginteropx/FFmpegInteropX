@@ -163,7 +163,7 @@ namespace FFmpegInteropXWinUI
 		HardwareDecoderStatus HardwareDecoderStatus{ get; };
 		DecoderEngine DecoderEngine
 		{
-			get; 
+			get;
 		};
 	}
 
@@ -230,7 +230,7 @@ namespace FFmpegInteropXWinUI
 
 	}
 
-	
+
 	runtimeclass CharacterEncoding
 	{
 		CharacterEncoding();
@@ -394,7 +394,7 @@ namespace FFmpegInteropXWinUI
 	}
 
 
-	runtimeclass FFmpegMediaSource: Windows.Foundation.IClosable
+	runtimeclass FFmpegMediaSource : Windows.Foundation.IClosable
 	{
 		///<summary>Creates a FFmpegMediaSource from a stream.</summary>
 	   static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream, MediaSourceConfig config);
@@ -496,7 +496,7 @@ namespace FFmpegInteropXWinUI
 
 		///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
 		///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this .</remarks>
-		Windows.Media.Playback.MediaPlaybackSession PlaybackSession{ get; };
+		Windows.Media.Playback.MediaPlaybackSession PlaybackSession{ get; set; };
 	}
 
 
@@ -504,145 +504,145 @@ namespace FFmpegInteropXWinUI
 	{
 		MediaSourceConfig();
 
-		///<summary>Enable passthrough for MP3 audio to system decoder.</summary>
-		///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
-		Boolean PassthroughAudioMP3{ get; set; };
+	///<summary>Enable passthrough for MP3 audio to system decoder.</summary>
+	///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
+	Boolean PassthroughAudioMP3{ get; set; };
 
-		///<summary>Enable passthrough for AAC audio to system decoder.</summary>
-		///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
-		Boolean PassthroughAudioAAC{ get; set; };
+	///<summary>Enable passthrough for AAC audio to system decoder.</summary>
+	///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
+	Boolean PassthroughAudioAAC{ get; set; };
 
-		///<summary>Sets the video decoder mode. Default is AutoDetection.</summary>
-		VideoDecoderMode VideoDecoderMode{ get; set; };
+	///<summary>Sets the video decoder mode. Default is AutoDetection.</summary>
+	VideoDecoderMode VideoDecoderMode{ get; set; };
 
-		///<summary>Max profile allowed for H264 system decoder. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
-		Int32 SystemDecoderH264MaxProfile{ get; set; };
+	///<summary>Max profile allowed for H264 system decoder. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
+	Int32 SystemDecoderH264MaxProfile{ get; set; };
 
-		///<summary>Max level allowed for H264 system decoder. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
-		///<remarks>Most H264 HW decoders only support Level 4.1, so this is the default.</remarks>
-		Int32 SystemDecoderH264MaxLevel{ get; set; };
-
-
-		///<summary>Max profile allowed for HEVC system decoder. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
-		Int32 SystemDecoderHEVCMaxProfile{ get; set; };
-
-		///<summary>Max level allowed for HEVC system decoder. Default: Disabled (-1).</summary>
-		///<remarks>Encoded as: 30*Major + 3*Minor. So Level 6.0 = 30*6 = 180, 5.1 = 30*5 + 3*1 = 163, 4.1 = 123.
-		///Many HEVC HW decoders support even very high levels, so we disable the check by default.</remarks>
-		Int32 SystemDecoderHEVCMaxLevel{ get; set; };
-		///<summary>Allow video output in IYuv format.</summary>
-		Boolean VideoOutputAllowIyuv{ get; set; };
-
-		///<summary>Allow video output in 10bit formats.</summary>
-		Boolean VideoOutputAllow10bit{ get; set; };
-
-		///<summary>Allow video output in BGRA format - required for video transparency.</summary>
-		Boolean VideoOutputAllowBgra8{ get; set; };
-
-		///<summary>Allow video output in NV12 format.</summary>
-		Boolean VideoOutputAllowNv12{ get; set; };
+	///<summary>Max level allowed for H264 system decoder. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
+	///<remarks>Most H264 HW decoders only support Level 4.1, so this is the default.</remarks>
+	Int32 SystemDecoderH264MaxLevel{ get; set; };
 
 
-		///<summary>The maximum number of broken frames to skipp in a stream before stopping decoding.</summary>
-		UInt32 SkipErrors{ get; set; };
+	///<summary>Max profile allowed for HEVC system decoder. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
+	Int32 SystemDecoderHEVCMaxProfile{ get; set; };
 
-		///<summary>The maximum number of video decoding threads.</summary>
-		UInt32 MaxVideoThreads{ get; set; };
+	///<summary>Max level allowed for HEVC system decoder. Default: Disabled (-1).</summary>
+	///<remarks>Encoded as: 30*Major + 3*Minor. So Level 6.0 = 30*6 = 180, 5.1 = 30*5 + 3*1 = 163, 4.1 = 123.
+	///Many HEVC HW decoders support even very high levels, so we disable the check by default.</remarks>
+	Int32 SystemDecoderHEVCMaxLevel{ get; set; };
+	///<summary>Allow video output in IYuv format.</summary>
+	Boolean VideoOutputAllowIyuv{ get; set; };
 
-		///<summary>The maximum number of audio decoding threads.</summary>
-		UInt32 MaxAudioThreads{ get; set; };
+	///<summary>Allow video output in 10bit formats.</summary>
+	Boolean VideoOutputAllow10bit{ get; set; };
 
-		///<summary>The maximum supported playback rate. This is set on the media stream source itself. 
-		/// This does not modify what the transport control default UI shows as available playback speeds. Custom UI is necessary!</summary>
-		Double MaxSupportedPlaybackRate{ get; set; };
+	///<summary>Allow video output in BGRA format - required for video transparency.</summary>
+	Boolean VideoOutputAllowBgra8{ get; set; };
 
-		///<summary>The buffer size in bytes to use for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
-		UInt32 StreamBufferSize{ get; set; };
-
-		///<summary>Additional options to use when creating the ffmpeg AVFormatContext.</summary>
-		Windows.Foundation.Collections.PropertySet FFmpegOptions{ get; set; };
-
-
-		///<summary>The default BufferTime that gets assigned to the MediaStreamSource for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
-		///<remarks>A value of 0 is recommended for local files, to avoid framework bugs and unneccessary memory consumption.</remarks>
-		Windows.Foundation.TimeSpan DefaultBufferTime{ get; set; };
-
-		///<summary>The default BufferTime that gets assigned to the MediaStreamSource for URI sources.</summary>
-		///<remarks>Default is 5 seconds. You might want to use higher values, especially for DASH stream sources.</remarks>
-		Windows.Foundation.TimeSpan DefaultBufferTimeUri{ get; set; };
+	///<summary>Allow video output in NV12 format.</summary>
+	Boolean VideoOutputAllowNv12{ get; set; };
 
 
-		///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>
-		Boolean AutoSelectForcedSubtitles{ get; set; };
+	///<summary>The maximum number of broken frames to skipp in a stream before stopping decoding.</summary>
+	UInt32 SkipErrors{ get; set; };
 
-		///<summary>Use SubtitleRegion and SubtitleStyle from config class, even if custom styles are defined for a subtitle.</summary>
-		Boolean OverrideSubtitleStyles{ get; set; };
+	///<summary>The maximum number of video decoding threads.</summary>
+	UInt32 MaxVideoThreads{ get; set; };
 
-		///<summary>Default region to use for subtitles.</summary>
-		Windows.Media.Core.TimedTextRegion SubtitleRegion{ get; set; };
+	///<summary>The maximum number of audio decoding threads.</summary>
+	UInt32 MaxAudioThreads{ get; set; };
 
-		///<summary>Default style to use for subtitles.</summary>
-		Windows.Media.Core.TimedTextStyle SubtitleStyle{ get; set; };
+	///<summary>The maximum supported playback rate. This is set on the media stream source itself. 
+	/// This does not modify what the transport control default UI shows as available playback speeds. Custom UI is necessary!</summary>
+	Double MaxSupportedPlaybackRate{ get; set; };
 
-		///<summary>Enable conversion of ANSI encoded subtitles to UTF-8.</summary>
-		Boolean AutoCorrectAnsiSubtitles{ get; set; };
+	///<summary>The buffer size in bytes to use for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
+	UInt32 StreamBufferSize{ get; set; };
 
-		///<summary>The character encoding used to decode ANSI encoded subtitles. By default, the active windows codepage is used.</summary>
-		CharacterEncoding AnsiSubtitleEncoding{ get; set; };
-
-		///<summary>The subtitle delay will be initially applied to all subtitle tracks.
-		///Use SetSubtitleDelay() on the FFmpegMediaSource instance if you want to change the delay during playback.</summary>
-		Windows.Foundation.TimeSpan DefaultSubtitleDelay{ get; set; };
-
-		/// <summary>FFmpegMediaSource will seek to the closest video keyframe, if set to true.</summary>
-		/// <remarks>
-		/// For FastSeek to work, you must use the MediaPlayer for playback, and assign
-		/// MediaPlayer.PlaybackSession to the FFmpegMediaSource.PlaybackSession .
-		/// </remarks>
-		Boolean FastSeek{ get; set; };
-
-		///<summary>Ensure that audio plays without artifacts after fast seeking.</summary>
-		///<remarks>This will slightly reduce the speed of fast seeking. Enabled by default.</remarks>
-		Boolean FastSeekCleanAudio{ get; set; };
-
-		///<summary>Try to improve stream switching times when FastSeek is enabled.</summary>
-		Boolean FastSeekSmartStreamSwitching{ get; set; };
-
-		///<summary>The default name to use for audio streams.</summary>
-		String DefaultAudioStreamName{ get; set; };
-
-		///<summary>The default name to use for subtitle streams.</summary>
-		String DefaultSubtitleStreamName{ get; set; };
-
-		///<summary>The default name to use for external subtitle streams.</summary>
-		String DefaultExternalSubtitleStreamName{ get; set; };
-
-		///<summary>Use subtitle font files that are embedded in the media file.</summary>
-		Boolean UseEmbeddedSubtitleFonts{ get; set; };
-
-		///<summary>The folder where attachments such as fonts are stored (inside the app's temp folder).</summary>
-		String AttachmentCacheFolderName{ get; set; };
-
-		///<summary>The minimum amount of time a subtitle should be shown. Default is 0.</summary>
-		Windows.Foundation.TimeSpan MinimumSubtitleDuration{ get; set; };
-
-		///<summary>Each subtitle's duration is extended by this amount. Default is 0.</summary>
-		Windows.Foundation.TimeSpan AdditionalSubtitleDuration{ get; set; };
-
-		///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
-		Boolean PreventModifiedSubtitleDurationOverlap{ get; set; };
+	///<summary>Additional options to use when creating the ffmpeg AVFormatContext.</summary>
+	Windows.Foundation.Collections.PropertySet FFmpegOptions{ get; set; };
 
 
-		///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
-		///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-		String FFmpegVideoFilters{ get; set; };
+	///<summary>The default BufferTime that gets assigned to the MediaStreamSource for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
+	///<remarks>A value of 0 is recommended for local files, to avoid framework bugs and unneccessary memory consumption.</remarks>
+	Windows.Foundation.TimeSpan DefaultBufferTime{ get; set; };
 
-		///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegMediaSource.SetFFmpegAudioFilters().</summary>
-		String FFmpegAudioFilters{ get; set; };
+	///<summary>The default BufferTime that gets assigned to the MediaStreamSource for URI sources.</summary>
+	///<remarks>Default is 5 seconds. You might want to use higher values, especially for DASH stream sources.</remarks>
+	Windows.Foundation.TimeSpan DefaultBufferTimeUri{ get; set; };
 
-		///<summary>Downmix multi-channel audio streams to stereo format.</summary>
-		Boolean DownmixAudioStreamsToStereo{ get; set; };
-	}
+
+	///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>
+	Boolean AutoSelectForcedSubtitles{ get; set; };
+
+	///<summary>Use SubtitleRegion and SubtitleStyle from config class, even if custom styles are defined for a subtitle.</summary>
+	Boolean OverrideSubtitleStyles{ get; set; };
+
+	///<summary>Default region to use for subtitles.</summary>
+	Windows.Media.Core.TimedTextRegion SubtitleRegion{ get; set; };
+
+	///<summary>Default style to use for subtitles.</summary>
+	Windows.Media.Core.TimedTextStyle SubtitleStyle{ get; set; };
+
+	///<summary>Enable conversion of ANSI encoded subtitles to UTF-8.</summary>
+	Boolean AutoCorrectAnsiSubtitles{ get; set; };
+
+	///<summary>The character encoding used to decode ANSI encoded subtitles. By default, the active windows codepage is used.</summary>
+	CharacterEncoding AnsiSubtitleEncoding{ get; set; };
+
+	///<summary>The subtitle delay will be initially applied to all subtitle tracks.
+	///Use SetSubtitleDelay() on the FFmpegMediaSource instance if you want to change the delay during playback.</summary>
+	Windows.Foundation.TimeSpan DefaultSubtitleDelay{ get; set; };
+
+	/// <summary>FFmpegMediaSource will seek to the closest video keyframe, if set to true.</summary>
+	/// <remarks>
+	/// For FastSeek to work, you must use the MediaPlayer for playback, and assign
+	/// MediaPlayer.PlaybackSession to the FFmpegMediaSource.PlaybackSession .
+	/// </remarks>
+	Boolean FastSeek{ get; set; };
+
+	///<summary>Ensure that audio plays without artifacts after fast seeking.</summary>
+	///<remarks>This will slightly reduce the speed of fast seeking. Enabled by default.</remarks>
+	Boolean FastSeekCleanAudio{ get; set; };
+
+	///<summary>Try to improve stream switching times when FastSeek is enabled.</summary>
+	Boolean FastSeekSmartStreamSwitching{ get; set; };
+
+	///<summary>The default name to use for audio streams.</summary>
+	String DefaultAudioStreamName{ get; set; };
+
+	///<summary>The default name to use for subtitle streams.</summary>
+	String DefaultSubtitleStreamName{ get; set; };
+
+	///<summary>The default name to use for external subtitle streams.</summary>
+	String DefaultExternalSubtitleStreamName{ get; set; };
+
+	///<summary>Use subtitle font files that are embedded in the media file.</summary>
+	Boolean UseEmbeddedSubtitleFonts{ get; set; };
+
+	///<summary>The folder where attachments such as fonts are stored (inside the app's temp folder).</summary>
+	String AttachmentCacheFolderName{ get; set; };
+
+	///<summary>The minimum amount of time a subtitle should be shown. Default is 0.</summary>
+	Windows.Foundation.TimeSpan MinimumSubtitleDuration{ get; set; };
+
+	///<summary>Each subtitle's duration is extended by this amount. Default is 0.</summary>
+	Windows.Foundation.TimeSpan AdditionalSubtitleDuration{ get; set; };
+
+	///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
+	Boolean PreventModifiedSubtitleDurationOverlap{ get; set; };
+
+
+	///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
+	///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+	String FFmpegVideoFilters{ get; set; };
+
+	///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegMediaSource.SetFFmpegAudioFilters().</summary>
+	String FFmpegAudioFilters{ get; set; };
+
+	///<summary>Downmix multi-channel audio streams to stereo format.</summary>
+	Boolean DownmixAudioStreamsToStereo{ get; set; };
+}
 
 [default_interface]
 runtimeclass KeyStringValuePair : Windows.Foundation.Collections.IKeyValuePair<String, String>

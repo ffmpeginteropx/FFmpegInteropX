@@ -502,10 +502,10 @@ namespace MediaPlayerCS
         private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
         {
             mediaPlayer.RemoveAllEffects();
-            if (enableVideoEffects.IsOn)
-            {
-                VideoEffectConfiguration.AddVideoEffect(mediaPlayer);
-            }
+            //if (enableVideoEffects.IsOn)
+            //{
+            //    //VideoEffectConfiguration.AddVideoEffect(mediaPlayer);
+            //}
         }
 
         private void Page_DragEnter(object sender, DragEventArgs e)

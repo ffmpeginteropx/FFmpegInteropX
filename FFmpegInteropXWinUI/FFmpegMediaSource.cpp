@@ -132,6 +132,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     {
         throw hresult_not_implemented();
     }
+    void FFmpegMediaSource::PlaybackSession(Windows::Media::Playback::MediaPlaybackSession const& value)
+    {
+        throw hresult_not_implemented();
+    }
     void FFmpegMediaSource::Close()
     {
         throw hresult_not_implemented();

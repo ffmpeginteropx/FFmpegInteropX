@@ -49,8 +49,8 @@ namespace MediaPlayerCS
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
-            FFmpegInteropLogging.SetLogLevel(LogLevel.Info);
-            FFmpegInteropLogging.SetLogProvider(this);
+            //FFmpegInteropLogging.SetLogLevel(LogLevel.Info);
+            //FFmpegInteropLogging.SetLogProvider(this);
         }
 
         public void Log(LogLevel level, string message)
