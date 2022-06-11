@@ -192,56 +192,56 @@ function Build-Platform {
     Copy-Item $build\include\libxml2\libxml $build\include\ -Force -Recurse
 
     # Build openssl if not already exists
-	if (!(Test-Path("$build\lib\ssl.lib")) -or !(Test-Path("$build\lib\crypto.lib"))) {
-		
-	    Write-Host
+    if (!(Test-Path("$build\lib\ssl.lib")) -or !(Test-Path("$build\lib\crypto.lib"))) {
+
+       Write-Host
         Write-Host "Building Library openssl..."
         Write-Host
-		
-	    $opensslPlatforms = @{
-		    'x86'   = 'VC-WIN32'
-		    'x64'   = 'VC-WIN64A'
-		    'ARM'   = 'VC-WIN32-ARM'
-		    'ARM64' = 'VC-WIN64-ARM'
-	    }
-	    $opensslPlatform = $opensslPlatforms[$Platform]
 
-	    if ($WindowsTarget -eq "UWP") { 
-		    $opensslPlatform = $opensslPlatform + "-UWP"
-	    }
+        $opensslPlatforms = @{
+            'x86'   = 'VC-WIN32'
+            'x64'   = 'VC-WIN64A'
+            'ARM'   = 'VC-WIN32-ARM'
+            'ARM64' = 'VC-WIN64-ARM'
+        }
+        $opensslPlatform = $opensslPlatforms[$Platform]
+
+        if ($WindowsTarget -eq "UWP") { 
+            $opensslPlatform = $opensslPlatform + "-UWP"
+        }
 
         New-Item -ItemType Directory -Force $build\int\openssl -OutVariable ssldir | Out-Null
-		
-	    $oldPath = $env:Path
-	    $env:Path += ";$SolutionDir\Tools\perl\perl\bin;C$SolutionDir\Tools\perl\c\bin;$SolutionDir\Tools\nasm"
+
+        $oldPath = $env:Path
+        $env:Path += ";$SolutionDir\Tools\perl\perl\bin;C$SolutionDir\Tools\perl\c\bin;$SolutionDir\Tools\nasm"
         $oldDir = get-location
-	    set-location "$ssldir"
-		
+        set-location "$ssldir"
+
         try {
-		    invoke perl $SolutionDir\Libs\openssl\Configure $opensslPlatform --prefix=$build --openssldir=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests no-secure-memory
-		    invoke nmake clean
-		    invoke nmake
-		    invoke nmake install_sw
+            invoke perl $SolutionDir\Libs\openssl\Configure $opensslPlatform --prefix=$build --openssldir=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests no-secure-memory
+            invoke nmake clean
+            invoke nmake
+            invoke nmake install_sw
         } finally {
             set-location $oldDir
-      	    $env:Path = $oldPath
+            $env:Path = $oldPath
         }
-        
-	    Copy-Item -Force $SolutionDir\Libs\openssl\license.txt $build\licenses\openssl.txt
-	    Copy-Item -Force $ssldir\libssl_static.lib $build\lib\ssl.lib
-	    Copy-Item -Force $ssldir\libcrypto_static.lib $build\lib\crypto.lib
+
+        Copy-Item -Force $SolutionDir\Libs\openssl\license.txt $build\licenses\openssl.txt
+        Copy-Item -Force $ssldir\libssl_static.lib $build\lib\ssl.lib
+        Copy-Item -Force $ssldir\libcrypto_static.lib $build\lib\crypto.lib
         } else {
-		Write-Host
+        Write-Host
         Write-Host "Openssl already exists in target build configuration. Skipping build."
-		Write-Host
-	}
+        Write-Host
+    }
 
     #Build dav1d
     Write-Host ""
     Write-Host "Building Library dav1d..."
     Write-Host ""
     & $BashExe $BashArgs --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
-    
+
     if ($WindowsTarget -eq "Desktop") { 
         
         $env:Path += ";$(Split-Path $BashExe)"
@@ -385,19 +385,19 @@ if (!(Test-Path $BashExe) -and ($BashExe.Name -ne 'wsl.exe')) {
 
     if (! $msysFound) {
         Write-Warning "MSYS2 not found."
-		choice /c YN /m "Do you want to install MSYS2 now to C:\msys64?"
+        choice /c YN /m "Do you want to install MSYS2 now to C:\msys64?"
         if ($LASTEXITCODE -eq 1)
         {
             .\InstallTools.ps1 MSYS2
-			$BashExe = "C:\msys64\usr\bin\bash.exe"
-			if (!(Test-Path $BashExe)) {
-				Exit 1
-			}
+            $BashExe = "C:\msys64\usr\bin\bash.exe"
+            if (!(Test-Path $BashExe)) {
+                Exit 1
+            }
         }
-		else
-		{
-			Exit 1
-		}
+        else
+        {
+            Exit 1
+        }
     }
 }
 
@@ -408,7 +408,7 @@ if (! (Test-Path "$PSScriptRoot\Tools\nasm")) {
 
 if (! (Test-Path "$PSScriptRoot\Tools\perl")) {
     Write-Warning "Perl not found. Installing..."
-	.\InstallTools.ps1 perl
+    .\InstallTools.ps1 perl
 }
 
 [System.IO.DirectoryInfo] $vsLatestPath = `
@@ -536,7 +536,7 @@ else
                 }
             }
         }
-   
+
         # only build PkgConfigFake once
         $BuildPkgConfigFake = $false;
     }
