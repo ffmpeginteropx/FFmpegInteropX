@@ -13,7 +13,7 @@ param(
 
         Note. The PlatformToolset will be inferred from this value ('v141', 'v142'...)
     #>
-    [version] $VcVersion = '14.2',
+    [version] $VcVersion = '14.3',
 
     [ValidateSet('UWP', 'Desktop')]
     [string] $WindowsTarget = 'UWP',
@@ -24,8 +24,10 @@ param(
         10.0.15063.0
         10.0.17763.0
         10.0.18362.0
+        10.0.19041.0
+        10.0.22000.0
     #>
-    [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
+    [version] $WindowsTargetPlatformVersion = '10.0.19041.0',
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
@@ -40,6 +42,8 @@ param(
     [string[]] $VsWhereCriteria = '-latest',
 
     [System.IO.FileInfo] $BashExe = 'C:\msys64\usr\bin\bash.exe',
+
+    [string[]] $BashArgs = @(),
 
     [switch] $ClearBuildFolders,
 
@@ -67,6 +71,7 @@ function Build-Platform {
         [string] $PlatformToolset,
         [string] $VsLatestPath,
         [string] $BashExe = 'C:\msys64\usr\bin\bash.exe',
+        [string[]] $BashArgs,
         [string] $LogFileName,
         [bool] $SkipBuildPkgConfigFake
     )
@@ -235,7 +240,7 @@ function Build-Platform {
     Write-Host ""
     Write-Host "Building Library dav1d..."
     Write-Host ""
-    invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
+    & $BashExe $BashArgs --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
     
     if ($WindowsTarget -eq "Desktop") { 
         
@@ -277,7 +282,7 @@ function Build-Platform {
 
         New-Item -ItemType Directory -Force $build\x264
 
-        invoke $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
+        & $BashExe $BashArgs --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
 
         #Build libvpx
         Write-Host
@@ -301,7 +306,7 @@ function Build-Platform {
 
         New-Item -ItemType Directory -Force $build\libvpx
         
-        invoke $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
+        & $BashExe $BashArgs --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
 
         Move-Item $build\lib\$cmakePlatform\vpxmd.lib $build\lib\vpx.lib -Force
         Remove-Item $build\lib\$cmakePlatform -Force -Recurse
@@ -312,7 +317,7 @@ function Build-Platform {
     Write-Host "Building FFmpeg..."
     Write-Host
 
-    invoke $BashExe --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
+    & $BashExe $BashArgs --login -x "`$(wslpath '$SolutionDir\FFmpegConfig.sh')" $WindowsTarget $Platform $SharedOrStatic
 
     # Copy PDBs to built binaries dir
     Get-ChildItem -Recurse -Include '*.pdb' $build\int\ffmpeg\ | Copy-Item -Destination $target\bin\ -Force
@@ -367,7 +372,7 @@ if (! (Test-Path $PSScriptRoot\Libs\ffmpeg\configure)) {
 
 # Check build tools
 
-if (!(Test-Path $BashExe)) {
+if (!(Test-Path $BashExe) -and ($BashExe.Name -ne 'wsl.exe')) {
     $msysFound = $false
     @( 'C:\msys64', 'C:\msys' ) | ForEach-Object {
         if (Test-Path $_) {
@@ -457,7 +462,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
         {
             $skip
         }
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skip"
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" -BashArgs ""$BashArgs"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skip"
         $processes[$platform] = $proc
     
         # only build PkgConfigFake once
@@ -504,6 +509,7 @@ else
                 -PlatformToolset $platformToolSet `
                 -VsLatestPath $vsLatestPath `
                 -BashExe $BashExe `
+                -BashArgs $BashArgs `
                 -LogFileName $logFile `
                 -SkipBuildPkgConfigFake $SkipBuildPkgConfigFake
         }
