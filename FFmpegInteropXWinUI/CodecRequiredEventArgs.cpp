@@ -10,22 +10,23 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 {
     FFmpegInteropXWinUI::CodecRequiredReason CodecRequiredEventArgs::Reason()
     {
-        throw hresult_not_implemented();
+        return this->reason;
     }
     hstring CodecRequiredEventArgs::FormatName()
     {
-        throw hresult_not_implemented();
+        return this->codecName;
     }
     hstring CodecRequiredEventArgs::StoreExtensionName()
     {
-        throw hresult_not_implemented();
+        return this->storeExtensionName;
     }
     hstring CodecRequiredEventArgs::ProductId()
     {
-        throw hresult_not_implemented();
+        return this->productId;
     }
+
     Windows::Foundation::IAsyncOperation<bool> CodecRequiredEventArgs::OpenStorePageAsync()
     {
-        throw hresult_not_implemented();
+        return winrt::Windows::System::Launcher::LaunchUriAsync(Uri(L"ms-windows-store://pdp/?ProductId=" + productId));
     }
 }

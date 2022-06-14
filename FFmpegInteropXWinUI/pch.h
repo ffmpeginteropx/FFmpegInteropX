@@ -45,6 +45,9 @@
 #include <mfidl.h>
 #include <winrt/Windows.System.h>
 #include <mutex>
+#include <ppltasks.h>
+#include <pplawait.h>
+
 extern "C"
 {
 #include <libavcodec/avcodec.h>
