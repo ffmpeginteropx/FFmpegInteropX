@@ -15,6 +15,11 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         hstring Title();
         Windows::Foundation::TimeSpan StartTime();
         Windows::Foundation::TimeSpan Duration();
+
+    private:
+        hstring title;
+        TimeSpan startTime;
+        TimeSpan duration;
     };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation

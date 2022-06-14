@@ -10,18 +10,23 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 {
     ChapterInfo::ChapterInfo(hstring const& title, Windows::Foundation::TimeSpan const& startTime, Windows::Foundation::TimeSpan const& duration)
     {
-        throw hresult_not_implemented();
+        this->title = title;
+        this->startTime = startTime;
+        this->duration = duration;
     }
+
     hstring ChapterInfo::Title()
     {
-        throw hresult_not_implemented();
+        return this->title;
     }
+
     Windows::Foundation::TimeSpan ChapterInfo::StartTime()
     {
-        throw hresult_not_implemented();
+        return this->startTime;
     }
+
     Windows::Foundation::TimeSpan ChapterInfo::Duration()
     {
-        throw hresult_not_implemented();
+        return this->duration;
     }
 }

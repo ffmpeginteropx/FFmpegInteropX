@@ -217,7 +217,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
 			else
 			{
 				auto size = min(aBufferSize, (unsigned int)(resampledDataSize * outChannels * bytesPerSample));
-				*pBuffer = *NativeBuffer::NativeBufferFactory::CreateNativeBuffer(resampledData[0], size, av_freep, resampledData);
+				*pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(resampledData[0], size, av_freep, resampledData);
 			}
 		}
 		else
@@ -227,7 +227,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
 			if (bufferRef)
 			{
 				auto size = min(bufferRef->size, avFrame->nb_samples * outChannels * bytesPerSample);
-				*pBuffer = *NativeBuffer::NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)size, free_buffer, bufferRef);
+				*pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)size, free_buffer, bufferRef);
 			}
 			else
 			{

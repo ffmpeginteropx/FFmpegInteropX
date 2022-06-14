@@ -15,6 +15,20 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         hstring MimeType();
         uint64_t Size();
 
+    public:
         winrt::Windows::Storage::Streams::IBuffer GetBuffer();
+
+        AttachedFile(hstring name, hstring mimeType, AVStream* stream)
+        {
+            this->name = name;
+            this->mimeType = mimeType;
+            this->stream = stream;
+        }
+
+    private:
+        hstring name;
+        hstring mimeType;
+
+        AVStream* stream;
     };
 }

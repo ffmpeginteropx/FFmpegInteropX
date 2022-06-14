@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "AttachedFile.h"
 #include "AttachedFile.g.cpp"
+#include "NativeBufferFactory.h"
 
 // Note: Remove this static_assert after copying these generated source files to your project.
 // This assertion exists to avoid compiling these generated source files directly.
@@ -10,20 +11,21 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 {
     hstring AttachedFile::Name()
     {
-        throw hresult_not_implemented();
+        return this->name;
     }
+
     hstring AttachedFile::MimeType()
     {
-        throw hresult_not_implemented();
+        throw this->mimeType;
     }
+
     uint64_t AttachedFile::Size()
     {
-        throw hresult_not_implemented();
+        return stream->codecpar->extradata_size;
     }
 
     winrt::Windows::Storage::Streams::IBuffer AttachedFile::GetBuffer()
     {
-        throw hresult_not_implemented();
-        //return NativeBuffer::NativeBufferFactory::CreateNativeBuffer(stream->codecpar->extradata, (DWORD)Size);
+       return NativeBuffer::NativeBufferFactory::CreateNativeBuffer(stream->codecpar->extradata, (DWORD)Size());
     }
 }
