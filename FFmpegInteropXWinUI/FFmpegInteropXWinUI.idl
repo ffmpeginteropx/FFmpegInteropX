@@ -291,7 +291,7 @@ namespace FFmpegInteropXWinUI
 	{
 		///<summary>This event is raised if a codec is required to improve playback experience.</summary>
 		///<remarks>The event is only raised once per codec. It will be raised again after a call to RefreshAsync().</remarks>
-		static event CodecRequiredEventHandler CodecRequired;
+		static event Windows.Foundation.EventHandler<CodecRequiredEventArgs> CodecRequired;
 
 	///<summary>This will pre-initialize the hardware acceleration status.</summary>
 	///<remarks>This can be called on app startup, but it is not required.</remarks>

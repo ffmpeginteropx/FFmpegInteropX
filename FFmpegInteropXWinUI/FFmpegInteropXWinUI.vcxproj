@@ -165,9 +165,6 @@
     <ClInclude Include="NativeBuffer.h" />
     <ClInclude Include="NativeBufferFactory.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Class.h">
-      <DependentUpon>Class.cpp</DependentUpon>
-    </ClInclude>
     <ClInclude Include="ReferenceCue.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="SubtitleProvider.h" />
@@ -215,7 +212,6 @@
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Class.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="ReferenceCue.cpp" />
     <ClCompile Include="SubtitleProvider.cpp" />
@@ -228,10 +224,6 @@
     <ClCompile Include="VideoStreamInfo.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="Class.idl">
-      <SubType>Code</SubType>
-      <DependentUpon>Class.cpp</DependentUpon>
-    </Midl>
     <Midl Include="FFmpegInteropXWinUI.idl" />
   </ItemGroup>
   <ItemGroup>

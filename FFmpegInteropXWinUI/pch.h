@@ -43,6 +43,8 @@
 #include <winrt/Windows.Media.Core.h>
 #include <winrt/Windows.Graphics.Imaging.h>
 #include <mfidl.h>
+#include <winrt/Windows.System.h>
+#include <mutex>
 extern "C"
 {
 #include <libavcodec/avcodec.h>

@@ -8,7 +8,7 @@
 
 namespace winrt::FFmpegInteropXWinUI::implementation
 {
-    winrt::event_token CodecChecker::CodecRequired(FFmpegInteropXWinUI::CodecRequiredEventHandler const& handler)
+    winrt::event_token CodecChecker::CodecRequired(winrt::Windows::Foundation::EventHandler<winrt::FFmpegInteropXWinUI::CodecRequiredEventArgs> const& handler)
     {
         throw hresult_not_implemented();
     }
