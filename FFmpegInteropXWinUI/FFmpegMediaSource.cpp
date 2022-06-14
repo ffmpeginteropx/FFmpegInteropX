@@ -11,8 +11,75 @@
 namespace winrt::FFmpegInteropXWinUI::implementation
 {
     // Static functions passed to FFmpeg
-    static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize);
-    static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence);
+    static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
+    {
+        FFmpegMediaSource* mss = reinterpret_cast<FFmpegMediaSource*>(ptr);
+        ULONG bytesRead = 0;
+        HRESULT hr = mss->fileStreamData->Read(buf, bufSize, &bytesRead);
+
+        if (FAILED(hr))
+        {
+            return -1;
+        }
+
+        // Check beginning of file for BOM on first read
+        if (mss->streamByteOrderMark == ByteOrderMark::Unchecked)
+        {
+            if (bytesRead >= 4)
+            {
+                auto bom = ((uint32_t*)buf)[0];
+                if ((bom & 0x00FFFFFF) == 0x00BFBBEF)
+                {
+                    mss->streamByteOrderMark = ByteOrderMark::UTF8;
+                }
+                else
+                {
+                    mss->streamByteOrderMark = ByteOrderMark::Unknown;
+                }
+            }
+            else
+            {
+                mss->streamByteOrderMark = ByteOrderMark::Unknown;
+            }
+        }
+
+        // If we succeed but don't have any bytes, assume end of file
+        if (bytesRead == 0)
+        {
+            return AVERROR_EOF;  // Let FFmpeg know that we have reached eof
+        }
+
+        return bytesRead;
+    }
+
+    // Static function to seek in file stream. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
+    static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence)
+    {
+        FFmpegMediaSource* mss = reinterpret_cast<FFmpegMediaSource*>(ptr);
+        if (whence == AVSEEK_SIZE)
+        {
+            // get stream size
+            STATSTG status;
+            if (FAILED(mss->fileStreamData->Stat(&status, STATFLAG_NONAME)))
+            {
+                return -1;
+            }
+            return status.cbSize.QuadPart;
+        }
+        else
+        {
+            LARGE_INTEGER in;
+            in.QuadPart = pos;
+            ULARGE_INTEGER out = { 0 };
+
+            if (FAILED(mss->fileStreamData->Seek(in, whence, &out)))
+            {
+                return -1;
+            }
+
+            return out.QuadPart; // Return the new position:
+        }
+    }
 
     // Flag for ffmpeg global setup
     static bool isRegistered = false;

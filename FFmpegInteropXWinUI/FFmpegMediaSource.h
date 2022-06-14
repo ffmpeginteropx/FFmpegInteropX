@@ -111,7 +111,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			}
 		}
 
-		//internal:
+	public://internal:
 		static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, MediaSourceConfig  const& config, CoreDispatcher  const& dispatcher);
 		static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, MediaSourceConfig  const& config, CoreDispatcher  const& dispatcher);
 		static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, MediaSourceConfig  const& config);
