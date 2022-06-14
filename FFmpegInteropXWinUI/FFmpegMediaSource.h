@@ -93,7 +93,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		void OnStarting(MediaStreamSource sender, MediaStreamSourceStartingEventArgs args);
 		void OnSampleRequested(MediaStreamSource sender, MediaStreamSourceSampleRequestedEventArgs args);
 		void CheckVideoDeviceChanged();
-		void OnSwitchStreamsRequested(MediaStreamSource sender, MediaStreamSourceSwitchStreamsRequestedEventArgs args);
+		void OnSwitchStreamsRequested(MediaStreamSource  const& sender, MediaStreamSourceSwitchStreamsRequestedEventArgs  const& args);
 		void OnAudioTracksChanged(MediaPlaybackItem sender, IVectorChangedEventArgs args);
 		void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList sender, TimedMetadataPresentationModeChangedEventArgs args);
 		void InitializePlaybackItem(MediaPlaybackItem playbackitem);

@@ -406,6 +406,51 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		mutexGuard.unlock();
 	}
 
+	void FFmpegMediaSource::OnSwitchStreamsRequested(MediaStreamSource const& sender, MediaStreamSourceSwitchStreamsRequestedEventArgs const& args)
+	{
+		mutexGuard.lock();
+
+		if (currentAudioStream && args.Request().OldStreamDescriptor() == currentAudioStream->StreamDescriptor())
+		{
+			if (!currentAudioEffects.empty())
+			{
+				currentAudioStream->DisableFilters();
+			}
+			currentAudioStream->DisableStream();
+			currentAudioStream = nullptr;
+		}
+		if (currentVideoStream && args.Request().OldStreamDescriptor() == currentVideoStream->StreamDescriptor())
+		{
+			currentVideoStream->DisableStream();
+			currentVideoStream = nullptr;
+		}
+
+		for each (auto stream in audioStreams)
+		{
+			if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
+			{
+				currentAudioStream = stream;
+				currentAudioStream->EnableStream();
+				if (!currentAudioEffects.empty())
+				{
+					currentAudioStream->SetFilters(currentAudioEffects);
+				}
+			}
+		}
+		for each (auto stream in videoStreams)
+		{
+			if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
+			{
+				currentVideoStream = stream;
+				currentVideoStream->EnableStream();
+			}
+		}
+
+		isFirstSeekAfterStreamSwitch = config.FastSeekSmartStreamSwitching();
+
+		mutexGuard.unlock();
+	}
+
 	HRESULT FFmpegMediaSource::Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek)
 	{
 		auto hr = S_OK;
