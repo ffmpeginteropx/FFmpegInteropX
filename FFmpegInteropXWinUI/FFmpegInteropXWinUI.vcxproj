@@ -158,6 +158,7 @@
     <ClInclude Include="IAvEffect.h" />
     <ClInclude Include="KeyStringValuePair.h" />
     <ClInclude Include="LanguageTagConverter.h" />
+    <ClInclude Include="MediaMetadata.h" />
     <ClInclude Include="MediaSampleProvider.h" />
     <ClInclude Include="MediaSourceConfig.h" />
     <ClInclude Include="MediaThumbnailData.h" />

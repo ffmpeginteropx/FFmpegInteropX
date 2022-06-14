@@ -99,6 +99,7 @@
     <ClInclude Include="SubtitleProviderBitmap.h" />
     <ClInclude Include="NALPacketSampleProvider.h" />
     <ClInclude Include="UncompressedAudioSampleProvider.h" />
+    <ClInclude Include="MediaMetadata.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Class.idl" />

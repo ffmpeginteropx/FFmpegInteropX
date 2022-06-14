@@ -20,9 +20,9 @@ namespace FFmpegInteropX
 			entries = ref new Vector<IKeyValuePair<String^, String^>^>();
 		}
 
-		void LoadMetadataTags(AVFormatContext *m_pAvFormatCtx)
+		void LoadMetadataTags(AVFormatContext* m_pAvFormatCtx)
 		{
-			if (!tagsLoaded) 
+			if (!tagsLoaded)
 			{
 				if (m_pAvFormatCtx->metadata)
 				{
@@ -38,9 +38,9 @@ namespace FFmpegInteropX
 					} while (entry);
 				}
 				tagsLoaded = true;
-			}			
+			}
 		}
-	
+
 
 		property IVectorView<IKeyValuePair<String^, String^>^>^ MetadataTags
 		{
@@ -49,7 +49,7 @@ namespace FFmpegInteropX
 				return entries->GetView();
 			}
 		}
-	
+
 	};
 
 
