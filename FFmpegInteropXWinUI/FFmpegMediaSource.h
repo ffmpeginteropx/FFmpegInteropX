@@ -192,7 +192,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		TimeSpan lastPosition;
 
 		static CoreDispatcher GetCurrentDispatcher();
-		void OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession sender, winrt::Windows::Foundation::IInspectable args);
+		void OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession const& sender, winrt::Windows::Foundation::IInspectable const& args);
 	};
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation
