@@ -28,6 +28,23 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         int64_t Bitrate();
         bool IsDefault();
         FFmpegInteropXWinUI::DecoderEngine _DecoderEngine;
+
+    public:
+        hstring name;
+        hstring language;
+        hstring codecName;
+        StreamDisposition disposition;
+        int64_t bitrate;
+        bool isDefault;
+
+        int pixelWidth;
+        int pixelHeight;
+        double displayAspectRatio;
+        int bitsPerSample;
+        double framesPerSecond;
+
+        FFmpegInteropXWinUI::HardwareDecoderStatus hardwareDecoderStatus;
+        FFmpegInteropXWinUI::DecoderEngine decoderEngine;
     };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation

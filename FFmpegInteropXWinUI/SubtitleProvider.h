@@ -35,8 +35,7 @@ namespace FFmpegInteropX
 			MediaSourceConfig const& config,
 			int index,
 			winrt::Windows::Media::Core::TimedMetadataKind const& ptimedMetadataKind,
-			winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher,
-			winrt::Windows::Media::Core::TimedMetadataTrack const& pTrack)
+			winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher)
 			: CompressedSampleProvider(reader,
 				avFormatCtx,
 				avCodecCtx,
@@ -44,7 +43,6 @@ namespace FFmpegInteropX
 				index,
 				HardwareDecoderStatus::Unknown),
 			dispatcher(pdispatcher),
-			SubtitleTrack(pTrack),
 			timedMetadataKind(ptimedMetadataKind)
 		{
 		}

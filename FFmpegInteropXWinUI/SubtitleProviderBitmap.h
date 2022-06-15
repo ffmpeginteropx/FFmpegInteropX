@@ -19,9 +19,8 @@ namespace FFmpegInteropX
 			AVCodecContext* avCodecCtx,
 			winrt::FFmpegInteropXWinUI::MediaSourceConfig const& config,
 			int index,
-			winrt::Windows::UI::Core::CoreDispatcher  const& dispatcher,
-			winrt::Windows::Media::Core::TimedMetadataTrack const& pTrack)
-			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, winrt::Windows::Media::Core::TimedMetadataKind::ImageSubtitle, dispatcher, pTrack)
+			winrt::Windows::UI::Core::CoreDispatcher  const& dispatcher)
+			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, winrt::Windows::Media::Core::TimedMetadataKind::ImageSubtitle, dispatcher)
 		{
 		}
 

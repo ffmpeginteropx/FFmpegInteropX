@@ -18,16 +18,15 @@ namespace FFmpegInteropX
 			MediaSourceConfig const& config,
 			int index,
 			winrt::Windows::UI::Core::CoreDispatcher const& dispatcher,
-			std::shared_ptr<AttachedFileHelper> attachedFileHelper,
-			winrt::Windows::Media::Core::TimedMetadataTrack const& pTrack)
+			std::shared_ptr<AttachedFileHelper> attachedFileHelper)
 			: SubtitleProvider(reader, 
 				avFormatCtx, 
 				avCodecCtx, 
 				config, 
 				index, 
 				winrt::Windows::Media::Core::TimedMetadataKind::Subtitle,
-				dispatcher,
-				pTrack)
+				dispatcher
+				)
 		{
 			this->attachedFileHelper = attachedFileHelper;
 		}
