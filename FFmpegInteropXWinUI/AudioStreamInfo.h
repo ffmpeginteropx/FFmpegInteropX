@@ -24,7 +24,11 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         int64_t Bitrate();
     public:
         bool IsDefault();
-
+        bool SetDefault()
+        {
+            isDefault = true;
+            return isDefault;
+        }
 
     private:
         hstring name;

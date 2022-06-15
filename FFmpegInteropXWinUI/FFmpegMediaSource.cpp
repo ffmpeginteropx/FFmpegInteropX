@@ -279,7 +279,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 		if (SUCCEEDED(hr))
 		{
-			m_pReader = std::shared_ptr<FFmpegReader>(new FFmpegReader(avFormatCtx, &sampleProviders));
+			m_pReader = std::shared_ptr<FFmpegReader>(new FFmpegInteropX::FFmpegReader(avFormatCtx, &sampleProviders));
 			if (m_pReader == nullptr)
 			{
 				hr = E_OUTOFMEMORY;
@@ -347,7 +347,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 					}
 				}
 			}
-			else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && avStream->disposition == AV_DISPOSITION_ATTACHED_PIC && thumbnailStreamIndex == AVERROR_STREAM_NOT_FOUND && !config->IsExternalSubtitleParser)
+			else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && avStream->disposition == AV_DISPOSITION_ATTACHED_PIC && thumbnailStreamIndex == AVERROR_STREAM_NOT_FOUND && !implConfig->IsExternalSubtitleParser)
 			{
 				thumbnailStreamIndex = index;
 			}
@@ -377,7 +377,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 				{
 					if (index == subtitleStreamIndex)
 					{
-						stream->SubtitleInfo()->SetDefault();
+						stream->SubtitleInfo().as<implementation::SubtitleStreamInfo>()->SetDefault();
 						subtitleStrInfos.InsertAt(0, stream->SubtitleInfo());
 						subtitleStreams.insert(subtitleStreams.begin(), (std::reinterpret_pointer_cast<SubtitleProvider>(stream)));
 					}

@@ -45,6 +45,12 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
         FFmpegInteropXWinUI::HardwareDecoderStatus hardwareDecoderStatus;
         FFmpegInteropXWinUI::DecoderEngine decoderEngine;
+
+        bool SetDefault()
+        {
+            isDefault = true;
+            return isDefault;
+        }
     };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation
