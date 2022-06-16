@@ -32,7 +32,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		bool isExternal;
 		bool SetDefault() 
 		{
-			isDefault = value;
+			isDefault = true;
 			return isDefault;
 		}
 	};

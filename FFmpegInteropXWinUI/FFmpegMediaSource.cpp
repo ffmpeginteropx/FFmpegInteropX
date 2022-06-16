@@ -16,6 +16,7 @@
 #include "SubtitleProviderSsaAss.h"
 #include "SubtitleProviderBitmap.h"
 #include "ChapterInfo.h"
+#include "FFmpegReader.h"
 
 using namespace winrt::Windows::Media::MediaProperties;
 using namespace FFmpegInteropX;
@@ -279,7 +280,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 		if (SUCCEEDED(hr))
 		{
-			m_pReader = std::shared_ptr<FFmpegReader>(new FFmpegInteropX::FFmpegReader(avFormatCtx, &sampleProviders));
+			m_pReader = std::shared_ptr<FFmpegInteropX::FFmpegReader>(new FFmpegInteropX::FFmpegReader(avFormatCtx, sampleProviders));
 			if (m_pReader == nullptr)
 			{
 				hr = E_OUTOFMEMORY;

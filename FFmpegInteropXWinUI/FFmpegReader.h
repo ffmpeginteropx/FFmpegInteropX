@@ -32,6 +32,6 @@ namespace FFmpegInteropX
 
 	private:
 		AVFormatContext* m_pAvFormatCtx;
-		std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders;
+		std::vector<std::shared_ptr<MediaSampleProvider>> sampleProviders;
 	};
 }
