@@ -76,7 +76,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		Windows::Media::Playback::MediaPlaybackSession PlaybackSession();
 		void PlaybackSession(Windows::Media::Playback::MediaPlaybackSession const& value);
 		void Close();
-		FFmpegMediaSource(MediaSourceConfig const& interopConfig, CoreDispatcher const& dispatcher);
+		FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, CoreDispatcher const& dispatcher);
 
 	private:
 
@@ -94,9 +94,9 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		void OnSampleRequested(MediaStreamSource const& sender, MediaStreamSourceSampleRequestedEventArgs const& args);
 		void CheckVideoDeviceChanged();
 		void OnSwitchStreamsRequested(MediaStreamSource  const& sender, MediaStreamSourceSwitchStreamsRequestedEventArgs  const& args);
-		void OnAudioTracksChanged(MediaPlaybackItem sender, IVectorChangedEventArgs args);
-		void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList sender, TimedMetadataPresentationModeChangedEventArgs args);
-		void InitializePlaybackItem(MediaPlaybackItem playbackitem);
+		void OnAudioTracksChanged(MediaPlaybackItem  const& sender, IVectorChangedEventArgs  const& args);
+		void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList  const& sender, TimedMetadataPresentationModeChangedEventArgs  const& args);
+		void InitializePlaybackItem(MediaPlaybackItem  const& playbackitem);
 		bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
 
 		void FlushStreams()
@@ -112,7 +112,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		}
 
 	public://internal:
-		static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, MediaSourceConfig  const& config, CoreDispatcher  const& dispatcher);
+		static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, CoreDispatcher  const& dispatcher);
 		static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, MediaSourceConfig  const& config, CoreDispatcher  const& dispatcher);
 		static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, MediaSourceConfig  const& config);
 		HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek);
@@ -126,7 +126,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		AVDictionary* avDict;
 		AVIOContext* avIOCtx;
 		AVFormatContext* avFormatCtx;
-		IStream* fileStreamData;
+		winrt::com_ptr<IStream> fileStreamData;
 		ByteOrderMark streamByteOrderMark;
 		winrt::FFmpegInteropXWinUI::MediaSourceConfig config = { nullptr };
 

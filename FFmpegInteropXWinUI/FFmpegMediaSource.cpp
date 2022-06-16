@@ -18,7 +18,8 @@
 #include "ChapterInfo.h"
 #include "FFmpegReader.h"
 
-using namespace winrt::Windows::Media::MediaProperties;
+using namespace winrt::Windows::Storage::Streams;
+//using namespace winrt::Windows::Media::MediaProperties;
 using namespace FFmpegInteropX;
 // Note: Remove this static_assert after copying these generated source files to your project.
 // This assertion exists to avoid compiling these generated source files directly.
@@ -149,7 +150,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 	static bool isRegistered = false;
 	std::mutex isRegisteredMutex;
 
-	FFmpegMediaSource::FFmpegMediaSource(MediaSourceConfig const& interopConfig,
+	FFmpegMediaSource::FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig,
 		CoreDispatcher const& dispatcher)
 		: config(interopConfig)
 		, thumbnailStreamIndex(AVERROR_STREAM_NOT_FOUND)
@@ -183,7 +184,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		Close();
 	}
 
-	winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromStream(IRandomAccessStream const& stream, MediaSourceConfig const& config, CoreDispatcher const& dispatcher)
+	winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, CoreDispatcher const& dispatcher)
 	{
 		auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher);
 		auto hr = interopMSS->CreateMediaStreamSource(stream);
@@ -219,13 +220,214 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	HRESULT FFmpegMediaSource::CreateMediaStreamSource(IRandomAccessStream const& stream)
 	{
-		return S_OK;
+		HRESULT hr = S_OK;
+		if (!stream)
+		{
+			hr = E_INVALIDARG;
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			// Convert asynchronous IRandomAccessStream to synchronous IStream. This API requires shcore.h and shcore.lib
+			//Helpersa::GetIStream(winrt::to_abi<::IUnknown*>(stream.try_as<IStream>()), &fileStreamData);
+			fileStreamData = stream.try_as<IStream>();
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			// Setup FFmpeg custom IO to access file as stream. This is necessary when accessing any file outside of app installation directory and appdata folder.
+			// Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
+			fileStreamBuffer = (unsigned char*)av_malloc(config.StreamBufferSize());
+			if (fileStreamBuffer == nullptr)
+			{
+				hr = E_OUTOFMEMORY;
+			}
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			avIOCtx = avio_alloc_context(fileStreamBuffer, config.StreamBufferSize(), 0, (void*)this, FileStreamRead, 0, FileStreamSeek);
+			if (avIOCtx == nullptr)
+			{
+				hr = E_OUTOFMEMORY;
+			}
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			avFormatCtx = avformat_alloc_context();
+			if (avFormatCtx == nullptr)
+			{
+				hr = E_OUTOFMEMORY;
+			}
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			// Populate AVDictionary avDict based on PropertySet ffmpegOptions. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
+			hr = ParseOptions(config.FFmpegOptions());
+		}
+
+
+		if (SUCCEEDED(hr))
+		{
+			// Populate AVDictionary avDict based on additional ffmpegOptions. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
+			hr = ParseOptions(config.as<implementation::MediaSourceConfig>()->AdditionalFFmpegSubtitleOptions);
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			avFormatCtx->pb = avIOCtx;
+			avFormatCtx->flags |= AVFMT_FLAG_CUSTOM_IO;
+
+			// Open media file using custom IO setup above instead of using file name. Opening a file using file name will invoke fopen C API call that only have
+			// access within the app installation directory and appdata folder. Custom IO allows access to file selected using FilePicker dialog.
+			if (avformat_open_input(&avFormatCtx, "", NULL, &avDict) < 0)
+			{
+				hr = E_FAIL; // Error opening file
+			}
+
+			// avDict is not NULL only when there is an issue with the given ffmpegOptions such as invalid key, value type etc. Iterate through it to see which one is causing the issue.
+			if (avDict != nullptr)
+			{
+				DebugMessage(L"Invalid FFmpeg option(s)");
+				av_dict_free(&avDict);
+
+				avDict = nullptr;
+			}
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			this->mss = mss;
+			hr = InitFFmpegContext();
+		}
+
+		return hr;
 	}
 
 	HRESULT FFmpegMediaSource::CreateMediaStreamSource(hstring const& uri)
 	{
-		return S_OK;
+		HRESULT hr = S_OK;
+		if (uri.empty())
+		{
+			hr = E_INVALIDARG;
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			avFormatCtx = avformat_alloc_context();
+			if (avFormatCtx == nullptr)
+			{
+				hr = E_OUTOFMEMORY;
+			}
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			// Populate AVDictionary avDict based on PropertySet ffmpegOptions. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
+			hr = ParseOptions(config.FFmpegOptions());
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			auto charStr = StringUtils::PlatformStringToUtf8String(uri);
+
+			// Open media in the given URI using the specified options
+			if (avformat_open_input(&avFormatCtx, charStr.c_str(), NULL, &avDict) < 0)
+			{
+				hr = E_FAIL; // Error opening file
+			}
+
+			// avDict is not NULL only when there is an issue with the given ffmpegOptions such as invalid key, value type etc. Iterate through it to see which one is causing the issue.
+			if (avDict != nullptr)
+			{
+				DebugMessage(L"Invalid FFmpeg option(s)");
+				av_dict_free(&avDict);
+				avDict = nullptr;
+			}
+		}
+
+		if (SUCCEEDED(hr))
+		{
+			this->mss = nullptr;
+			hr = InitFFmpegContext();
+		}
+
+		return hr;
 	}
+
+	void FFmpegMediaSource::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList const& sender, TimedMetadataPresentationModeChangedEventArgs const& args)
+	{
+		mutexGuard.lock();
+		int index = 0;
+		for each (auto stream in subtitleStreams)
+		{
+			if (stream->SubtitleTrack == args.Track())
+			{
+				auto mode = args.NewPresentationMode();
+				if (mode == TimedMetadataTrackPresentationMode::Disabled || mode == TimedMetadataTrackPresentationMode::Hidden)
+				{
+					stream->DisableStream();
+				}
+				else
+				{
+					stream->EnableStream();
+				}
+			}
+			index++;
+		}
+		mutexGuard.unlock();
+	}
+
+	void FFmpegMediaSource::OnAudioTracksChanged(MediaPlaybackItem const& sender, IVectorChangedEventArgs const& args)
+	{
+		mutexGuard.lock();
+		if (sender.AudioTracks().Size() == AudioStreams().Size())
+		{
+			for (unsigned int i = 0; i < AudioStreams().Size(); i++)
+			{
+				auto track = sender.AudioTracks().GetAt(i);
+				auto info = AudioStreams().GetAt(i);
+				if (!info.Name().empty())
+				{
+					track.Label(info.Name());
+				}
+				else if (!info.Language().empty())
+				{
+					track.Label(info.Language());
+				}
+			}
+		}
+		mutexGuard.unlock();
+	}
+
+	void FFmpegMediaSource::InitializePlaybackItem(MediaPlaybackItem const& playbackitem)
+	{
+		audioTracksChangedToken = playbackitem.AudioTracksChanged(Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem, Windows::Foundation::Collections::IVectorChangedEventArgs>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnAudioTracksChanged));
+		subtitlePresentationModeChangedToken = playbackitem.TimedMetadataTracks().PresentationModeChanged(Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackTimedMetadataTrackList, Windows::Media::Playback::TimedMetadataPresentationModeChangedEventArgs>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnPresentationModeChanged));
+
+		if (config.AutoSelectForcedSubtitles())
+		{
+			int index = 0;
+			for each (auto stream in subtitleStreams)
+			{
+				if (subtitleStreamInfos.GetAt(index).IsForced())
+				{
+					playbackitem.TimedMetadataTracks().SetPresentationMode(index, TimedMetadataTrackPresentationMode::PlatformPresented);
+					break;
+				}
+
+				index++;
+			}
+		}
+
+		for each (auto stream in subtitleStreams)
+		{
+			stream->PlaybackItem = playbackItem;
+		}
+	}
+
 
 	CoreDispatcher FFmpegMediaSource::GetCurrentDispatcher()
 	{
@@ -974,12 +1176,114 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	Windows::Foundation::IAsyncOperation<Windows::Foundation::Collections::IVectorView<FFmpegInteropXWinUI::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(Windows::Storage::Streams::IRandomAccessStream stream, hstring streamName)
 	{
-		throw hresult_not_implemented();
+		auto result = co_await concurrency::create_task([this, stream, streamName]
+			{
+				auto subConfig(winrt::make_self<MediaSourceConfig>());
+				subConfig->IsExternalSubtitleParser = true;
+				subConfig->DefaultSubtitleStreamName(streamName);
+				subConfig->DefaultSubtitleDelay(this->SubtitleDelay());
+				subConfig->AutoCorrectAnsiSubtitles(this->config.AutoCorrectAnsiSubtitles());
+				subConfig->AnsiSubtitleEncoding(this->config.AnsiSubtitleEncoding());
+				subConfig->OverrideSubtitleStyles(this->config.OverrideSubtitleStyles());
+				subConfig->SubtitleRegion(this->config.SubtitleRegion());
+				subConfig->SubtitleStyle(this->config.SubtitleStyle());
+				subConfig->AutoCorrectAnsiSubtitles(this->config.AutoCorrectAnsiSubtitles());
+				subConfig->AutoSelectForcedSubtitles(false());
+				subConfig->MinimumSubtitleDuration(this->config.MinimumSubtitleDuration());
+				subConfig->AdditionalSubtitleDuration(this->config.AdditionalSubtitleDuration());
+				subConfig->PreventModifiedSubtitleDurationOverlap(this->config.PreventModifiedSubtitleDurationOverlap());
+
+				auto videoDescriptor = currentVideoStream ? (currentVideoStream->StreamDescriptor()).as<VideoStreamDescriptor>() : nullptr;
+				if (videoDescriptor)
+				{
+					subConfig->AdditionalFFmpegSubtitleOptions = PropertySet();
+
+					subConfig->AdditionalFFmpegSubtitleOptions.Insert(L"subfps",
+					winrt::box_value(winrt::to_hstring(videoDescriptor.EncodingProperties().FrameRate().Numerator()) + L"/" + winrt::to_hstring(videoDescriptor.EncodingProperties().FrameRate().Denominator())));
+				}
+				auto externalSubsParser = FFmpegMediaSource::CreateFromStream(stream, subConfig, nullptr);
+
+				if (externalSubsParser->SubtitleStreams().Size() > 0)
+				{
+					if (videoDescriptor)
+					{
+						auto pixelAspect = (double)videoDescriptor.EncodingProperties().PixelAspectRatio().Numerator() / videoDescriptor.EncodingProperties().PixelAspectRatio().Denominator();
+						auto videoAspect = ((double)currentVideoStream->m_pAvCodecCtx->width / currentVideoStream->m_pAvCodecCtx->height) / pixelAspect;
+						for each (auto stream in externalSubsParser->subtitleStreams)
+						{
+							stream->NotifyVideoFrameSize(currentVideoStream->m_pAvCodecCtx->width, currentVideoStream->m_pAvCodecCtx->height, videoAspect);
+						}
+					}
+
+					int readResult = 0;
+					while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
+					{
+						//Concurrency::interruption_point();
+					}
+				}
+
+
+				mutexGuard.lock();
+				try
+				{
+					if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
+					{
+						externalSubsParser->SetSubtitleDelay(SubtitleDelay());
+					}
+
+					int subtitleTracksCount = 0;
+
+					for each (auto externalSubtitle in externalSubsParser->subtitleStreams)
+					{
+						if (externalSubtitle->SubtitleTrack.Cues().Size() > 0)
+						{
+							// detach stream
+							externalSubtitle->Detach();
+
+							// find and add stream info
+							for (auto subtitleInfo : externalSubsParser->SubtitleStreams())
+							{
+								if (subtitleInfo.SubtitleTrack() == externalSubtitle->SubtitleTrack)
+								{
+									subtitleStrInfos.Append(subtitleInfo);
+									break;
+								}
+							}
+
+							// add stream
+							subtitleStreams.push_back(externalSubtitle);
+							if (this->PlaybackItem() != nullptr)
+							{
+								PlaybackItem().Source().ExternalTimedMetadataTracks().Append(externalSubtitle->SubtitleTrack);
+							}
+							subtitleTracksCount++;
+						}
+					}
+
+					if (subtitleTracksCount == 0)
+					{
+						throw_hresult(E_INVALIDARG);
+						//throw ref new InvalidArgumentException("No subtitles found in file.");
+					}
+
+					subtitleStreamInfos = subtitleStrInfos.GetView();
+				}
+				catch (...)
+				{
+					mutexGuard.unlock();
+					throw;
+				}
+				mutexGuard.unlock();
+				return externalSubsParser->SubtitleStreams();
+			});
+		co_return result;
+
 	}
 
 	Windows::Foundation::IAsyncOperation<Windows::Foundation::Collections::IVectorView<FFmpegInteropXWinUI::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(Windows::Storage::Streams::IRandomAccessStream stream)
 	{
-		throw hresult_not_implemented();
+
+
 	}
 
 	FFmpegInteropXWinUI::MediaSourceConfig FFmpegMediaSource::Configuration()
@@ -1131,6 +1435,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 		mutexGuard.unlock();
 	}
+
 
 	std::shared_ptr<MediaSampleProvider> FFmpegMediaSource::CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avAudioCodecCtx, int index)
 	{
