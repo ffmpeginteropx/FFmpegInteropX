@@ -128,7 +128,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		AVFormatContext* avFormatCtx;
 		winrt::com_ptr<IStream> fileStreamData;
 		ByteOrderMark streamByteOrderMark;
-		winrt::FFmpegInteropXWinUI::MediaSourceConfig config = { nullptr };
+		winrt::com_ptr<MediaSourceConfig> config = { nullptr };
 
 	private:
 
