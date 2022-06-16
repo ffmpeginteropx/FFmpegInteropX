@@ -10,23 +10,22 @@ outDir="$DIR/Intermediate/FFmpeg$variant/$platform"
 
 # make sure path to link.exe (same dir as cl.exe) is at start of path variable
 # this avoids conflicts with GNU link.exe
-clpath=$(which cl)
-clpath="${clpath::-3}"
+clpath=$(dirname "$(which cl.exe)")
 PATH=$clpath:$PATH
 
 cd Libs/dav1d
 
 rm -rf $intDir
 
-/mingw64/bin/meson $intDir --cross-file ../build-scripts/dav1d-cross/$platform.txt || exit
+meson $intDir --cross-file ../build-scripts/dav1d-cross/$platform.txt || exit
 
 cd $intDir
-/mingw64/bin/meson configure -Dbuildtype=release || exit
-/mingw64/bin/meson configure -Ddefault_library=static || exit
-/mingw64/bin/meson configure -Denable_tests=false || exit
-/mingw64/bin/meson configure -Denable_asm=true || exit
+meson configure -Dbuildtype=release || exit
+meson configure -Ddefault_library=static || exit
+meson configure -Denable_tests=false || exit
+meson configure -Denable_asm=true || exit
 
-/mingw64/bin/ninja || exit
+ninja || exit
 
 mkdir -p $outDir/lib
 mkdir -p $outDir/include

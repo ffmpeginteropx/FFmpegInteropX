@@ -1,8 +1,8 @@
 [binaries]
-c = 'cl'
-cpp = 'cl'
-ar = 'lib'
-windres = 'rc'
+c = 'cl.exe'
+cpp = 'cl.exe'
+ar = 'lib.exe'
+windres = 'rc.exe'
 
 [built-in options]
 c_args = ['-MD', '-GL', '-DWINAPI_FAMILY=WINAPI_FAMILY_APP']
