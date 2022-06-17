@@ -142,10 +142,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		IVector<winrt::FFmpegInteropXWinUI::SubtitleStreamInfo> subtitleStrInfos = { nullptr };
 		IVector<winrt::FFmpegInteropXWinUI::VideoStreamInfo> videoStrInfos = { nullptr };
 
-		std::vector<std::shared_ptr<MediaSampleProvider>> sampleProviders = { nullptr };
-		std::vector<std::shared_ptr<MediaSampleProvider>> audioStreams = { nullptr };
-		std::vector< std::shared_ptr<SubtitleProvider>> subtitleStreams = { nullptr };
-		std::vector<std::shared_ptr<MediaSampleProvider>> videoStreams = { nullptr };
+		std::vector<std::shared_ptr<MediaSampleProvider>> sampleProviders;
+		std::vector<std::shared_ptr<MediaSampleProvider>> audioStreams;
+		std::vector< std::shared_ptr<SubtitleProvider>> subtitleStreams;
+		std::vector<std::shared_ptr<MediaSampleProvider>> videoStreams;
 
 		std::shared_ptr<MediaSampleProvider> currentVideoStream;
 		std::shared_ptr<MediaSampleProvider> currentAudioStream;
@@ -162,9 +162,9 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		IVectorView<winrt::FFmpegInteropXWinUI::ChapterInfo> chapterInfos = { nullptr };
 		winrt::FFmpegInteropXWinUI::FormatInfo formatInfo = { nullptr };
 
-		std::shared_ptr<AttachedFileHelper> attachedFileHelper;
+		std::shared_ptr<AttachedFileHelper> attachedFileHelper = NULL;
 
-		std::shared_ptr<MediaMetadata> metadata;
+		std::shared_ptr<MediaMetadata> metadata = NULL;
 
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher dispatcher = { nullptr };
@@ -175,14 +175,14 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		hstring audioCodecName;
 		TimeSpan mediaDuration;
 		TimeSpan subtitleDelay;
-		unsigned char* fileStreamBuffer;
+		unsigned char* fileStreamBuffer = NULL;
 		bool isFirstSeek;
-		AVBufferRef* avHardwareContext;
-		AVBufferRef* avHardwareContextDefault;
-		ID3D11Device* device;
-		ID3D11DeviceContext* deviceContext;
-		HANDLE deviceHandle;
-		IMFDXGIDeviceManager* deviceManager;
+		AVBufferRef* avHardwareContext = NULL;
+		AVBufferRef* avHardwareContextDefault = NULL;
+		ID3D11Device* device = NULL;
+		ID3D11DeviceContext* deviceContext = NULL;
+		HANDLE deviceHandle = NULL;
+		IMFDXGIDeviceManager* deviceManager = NULL;
 
 		bool isFirstSeekAfterStreamSwitch;
 		bool isLastSeekForward;

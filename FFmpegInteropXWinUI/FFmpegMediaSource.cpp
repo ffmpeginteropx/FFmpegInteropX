@@ -158,6 +158,15 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		, isFirstSeek(true)
 		, dispatcher(dispatcher)
 	{
+		avDict = NULL;
+		unsigned char* fileStreamBuffer = NULL;
+		avHardwareContext = NULL;
+		avHardwareContextDefault = NULL;
+		device = NULL;
+		deviceContext = NULL;
+		deviceHandle = NULL;
+		deviceManager = NULL;
+
 		if (!isRegistered)
 		{
 			isRegisteredMutex.lock();
@@ -232,10 +241,8 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			// Convert asynchronous IRandomAccessStream to synchronous IStream. This API requires shcore.h and shcore.lib
 			//
 			//
-			//Helpersa::GetIStream(winrt::to_abi<::IUnknown*>(stream.try_as<IStream>()), &fileStreamData);
 			hr = CreateStreamOverRandomAccessStream(reinterpret_cast<::IUnknown*>(winrt::get_abi(stream)), IID_PPV_ARGS(&fileStreamData));
-			//stream.as(IID_PPV_ARGS(&fileStreamData));
-			
+
 		}
 
 		if (SUCCEEDED(hr))
@@ -251,7 +258,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 		if (SUCCEEDED(hr))
 		{
-			avIOCtx = avio_alloc_context(fileStreamBuffer, config->StreamBufferSize(), 0, (void*)this, FileStreamRead, 0, FileStreamSeek);
+			avIOCtx = avio_alloc_context(fileStreamBuffer, config->StreamBufferSize(), 0, (void*)winrt::get_abi(this), FileStreamRead, 0, FileStreamSeek);
 			if (avIOCtx == nullptr)
 			{
 				hr = E_OUTOFMEMORY;
@@ -284,7 +291,6 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		{
 			avFormatCtx->pb = avIOCtx;
 			avFormatCtx->flags |= AVFMT_FLAG_CUSTOM_IO;
-
 			// Open media file using custom IO setup above instead of using file name. Opening a file using file name will invoke fopen C API call that only have
 			// access within the app installation directory and appdata folder. Custom IO allows access to file selected using FilePicker dialog.
 			if (avformat_open_input(&avFormatCtx, "", NULL, &avDict) < 0)
@@ -641,7 +647,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			auto videoDescriptor = (currentVideoStream->StreamDescriptor().as<VideoStreamDescriptor>());
 			auto pixelAspect = (double)videoDescriptor.EncodingProperties().PixelAspectRatio().Numerator() / videoDescriptor.EncodingProperties().PixelAspectRatio().Denominator();
 			auto videoAspect = ((double)currentVideoStream->m_pAvCodecCtx->width / currentVideoStream->m_pAvCodecCtx->height) / pixelAspect;
-			for each (auto stream in subtitleStreams)
+			for (auto stream : subtitleStreams)
 			{
 				stream->NotifyVideoFrameSize(currentVideoStream->m_pAvCodecCtx->width, currentVideoStream->m_pAvCodecCtx->height, videoAspect);
 			}

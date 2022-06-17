@@ -186,8 +186,8 @@ namespace FFmpegInteropX
 		INT64 m_startOffset;
 		double timeBaseFactor;
 		DecoderEngine decoder;
-		ID3D11Device* device;
-		ID3D11DeviceContext* deviceContext;
+		ID3D11Device* device = NULL;
+		ID3D11DeviceContext* deviceContext = NULL;
 
 	};
 }
