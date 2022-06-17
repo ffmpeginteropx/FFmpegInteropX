@@ -386,7 +386,7 @@ namespace FFmpegInteropXWinUI
 	}
 
 	[default_interface]
-	runtimeclass MediaThumbnailData
+	runtimeclass MediaThumbnailData: Windows.Foundation.IClosable
 	{
 		Windows.Storage.Streams.IBuffer  Buffer{get; };
 		String Extension{ get; };
