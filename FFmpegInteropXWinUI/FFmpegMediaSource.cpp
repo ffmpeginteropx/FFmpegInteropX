@@ -18,6 +18,7 @@
 #include "ChapterInfo.h"
 #include "FFmpegReader.h"
 
+
 using namespace winrt::Windows::Storage::Streams;
 //using namespace winrt::Windows::Media::MediaProperties;
 using namespace FFmpegInteropX;
@@ -229,8 +230,12 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		if (SUCCEEDED(hr))
 		{
 			// Convert asynchronous IRandomAccessStream to synchronous IStream. This API requires shcore.h and shcore.lib
+			//
+			//
 			//Helpersa::GetIStream(winrt::to_abi<::IUnknown*>(stream.try_as<IStream>()), &fileStreamData);
-			fileStreamData = stream.try_as<IStream>();
+			hr = CreateStreamOverRandomAccessStream(reinterpret_cast<::IUnknown*>(winrt::get_abi(stream)), IID_PPV_ARGS(&fileStreamData));
+			//stream.as(IID_PPV_ARGS(&fileStreamData));
+			
 		}
 
 		if (SUCCEEDED(hr))
