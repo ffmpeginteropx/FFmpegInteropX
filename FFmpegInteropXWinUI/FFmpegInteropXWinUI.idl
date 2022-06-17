@@ -320,7 +320,7 @@ namespace FFmpegInteropXWinUI
 	};
 
 	[default_interface]
-	runtimeclass FrameGrabber
+	runtimeclass FrameGrabber: Windows.Foundation.IClosable
 	{
 		/// <summary>The duration of the video stream.</summary>
 		Windows.Foundation.TimeSpan Duration{get; };
