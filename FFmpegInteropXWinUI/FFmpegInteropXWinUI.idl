@@ -454,7 +454,7 @@ namespace FFmpegInteropXWinUI
 		MediaSourceConfig Configuration{ get; };
 
 
-		IVectorView<IKeyValuePair<String, String> > MetadataTags{ get; };
+		IMapView<String, IVectorView<String> > MetadataTags{ get; };
 
 		///<summary>Gets the duration of the stream. Returns zero, if this is streaming media.</summary>
 		Windows.Foundation.TimeSpan Duration{ get; };
@@ -492,7 +492,7 @@ namespace FFmpegInteropXWinUI
 
 		///<summary>Gets or sets the BufferTime of the MediaStreamSource.</summary>
 		///<remarks>A value of 0 is recommended for local files, streaming sources should use higher values.</remarks>
-		Windows.Foundation.TimeSpan BufferTime{ get; };
+		Windows.Foundation.TimeSpan BufferTime{ get; set; };
 
 		///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
 		///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this .</remarks>

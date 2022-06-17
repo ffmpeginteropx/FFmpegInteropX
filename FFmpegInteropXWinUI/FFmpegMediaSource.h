@@ -60,7 +60,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		Windows::Foundation::IAsyncOperation<Windows::Foundation::Collections::IVectorView<FFmpegInteropXWinUI::SubtitleStreamInfo>> AddExternalSubtitleAsync(Windows::Storage::Streams::IRandomAccessStream stream, hstring streamName);
 		Windows::Foundation::IAsyncOperation<Windows::Foundation::Collections::IVectorView<FFmpegInteropXWinUI::SubtitleStreamInfo>> AddExternalSubtitleAsync(Windows::Storage::Streams::IRandomAccessStream stream);
 		FFmpegInteropXWinUI::MediaSourceConfig Configuration();
-		Windows::Foundation::Collections::IVectorView<Windows::Foundation::Collections::IKeyValuePair<hstring, hstring>> MetadataTags();
+		winrt::Windows::Foundation::Collections::IMapView<hstring, winrt::Windows::Foundation::Collections::IVectorView<hstring>> MetadataTags();
 		Windows::Foundation::TimeSpan Duration();
 		FFmpegInteropXWinUI::VideoStreamInfo CurrentVideoStream();
 		FFmpegInteropXWinUI::AudioStreamInfo CurrentAudioStream();
@@ -73,6 +73,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		Windows::Media::Playback::MediaPlaybackItem PlaybackItem();
 		Windows::Foundation::TimeSpan SubtitleDelay();
 		Windows::Foundation::TimeSpan BufferTime();
+		void BufferTime(winrt::Windows::Foundation::TimeSpan const& value);
 		Windows::Media::Playback::MediaPlaybackSession PlaybackSession();
 		void PlaybackSession(Windows::Media::Playback::MediaPlaybackSession const& value);
 		void Close();
@@ -113,8 +114,8 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	public://internal:
 		static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, CoreDispatcher  const& dispatcher);
-		static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, MediaSourceConfig  const& config, CoreDispatcher  const& dispatcher);
-		static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, MediaSourceConfig  const& config);
+		static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, CoreDispatcher  const& dispatcher);
+		static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config);
 		HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek);
 
 		std::shared_ptr<MediaSampleProvider> VideoSampleProvider()

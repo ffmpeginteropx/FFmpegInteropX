@@ -195,7 +195,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		return interopMSS;
 	}
 
-	winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(hstring const& uri, MediaSourceConfig const& config, CoreDispatcher const& dispatcher)
+	winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(hstring const& uri, winrt::com_ptr<MediaSourceConfig> const& config, CoreDispatcher const& dispatcher)
 	{
 		auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher);
 		auto hr = interopMSS->CreateMediaStreamSource(uri);
@@ -206,7 +206,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		return interopMSS;
 	}
 
-	winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(hstring const& uri, MediaSourceConfig const& config)
+	winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(hstring const& uri, winrt::com_ptr<MediaSourceConfig> const& config)
 	{
 		auto dispatcher = GetCurrentDispatcher();
 		auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher);
@@ -451,22 +451,29 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	Windows::Foundation::IAsyncOperation<FFmpegInteropXWinUI::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream, FFmpegInteropXWinUI::MediaSourceConfig config)
 	{
-		throw hresult_not_implemented();
+		auto dispatcher = GetCurrentDispatcher();
+		co_await winrt::resume_background();
+		auto result = CreateFromStream(stream, config.as<winrt::FFmpegInteropXWinUI::implementation::MediaSourceConfig>(), dispatcher);
+		co_return result.as<FFmpegInteropXWinUI::FFmpegMediaSource>();;
 	}
 
 	Windows::Foundation::IAsyncOperation<FFmpegInteropXWinUI::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream)
 	{
-		throw hresult_not_implemented();
-	}
-	Windows::Foundation::IAsyncOperation<FFmpegInteropXWinUI::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri, FFmpegInteropXWinUI::MediaSourceConfig config)
-	{
-		throw hresult_not_implemented();
-	}
-	Windows::Foundation::IAsyncOperation<FFmpegInteropXWinUI::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
-	{
-		throw hresult_not_implemented();
+		return CreateFromStreamAsync(stream, winrt::make_self<MediaSourceConfig>().as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>());
 	}
 
+	Windows::Foundation::IAsyncOperation<FFmpegInteropXWinUI::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri, FFmpegInteropXWinUI::MediaSourceConfig config)
+	{
+		auto dispatcher = GetCurrentDispatcher();
+		co_await winrt::resume_background();
+		auto result = CreateFromUri(uri, config.as<winrt::FFmpegInteropXWinUI::implementation::MediaSourceConfig>(), dispatcher);
+		co_return result.as<FFmpegInteropXWinUI::FFmpegMediaSource>();
+	}
+
+	Windows::Foundation::IAsyncOperation<FFmpegInteropXWinUI::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
+	{
+		return CreateFromUriAsync(uri, winrt::make_self<MediaSourceConfig>().as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>());
+	}
 
 	HRESULT FFmpegMediaSource::InitFFmpegContext()
 	{
@@ -1156,214 +1163,310 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	Windows::Media::Core::MediaStreamSource FFmpegMediaSource::GetMediaStreamSource()
 	{
-		throw hresult_not_implemented();
+		if (this->config->IsFrameGrabber) throw_hresult(E_UNEXPECTED);
+		return mss;
+	}
+
+	MediaSource FFmpegMediaSource::CreateMediaSource()
+	{
+		for (auto stream : sampleProviders)
+		{
+			if (stream)
+			{
+				stream->NotifyCreateSource();
+			}
+		}
+
+		if (this->config->IsFrameGrabber) throw_hresult(E_UNEXPECTED);
+		MediaSource source = MediaSource::CreateFromMediaStreamSource(mss);
+		for each (auto stream in subtitleStreams)
+		{
+			source.ExternalTimedMetadataTracks().Append(stream->SubtitleTrack);
+		}
+		for (auto subtitleInfo : SubtitleStreams())
+		{
+			if (subtitleInfo.IsExternal()) {
+				source.ExternalTimedMetadataTracks().Append(subtitleInfo.SubtitleTrack());
+			}
+		}
+
+		if (chapterInfos.Size() > 0)
+		{
+			auto track = TimedMetadataTrack(L"Chapters", L"", TimedMetadataKind::Chapter);
+			for (auto chapter : chapterInfos)
+			{
+				auto cue = ChapterCue();
+				cue.Title(chapter.Title());
+				cue.StartTime(chapter.StartTime());
+				cue.Duration(chapter.Duration());
+				track.AddCue(cue);
+			}
+			source.ExternalTimedMetadataTracks().Append(track);
+		}
+
+		return source;
 	}
 
 	Windows::Media::Playback::MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem()
 	{
-		throw hresult_not_implemented();
+		mutexGuard.lock();
+		try
+		{
+			if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
+			playbackItem = MediaPlaybackItem(CreateMediaSource());
+			InitializePlaybackItem(playbackItem);
+			mutexGuard.unlock();
+			return playbackItem;
+		}
+		catch (...)
+		{
+			mutexGuard.unlock();
+			throw;
+		}
 	}
 
 	Windows::Media::Playback::MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(Windows::Foundation::TimeSpan const& startTime)
 	{
-		throw hresult_not_implemented();
+		mutexGuard.lock();
+		try
+		{
+			if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
+			playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime);
+			InitializePlaybackItem(playbackItem);
+			mutexGuard.unlock();
+			return playbackItem;
+		}
+		catch (...)
+		{
+			mutexGuard.unlock();
+			throw;
+		}
 	}
 
 	Windows::Media::Playback::MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(Windows::Foundation::TimeSpan const& startTime, Windows::Foundation::TimeSpan const& durationLimit)
 	{
-		throw hresult_not_implemented();
+		mutexGuard.lock();
+		try
+		{
+			if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
+			playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime, durationLimit);
+			InitializePlaybackItem(playbackItem);
+			mutexGuard.unlock();
+			return playbackItem;
+		}
+		catch (...)
+		{
+			mutexGuard.unlock();
+			throw;
+		}
 	}
 
 	Windows::Foundation::IAsyncOperation<Windows::Foundation::Collections::IVectorView<FFmpegInteropXWinUI::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(Windows::Storage::Streams::IRandomAccessStream stream, hstring streamName)
 	{
-		auto result = co_await concurrency::create_task([this, stream, streamName]
+		co_await winrt::resume_background();
+
+		auto cancellation = co_await get_cancellation_token();
+		auto subConfig(winrt::make_self<MediaSourceConfig>());
+		subConfig->IsExternalSubtitleParser = true;
+		subConfig->DefaultSubtitleStreamName(streamName);
+		subConfig->DefaultSubtitleDelay(this->SubtitleDelay());
+		subConfig->AutoCorrectAnsiSubtitles(this->config->AutoCorrectAnsiSubtitles());
+		subConfig->AnsiSubtitleEncoding(this->config->AnsiSubtitleEncoding());
+		subConfig->OverrideSubtitleStyles(this->config->OverrideSubtitleStyles());
+		subConfig->SubtitleRegion(this->config->SubtitleRegion());
+		subConfig->SubtitleStyle(this->config->SubtitleStyle());
+		subConfig->AutoCorrectAnsiSubtitles(this->config->AutoCorrectAnsiSubtitles());
+		subConfig->AutoSelectForcedSubtitles(false());
+		subConfig->MinimumSubtitleDuration(this->config->MinimumSubtitleDuration());
+		subConfig->AdditionalSubtitleDuration(this->config->AdditionalSubtitleDuration());
+		subConfig->PreventModifiedSubtitleDurationOverlap(this->config->PreventModifiedSubtitleDurationOverlap());
+
+		auto videoDescriptor = currentVideoStream ? (currentVideoStream->StreamDescriptor()).as<VideoStreamDescriptor>() : nullptr;
+		if (videoDescriptor)
+		{
+			subConfig->AdditionalFFmpegSubtitleOptions = PropertySet();
+
+			subConfig->AdditionalFFmpegSubtitleOptions.Insert(L"subfps",
+				winrt::box_value(winrt::to_hstring(videoDescriptor.EncodingProperties().FrameRate().Numerator()) + L"/" + winrt::to_hstring(videoDescriptor.EncodingProperties().FrameRate().Denominator())));
+		}
+		auto externalSubsParser = FFmpegMediaSource::CreateFromStream(stream, subConfig, nullptr);
+
+		if (externalSubsParser->SubtitleStreams().Size() > 0)
+		{
+			if (videoDescriptor)
 			{
-				auto subConfig(winrt::make_self<MediaSourceConfig>());
-				subConfig->IsExternalSubtitleParser = true;
-				subConfig->DefaultSubtitleStreamName(streamName);
-				subConfig->DefaultSubtitleDelay(this->SubtitleDelay());
-				subConfig->AutoCorrectAnsiSubtitles(this->config->AutoCorrectAnsiSubtitles());
-				subConfig->AnsiSubtitleEncoding(this->config->AnsiSubtitleEncoding());
-				subConfig->OverrideSubtitleStyles(this->config->OverrideSubtitleStyles());
-				subConfig->SubtitleRegion(this->config->SubtitleRegion());
-				subConfig->SubtitleStyle(this->config->SubtitleStyle());
-				subConfig->AutoCorrectAnsiSubtitles(this->config->AutoCorrectAnsiSubtitles());
-				subConfig->AutoSelectForcedSubtitles(false());
-				subConfig->MinimumSubtitleDuration(this->config->MinimumSubtitleDuration());
-				subConfig->AdditionalSubtitleDuration(this->config->AdditionalSubtitleDuration());
-				subConfig->PreventModifiedSubtitleDurationOverlap(this->config->PreventModifiedSubtitleDurationOverlap());
-
-				auto videoDescriptor = currentVideoStream ? (currentVideoStream->StreamDescriptor()).as<VideoStreamDescriptor>() : nullptr;
-				if (videoDescriptor)
+				auto pixelAspect = (double)videoDescriptor.EncodingProperties().PixelAspectRatio().Numerator() / videoDescriptor.EncodingProperties().PixelAspectRatio().Denominator();
+				auto videoAspect = ((double)currentVideoStream->m_pAvCodecCtx->width / currentVideoStream->m_pAvCodecCtx->height) / pixelAspect;
+				for each (auto stream in externalSubsParser->subtitleStreams)
 				{
-					subConfig->AdditionalFFmpegSubtitleOptions = PropertySet();
-
-					subConfig->AdditionalFFmpegSubtitleOptions.Insert(L"subfps",
-					winrt::box_value(winrt::to_hstring(videoDescriptor.EncodingProperties().FrameRate().Numerator()) + L"/" + winrt::to_hstring(videoDescriptor.EncodingProperties().FrameRate().Denominator())));
+					stream->NotifyVideoFrameSize(currentVideoStream->m_pAvCodecCtx->width, currentVideoStream->m_pAvCodecCtx->height, videoAspect);
 				}
-				auto externalSubsParser = FFmpegMediaSource::CreateFromStream(stream, subConfig, nullptr);
+			}
 
-				if (externalSubsParser->SubtitleStreams().Size() > 0)
+			int readResult = 0;
+			while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
+			{
+				//Concurrency::interruption_point();
+				if (cancellation()) co_return nullptr;
+			}
+		}
+
+
+		mutexGuard.lock();
+		try
+		{
+			if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
+			{
+				externalSubsParser->SetSubtitleDelay(SubtitleDelay());
+			}
+
+			int subtitleTracksCount = 0;
+
+			for each (auto externalSubtitle in externalSubsParser->subtitleStreams)
+			{
+				if (externalSubtitle->SubtitleTrack.Cues().Size() > 0)
 				{
-					if (videoDescriptor)
+					// detach stream
+					externalSubtitle->Detach();
+
+					// find and add stream info
+					for (auto subtitleInfo : externalSubsParser->SubtitleStreams())
 					{
-						auto pixelAspect = (double)videoDescriptor.EncodingProperties().PixelAspectRatio().Numerator() / videoDescriptor.EncodingProperties().PixelAspectRatio().Denominator();
-						auto videoAspect = ((double)currentVideoStream->m_pAvCodecCtx->width / currentVideoStream->m_pAvCodecCtx->height) / pixelAspect;
-						for each (auto stream in externalSubsParser->subtitleStreams)
+						if (subtitleInfo.SubtitleTrack() == externalSubtitle->SubtitleTrack)
 						{
-							stream->NotifyVideoFrameSize(currentVideoStream->m_pAvCodecCtx->width, currentVideoStream->m_pAvCodecCtx->height, videoAspect);
+							subtitleStrInfos.Append(subtitleInfo);
+							break;
 						}
 					}
 
-					int readResult = 0;
-					while ((readResult = externalSubsParser->m_pReader->ReadPacket()) >= 0)
+					// add stream
+					subtitleStreams.push_back(externalSubtitle);
+					if (this->PlaybackItem() != nullptr)
 					{
-						//Concurrency::interruption_point();
+						PlaybackItem().Source().ExternalTimedMetadataTracks().Append(externalSubtitle->SubtitleTrack);
 					}
+					subtitleTracksCount++;
 				}
+			}
 
+			if (subtitleTracksCount == 0)
+			{
+				throw_hresult(E_INVALIDARG);
+				//throw ref new InvalidArgumentException("No subtitles found in file.");
+			}
 
-				mutexGuard.lock();
-				try
-				{
-					if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
-					{
-						externalSubsParser->SetSubtitleDelay(SubtitleDelay());
-					}
-
-					int subtitleTracksCount = 0;
-
-					for each (auto externalSubtitle in externalSubsParser->subtitleStreams)
-					{
-						if (externalSubtitle->SubtitleTrack.Cues().Size() > 0)
-						{
-							// detach stream
-							externalSubtitle->Detach();
-
-							// find and add stream info
-							for (auto subtitleInfo : externalSubsParser->SubtitleStreams())
-							{
-								if (subtitleInfo.SubtitleTrack() == externalSubtitle->SubtitleTrack)
-								{
-									subtitleStrInfos.Append(subtitleInfo);
-									break;
-								}
-							}
-
-							// add stream
-							subtitleStreams.push_back(externalSubtitle);
-							if (this->PlaybackItem() != nullptr)
-							{
-								PlaybackItem().Source().ExternalTimedMetadataTracks().Append(externalSubtitle->SubtitleTrack);
-							}
-							subtitleTracksCount++;
-						}
-					}
-
-					if (subtitleTracksCount == 0)
-					{
-						throw_hresult(E_INVALIDARG);
-						//throw ref new InvalidArgumentException("No subtitles found in file.");
-					}
-
-					subtitleStreamInfos = subtitleStrInfos.GetView();
-				}
-				catch (...)
-				{
-					mutexGuard.unlock();
-					throw;
-				}
-				mutexGuard.unlock();
-				return externalSubsParser->SubtitleStreams();
-			});
-		co_return result;
-
+			subtitleStreamInfos = subtitleStrInfos.GetView();
+		}
+		catch (...)
+		{
+			mutexGuard.unlock();
+			throw;
+		}
+		mutexGuard.unlock();
+		co_return externalSubsParser->SubtitleStreams();
 	}
 
 	Windows::Foundation::IAsyncOperation<Windows::Foundation::Collections::IVectorView<FFmpegInteropXWinUI::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(Windows::Storage::Streams::IRandomAccessStream stream)
 	{
-
-
+		return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName());
 	}
 
 	FFmpegInteropXWinUI::MediaSourceConfig FFmpegMediaSource::Configuration()
 	{
-		throw hresult_not_implemented();
+		return config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>();
 	}
 
-	Windows::Foundation::Collections::IVectorView<Windows::Foundation::Collections::IKeyValuePair<hstring, hstring>> FFmpegMediaSource::MetadataTags()
+	winrt::Windows::Foundation::Collections::IMapView<hstring, winrt::Windows::Foundation::Collections::IVectorView<hstring>> FFmpegMediaSource::MetadataTags()
 	{
-		throw hresult_not_implemented();
+		metadata->LoadMetadataTags(avFormatCtx);
+		return metadata->MetadataTags();
 	}
 
 	Windows::Foundation::TimeSpan FFmpegMediaSource::Duration()
 	{
-		throw hresult_not_implemented();
+		return mediaDuration;
 	}
 
 	FFmpegInteropXWinUI::VideoStreamInfo FFmpegMediaSource::CurrentVideoStream()
 	{
-		throw hresult_not_implemented();
+		auto stream = currentVideoStream;
+		return stream ? stream->VideoInfo() : nullptr;
 	}
 
 	FFmpegInteropXWinUI::AudioStreamInfo FFmpegMediaSource::CurrentAudioStream()
 	{
-		throw hresult_not_implemented();
+		auto stream = currentAudioStream;
+		return stream ? stream->AudioInfo() : nullptr;
 	}
 
 	Windows::Foundation::Collections::IVectorView<FFmpegInteropXWinUI::VideoStreamInfo> FFmpegMediaSource::VideoStreams()
 	{
-		throw hresult_not_implemented();
+		return videoStreamInfos;
 	}
 
 	Windows::Foundation::Collections::IVectorView<FFmpegInteropXWinUI::AudioStreamInfo> FFmpegMediaSource::AudioStreams()
 	{
-		throw hresult_not_implemented();
+		return audioStreamInfos;
 	}
 
 	Windows::Foundation::Collections::IVectorView<FFmpegInteropXWinUI::SubtitleStreamInfo> FFmpegMediaSource::SubtitleStreams()
 	{
-		throw hresult_not_implemented();
+		return subtitleStreamInfos;
 	}
 
 	Windows::Foundation::Collections::IVectorView<FFmpegInteropXWinUI::ChapterInfo> FFmpegMediaSource::ChapterInfos()
 	{
-		throw hresult_not_implemented();
+		return chapterInfos;
 	}
 
 	FFmpegInteropXWinUI::FormatInfo FFmpegMediaSource::FormatInfo()
 	{
-		throw hresult_not_implemented();
+		return formatInfo;
 	}
 
 	bool FFmpegMediaSource::HasThumbnail()
 	{
-		throw hresult_not_implemented();
+		return thumbnailStreamIndex;
 	}
 
 	Windows::Media::Playback::MediaPlaybackItem FFmpegMediaSource::PlaybackItem()
 	{
-		throw hresult_not_implemented();
+		return playbackItem;
 	}
 
 	Windows::Foundation::TimeSpan FFmpegMediaSource::SubtitleDelay()
 	{
-		throw hresult_not_implemented();
+		return subtitleDelay;
 	}
 
 	Windows::Foundation::TimeSpan FFmpegMediaSource::BufferTime()
 	{
-		throw hresult_not_implemented();
+		return mss.BufferTime();
+	}
+
+	void FFmpegMediaSource::BufferTime(winrt::Windows::Foundation::TimeSpan const& value)
+	{
+		mss.BufferTime(value);
 	}
 
 	Windows::Media::Playback::MediaPlaybackSession FFmpegMediaSource::PlaybackSession()
 	{
-		throw hresult_not_implemented();
+		return session;
 	}
 
 	void FFmpegMediaSource::PlaybackSession(Windows::Media::Playback::MediaPlaybackSession const& value)
 	{
-		throw hresult_not_implemented();
+		mutexGuard.lock();
+		if (session)
+		{
+			session.PositionChanged(sessionPositionEvent);
+		}
+		session = value;
+		if (value)
+		{
+			sessionPositionEvent = value.PositionChanged(Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackSession, winrt::Windows::Foundation::IInspectable>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnPositionChanged));
+		}
+		mutexGuard.unlock();
 	}
 
 	void FFmpegMediaSource::Close()
@@ -1451,16 +1554,16 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			{
 				encodingProperties = AudioEncodingProperties::CreateAac(avAudioCodecCtx->profile == FF_PROFILE_AAC_HE || avAudioCodecCtx->profile == FF_PROFILE_AAC_HE_V2 ? avAudioCodecCtx->sample_rate / 2 : avAudioCodecCtx->sample_rate, avAudioCodecCtx->channels, (unsigned int)avAudioCodecCtx->bit_rate);
 			}
-			audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config, index, encodingProperties, HardwareDecoderStatus::Unknown));
+			audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, encodingProperties, HardwareDecoderStatus::Unknown));
 		}
 		else if (avAudioCodecCtx->codec_id == AV_CODEC_ID_MP3 && config->PassthroughAudioMP3())
 		{
 			AudioEncodingProperties encodingProperties = AudioEncodingProperties::CreateMp3(avAudioCodecCtx->sample_rate, avAudioCodecCtx->channels, (unsigned int)avAudioCodecCtx->bit_rate);
-			audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config, index, encodingProperties, HardwareDecoderStatus::Unknown));
+			audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, encodingProperties, HardwareDecoderStatus::Unknown));
 		}
 		else
 		{
-			audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new UncompressedAudioSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config, index));
+			audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new UncompressedAudioSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index));
 		}
 
 		auto hr = audioSampleProvider->Initialize();
@@ -1528,11 +1631,11 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			// Check for H264 bitstream flavor. H.264 AVC extradata starts with 1 while non AVC one starts with 0
 			if (avVideoCodecCtx->extradata != nullptr && avVideoCodecCtx->extradata_size > 0 && avVideoCodecCtx->extradata[0] == 1)
 			{
-				videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new H264AVCSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus));
+				videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new H264AVCSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
 			}
 			else
 			{
-				videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus));
+				videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
 			}
 		}
 		else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC &&
@@ -1545,11 +1648,11 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			if (avVideoCodecCtx->extradata != nullptr && avVideoCodecCtx->extradata_size > 22 &&
 				(avVideoCodecCtx->extradata[0] || avVideoCodecCtx->extradata[1] || avVideoCodecCtx->extradata[2] > 1))
 			{
-				videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new HEVCSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus));
+				videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new HEVCSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
 			}
 			else
 			{
-				videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus));
+				videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new NALPacketSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
 			}
 		}
 		else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3 &&
@@ -1561,7 +1664,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			auto extradata = std::vector<uint8_t>((uint8_t)&avVideoCodecCtx->extradata, (uint8_t)&avVideoCodecCtx->extradata + avVideoCodecCtx->extradata_size);
 
 			videoProperties.SetFormatUserData(extradata);
-			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus));
+			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
 		}
 		else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VC1 &&
 			CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVC1(), hardwareDecoderStatus, -1, -1) &&
@@ -1574,7 +1677,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 			//auto extradata = Platform::ArrayReference<uint8_t>(avVideoCodecCtx->extradata, avVideoCodecCtx->extradata_size);
 			videoProperties.SetFormatUserData(extradata);
-			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus));
+			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
 		}
 		else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_MPEG2VIDEO &&
 			CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationMPEG2(), hardwareDecoderStatus, -1, -1))
@@ -1582,7 +1685,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			auto videoProperties = VideoEncodingProperties();
 			videoProperties.Subtype(MediaEncodingSubtypes::Mpeg2());
 
-			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus));
+			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
 		}
 		else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP9 &&
 			CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP9(), hardwareDecoderStatus, -1, -1) &&
@@ -1591,7 +1694,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			auto videoProperties = VideoEncodingProperties();
 			videoProperties.Subtype(MediaEncodingSubtypes::Vp9());
 
-			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus));
+			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
 		}
 		else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP8 &&
 			CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP8(), hardwareDecoderStatus, -1, -1) &&
@@ -1601,12 +1704,12 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			auto videoProperties = VideoEncodingProperties();
 			videoProperties.Subtype(Windows::Media::Core::CodecSubtypes::VideoFormatVP80());
 
-			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, videoProperties, hardwareDecoderStatus));
+			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
 		}
 		else if (avVideoCodecCtx->hw_device_ctx)
 		{
 			hardwareDecoderStatus = HardwareDecoderStatus::Available;
-			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new D3D11VideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, hardwareDecoderStatus));
+			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new D3D11VideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, hardwareDecoderStatus));
 		}
 		else
 		{
@@ -1614,7 +1717,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			{
 				hardwareDecoderStatus = HardwareDecoderStatus::NotAvailable;
 			}
-			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new UncompressedVideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config, index, hardwareDecoderStatus));
+			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new UncompressedVideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, hardwareDecoderStatus));
 		}
 
 #pragma warning (default: 4973)
