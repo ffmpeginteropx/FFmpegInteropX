@@ -10,22 +10,29 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 {
     FormatInfo::FormatInfo(hstring const& title, hstring const& formatName, Windows::Foundation::TimeSpan const& duration, int64_t bitrate)
     {
-        throw hresult_not_implemented();
+        this->title = title;
+        this->formatName = formatName;
+        this->duration = duration;
+        this->bitrate = bitrate;
     }
+
     hstring FormatInfo::Title()
     {
-        throw hresult_not_implemented();
+        return title;
     }
+
     hstring FormatInfo::FormatName()
     {
-        throw hresult_not_implemented();
+        return formatName;
     }
+
     Windows::Foundation::TimeSpan FormatInfo::Duration()
     {
-        throw hresult_not_implemented();
+        return duration;
     }
+
     int64_t FormatInfo::Bitrate()
     {
-        throw hresult_not_implemented();
+        return bitrate;
     }
 }

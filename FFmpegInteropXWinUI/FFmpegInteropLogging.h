@@ -14,6 +14,8 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         static void SetLogLevel(FFmpegInteropXWinUI::LogLevel const& level);
         static void SetLogProvider(FFmpegInteropXWinUI::ILogProvider const& logProvider);
         static void SetDefaultLogProvider();
+
+        static ILogProvider s_pLogProvider;
     };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation

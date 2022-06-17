@@ -16,6 +16,12 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         hstring FormatName();
         Windows::Foundation::TimeSpan Duration();
         int64_t Bitrate();
+
+    private:
+        winrt::hstring title;
+        winrt::hstring formatName;
+        TimeSpan duration;
+        int64_t bitrate;
     };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation
