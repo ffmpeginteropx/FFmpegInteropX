@@ -10,42 +10,58 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 {
     SubtitleStreamInfo::SubtitleStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropXWinUI::StreamDisposition const& disposition, bool isDefault, bool isForced, Windows::Media::Core::TimedMetadataTrack const& track, bool isExternal)
     {
-        throw hresult_not_implemented();
+        this->name = name;
+        this->language = language;
+        this->codecName = codecName;
+        this->disposition = disposition;
+        this->isDefault = isDefault;
+        this->isForced = isForced;
+        this->track = track;
+        this->isExternal = isExternal;
     }
+
     bool SubtitleStreamInfo::IsExternal()
     {
-        throw hresult_not_implemented();
+        return isExternal;
     }
+
     bool SubtitleStreamInfo::IsForced()
     {
-        throw hresult_not_implemented();
+        return isForced;
     }
+
     Windows::Media::Core::TimedMetadataTrack SubtitleStreamInfo::SubtitleTrack()
     {
-        return Windows::Media::Core::TimedMetadataTrack{ nullptr };
+        return track;
     }
+
     hstring SubtitleStreamInfo::Name()
     {
-        throw hresult_not_implemented();
+        return name;
     }
+
     hstring SubtitleStreamInfo::Language()
     {
-        throw hresult_not_implemented();
+        return language;
     }
+
     hstring SubtitleStreamInfo::CodecName()
     {
-        throw hresult_not_implemented();
+        return codecName;
     }
+
     FFmpegInteropXWinUI::StreamDisposition SubtitleStreamInfo::Disposition()
     {
-        throw hresult_not_implemented();
+        return disposition;
     }
+
     int64_t SubtitleStreamInfo::Bitrate()
     {
-        throw hresult_not_implemented();
+        return 0;
     }
+
     bool SubtitleStreamInfo::IsDefault()
     {
-        throw hresult_not_implemented();
+        return isDefault;
     }
 }

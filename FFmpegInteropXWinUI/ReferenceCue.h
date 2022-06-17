@@ -18,6 +18,15 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         Windows::Foundation::TimeSpan Duration();
         void Id(hstring const& value);
         hstring Id();
+
+    public:
+        winrt::hstring id;
+
+        winrt::Windows::Foundation::TimeSpan duration;
+
+        winrt::Windows::Foundation::TimeSpan startTime;
+
+        winrt::Windows::Media::Core::IMediaCue cueRef;
     };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation

@@ -10,30 +10,34 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 {
     ReferenceCue::ReferenceCue(Windows::Media::Core::IMediaCue const& other)
     {
-        throw hresult_not_implemented();
+        this->cueRef = other;
+        this->duration = other.Duration();
+        this->id = other.Id();
+        this->startTime = other.StartTime();
     }
+
     void ReferenceCue::StartTime(Windows::Foundation::TimeSpan const& value)
     {
-        throw hresult_not_implemented();
+        this->startTime = value;
     }
     Windows::Foundation::TimeSpan ReferenceCue::StartTime()
     {
-        throw hresult_not_implemented();
+        return startTime;
     }
     void ReferenceCue::Duration(Windows::Foundation::TimeSpan const& value)
     {
-        throw hresult_not_implemented();
+        this->duration = value;
     }
     Windows::Foundation::TimeSpan ReferenceCue::Duration()
     {
-        throw hresult_not_implemented();
+        return duration;
     }
     void ReferenceCue::Id(hstring const& value)
     {
-        throw hresult_not_implemented();
+        id = value;
     }
     hstring ReferenceCue::Id()
     {
-        throw hresult_not_implemented();
+        return id;
     }
 }
