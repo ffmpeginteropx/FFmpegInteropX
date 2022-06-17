@@ -25,7 +25,7 @@ extern "C"
 
 using namespace FFmpegInteropX;
 
-FFmpegInteropX::FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>> &initProviders)
+FFmpegInteropX::FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>> *initProviders)
 	: m_pAvFormatCtx(avFormatCtx)
 	, sampleProviders(initProviders)
 {
@@ -54,7 +54,7 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
 		return ret;
 	}
 
-	if (avPacket->stream_index >= (int)sampleProviders.size())
+	if (avPacket->stream_index >= (int)sampleProviders->size())
 	{
 		// new stream detected. if this is a subtitle stream, we could create it now.
 		av_packet_free(&avPacket);
@@ -67,7 +67,7 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
 		return E_FAIL;
 	}
 
-	std::shared_ptr<MediaSampleProvider> provider = sampleProviders.at(avPacket->stream_index);
+	std::shared_ptr<MediaSampleProvider> provider = sampleProviders->at(avPacket->stream_index);
 	if (provider)
 	{
 		provider->QueuePacket(avPacket);

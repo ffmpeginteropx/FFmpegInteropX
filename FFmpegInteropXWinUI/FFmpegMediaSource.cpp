@@ -500,7 +500,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 		if (SUCCEEDED(hr))
 		{
-			m_pReader = std::shared_ptr<FFmpegInteropX::FFmpegReader>(new FFmpegInteropX::FFmpegReader(avFormatCtx, sampleProviders));
+			m_pReader = std::shared_ptr<FFmpegInteropX::FFmpegReader>(new FFmpegInteropX::FFmpegReader(avFormatCtx, &sampleProviders));
 			if (m_pReader == nullptr)
 			{
 				hr = E_OUTOFMEMORY;
