@@ -42,7 +42,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         double displayAspectRatio;
         int bitsPerSample;
         double framesPerSecond;
-
+        double framesPerSecondOverride;
         FFmpegInteropXWinUI::HardwareDecoderStatus hardwareDecoderStatus;
         FFmpegInteropXWinUI::DecoderEngine decoderEngine;
 

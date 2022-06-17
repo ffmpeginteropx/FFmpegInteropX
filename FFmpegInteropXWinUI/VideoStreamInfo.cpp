@@ -10,66 +10,77 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 {
     VideoStreamInfo::VideoStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropXWinUI::StreamDisposition const& disposition, int64_t bitrate, bool isDefault, int32_t pixelWidth, int32_t pixelHeight, double displayAspectRatio, int32_t bitsPerSample, double framesPerSecond, FFmpegInteropXWinUI::HardwareDecoderStatus const& hwAccel, FFmpegInteropXWinUI::DecoderEngine const& decoderEngine)
     {
-        throw hresult_not_implemented();
+        this->name = name;
+        this->language = language;
+        this->codecName = codecName;
+        this->disposition = disposition;
+        this->bitrate = bitrate;
+        this->isDefault = isDefault;
+
+        this->pixelWidth = pixelWidth;
+        this->pixelHeight = pixelHeight;
+        this->displayAspectRatio = displayAspectRatio;
+        this->bitsPerSample = bitsPerSample;
+        this->framesPerSecond = framesPerSecond;
     }
     int32_t VideoStreamInfo::PixelWidth()
     {
-        throw hresult_not_implemented();
+        return pixelWidth;
     }
     int32_t VideoStreamInfo::PixelHeight()
     {
-        throw hresult_not_implemented();
+        return pixelHeight;
     }
     double VideoStreamInfo::DisplayAspectRatio()
     {
-        throw hresult_not_implemented();
+        return displayAspectRatio;
     }
     int32_t VideoStreamInfo::BitsPerSample()
     {
-        throw hresult_not_implemented();
+        return bitsPerSample;
     }
     double VideoStreamInfo::FramesPerSecond()
     {
-        throw hresult_not_implemented();
+        return framesPerSecond;
     }
     double VideoStreamInfo::FramesPerSecondOverride()
     {
-        throw hresult_not_implemented();
+        return framesPerSecondOverride;
     }
     void VideoStreamInfo::FramesPerSecondOverride(double value)
     {
-        throw hresult_not_implemented();
+        framesPerSecondOverride = value;
     }
     FFmpegInteropXWinUI::HardwareDecoderStatus VideoStreamInfo::HardwareDecoderStatus()
     {
-        throw hresult_not_implemented();
+        return hardwareDecoderStatus;
     }
     FFmpegInteropXWinUI::DecoderEngine VideoStreamInfo::DecoderEngine()
     {
-        throw hresult_not_implemented();
+        return decoderEngine;
     }
     hstring VideoStreamInfo::Name()
     {
-        throw hresult_not_implemented();
+        return name;
     }
     hstring VideoStreamInfo::Language()
     {
-        throw hresult_not_implemented();
+        return language;
     }
     hstring VideoStreamInfo::CodecName()
     {
-        throw hresult_not_implemented();
+        return codecName;
     }
     FFmpegInteropXWinUI::StreamDisposition VideoStreamInfo::Disposition()
     {
-        throw hresult_not_implemented();
+        return disposition;
     }
     int64_t VideoStreamInfo::Bitrate()
     {
-        throw hresult_not_implemented();
+        return bitrate;
     }
     bool VideoStreamInfo::IsDefault()
     {
-        throw hresult_not_implemented();
+        return isDefault;
     }
 }
