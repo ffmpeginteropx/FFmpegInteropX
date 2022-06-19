@@ -16,30 +16,13 @@ winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface DirectXInteropHe
 	return result;
 }
 
-HRESULT DirectXInteropHelper::GetDXGISurface2(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface source, ID3D11Device* d3d12Device, IDXGISurface** dxgiSurface)
+HRESULT DirectXInteropHelper::GetDXGISurface2(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface source, IDXGISurface** dxgiSurface)
 {
 	using IUnknown = ::IUnknown;
-	//TODO: this most likely doesn't work, but I left it this way to allow the project to build.
-	//::IDXGIDevice* dxgiDevice;
-	//d3d12Device->QueryInterface<::IDXGIDevice>(&dxgiDevice);
-	//winrt::com_ptr<::IInspectable> inspectableSurface;
-	//winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice d3dDevice2{ nullptr };  /* = ... */;
-
-	//CreateDirect3D11DeviceFromDXGIDevice((::IDXGIDevice*)dxgiDevice,
-	//	reinterpret_cast<::IInspectable**>(winrt::put_abi(d3dDevice2)));
 
 	winrt::com_ptr<::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess> dxgiInterfaceAccess{
 		source.as<::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess>()
 	};
-
-	//CreateDirect3D11DeviceFromDXGIDevice(dxgiDevice, inspectableSurface.put());
-
-
-	/*inspectableSurface.as(d3d12Device);
-
-	winrt::com_ptr<::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess> dxgiInterfaceAccess{
-		d3dDevice.as<::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess>()
-	};*/;
 
 	winrt::com_ptr<::IDXGISurface> nativeSurface;
 	auto hr = dxgiInterfaceAccess->GetInterface(
@@ -48,6 +31,7 @@ HRESULT DirectXInteropHelper::GetDXGISurface2(winrt::Windows::Graphics::DirectX:
 	if (SUCCEEDED(hr))
 	{
 		*dxgiSurface = nativeSurface.get();
+		(*dxgiSurface)->AddRef();//not sure why this is needed, but without it the texture pool doesn't work
 	}
 	return hr;
 

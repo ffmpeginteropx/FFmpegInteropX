@@ -29,36 +29,36 @@ inline bool operator!=(const winrt::Windows::Foundation::TimeSpan& span, const w
 
 inline winrt::Windows::Foundation::TimeSpan operator+(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
 {
-	winrt::Windows::Foundation::TimeSpan result;
-	result = span + other;
+	winrt::Windows::Foundation::TimeSpan result(span.count() + other.count());
 	return result;
 }
 
 inline winrt::Windows::Foundation::TimeSpan operator-(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
 {
-	winrt::Windows::Foundation::TimeSpan result;
-	result = span - other;
+	winrt::Windows::Foundation::TimeSpan result(span.count() - other.count());
 	return result;
 }
 
-inline winrt::Windows::Foundation::TimeSpan& operator+=(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
+inline winrt::Windows::Foundation::TimeSpan& operator += (const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
 {
-	return span += other;
+	return winrt::Windows::Foundation::TimeSpan(span.count() + other.count());
 }
 
 inline winrt::Windows::Foundation::TimeSpan& operator-=(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
 {
-	return span -= other;
+	return winrt::Windows::Foundation::TimeSpan(span.count() - other.count());
 }
 
 inline winrt::Windows::Foundation::TimeSpan operator*(const winrt::Windows::Foundation::TimeSpan& span, const double factor)
 {
-	return (span * factor);
+	auto mult = (long long)(span.count() * factor);
+	return TimeSpan{ mult };
 }
 
 inline winrt::Windows::Foundation::TimeSpan operator/(const winrt::Windows::Foundation::TimeSpan& span, const double factor)
 {
-	return (span / factor);
+	auto mult = (long long)(span.count() / factor);
+	return TimeSpan{ mult };
 }
 
 //inline winrt::Windows::Foundation::TimeSpan TowinrtTimeSpan(long long ticks)

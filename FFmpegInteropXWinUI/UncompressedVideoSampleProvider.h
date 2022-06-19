@@ -95,9 +95,9 @@ namespace FFmpegInteropX
 		int outputFrameWidth;
 		bool outputDirectBuffer;
 
-		AVBufferPool* sourceBufferPool;
+		AVBufferPool* sourceBufferPool = NULL;
 		int sourceBufferPoolSize;
-		AVBufferPool* targetBufferPool;
+		AVBufferPool* targetBufferPool = NULL;
 		int targetBufferPoolSize;
 		AVPixelFormat m_OutputPixelFormat;
 		SwsContext* m_pSwsCtx = NULL;

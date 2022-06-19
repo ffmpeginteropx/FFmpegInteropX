@@ -117,6 +117,10 @@ namespace FFmpegInteropX
 				pool.push_back(texture);
 				texture->AddRef();
 			}
+			else
+			{
+				delete texture;
+			}
 		}
 
 	private:
