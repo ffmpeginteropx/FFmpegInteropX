@@ -102,7 +102,7 @@ namespace MediaPlayerCS
             }
         }
 
-        private async void CodecChecker_CodecRequired(CodecRequiredEventArgs args)
+        private async void CodecChecker_CodecRequired(object sender, CodecRequiredEventArgs args)
         {
             await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
                 CoreDispatcherPriority.Normal,

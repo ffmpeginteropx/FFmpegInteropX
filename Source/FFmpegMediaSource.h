@@ -130,9 +130,9 @@ namespace FFmpegInteropX
 			}
 		}
 
-		property IVectorView<IKeyValuePair<String^, String^>^>^ MetadataTags
+		property IMapView<String^, IVectorView<String^>^>^ MetadataTags
 		{
-			IVectorView<IKeyValuePair<String^, String^>^>^ get()
+			IMapView<String^, IVectorView<String^>^>^ get()
 			{
 				metadata->LoadMetadataTags(avFormatCtx);
 				return metadata->MetadataTags;

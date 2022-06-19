@@ -59,7 +59,6 @@ namespace FFmpegInteropX
 		}
 	};
 
-	public delegate void CodecRequiredEventHandler(CodecRequiredEventArgs^ args);
 
 	///<summary>This static class handles hardware acceleration detection and status handling.</summary>
 	public ref class CodecChecker sealed
@@ -68,7 +67,7 @@ namespace FFmpegInteropX
 
 		///<summary>This event is raised if a codec is required to improve playback experience.</summary>
 		///<remarks>The event is only raised once per codec. It will be raised again after a call to RefreshAsync().</remarks>
-		static event CodecRequiredEventHandler^ CodecRequired;
+		static event EventHandler<CodecRequiredEventArgs^>^ CodecRequired;
 		
 		///<summary>This will pre-initialize the hardware acceleration status.</summary>
 		///<remarks>This can be called on app startup, but it is not required.</remarks>
@@ -212,7 +211,7 @@ namespace FFmpegInteropX
 
 		static void RaiseCodecRequired(CodecRequiredReason reason, String^ codecName, String^ storeEntryName, String^ uri)
 		{
-			CodecRequired(ref new CodecRequiredEventArgs(reason, codecName, storeEntryName, uri));
+			CodecRequired(nullptr, ref new CodecRequiredEventArgs(reason, codecName, storeEntryName, uri));
 		}
 
 		static property HardwareAccelerationStatus^ HardwareAccelerationH264 { HardwareAccelerationStatus^ get() { return hardwareAccelerationH264; } }
