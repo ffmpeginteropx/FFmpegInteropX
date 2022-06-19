@@ -166,25 +166,25 @@ namespace FFmpegInteropX
 
 	private:
 		std::queue<AVPacket*> m_packetQueue;
-		INT64 m_nextPacketPts;
-		winrt::Windows::Media::Core::IMediaStreamDescriptor m_streamDescriptor;
+		INT64 m_nextPacketPts = 0;
+		winrt::Windows::Media::Core::IMediaStreamDescriptor m_streamDescriptor = nullptr;
 		HardwareDecoderStatus hardwareDecoderStatus;
 
 	public:
 		// The FFmpeg context. Because they are complex types
 		// we declare them as internal so they don't get exposed
 		// externally
-		MediaSourceConfig m_config;
+		MediaSourceConfig m_config = nullptr;
 		std::shared_ptr<FFmpegReader> m_pReader;
-		AVFormatContext* m_pAvFormatCtx;
-		AVCodecContext* m_pAvCodecCtx;
-		AVStream* m_pAvStream;
-		IStreamInfo streamInfo;
+		AVFormatContext* m_pAvFormatCtx = NULL;
+		AVCodecContext* m_pAvCodecCtx = NULL;
+		AVStream* m_pAvStream = NULL;
+		IStreamInfo streamInfo = nullptr;
 		bool m_isEnabled = false;
-		bool m_isDiscontinuous;
-		int m_streamIndex;
-		INT64 m_startOffset;
-		double timeBaseFactor;
+		bool m_isDiscontinuous = false;
+		int m_streamIndex = 0;
+		INT64 m_startOffset = 0;
+		double timeBaseFactor = 0;
 		DecoderEngine decoder;
 		ID3D11Device* device = NULL;
 		ID3D11DeviceContext* deviceContext = NULL;

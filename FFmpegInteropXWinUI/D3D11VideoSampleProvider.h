@@ -16,8 +16,8 @@ namespace FFmpegInteropX
 	class D3D11VideoSampleProvider : public UncompressedVideoSampleProvider
 	{
 	private:
-		const AVCodec* hwCodec;
-		const AVCodec* swCodec;
+		const AVCodec* hwCodec = NULL;
+		const AVCodec* swCodec = NULL;
 
 	public:
 

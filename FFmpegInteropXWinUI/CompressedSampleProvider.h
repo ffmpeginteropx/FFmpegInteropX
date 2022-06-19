@@ -17,7 +17,7 @@ namespace FFmpegInteropX
 		virtual winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
 
 	private:
-		winrt::Windows::Media::MediaProperties::VideoEncodingProperties videoEncodingProperties;
-		winrt::Windows::Media::MediaProperties::AudioEncodingProperties audioEncodingProperties;
+		winrt::Windows::Media::MediaProperties::VideoEncodingProperties videoEncodingProperties = { nullptr };
+		winrt::Windows::Media::MediaProperties::AudioEncodingProperties audioEncodingProperties = { nullptr };
 	};
 }
