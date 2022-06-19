@@ -21,6 +21,11 @@ namespace FFmpegInteropX
 
 	public:
 
+		virtual ~D3D11VideoSampleProvider()
+		{
+			texturePool.reset();
+		}
+
 		D3D11VideoSampleProvider(
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,

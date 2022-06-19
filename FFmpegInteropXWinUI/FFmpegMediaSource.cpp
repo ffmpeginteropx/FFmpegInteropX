@@ -1521,9 +1521,12 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		audioStreams.clear();
 		videoStreams.clear();
 
-		avformat_close_input(&avFormatCtx);
-		av_free(avIOCtx);
-		av_dict_free(&avDict);
+		if (avFormatCtx)
+			avformat_close_input(&avFormatCtx);
+		if (avIOCtx)
+			av_free(avIOCtx);
+		if (avDict)
+			av_dict_free(&avDict);
 
 		if (fileStreamData != nullptr)
 		{
