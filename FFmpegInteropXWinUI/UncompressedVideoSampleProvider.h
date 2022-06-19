@@ -100,7 +100,7 @@ namespace FFmpegInteropX
 		AVBufferPool* targetBufferPool;
 		int targetBufferPoolSize;
 		AVPixelFormat m_OutputPixelFormat;
-		SwsContext* m_pSwsCtx;
+		SwsContext* m_pSwsCtx = NULL;
 		bool m_interlaced_frame;
 		bool m_top_field_first;
 		AVChromaLocation m_chroma_location;

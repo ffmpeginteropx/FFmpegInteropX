@@ -15,7 +15,7 @@ namespace FFmpegInteropX
 	using namespace winrt::Windows::Storage;
 	using namespace winrt::Windows::Storage::Streams;
 
-	class AttachedFileHelper sealed
+	class AttachedFileHelper
 	{
 	public:
 		virtual ~AttachedFileHelper()

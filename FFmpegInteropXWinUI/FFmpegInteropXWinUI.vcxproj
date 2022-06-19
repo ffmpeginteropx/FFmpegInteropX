@@ -228,6 +228,7 @@
     <Midl Include="FFmpegInteropXWinUI.idl" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="FFmpegInteropXWinUI.def" />
     <None Include="packages.config" />
   </ItemGroup>

@@ -22,15 +22,17 @@ winrt::Windows::Storage::Streams::IBuffer NativeBufferFactory::CreateNativeBuffe
 	auto iinspectable = nativeBuffer.as<winrt::Windows::Foundation::IInspectable>();
 	winrt::Windows::Storage::Streams::IBuffer* buffer = iinspectable.as< winrt::Windows::Storage::Streams::IBuffer*>();
 	*/
-	return nullptr;
+	auto buffer = winrt::make<NativeBuffer>((byte*)lpBuffer, nNumberOfBytes, free, opaque);
+
+	return buffer;
 }
 
 winrt::Windows::Storage::Streams::IBuffer NativeBufferFactory::CreateNativeBuffer(LPVOID lpBuffer, UINT32 nNumberOfBytes, const winrt::Windows::Foundation::IInspectable& pObject)
 {
 	//winrt::com_ptr<NativeBuffer> nativeBuffer;
-	//winrt::make<NativeBuffer>(&nativeBuffer, (byte*)lpBuffer, nNumberOfBytes, pObject);
+	auto buffer = winrt::make<NativeBuffer>((byte*)lpBuffer, nNumberOfBytes, pObject);
 	//auto iinspectable = nativeBuffer.as<winrt::Windows::Foundation::IInspectable>();
 	//winrt::Windows::Storage::Streams::IBuffer* buffer = iinspectable.as< winrt::Windows::Storage::Streams::IBuffer*>();
 
-	return nullptr;
+	return buffer;
 }

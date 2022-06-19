@@ -102,12 +102,12 @@
     <ClInclude Include="MediaMetadata.h" />
   </ItemGroup>
   <ItemGroup>
-    <Midl Include="Class.idl" />
     <Midl Include="FFmpegInteropXWinUI.idl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="FFmpegInteropXWinUI.def" />
     <None Include="packages.config" />
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="readme.txt" />

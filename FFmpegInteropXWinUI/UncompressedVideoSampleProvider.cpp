@@ -43,6 +43,7 @@ UncompressedVideoSampleProvider::UncompressedVideoSampleProvider(
 	HardwareDecoderStatus hardwareDecoderStatus)
 	: UncompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
 {
+	m_pSwsCtx = NULL;
 }
 
 void UncompressedVideoSampleProvider::SelectOutputFormat()
