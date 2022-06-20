@@ -21,7 +21,7 @@
 
 namespace FFmpegInteropX
 {
-	 class H264AVCSampleProvider :
+	class H264AVCSampleProvider :
 		public NALPacketSampleProvider
 	{
 	public:
@@ -31,7 +31,7 @@ namespace FFmpegInteropX
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			MediaSourceConfig const& config, 
+			MediaSourceConfig const& config,
 			int streamIndex,
 			VideoEncodingProperties encodingProperties,
 			HardwareDecoderStatus hardwareDecoderStatus);
@@ -39,6 +39,6 @@ namespace FFmpegInteropX
 		virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer* pBuffer) override;
 		virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter dataWriter) override;
 		int ReadMultiByteValue(BYTE* buffer, int position, int numBytes);
-		int m_nalLenSize;
+		int m_nalLenSize = 0;
 	};
 }

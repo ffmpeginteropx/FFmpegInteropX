@@ -32,7 +32,7 @@ namespace FFmpegInteropX
 			std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
 			AVCodecContext* avCodecCtx,
-			MediaSourceConfig const& config, 
+			MediaSourceConfig const& config,
 			int streamIndex,
 			VideoEncodingProperties encodingProperties,
 			HardwareDecoderStatus hardwareDecoderStatus);
@@ -42,6 +42,6 @@ namespace FFmpegInteropX
 		virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter dataWriter);
 
 	private:
-		bool m_bHasSentExtradata;
+		bool m_bHasSentExtradata = false;
 	};
 }
