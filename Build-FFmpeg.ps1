@@ -241,9 +241,9 @@ function Build-Platform {
     Write-Host "Building Library dav1d..."
     Write-Host ""
 
-    echo 'caca {'
+    echo 'testmark {'
     Write-Host "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform"
-    echo '} caca'
+    echo '} testmark'
     & $BashExe $BashArgs --login -c "./Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
     exit
 
