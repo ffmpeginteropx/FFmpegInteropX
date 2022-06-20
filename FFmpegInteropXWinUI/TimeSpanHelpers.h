@@ -12,19 +12,19 @@ inline bool operator <= (const winrt::Windows::Foundation::TimeSpan& span, const
 }
 inline bool operator>(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
 {
-	return span > other;
+	return span.count() > other.count();
 }
 inline bool operator>=(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
 {
-	return span >= other;
+	return span.count() >= other.count();
 }
 inline bool operator==(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
 {
-	return span == other;
+	return span.count() == other.count();
 }
 inline bool operator!=(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)
 {
-	return span != other;
+	return span.count() != other.count();
 }
 
 inline winrt::Windows::Foundation::TimeSpan operator+(const winrt::Windows::Foundation::TimeSpan& span, const winrt::Windows::Foundation::TimeSpan& other)

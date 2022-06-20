@@ -69,6 +69,9 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		TimedTextPadding padding;
 		padding.Unit = TimedTextUnit::Percentage;
 		padding.Start = 0;
+		padding.After = 0;
+		padding.Before = 0;
+		padding.End = 0;
 		m_SubtitleRegion.Padding(padding);
 		m_SubtitleRegion.Name(L"");
 

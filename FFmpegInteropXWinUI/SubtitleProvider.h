@@ -391,13 +391,13 @@ namespace FFmpegInteropX
 
 			try
 			{
-				for each (auto cue in pendingChangedDurationCues)
+				for (auto cue : pendingChangedDurationCues)
 				{
 					SubtitleTrack.RemoveCue(cue);
 					SubtitleTrack.AddCue(cue);
 				}
 
-				for each (auto cue in pendingCues)
+				for (auto cue : pendingCues)
 				{
 					SubtitleTrack.AddCue(cue);
 				}
@@ -406,7 +406,7 @@ namespace FFmpegInteropX
 				{
 					EnsureRefTrackInitialized();
 
-					for each (auto cue in pendingRefCues)
+					for (auto cue : pendingRefCues)
 					{
 						referenceTrack.AddCue(cue);
 					}

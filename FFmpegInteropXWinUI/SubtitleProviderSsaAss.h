@@ -199,8 +199,8 @@ namespace FFmpegInteropX
 					}
 				}
 
-				auto cueStyle = !m_config.OverrideSubtitleStyles() && style ? style->Style : m_config.SubtitleStyle();
-				auto cueRegion = !m_config.OverrideSubtitleStyles() && style ? style->Region : m_config.SubtitleRegion();
+				auto cueStyle = !m_config.OverrideSubtitleStyles() && style.get() != nullptr ? style->Style : m_config.SubtitleStyle();
+				auto cueRegion = !m_config.OverrideSubtitleStyles() && style.get() != nullptr ? style->Region : m_config.SubtitleRegion();
 				winrt::Windows::Media::Core::TimedTextRegion subRegion = nullptr;
 
 				if ((marginL > 0 || marginR > 0 || marginV > 0) && width > 0 && height > 0)
@@ -230,7 +230,7 @@ namespace FFmpegInteropX
 					cue.CueStyle(cueStyle);
 
 					winrt::Windows::Media::Core::TimedTextLine textLine = winrt::Windows::Media::Core::TimedTextLine();
-					cue.Lines().Append(textLine);
+
 
 					winrt::Windows::Media::Core::TimedTextStyle subStyle = nullptr;
 					winrt::Windows::Media::Core::TimedTextSubformat subFormat = nullptr;
@@ -562,7 +562,7 @@ namespace FFmpegInteropX
 					if (timedText.size() > 0)
 					{
 						textLine.Text(timedText);
-
+						cue.Lines().Append(textLine);
 						return cue;
 					}
 				}
