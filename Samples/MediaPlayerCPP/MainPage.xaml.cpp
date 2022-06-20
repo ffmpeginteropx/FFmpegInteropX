@@ -25,7 +25,7 @@
 #include "MainPage.xaml.h"
 #include <collection.h>
 
-using namespace FFmpegInterop;
+using namespace FFmpegInteropX;
 using namespace MediaPlayerCPP;
 
 using namespace concurrency;
@@ -50,14 +50,14 @@ using namespace Windows::UI::Xaml::Navigation;
 
 MainPage::MainPage()
 {
-	Config = ref new FFmpegInteropConfig();
+	Config = ref new MediaSourceConfig();
 	InitializeComponent();
 
 	// Show the control panel on startup so user can start opening media
 	Splitter->IsPaneOpen = true;
 	AutoDetect->IsOn = true;
 
-	VideoEffectConfiguration = ref new FFmpegInterop::VideoEffectConfiguration();
+	VideoEffectConfiguration = ref new FFmpegInteropX::VideoEffectConfiguration();
 
 	mediaPlayer = ref new MediaPlayer();
 	mediaPlayer->AudioCategory = Windows::Media::Playback::MediaPlayerAudioCategory::Movie;
@@ -128,12 +128,12 @@ task<void> MainPage::OpenLocalFile(StorageFile^ file)
 	currentFile = file;
 	mediaPlayer->Source = nullptr;
 
-	// Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
+	// Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
 	try
 	{
 		auto stream = co_await file->OpenAsync(FileAccessMode::Read);
-		// Instantiate FFmpegInteropMSS using the opened local file stream
-		FFmpegMSS = co_await FFmpegInteropMSS::CreateFromStreamAsync(stream, Config);
+		// Instantiate FFmpegMediaSource using the opened local file stream
+		FFmpegMSS = co_await FFmpegMediaSource::CreateFromStreamAsync(stream, Config);
 
 		StorageApplicationPermissions::FutureAccessList->Clear();
 		StorageApplicationPermissions::FutureAccessList->Add(file);
@@ -180,11 +180,11 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
 	// Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
 	// Config->FFmpegOptions->Insert("stimeout", 100000);
 
-	// Instantiate FFmpegInteropMSS using the URI
+	// Instantiate FFmpegMediaSource using the URI
 	mediaPlayer->Source = nullptr;
 	try
 	{
-		FFmpegMSS = co_await FFmpegInteropMSS::CreateFromUriAsync(uri, Config);
+		FFmpegMSS = co_await FFmpegMediaSource::CreateFromUriAsync(uri, Config);
 		playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
 		// Pass MediaPlaybackItem to Media Element
@@ -273,7 +273,7 @@ task<void> MediaPlayerCPP::MainPage::LoadSubtitleFile()
 			auto file = co_await filePicker->PickSingleFileAsync();
 			if (file != nullptr)
 			{
-				// Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
+				// Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
 				auto stream = co_await file->OpenAsync(FileAccessMode::Read);
 				auto track = TimedTextSource::CreateFromStream(stream);
 				playbackItem->Source->ExternalTimedTextSources->Append(track);
@@ -311,7 +311,7 @@ task<void> MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg()
 			auto file = co_await filePicker->PickSingleFileAsync();
 			if (file != nullptr)
 			{
-				// Open StorageFile as IRandomAccessStream to be passed to FFmpegInteropMSS
+				// Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
 				auto stream = co_await file->OpenAsync(FileAccessMode::Read);
 				if (playbackItem != nullptr)
 				{

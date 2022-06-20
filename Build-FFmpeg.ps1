@@ -312,7 +312,7 @@ function Build-Platform {
     Write-Host "Building FFmpeg..."
     Write-Host
 
-    invoke $BashExe --login -x $SolutionDir\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
+    invoke $BashExe --login -x $SolutionDir\Build\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
 
     # Copy PDBs to built binaries dir
     Get-ChildItem -Recurse -Include '*.pdb' $build\int\ffmpeg\ | Copy-Item -Destination $target\bin\ -Force
@@ -383,7 +383,7 @@ if (!(Test-Path $BashExe)) {
 		choice /c YN /m "Do you want to install MSYS2 now to C:\msys64?"
         if ($LASTEXITCODE -eq 1)
         {
-            .\InstallTools.ps1 MSYS2
+            .\Build\InstallTools.ps1 MSYS2
 			$BashExe = "C:\msys64\usr\bin\bash.exe"
 			if (!(Test-Path $BashExe)) {
 				Exit 1
@@ -398,12 +398,12 @@ if (!(Test-Path $BashExe)) {
 
 if (! (Test-Path "$PSScriptRoot\Tools\nasm")) {
     Write-Warning "NASM not found. Installing..."
-	.\InstallTools.ps1 nasm
+	.\Build\InstallTools.ps1 nasm
 }
 
 if (! (Test-Path "$PSScriptRoot\Tools\perl")) {
     Write-Warning "Perl not found. Installing..."
-	.\InstallTools.ps1 perl
+	.\Build\InstallTools.ps1 perl
 }
 
 [System.IO.DirectoryInfo] $vsLatestPath = `
@@ -538,7 +538,7 @@ else
 
 if ($success -and $NugetPackageVersion)
 {
-    nuget pack .\FFmpegInteropX.FFmpegUWP.nuspec `
+    nuget pack .\Build\FFmpegInteropX.FFmpegUWP.nuspec `
         -Properties "id=FFmpegInteropX.FFmpegUWP;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat symbols.nupkg `

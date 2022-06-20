@@ -10,6 +10,9 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 
 #### Latest Releases:
 - [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX):
+  - 1.0.0
+    - Renamed namespaces and classes
+    - Removed deprecated APIs and code cleanup
   - 0.9.4
     - Support for HDR video!
   - 0.9.3
@@ -71,7 +74,7 @@ We have switched from manual builds to providing NuGet packages. There are two p
 
 The easiest way to work with FFmpegInteropX is to add both NuGet packages to your app. This allows full usage of all features, without checking out the repo or installing build tools.
 
-**Advanced users and library developers:** If you want to be able to debug into FFmpegInteropX right from your app, or to work on the library, you need to clone this repository. Instead of adding the FFmpegInteropX NuGet package to your app, you can directly add the `FFmpegInterop\FFmpegInterop.vcxproj` project file to your app solution (it does not matter where the FFmpegInteropX folder is located). Then in your main app project, add a reference to the FFmpegInterop project. Now you have all the sources directly in your app solution and can debug and enhance the lib.
+**Advanced users and library developers:** If you want to be able to debug into FFmpegInteropX right from your app, or to work on the library, you need to clone this repository. Instead of adding the FFmpegInteropX NuGet package to your app, you can directly add the `Source\FFmpegInteropX.vcxproj` project file to your app solution (it does not matter where the FFmpegInteropX folder is located). Then in your main app project, add a reference to the FFmpegInteropX project. Now you have all the sources directly in your app solution and can debug and enhance the lib.
 
 **Full blown:** If needed, you can even supply your own custom FFmpeg build to replace our FFmpegInteropX.FFmpegUWP NuGet package.
 
@@ -79,30 +82,30 @@ Check out the [build instructions](README-BUILD.md) if you want to manually buil
 
 ## Using the FFmpegInteropX libraray
 
-Using the **FFmpegInteropMSS** object is fairly straightforward and can be observed from the sample applications provided.
+Using the **FFmpegMediaSource** object is fairly straightforward and can be observed from the sample applications provided.
 
 1. Get an `IRandomAccessStream` for the media you want to playback.
-2. Create a new `FFmpegInteropMSS` object using `FFmpegInteropMSS.CreateFromStreamAsync()` passing it the stream and optionally a config class instance.
+2. Create a new `FFmpegMediaSource` object using `FFmpegMediaSource.CreateFromStreamAsync()` passing it the stream and optionally a config class instance.
 3. Get the MediaPlaybackItem from the Interop object by invoking `CreateMediaPlaybackItem()`
 4. Assign the MediaPlaybackItem to your MediaPlayer or MediaElement for playback.
 
-**Important:** Store the FFmpegInteropMSS instance e.g. in a local field, as long as playback is running. If the object is collected by the GC during playback, playback will stop with an error.
+**Important:** Store the FFmpegMediaSource instance e.g. in a local field, as long as playback is running. If the object is collected by the GC during playback, playback will stop with an error.
 
-Use `FFmepgInteropMSS.CreateFromUriAsync()` to create a MediaStreamSource on a streaming source (shoutcast for example).
+Use `FFmpegMediaSource.CreateFromUriAsync()` to create a MediaStreamSource on a streaming source (shoutcast for example).
 
-You can use `FFmpegInteropMSS.GetMediaStreamSource()` to get the MediaStreamSource like in the original version of the library. But when using MediaStreamSource, you won't get subtitles. Subtitle support requires using the MediaPlaybackItem!
+You can use `FFmpegMediaSource.GetMediaStreamSource()` to get the MediaStreamSource like in the original version of the library. But when using MediaStreamSource, you won't get subtitles. Subtitle support requires using the MediaPlaybackItem!
 
 Call `FrameGrabber.CreateFromStreamAsync()` to grab one or more frames from a video file.
 
 ## Subtitle Support
 
-FFmpegInterop will automatically load and use all embedded subtitles, supporting all formats through ffmpeg. You have to use the MediaPlaybackItem returned from the MSS object. Then subtitles can be selected from MediaElement's transport controls. 
+FFmpegInterop will automatically load and use all embedded subtitles, supporting all formats through ffmpeg. You have to use the MediaPlaybackItem returned from the FFmpegMediaSource object. Then subtitles can be selected from MediaElement's transport controls. 
 
-You can also add external subtitle files by using `FFmpegInteropMSS.AddExternalSubtitleAsync()`, even during playback. See the sample apps for reference. All ffmpeg subtitle formats are supported as external files, except for the two-file "sub/idx" (DVD) format. 
+You can also add external subtitle files by using `FFmpegMediaSource.AddExternalSubtitleAsync()`, even during playback. See the sample apps for reference. All ffmpeg subtitle formats are supported as external files, except for the two-file "sub/idx" (DVD) format. 
 
 Some external text subtitle files are stored with ANSI encoding instead of UTF8 (which is required by ffmpeg). FFmpegInterop can do an automatic conversion to UTF8. This is enabled by default in the config class and will use the system's active codepage by default. You can change the behavior by changing `AutoCorrectAnsiSubtitles` and `AnsiSubtitleEncoding` parameters in the config class. Codepage 0 is the system's active codepage.
 
-Note: If your app uses multiple windows using CoreApplication.CreateNewView(), then you must create the FFmpegInteropMSS object on the thread of the window where the video is to be shown. Otherwise, subtitles will flicker.
+Note: If your app uses multiple windows using CoreApplication.CreateNewView(), then you must create the FFmpegMediaSource object on the thread of the window where the video is to be shown. Otherwise, subtitles will flicker.
 
 #### Version History:
 - [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.2

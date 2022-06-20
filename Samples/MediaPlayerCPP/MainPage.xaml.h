@@ -36,8 +36,8 @@ namespace MediaPlayerCPP
 	public:
 		MainPage();
 
-		property FFmpegInterop::FFmpegInteropConfig^ Config;
-		property FFmpegInterop::VideoEffectConfiguration^ VideoEffectConfiguration;
+		property FFmpegInteropX::MediaSourceConfig^ Config;
+		property FFmpegInteropX::VideoEffectConfiguration^ VideoEffectConfiguration;
 
 	private:
 		void OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
@@ -62,8 +62,8 @@ namespace MediaPlayerCPP
 
 		Windows::Media::Playback::MediaPlayer^ mediaPlayer;
 		Windows::Storage::StorageFile^ currentFile;
-		FFmpegInterop::FFmpegInteropMSS^ actualFFmpegMSS;
-		FFmpegInterop::FFmpegInteropMSS^ FFmpegMSS;
+		FFmpegInteropX::FFmpegMediaSource^ actualFFmpegMSS;
+		FFmpegInteropX::FFmpegMediaSource^ FFmpegMSS;
 		Windows::Media::Playback::MediaPlaybackItem^ playbackItem;
 		Windows::Foundation::EventRegistrationToken timedMetadataTracksChangedToken;
 		void CbEncodings_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e);

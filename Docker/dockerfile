@@ -24,11 +24,11 @@ RUN curl -SL --output git.zip https://github.com/git-for-windows/git/releases/do
 	&& setx PATH "%PATH%;C:\git\cmd"
 	
 # Clone FFmpegInteropX
-RUN git clone https://github.com/ffmpeginteropx/FFmpegInteropX.git --recursive
+RUN git clone https://github.com/ffmpeginteropx/FFmpegInteropX.git --recursive -branch release-1.0
 
 # Install build tools
 RUN cd FFmpegInteropX `
-    && powershell .\InstallTools.ps1 `
+    && powershell .\Build\InstallTools.ps1 `
 	&& rd /S /Q C:\$Recycle.Bin
 	
 # Define the entry point for the docker container.

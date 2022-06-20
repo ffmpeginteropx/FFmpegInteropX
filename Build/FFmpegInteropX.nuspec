@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <description>FFmpeg decoding library for Windows 10 UWP Apps</description>
+    <authors>FFmpegInteropX</authors>
+    <projectUrl>https://github.com/ffmpeginteropx/FFmpegInteropX</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">Apache-2.0</license>
+    <dependencies>
+      <group>
+          <dependency id="FFmpegInteropX.FFmpegUWP" version="5.0.0" />
+      </group>
+      <group targetFramework="uap10.0" />
+    </dependencies>
+    <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
+  </metadata>
+  <files>
+
+    <file src="..\Output\FFmpegInteropX\x64\Release\FFmpegInteropX.winmd"   target="lib\uap10.0" />
+    <file src="..\Output\FFmpegInteropX\x64\Release\FFmpegInteropX.xml"     target="lib\uap10.0" />
+
+    <file src="..\Output\FFmpegInteropX\x86\Release\FFmpegInteropX.dll"     target="runtimes\win10-x86\native" />
+    <file src="..\Output\FFmpegInteropX\x86\Release\FFmpegInteropX.pdb"     target="runtimes\win10-x86\native" />
+
+    <file src="..\Output\FFmpegInteropX\x64\Release\FFmpegInteropX.dll"     target="runtimes\win10-x64\native" />
+    <file src="..\Output\FFmpegInteropX\x64\Release\FFmpegInteropX.pdb"     target="runtimes\win10-x64\native" />
+
+    <file src="..\Output\FFmpegInteropX\ARM\Release\FFmpegInteropX.dll"     target="runtimes\win10-arm\native" />
+    <file src="..\Output\FFmpegInteropX\ARM\Release\FFmpegInteropX.pdb"     target="runtimes\win10-arm\native" />
+
+    <file src="..\Output\FFmpegInteropX\ARM64\Release\FFmpegInteropX.dll"   target="runtimes\win10-arm64\native" />
+    <file src="..\Output\FFmpegInteropX\ARM64\Release\FFmpegInteropX.pdb"   target="runtimes\win10-arm64\native" />
+
+    <file src="FFmpegInteropX.targets"                          target="build\native"/>
+
+  </files>
+</package>
