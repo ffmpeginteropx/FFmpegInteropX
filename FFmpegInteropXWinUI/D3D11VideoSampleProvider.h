@@ -119,7 +119,7 @@ namespace FFmpegInteropX
 			return hr;
 		}
 
-		virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample sample) override
+		virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample const& sample) override
 		{
 			if (sample.Direct3D11Surface())
 			{

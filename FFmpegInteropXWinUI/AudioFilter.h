@@ -25,20 +25,20 @@ namespace FFmpegInteropX
 	using namespace winrt::Windows::Foundation::Collections;
 	using namespace winrt::Windows::Media::Playback;
 	using namespace winrt::Windows::Foundation;
-	
+
 	using namespace winrt::Windows::Storage;
 
 	class AudioFilter : public IAvEffect
 	{
-		const AVFilter* AVSource;
-		const AVFilter* AVSink;
+		const AVFilter* AVSource = NULL;
+		const AVFilter* AVSink = NULL;
 
-		AVFilterGraph* graph;
-		AVFilterContext* avSource_ctx, * avSink_ctx;
+		AVFilterGraph* graph = NULL;
+		AVFilterContext* avSource_ctx = NULL, * avSink_ctx = NULL;
 
-		AVCodecContext* inputCodecCtx;
+		AVCodecContext* inputCodecCtx = NULL;
 
-		winrt::hstring filterDefinition;
+		winrt::hstring filterDefinition{};
 		bool isInitialized = false;
 		char channel_layout_name[256];
 
@@ -181,7 +181,7 @@ namespace FFmpegInteropX
 		}
 
 
-		AudioFilter(AVCodecContext* m_inputCodecCtx, winrt::hstring filterDefinition)
+		AudioFilter(AVCodecContext* m_inputCodecCtx, winrt::hstring const& filterDefinition)
 		{
 			this->inputCodecCtx = m_inputCodecCtx;
 			this->filterDefinition = filterDefinition;

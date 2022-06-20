@@ -27,8 +27,8 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	private:
 		CodecRequiredReason reason;
-		hstring codecName;
-		hstring storeExtensionName;
-		hstring productId;
+		hstring codecName{};
+		hstring storeExtensionName{};
+		hstring productId{};
 	};
 }

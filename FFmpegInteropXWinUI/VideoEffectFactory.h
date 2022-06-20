@@ -7,8 +7,8 @@ namespace FFmpegInteropX
 {
 	class VideoEffectFactory : public AbstractEffectFactory
 	{
-		AVCodecContext* inputContext;
-		AVStream* inputStream;
+		AVCodecContext* inputContext=NULL;
+		AVStream* inputStream = NULL;
 
 	public:
 
@@ -18,7 +18,7 @@ namespace FFmpegInteropX
 			this->inputStream = inputStream;
 		}
 
-		std::shared_ptr<IAvEffect> CreateEffect(winrt::hstring filterDefinition) override
+		std::shared_ptr<IAvEffect> CreateEffect(winrt::hstring const& filterDefinition) override
 		{
 			/*Since video often requires HW acceleration for acceptable framerates,
 			we used IBasicVodeoEffect to implement video filters,

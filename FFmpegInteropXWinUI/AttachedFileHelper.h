@@ -34,7 +34,7 @@ namespace FFmpegInteropX
 		winrt::Windows::Foundation::Collections::IVector<winrt::FFmpegInteropXWinUI::AttachedFile> AttachedFiles() { return attachedFiles; }
 		winrt::hstring InstanceId() { return instanceId; }
 
-		void AddAttachedFile(winrt::FFmpegInteropXWinUI::AttachedFile file)
+		void AddAttachedFile(winrt::FFmpegInteropXWinUI::AttachedFile const& file)
 		{
 			attachedFiles.Append(file);
 		}
@@ -89,8 +89,8 @@ namespace FFmpegInteropX
 	private:
 		winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Storage::StorageFile> extractedFiles{ winrt::single_threaded_map<winrt::hstring, winrt::Windows::Storage::StorageFile>() };
 		winrt::Windows::Foundation::Collections::IVector<winrt::FFmpegInteropXWinUI::AttachedFile> attachedFiles{ winrt::single_threaded_vector<winrt::FFmpegInteropXWinUI::AttachedFile>() };
-		winrt::FFmpegInteropXWinUI::MediaSourceConfig config;
-		winrt::hstring instanceId;
+		winrt::FFmpegInteropXWinUI::MediaSourceConfig config = {nullptr};
+		winrt::hstring instanceId{};
 	};
 
 }

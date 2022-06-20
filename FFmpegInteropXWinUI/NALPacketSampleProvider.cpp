@@ -97,7 +97,7 @@ HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuf
 	return hr;
 }
 
-HRESULT NALPacketSampleProvider::GetSPSAndPPSBuffer(DataWriter dataWriter, BYTE* buf, UINT32 length)
+HRESULT NALPacketSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length)
 {
 	HRESULT hr = S_OK;
 
@@ -116,7 +116,7 @@ HRESULT NALPacketSampleProvider::GetSPSAndPPSBuffer(DataWriter dataWriter, BYTE*
 	return hr;
 }
 
-HRESULT NALPacketSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter dataWriter)
+HRESULT NALPacketSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter const& dataWriter)
 {
 	// Write out the NAL packet
 	auto aBuffer = std::vector(avPacket->data, avPacket->data + avPacket->size);

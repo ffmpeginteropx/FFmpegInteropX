@@ -37,7 +37,7 @@ HEVCSampleProvider::~HEVCSampleProvider()
 {
 }
 
-HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter dataWriter, BYTE* buf, UINT32 length)
+HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length)
 {
 	HRESULT hr = S_OK;
 	int spsLength = 0;

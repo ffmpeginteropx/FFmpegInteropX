@@ -24,10 +24,10 @@ namespace FFmpegInteropX
 	{
 	public:
 		winrt::Windows::Media::Core::TimedMetadataTrack SubtitleTrack = { nullptr };
-		
+
 		winrt::Windows::Media::Playback::MediaPlaybackItem PlaybackItem = { nullptr };
 
-		winrt::Windows::Foundation::TimeSpan SubtitleDelay;
+		winrt::Windows::Foundation::TimeSpan SubtitleDelay{};
 
 		SubtitleProvider(std::shared_ptr<FFmpegReader> reader,
 			AVFormatContext* avFormatCtx,
@@ -195,7 +195,7 @@ namespace FFmpegInteropX
 			av_packet_free(&packet);
 		}
 
-		void SetSubtitleDelay(TimeSpan delay)
+		void SetSubtitleDelay(TimeSpan const& delay)
 		{
 			mutex.lock();
 			newDelay = delay;
@@ -210,22 +210,22 @@ namespace FFmpegInteropX
 			mutex.unlock();
 		}
 
-		int parseInt(std::wstring str)
+		int parseInt(std::wstring const& str)
 		{
 			return std::stoi(str, nullptr, 10);
 		}
 
-		double parseDouble(std::wstring str)
+		double parseDouble(std::wstring const& str)
 		{
 			return std::stod(str);
 		}
 
-		int parseHexInt(std::wstring str)
+		int parseHexInt(std::wstring const& str)
 		{
 			return std::stoi(str, nullptr, 16);
 		}
 
-		int parseHexOrDecimalInt(std::wstring str, size_t offset)
+		int parseHexOrDecimalInt(std::wstring const& str, size_t offset)
 		{
 			if (str.length() > offset + 1 && str[offset] == L'H')
 			{
@@ -234,7 +234,7 @@ namespace FFmpegInteropX
 			return parseInt(str.substr(offset));
 		}
 
-		bool checkTag(std::wstring str, std::wstring prefix, size_t minParamLenth = 1)
+		bool checkTag(std::wstring const& str, std::wstring const& prefix, size_t minParamLenth = 1)
 		{
 			return
 				str.size() >= (prefix.size() + minParamLenth) &&
@@ -243,7 +243,7 @@ namespace FFmpegInteropX
 
 	private:
 
-		void AddCue(winrt::Windows::Media::Core::IMediaCue cue)
+		void AddCue(winrt::Windows::Media::Core::IMediaCue const& cue)
 		{
 			mutex.lock();
 			try
@@ -289,7 +289,7 @@ namespace FFmpegInteropX
 			mutex.unlock();
 		}
 
-		void DispatchCueToTrack(winrt::Windows::Media::Core::IMediaCue cue)
+		void DispatchCueToTrack(winrt::Windows::Media::Core::IMediaCue const& cue)
 		{
 			if (m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
 			{
@@ -307,7 +307,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		void OnRefCueEntered(winrt::Windows::Media::Core::TimedMetadataTrack sender, winrt::Windows::Media::Core::MediaCueEventArgs args)
+		void OnRefCueEntered(winrt::Windows::Media::Core::TimedMetadataTrack const& sender, winrt::Windows::Media::Core::MediaCueEventArgs const& args)
 		{
 			mutex.lock();
 			try {
@@ -326,7 +326,7 @@ namespace FFmpegInteropX
 			mutex.unlock();
 		}
 
-		void OnCueEntered(winrt::Windows::Media::Core::TimedMetadataTrack sender, winrt::Windows::Media::Core::MediaCueEventArgs args)
+		void OnCueEntered(winrt::Windows::Media::Core::TimedMetadataTrack const& sender, winrt::Windows::Media::Core::MediaCueEventArgs const& args)
 		{
 			mutex.lock();
 			try
@@ -385,7 +385,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		void OnTick(winrt::Windows::Foundation::IInspectable sender, winrt::Windows::Foundation::IInspectable args)
+		void OnTick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args)
 		{
 			mutex.lock();
 
@@ -511,7 +511,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		void OnTimedMetadataTracksChanged(winrt::Windows::Media::Playback::MediaPlaybackItem sender, winrt::Windows::Foundation::Collections::IVectorChangedEventArgs args)
+		void OnTimedMetadataTracksChanged(winrt::Windows::Media::Playback::MediaPlaybackItem const& sender, winrt::Windows::Foundation::Collections::IVectorChangedEventArgs const& args)
 		{
 			// enable ref track
 			if (args.CollectionChange() == CollectionChange::ItemInserted &&
@@ -522,7 +522,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		void OnTrackFailed(winrt::Windows::Media::Core::TimedMetadataTrack sender, winrt::Windows::Media::Core::TimedMetadataTrackFailedEventArgs args)
+		void OnTrackFailed(winrt::Windows::Media::Core::TimedMetadataTrack const& sender, winrt::Windows::Media::Core::TimedMetadataTrackFailedEventArgs const& args)
 		{
 			OutputDebugString(L"Subtitle track error.");
 		}
@@ -573,11 +573,11 @@ namespace FFmpegInteropX
 		std::vector<winrt::Windows::Media::Core::IMediaCue> pendingRefCues;
 		std::vector<winrt::Windows::Media::Core::IMediaCue> pendingChangedDurationCues;
 		winrt::Windows::Media::Core::TimedMetadataKind timedMetadataKind;
-		winrt::Windows::UI::Core::CoreDispatcher dispatcher = {nullptr};
+		winrt::Windows::UI::Core::CoreDispatcher dispatcher = { nullptr };
 		winrt::Windows::UI::Xaml::DispatcherTimer timer = { nullptr };
-		TimeSpan newDelay;
+		TimeSpan newDelay{};
 		std::vector<std::pair<winrt::Windows::Media::Core::IMediaCue, long long>> negativePositionCues;
-		bool isPreviousCueInfiniteDuration;
+		bool isPreviousCueInfiniteDuration = false;
 		winrt::Windows::Media::Core::IMediaCue infiniteDurationCue = { nullptr };
 		winrt::Windows::Media::Core::IMediaCue lastExtendedDurationCue = { nullptr };
 		winrt::Windows::Media::Core::TimedMetadataTrack referenceTrack = { nullptr };

@@ -37,7 +37,7 @@ H264AVCSampleProvider::~H264AVCSampleProvider()
 {
 }
 
-HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter dataWriter, BYTE* buf, UINT32 length)
+HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length)
 {
 	HRESULT hr = S_OK;
 	int spsLength = 0;
@@ -114,7 +114,7 @@ HRESULT H264AVCSampleProvider::WriteNALPacket(AVPacket* avPacket, IBuffer* pBuff
 }
 
 // Write out an NAL packet converting stream offsets to start-codes
-HRESULT H264AVCSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter dataWriter)
+HRESULT H264AVCSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket,  DataWriter const& dataWriter)
 {
 	HRESULT hr = S_OK;
 	UINT32 index = 0;

@@ -15,10 +15,10 @@ namespace FFmpegInteropX
 	class UncompressedFrameProvider sealed
 	{
 		std::shared_ptr<IAvEffect> filter;
-		AVFormatContext* m_pAvFormatCtx;
-		AVCodecContext* m_pAvCodecCtx;
+		AVFormatContext* m_pAvFormatCtx = NULL;
+		AVCodecContext* m_pAvCodecCtx = NULL;
 		std::shared_ptr<AbstractEffectFactory> m_effectFactory;
-		winrt::hstring pendingEffects;
+		winrt::hstring pendingEffects{};
 
 	public:
 		UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, std::shared_ptr<AbstractEffectFactory> p_effectFactory)

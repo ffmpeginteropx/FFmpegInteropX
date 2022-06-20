@@ -156,7 +156,6 @@
     <ClInclude Include="H264AVCSampleProvider.h" />
     <ClInclude Include="HEVCSampleProvider.h" />
     <ClInclude Include="IAvEffect.h" />
-    <ClInclude Include="KeyStringValuePair.h" />
     <ClInclude Include="LanguageTagConverter.h" />
     <ClInclude Include="MediaMetadata.h" />
     <ClInclude Include="MediaSampleProvider.h" />
@@ -203,7 +202,6 @@
     <ClCompile Include="FrameGrabber.cpp" />
     <ClCompile Include="H264AVCSampleProvider.cpp" />
     <ClCompile Include="HEVCSampleProvider.cpp" />
-    <ClCompile Include="KeyStringValuePair.cpp" />
     <ClCompile Include="LanguageTagConverter.cpp" />
     <ClCompile Include="MediaSampleProvider.cpp" />
     <ClCompile Include="MediaSourceConfig.cpp" />

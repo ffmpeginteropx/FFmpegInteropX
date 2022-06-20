@@ -19,14 +19,14 @@ namespace FFmpegInteropX
 			int index,
 			winrt::Windows::UI::Core::CoreDispatcher const& dispatcher,
 			std::shared_ptr<AttachedFileHelper> attachedFileHelper)
-			: SubtitleProvider(reader, 
-				avFormatCtx, 
-				avCodecCtx, 
-				config, 
-				index, 
+			: SubtitleProvider(reader,
+				avFormatCtx,
+				avCodecCtx,
+				config,
+				index,
 				winrt::Windows::Media::Core::TimedMetadataKind::Subtitle,
 				dispatcher
-				)
+			)
 		{
 			this->attachedFileHelper = attachedFileHelper;
 		}
@@ -788,7 +788,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		winrt::Windows::Media::Core::TimedTextStyle CopyStyle(winrt::Windows::Media::Core::TimedTextStyle style)
+		winrt::Windows::Media::Core::TimedTextStyle CopyStyle(winrt::Windows::Media::Core::TimedTextStyle const& style)
 		{
 			auto copy = winrt::Windows::Media::Core::TimedTextStyle();
 			copy.Background(style.Background());
@@ -820,7 +820,7 @@ namespace FFmpegInteropX
 			return copy;
 		}
 
-		winrt::Windows::Media::Core::TimedTextRegion CopyRegion(winrt::Windows::Media::Core::TimedTextRegion region)
+		winrt::Windows::Media::Core::TimedTextRegion CopyRegion(winrt::Windows::Media::Core::TimedTextRegion const& region)
 		{
 			auto copy = winrt::Windows::Media::Core::TimedTextRegion();
 			copy.Background(region.Background());
@@ -861,7 +861,7 @@ namespace FFmpegInteropX
 			}
 		}
 
-		winrt::Windows::Media::Core::TimedTextLineAlignment GetHorizontalAlignment(int alignment, bool numpadAlignment,  winrt::Windows::Media::Core::TimedTextLineAlignment defaultAlignment = winrt::Windows::Media::Core::TimedTextLineAlignment::End)
+		winrt::Windows::Media::Core::TimedTextLineAlignment GetHorizontalAlignment(int alignment, bool numpadAlignment, winrt::Windows::Media::Core::TimedTextLineAlignment defaultAlignment = winrt::Windows::Media::Core::TimedTextLineAlignment::End)
 		{
 			// 1 2 3	bottom left center right
 			// 4 5 8	top left
@@ -1006,9 +1006,9 @@ namespace FFmpegInteropX
 		class SsaStyleDefinition
 		{
 		public:
-			winrt::hstring Name;
-			winrt::Windows::Media::Core::TimedTextRegion Region;
-			winrt::Windows::Media::Core::TimedTextStyle Style;
+			winrt::hstring Name{};
+			winrt::Windows::Media::Core::TimedTextRegion Region = { nullptr };
+			winrt::Windows::Media::Core::TimedTextStyle Style = { nullptr };
 		};
 
 		~SubtitleProviderSsaAss()
@@ -1020,15 +1020,15 @@ namespace FFmpegInteropX
 		}
 
 	private:
-		bool hasParsedHeaders;
-		bool isAss;
-		int ssaVersion;
-		int textIndex;
-		int width;
-		int height;
-		double videoAspectRatio;
-		int videoWidth;
-		int videoHeight;
+		bool hasParsedHeaders = false;
+		bool isAss = false;
+		int ssaVersion = 0;
+		int textIndex = 0;
+		int width = 0;
+		int height = 0;
+		double videoAspectRatio = 0.0;
+		int videoWidth = 0;
+		int videoHeight = 0;
 		int regionIndex = 1;
 		std::map<winrt::hstring, std::shared_ptr<SsaStyleDefinition>> styles;
 		std::map<std::wstring, winrt::hstring> fonts;

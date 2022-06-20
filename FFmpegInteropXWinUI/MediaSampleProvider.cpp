@@ -337,7 +337,7 @@ HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpa
 	return hr;
 }
 
-HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan timestamp)
+HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan const& timestamp)
 {
 	HRESULT hr = S_OK;
 	bool foundPacket = false;
@@ -449,7 +449,7 @@ void MediaSampleProvider::DisableStream()
 	m_pAvStream->discard = AVDISCARD_ALL;
 }
 
-void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperties videoProperties, bool isCompressedFormat)
+void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperties const& videoProperties, bool isCompressedFormat)
 {
 	if (isCompressedFormat)
 	{

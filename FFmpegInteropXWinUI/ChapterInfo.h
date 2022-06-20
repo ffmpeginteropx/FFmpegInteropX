@@ -7,24 +7,24 @@
 
 namespace winrt::FFmpegInteropXWinUI::implementation
 {
-    struct ChapterInfo : ChapterInfoT<ChapterInfo>
-    {
-        ChapterInfo() = default;
+	struct ChapterInfo : ChapterInfoT<ChapterInfo>
+	{
+		ChapterInfo() = default;
 
-        ChapterInfo(hstring const& title, Windows::Foundation::TimeSpan const& startTime, Windows::Foundation::TimeSpan const& duration);
-        hstring Title();
-        Windows::Foundation::TimeSpan StartTime();
-        Windows::Foundation::TimeSpan Duration();
+		ChapterInfo(hstring const& title, Windows::Foundation::TimeSpan const& startTime, Windows::Foundation::TimeSpan const& duration);
+		hstring Title();
+		Windows::Foundation::TimeSpan StartTime();
+		Windows::Foundation::TimeSpan Duration();
 
-    private:
-        hstring title;
-        TimeSpan startTime;
-        TimeSpan duration;
-    };
+	private:
+		hstring title{};
+		TimeSpan startTime{};
+		TimeSpan duration{};
+	};
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation
 {
-    struct ChapterInfo : ChapterInfoT<ChapterInfo, implementation::ChapterInfo>
-    {
-    };
+	struct ChapterInfo : ChapterInfoT<ChapterInfo, implementation::ChapterInfo>
+	{
+	};
 }

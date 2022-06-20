@@ -511,7 +511,7 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::ReadFrameProperties(AVFram
 	}
 }
 
-HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample sample)
+HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample  const& sample)
 {
 	if (m_interlaced_frame)
 	{

@@ -28,12 +28,12 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		double DisplayAspectRatio();
 
 	private:
-		winrt::Windows::Storage::Streams::IBuffer pixelData = {nullptr};
-		unsigned int pixelWidth;
-		unsigned int pixelHeight;
-		winrt::Windows::Foundation::TimeSpan timestamp;
+		winrt::Windows::Storage::Streams::IBuffer pixelData = { nullptr };
+		unsigned int pixelWidth = 0;
+		unsigned int pixelHeight = 0;
+		winrt::Windows::Foundation::TimeSpan timestamp{};
 		winrt::Windows::Media::MediaProperties::MediaRatio pixelAspectRatio = { nullptr };
-		bool hasNonSquarePixels;
+		bool hasNonSquarePixels = false;
 
 		winrt::Windows::Foundation::IAsyncAction Encode(winrt::Windows::Storage::Streams::IRandomAccessStream stream, winrt::guid encoderGuid)
 		{

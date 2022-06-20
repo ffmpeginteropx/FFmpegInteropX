@@ -39,7 +39,7 @@ namespace FFmpegInteropX
 		virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos);
 		virtual HRESULT FeedPacketToDecoder(int64_t& firstPacketPos);
 
-		void SetFilters(winrt::hstring effects) override 
+		void SetFilters(winrt::hstring effects) override
 		{
 			frameProvider->UpdateFilter(effects);
 		}
@@ -56,8 +56,8 @@ namespace FFmpegInteropX
 		virtual void Flush() override;
 
 	private:
-		INT64 nextFramePts;
-		bool hasNextFramePts;
+		INT64 nextFramePts = 0;
+		bool hasNextFramePts = false;
 	};
 }
 

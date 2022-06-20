@@ -61,7 +61,7 @@ namespace FFmpegInteropX
 				{
 					if (!dummyBitmap)
 					{
-						dummyBitmap =  winrt::Windows::Graphics::Imaging::SoftwareBitmap(winrt::Windows::Graphics::Imaging::BitmapPixelFormat::Bgra8, 16, 16, winrt::Windows::Graphics::Imaging::BitmapAlphaMode::Premultiplied);
+						dummyBitmap = winrt::Windows::Graphics::Imaging::SoftwareBitmap(winrt::Windows::Graphics::Imaging::BitmapPixelFormat::Bgra8, 16, 16, winrt::Windows::Graphics::Imaging::BitmapAlphaMode::Premultiplied);
 					}
 
 					// inserty dummy cue
@@ -79,7 +79,7 @@ namespace FFmpegInteropX
 				{
 					using namespace winrt::Windows::Graphics::Imaging;
 
-					auto bitmap =  SoftwareBitmap(BitmapPixelFormat::Bgra8, width, height, BitmapAlphaMode::Straight);
+					auto bitmap = SoftwareBitmap(BitmapPixelFormat::Bgra8, width, height, BitmapAlphaMode::Straight);
 					{
 						auto buffer = bitmap.LockBuffer(BitmapBufferAccessMode::Write);
 						auto reference = buffer.CreateReference();
@@ -146,7 +146,7 @@ namespace FFmpegInteropX
 
 	private:
 
-		bool CheckSize(AVSubtitle& subtitle, int& width, int& height, int& offsetX, int& offsetY,  winrt::Windows::Media::Core::TimedTextSize& cueSize, winrt::Windows::Media::Core::TimedTextPoint& cuePosition)
+		bool CheckSize(AVSubtitle& subtitle, int& width, int& height, int& offsetX, int& offsetY, winrt::Windows::Media::Core::TimedTextSize& cueSize, winrt::Windows::Media::Core::TimedTextPoint& cuePosition)
 		{
 			if (!GetInitialSize())
 			{
@@ -230,13 +230,13 @@ namespace FFmpegInteropX
 		}
 
 	private:
-		int videoWidth;
-		int videoHeight;
-		double videoAspectRatio;
-		bool hasSize;
-		int subtitleWidth;
-		int subtitleHeight;
-		int optimalHeight;
+		int videoWidth = 0;
+		int videoHeight = 0;
+		double videoAspectRatio = 0.0;
+		bool hasSize = false;
+		int subtitleWidth = 0;
+		int subtitleHeight = 0;
+		int optimalHeight = 0;
 		winrt::Windows::Graphics::Imaging::SoftwareBitmap dummyBitmap = { nullptr };
 
 	};

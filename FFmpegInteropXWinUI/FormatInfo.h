@@ -7,26 +7,26 @@
 
 namespace winrt::FFmpegInteropXWinUI::implementation
 {
-    struct FormatInfo : FormatInfoT<FormatInfo>
-    {
-        FormatInfo() = default;
+	struct FormatInfo : FormatInfoT<FormatInfo>
+	{
+		FormatInfo() = default;
 
-        FormatInfo(hstring const& title, hstring const& formatName, Windows::Foundation::TimeSpan const& duration, int64_t bitrate);
-        hstring Title();
-        hstring FormatName();
-        Windows::Foundation::TimeSpan Duration();
-        int64_t Bitrate();
+		FormatInfo(hstring const& title, hstring const& formatName, Windows::Foundation::TimeSpan const& duration, int64_t bitrate);
+		hstring Title();
+		hstring FormatName();
+		Windows::Foundation::TimeSpan Duration();
+		int64_t Bitrate();
 
-    private:
-        winrt::hstring title;
-        winrt::hstring formatName;
-        TimeSpan duration;
-        int64_t bitrate;
-    };
+	private:
+		winrt::hstring title{};
+		winrt::hstring formatName{};
+		TimeSpan duration{};
+		int64_t bitrate = 0;
+	};
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation
 {
-    struct FormatInfo : FormatInfoT<FormatInfo, implementation::FormatInfo>
-    {
-    };
+	struct FormatInfo : FormatInfoT<FormatInfo, implementation::FormatInfo>
+	{
+	};
 }

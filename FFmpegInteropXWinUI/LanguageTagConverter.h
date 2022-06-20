@@ -10,15 +10,15 @@ namespace FFmpegInteropX
 		winrt::hstring TwoLetterCode() { return twoLetterCode; }
 		winrt::hstring EnglishName() { return englishName; }
 
-		LanguageEntry(winrt::hstring twoLetterCode, winrt::hstring englishName)
+		LanguageEntry(winrt::hstring const& twoLetterCode, winrt::hstring const& englishName)
 		{
 			this->twoLetterCode = twoLetterCode;
 			this->englishName = englishName;
 		}
 
 	private:
-		winrt::hstring twoLetterCode;
-		winrt::hstring englishName;
+		winrt::hstring twoLetterCode{};
+		winrt::hstring englishName{};
 	};
 
 	class LanguageTagConverter
@@ -27,7 +27,7 @@ namespace FFmpegInteropX
 		static std::map<winrt::hstring, std::shared_ptr<LanguageEntry>> map;
 
 	public:
-		static std::shared_ptr<LanguageEntry> TryGetLanguage(winrt::hstring languageTag)
+		static std::shared_ptr<LanguageEntry> TryGetLanguage(winrt::hstring const& languageTag)
 		{
 			auto result = map.find(languageTag);
 			if (result != map.end())

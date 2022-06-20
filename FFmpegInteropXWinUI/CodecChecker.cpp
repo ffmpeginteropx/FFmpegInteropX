@@ -74,22 +74,22 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	}
 
-	winrt::event<Windows::Foundation::EventHandler<winrt::FFmpegInteropXWinUI::CodecRequiredEventArgs>> CodecChecker::m_codecRequiredEvent;
+	winrt::event<Windows::Foundation::EventHandler<winrt::FFmpegInteropXWinUI::CodecRequiredEventArgs>> CodecChecker::m_codecRequiredEvent {};
 	std::mutex CodecChecker::mutex;
 
-	bool CodecChecker::hasCheckedHardwareAcceleration;
+	bool CodecChecker::hasCheckedHardwareAcceleration = false;
 
-	bool CodecChecker::hasCheckedMpeg2Extension;
-	bool CodecChecker::hasCheckedVP9Extension;
-	bool CodecChecker::hasCheckedHEVCExtension;
+	bool CodecChecker::hasCheckedMpeg2Extension = false;
+	bool CodecChecker::hasCheckedVP9Extension = false;
+	bool CodecChecker::hasCheckedHEVCExtension = false;
 
-	bool CodecChecker::isMpeg2ExtensionInstalled;
-	bool CodecChecker::isVP9ExtensionInstalled;
-	bool CodecChecker::isHEVCExtensionInstalled;
+	bool CodecChecker::isMpeg2ExtensionInstalled = false;
+	bool CodecChecker::isVP9ExtensionInstalled = false;
+	bool CodecChecker::isHEVCExtensionInstalled = false;
 
-	bool CodecChecker::hasAskedInstallMpeg2Extension;
-	bool CodecChecker::hasAskedInstallVP9Extension;
-	bool CodecChecker::hasAskedInstallHEVCExtension;
+	bool CodecChecker::hasAskedInstallMpeg2Extension = false;
+	bool CodecChecker::hasAskedInstallVP9Extension = false;
+	bool CodecChecker::hasAskedInstallHEVCExtension = false;
 
 	HardwareAccelerationStatus CodecChecker::hardwareAccelerationH264;
 	HardwareAccelerationStatus CodecChecker::hardwareAccelerationHEVC;

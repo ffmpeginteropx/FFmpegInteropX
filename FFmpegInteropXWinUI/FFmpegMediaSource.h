@@ -124,9 +124,9 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		}
 
 		std::shared_ptr<FFmpegReader> m_pReader;
-		AVDictionary* avDict;
-		AVIOContext* avIOCtx;
-		AVFormatContext* avFormatCtx;
+		AVDictionary* avDict = NULL;
+		AVIOContext* avIOCtx = NULL;
+		AVFormatContext* avFormatCtx = NULL;
 		winrt::com_ptr<IStream> fileStreamData;
 		ByteOrderMark streamByteOrderMark;
 		winrt::com_ptr<MediaSourceConfig> config = { nullptr };
@@ -134,9 +134,9 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 	private:
 
 		MediaStreamSource mss = { nullptr };
-		winrt::event_token startingRequestedToken;
-		winrt::event_token sampleRequestedToken;
-		winrt::event_token switchStreamRequestedToken;
+		winrt::event_token startingRequestedToken{};
+		winrt::event_token sampleRequestedToken{};
+		winrt::event_token switchStreamRequestedToken{};
 		MediaPlaybackItem playbackItem = { nullptr };
 		IVector<winrt::FFmpegInteropXWinUI::AudioStreamInfo> audioStrInfos = { nullptr };
 		IVector<winrt::FFmpegInteropXWinUI::SubtitleStreamInfo> subtitleStrInfos = { nullptr };
@@ -149,11 +149,11 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 		std::shared_ptr<MediaSampleProvider> currentVideoStream;
 		std::shared_ptr<MediaSampleProvider> currentAudioStream;
-		hstring currentAudioEffects;
-		int thumbnailStreamIndex;
+		hstring currentAudioEffects{};
+		int thumbnailStreamIndex = 0;
 
-		winrt::event_token audioTracksChangedToken;
-		winrt::event_token subtitlePresentationModeChangedToken;
+		winrt::event_token audioTracksChangedToken{};
+		winrt::event_token subtitlePresentationModeChangedToken{};
 
 
 		IVectorView<winrt::FFmpegInteropXWinUI::VideoStreamInfo> videoStreamInfos = { nullptr };
@@ -169,12 +169,12 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		std::recursive_mutex mutexGuard;
 		CoreDispatcher dispatcher = { nullptr };
 		MediaPlaybackSession session = { nullptr };
-		winrt::event_token sessionPositionEvent;
+		winrt::event_token sessionPositionEvent{};
 
-		hstring videoCodecName;
-		hstring audioCodecName;
-		TimeSpan mediaDuration;
-		TimeSpan subtitleDelay;
+		hstring videoCodecName{};
+		hstring audioCodecName{};
+		TimeSpan mediaDuration{};
+		TimeSpan subtitleDelay{};
 		unsigned char* fileStreamBuffer = NULL;
 		bool isFirstSeek;
 		AVBufferRef* avHardwareContext = NULL;
@@ -184,13 +184,13 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		HANDLE deviceHandle = NULL;
 		IMFDXGIDeviceManager* deviceManager = NULL;
 
-		bool isFirstSeekAfterStreamSwitch;
-		bool isLastSeekForward;
-		TimeSpan lastSeekStart;
-		TimeSpan lastSeekActual;
+		bool isFirstSeekAfterStreamSwitch = false;
+		bool isLastSeekForward = false;
+		TimeSpan lastSeekStart{};
+		TimeSpan lastSeekActual{};
 
-		TimeSpan actualPosition;
-		TimeSpan lastPosition;
+		TimeSpan actualPosition{};
+		TimeSpan lastPosition{};
 
 		static CoreDispatcher GetCurrentDispatcher();
 		void OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession const& sender, winrt::Windows::Foundation::IInspectable const& args);

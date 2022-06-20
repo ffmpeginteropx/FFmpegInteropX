@@ -42,7 +42,7 @@ typedef struct _MT_CUSTOM_VIDEO_PRIMARIES {
 
 namespace FFmpegInteropX
 {
-	
+
 
 	class UncompressedVideoSampleProvider : public UncompressedSampleProvider
 	{
@@ -63,13 +63,13 @@ namespace FFmpegInteropX
 			HardwareDecoderStatus hardwareDecoderStatus);
 		winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
 		virtual HRESULT CreateBufferFromFrame(winrt::Windows::Storage::Streams::IBuffer* pBuffer, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
-		virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample sample) override;
+		virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample  const& sample) override;
 		void ReadFrameProperties(AVFrame* avFrame, int64_t& framePts);
 		void CheckFrameSize(AVFrame* avFrame);
 		AVPixelFormat GetOutputPixelFormat() { return m_OutputPixelFormat; }
-		int TargetWidth;
-		int TargetHeight;
-		BYTE* TargetBuffer;
+		int TargetWidth = 0;
+		int TargetHeight = 0;
+		BYTE* TargetBuffer = NULL;
 
 		virtual void NotifyCreateSource() override
 		{
@@ -88,28 +88,28 @@ namespace FFmpegInteropX
 		AVBufferRef* AllocateBuffer(int requestedSize, AVBufferPool** bufferPool, int* bufferPoolSize);
 		static int get_buffer2(AVCodecContext* avCodecContext, AVFrame* frame, int flags);
 
-		winrt::hstring outputMediaSubtype;
-		int outputWidth;
-		int outputHeight;
-		int outputFrameHeight;
-		int outputFrameWidth;
-		bool outputDirectBuffer;
+		winrt::hstring outputMediaSubtype{};
+		int outputWidth = 0;
+		int outputHeight = 0;
+		int outputFrameHeight = 0;
+		int outputFrameWidth = 0;
+		bool outputDirectBuffer = 0;
 
 		AVBufferPool* sourceBufferPool = NULL;
-		int sourceBufferPoolSize;
+		int sourceBufferPoolSize = 0;
 		AVBufferPool* targetBufferPool = NULL;
-		int targetBufferPoolSize;
+		int targetBufferPoolSize = 0;
 		AVPixelFormat m_OutputPixelFormat;
 		SwsContext* m_pSwsCtx = NULL;
-		bool m_interlaced_frame;
-		bool m_top_field_first;
+		bool m_interlaced_frame = 0;
+		bool m_top_field_first = 0;
 		AVChromaLocation m_chroma_location;
-		bool hasFirstInterlacedFrame;
-		winrt::Windows::Foundation::IInspectable maxCLL;
-		winrt::Windows::Foundation::IInspectable maxFALL;
-		winrt::Windows::Foundation::IInspectable minLuminance;
-		winrt::Windows::Foundation::IInspectable maxLuminance;
-		winrt::Windows::Foundation::IInspectable customPrimaries;
+		bool hasFirstInterlacedFrame = 0;
+		winrt::Windows::Foundation::IInspectable maxCLL = { nullptr };
+		winrt::Windows::Foundation::IInspectable maxFALL = { nullptr };
+		winrt::Windows::Foundation::IInspectable minLuminance = { nullptr };
+		winrt::Windows::Foundation::IInspectable maxLuminance = { nullptr };
+		winrt::Windows::Foundation::IInspectable customPrimaries = { nullptr };
 	};
 }
 

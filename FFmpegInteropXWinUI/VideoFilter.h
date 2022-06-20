@@ -25,26 +25,26 @@ namespace FFmpegInteropX
 	using namespace winrt::Windows::Foundation::Collections;
 	using namespace winrt::Windows::Media::Playback;
 	using namespace winrt::Windows::Foundation;
-	
+
 	using namespace winrt::Windows::Storage;
 
 	class VideoFilter : public IAvEffect
 	{
-		const AVFilter* AVSource;
-		const AVFilter* AVSink;
+		const AVFilter* AVSource = NULL;
+		const AVFilter* AVSink = NULL;
 
-		AVFilterGraph* graph;
-		AVFilterContext* avSource_ctx, * avSink_ctx;
+		AVFilterGraph* graph = NULL;
+		AVFilterContext* avSource_ctx = NULL, * avSink_ctx = NULL;
 
-		AVCodecContext* inputCodecCtx;
-		AVStream* inputStream;
+		AVCodecContext* inputCodecCtx = NULL;
+		AVStream* inputStream = NULL;
 
-		winrt::hstring filterDefinition;
+		winrt::hstring filterDefinition{};
 		bool isInitialized = false;
 
 		AVPixelFormat format;
-		int width;
-		int height;
+		int width = 0;
+		int height = 0;
 
 		HRESULT AllocGraph()
 		{
@@ -82,7 +82,7 @@ namespace FFmpegInteropX
 			width = avFrame->width;
 			height = avFrame->height;
 
-			auto framerate = inputCodecCtx->framerate.num > 0 && inputCodecCtx->framerate.den > 0 ? 
+			auto framerate = inputCodecCtx->framerate.num > 0 && inputCodecCtx->framerate.den > 0 ?
 				inputCodecCtx->framerate : inputStream->avg_frame_rate;
 			auto timeBase = inputCodecCtx->time_base.num > 0 && inputCodecCtx->time_base.den > 0 ?
 				inputCodecCtx->time_base : inputStream->time_base;
@@ -158,7 +158,7 @@ namespace FFmpegInteropX
 			auto out = avfilter_inout_alloc();
 			if (!out)
 				return E_FAIL;
-			
+
 			out->name = av_strdup("out");
 			out->filter_ctx = avSink_ctx;
 			out->pad_idx = 0;
@@ -188,7 +188,7 @@ namespace FFmpegInteropX
 		}
 
 		HRESULT AddFrame(AVFrame* avFrame) override
-		{	
+		{
 			HRESULT hr = S_OK;
 
 			if (!isInitialized)

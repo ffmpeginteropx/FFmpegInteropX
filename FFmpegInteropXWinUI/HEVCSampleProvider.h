@@ -35,6 +35,6 @@ namespace FFmpegInteropX
 			int streamIndex,
 			VideoEncodingProperties encodingProperties,
 			HardwareDecoderStatus hardwareDecoderStatus);
-		virtual HRESULT GetSPSAndPPSBuffer(DataWriter dataWriter, BYTE* buf, UINT32 length) override;
+		virtual HRESULT GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length) override;
 	};
 }

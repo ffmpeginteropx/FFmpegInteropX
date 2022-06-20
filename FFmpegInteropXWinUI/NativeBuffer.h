@@ -73,10 +73,10 @@ namespace NativeBuffer
 
 
 	private:
-		UINT32 m_length;
-		byte* m_buffer;
+		UINT32 m_length = 0;
+		byte* m_buffer = NULL;
 		void(*m_free)(void* opaque);
 		void* m_opaque;
-		winrt::Windows::Foundation::IInspectable m_pObject;
+		winrt::Windows::Foundation::IInspectable m_pObject = { nullptr };
 	};
 }

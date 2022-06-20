@@ -224,8 +224,8 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		return this->codePage;
 	}
 
-	winrt::Windows::Foundation::Collections::IVector<winrt::FFmpegInteropXWinUI::CharacterEncoding> CharacterEncoding::internalMap;
-	winrt::Windows::Foundation::Collections::IVectorView<winrt::FFmpegInteropXWinUI::CharacterEncoding> CharacterEncoding::internalView;
+	winrt::Windows::Foundation::Collections::IVector<winrt::FFmpegInteropXWinUI::CharacterEncoding> CharacterEncoding::internalMap{ nullptr };
+	winrt::Windows::Foundation::Collections::IVectorView<winrt::FFmpegInteropXWinUI::CharacterEncoding> CharacterEncoding::internalView{ nullptr };
 	std::mutex CharacterEncoding::mutex;
 
 }

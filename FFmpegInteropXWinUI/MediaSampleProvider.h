@@ -29,7 +29,7 @@ namespace FFmpegInteropX
 
 	class FFmpegReader;
 
-	class MediaSampleProvider abstract
+	class MediaSampleProvider
 	{
 	public:
 		virtual ~MediaSampleProvider();
@@ -91,12 +91,12 @@ namespace FFmpegInteropX
 			return decoder;
 		}
 
-		bool IsCleanSample;
+		bool IsCleanSample = false;
 
-		winrt::hstring Name;
-		winrt::hstring Language;
-		winrt::hstring CodecName;
-		TimeSpan LastSampleTimestamp;
+		winrt::hstring Name{};
+		winrt::hstring Language{};
+		winrt::hstring CodecName{};
+		TimeSpan LastSampleTimestamp{};
 
 		virtual HRESULT Initialize();
 		void InitializeNameLanguageCodec();
@@ -106,14 +106,14 @@ namespace FFmpegInteropX
 		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
 		virtual HRESULT CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface) = 0;
 		HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
-		HRESULT SkipPacketsUntilTimestamp(TimeSpan timestamp);
+		HRESULT SkipPacketsUntilTimestamp(TimeSpan const& timestamp);
 		virtual winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() = 0;
-		virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample sample) { return S_OK; }; // can be overridded for setting extended properties
+		virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample const& sample) { return S_OK; }; // can be overridded for setting extended properties
 		void EnableStream();
 		void DisableStream();
 		virtual void SetFilters(winrt::hstring filterDefinition) { };// override for setting effects in sample providers
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
-		virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties videoEncodingProperties, bool isCompressedFormat);
+		virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& videoEncodingProperties, bool isCompressedFormat);
 		virtual void Detach();
 		virtual HRESULT SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) { return S_OK; };
 

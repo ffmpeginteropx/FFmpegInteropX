@@ -16,7 +16,7 @@ namespace FFmpegInteropX
 			InputContext = input_ctx;
 		}
 
-		std::shared_ptr<IAvEffect> CreateEffect(winrt::hstring filterDefinition) override
+		std::shared_ptr<IAvEffect> CreateEffect(winrt::hstring const& filterDefinition) override
 		{
 			return std::shared_ptr<AudioFilter>(new AudioFilter(InputContext, filterDefinition));
 		}

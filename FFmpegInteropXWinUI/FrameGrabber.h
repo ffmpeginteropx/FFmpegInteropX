@@ -34,9 +34,9 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 	public:
 		winrt::com_ptr<winrt::FFmpegInteropXWinUI::implementation::FFmpegMediaSource> interopMSS = { nullptr };
 		winrt::Windows::Media::MediaProperties::MediaRatio pixelAspectRatio = { nullptr };
-		int width;
-		int height;
-		
+		int width = 0;
+		int height = 0;
+
 
 		FrameGrabber(winrt::com_ptr<winrt::FFmpegInteropXWinUI::implementation::FFmpegMediaSource> interopMSS)
 		{
@@ -45,10 +45,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	private:
 
-		int decodePixelWidth;
-		int decodePixelHeight;
+		int decodePixelWidth = 0;
+		int decodePixelHeight = 0;
 
-		void PrepareDecoding(winrt::Windows::Storage::Streams::IBuffer targetBuffer)
+		void PrepareDecoding(winrt::Windows::Storage::Streams::IBuffer const& targetBuffer)
 		{
 			// the IBuffer from WriteableBitmap can only be accessed on UI thread
 			// so we need to check it and get its pointer here already

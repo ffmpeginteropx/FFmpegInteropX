@@ -17,7 +17,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		void Close();
 
 		winrt::Windows::Storage::Streams::IBuffer _buffer = { nullptr };
-		winrt::hstring _extension;
+		winrt::hstring _extension{};
 		~MediaThumbnailData();
 	};
 }

@@ -22,15 +22,15 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		int64_t Bitrate();
 		bool IsDefault();
 
-		hstring name;
-		hstring language;
-		hstring codecName;
+		hstring name{};
+		hstring language{};
+		hstring codecName{};
 		StreamDisposition disposition;
-		bool isDefault;
-		bool isForced;
+		bool isDefault = false;
+		bool isForced = false;
 		Windows::Media::Core::TimedMetadataTrack track = { nullptr };
-		bool isExternal;
-		bool SetDefault() 
+		bool isExternal = false;
+		bool SetDefault()
 		{
 			isDefault = true;
 			return isDefault;
