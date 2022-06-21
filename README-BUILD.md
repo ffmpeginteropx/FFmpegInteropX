@@ -2,13 +2,13 @@
 
 **Prerequisites:**
 
-Visual Studio 2019 is required to manually build FFmpegInteropX and FFmpeg. All other dependencies are installed automatically into the "Tools" subfolder during build. 
+Visual Studio 2022 or 2019 is required to manually build FFmpegInteropX and FFmpeg. All other dependencies are installed automatically into the "Tools" subfolder during build. 
 
-- Visual Studio 2019:
+- Visual Studio Installer:
   - Select "Universal Windows Platform development" workload in Installer
   - In VS Installer, check "Installation details" area on the right side, expand "Universal Windows Platform development", check "C++ (v142) Universal Windows Platform tools"
   - Visual C++ Redistributable for Visual Studio 2010 [x64](https://www.microsoft.com/en-us/download/details.aspx?id=14632) or [x86](https://www.microsoft.com/de-de/download/details.aspx?id=5555) (only needed for manual FFmpeg builds)
-  - For AV1 HW decoding, you need the Windows 11 SDK 10.0.22000.0 (only available on Visual Studio 16.11.8 and higher). HW decoding will also run on Windows 10, the Windows 11 SDK is just required for building.
+  - For AV1 HW decoding, you need the Windows 11 SDK 10.0.22000.0. HW decoding will also run on Windows 10, the Windows 11 SDK is just required for building.
 
 ## Getting the sources
 
@@ -46,7 +46,7 @@ Your `FFmpegInteropX` folder should look as follows
 	    README.md
 
 
-## Building ffmpeg with Visual Studio 2019
+## Building ffmpeg with Visual Studio
 
 After installing the ffmpeg build tools, you run Build-FFmpeg.ps1 to build FFmpeg.
 
@@ -94,7 +94,6 @@ Build only x86 and x64:
 You can of course combine parameters. There are more parameters, you can see them at the beginning of the build script.
 
 
-Note: You need Visual Studio 2017 15.9.0 or higher to build the ARM64 version of ffmpeg!
 
 ## Building the FFmpegInterop library
 

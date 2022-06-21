@@ -85,16 +85,6 @@ namespace MediaPlayerCS
             CoreWindow.GetForCurrentThread().KeyDown += MainPage_KeyDown;
         }
 
-        private async void CodecChecker_CodecRequired(object sender, CodecRequiredEventArgs e)
-        {
-            await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-                CoreDispatcherPriority.Normal,
-                new DispatchedHandler(async () =>
-                {
-                    await AskUserInstallCodec(e);
-                }));
-        }
-
         private async void MainPage_KeyDown(CoreWindow sender, KeyEventArgs args)
         {
             if (args.VirtualKey == VirtualKey.Enter && (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down)
@@ -112,7 +102,15 @@ namespace MediaPlayerCS
             }
         }
 
-
+        private async void CodecChecker_CodecRequired(object sender, CodecRequiredEventArgs args)
+        {
+            await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
+                CoreDispatcherPriority.Normal,
+                new DispatchedHandler(async () =>
+                {
+                    await AskUserInstallCodec(args);
+                }));
+        }
 
         private static async Task AskUserInstallCodec(CodecRequiredEventArgs args)
         {

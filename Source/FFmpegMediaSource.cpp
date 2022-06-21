@@ -554,7 +554,6 @@ HRESULT FFmpegMediaSource::CreateMediaStreamSource(String^ uri)
 
 	if (SUCCEEDED(hr))
 	{
-		this->mss = nullptr;
 		hr = InitFFmpegContext();
 	}
 
@@ -641,7 +640,6 @@ HRESULT FFmpegMediaSource::CreateMediaStreamSource(IRandomAccessStream^ stream)
 
 	if (SUCCEEDED(hr))
 	{
-		this->mss = mss;
 		hr = InitFFmpegContext();
 	}
 

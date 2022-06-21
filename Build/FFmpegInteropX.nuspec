@@ -10,7 +10,7 @@
     <license type="expression">Apache-2.0</license>
     <dependencies>
       <group>
-          <dependency id="FFmpegInteropX.FFmpegUWP" version="4.0.0" />
+          <dependency id="FFmpegInteropX.FFmpegUWP" version="5.0.0" />
       </group>
       <group targetFramework="uap10.0" />
     </dependencies>

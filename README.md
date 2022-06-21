@@ -10,6 +10,9 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 
 #### Latest Releases:
 - [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX):
+  - 1.0.0
+    - Renamed namespaces and classes
+    - Removed deprecated APIs and code cleanup
   - 0.9.4
     - Support for HDR video!
   - 0.9.3

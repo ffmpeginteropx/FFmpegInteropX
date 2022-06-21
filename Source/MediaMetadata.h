@@ -11,13 +11,13 @@ namespace FFmpegInteropX
 
 	ref class MediaMetadata sealed
 	{
-		Vector<IKeyValuePair<String^, String^>^>^ entries;
+		Map<String^, IVectorView<String^>^>^ entries;
 		bool tagsLoaded = false;
 	internal:
 
 		MediaMetadata()
 		{
-			entries = ref new Vector<IKeyValuePair<String^, String^>^>();
+			entries = ref new Map<String^, IVectorView<String^>^>();
 		}
 
 		void LoadMetadataTags(AVFormatContext* m_pAvFormatCtx)
@@ -27,24 +27,43 @@ namespace FFmpegInteropX
 				if (m_pAvFormatCtx->metadata)
 				{
 					AVDictionaryEntry* entry = NULL;
-
+					auto localEntries = ref new Map<String^, IVector<String^>^>();
 					do {
 						entry = av_dict_get(m_pAvFormatCtx->metadata, "", entry, AV_DICT_IGNORE_SUFFIX);
 						if (entry)
-							entries->Append(ref new KeyStringValuePair(
-								StringUtils::Utf8ToPlatformString(entry->key),
-								StringUtils::Utf8ToPlatformString(entry->value)));
+						{
+							auto key = StringUtils::Utf8ToPlatformString(entry->key);
+							auto value = StringUtils::Utf8ToPlatformString(entry->value);
+							if (localEntries->HasKey(key))
+							{
+								auto vector = localEntries->Lookup(key);
+								vector->Append(value);
+							}
+							else
+							{
+								auto vector = ref new Vector<String^>();
+								vector->Append(value);
+								localEntries->Insert(key, vector);
+							}
+						}
+
 
 					} while (entry);
+
+
+					for (auto kvp : localEntries)
+					{
+						entries->Insert(kvp->Key, kvp->Value->GetView());
+					}
 				}
 				tagsLoaded = true;
 			}
 		}
 
 
-		property IVectorView<IKeyValuePair<String^, String^>^>^ MetadataTags
+		property IMapView<String^, IVectorView<String^>^>^ MetadataTags
 		{
-			IVectorView<IKeyValuePair<String^, String^>^>^ get()
+			IMapView<String^, IVectorView<String^>^>^ get()
 			{
 				return entries->GetView();
 			}
