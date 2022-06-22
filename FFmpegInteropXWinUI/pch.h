@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <unknwn.h>
 #include <shcore.h>
 #include <memory>
@@ -9,15 +9,6 @@
 #include <d3d11.h>
 #include <queue>
 #include "StringUtils.h"
-#include <winrt/Microsoft.UI.Composition.h>
-#include <winrt/Microsoft.UI.Xaml.h>
-#include <winrt/Microsoft.UI.Xaml.Controls.h>
-#include <winrt/Microsoft.UI.Xaml.Controls.Primitives.h>
-#include <winrt/Microsoft.UI.Xaml.Data.h>
-#include <winrt/Microsoft.UI.Xaml.Markup.h>
-#include <winrt/Microsoft.UI.Xaml.Navigation.h>
-#include <winrt/Microsoft.UI.Dispatching.h>
-#include <winrt/microsoft.ui.dispatching.co_await.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
 #include <winrt/Windows.Graphics.DirectX.h>
 #include <winrt/Windows.Globalization.h>
