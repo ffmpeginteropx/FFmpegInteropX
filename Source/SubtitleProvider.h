@@ -48,15 +48,12 @@ namespace FFmpegInteropX
 
 			if (!m_config->IsExternalSubtitleParser)
 			{
-				if (Windows::Foundation::Metadata::ApiInformation::IsEnumNamedValuePresent("Windows.Media.Core.TimedMetadataKind", "ImageSubtitle") &&
-					timedMetadataKind == TimedMetadataKind::ImageSubtitle)
-				{
-					SubtitleTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::MediaCueEventArgs ^>(this, &FFmpegInteropX::SubtitleProvider::OnCueEntered);
-				}
 				SubtitleTrack->TrackFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack ^, Windows::Media::Core::TimedMetadataTrackFailedEventArgs ^>(this, &FFmpegInteropX::SubtitleProvider::OnTrackFailed);
 			}
 
 			InitializeStreamInfo();
+
+            m_pAvStream->discard = AVDISCARD_DEFAULT;
 
 			return S_OK;
 		}
@@ -70,99 +67,96 @@ namespace FFmpegInteropX
 
 		virtual void QueuePacket(AVPacket *packet) override
 		{
-			if (m_isEnabled)
-			{
-				try
-				{
-					TimeSpan position = ConvertPosition(packet->pts);
-					TimeSpan duration = ConvertDuration(packet->duration);
-					bool isDurationFixed = false;
+            try
+            {
+                TimeSpan position = ConvertPosition(packet->pts);
+                TimeSpan duration = ConvertDuration(packet->duration);
+                bool isDurationFixed = false;
 
-					auto cue = CreateCue(packet, &position, &duration);
-					if (cue && position.Duration >= 0)
-					{
-						// apply subtitle delay
-						position += SubtitleDelay;
-						if (position.Duration < 0)
-						{
-							negativePositionCues.emplace_back(cue, position.Duration);
-							position.Duration = 0;
-						}
+                auto cue = CreateCue(packet, &position, &duration);
+                if (cue && position.Duration >= 0)
+                {
+                    // apply subtitle delay
+                    position += SubtitleDelay;
+                    if (position.Duration < 0)
+                    {
+                        negativePositionCues.emplace_back(cue, position.Duration);
+                        position.Duration = 0;
+                    }
 
-						// clip previous extended duration cue, if there is one
-						if (lastExtendedDurationCue && m_config->PreventModifiedSubtitleDurationOverlap &&
-							lastExtendedDurationCue->StartTime + lastExtendedDurationCue->Duration > position)
-						{
-							auto diff = position - (lastExtendedDurationCue->StartTime + lastExtendedDurationCue->Duration);
-							auto newDuration = lastExtendedDurationCue->Duration + diff;
-							if (newDuration.Duration > 0)
-							{
-								lastExtendedDurationCue->Duration = newDuration;
-								if (!m_config->IsExternalSubtitleParser)
-								{
-									pendingChangedDurationCues.push_back(lastExtendedDurationCue);
-								}
-							}
-							else
-							{
-								// weird subtitle timings, just leave it as is
-							}
-						}
+                    // clip previous extended duration cue, if there is one
+                    if (lastExtendedDurationCue && m_config->PreventModifiedSubtitleDurationOverlap &&
+                        lastExtendedDurationCue->StartTime + lastExtendedDurationCue->Duration > position)
+                    {
+                        auto diff = position - (lastExtendedDurationCue->StartTime + lastExtendedDurationCue->Duration);
+                        auto newDuration = lastExtendedDurationCue->Duration + diff;
+                        if (newDuration.Duration > 0)
+                        {
+                            lastExtendedDurationCue->Duration = newDuration;
+                            if (!m_config->IsExternalSubtitleParser)
+                            {
+                                pendingChangedDurationCues.push_back(lastExtendedDurationCue);
+                            }
+                        }
+                        else
+                        {
+                            // weird subtitle timings, just leave it as is
+                        }
+                    }
 
-						lastExtendedDurationCue = nullptr;
+                    lastExtendedDurationCue = nullptr;
 
-						if (duration.Duration < 0)
-						{
-							duration.Duration = InfiniteDuration;
-						}
-						else
-						{
-							if (m_config->AdditionalSubtitleDuration.Duration != 0)
-							{
-								duration.Duration += m_config->AdditionalSubtitleDuration.Duration;
-								lastExtendedDurationCue = cue;
-							}
-							if (duration.Duration < m_config->MinimumSubtitleDuration.Duration)
-							{
-								duration.Duration = m_config->MinimumSubtitleDuration.Duration;
-								lastExtendedDurationCue = cue;
-							}
-						}
+                    if (duration.Duration < 0)
+                    {
+                        duration.Duration = InfiniteDuration;
+                    }
+                    else
+                    {
+                        if (m_config->AdditionalSubtitleDuration.Duration != 0)
+                        {
+                            duration.Duration += m_config->AdditionalSubtitleDuration.Duration;
+                            lastExtendedDurationCue = cue;
+                        }
+                        if (duration.Duration < m_config->MinimumSubtitleDuration.Duration)
+                        {
+                            duration.Duration = m_config->MinimumSubtitleDuration.Duration;
+                            lastExtendedDurationCue = cue;
+                        }
+                    }
 
-						cue->StartTime = position;
-						cue->Duration = duration;
-						AddCue(cue);
+                    cue->StartTime = position;
+                    cue->Duration = duration;
+                    AddCue(cue);
 
-						if (!m_config->IsExternalSubtitleParser)
-						{
-							isPreviousCueInfiniteDuration = duration.Duration >= InfiniteDuration;
-						}
-						else
-						{
-							// fixup infinite duration cues for external subs
-							if (isPreviousCueInfiniteDuration)
-							{
-								infiniteDurationCue->Duration = cue->StartTime - infiniteDurationCue->StartTime;
-							}
+                    if (!m_config->IsExternalSubtitleParser)
+                    {
+                        isPreviousCueInfiniteDuration = duration.Duration >= InfiniteDuration;
+                    }
+                    else
+                    {
+                        // fixup infinite duration cues for external subs
+                        if (isPreviousCueInfiniteDuration)
+                        {
+                            infiniteDurationCue->Duration = cue->StartTime - infiniteDurationCue->StartTime;
+                        }
 
-							if (duration.Duration >= InfiniteDuration)
-							{
-								isPreviousCueInfiniteDuration = true;
-								infiniteDurationCue = cue;
-							}
-							else
-							{
-								isPreviousCueInfiniteDuration = false;
-								infiniteDurationCue = nullptr;
-							}
-						}
-					}
-				}
-				catch (...)
-				{
-					OutputDebugString(L"Failed to create subtitle cue.");
-				}
-			}
+                        if (duration.Duration >= InfiniteDuration)
+                        {
+                            isPreviousCueInfiniteDuration = true;
+                            infiniteDurationCue = cue;
+                        }
+                        else
+                        {
+                            isPreviousCueInfiniteDuration = false;
+                            infiniteDurationCue = nullptr;
+                        }
+                    }
+                }
+            }
+            catch (...)
+            {
+                OutputDebugString(L"Failed to create subtitle cue.");
+            }
 			av_packet_free(&packet);
 		}
 
@@ -264,7 +258,7 @@ namespace FFmpegInteropX
 
 		void DispatchCueToTrack(IMediaCue^ cue)
 		{
-			if (m_config->IsExternalSubtitleParser)
+			if (m_config->IsExternalSubtitleParser || !IsEnabled)
 			{
 				SubtitleTrack->AddCue(cue);
 			}
@@ -295,33 +289,6 @@ namespace FFmpegInteropX
 			}
 			catch (...)
 			{
-			}
-			mutex.unlock();
-		}
-
-		void OnCueEntered(Windows::Media::Core::TimedMetadataTrack ^sender, Windows::Media::Core::MediaCueEventArgs ^args)
-		{
-			mutex.lock();
-			try
-			{
-				//cleanup old cues to free memory
-				std::vector<IMediaCue^> remove;
-				for each (auto cue in SubtitleTrack->Cues)
-				{
-					if (cue->StartTime + cue->Duration < args->Cue->StartTime)
-					{
-						remove.push_back(cue);
-					}
-				}
-
-				for each (auto cue in remove)
-				{
-					SubtitleTrack->RemoveCue(cue);
-				}
-			}
-			catch (...)
-			{
-				OutputDebugString(L"Failed to cleanup old cues.");
 			}
 			mutex.unlock();
 		}
@@ -485,11 +452,24 @@ namespace FFmpegInteropX
 
 	public:
 
-		void Flush() override
+        void EnableStream() override
+        {
+            DebugMessage(L"EnableStream\n");
+            m_isEnabled = true;
+        }
+
+        void DisableStream() override
+        {
+            DebugMessage(L"DisableStream\n");
+            m_isEnabled = false;
+        }
+
+		void Flush(bool flushBuffers) override
 		{
-			if (!m_config->IsExternalSubtitleParser)
+            CompressedSampleProvider::Flush(flushBuffers);
+
+			if (!m_config->IsExternalSubtitleParser && flushBuffers)
 			{
-				CompressedSampleProvider::Flush();
 
 				mutex.lock();
 
@@ -521,10 +501,11 @@ namespace FFmpegInteropX
 			}
 		}
 
-	private:
-
+    internal:
 		std::recursive_mutex mutex;
-		int cueCount;
+
+    private:
+        int cueCount;
 		std::vector<IMediaCue^> pendingCues;
 		std::vector<IMediaCue^> pendingRefCues;
 		std::vector<IMediaCue^> pendingChangedDurationCues;

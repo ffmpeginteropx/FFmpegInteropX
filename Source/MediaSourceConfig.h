@@ -47,8 +47,8 @@ namespace FFmpegInteropX
 
 			FFmpegOptions = ref new PropertySet();
 
-			DefaultBufferTime = TimeSpan{ 0 };
-			DefaultBufferTimeUri = TimeSpan{ 50000000 };
+            ReadAheadBufferSize = 100 * 1024 * 1024;
+            ReadAheadBufferDuration = TimeSpan { 600000000 };
 
 			AutoSelectForcedSubtitles = true;
 			OverrideSubtitleStyles = false;
@@ -185,12 +185,23 @@ namespace FFmpegInteropX
 
 
 		///<summary>The default BufferTime that gets assigned to the MediaStreamSource for IRandomAccessStream sources.</summary>
-		///<remarks>A value of 0 is recommended for local files, to avoid framework bugs and unneccessary memory consumption.</remarks>
-		property TimeSpan DefaultBufferTime;
+		///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
+        [WFM::Deprecated("Use ReadAheadBufferSize and ReadAheadBufferDuration.", WFM::DeprecationType::Deprecate, 0x0)]
+        property TimeSpan DefaultBufferTime;
 
 		///<summary>The default BufferTime that gets assigned to the MediaStreamSource for URI sources.</summary>
-		///<remarks>Default is 5 seconds. You might want to use higher values, especially for DASH stream sources.</remarks>
-		property TimeSpan DefaultBufferTimeUri;
+        ///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
+        [WFM::Deprecated("Use ReadAheadBufferSize and ReadAheadBufferDuration.", WFM::DeprecationType::Deprecate, 0x0)]
+        property TimeSpan DefaultBufferTimeUri;
+
+
+        ///<summary>The maximum number of bytes to buffer ahead per stream.</summary>
+        ///<remarks>This value can be changed any time during playback.</remarks>
+        property long long ReadAheadBufferSize;
+
+        ///<summary>The maximum duration to buffer ahead per stream.</summary>
+        ///<remarks>This value can be changed any time during playback.</remarks>
+        property TimeSpan ReadAheadBufferDuration;
 
 
 		///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>

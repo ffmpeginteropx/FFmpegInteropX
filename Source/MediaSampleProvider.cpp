@@ -40,6 +40,7 @@ MediaSampleProvider::MediaSampleProvider(
 	, m_config(config)
 	, m_streamIndex(streamIndex)
 	, hardwareDecoderStatus(hardwareDecoderStatus)
+    , buffer(ref new StreamBuffer(streamIndex, config))
 {
 	DebugMessage(L"MediaSampleProvider\n");
 
@@ -265,43 +266,33 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG & packe
 {
 	HRESULT hr = S_OK;
 
-	// Continue reading until there is an appropriate packet in the stream
-	while (m_packetQueue.empty())
-	{
-		if (m_pReader->ReadPacket() < 0)
-		{
-			DebugMessage(L"GetNextPacket reaching EOF\n");
-			break;
-		}
-	}
+    if (buffer->ReadUntilNotEmpty(m_pReader))
+    {
+        auto packet = buffer->PopPacket();
 
-	if (!m_packetQueue.empty())
-	{
-		// read next packet and set pts values
-		auto packet = PopPacket();
-		*avPacket = packet;
+        *avPacket = packet;
 
-		packetDuration = packet->duration;
-		
-		if (packet->pts != AV_NOPTS_VALUE)
-		{
-			packetPts = packet->pts;
-			// Set the PTS for the next sample if it doesn't one.
-			m_nextPacketPts = packetPts + packetDuration;
-		}
-		else if (m_isDiscontinuous && packet->dts != AV_NOPTS_VALUE)
-		{
-			packetPts = packet->dts;
-			// Use DTS instead of PTS after a seek, if PTS is not available (e.g. some WMV files)
-			m_nextPacketPts = packetPts + packetDuration;
-		}
-		else
-		{
-			packetPts = m_nextPacketPts;
-			// Set the PTS for the next sample if it doesn't one.
-			m_nextPacketPts += packetDuration;
-		}
-	}
+        packetDuration = packet->duration;
+
+        if (packet->pts != AV_NOPTS_VALUE)
+        {
+            packetPts = packet->pts;
+            // Set the PTS for the next sample if it doesn't one.
+            m_nextPacketPts = packetPts + packetDuration;
+        }
+        else if (m_isDiscontinuous && packet->dts != AV_NOPTS_VALUE)
+        {
+            packetPts = packet->dts;
+            // Use DTS instead of PTS after a seek, if PTS is not available (e.g. some WMV files)
+            m_nextPacketPts = packetPts + packetDuration;
+        }
+        else
+        {
+            packetPts = m_nextPacketPts;
+            // Set the PTS for the next sample if it doesn't one.
+            m_nextPacketPts += packetDuration;
+        }
+    }
 	else
 	{
 		hr = S_FALSE;
@@ -314,28 +305,18 @@ HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpa
 {
 	HRESULT hr = S_FALSE;
 
-	// Continue reading until there is an appropriate packet in the stream
-	while (m_packetQueue.empty())
-	{
-		if (m_pReader->ReadPacket() < 0)
-		{
-			DebugMessage(L"GetNextPacketTimestamp reaching EOF\n");
-			break;
-		}
-	}
-
-	if (!m_packetQueue.empty())
-	{
-		// peek next packet and set pts value
-		auto packet = m_packetQueue.front();
-		auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
-		if (pts != AV_NOPTS_VALUE)
-		{
-			timestamp = ConvertPosition(pts);
-			packetDuration = ConvertDuration(packet->duration);
-			hr = S_OK;
-		}
-	}
+    if (buffer->ReadUntilNotEmpty(m_pReader))
+    {
+        // peek next packet and set pts value
+        auto packet = buffer->PeekPacket();
+        auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
+        if (pts != AV_NOPTS_VALUE)
+        {
+            timestamp = ConvertPosition(pts);
+            packetDuration = ConvertDuration(packet->duration);
+            hr = S_OK;
+        }
+    }
 
 	return hr;
 }
@@ -343,52 +324,11 @@ HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpa
 HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan timestamp)
 {
 	HRESULT hr = S_OK;
-	bool foundPacket = false;
 
-	while (hr == S_OK && !foundPacket)
-	{
-		// Continue reading until there is an appropriate packet in the stream
-		while (m_packetQueue.empty())
-		{
-			if (m_pReader->ReadPacket() < 0)
-			{
-				DebugMessage(L"SkipPacketsUntilTimestamp reaching EOF\n");
-				break;
-			}
-		}
-
-		if (!m_packetQueue.empty())
-		{
-			// peek next packet and check pts value
-			auto packet = m_packetQueue.front();
-
-			auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
-			if (pts != AV_NOPTS_VALUE && packet->duration != AV_NOPTS_VALUE)
-			{
-				auto packetEnd = ConvertPosition(pts + packet->duration);
-				if (packet->duration > 0 ? packetEnd <= timestamp : packetEnd < timestamp)
-				{
-					m_packetQueue.pop();
-					av_packet_free(&packet);
-				}
-				else
-				{
-					foundPacket = true;
-					break;
-				}
-			}
-			else
-			{
-				hr = S_FALSE;
-				break;
-			}
-		}
-		else
-		{
-			// no more packet found
-			hr = S_FALSE;
-		}
-	}
+    if (!buffer->SkipUntilTimestamp(m_pReader, ConvertPosition(timestamp)))
+    {
+        hr = S_FALSE;
+    }
 
 	return hr;
 }
@@ -399,7 +339,7 @@ void MediaSampleProvider::QueuePacket(AVPacket *packet)
 
 	if (m_isEnabled)
 	{
-		m_packetQueue.push(packet);
+		buffer->QueuePacket(packet);
 	}
 	else
 	{
@@ -407,32 +347,17 @@ void MediaSampleProvider::QueuePacket(AVPacket *packet)
 	}
 }
 
-AVPacket* MediaSampleProvider::PopPacket()
-{
-	DebugMessage(L" - PopPacket\n");
-	AVPacket* result = NULL;
-
-	if (!m_packetQueue.empty())
-	{
-		result = m_packetQueue.front();
-		m_packetQueue.pop();
-	}
-
-	return result;
-}
-
-void MediaSampleProvider::Flush()
+void MediaSampleProvider::Flush(bool flushBuffers)
 {
 	DebugMessage(L"Flush\n");
-	while (!m_packetQueue.empty())
-	{
-		AVPacket *avPacket = PopPacket();
-		av_packet_free(&avPacket);
-	}
 	if (m_pAvCodecCtx)
 	{
 		avcodec_flush_buffers(m_pAvCodecCtx);
 	}
+    if (flushBuffers)
+    {
+        buffer->Flush();
+    }
 	m_isDiscontinuous = true;
 	IsCleanSample = false;
 }
@@ -447,7 +372,6 @@ void MediaSampleProvider::EnableStream()
 void MediaSampleProvider::DisableStream()
 {
 	DebugMessage(L"DisableStream\n");
-	Flush();
 	m_isEnabled = false;
 	m_pAvStream->discard = AVDISCARD_ALL;
 }
@@ -510,7 +434,7 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
 
 void MediaSampleProvider::Detach()
 {
-	Flush();
+	Flush(false);
 	m_pReader = nullptr;
 	avcodec_close(m_pAvCodecCtx);
 	avcodec_free_context(&m_pAvCodecCtx);

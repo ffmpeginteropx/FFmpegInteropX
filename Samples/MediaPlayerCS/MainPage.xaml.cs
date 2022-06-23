@@ -1,4 +1,4 @@
-﻿//*****************************************************************************
+//*****************************************************************************
 //
 //	Copyright 2015 Microsoft Corporation
 //
@@ -92,12 +92,21 @@ namespace MediaPlayerCS
             {
                 await TryOpenLastFile();
             }
+            if (args.VirtualKey == VirtualKey.Enter && (Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift) & CoreVirtualKeyStates.Down)
+               == CoreVirtualKeyStates.Down && ApplicationData.Current.LocalSettings.Values.ContainsKey("LastUri"))
+            {
+                await TryOpenLastUri();
+            }
+
             if (args.VirtualKey == VirtualKey.V)
             {
                 if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
                 {
-                    playbackItem.VideoTracks.SelectedIndex =
+                    bool reverse = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
+                    int index = reverse ?
+                        (playbackItem.VideoTracks.SelectedIndex - 1) % playbackItem.VideoTracks.Count :
                         (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
+                    playbackItem.VideoTracks.SelectedIndex = index;
                 }
             }
         }
@@ -146,6 +155,18 @@ namespace MediaPlayerCS
                     StorageApplicationPermissions.FutureAccessList.Entries[0].Token);
 
                 await OpenLocalFile(file);
+            }
+            catch (Exception)
+            {
+            }
+        }
+        private async Task TryOpenLastUri()
+        {
+            try
+            {
+                //Try open last uri
+                var uri = (string)ApplicationData.Current.LocalSettings.Values["LastUri"];
+                await OpenStreamUri(uri);
             }
             catch (Exception)
             {
@@ -225,30 +246,37 @@ namespace MediaPlayerCS
                 // Mark event as handled to prevent duplicate event to re-triggered
                 e.Handled = true;
 
-                try
-                {
-                    // Set FFmpeg specific options. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
+                await OpenStreamUri(uri);
+            }
+        }
 
-                    // Below are some sample options that you can set to configure RTSP streaming
-                    // Config.FFmpegOptions.Add("rtsp_flags", "prefer_tcp");
-                    // Config.FFmpegOptions.Add("stimeout", 100000);
+        private async Task OpenStreamUri(string uri)
+        {
+            try
+            {
+                // Set FFmpeg specific options. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
 
-                    // Instantiate FFmpegMediaSource using the URI
-                    mediaPlayer.Source = null;
-                    FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
+                // Below are some sample options that you can set to configure RTSP streaming
+                // Config.FFmpegOptions.Add("rtsp_flags", "prefer_tcp");
+                // Config.FFmpegOptions.Add("stimeout", 100000);
 
-                    var source = FFmpegMSS.CreateMediaPlaybackItem();
+                // Instantiate FFmpegMediaSource using the URI
+                mediaPlayer.Source = null;
+                FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
 
-                    // Pass MediaStreamSource to Media Element
-                    mediaPlayer.Source = source;
+                var source = FFmpegMSS.CreateMediaPlaybackItem();
 
-                    // Close control panel after opening media
-                    Splitter.IsPaneOpen = false;
-                }
-                catch (Exception ex)
-                {
-                    await DisplayErrorMessage(ex.Message);
-                }
+                // Pass MediaStreamSource to Media Element
+                mediaPlayer.Source = source;
+
+                // Close control panel after opening media
+                Splitter.IsPaneOpen = false;
+
+                ApplicationData.Current.LocalSettings.Values["LastUri"] = uri;
+            }
+            catch (Exception ex)
+            {
+                await DisplayErrorMessage(ex.Message);
             }
         }
 

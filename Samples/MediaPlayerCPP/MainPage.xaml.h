@@ -1,4 +1,4 @@
-﻿//*****************************************************************************
+//*****************************************************************************
 //
 //	Copyright 2015 Microsoft Corporation
 //
@@ -43,7 +43,8 @@ namespace MediaPlayerCPP
 		void OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 		task<void> OpenLocalFile();
 		task<void> OpenLocalFile(Windows::Storage::StorageFile^ file);
-		task<void> TryOpenLastFile();
+        task<void> TryOpenLastFile();
+        task<void> TryOpenLastUri();
 		void URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e);
 		task<void> OpenUriStream(Platform::String^ uri);
 		void MediaFailed(Platform::Object^ sender, Windows::UI::Xaml::ExceptionRoutedEventArgs^ e);

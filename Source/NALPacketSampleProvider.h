@@ -26,7 +26,7 @@ namespace FFmpegInteropX
 	{
 	public:
 		virtual ~NALPacketSampleProvider();
-		virtual void Flush() override;
+		virtual void Flush(bool flushBuffers) override;
 
 	internal:
 		NALPacketSampleProvider(

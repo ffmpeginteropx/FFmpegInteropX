@@ -48,10 +48,10 @@ namespace FFmpegInteropX
 	{
 	public:
 		virtual ~UncompressedVideoSampleProvider();
-		virtual void Flush() override
+		virtual void Flush(bool flushBuffers) override
 		{
 			hasFirstInterlacedFrame = false;
-			UncompressedSampleProvider::Flush();
+			UncompressedSampleProvider::Flush(flushBuffers);
 		}
 
 	internal:

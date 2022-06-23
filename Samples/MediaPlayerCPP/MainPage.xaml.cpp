@@ -1,4 +1,4 @@
-﻿//*****************************************************************************
+//*****************************************************************************
 //
 //	Copyright 2015 Microsoft Corporation
 //
@@ -83,17 +83,31 @@ void MediaPlayerCPP::MainPage::OnButtonPressed(Windows::Media::SystemMediaTransp
 
 task<void> MainPage::TryOpenLastFile()
 {
-	try
-	{
-		//Try open last file
-		auto file = co_await StorageApplicationPermissions::FutureAccessList->GetFileAsync(
-			StorageApplicationPermissions::FutureAccessList->Entries->GetAt(0).Token);
-		co_await OpenLocalFile(file);
-	}
-	catch (Exception^ ex)
-	{
-		DisplayErrorMessage(ex->Message);
-	}
+    try
+    {
+        //Try open last file
+        auto file = co_await StorageApplicationPermissions::FutureAccessList->GetFileAsync(
+            StorageApplicationPermissions::FutureAccessList->Entries->GetAt(0).Token);
+        co_await OpenLocalFile(file);
+    }
+    catch (Exception^ ex)
+    {
+        DisplayErrorMessage(ex->Message);
+    }
+}
+
+task<void> MainPage::TryOpenLastUri()
+{
+    try
+    {
+        //Try open last uri
+        auto uri = (String^)ApplicationData::Current->LocalSettings->Values->Lookup("LastUri");
+        co_await OpenUriStream(uri);
+    }
+    catch (Exception^ ex)
+    {
+        DisplayErrorMessage(ex->Message);
+    }
 }
 
 void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -192,6 +206,8 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
 
 		// Close control panel after opening media
 		Splitter->IsPaneOpen = false;
+
+        ApplicationData::Current->LocalSettings->Values->Insert("LastUri", uri);
 	}
 	catch (Exception^ ex)
 	{
@@ -477,14 +493,33 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
 		TryOpenLastFile();
 	}
 
+    if (args->VirtualKey == Windows::System::VirtualKey::Enter && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Shift) & Windows::UI::Core::CoreVirtualKeyStates::Down)
+        == Windows::UI::Core::CoreVirtualKeyStates::Down && ApplicationData::Current->LocalSettings->Values->HasKey("LastUri"))
+    {
+        TryOpenLastUri();
+    }
+
 	if (args->VirtualKey == Windows::System::VirtualKey::V)
 	{
 		if (playbackItem && playbackItem->VideoTracks->Size > 1)
 		{
-			playbackItem->VideoTracks->SelectedIndex =
-				(playbackItem->VideoTracks->SelectedIndex + 1) % playbackItem->VideoTracks->Size;
+            bool reverse = (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Shift) & Windows::UI::Core::CoreVirtualKeyStates::Down) == Windows::UI::Core::CoreVirtualKeyStates::Down;
+            int index = reverse ?
+                (playbackItem->VideoTracks->SelectedIndex - 1) % playbackItem->VideoTracks->Size :
+                (playbackItem->VideoTracks->SelectedIndex + 1) % playbackItem->VideoTracks->Size;
+            playbackItem->VideoTracks->SelectedIndex = index;
 		}
 	}
+
+    if (args->VirtualKey == Windows::System::VirtualKey::Right && FFmpegMSS && mediaPlayer->CanSeek)
+    {
+        mediaPlayer->Position = TimeSpan{ min(mediaPlayer->Position.Duration + 50000000, mediaPlayer->NaturalDuration.Duration) };
+    }
+
+    if (args->VirtualKey == Windows::System::VirtualKey::Left && FFmpegMSS && mediaPlayer->CanSeek)
+    {
+        mediaPlayer->Position = TimeSpan{ max(mediaPlayer->Position.Duration - 50000000, 0) };
+    }
 }
 
 

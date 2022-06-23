@@ -48,7 +48,7 @@ namespace FFmpegInteropX
 
 
 	public:
-		virtual void Flush() override;
+		virtual void Flush(bool flushBuffers) override;
 
 	private:
 		int64 nextFramePts;

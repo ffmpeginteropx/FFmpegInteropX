@@ -1,4 +1,4 @@
-﻿//*****************************************************************************
+//*****************************************************************************
 //
 //	Copyright 2015 Microsoft Corporation
 //
@@ -270,18 +270,6 @@ namespace FFmpegInteropX
 		void InitializePlaybackItem(MediaPlaybackItem^ playbackitem);
 		bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
 
-		void FlushStreams()
-		{
-			// Flush all active streams
-			for each (auto stream in sampleProviders)
-			{
-				if (stream && stream->IsEnabled)
-				{
-					stream->Flush();
-				}
-			}
-		}
-
 	internal:
 		static FFmpegMediaSource^ CreateFromStream(IRandomAccessStream^ stream, MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
 		static FFmpegMediaSource^ CreateFromUri(String^ uri, MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
@@ -343,6 +331,9 @@ namespace FFmpegInteropX
 		CoreDispatcher^ dispatcher;
 		MediaPlaybackSession^ session;
 		EventRegistrationToken sessionPositionEvent;
+        TimeSpan currentPosition;
+        TimeSpan lastPosition;
+        bool isFirstSeekAfterStreamSwitch;
 
 		String^ videoCodecName;
 		String^ audioCodecName;
@@ -357,16 +348,9 @@ namespace FFmpegInteropX
 		HANDLE deviceHandle;
 		IMFDXGIDeviceManager* deviceManager;
 
-		bool isFirstSeekAfterStreamSwitch;
-		bool isLastSeekForward;
-		TimeSpan lastSeekStart;
-		TimeSpan lastSeekActual;
-
-		TimeSpan actualPosition;
-		TimeSpan lastPosition;
-
 		static CoreDispatcher^ GetCurrentDispatcher();
 		void OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession^ sender, Platform::Object^ args);
+		void OnPaused(Windows::Media::Core::MediaStreamSource^ sender, Platform::Object^ args);
 };
 
 }

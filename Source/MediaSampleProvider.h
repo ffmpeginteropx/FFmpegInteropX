@@ -29,14 +29,15 @@ namespace FFmpegInteropX
 	using namespace Windows::Media::MediaProperties;
 	using namespace Windows::Graphics::DirectX::Direct3D11;
 
-	ref class FFmpegReader;
+    ref class FFmpegReader;
+    ref class StreamBuffer;
 
 	ref class MediaSampleProvider abstract
 	{
 	public:
 		virtual ~MediaSampleProvider();
 		virtual MediaStreamSample^ GetNextSample();
-		virtual void Flush();
+		virtual void Flush(bool flushBuffers);
 
 		property IMediaStreamDescriptor^ StreamDescriptor
 		{
@@ -105,15 +106,14 @@ namespace FFmpegInteropX
 		void InitializeNameLanguageCodec();
 		virtual void InitializeStreamInfo();
 		virtual void QueuePacket(AVPacket* packet);
-		AVPacket* PopPacket();
 		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
 		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) = 0;
 		HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
 		HRESULT SkipPacketsUntilTimestamp(TimeSpan timestamp);
 		virtual IMediaStreamDescriptor^ CreateStreamDescriptor() = 0;
 		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
-		void EnableStream();
-		void DisableStream();
+        virtual void EnableStream();
+        virtual void DisableStream();
 		virtual void SetFilters(String^ filterDefinition) { };// override for setting effects in sample providers
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
 		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
@@ -168,9 +168,8 @@ namespace FFmpegInteropX
 			HardwareDecoderStatus hardwareDecoderStatus);
 
 	private:
-		std::queue<AVPacket*> m_packetQueue;
-		int64 m_nextPacketPts;
-		IMediaStreamDescriptor^ m_streamDescriptor;
+        int64 m_nextPacketPts;
+        IMediaStreamDescriptor^ m_streamDescriptor;
 		HardwareDecoderStatus hardwareDecoderStatus;
 
 	internal:
@@ -179,7 +178,8 @@ namespace FFmpegInteropX
 		// externally
 		MediaSourceConfig^ m_config;
 		FFmpegReader^ m_pReader;
-		AVFormatContext* m_pAvFormatCtx;
+        StreamBuffer^ buffer;
+        AVFormatContext* m_pAvFormatCtx;
 		AVCodecContext* m_pAvCodecCtx;
 		AVStream* m_pAvStream;
 		IStreamInfo^ streamInfo;
