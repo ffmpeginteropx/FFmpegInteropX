@@ -68,7 +68,8 @@ void FFmpegReader::FlushCodecs()
     std::lock_guard<std::mutex> lock(mutex);
     for (auto stream : *sampleProviders)
     {
-        stream->Flush(false);
+        if (stream)
+            stream->Flush(false);
     }
 }
 
@@ -77,7 +78,8 @@ void FFmpegReader::Flush()
     std::lock_guard<std::mutex> lock(mutex);
     for (auto stream : *sampleProviders)
     {
-        stream->Flush(true);
+        if (stream)
+            stream->Flush(true);
     }
     result = 0;
 }
@@ -234,9 +236,6 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
 
         if (hr == S_OK)
         {
-            // reduce playback delay
-            timestampVideo += timestampVideoDuration;
-
             actualPosition = timestampVideo;
 
             // remember last seek direction
@@ -273,10 +272,10 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                             audioStream->SkipPacketsUntilTimestamp(audioTarget);
 
                             auto sample = audioStream->GetNextSample();
-                            /*if (sample)
+                            if (sample)
                             {
                                 actualPosition = sample->Timestamp + sample->Duration;
-                            }*/
+                            }
                         }
                     }
                     else if (audioPreroll.Duration <= 0)
@@ -289,10 +288,10 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                         {
                             // decode one audio sample to get clean output
                             auto sample = audioStream->GetNextSample();
-                            /*if (sample)
+                            if (sample)
                             {
                                 actualPosition = sample->Timestamp + sample->Duration;
-                            }*/
+                            }
                         }
                     }
                 }
@@ -383,7 +382,10 @@ void FFmpegReader::ReadDataLoop()
             sleep = false;
             for (auto stream : *sampleProviders)
             {
-                sleep &= stream->buffer->IsFull(stream);
+                if (stream)
+                {
+                    sleep &= stream->buffer->IsFull(stream);
+                }
             }
             if (!isReading)
             {

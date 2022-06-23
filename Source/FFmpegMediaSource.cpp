@@ -945,6 +945,9 @@ HRESULT FFmpegMediaSource::InitFFmpegContext()
 			// Convert media duration from AV_TIME_BASE to TimeSpan unit
 			mediaDuration = { LONGLONG(avFormatCtx->duration * 10000000 / double(AV_TIME_BASE)) };
 
+            // Assign initial BufferTime to MediaStreamSource
+            mss->BufferTime = TimeSpan{ 0 };
+
 			if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.MediaStreamSource", "MaxSupportedPlaybackRate"))
 			{
 				mss->MaxSupportedPlaybackRate = config->MaxSupportedPlaybackRate;

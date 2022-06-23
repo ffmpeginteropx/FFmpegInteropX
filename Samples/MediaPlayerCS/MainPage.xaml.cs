@@ -109,6 +109,16 @@ namespace MediaPlayerCS
                     playbackItem.VideoTracks.SelectedIndex = index;
                 }
             }
+
+            if (args.VirtualKey == VirtualKey.Right && FFmpegMSS != null && mediaPlayer.PlaybackSession.CanSeek)
+            {
+                mediaPlayer.PlaybackSession.Position += TimeSpan.FromSeconds(5);
+            }
+
+            if (args.VirtualKey == VirtualKey.Left && FFmpegMSS != null && mediaPlayer.PlaybackSession.CanSeek)
+            {
+                mediaPlayer.PlaybackSession.Position -= TimeSpan.FromSeconds(5);
+            }
         }
 
         private async void CodecChecker_CodecRequired(object sender, CodecRequiredEventArgs args)

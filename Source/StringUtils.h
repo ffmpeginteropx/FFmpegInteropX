@@ -42,7 +42,7 @@ namespace FFmpegInteropX
 
 		static std::string PlatformStringToUtf8String(String^ value)
 		{
-		    size_t required_size = WideCharToMultiByte(CP_UTF8, 0, value->Data(), -1, NULL, 0, NULL, NULL);
+		    int required_size = WideCharToMultiByte(CP_UTF8, 0, value->Data(), -1, NULL, 0, NULL, NULL);
             char* buffer = (char*)calloc(required_size, sizeof(char));
             auto result = WideCharToMultiByte(CP_UTF8, 0, value->Data(), -1, buffer, required_size, NULL, NULL);
             std::string s_str = std::string(buffer);

@@ -511,14 +511,14 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
 		}
 	}
 
-    if (args->VirtualKey == Windows::System::VirtualKey::Right && FFmpegMSS && mediaPlayer->CanSeek)
+    if (args->VirtualKey == Windows::System::VirtualKey::Right && FFmpegMSS && mediaPlayer->PlaybackSession->CanSeek)
     {
-        mediaPlayer->Position = TimeSpan{ min(mediaPlayer->Position.Duration + 50000000, mediaPlayer->NaturalDuration.Duration) };
+        mediaPlayer->PlaybackSession->Position = TimeSpan{ mediaPlayer->PlaybackSession->Position.Duration + 50000000 };
     }
 
-    if (args->VirtualKey == Windows::System::VirtualKey::Left && FFmpegMSS && mediaPlayer->CanSeek)
+    if (args->VirtualKey == Windows::System::VirtualKey::Left && FFmpegMSS && mediaPlayer->PlaybackSession->CanSeek)
     {
-        mediaPlayer->Position = TimeSpan{ max(mediaPlayer->Position.Duration - 50000000, 0) };
+        mediaPlayer->PlaybackSession->Position = TimeSpan{ mediaPlayer->PlaybackSession->Position.Duration - 50000000 };
     }
 }
 
