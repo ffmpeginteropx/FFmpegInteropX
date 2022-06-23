@@ -189,6 +189,7 @@
     <ClInclude Include="DirectXInteropHelper.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="StreamBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Build\FFmpegConfig.sh">

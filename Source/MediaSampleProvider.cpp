@@ -20,6 +20,7 @@
 #include "MediaSampleProvider.h"
 #include "FFmpegMediaSource.h"
 #include "FFmpegReader.h"
+#include "StreamBuffer.h"
 #include "LanguageTagConverter.h"
 #include "AvCodecContextHelpers.h"
 

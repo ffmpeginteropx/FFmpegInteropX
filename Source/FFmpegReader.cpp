@@ -18,6 +18,7 @@
 
 #include "pch.h"
 #include "FFmpegReader.h"
+#include "StreamBuffer.h"
 #include "UncompressedSampleProvider.h"
 
 using namespace Concurrency;
@@ -25,22 +26,22 @@ using namespace Concurrency;
 using namespace FFmpegInteropX;
 
 FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<MediaSampleProvider^>* initProviders, MediaSourceConfig^ config)
-	: avFormatCtx(avFormatCtx)
-	, sampleProviders(initProviders)
+    : avFormatCtx(avFormatCtx)
+    , sampleProviders(initProviders)
     , config(config)
 {
 }
 
 void FFmpegReader::Start()
 {
-	{
-		std::lock_guard<std::mutex> lock(mutex);
-		if (!isReading)
-		{
-			readTask = create_task([this] () { this->ReadDataLoop(); });
-			isReading = true;
-		}
-	}
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        if (!isReading)
+        {
+            readTask = create_task([this] () { this->ReadDataLoop(); });
+            isReading = true;
+        }
+    }
 }
 
 void FFmpegReader::Stop()
@@ -365,51 +366,51 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
         actualPosition = targetPosition;
     }
 
-	return result;
+    return result;
 }
 
 void FFmpegReader::ReadDataLoop()
 {
-	int ret = 0;
-	bool sleep = false;
+    int ret = 0;
+    bool sleep = false;
     bool force = false;
 
-	while (true)
-	{
-		{
-			std::lock_guard<std::mutex> lock(mutex);
+    while (true)
+    {
+        {
+            std::lock_guard<std::mutex> lock(mutex);
             force = forceReadStream >= 0;
             sleep = false;
             for (auto stream : *sampleProviders)
             {
                 sleep &= stream->buffer->IsFull(stream);
             }
-			if (!isReading)
-			{
+            if (!isReading)
+            {
                 break;
-			}
-		}
+            }
+        }
 
-		if (!sleep || force)
-		{
+        if (!sleep || force)
+        {
             ret = ReadPacket();
             if (ret < 0)
             {
                 break;
             }
-		}
-		else
-		{
-			Sleep(100);
-		}
-	}
+        }
+        else
+        {
+            Sleep(100);
+        }
+    }
 
-	{
-		std::lock_guard<std::mutex> lock(mutex);
-		isReading = false;
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        isReading = false;
         forceReadStream = -1;
         result = ret;
-	}
+    }
 }
 
 FFmpegReader::~FFmpegReader()
@@ -481,16 +482,16 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer^ buffer)
         manual = !isReading;
     }
 
-	while (true)
-	{
-		{
-			std::lock_guard<std::mutex> lock(mutex);
+    while (true)
+    {
+        {
+            std::lock_guard<std::mutex> lock(mutex);
 
-			if (!(buffer->IsEmpty()))
-			{
+            if (!(buffer->IsEmpty()))
+            {
                 forceReadStream = -1;
                 break;
-			}
+            }
             else if (result < 0)
             {
                 break;
@@ -499,7 +500,7 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer^ buffer)
             {
                 forceReadStream = buffer->StreamIndex;
             }
-		}
+        }
 
         //task_completion_event<int> tce;
 
@@ -511,8 +512,8 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer^ buffer)
         {
             Sleep(10);
         }
-	}
+    }
 
-	return result;
+    return result;
 }
 

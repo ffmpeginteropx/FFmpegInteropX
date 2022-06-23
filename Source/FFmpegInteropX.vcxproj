@@ -131,6 +131,7 @@
     <ClInclude Include="NativeBuffer.h" />
     <ClInclude Include="NativeBufferFactory.h" />
     <ClInclude Include="ReferenceCue.h" />
+    <ClInclude Include="StreamBuffer.h" />
     <ClInclude Include="StreamInfo.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="SubtitleProvider.h" />
