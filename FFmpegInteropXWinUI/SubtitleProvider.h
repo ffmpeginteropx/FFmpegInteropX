@@ -452,7 +452,7 @@ namespace FFmpegInteropX
 
 			std::vector<std::pair<winrt::Windows::Media::Core::IMediaCue, long long>> newNegativePositionCues;
 
-			for each (auto c in cues)
+			for (auto c : cues)
 			{
 				TimeSpan cStartTime = c.StartTime();
 
