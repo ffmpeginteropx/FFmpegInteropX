@@ -348,6 +348,11 @@ void MediaSampleProvider::QueuePacket(AVPacket *packet)
 	}
 }
 
+bool MediaSampleProvider::IsBufferFull()
+{
+    return buffer->IsFull(this);
+}
+
 void MediaSampleProvider::Flush(bool flushBuffers)
 {
 	DebugMessage(L"Flush\n");

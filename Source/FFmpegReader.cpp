@@ -17,6 +17,7 @@
 //*****************************************************************************
 
 #include "pch.h"
+#include <agents.h>
 #include "FFmpegReader.h"
 #include "StreamBuffer.h"
 #include "UncompressedSampleProvider.h"
@@ -31,14 +32,14 @@ FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<MediaSample
     , config(config)
 {
 }
-
 void FFmpegReader::Start()
 {
     {
         std::lock_guard<std::mutex> lock(mutex);
-        if (!isReading)
+        if (!isReading && (config->ReadAheadBufferSize > 0 || config->ReadAheadBufferDuration.Duration > 0) && !config->IsFrameGrabber)
         {
             readTask = create_task([this] () { this->ReadDataLoop(); });
+            sleepEvent = task_completion_event<void>();
             isReading = true;
         }
     }
@@ -52,13 +53,26 @@ void FFmpegReader::Stop()
         if (isReading)
         {
             isReading = false;
+            sleepEvent.set();
             wait = true;
         }
     }
 
     if (wait)
     {
-        readTask.wait();
+        try
+        {
+            readTask.wait();
+        }
+        catch (...)
+        {
+            DebugMessage(L"Failed to wait for task. Probably destructor called from UI thread.\n");
+
+            while (!readTask.is_done())
+            {
+                Sleep(1);
+            }
+        }
     }
 
 }
@@ -86,6 +100,8 @@ void FFmpegReader::Flush()
 
 HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool fastSeek, MediaSampleProvider^ videoStream, MediaSampleProvider^ audioStream)
 {
+    Stop();
+
     auto hr = S_OK;
     if (result != 0)
     {
@@ -372,28 +388,29 @@ void FFmpegReader::ReadDataLoop()
 {
     int ret = 0;
     bool sleep = false;
-    bool force = false;
+
+    // Create a call object that prints characters that it receives 
+    // to the console.
+    call<int> breakSleep([this] (int)
+        {
+            sleepEvent.set();
+        });
+    timer<int> sleepTimer(10000u, 0, &breakSleep, false);
 
     while (true)
     {
         {
             std::lock_guard<std::mutex> lock(mutex);
-            force = forceReadStream >= 0;
-            sleep = false;
-            for (auto stream : *sampleProviders)
-            {
-                if (stream)
-                {
-                    sleep &= stream->buffer->IsFull(stream);
-                }
-            }
             if (!isReading)
             {
                 break;
             }
+
+            sleep = CheckNeedsSleep(sleep);
         }
 
-        if (!sleep || force)
+
+        if (!sleep)
         {
             ret = ReadPacket();
             if (ret < 0)
@@ -403,17 +420,64 @@ void FFmpegReader::ReadDataLoop()
         }
         else
         {
-            Sleep(100);
+            auto sleepTask = create_task(sleepEvent);
+            sleepTimer.start();
+            sleepTask.wait();
+            sleepEvent = task_completion_event<void>();
         }
     }
-
+    
     {
         std::lock_guard<std::mutex> lock(mutex);
+        if (forceReadStream != -1)
+        {
+            waitStreamEvent.set();
+        }
         isReading = false;
         forceReadStream = -1;
         result = ret;
+        lastStream = nullptr;
+        fullStream = nullptr;
     }
 }
+
+
+bool FFmpegReader::CheckNeedsSleep(bool wasSleeping)
+{
+    bool force = forceReadStream >= 0;
+    if (force)
+    {
+        return false;
+    }
+
+    bool sleep = wasSleeping;
+
+    // check if we need to start sleeping
+    if (!sleep && lastStream && lastStream->IsBufferFull())
+    {
+        sleep = true;
+        fullStream = lastStream;
+    }
+
+    // check if we can stop sleeping
+    if (sleep && !fullStream && !fullStream->IsBufferFull())
+    {
+        sleep = false;
+        fullStream = nullptr;
+        for (auto stream : *sampleProviders)
+        {
+            if (stream && stream->IsBufferFull())
+            {
+                sleep = true;
+                fullStream = stream;
+                break;
+            }
+        }
+    }
+
+    return sleep;
+}
+
 
 FFmpegReader::~FFmpegReader()
 {
@@ -434,7 +498,6 @@ int FFmpegReader::ReadPacket()
     ret = av_read_frame(avFormatCtx, avPacket);
     if (ret < 0)
     {
-        std::lock_guard<std::mutex> lock(mutex);
         av_packet_free(&avPacket);
     }
     else
@@ -445,6 +508,7 @@ int FFmpegReader::ReadPacket()
             if (avPacket->stream_index == forceReadStream)
             {
                 forceReadStream = -1;
+                waitStreamEvent.set();
             }
 
             if (avPacket->stream_index >= (int)sampleProviders->size())
@@ -462,6 +526,7 @@ int FFmpegReader::ReadPacket()
             if (provider)
             {
                 provider->QueuePacket(avPacket);
+                lastStream = provider;
             }
             else
             {
@@ -471,6 +536,7 @@ int FFmpegReader::ReadPacket()
         }
     }
 
+    std::lock_guard<std::mutex> lock(mutex);
     result = ret;
     return result;
 }
@@ -484,14 +550,13 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer^ buffer)
         manual = !isReading;
     }
 
-    while (true)
+    if (manual)
     {
+        // no read-ahead used
+        while (true)
         {
-            std::lock_guard<std::mutex> lock(mutex);
-
             if (!(buffer->IsEmpty()))
             {
-                forceReadStream = -1;
                 break;
             }
             else if (result < 0)
@@ -500,19 +565,39 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer^ buffer)
             }
             else
             {
-                forceReadStream = buffer->StreamIndex;
+                ReadPacket();
             }
         }
-
-        //task_completion_event<int> tce;
-
-        if (manual)
+    }
+    else
+    {
+        // read-ahead active
+        while (true)
         {
-            ReadPacket();
-        }
-        else
-        {
-            Sleep(10);
+            task<void> waitStreamTask;
+            {
+                std::lock_guard<std::mutex> lock(mutex);
+
+                if (!(buffer->IsEmpty()))
+                {
+                    forceReadStream = -1;
+                    break;
+                }
+                else if (result < 0)
+                {
+                    break;
+                }
+                else
+                {
+                    forceReadStream = buffer->StreamIndex;
+                    waitStreamEvent = task_completion_event<void>();
+                    waitStreamTask = create_task(waitStreamEvent);
+
+                    sleepEvent.set();
+                }
+            }
+
+            waitStreamTask.wait();
         }
     }
 

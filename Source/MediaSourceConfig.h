@@ -108,7 +108,7 @@ namespace FFmpegInteropX
 			AutoCorrectAnsiSubtitles = true;
 			AnsiSubtitleEncoding = CharacterEncoding::GetSystemDefault();
 
-			FastSeek = false;
+			FastSeek = true;
 			FastSeekCleanAudio = true;
 			FastSeekSmartStreamSwitching = true;
 

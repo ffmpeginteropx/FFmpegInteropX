@@ -50,16 +50,21 @@ namespace FFmpegInteropX
         HRESULT SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, MediaSampleProvider^ videoStream, MediaSampleProvider^ audioStream);
         void ReadDataLoop();
         void FlushCodecs();
+        bool CheckNeedsSleep(bool wasSleeping);
 
         AVFormatContext* avFormatCtx;
         std::vector<MediaSampleProvider^>* sampleProviders;
         MediaSourceConfig^ config;
+        MediaSampleProvider^ lastStream;
+        MediaSampleProvider^ fullStream;
 
         std::mutex mutex;
         bool isReading;
         int forceReadStream;
         int result;
         task<void> readTask;
+        task_completion_event<void> sleepEvent;
+        task_completion_event<void> waitStreamEvent;
 
         bool isFirstSeekAfterStreamSwitch;
         bool isLastSeekForward;

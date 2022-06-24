@@ -967,7 +967,6 @@ HRESULT FFmpegMediaSource::InitFFmpegContext()
 			startingRequestedToken = mss->Starting += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceStartingEventArgs^>(this, &FFmpegMediaSource::OnStarting);
 			sampleRequestedToken = mss->SampleRequested += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceSampleRequestedEventArgs^>(this, &FFmpegMediaSource::OnSampleRequested);
 			switchStreamRequestedToken = mss->SwitchStreamsRequested += ref new TypedEventHandler<MediaStreamSource^, MediaStreamSourceSwitchStreamsRequestedEventArgs^>(this, &FFmpegMediaSource::OnSwitchStreamsRequested);
-			mss->Paused += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSource^, Platform::Object^>(this, &FFmpegInteropX::FFmpegMediaSource::OnPaused);
 		}
 	}
 
@@ -1559,13 +1558,6 @@ HRESULT FFmpegMediaSource::ParseOptions(PropertySet^ ffmpegOptions)
 
 	return hr;
 }
-
-
-void FFmpegInteropX::FFmpegMediaSource::OnPaused(Windows::Media::Core::MediaStreamSource^ sender, Platform::Object^ args)
-{
-	m_pReader->Stop();
-}
-
 
 void FFmpegMediaSource::OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args)
 {

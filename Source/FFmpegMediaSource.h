@@ -350,7 +350,6 @@ namespace FFmpegInteropX
 
 		static CoreDispatcher^ GetCurrentDispatcher();
 		void OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession^ sender, Platform::Object^ args);
-		void OnPaused(Windows::Media::Core::MediaStreamSource^ sender, Platform::Object^ args);
 };
 
 }
