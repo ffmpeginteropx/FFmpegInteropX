@@ -120,7 +120,10 @@ namespace FFmpegInteropX
 		{
 			if (sample->Direct3D11Surface)
 			{
-				samples.insert(reinterpret_cast<IUnknown*>(sample));
+                // AddRef the sample on native interface to prevent it from being collected before Processed is called
+                auto sampleNative = reinterpret_cast<IUnknown*>(sample);
+                sampleNative->AddRef();
+
 				sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(this, &D3D11VideoSampleProvider::OnProcessed);
 			}
 
@@ -145,7 +148,9 @@ namespace FFmpegInteropX
 				texturePool->ReturnTexture(texture);
 			}
 
-			samples.erase(reinterpret_cast<IUnknown*>(sender));
+            // Release the sample's native interface
+            auto sampleNative = reinterpret_cast<IUnknown*>(sender);
+            sampleNative->Release();
 
 			SAFE_RELEASE(surface);
 			SAFE_RELEASE(texture);
@@ -379,7 +384,6 @@ namespace FFmpegInteropX
 		}
 
 		TexturePool^ texturePool;
-		std::set<IUnknown*> samples;
 
 	};
 }
