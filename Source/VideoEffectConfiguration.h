@@ -111,7 +111,7 @@ namespace FFmpegInteropX
 		{
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", this);
-			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", true, set);
+			player->AddVideoEffect("FFmpegInteropX.BasicVideoEffect", true, set);
 		}
 
 		[Windows::Foundation::Metadata::DefaultOverloadAttribute]
@@ -119,21 +119,21 @@ namespace FFmpegInteropX
 		{
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", this);
-			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", optional, set);
+			player->AddVideoEffect("FFmpegInteropX.BasicVideoEffect", optional, set);
 		}
 
 		void AddVideoEffect(MediaElement^ player)
 		{
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", this);
-			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", true, set);
+			player->AddVideoEffect("FFmpegInteropX.BasicVideoEffect", true, set);
 		}
 
 		void AddVideoEffect(MediaElement^ player, bool optional)
 		{
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", this);
-			player->AddVideoEffect("FFmpegInterop.BasicVideoEffect", optional, set);
+			player->AddVideoEffect("FFmpegInteropX.BasicVideoEffect", optional, set);
 		}
 	};
 }
