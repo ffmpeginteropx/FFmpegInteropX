@@ -1754,7 +1754,7 @@ void FFmpegMediaSource::OnSwitchStreamsRequested(MediaStreamSource^ sender, Medi
 	if (currentVideoStream && args->Request->OldStreamDescriptor == currentVideoStream->StreamDescriptor)
 	{
 		currentVideoStream->DisableStream();
-        currentAudioStream->Flush(true);
+        currentVideoStream->Flush(true);
         currentVideoStream = nullptr;
 	}
 
