@@ -84,7 +84,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         auto set = winrt::Windows::Foundation::Collections::PropertySet();
         winrt::FFmpegInteropXWinUI::VideoEffectConfiguration winrtThis = *this;
         set.Insert(L"config", winrt::box_value<winrt::FFmpegInteropXWinUI::VideoEffectConfiguration>(winrtThis));
-        player.AddVideoEffect(L"winrt.FFmpegInteropXWinUI.implementation.BasicVideoEffect", true, set);
+        player.AddVideoEffect(winrt::name_of<winrt::FFmpegInteropXWinUI::BasicVideoEffect>(), true, set);
     }
     void VideoEffectConfiguration::AddVideoEffect(winrt::Windows::Media::Playback::MediaPlayer const& player, bool Optional)
     {
