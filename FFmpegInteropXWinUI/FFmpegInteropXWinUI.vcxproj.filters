@@ -46,6 +46,7 @@
     <ClCompile Include="SubtitleProvider.cpp" />
     <ClCompile Include="NALPacketSampleProvider.cpp" />
     <ClCompile Include="UncompressedAudioSampleProvider.cpp" />
+    <ClCompile Include="VideoEffectConfiguration.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -98,6 +99,7 @@
     <ClInclude Include="NALPacketSampleProvider.h" />
     <ClInclude Include="UncompressedAudioSampleProvider.h" />
     <ClInclude Include="MediaMetadata.h" />
+    <ClInclude Include="VideoEffectConfiguration.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropXWinUI.idl" />

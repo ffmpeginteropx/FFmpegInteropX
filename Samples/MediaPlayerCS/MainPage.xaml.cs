@@ -1,4 +1,4 @@
-﻿//*****************************************************************************
+//*****************************************************************************
 //
 //	Copyright 2015 Microsoft Corporation
 //
@@ -54,11 +54,11 @@ namespace MediaPlayerCS
             set;
         } = true;
 
-        //public VideoEffectConfiguration VideoEffectConfiguration
-        //{
-        //    get;
-        //    set;
-        //}
+        public VideoEffectConfiguration VideoEffectConfiguration
+        {
+            get;
+            set;
+        }
 
         public MainPage()
         {
@@ -69,7 +69,7 @@ namespace MediaPlayerCS
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
             AutoDetect.IsOn = true;
-            //VideoEffectConfiguration = new VideoEffectConfiguration();
+            VideoEffectConfiguration = new VideoEffectConfiguration();
 
             mediaPlayer = new MediaPlayer();
             mediaPlayer.AudioCategory = MediaPlayerAudioCategory.Movie;
@@ -502,10 +502,10 @@ namespace MediaPlayerCS
         private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
         {
             mediaPlayer.RemoveAllEffects();
-            //if (enableVideoEffects.IsOn)
-            //{
-            //    //VideoEffectConfiguration.AddVideoEffect(mediaPlayer);
-            //}
+            if (enableVideoEffects.IsOn)
+            {
+                VideoEffectConfiguration.AddVideoEffect(mediaPlayer);
+            }
         }
 
         private void Page_DragEnter(object sender, DragEventArgs e)

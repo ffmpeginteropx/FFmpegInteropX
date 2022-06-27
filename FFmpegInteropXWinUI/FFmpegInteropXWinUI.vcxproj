@@ -174,6 +174,7 @@
     <ClInclude Include="UncompressedFrameProvider.h" />
     <ClInclude Include="UncompressedSampleProvider.h" />
     <ClInclude Include="UncompressedVideoSampleProvider.h" />
+    <ClInclude Include="VideoEffectConfiguration.h" />
     <ClInclude Include="VideoEffectFactory.h" />
     <ClInclude Include="VideoFilter.h" />
     <ClInclude Include="VideoFrame.h" />
@@ -216,6 +217,7 @@
     <ClCompile Include="UncompressedAudioSampleProvider.cpp" />
     <ClCompile Include="UncompressedSampleProvider.cpp" />
     <ClCompile Include="UncompressedVideoSampleProvider.cpp" />
+    <ClCompile Include="VideoEffectConfiguration.cpp" />
     <ClCompile Include="VideoFrame.cpp" />
     <ClCompile Include="VideoStreamInfo.cpp" />
   </ItemGroup>
