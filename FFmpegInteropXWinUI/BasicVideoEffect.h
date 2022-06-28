@@ -1,7 +1,7 @@
 #pragma once
 #include "BasicVideoEffect.g.h"
-#include <Generated Files/winrt/Microsoft.Graphics.Canvas.h>
-#include <Generated Files/winrt/Microsoft.Graphics.Canvas.Effects.h>
+#include <winrt/Microsoft.Graphics.Canvas.h>
+#include <winrt/Microsoft.Graphics.Canvas.Effects.h>
 
 using namespace winrt::Microsoft::Graphics::Canvas::Effects;
 using namespace winrt::Microsoft::Graphics::Canvas;
@@ -26,10 +26,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         void Close(Windows::Media::Effects::MediaEffectClosedReason const& reason);
         void DiscardQueuedFrames();
 
-    public://internal
+    private:
         winrt::Windows::Foundation::Collections::IPropertySet inputConfiguration;
         winrt::Microsoft::Graphics::Canvas::CanvasDevice canvasDevice;
-        winrt::FFmpegInteropXWinUI::VideoEffectConfiguration EffectConfiguration;
+        winrt::FFmpegInteropXWinUI::VideoEffectConfiguration effectConfiguration;
 
 
         winrt::Microsoft::Graphics::Canvas::Effects::ICanvasEffect CreateColorEffect(winrt::Microsoft::Graphics::Canvas::ICanvasImage source, float c, float b, float s)
@@ -77,6 +77,12 @@ namespace winrt::FFmpegInteropXWinUI::implementation
             return effect;
         }
 
+    };
+}
 
+namespace winrt::FFmpegInteropXWinUI::factory_implementation
+{
+    struct BasicVideoEffect : BasicVideoEffectT<BasicVideoEffect, implementation::BasicVideoEffect>
+    {
     };
 }

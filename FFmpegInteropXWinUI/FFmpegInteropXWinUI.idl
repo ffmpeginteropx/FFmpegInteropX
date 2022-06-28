@@ -227,7 +227,7 @@ namespace FFmpegInteropXWinUI
     [default_interface]
     runtimeclass BasicVideoEffect : Windows.Media.Effects.IBasicVideoEffect
     {
-
+        BasicVideoEffect();
     }
 
 
@@ -677,10 +677,10 @@ runtimeclass ReferenceCue : Windows.Media.Core.IMediaCue
     [default_overload]
     void AddVideoEffect(Windows.Media.Playback.MediaPlayer player);
     [default_overload]
-    void AddVideoEffect(Windows.Media.Playback.MediaPlayer player, Boolean Optional);
+    void AddVideoEffect(Windows.Media.Playback.MediaPlayer player, Boolean isOptional);
 
     void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player);
 
-    void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player, Boolean Optional);
+    void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player, Boolean isOptional);
 }
 }

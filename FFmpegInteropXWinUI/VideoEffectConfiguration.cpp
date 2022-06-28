@@ -82,32 +82,25 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     void VideoEffectConfiguration::AddVideoEffect(winrt::Windows::Media::Playback::MediaPlayer const& player)
     {
         auto set = winrt::Windows::Foundation::Collections::PropertySet();
-        winrt::FFmpegInteropXWinUI::VideoEffectConfiguration winrtThis = *this;
-        set.Insert(L"config", winrt::box_value<winrt::FFmpegInteropXWinUI::VideoEffectConfiguration>(winrtThis));
+        set.Insert(L"config", *this);
         player.AddVideoEffect(winrt::name_of<winrt::FFmpegInteropXWinUI::BasicVideoEffect>(), true, set);
     }
-    void VideoEffectConfiguration::AddVideoEffect(winrt::Windows::Media::Playback::MediaPlayer const& player, bool Optional)
+    void VideoEffectConfiguration::AddVideoEffect(winrt::Windows::Media::Playback::MediaPlayer const& player, bool isOptional)
     {
         auto set = winrt::Windows::Foundation::Collections::PropertySet();
-        winrt::FFmpegInteropXWinUI::VideoEffectConfiguration winrtThis = *this;
-        set.Insert(L"config", winrt::box_value<winrt::FFmpegInteropXWinUI::VideoEffectConfiguration>(winrtThis));
-
-        player.AddVideoEffect(L"winrt.FFmpegInteropXWinUI.implementation.BasicVideoEffect", Optional, set);
+        set.Insert(L"config", *this);
+        player.AddVideoEffect(winrt::name_of<winrt::FFmpegInteropXWinUI::BasicVideoEffect>(), isOptional, set);
     }
     void VideoEffectConfiguration::AddVideoEffect(winrt::Windows::UI::Xaml::Controls::MediaElement const& player)
     {
         auto set = winrt::Windows::Foundation::Collections::PropertySet();
-        winrt::FFmpegInteropXWinUI::VideoEffectConfiguration winrtThis = *this;
-        set.Insert(L"config", winrt::box_value<winrt::FFmpegInteropXWinUI::VideoEffectConfiguration>(winrtThis));
-
-        player.AddVideoEffect(L"winrt.FFmpegInteropXWinUI.implementation.BasicVideoEffect", true, set);
+        set.Insert(L"config", *this);
+        player.AddVideoEffect(winrt::name_of<winrt::FFmpegInteropXWinUI::BasicVideoEffect>(), true, set);
     }
-    void VideoEffectConfiguration::AddVideoEffect(winrt::Windows::UI::Xaml::Controls::MediaElement const& player, bool Optional)
+    void VideoEffectConfiguration::AddVideoEffect(winrt::Windows::UI::Xaml::Controls::MediaElement const& player, bool isOptional)
     {
         auto set = winrt::Windows::Foundation::Collections::PropertySet();
-        winrt::FFmpegInteropXWinUI::VideoEffectConfiguration winrtThis = *this;
-        set.Insert(L"config", winrt::box_value<winrt::FFmpegInteropXWinUI::VideoEffectConfiguration>(winrtThis));
-
-        player.AddVideoEffect(L"winrt.FFmpegInteropXWinUI.implementation.BasicVideoEffect", Optional, set);
+        set.Insert(L"config", *this);
+        player.AddVideoEffect(winrt::name_of<winrt::FFmpegInteropXWinUI::BasicVideoEffect>(), isOptional, set);
     }
 }

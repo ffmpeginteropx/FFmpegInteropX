@@ -19,8 +19,8 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 {
     void BasicVideoEffect::SetProperties(Windows::Foundation::Collections::IPropertySet const& configuration)
     {
-        this->inputConfiguration = configuration;
-        EffectConfiguration = winrt::unbox_value< winrt::FFmpegInteropXWinUI::VideoEffectConfiguration>(configuration.Lookup(L"config"));
+        inputConfiguration = configuration;
+        effectConfiguration = winrt::unbox_value< winrt::FFmpegInteropXWinUI::VideoEffectConfiguration>(configuration.Lookup(L"config"));
     }
 
     bool BasicVideoEffect::IsReadOnly()
@@ -49,6 +49,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
     void BasicVideoEffect::SetEncodingProperties(Windows::Media::MediaProperties::VideoEncodingProperties const& encodingProperties, Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice const& device)
     {
+        UNREFERENCED_PARAMETER(encodingProperties);
         canvasDevice = CanvasDevice::CreateFromDirect3D11Device(device);
     }
 
@@ -56,13 +57,13 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     {
         try
         {
-            auto c = EffectConfiguration.Contrast();
-            auto b = EffectConfiguration.Brightness();
-            auto s = EffectConfiguration.Saturation();
-            auto temp = EffectConfiguration.Temperature();
-            auto tint = EffectConfiguration.Tint();
-            auto sharpness = EffectConfiguration.Sharpness();
-            auto sharpnessThreshold = EffectConfiguration.SharpnessThreshold();
+            auto c = effectConfiguration.Contrast();
+            auto b = effectConfiguration.Brightness();
+            auto s = effectConfiguration.Saturation();
+            auto temp = effectConfiguration.Temperature();
+            auto tint = effectConfiguration.Tint();
+            auto sharpness = effectConfiguration.Sharpness();
+            auto sharpnessThreshold = effectConfiguration.SharpnessThreshold();
 
             bool hasSharpness = sharpness > 0.0f;
             bool hasColor = c != 0.0f || b != 0.0f || s != 0.0f;
@@ -98,6 +99,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
     void BasicVideoEffect::Close(Windows::Media::Effects::MediaEffectClosedReason const& reason)
     {
+        UNREFERENCED_PARAMETER(reason);
         canvasDevice = nullptr;
     }
 
