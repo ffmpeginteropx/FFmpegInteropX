@@ -53,6 +53,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     }
     void VideoEffectConfiguration::Temperature(float value)
     {
+        if (value < -1 || value > 1)
+        {
+            throw_hresult(E_INVALIDARG);
+        }
         _Temperature = value;
     }
     float VideoEffectConfiguration::Tint()
@@ -61,6 +65,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     }
     void VideoEffectConfiguration::Tint(float value)
     {
+        if (value < -1 || value > 1)
+        {
+            throw_hresult(E_INVALIDARG);
+        }
         _Tint = value;
     }
     float VideoEffectConfiguration::Sharpness()
@@ -69,6 +77,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     }
     void VideoEffectConfiguration::Sharpness(float value)
     {
+        if (value < 0 || value > 10)
+        {
+            throw_hresult(E_INVALIDARG);
+        }
         _Sharpness = value;
     }
     float VideoEffectConfiguration::SharpnessThreshold()
@@ -77,6 +89,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     }
     void VideoEffectConfiguration::SharpnessThreshold(float value)
     {
+        if (value < 0 || value > 10)
+        {
+            throw_hresult(E_INVALIDARG);
+        }
         _SharpnessThreshold = value;
     }
     void VideoEffectConfiguration::AddVideoEffect(winrt::Windows::Media::Playback::MediaPlayer const& player)
