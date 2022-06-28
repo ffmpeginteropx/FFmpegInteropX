@@ -121,16 +121,19 @@ namespace FFmpegInteropX
 			}
 		}
 
-		virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio) override
+		virtual void NotifyVideoFrameSize(int frameWidth, int frameHeight, double aspectRatio) override
 		{
 			videoAspectRatio = aspectRatio;
-			videoWidth = width;
-			videoHeight = height;
+			videoWidth = frameWidth;
+			videoHeight = frameHeight;
 		}
 
 		virtual winrt::Windows::Media::Core::IMediaCue CreateCue(AVPacket* packet, winrt::Windows::Foundation::TimeSpan* position, winrt::Windows::Foundation::TimeSpan* duration) override
 		{
-			ParseHeaders();
+            UNREFERENCED_PARAMETER(duration);
+            UNREFERENCED_PARAMETER(position);
+
+            ParseHeaders();
 
 			AVSubtitle subtitle;
 			int gotSubtitle = 0;
@@ -192,10 +195,10 @@ namespace FFmpegInteropX
 				if (!hasError && startStyle > 0 && endStyle > 0)
 				{
 					auto styleName = StringUtils::WStringToPlatformString(str.substr(startStyle, endStyle - startStyle));
-					auto result = styles.find(styleName);
-					if (result != styles.end())
+					auto findFesult = styles.find(styleName);
+					if (findFesult != styles.end())
 					{
-						style = result->second;
+						style = findFesult->second;
 					}
 				}
 
@@ -322,19 +325,19 @@ namespace FFmpegInteropX
 										{
 											auto alpha = parseHexOrDecimalInt(tag, 6);
 											auto color = subStyle.Foreground();
-											subStyle.Foreground(ColorFromArgb(alpha, color.R, color.G, color.B));
+											subStyle.Foreground(ColorFromArgb((unsigned char)alpha, color.R, color.G, color.B));
 										}
 										else if (checkTag(tag, L"1a", 2))
 										{
 											auto alpha = parseHexOrDecimalInt(tag, 3);
 											auto color = subStyle.Foreground();
-											subStyle.Foreground(ColorFromArgb(alpha, color.R, color.G, color.B));
+											subStyle.Foreground(ColorFromArgb((unsigned char)alpha, color.R, color.G, color.B));
 										}
 										else if (checkTag(tag, L"3a", 2))
 										{
 											auto alpha = parseHexOrDecimalInt(tag, 3);
 											auto color = subStyle.OutlineColor();
-											subStyle.OutlineColor(ColorFromArgb(alpha, color.R, color.G, color.B));
+											subStyle.OutlineColor(ColorFromArgb((unsigned char)alpha, color.R, color.G, color.B));
 										}
 										else if (checkTag(tag, L"an"))
 										{
@@ -440,16 +443,16 @@ namespace FFmpegInteropX
 									padding.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
 
 									winrt::Windows::Media::Core::TimedTextSize extent;
-									winrt::Windows::Media::Core::TimedTextPoint position;
+									winrt::Windows::Media::Core::TimedTextPoint pos;
 									extent.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
-									position.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+									pos.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
 
 									double size;
 
 									switch (subRegion.DisplayAlignment())
 									{
 									case  winrt::Windows::Media::Core::TimedTextDisplayAlignment::Before:
-										position.Y = y * 100;
+										pos.Y = y * 100;
 										extent.Height = (1.0 - y) * 100;
 										break;
 									case  winrt::Windows::Media::Core::TimedTextDisplayAlignment::After:
@@ -457,7 +460,7 @@ namespace FFmpegInteropX
 										break;
 									case  winrt::Windows::Media::Core::TimedTextDisplayAlignment::Center:
 										size = min(y, 1 - y);
-										position.Y = (y - size) * 100;
+										pos.Y = (y - size) * 100;
 										extent.Height = (size * 2) * 100;
 										break;
 									default:
@@ -467,7 +470,7 @@ namespace FFmpegInteropX
 									switch (subStyle.LineAlignment())
 									{
 									case  winrt::Windows::Media::Core::TimedTextLineAlignment::Start:
-										position.X = x * 100;
+										pos.X = x * 100;
 										extent.Width = (1.0 - x) * 100;
 										break;
 									case  winrt::Windows::Media::Core::TimedTextLineAlignment::End:
@@ -475,13 +478,13 @@ namespace FFmpegInteropX
 										break;
 									case  winrt::Windows::Media::Core::TimedTextLineAlignment::Center:
 										size = min(x, 1 - x);
-										position.X = (x - size) * 100;
+										pos.X = (x - size) * 100;
 										extent.Width = (size * 2) * 100;
 										break;
 									default:
 										break;
 									}
-									subRegion.Position(position);
+									subRegion.Position(pos);
 									subRegion.Extent(extent);
 
 									subRegion.Padding(padding);
@@ -614,7 +617,7 @@ namespace FFmpegInteropX
 					if (count == 3)
 					{
 						// try with decimal colors
-						auto count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
+						count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
 							"%[,],%[,],%f,%i,%i,%i,%i,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
 							name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
 							&size, &color, &secondaryColor, &outlineColor, &backColor,
@@ -964,7 +967,7 @@ namespace FFmpegInteropX
 			return result;
 		}
 
-		winrt::Windows::UI::Color ColorFromArgb(int a, int r, int g, int b)
+		winrt::Windows::UI::Color ColorFromArgb(unsigned char a, unsigned char r, unsigned char g, unsigned char b)
 		{
 			winrt::Windows::UI::Color color;
 			color.A = a;

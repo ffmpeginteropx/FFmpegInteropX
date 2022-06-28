@@ -1,8 +1,6 @@
 #pragma once
 #include "pch.h"
 #include <string.h>
-#include <codecvt>
-#define  _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
 namespace FFmpegInteropX
 {
@@ -23,10 +21,12 @@ namespace FFmpegInteropX
 		{
 			if (!char_array) return std::wstring(L"");
 
-			std::string s_str = std::string(char_array);
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-			std::wstring wid_str = myconv.from_bytes(s_str);
-			return wid_str;
+            auto required_size = MultiByteToWideChar(CP_UTF8, 0, char_array, -1, NULL, 0);
+            wchar_t* buffer = (wchar_t*)calloc(required_size, sizeof(wchar_t));
+            auto result = MultiByteToWideChar(CP_UTF8, 0, char_array, -1, buffer, required_size);
+            assert(result == required_size);
+            std::wstring wid_str = std::wstring(buffer);
+            return wid_str;
 		}
 
 		static winrt::hstring Utf8ToPlatformString(const char* char_array)
@@ -44,9 +44,6 @@ namespace FFmpegInteropX
 		static std::string PlatformStringToUtf8String(winrt::hstring value)
 		{
 			return to_string(value);
-			/*std::wstring strW(value->Begin(), value->Length());
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-			return myconv.to_bytes(strW);*/
 		}
 
 	};

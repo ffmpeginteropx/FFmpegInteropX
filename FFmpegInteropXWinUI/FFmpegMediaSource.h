@@ -189,7 +189,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		TimeSpan lastSeekStart{};
 		TimeSpan lastSeekActual{};
 
-		TimeSpan actualPosition{};
+		TimeSpan currentPosition{};
 		TimeSpan lastPosition{};
 
 		static CoreDispatcher GetCurrentDispatcher();

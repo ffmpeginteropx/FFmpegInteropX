@@ -60,7 +60,7 @@ namespace FFmpegInteropX
 
 			// pre-allocate pool
 			ID3D11Texture2D* copy_tex;
-			HRESULT hr;
+			HRESULT hr = S_OK;
 			for (int i = 0; i < initialPoolSize; i++)
 			{
 				hr = device->CreateTexture2D(&desc_shared, NULL, &copy_tex);
@@ -116,10 +116,6 @@ namespace FFmpegInteropX
 			{
 				pool.push_back(texture);
 				texture->AddRef();
-			}
-			else
-			{
-				delete texture;
 			}
 		}
 

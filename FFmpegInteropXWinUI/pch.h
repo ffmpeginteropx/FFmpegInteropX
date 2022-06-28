@@ -2,43 +2,47 @@
 #include <unknwn.h>
 #include <shcore.h>
 #include <memory>
+
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
-#include <winrt/Windows.Media.Playback.h>
-#include <winrt/Windows.Storage.h>
-#include <d3d11.h>
-#include <queue>
-#include "StringUtils.h"
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
 #include <winrt/Windows.Graphics.DirectX.h>
+#include <winrt/Windows.Graphics.Imaging.h>
 #include <winrt/Windows.Globalization.h>
 #include <winrt/Windows.Foundation.Metadata.h>
-#include <winrt/Windows.UI.Xaml.h>
+#include <winrt/Windows.Media.h>
 #include <winrt/Windows.Media.Core.h>
 #include <winrt/Windows.Media.MediaProperties.h>
+#include <winrt/Windows.Media.Playback.h>
+#include <winrt/Windows.UI.Xaml.h>
+#include <winrt/Windows.UI.h>
+#include <winrt/Windows.UI.Core.h>
+#include <winrt/Windows.UI.Core.Preview.h>
+#include <winrt/Windows.Storage.h>
+#include <winrt/Windows.Storage.FileProperties.h>
+#include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.System.h>
+
+#include <d3d11.h>
 #include <windows.graphics.directx.direct3d11.interop.h>
+
+#include <mfapi.h>
 #include <mfidl.h>
 #include <robuffer.h>
-#include <mfapi.h>
-#include <winrt/Windows.UI.Core.h>
 #include <guiddef.h>
+
 #include <vector>
 #include <map>
 #include <array>
 #include <set>
-#include <winrt/Windows.Storage.Streams.h>
-#include <ppltasks.h>
-#include <winrt/Windows.UI.h>
-#include <winrt/Windows.Storage.FileProperties.h>
-#include <winrt/Windows.Media.h>
-#include <winrt/Windows.UI.Core.Preview.h>
-#include <winrt/Windows.Media.Core.h>
-#include <winrt/Windows.Graphics.Imaging.h>
-#include <mfidl.h>
-#include <winrt/Windows.System.h>
+#include <queue>
+#include <deque>
+
 #include <mutex>
 #include <ppltasks.h>
 #include <pplawait.h>
+
+#pragma warning(disable : 4244)
 
 extern "C"
 {
@@ -51,11 +55,15 @@ extern "C"
 #include <libavutil/hwcontext_d3d11va.h>
 }
 
+#pragma warning(default : 4244)
+
+#include "StringUtils.h"
 #include "MediaSourceConfig.h"
 #include "TimeSpanHelpers.h"
 #include "AudioStreamInfo.h"
 #include "VideoStreamInfo.h"
 #include "SubtitleStreamInfo.h"
+
 // Disable debug string output on non-debug build
 #if !_DEBUG
 #define DebugMessage(x)

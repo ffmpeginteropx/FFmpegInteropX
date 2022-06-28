@@ -74,7 +74,7 @@ namespace FFmpegInteropX
 				auto folder = co_await ApplicationData::Current().TemporaryFolder().GetFolderAsync(folderName);
 				auto instancefolder = co_await folder.GetFolderAsync(instanceId);
 				auto files = co_await instancefolder.GetFilesAsync();
-				for (auto& file : files)
+				for (auto file : files)
 				{
 					co_await file.DeleteAsync();
 				}

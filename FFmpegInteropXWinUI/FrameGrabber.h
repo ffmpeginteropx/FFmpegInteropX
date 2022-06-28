@@ -77,7 +77,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			if (targetBuffer)
 			{
 				auto length = targetBuffer.Length();
-				if (length != width * height * 4)
+				if (length != (uint32_t) width * height * 4)
 				{
 					throw_hresult(E_INVALIDARG);
 				}

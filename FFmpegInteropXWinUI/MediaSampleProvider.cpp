@@ -23,7 +23,7 @@
 #include "LanguageTagConverter.h"
 #include "AvCodecContextHelpers.h"
 //#include "SubtitleProvider.h"
-#include "Mfapi.h";
+#include "Mfapi.h"
 
 using namespace FFmpegInteropX;
 using namespace winrt::Windows::Media::MediaProperties;
@@ -137,7 +137,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
 	{
 		int count = 0;
 		int number = 0;
-		for (unsigned int i = 0; i < m_pAvFormatCtx->nb_streams; i++)
+		for (int i = 0; i < (int)m_pAvFormatCtx->nb_streams; i++)
 		{
 			if (m_pAvFormatCtx->streams[i]->codecpar->codec_type == m_pAvStream->codecpar->codec_type)
 			{

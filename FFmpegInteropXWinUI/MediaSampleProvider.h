@@ -108,14 +108,20 @@ namespace FFmpegInteropX
 		HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
 		HRESULT SkipPacketsUntilTimestamp(TimeSpan const& timestamp);
 		virtual winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() = 0;
-		virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample const& sample) { return S_OK; }; // can be overridded for setting extended properties
+        virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample const& sample) { UNREFERENCED_PARAMETER(sample); return S_OK; }; // can be overridded for setting extended properties
 		void EnableStream();
 		void DisableStream();
 		virtual void SetFilters(winrt::hstring filterDefinition) { };// override for setting effects in sample providers
 		virtual void DisableFilters() {};//override for disabling filters in sample providers;
 		virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& videoEncodingProperties, bool isCompressedFormat);
 		virtual void Detach();
-		virtual HRESULT SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) { return S_OK; };
+		virtual HRESULT SetHardwareDevice(ID3D11Device* newDevice, ID3D11DeviceContext* newDeviceContext, AVBufferRef* avHardwareContext)
+        {
+            UNREFERENCED_PARAMETER(newDevice);
+            UNREFERENCED_PARAMETER(newDeviceContext);
+            UNREFERENCED_PARAMETER(avHardwareContext);
+            return S_OK;
+        };
 
 		virtual void NotifyCreateSource()
 		{

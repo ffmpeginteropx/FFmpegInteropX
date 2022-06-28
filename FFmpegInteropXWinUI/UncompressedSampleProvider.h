@@ -35,7 +35,15 @@ namespace FFmpegInteropX
 			HardwareDecoderStatus hardwareDecoderStatus
 		);
 		virtual HRESULT CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface) override;
-		virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) { return E_FAIL; }; // must be overridden by specific decoders
+		virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
+        {
+            UNREFERENCED_PARAMETER(pBuffer);
+            UNREFERENCED_PARAMETER(surface);
+            UNREFERENCED_PARAMETER(avFrame);
+            UNREFERENCED_PARAMETER(framePts);
+            UNREFERENCED_PARAMETER(frameDuration);
+            return E_FAIL;
+        }; // must be overridden by specific decoders
 		virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos);
 		virtual HRESULT FeedPacketToDecoder(int64_t& firstPacketPos);
 

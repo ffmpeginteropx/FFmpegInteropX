@@ -47,9 +47,9 @@ HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(winrt::Windows::M
 
 HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* deviceManager, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, ID3D11VideoDevice** outVideoDevice, HANDLE* outDeviceHandle)
 {
-	ID3D11Device* device;
-	ID3D11DeviceContext* deviceContext;
-	ID3D11VideoDevice* videoDevice;
+	ID3D11Device* device = NULL;
+	ID3D11DeviceContext* deviceContext = NULL;
+	ID3D11VideoDevice* videoDevice = NULL;
 
 	HRESULT hr = deviceManager->OpenDeviceHandle(outDeviceHandle);
 	if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11Device, (void**)&device);

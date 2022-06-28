@@ -60,8 +60,6 @@ namespace FFmpegInteropX
 
 		HRESULT AllocSource(AVFrame* avFrame)
 		{
-			AVDictionary* options_dict = NULL;
-
 			int hr;
 
 			/* Create the buffer filter;

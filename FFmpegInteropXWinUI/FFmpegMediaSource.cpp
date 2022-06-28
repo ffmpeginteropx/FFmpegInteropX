@@ -159,7 +159,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		, dispatcher(dispatcher)
 	{
 		avDict = NULL;
-		unsigned char* fileStreamBuffer = NULL;
+		fileStreamBuffer = NULL;
 		avHardwareContext = NULL;
 		avHardwareContextDefault = NULL;
 		device = NULL;
@@ -370,6 +370,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	void FFmpegMediaSource::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList const& sender, TimedMetadataPresentationModeChangedEventArgs const& args)
 	{
+        UNREFERENCED_PARAMETER(sender);
 		mutexGuard.lock();
 		int index = 0;
 		for each (auto stream in subtitleStreams)
@@ -393,7 +394,8 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	void FFmpegMediaSource::OnAudioTracksChanged(MediaPlaybackItem const& sender, IVectorChangedEventArgs const& args)
 	{
-		mutexGuard.lock();
+        UNREFERENCED_PARAMETER(args);
+        mutexGuard.lock();
 		if (sender.AudioTracks().Size() == AudioStreams().Size())
 		{
 			for (unsigned int i = 0; i < AudioStreams().Size(); i++)
@@ -542,7 +544,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			}
 		}
 
-		for (unsigned int index = 0; index < avFormatCtx->nb_streams; index++)
+		for (int index = 0; index < (int)avFormatCtx->nb_streams; index++)
 		{
 			auto avStream = avFormatCtx->streams[index];
 			avStream->discard = AVDISCARD_ALL; // all streams are disabled until we enable them
@@ -945,7 +947,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 		if (avVideoCodec)
 		{
-			auto tryAv1hw = avVideoCodec->id == AVCodecID::AV_CODEC_ID_AV1 && avVideoCodec->name != "av1" && config->VideoDecoderMode() == VideoDecoderMode::Automatic;
+			auto tryAv1hw = avVideoCodec->id == AVCodecID::AV_CODEC_ID_AV1 && std::string(avVideoCodec->name) != "av1" && config->VideoDecoderMode() == VideoDecoderMode::Automatic;
 			auto libdav1d = tryAv1hw ? avVideoCodec : NULL;
 			if (tryAv1hw)
 			{
@@ -970,10 +972,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 				int i = 0;
 				while (SUCCEEDED(hr))
 				{
-					auto config = avcodec_get_hw_config(avVideoCodec, i++);
-					if (config)
+					auto hwConfig = avcodec_get_hw_config(avVideoCodec, i++);
+					if (hwConfig)
 					{
-						if (config->pix_fmt == AV_PIX_FMT_D3D11 && config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
+						if (hwConfig->pix_fmt == AV_PIX_FMT_D3D11 && hwConfig->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
 						{
 							AVBufferRef* hwContext = NULL;
 							if (!avHardwareContext)
@@ -1287,7 +1289,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		subConfig->SubtitleRegion(this->config->SubtitleRegion());
 		subConfig->SubtitleStyle(this->config->SubtitleStyle());
 		subConfig->AutoCorrectAnsiSubtitles(this->config->AutoCorrectAnsiSubtitles());
-		subConfig->AutoSelectForcedSubtitles(false());
+		subConfig->AutoSelectForcedSubtitles(false);
 		subConfig->MinimumSubtitleDuration(this->config->MinimumSubtitleDuration());
 		subConfig->AdditionalSubtitleDuration(this->config->AdditionalSubtitleDuration());
 		subConfig->PreventModifiedSubtitleDurationOverlap(this->config->PreventModifiedSubtitleDurationOverlap());
@@ -1308,9 +1310,9 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			{
 				auto pixelAspect = (double)videoDescriptor.EncodingProperties().PixelAspectRatio().Numerator() / videoDescriptor.EncodingProperties().PixelAspectRatio().Denominator();
 				auto videoAspect = ((double)currentVideoStream->m_pAvCodecCtx->width / currentVideoStream->m_pAvCodecCtx->height) / pixelAspect;
-				for each (auto stream in externalSubsParser->subtitleStreams)
+				for each (auto subtitleStream in externalSubsParser->subtitleStreams)
 				{
-					stream->NotifyVideoFrameSize(currentVideoStream->m_pAvCodecCtx->width, currentVideoStream->m_pAvCodecCtx->height, videoAspect);
+                    subtitleStream->NotifyVideoFrameSize(currentVideoStream->m_pAvCodecCtx->width, currentVideoStream->m_pAvCodecCtx->height, videoAspect);
 				}
 			}
 
@@ -1556,6 +1558,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	std::shared_ptr<MediaSampleProvider> FFmpegMediaSource::CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avAudioCodecCtx, int index)
 	{
+        UNREFERENCED_PARAMETER(avStream);
 		std::shared_ptr<MediaSampleProvider> audioSampleProvider = nullptr;
 		if (avAudioCodecCtx->codec_id == AV_CODEC_ID_AAC && config->PassthroughAudioAAC())
 		{
@@ -1591,7 +1594,8 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	bool FFmpegMediaSource::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel)
 	{
-		bool result = false;
+        UNREFERENCED_PARAMETER(maxProfile);
+        bool result = false;
 		if (!config->IsFrameGrabber)
 		{
 #pragma warning (disable: 4973)
@@ -1626,9 +1630,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	std::shared_ptr<MediaSampleProvider> FFmpegMediaSource::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index)
 	{
+        UNREFERENCED_PARAMETER(avStream);
+
 		std::shared_ptr<MediaSampleProvider> videoSampleProvider = nullptr;
-		std::shared_ptr<VideoEncodingProperties> videoProperties = nullptr;
-		winrt::FFmpegInteropXWinUI::HardwareDecoderStatus hardwareDecoderStatus;
+		winrt::FFmpegInteropXWinUI::HardwareDecoderStatus hardwareDecoderStatus = HardwareDecoderStatus::Unknown;
 
 #pragma warning (disable: 4973)
 
@@ -1675,9 +1680,9 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		{
 			auto videoProperties = VideoEncodingProperties();
 			videoProperties.Subtype(MediaEncodingSubtypes::Wmv3());
-			auto extradata = std::vector<uint8_t>((uint8_t)&avVideoCodecCtx->extradata, (uint8_t)&avVideoCodecCtx->extradata + avVideoCodecCtx->extradata_size);
 
-			videoProperties.SetFormatUserData(extradata);
+            auto extradata = std::vector(avVideoCodecCtx->extradata_size, (uint8_t)*avVideoCodecCtx->extradata);
+            videoProperties.SetFormatUserData(extradata);
 			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
 		}
 		else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VC1 &&
@@ -1687,10 +1692,8 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			auto videoProperties = VideoEncodingProperties();
 			videoProperties.Subtype(MediaEncodingSubtypes::Wvc1());
 
-			auto extradata = std::vector<uint8_t>((uint8_t)&avVideoCodecCtx->extradata, (uint8_t)&avVideoCodecCtx->extradata + avVideoCodecCtx->extradata_size);
-
-			//auto extradata = Platform::ArrayReference<uint8_t>(avVideoCodecCtx->extradata, avVideoCodecCtx->extradata_size);
-			videoProperties.SetFormatUserData(extradata);
+            auto extradata = std::vector(avVideoCodecCtx->extradata_size, (uint8_t)*avVideoCodecCtx->extradata);
+            videoProperties.SetFormatUserData(extradata);
 			videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropXWinUI::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
 		}
 		else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_MPEG2VIDEO &&
@@ -1845,6 +1848,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	void FFmpegMediaSource::OnSampleRequested(winrt::Windows::Media::Core::MediaStreamSource const& sender, winrt::Windows::Media::Core::MediaStreamSourceSampleRequestedEventArgs const& args)
 	{
+        UNREFERENCED_PARAMETER(sender);
 		mutexGuard.lock();
 		if (mss != nullptr)
 		{
@@ -1954,6 +1958,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	void FFmpegMediaSource::OnSwitchStreamsRequested(MediaStreamSource const& sender, MediaStreamSourceSwitchStreamsRequestedEventArgs const& args)
 	{
+        UNREFERENCED_PARAMETER(sender);
 		mutexGuard.lock();
 
 		if (currentAudioStream && args.Request().OldStreamDescriptor() == currentAudioStream->StreamDescriptor())
@@ -2007,7 +2012,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		if (stream)
 		{
 			int64_t seekTarget = stream->ConvertPosition(position);
-			auto diffActual = position - actualPosition;
+			auto diffActual = position - currentPosition;
 			auto diffLast = position - lastPosition;
 			bool isSeekBeforeStreamSwitch = PlaybackSession() && config->FastSeekSmartStreamSwitching() && diffActual.count() > 0 && diffActual.count() < 5000000 && diffLast.count() > 0 && diffLast.count() < 10000000;
 
@@ -2179,9 +2184,11 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 	void FFmpegMediaSource::OnPositionChanged(winrt::Windows::Media::Playback::MediaPlaybackSession const& sender, winrt::Windows::Foundation::IInspectable const& args)
 	{
-		mutexGuard.lock();
-		lastPosition = actualPosition;
-		actualPosition = sender.Position();
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(args);
+        mutexGuard.lock();
+		lastPosition = currentPosition;
+        currentPosition = sender.Position();
 		mutexGuard.unlock();
 	}
 }

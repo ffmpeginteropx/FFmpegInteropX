@@ -40,8 +40,6 @@ H264AVCSampleProvider::~H264AVCSampleProvider()
 HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length)
 {
 	HRESULT hr = S_OK;
-	int spsLength = 0;
-	int ppsLength = 0;
 
 	// Get the position of the SPS
 	if (buf == nullptr || length < 7)
@@ -69,8 +67,9 @@ HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, 
 		dataWriter.WriteByte(0);
 		dataWriter.WriteByte(0);
 		dataWriter.WriteByte(1);
+
 		auto bufferStart = buf + pos;
-		auto buffer = std::vector<uint8_t>((uint8_t)&bufferStart, (uint8_t)&bufferStart + nalsize);
+		auto buffer = std::vector(nalsize, *bufferStart);
 		dataWriter.WriteBytes(buffer);
 
 		pos += nalsize;
@@ -91,9 +90,10 @@ HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, 
 		dataWriter.WriteByte(0);
 		dataWriter.WriteByte(0);
 		dataWriter.WriteByte(1);
+
 		auto bufferStart = buf + pos;
-		auto buffer = std::vector<uint8_t>((uint8_t)&bufferStart, (uint8_t)&bufferStart + nalsize);
-		dataWriter.WriteBytes(buffer);
+        auto buffer = std::vector(nalsize, *bufferStart);
+        dataWriter.WriteBytes(buffer);
 
 		pos += nalsize;
 	}
@@ -148,7 +148,7 @@ HRESULT H264AVCSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, 
 		}
 
 		// Write the rest of the packet to the stream
-		auto vBuffer = std::vector(&(avPacket->data[index]), &(avPacket->data[index]) + size);
+		auto vBuffer = std::vector(size, avPacket->data[index]);
 		dataWriter.WriteBytes(vBuffer);
 		index += size;
 	} while (index < packetSize);

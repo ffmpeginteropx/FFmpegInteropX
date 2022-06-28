@@ -1,12 +1,9 @@
 #pragma once
 #include "pch.h"
-#include <string>
-#include <codecvt>
 #include <winrt/Windows.Media.Core.h>
 #include "CompressedSampleProvider.h"
 #include "NativeBufferFactory.h"
 #include "ReferenceCue.h"
-#include <mutex>
 #include "AvCodecContextHelpers.h"
 #include <winrt/FFmpegInteropXWinUI.h>
 
@@ -93,6 +90,9 @@ namespace FFmpegInteropX
 
 		virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio)
 		{
+            UNREFERENCED_PARAMETER(width);
+            UNREFERENCED_PARAMETER(height);
+            UNREFERENCED_PARAMETER(aspectRatio);
 		}
 
 		virtual winrt::Windows::Media::Core::IMediaCue CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) = 0;
@@ -105,7 +105,6 @@ namespace FFmpegInteropX
 				{
 					TimeSpan position = ConvertPosition(packet->pts);
 					TimeSpan duration = ConvertDuration(packet->duration);
-					bool isDurationFixed = false;
 
 					auto cue = CreateCue(packet, &position, &duration);
 					if (cue && position.count() >= 0)
@@ -255,7 +254,7 @@ namespace FFmpegInteropX
 					bool individualCue = true;
 					if (this->timedMetadataKind == winrt::Windows::Media::Core::TimedMetadataKind::Subtitle)
 					{
-						for (int i = SubtitleTrack.Cues().Size() - 1; i >= 0; i--)
+                        for (int i = SubtitleTrack.Cues().Size() - 1; i >= 0; i--)
 						{
 							auto existingSub = SubtitleTrack.Cues().GetAt(i).as<winrt::Windows::Media::Core::TimedTextCue>();
 
@@ -271,12 +270,12 @@ namespace FFmpegInteropX
 
 							break;
 						}
-					}
+                    }
 					if (individualCue)
 					{
 						DispatchCueToTrack(cue);
 					}
-				}
+                }
 				else
 				{
 					DispatchCueToTrack(cue);
@@ -309,6 +308,7 @@ namespace FFmpegInteropX
 
 		void OnRefCueEntered(winrt::Windows::Media::Core::TimedMetadataTrack const& sender, winrt::Windows::Media::Core::MediaCueEventArgs const& args)
 		{
+            UNREFERENCED_PARAMETER(sender);
 			mutex.lock();
 			try {
 				//remove all cues from subtitle track
@@ -328,7 +328,8 @@ namespace FFmpegInteropX
 
 		void OnCueEntered(winrt::Windows::Media::Core::TimedMetadataTrack const& sender, winrt::Windows::Media::Core::MediaCueEventArgs const& args)
 		{
-			mutex.lock();
+            UNREFERENCED_PARAMETER(sender);
+            mutex.lock();
 			try
 			{
 				//cleanup old cues to free memory
@@ -387,7 +388,9 @@ namespace FFmpegInteropX
 
 		void OnTick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args)
 		{
-			mutex.lock();
+            UNREFERENCED_PARAMETER(sender);
+            UNREFERENCED_PARAMETER(args);
+            mutex.lock();
 
 			try
 			{
@@ -459,14 +462,12 @@ namespace FFmpegInteropX
 				//check to see if this cue had negative duration
 				if (c.StartTime().count() == 0)
 				{
-					size_t lookupIndex = -1;
 					for (size_t i = 0; i < negativePositionCues.size(); i++)
 					{
 						auto element = negativePositionCues.at(i);
 						if (c == element.first)
 						{
 							cStartTime = TimeSpan(element.second);
-							lookupIndex = i;
 							break;
 						}
 					}
@@ -524,7 +525,9 @@ namespace FFmpegInteropX
 
 		void OnTrackFailed(winrt::Windows::Media::Core::TimedMetadataTrack const& sender, winrt::Windows::Media::Core::TimedMetadataTrackFailedEventArgs const& args)
 		{
-			OutputDebugString(L"Subtitle track error.");
+            UNREFERENCED_PARAMETER(sender);
+            UNREFERENCED_PARAMETER(args);
+            OutputDebugString(L"Subtitle track error.");
 		}
 
 	public:

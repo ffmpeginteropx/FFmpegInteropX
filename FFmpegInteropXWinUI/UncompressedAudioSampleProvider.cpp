@@ -192,7 +192,9 @@ UncompressedAudioSampleProvider::~UncompressedAudioSampleProvider()
 
 HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
 {
-	HRESULT hr = S_OK;
+    UNREFERENCED_PARAMETER(surface);
+
+    HRESULT hr = S_OK;
 
 	hr = CheckFormatChanged((AVSampleFormat)avFrame->format, avFrame->channels, avFrame->channel_layout, avFrame->sample_rate);
 
@@ -259,6 +261,9 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
 			//}
 			frameDuration = actualDuration;
 		}
+        // Try to get the best effort timestamp for the frame.
+        if (avFrame->best_effort_timestamp != AV_NOPTS_VALUE)
+            framePts = avFrame->best_effort_timestamp;
 	}
 
 	return hr;

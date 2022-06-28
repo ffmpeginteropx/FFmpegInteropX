@@ -329,7 +329,10 @@ UncompressedVideoSampleProvider::~UncompressedVideoSampleProvider()
 
 HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
 {
-	HRESULT hr = S_OK;
+    UNREFERENCED_PARAMETER(surface);
+    UNREFERENCED_PARAMETER(frameDuration);
+
+    HRESULT hr = S_OK;
 	CheckFrameSize(avFrame);
 
 	if (outputDirectBuffer)

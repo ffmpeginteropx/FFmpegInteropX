@@ -109,7 +109,7 @@ HRESULT NALPacketSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter
 	else
 	{
 		// Write both SPS and PPS sequence as is from extradata
-		auto vSPSPPS = std::vector(buf, buf + length);
+		auto vSPSPPS = std::vector(length, *buf);
 		dataWriter.WriteBytes(vSPSPPS);
 	}
 
@@ -119,7 +119,7 @@ HRESULT NALPacketSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter
 HRESULT NALPacketSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter const& dataWriter)
 {
 	// Write out the NAL packet
-	auto aBuffer = std::vector(avPacket->data, avPacket->data + avPacket->size);
+	auto aBuffer = std::vector(avPacket->size, *avPacket->data);
 	dataWriter.WriteBytes(aBuffer);
 	return S_OK;
 }

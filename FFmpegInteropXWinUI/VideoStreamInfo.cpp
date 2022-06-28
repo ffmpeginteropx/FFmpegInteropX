@@ -22,6 +22,8 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         this->displayAspectRatio = displayAspectRatio;
         this->bitsPerSample = bitsPerSample;
         this->framesPerSecond = framesPerSecond;
+        this->hardwareDecoderStatus = hwAccel;
+        this->decoderEngine = decoderEngine;
     }
     int32_t VideoStreamInfo::PixelWidth()
     {
