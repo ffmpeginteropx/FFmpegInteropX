@@ -18,7 +18,7 @@ namespace FFmpegInteropX
 		float _Tint;
 		float _Sharpness;
 		float _SharpnessThreshold;
-
+        String^ classId = "FFmpegInteropX.BasicVideoEffect";
 	public:
 		///<summary>Adjusts the brightness of the image. Default value is 0, recommended range -1 to 1.</summary>
 		property float Brightness
@@ -111,7 +111,7 @@ namespace FFmpegInteropX
 		{
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", this);
-			player->AddVideoEffect("FFmpegInteropX.BasicVideoEffect", true, set);
+			player->AddVideoEffect(classId, true, set);
 		}
 
 		[Windows::Foundation::Metadata::DefaultOverloadAttribute]
@@ -119,21 +119,21 @@ namespace FFmpegInteropX
 		{
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", this);
-			player->AddVideoEffect("FFmpegInteropX.BasicVideoEffect", optional, set);
+			player->AddVideoEffect(classId, optional, set);
 		}
 
 		void AddVideoEffect(MediaElement^ player)
 		{
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", this);
-			player->AddVideoEffect("FFmpegInteropX.BasicVideoEffect", true, set);
+			player->AddVideoEffect(classId, true, set);
 		}
 
 		void AddVideoEffect(MediaElement^ player, bool optional)
 		{
 			PropertySet^ set = ref new PropertySet();
 			set->Insert("config", this);
-			player->AddVideoEffect("FFmpegInteropX.BasicVideoEffect", optional, set);
+			player->AddVideoEffect(classId, optional, set);
 		}
 	};
 }
