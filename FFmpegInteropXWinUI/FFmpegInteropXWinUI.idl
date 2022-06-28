@@ -227,7 +227,7 @@ namespace FFmpegInteropXWinUI
     [default_interface]
     runtimeclass BasicVideoEffect : Windows.Media.Effects.IBasicVideoEffect
     {
-
+        BasicVideoEffect();
     }
 
 
