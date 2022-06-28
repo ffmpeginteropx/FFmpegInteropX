@@ -21,17 +21,17 @@
 
 namespace FFmpegInteropX
 {
-	public ref class FFmpegInteropLogging sealed
-	{
-	public:
-		static void SetLogLevel(LogLevel level);
-		static void SetLogProvider(ILogProvider^ logProvider);
-		static void SetDefaultLogProvider();
+    public ref class FFmpegInteropLogging sealed
+    {
+    public:
+        static void SetLogLevel(LogLevel level);
+        static void SetLogProvider(ILogProvider^ logProvider);
+        static void SetDefaultLogProvider();
 
-	private:
-		FFmpegInteropLogging();
+    private:
+        FFmpegInteropLogging();
 
-		static ILogProvider^ s_pLogProvider;
-	};
+        static ILogProvider^ s_pLogProvider;
+    };
 }
 

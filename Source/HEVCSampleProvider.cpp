@@ -22,14 +22,14 @@
 using namespace FFmpegInteropX;
 
 HEVCSampleProvider::HEVCSampleProvider(
-	FFmpegReader^ reader,
-	AVFormatContext* avFormatCtx,
-	AVCodecContext* avCodecCtx,
-	MediaSourceConfig^ config,
-	int streamIndex,
-	VideoEncodingProperties^ encodingProperties,
-	HardwareDecoderStatus hardwareDecoderStatus)
-	: H264AVCSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareDecoderStatus)
+    FFmpegReader^ reader,
+    AVFormatContext* avFormatCtx,
+    AVCodecContext* avCodecCtx,
+    MediaSourceConfig^ config,
+    int streamIndex,
+    VideoEncodingProperties^ encodingProperties,
+    HardwareDecoderStatus hardwareDecoderStatus)
+    : H264AVCSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareDecoderStatus)
 {
 }
 
@@ -39,60 +39,60 @@ HEVCSampleProvider::~HEVCSampleProvider()
 
 HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length)
 {
-	HRESULT hr = S_OK;
-	int spsLength = 0;
-	int ppsLength = 0;
+    HRESULT hr = S_OK;
+    int spsLength = 0;
+    int ppsLength = 0;
 
-	// Get the position of the SPS
-	if (buf == nullptr || length < 4)
-	{
-		// The data isn't present
-		hr = E_FAIL;
-	}
-	if (SUCCEEDED(hr))
-	{
-		if (length > 22 && (buf[0] || buf[1] || buf[2] > 1)) {
-			/* Extradata is in hvcC format */
-			int i, j, num_arrays;
-			int pos = 21;
+    // Get the position of the SPS
+    if (buf == nullptr || length < 4)
+    {
+        // The data isn't present
+        hr = E_FAIL;
+    }
+    if (SUCCEEDED(hr))
+    {
+        if (length > 22 && (buf[0] || buf[1] || buf[2] > 1)) {
+            /* Extradata is in hvcC format */
+            int i, j, num_arrays;
+            int pos = 21;
 
-			m_nalLenSize = (buf[pos++] & 3) + 1;
-			num_arrays = buf[pos++];
+            m_nalLenSize = (buf[pos++] & 3) + 1;
+            num_arrays = buf[pos++];
 
-			/* Decode nal units from hvcC. */
-			for (i = 0; i < num_arrays; i++) {
-				int type = buf[pos++] & 0x3f;
-				int cnt = ReadMultiByteValue(buf, pos, 2);
-				pos += 2;
+            /* Decode nal units from hvcC. */
+            for (i = 0; i < num_arrays; i++) {
+                int type = buf[pos++] & 0x3f;
+                int cnt = ReadMultiByteValue(buf, pos, 2);
+                pos += 2;
 
-				for (j = 0; j < cnt; j++) {
-					int nalsize = ReadMultiByteValue(buf, pos, 2);
-					pos += 2;
+                for (j = 0; j < cnt; j++) {
+                    int nalsize = ReadMultiByteValue(buf, pos, 2);
+                    pos += 2;
 
-					if (length - pos < (UINT32)nalsize) {
-						return E_FAIL;
-					}
+                    if (length - pos < (UINT32)nalsize) {
+                        return E_FAIL;
+                    }
 
-					// Write the NAL unit to the stream
-					dataWriter->WriteByte(0);
-					dataWriter->WriteByte(0);
-					dataWriter->WriteByte(0);
-					dataWriter->WriteByte(1);
+                    // Write the NAL unit to the stream
+                    dataWriter->WriteByte(0);
+                    dataWriter->WriteByte(0);
+                    dataWriter->WriteByte(0);
+                    dataWriter->WriteByte(1);
 
-					auto data = Platform::ArrayReference<uint8_t>(buf + pos, nalsize);
-					dataWriter->WriteBytes(data);
+                    auto data = Platform::ArrayReference<uint8_t>(buf + pos, nalsize);
+                    dataWriter->WriteBytes(data);
 
-					pos += nalsize;
-				}
-			}
-		}
-		else 
-		{
-			/* The stream and extradata contains raw NAL packets. No decoding needed. */
-			auto extra = Platform::ArrayReference<uint8_t>(buf, length);
-			dataWriter->WriteBytes(extra);
-		}
-	}
+                    pos += nalsize;
+                }
+            }
+        }
+        else
+        {
+            /* The stream and extradata contains raw NAL packets. No decoding needed. */
+            auto extra = Platform::ArrayReference<uint8_t>(buf, length);
+            dataWriter->WriteBytes(extra);
+        }
+    }
 
-	return hr;
+    return hr;
 }
