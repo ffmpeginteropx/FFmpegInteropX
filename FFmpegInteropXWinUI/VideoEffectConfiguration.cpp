@@ -53,6 +53,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     }
     void VideoEffectConfiguration::Temperature(float value)
     {
+        if (value < -1 || value > 1)
+        {
+            throw_hresult(E_INVALIDARG);
+        }
         _Temperature = value;
     }
     float VideoEffectConfiguration::Tint()
@@ -61,6 +65,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     }
     void VideoEffectConfiguration::Tint(float value)
     {
+        if (value < -1 || value > 1)
+        {
+            throw_hresult(E_INVALIDARG);
+        }
         _Tint = value;
     }
     float VideoEffectConfiguration::Sharpness()
@@ -69,6 +77,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     }
     void VideoEffectConfiguration::Sharpness(float value)
     {
+        if (value < 0 || value > 10)
+        {
+            throw_hresult(E_INVALIDARG);
+        }
         _Sharpness = value;
     }
     float VideoEffectConfiguration::SharpnessThreshold()
@@ -77,6 +89,10 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     }
     void VideoEffectConfiguration::SharpnessThreshold(float value)
     {
+        if (value < 0 || value > 10)
+        {
+            throw_hresult(E_INVALIDARG);
+        }
         _SharpnessThreshold = value;
     }
     void VideoEffectConfiguration::AddVideoEffect(winrt::Windows::Media::Playback::MediaPlayer const& player)
@@ -92,7 +108,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         winrt::FFmpegInteropXWinUI::VideoEffectConfiguration winrtThis = *this;
         set.Insert(L"config", winrt::box_value<winrt::FFmpegInteropXWinUI::VideoEffectConfiguration>(winrtThis));
 
-        player.AddVideoEffect(L"winrt.FFmpegInteropXWinUI.implementation.BasicVideoEffect", Optional, set);
+        player.AddVideoEffect(winrt::name_of<winrt::FFmpegInteropXWinUI::BasicVideoEffect>(), Optional, set);
     }
     void VideoEffectConfiguration::AddVideoEffect(winrt::Windows::UI::Xaml::Controls::MediaElement const& player)
     {
@@ -100,7 +116,7 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         winrt::FFmpegInteropXWinUI::VideoEffectConfiguration winrtThis = *this;
         set.Insert(L"config", winrt::box_value<winrt::FFmpegInteropXWinUI::VideoEffectConfiguration>(winrtThis));
 
-        player.AddVideoEffect(L"winrt.FFmpegInteropXWinUI.implementation.BasicVideoEffect", true, set);
+        player.AddVideoEffect(winrt::name_of<winrt::FFmpegInteropXWinUI::BasicVideoEffect>(), true, set);
     }
     void VideoEffectConfiguration::AddVideoEffect(winrt::Windows::UI::Xaml::Controls::MediaElement const& player, bool Optional)
     {
@@ -108,6 +124,6 @@ namespace winrt::FFmpegInteropXWinUI::implementation
         winrt::FFmpegInteropXWinUI::VideoEffectConfiguration winrtThis = *this;
         set.Insert(L"config", winrt::box_value<winrt::FFmpegInteropXWinUI::VideoEffectConfiguration>(winrtThis));
 
-        player.AddVideoEffect(L"winrt.FFmpegInteropXWinUI.implementation.BasicVideoEffect", Optional, set);
+        player.AddVideoEffect(winrt::name_of<winrt::FFmpegInteropXWinUI::BasicVideoEffect>(), Optional, set);
     }
 }
