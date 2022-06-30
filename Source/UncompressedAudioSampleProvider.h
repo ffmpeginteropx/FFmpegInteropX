@@ -21,32 +21,32 @@
 
 namespace FFmpegInteropX
 {
-	ref class UncompressedAudioSampleProvider: UncompressedSampleProvider
-	{
-	public:
-		virtual ~UncompressedAudioSampleProvider();
+    ref class UncompressedAudioSampleProvider : UncompressedSampleProvider
+    {
+    public:
+        virtual ~UncompressedAudioSampleProvider();
 
-	internal:
-		UncompressedAudioSampleProvider(
-			FFmpegReader^ reader,
-			AVFormatContext* avFormatCtx,
-			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config, 
-			int streamIndex);
-		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
-		IMediaStreamDescriptor^ CreateStreamDescriptor() override;
-		HRESULT CheckFormatChanged(AVSampleFormat format, int channels, uint64 channelLayout, int sampleRate);
-		HRESULT UpdateResampler();
-	
+    internal:
+        UncompressedAudioSampleProvider(
+            FFmpegReader^ reader,
+            AVFormatContext* avFormatCtx,
+            AVCodecContext* avCodecCtx,
+            MediaSourceConfig^ config,
+            int streamIndex);
+        virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
+        IMediaStreamDescriptor^ CreateStreamDescriptor() override;
+        HRESULT CheckFormatChanged(AVSampleFormat format, int channels, uint64 channelLayout, int sampleRate);
+        HRESULT UpdateResampler();
 
-	private:
-		SwrContext* m_pSwrCtx;
-		AVSampleFormat inSampleFormat, outSampleFormat;
-		int inSampleRate, outSampleRate, inChannels, outChannels;
-		uint64 inChannelLayout, outChannelLayout;
-		int bytesPerSample;
-		bool needsUpdateResampler;
-		bool useResampler;
-	};
+
+    private:
+        SwrContext* m_pSwrCtx;
+        AVSampleFormat inSampleFormat, outSampleFormat;
+        int inSampleRate, outSampleRate, inChannels, outChannels;
+        uint64 inChannelLayout, outChannelLayout;
+        int bytesPerSample;
+        bool needsUpdateResampler;
+        bool useResampler;
+    };
 }
 

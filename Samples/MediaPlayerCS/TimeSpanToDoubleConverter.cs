@@ -7,7 +7,7 @@ using Windows.UI.Xaml.Data;
 
 namespace MediaPlayerCS
 {
-    public class TimeSpanToDoubleConverter: IValueConverter
+    public class TimeSpanToDoubleConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
