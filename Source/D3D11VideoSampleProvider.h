@@ -143,7 +143,7 @@ namespace FFmpegInteropX
 
                 // Attach Processed event and store in samples list
                 auto token = sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(this, &D3D11VideoSampleProvider::OnProcessed);
-                samples[sampleNative] = token;
+                trackedSamples[sampleNative] = token;
             }
 
             return UncompressedVideoSampleProvider::SetSampleProperties(sample);
@@ -154,8 +154,8 @@ namespace FFmpegInteropX
             std::lock_guard<std::mutex> lock(samplesMutex);
 
             auto sampleNative = reinterpret_cast<IUnknown*>(sender);
-            auto mapEntry = samples.find(sampleNative);
-            if (mapEntry == samples.end())
+            auto mapEntry = trackedSamples.find(sampleNative);
+            if (mapEntry == trackedSamples.end())
             {
                 // sample was already released during Flush() or destructor
             }
@@ -163,7 +163,7 @@ namespace FFmpegInteropX
             {
                 // Release the sample's native interface and return texture to pool
                 sampleNative->Release();
-                samples.erase(mapEntry);
+                trackedSamples.erase(mapEntry);
 
                 ReturnTextureToPool(sender);
             }
@@ -193,7 +193,7 @@ namespace FFmpegInteropX
         void ReleaseTrackedSamples()
         {
             std::lock_guard<std::mutex> lock(samplesMutex);
-            for (auto entry : samples)
+            for (auto entry : trackedSamples)
             {
                 // detach Processed event and release native interface
                 auto sampleNative = entry.first;
@@ -203,13 +203,13 @@ namespace FFmpegInteropX
                 sampleNative->Release();
             }
 
-            samples.clear();
+            trackedSamples.clear();
         }
 
         void ReturnTrackedSamples()
         {
             std::lock_guard<std::mutex> lock(samplesMutex);
-            for (auto entry : samples)
+            for (auto entry : trackedSamples)
             {
                 // detach Processed event and release native interface
                 auto sampleNative = entry.first;
@@ -222,7 +222,7 @@ namespace FFmpegInteropX
                 ReturnTextureToPool(sample);
             }
 
-            samples.clear();
+            trackedSamples.clear();
         }
 
         virtual HRESULT SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) override
@@ -453,7 +453,7 @@ namespace FFmpegInteropX
         }
 
         TexturePool^ texturePool;
-        std::map<IUnknown*,EventRegistrationToken> samples;
+        std::map<IUnknown*,EventRegistrationToken> trackedSamples;
         std::mutex samplesMutex;
     };
 }
