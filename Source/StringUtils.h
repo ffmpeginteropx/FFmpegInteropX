@@ -26,6 +26,7 @@ namespace FFmpegInteropX
             wchar_t* buffer = (wchar_t*)calloc(required_size, sizeof(wchar_t));
             auto result = MultiByteToWideChar(CP_UTF8, 0, char_array, -1, buffer, required_size);
             std::wstring wid_str = std::wstring(buffer);
+            free(buffer);
             return wid_str;
         }
 
@@ -46,6 +47,7 @@ namespace FFmpegInteropX
             char* buffer = (char*)calloc(required_size, sizeof(char));
             auto result = WideCharToMultiByte(CP_UTF8, 0, value->Data(), -1, buffer, required_size, NULL, NULL);
             std::string s_str = std::string(buffer);
+            free(buffer);
             return s_str;
         }
 

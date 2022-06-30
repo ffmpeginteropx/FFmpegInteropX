@@ -45,6 +45,21 @@ namespace FFmpegInteropX
             }
         }
 
+    public:
+
+        virtual ~D3D11VideoSampleProvider()
+        {
+            ReleaseTrackedSamples();
+        }
+
+        virtual void Flush() override
+        {
+            UncompressedVideoSampleProvider::Flush();
+            ReturnTrackedSamples();
+        }
+
+    internal:
+
         virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override
         {
             HRESULT hr = S_OK;
@@ -120,11 +135,15 @@ namespace FFmpegInteropX
         {
             if (sample->Direct3D11Surface)
             {
+                std::lock_guard<std::mutex> lock(samplesMutex);
+
                 // AddRef the sample on native interface to prevent it from being collected before Processed is called
                 auto sampleNative = reinterpret_cast<IUnknown*>(sample);
                 sampleNative->AddRef();
 
-                sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(this, &D3D11VideoSampleProvider::OnProcessed);
+                // Attach Processed event and store in samples list
+                auto token = sample->Processed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::MediaStreamSample^, Platform::Object^>(this, &D3D11VideoSampleProvider::OnProcessed);
+                trackedSamples[sampleNative] = token;
             }
 
             return UncompressedVideoSampleProvider::SetSampleProperties(sample);
@@ -132,11 +151,30 @@ namespace FFmpegInteropX
 
         void OnProcessed(Windows::Media::Core::MediaStreamSample^ sender, Platform::Object^ args)
         {
-            auto unknown = reinterpret_cast<IUnknown*>(sender->Direct3D11Surface);
+            std::lock_guard<std::mutex> lock(samplesMutex);
+
+            auto sampleNative = reinterpret_cast<IUnknown*>(sender);
+            auto mapEntry = trackedSamples.find(sampleNative);
+            if (mapEntry == trackedSamples.end())
+            {
+                // sample was already released during Flush() or destructor
+            }
+            else
+            {
+                // Release the sample's native interface and return texture to pool
+                sampleNative->Release();
+                trackedSamples.erase(mapEntry);
+
+                ReturnTextureToPool(sender);
+            }
+        }
+
+        void ReturnTextureToPool(MediaStreamSample^ sample)
+        {
             IDXGISurface* surface = NULL;
             ID3D11Texture2D* texture = NULL;
 
-            HRESULT hr = DirectXInteropHelper::GetDXGISurface(sender->Direct3D11Surface, &surface);
+            HRESULT hr = DirectXInteropHelper::GetDXGISurface(sample->Direct3D11Surface, &surface);
 
             if (SUCCEEDED(hr))
             {
@@ -148,12 +186,43 @@ namespace FFmpegInteropX
                 texturePool->ReturnTexture(texture);
             }
 
-            // Release the sample's native interface
-            auto sampleNative = reinterpret_cast<IUnknown*>(sender);
-            sampleNative->Release();
-
             SAFE_RELEASE(surface);
             SAFE_RELEASE(texture);
+        }
+
+        void ReleaseTrackedSamples()
+        {
+            std::lock_guard<std::mutex> lock(samplesMutex);
+            for (auto entry : trackedSamples)
+            {
+                // detach Processed event and release native interface
+                auto sampleNative = entry.first;
+                auto sample = reinterpret_cast<MediaStreamSample^>(sampleNative);
+
+                sample->Processed -= entry.second;
+                sampleNative->Release();
+            }
+
+            trackedSamples.clear();
+        }
+
+        void ReturnTrackedSamples()
+        {
+            std::lock_guard<std::mutex> lock(samplesMutex);
+            for (auto entry : trackedSamples)
+            {
+                // detach Processed event and release native interface
+                auto sampleNative = entry.first;
+                auto sample = reinterpret_cast<MediaStreamSample^>(sampleNative);
+
+                sample->Processed -= entry.second;
+                sampleNative->Release();
+
+                // return texture to pool
+                ReturnTextureToPool(sample);
+            }
+
+            trackedSamples.clear();
         }
 
         virtual HRESULT SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) override
@@ -384,7 +453,8 @@ namespace FFmpegInteropX
         }
 
         TexturePool^ texturePool;
-
+        std::map<IUnknown*,EventRegistrationToken> trackedSamples;
+        std::mutex samplesMutex;
     };
 }
 
