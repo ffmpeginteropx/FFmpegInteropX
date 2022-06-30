@@ -22,9 +22,11 @@ namespace FFmpegInteropX
         {
             if (!char_array) return std::wstring(L"");
 
-            std::string s_str = std::string(char_array);
-            std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-            std::wstring wid_str = myconv.from_bytes(s_str);
+            auto required_size = MultiByteToWideChar(CP_UTF8, 0, char_array, -1, NULL, 0);
+            wchar_t* buffer = (wchar_t*)calloc(required_size, sizeof(wchar_t));
+            auto result = MultiByteToWideChar(CP_UTF8, 0, char_array, -1, buffer, required_size);
+            std::wstring wid_str = std::wstring(buffer);
+            free(buffer);
             return wid_str;
         }
 
@@ -39,12 +41,14 @@ namespace FFmpegInteropX
             return ref new Platform::String(input.c_str(), (unsigned int)input.length());
         }
 
-
         static std::string PlatformStringToUtf8String(String^ value)
         {
-            std::wstring strW(value->Begin(), value->Length());
-            std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-            return myconv.to_bytes(strW);
+            int required_size = WideCharToMultiByte(CP_UTF8, 0, value->Data(), -1, NULL, 0, NULL, NULL);
+            char* buffer = (char*)calloc(required_size, sizeof(char));
+            auto result = WideCharToMultiByte(CP_UTF8, 0, value->Data(), -1, buffer, required_size, NULL, NULL);
+            std::string s_str = std::string(buffer);
+            free(buffer);
+            return s_str;
         }
 
     };
