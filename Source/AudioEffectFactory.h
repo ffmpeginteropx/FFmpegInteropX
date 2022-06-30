@@ -5,20 +5,20 @@
 
 namespace FFmpegInteropX
 {
-	ref class AudioEffectFactory : public AbstractEffectFactory
-	{
-		AVCodecContext* InputContext;	
+    ref class AudioEffectFactory : public AbstractEffectFactory
+    {
+        AVCodecContext* InputContext;
 
-	internal:
+    internal:
 
-		AudioEffectFactory(AVCodecContext* input_ctx)
-		{
-			InputContext = input_ctx;
-		}
+        AudioEffectFactory(AVCodecContext* input_ctx)
+        {
+            InputContext = input_ctx;
+        }
 
-		IAvEffect^ CreateEffect(String^ filterDefinition) override
-		{
-			return ref new AudioFilter(InputContext, filterDefinition);
-		}
-	};
+        IAvEffect^ CreateEffect(String^ filterDefinition) override
+        {
+            return ref new AudioFilter(InputContext, filterDefinition);
+        }
+    };
 }

@@ -530,7 +530,7 @@ namespace MediaPlayerCS
                     tbSubtitleDelay.Text = "Subtitle delay: 0s";
                 }));
         }
-      
+
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
         {
             PassthroughVideo.IsEnabled = !AutoDetect.IsOn;

@@ -13,32 +13,32 @@ using namespace Windows::Storage::Streams;
 
 namespace FFmpegInteropX
 {
-	public ref class AttachedFile sealed
-	{
-	public:
-		property String^ Name { String^ get() { return name; } };
-		property String^ MimeType { String^ get() { return mimeType; } };
-		property uint64 Size { uint64 get() { return stream->codecpar->extradata_size; }}
+    public ref class AttachedFile sealed
+    {
+    public:
+        property String^ Name { String^ get() { return name; } };
+        property String^ MimeType { String^ get() { return mimeType; } };
+        property uint64 Size { uint64 get() { return stream->codecpar->extradata_size; }}
 
-	internal:
+    internal:
 
-		AttachedFile(String^ name, String^ mimeType, AVStream* stream)
-		{
-			this->name = name;
-			this->mimeType = mimeType;
-			this->stream = stream;
-		}
+        AttachedFile(String^ name, String^ mimeType, AVStream* stream)
+        {
+            this->name = name;
+            this->mimeType = mimeType;
+            this->stream = stream;
+        }
 
-		IBuffer^ GetBuffer()
-		{
-			return NativeBuffer::NativeBufferFactory::CreateNativeBuffer(stream->codecpar->extradata, (DWORD)Size);
-		}
+        IBuffer^ GetBuffer()
+        {
+            return NativeBuffer::NativeBufferFactory::CreateNativeBuffer(stream->codecpar->extradata, (DWORD)Size);
+        }
 
-	private:
-		String^ name;
-		String^ mimeType;
+    private:
+        String^ name;
+        String^ mimeType;
 
-		AVStream* stream;
-	};
+        AVStream* stream;
+    };
 
 }

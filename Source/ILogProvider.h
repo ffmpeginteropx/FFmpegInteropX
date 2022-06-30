@@ -20,24 +20,24 @@
 
 namespace FFmpegInteropX
 {
-	using namespace Platform;
-	
-	// Level values from ffmpeg: libavutil/log.h
-	public enum class LogLevel
-	{
-		Panic = 0,
-		Fatal = 8,
-		Error = 16,
-		Warning = 24,
-		Info = 32,
-		Verbose = 40,
-		Debug = 48,
-		Trace = 56
-	};
+    using namespace Platform;
 
-	public interface class ILogProvider
-	{
-		void Log(LogLevel level, String^ message);
-	};
+    // Level values from ffmpeg: libavutil/log.h
+    public enum class LogLevel
+    {
+        Panic = 0,
+        Fatal = 8,
+        Error = 16,
+        Warning = 24,
+        Info = 32,
+        Verbose = 40,
+        Debug = 48,
+        Trace = 56
+    };
+
+    public interface class ILogProvider
+    {
+        void Log(LogLevel level, String^ message);
+    };
 }
 

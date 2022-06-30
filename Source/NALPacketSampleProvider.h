@@ -21,28 +21,28 @@
 
 namespace FFmpegInteropX
 {
-	ref class NALPacketSampleProvider :
-		public CompressedSampleProvider
-	{
-	public:
-		virtual ~NALPacketSampleProvider();
-		virtual void Flush(bool flushBuffers) override;
+    ref class NALPacketSampleProvider :
+        public CompressedSampleProvider
+    {
+    public:
+        virtual ~NALPacketSampleProvider();
+        virtual void Flush(bool flushBuffers) override;
 
-	internal:
-		NALPacketSampleProvider(
-			FFmpegReader^ reader,
-			AVFormatContext* avFormatCtx,
-			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config, 
-			int streamIndex,
-			VideoEncodingProperties^ encodingProperties,
-			HardwareDecoderStatus hardwareDecoderStatus);
-		virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer) override;
-		virtual HRESULT GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length);
-		virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer^* pBuffer);
-		virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter^ dataWriter);
+    internal:
+        NALPacketSampleProvider(
+            FFmpegReader^ reader,
+            AVFormatContext* avFormatCtx,
+            AVCodecContext* avCodecCtx,
+            MediaSourceConfig^ config,
+            int streamIndex,
+            VideoEncodingProperties^ encodingProperties,
+            HardwareDecoderStatus hardwareDecoderStatus);
+        virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer) override;
+        virtual HRESULT GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length);
+        virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer^* pBuffer);
+        virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter^ dataWriter);
 
-	private:
-		bool m_bHasSentExtradata;
-	};
+    private:
+        bool m_bHasSentExtradata;
+    };
 }

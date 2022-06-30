@@ -5,19 +5,19 @@
 
 namespace FFmpegInteropX
 {
-	ref class SubtitleProviderBitmap : SubtitleProvider
-	{
+    ref class SubtitleProviderBitmap : SubtitleProvider
+    {
 
-	internal:
-		SubtitleProviderBitmap(FFmpegReader^ reader,
-			AVFormatContext* avFormatCtx,
-			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config,
-			int index,
-			CoreDispatcher^ dispatcher)
-			: SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::ImageSubtitle, dispatcher)
-		{
-		}
+    internal:
+        SubtitleProviderBitmap(FFmpegReader^ reader,
+            AVFormatContext* avFormatCtx,
+            AVCodecContext* avCodecCtx,
+            MediaSourceConfig^ config,
+            int index,
+            CoreDispatcher^ dispatcher)
+            : SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::ImageSubtitle, dispatcher)
+        {
+        }
 
         virtual HRESULT Initialize() override
         {
@@ -32,48 +32,48 @@ namespace FFmpegInteropX
             return S_OK;
         }
 
-		virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio) override
-		{
-			videoWidth = width;
-			videoHeight = height;
-			if (isnormal(aspectRatio) && aspectRatio > 0)
-			{
-				videoAspectRatio = aspectRatio;
-			}
-			else
-			{
-				videoAspectRatio = (double)width / height;
-			}
-		}
+        virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio) override
+        {
+            videoWidth = width;
+            videoHeight = height;
+            if (isnormal(aspectRatio) && aspectRatio > 0)
+            {
+                videoAspectRatio = aspectRatio;
+            }
+            else
+            {
+                videoAspectRatio = (double)width / height;
+            }
+        }
 
-		virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan *duration) override
-		{
-			AVSubtitle* subtitle = (AVSubtitle*)malloc(sizeof(AVSubtitle));
+        virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) override
+        {
+            AVSubtitle* subtitle = (AVSubtitle*)malloc(sizeof(AVSubtitle));
             if (!subtitle)
             {
                 return nullptr;
             }
 
-			int gotSubtitle = 0;
-			auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, subtitle, &gotSubtitle, packet);
-			if (result > 0 && gotSubtitle)
-			{
-				if (subtitle->start_display_time > 0)
-				{
-					position->Duration += (long long)10000 * subtitle->start_display_time;
-				}
-				duration->Duration = (long long)10000 * subtitle->end_display_time;
+            int gotSubtitle = 0;
+            auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, subtitle, &gotSubtitle, packet);
+            if (result > 0 && gotSubtitle)
+            {
+                if (subtitle->start_display_time > 0)
+                {
+                    position->Duration += (long long)10000 * subtitle->start_display_time;
+                }
+                duration->Duration = (long long)10000 * subtitle->end_display_time;
 
-				if (subtitle->num_rects <= 0)
-				{
-					// inserty dummy cue
-					ImageCue^ cue = ref new ImageCue();
-					cue->SoftwareBitmap = GetDummyBitmap();
-					avsubtitle_free(subtitle);
+                if (subtitle->num_rects <= 0)
+                {
+                    // inserty dummy cue
+                    ImageCue^ cue = ref new ImageCue();
+                    cue->SoftwareBitmap = GetDummyBitmap();
+                    avsubtitle_free(subtitle);
                     delete subtitle;
 
-					return cue;
-				}
+                    return cue;
+                }
                 else
                 {
                     int width, height, offsetX, offsetY;
@@ -96,15 +96,15 @@ namespace FFmpegInteropX
                     }
                 }
             }
-			else if (result <= 0)
-			{
+            else if (result <= 0)
+            {
                 avsubtitle_free(subtitle);
                 delete subtitle;
-				OutputDebugString(L"Failed to decode subtitle.");
-			}
+                OutputDebugString(L"Failed to decode subtitle.");
+            }
 
-			return nullptr;
-		}
+            return nullptr;
+        }
 
     public:
 
@@ -124,7 +124,7 @@ namespace FFmpegInteropX
             }
         }
 
-	private:
+    private:
 
         void OnCueEntered(Windows::Media::Core::TimedMetadataTrack^ sender, Windows::Media::Core::MediaCueEventArgs^ args)
         {
@@ -244,99 +244,99 @@ namespace FFmpegInteropX
             return dummyBitmap;
         }
 
-		bool CheckSize(AVSubtitle* subtitle, int& width, int& height, int& offsetX, int& offsetY, TimedTextSize& cueSize, TimedTextPoint& cuePosition)
-		{
-			if (!GetInitialSize())
-			{
-				return false;
-			}
+        bool CheckSize(AVSubtitle* subtitle, int& width, int& height, int& offsetX, int& offsetY, TimedTextSize& cueSize, TimedTextPoint& cuePosition)
+        {
+            if (!GetInitialSize())
+            {
+                return false;
+            }
 
-			// get actual extent of subtitle rects
-			int minX = subtitleWidth, minY = subtitleHeight, maxW = 0, maxH = 0;
-			for (unsigned int i = 0; i < subtitle->num_rects; i++)
-			{
-				auto rect = subtitle->rects[i];
-				minX = min(minX, rect->x);
-				minY = min(minY, rect->y);
-				maxW = max(maxW, rect->x + rect->w);
-				maxH = max(maxH, rect->y + rect->h);
-			}
+            // get actual extent of subtitle rects
+            int minX = subtitleWidth, minY = subtitleHeight, maxW = 0, maxH = 0;
+            for (unsigned int i = 0; i < subtitle->num_rects; i++)
+            {
+                auto rect = subtitle->rects[i];
+                minX = min(minX, rect->x);
+                minY = min(minY, rect->y);
+                maxW = max(maxW, rect->x + rect->w);
+                maxH = max(maxH, rect->y + rect->h);
+            }
 
-			// sanity check
-			if (minX < 0 || minY < 0 || maxW > subtitleWidth || maxH > subtitleHeight)
-			{
-				return false;
-			}
+            // sanity check
+            if (minX < 0 || minY < 0 || maxW > subtitleWidth || maxH > subtitleHeight)
+            {
+                return false;
+            }
 
-			offsetX = minX;
-			offsetY = minY;
-			width = maxW - minX;
-			height = maxH - minY;
+            offsetX = minX;
+            offsetY = minY;
+            width = maxW - minX;
+            height = maxH - minY;
 
-			// try to fit into actual video frame aspect ratio, if aspect of sub is different from video
-			int heightOffset = 0;
-			int targetHeight = subtitleHeight;
-			if (optimalHeight)
-			{
-				heightOffset = (subtitleHeight - optimalHeight) / 2;
-				targetHeight = optimalHeight;
+            // try to fit into actual video frame aspect ratio, if aspect of sub is different from video
+            int heightOffset = 0;
+            int targetHeight = subtitleHeight;
+            if (optimalHeight)
+            {
+                heightOffset = (subtitleHeight - optimalHeight) / 2;
+                targetHeight = optimalHeight;
 
-				// if subtitle does not fit into optimal height, fall back to normal height
-				if (maxH > optimalHeight + heightOffset || minY < heightOffset)
-				{
-					optimalHeight = 0;
-					heightOffset = 0;
-					targetHeight = subtitleHeight;
-				}
-			}
+                // if subtitle does not fit into optimal height, fall back to normal height
+                if (maxH > optimalHeight + heightOffset || minY < heightOffset)
+                {
+                    optimalHeight = 0;
+                    heightOffset = 0;
+                    targetHeight = subtitleHeight;
+                }
+            }
 
-			cueSize.Unit = TimedTextUnit::Percentage;
-			cueSize.Width = (double)width * 100 / subtitleWidth;
-			cueSize.Height = (double)height * 100 / targetHeight;
+            cueSize.Unit = TimedTextUnit::Percentage;
+            cueSize.Width = (double)width * 100 / subtitleWidth;
+            cueSize.Height = (double)height * 100 / targetHeight;
 
-			// for some reason, all bitmap cues are moved down by 5% by uwp. we need to compensate for that.
-			cuePosition.Unit = TimedTextUnit::Percentage;
-			cuePosition.X = (double)offsetX * 100 / subtitleWidth;
-			cuePosition.Y = ((double)(offsetY - heightOffset) * 100 / targetHeight) - 5;
+            // for some reason, all bitmap cues are moved down by 5% by uwp. we need to compensate for that.
+            cuePosition.Unit = TimedTextUnit::Percentage;
+            cuePosition.X = (double)offsetX * 100 / subtitleWidth;
+            cuePosition.Y = ((double)(offsetY - heightOffset) * 100 / targetHeight) - 5;
 
-			return true;
-		}
+            return true;
+        }
 
-		bool GetInitialSize()
-		{
-			if (!hasSize)
-			{
-				// initially get size information
-				subtitleWidth = m_pAvCodecCtx->width;
-				subtitleHeight = m_pAvCodecCtx->height;
+        bool GetInitialSize()
+        {
+            if (!hasSize)
+            {
+                // initially get size information
+                subtitleWidth = m_pAvCodecCtx->width;
+                subtitleHeight = m_pAvCodecCtx->height;
 
-				if (subtitleWidth > 0 && subtitleHeight > 0)
-				{
-					if (subtitleWidth != videoWidth || subtitleHeight != videoHeight || (videoAspectRatio > 0 && videoAspectRatio != 1))
-					{
-						auto height = (int)(subtitleWidth / videoAspectRatio);
-						if (height < subtitleHeight)
-						{
-							optimalHeight = height;
-						}
-					}
+                if (subtitleWidth > 0 && subtitleHeight > 0)
+                {
+                    if (subtitleWidth != videoWidth || subtitleHeight != videoHeight || (videoAspectRatio > 0 && videoAspectRatio != 1))
+                    {
+                        auto height = (int)(subtitleWidth / videoAspectRatio);
+                        if (height < subtitleHeight)
+                        {
+                            optimalHeight = height;
+                        }
+                    }
 
-					hasSize = true;
-				}
-			}
-			return hasSize;
-		}
+                    hasSize = true;
+                }
+            }
+            return hasSize;
+        }
 
-	private:
-		int videoWidth;
-		int videoHeight;
-		double videoAspectRatio;
-		bool hasSize;
-		int subtitleWidth;
-		int subtitleHeight;
-		int optimalHeight;
-		SoftwareBitmap^ dummyBitmap;
+    private:
+        int videoWidth;
+        int videoHeight;
+        double videoAspectRatio;
+        bool hasSize;
+        int subtitleWidth;
+        int subtitleHeight;
+        int optimalHeight;
+        SoftwareBitmap^ dummyBitmap;
         std::map<String^, AVSubtitle*> map;
         int nextId;
-	};
+    };
 }

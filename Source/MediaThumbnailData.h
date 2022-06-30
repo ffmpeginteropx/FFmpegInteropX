@@ -20,40 +20,40 @@
 
 namespace FFmpegInteropX
 {
-	using namespace Platform;
-	using namespace Windows::Storage::Streams;
+    using namespace Platform;
+    using namespace Windows::Storage::Streams;
 
-	public ref class MediaThumbnailData sealed
-	{
-		IBuffer^ _buffer;
-		String^ _extension;
+    public ref class MediaThumbnailData sealed
+    {
+        IBuffer^ _buffer;
+        String^ _extension;
 
-	public:
+    public:
 
-		property IBuffer^ Buffer
-		{
-			IBuffer^ get()
-			{
-				return _buffer;
-			}
-		}
-		property String^ Extension
-		{
-			String^ get()
-			{
-				return _extension;
-			}
-		}
+        property IBuffer^ Buffer
+        {
+            IBuffer^ get()
+            {
+                return _buffer;
+            }
+        }
+        property String^ Extension
+        {
+            String^ get()
+            {
+                return _extension;
+            }
+        }
 
-		MediaThumbnailData(IBuffer^ buffer, String^ extension)
-		{
-			this->_buffer = buffer;
-			this->_extension = extension;
-		}
-	private: ~MediaThumbnailData()
-		{
-			delete _buffer;
-			delete _extension;
-		}
-	};
+        MediaThumbnailData(IBuffer^ buffer, String^ extension)
+        {
+            this->_buffer = buffer;
+            this->_extension = extension;
+        }
+    private: ~MediaThumbnailData()
+    {
+        delete _buffer;
+        delete _extension;
+    }
+    };
 }

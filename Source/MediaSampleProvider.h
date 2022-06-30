@@ -24,176 +24,176 @@
 
 namespace FFmpegInteropX
 {
-	using namespace Windows::Storage::Streams;
-	using namespace Windows::Media::Core;
-	using namespace Windows::Media::MediaProperties;
-	using namespace Windows::Graphics::DirectX::Direct3D11;
+    using namespace Windows::Storage::Streams;
+    using namespace Windows::Media::Core;
+    using namespace Windows::Media::MediaProperties;
+    using namespace Windows::Graphics::DirectX::Direct3D11;
 
     ref class FFmpegReader;
     ref class StreamBuffer;
 
-	ref class MediaSampleProvider abstract
-	{
-	public:
-		virtual ~MediaSampleProvider();
-		virtual MediaStreamSample^ GetNextSample();
-		virtual void Flush(bool flushBuffers);
+    ref class MediaSampleProvider abstract
+    {
+    public:
+        virtual ~MediaSampleProvider();
+        virtual MediaStreamSample^ GetNextSample();
+        virtual void Flush(bool flushBuffers);
 
-		property IMediaStreamDescriptor^ StreamDescriptor
-		{
-			IMediaStreamDescriptor^ get() { return m_streamDescriptor; }
-		}
+        property IMediaStreamDescriptor^ StreamDescriptor
+        {
+            IMediaStreamDescriptor^ get() { return m_streamDescriptor; }
+        }
 
-		property VideoStreamDescriptor^ VideoDescriptor
-		{
-			VideoStreamDescriptor^ get() { return dynamic_cast<VideoStreamDescriptor^>(m_streamDescriptor); }
-		}
+        property VideoStreamDescriptor^ VideoDescriptor
+        {
+            VideoStreamDescriptor^ get() { return dynamic_cast<VideoStreamDescriptor^>(m_streamDescriptor); }
+        }
 
-		property AudioStreamDescriptor^ AudioDescriptor
-		{
-			AudioStreamDescriptor^ get() { return dynamic_cast<AudioStreamDescriptor^>(m_streamDescriptor); }
-		}
+        property AudioStreamDescriptor^ AudioDescriptor
+        {
+            AudioStreamDescriptor^ get() { return dynamic_cast<AudioStreamDescriptor^>(m_streamDescriptor); }
+        }
 
-		property IStreamInfo^ StreamInfo
-		{
-			IStreamInfo^ get() { return streamInfo; }
-		}
+        property IStreamInfo^ StreamInfo
+        {
+            IStreamInfo^ get() { return streamInfo; }
+        }
 
-		property AudioStreamInfo^ AudioInfo
-		{
-			AudioStreamInfo^ get() { return dynamic_cast<AudioStreamInfo^>(streamInfo); }
-		}
+        property AudioStreamInfo^ AudioInfo
+        {
+            AudioStreamInfo^ get() { return dynamic_cast<AudioStreamInfo^>(streamInfo); }
+        }
 
-		property VideoStreamInfo^ VideoInfo
-		{
-			VideoStreamInfo^ get() { return dynamic_cast<VideoStreamInfo^>(streamInfo); }
-		}
+        property VideoStreamInfo^ VideoInfo
+        {
+            VideoStreamInfo^ get() { return dynamic_cast<VideoStreamInfo^>(streamInfo); }
+        }
 
-		property SubtitleStreamInfo^ SubtitleInfo
-		{
-			SubtitleStreamInfo^ get() { return dynamic_cast<SubtitleStreamInfo^>(streamInfo); }
-		}
+        property SubtitleStreamInfo^ SubtitleInfo
+        {
+            SubtitleStreamInfo^ get() { return dynamic_cast<SubtitleStreamInfo^>(streamInfo); }
+        }
 
-		property int StreamIndex
-		{
-			int get() { return m_streamIndex; }
-		}
+        property int StreamIndex
+        {
+            int get() { return m_streamIndex; }
+        }
 
-		property bool IsEnabled
-		{
-			bool get() { return m_isEnabled; }
-		}
+        property bool IsEnabled
+        {
+            bool get() { return m_isEnabled; }
+        }
 
-		property HardwareDecoderStatus HardwareAccelerationStatus
-		{
-			HardwareDecoderStatus get() { return hardwareDecoderStatus; }
-		}
+        property HardwareDecoderStatus HardwareAccelerationStatus
+        {
+            HardwareDecoderStatus get() { return hardwareDecoderStatus; }
+        }
 
-		property DecoderEngine Decoder
-		{
-			DecoderEngine get() { return decoder; }
-		}
+        property DecoderEngine Decoder
+        {
+            DecoderEngine get() { return decoder; }
+        }
 
-		property bool IsCleanSample;
+        property bool IsCleanSample;
 
-		property String^ Name;
-		property String^ Language;
-		property String^ CodecName;
-		property TimeSpan LastSampleTimestamp;
+        property String^ Name;
+        property String^ Language;
+        property String^ CodecName;
+        property TimeSpan LastSampleTimestamp;
 
-	internal:
-		virtual HRESULT Initialize();
-		void InitializeNameLanguageCodec();
-		virtual void InitializeStreamInfo();
-		virtual void QueuePacket(AVPacket* packet);
-		HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
+    internal:
+        virtual HRESULT Initialize();
+        void InitializeNameLanguageCodec();
+        virtual void InitializeStreamInfo();
+        virtual void QueuePacket(AVPacket* packet);
+        HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
         bool IsBufferFull();
-		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) = 0;
-		HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
-		HRESULT SkipPacketsUntilTimestamp(TimeSpan timestamp);
-		virtual IMediaStreamDescriptor^ CreateStreamDescriptor() = 0;
-		virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
+        virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) = 0;
+        HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
+        HRESULT SkipPacketsUntilTimestamp(TimeSpan timestamp);
+        virtual IMediaStreamDescriptor^ CreateStreamDescriptor() = 0;
+        virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
         virtual void EnableStream();
         virtual void DisableStream();
-		virtual void SetFilters(String^ filterDefinition) { };// override for setting effects in sample providers
-		virtual void DisableFilters() {};//override for disabling filters in sample providers;
-		virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
-		virtual void Detach();
-		virtual HRESULT SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) { return S_OK; };
+        virtual void SetFilters(String^ filterDefinition) { };// override for setting effects in sample providers
+        virtual void DisableFilters() {};//override for disabling filters in sample providers;
+        virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
+        virtual void Detach();
+        virtual HRESULT SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) { return S_OK; };
 
-		virtual void NotifyCreateSource()
-		{
-			if (m_pAvFormatCtx->start_time != AV_NOPTS_VALUE)
-			{
-				auto streamStartTime = ConvertDuration(m_pAvStream->start_time);
+        virtual void NotifyCreateSource()
+        {
+            if (m_pAvFormatCtx->start_time != AV_NOPTS_VALUE)
+            {
+                auto streamStartTime = ConvertDuration(m_pAvStream->start_time);
 
-				if (m_pAvFormatCtx->start_time == streamStartTime.Duration / 10)
-				{
-					// use more precise start time
-					m_startOffset = streamStartTime.Duration;
-				}
-				else
-				{
-					m_startOffset = m_pAvFormatCtx->start_time * 10;
-				}
-			}
-		}
+                if (m_pAvFormatCtx->start_time == streamStartTime.Duration / 10)
+                {
+                    // use more precise start time
+                    m_startOffset = streamStartTime.Duration;
+                }
+                else
+                {
+                    m_startOffset = m_pAvFormatCtx->start_time * 10;
+                }
+            }
+        }
 
-		TimeSpan ConvertPosition(LONGLONG pts)
-		{
-			return TimeSpan{ LONGLONG(timeBaseFactor * pts) - m_startOffset };
-		}
+        TimeSpan ConvertPosition(LONGLONG pts)
+        {
+            return TimeSpan{ LONGLONG(timeBaseFactor * pts) - m_startOffset };
+        }
 
-		LONGLONG ConvertPosition(TimeSpan position)
-		{
-			return LONGLONG((position.Duration + m_startOffset) / timeBaseFactor);
-		}
+        LONGLONG ConvertPosition(TimeSpan position)
+        {
+            return LONGLONG((position.Duration + m_startOffset) / timeBaseFactor);
+        }
 
-		TimeSpan ConvertDuration(LONGLONG duration)
-		{
-			return TimeSpan{ LONGLONG(timeBaseFactor * duration) };
-		}
+        TimeSpan ConvertDuration(LONGLONG duration)
+        {
+            return TimeSpan{ LONGLONG(timeBaseFactor * duration) };
+        }
 
-		LONGLONG ConvertDuration(TimeSpan duration)
-		{
-			return LONGLONG(duration.Duration / timeBaseFactor);
-		}
+        LONGLONG ConvertDuration(TimeSpan duration)
+        {
+            return LONGLONG(duration.Duration / timeBaseFactor);
+        }
 
-	protected private:
-		MediaSampleProvider(
-			FFmpegReader^ reader,
-			AVFormatContext* avFormatCtx,
-			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config,
-			int streamIndex,
-			HardwareDecoderStatus hardwareDecoderStatus);
+    protected private:
+        MediaSampleProvider(
+            FFmpegReader^ reader,
+            AVFormatContext* avFormatCtx,
+            AVCodecContext* avCodecCtx,
+            MediaSourceConfig^ config,
+            int streamIndex,
+            HardwareDecoderStatus hardwareDecoderStatus);
 
-	private:
+    private:
         int64 m_nextPacketPts;
         IMediaStreamDescriptor^ m_streamDescriptor;
-		HardwareDecoderStatus hardwareDecoderStatus;
+        HardwareDecoderStatus hardwareDecoderStatus;
 
-	internal:
-		// The FFmpeg context. Because they are complex types
-		// we declare them as internal so they don't get exposed
-		// externally
-		MediaSourceConfig^ m_config;
-		FFmpegReader^ m_pReader;
+    internal:
+        // The FFmpeg context. Because they are complex types
+        // we declare them as internal so they don't get exposed
+        // externally
+        MediaSourceConfig^ m_config;
+        FFmpegReader^ m_pReader;
         StreamBuffer^ buffer;
         AVFormatContext* m_pAvFormatCtx;
-		AVCodecContext* m_pAvCodecCtx;
-		AVStream* m_pAvStream;
-		IStreamInfo^ streamInfo;
-		bool m_isEnabled = false;
-		bool m_isDiscontinuous;
-		int m_streamIndex;
-		int64 m_startOffset;
-		double timeBaseFactor;
-		DecoderEngine decoder;
-		ID3D11Device* device;
-		ID3D11DeviceContext* deviceContext;
-		
-	};
+        AVCodecContext* m_pAvCodecCtx;
+        AVStream* m_pAvStream;
+        IStreamInfo^ streamInfo;
+        bool m_isEnabled = false;
+        bool m_isDiscontinuous;
+        int m_streamIndex;
+        int64 m_startOffset;
+        double timeBaseFactor;
+        DecoderEngine decoder;
+        ID3D11Device* device;
+        ID3D11DeviceContext* deviceContext;
+        
+    };
 }
 
 // free AVBufferRef*

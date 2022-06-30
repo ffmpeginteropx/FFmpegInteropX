@@ -22,37 +22,37 @@
 
 namespace FFmpegInteropX
 {
-	ref class UncompressedSampleProvider abstract : public MediaSampleProvider
-	{
-	internal:
-		UncompressedSampleProvider(
-			FFmpegReader^ reader,
-			AVFormatContext* avFormatCtx,
-			AVCodecContext* avCodecCtx,
-			MediaSourceConfig^ config,
-			int streamIndex,
-			HardwareDecoderStatus hardwareDecoderStatus
-		);
-		virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) override;
-		virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) { return E_FAIL; }; // must be overridden by specific decoders
-		virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos);
-		virtual HRESULT FeedPacketToDecoder(int64_t& firstPacketPos);
-		void SetFilters(String^ effects) override {
-			frameProvider->UpdateFilter(effects);
-		}
-		void DisableFilters() override
-		{
-			frameProvider->DisableFilter();
-		}
-		UncompressedFrameProvider ^ frameProvider;
+    ref class UncompressedSampleProvider abstract : public MediaSampleProvider
+    {
+    internal:
+        UncompressedSampleProvider(
+            FFmpegReader^ reader,
+            AVFormatContext* avFormatCtx,
+            AVCodecContext* avCodecCtx,
+            MediaSourceConfig^ config,
+            int streamIndex,
+            HardwareDecoderStatus hardwareDecoderStatus
+        );
+        virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) override;
+        virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) { return E_FAIL; }; // must be overridden by specific decoders
+        virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos);
+        virtual HRESULT FeedPacketToDecoder(int64_t& firstPacketPos);
+        void SetFilters(String^ effects) override {
+            frameProvider->UpdateFilter(effects);
+        }
+        void DisableFilters() override
+        {
+            frameProvider->DisableFilter();
+        }
+        UncompressedFrameProvider^ frameProvider;
 
 
-	public:
-		virtual void Flush(bool flushBuffers) override;
+    public:
+        virtual void Flush(bool flushBuffers) override;
 
-	private:
-		int64 nextFramePts;
-		bool hasNextFramePts;
-	};
+    private:
+        int64 nextFramePts;
+        bool hasNextFramePts;
+    };
 }
 

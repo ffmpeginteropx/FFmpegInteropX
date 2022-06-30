@@ -32,6 +32,7 @@ FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<MediaSample
     , config(config)
 {
 }
+
 void FFmpegReader::Start()
 {
     {
