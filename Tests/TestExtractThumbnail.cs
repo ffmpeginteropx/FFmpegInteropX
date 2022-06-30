@@ -83,7 +83,7 @@ namespace UnitTest.Windows
                 BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
                 var bitmap = await decoder.GetFrameAsync(0);
                 Assert.IsNotNull(bitmap);
-                
+
                 // encode as png
                 stream.Seek(0);
                 stream.Size = 0;

@@ -22,14 +22,14 @@
 using namespace FFmpegInteropX;
 
 NALPacketSampleProvider::NALPacketSampleProvider(
-	FFmpegReader^ reader,
-	AVFormatContext* avFormatCtx,
-	AVCodecContext* avCodecCtx,
-	MediaSourceConfig^ config,
-	int streamIndex,
-	VideoEncodingProperties^ encodingProperties,
-	HardwareDecoderStatus hardwareDecoderStatus)
-	: CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareDecoderStatus)
+    FFmpegReader^ reader,
+    AVFormatContext* avFormatCtx,
+    AVCodecContext* avCodecCtx,
+    MediaSourceConfig^ config,
+    int streamIndex,
+    VideoEncodingProperties^ encodingProperties,
+    HardwareDecoderStatus hardwareDecoderStatus)
+    : CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareDecoderStatus)
 {
 }
 
@@ -39,92 +39,92 @@ NALPacketSampleProvider::~NALPacketSampleProvider()
 
 void NALPacketSampleProvider::Flush()
 {
-	CompressedSampleProvider::Flush();
-	m_bHasSentExtradata = false;
+    CompressedSampleProvider::Flush();
+    m_bHasSentExtradata = false;
 }
 
 HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer)
 {
-	HRESULT hr = S_OK;
-	DataWriter^ dataWriter = nullptr;
+    HRESULT hr = S_OK;
+    DataWriter^ dataWriter = nullptr;
 
-	// On first frame, write the SPS and PPS
-	if (!m_bHasSentExtradata)
-	{
-		dataWriter = ref new DataWriter();
-		hr = GetSPSAndPPSBuffer(dataWriter, m_pAvCodecCtx->extradata, m_pAvCodecCtx->extradata_size);
-		m_bHasSentExtradata = true;
-	}
+    // On first frame, write the SPS and PPS
+    if (!m_bHasSentExtradata)
+    {
+        dataWriter = ref new DataWriter();
+        hr = GetSPSAndPPSBuffer(dataWriter, m_pAvCodecCtx->extradata, m_pAvCodecCtx->extradata_size);
+        m_bHasSentExtradata = true;
+    }
 
-	if (SUCCEEDED(hr))
-	{
-		// Check for extradata changes during playback
-		for (int i = 0; i < avPacket->side_data_elems; i++)
-		{
-			if (avPacket->side_data[i].type == AV_PKT_DATA_NEW_EXTRADATA && avPacket->side_data[i].size < UINT32_MAX)
-			{
-				if (dataWriter == nullptr)
-				{
-					dataWriter = ref new DataWriter();
-				}
-				hr = GetSPSAndPPSBuffer(dataWriter, avPacket->side_data[i].data, (UINT32)avPacket->side_data[i].size);
-				break;
-			}
-		}
+    if (SUCCEEDED(hr))
+    {
+        // Check for extradata changes during playback
+        for (int i = 0; i < avPacket->side_data_elems; i++)
+        {
+            if (avPacket->side_data[i].type == AV_PKT_DATA_NEW_EXTRADATA && avPacket->side_data[i].size < UINT32_MAX)
+            {
+                if (dataWriter == nullptr)
+                {
+                    dataWriter = ref new DataWriter();
+                }
+                hr = GetSPSAndPPSBuffer(dataWriter, avPacket->side_data[i].data, (UINT32)avPacket->side_data[i].size);
+                break;
+            }
+        }
 
-	}
+    }
 
-	if (SUCCEEDED(hr))
-	{
-		if (dataWriter == nullptr)
-		{
-			// no extradata: write out packet as-is
-			hr = WriteNALPacket(avPacket, pBuffer);
-		}
-		else
-		{
-			// append packet after extradata
-			hr = WriteNALPacketAfterExtradata(avPacket, dataWriter);
+    if (SUCCEEDED(hr))
+    {
+        if (dataWriter == nullptr)
+        {
+            // no extradata: write out packet as-is
+            hr = WriteNALPacket(avPacket, pBuffer);
+        }
+        else
+        {
+            // append packet after extradata
+            hr = WriteNALPacketAfterExtradata(avPacket, dataWriter);
 
-			if (SUCCEEDED(hr))
-			{
-				*pBuffer = dataWriter->DetachBuffer();
-			}
-		}
-	}
+            if (SUCCEEDED(hr))
+            {
+                *pBuffer = dataWriter->DetachBuffer();
+            }
+        }
+    }
 
-	return hr;
+    return hr;
 }
 
 HRESULT NALPacketSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length)
 {
-	HRESULT hr = S_OK;
+    HRESULT hr = S_OK;
 
-	if (buf == nullptr || length < 8)
-	{
-		// The data isn't present
-		hr = E_FAIL;
-	}
-	else
-	{
-		// Write both SPS and PPS sequence as is from extradata
-		auto vSPSPPS = Platform::ArrayReference<uint8_t>(buf, length);
-		dataWriter->WriteBytes(vSPSPPS);
-	}
+    if (buf == nullptr || length < 8)
+    {
+        // The data isn't present
+        hr = E_FAIL;
+    }
+    else
+    {
+        // Write both SPS and PPS sequence as is from extradata
+        auto vSPSPPS = Platform::ArrayReference<uint8_t>(buf, length);
+        dataWriter->WriteBytes(vSPSPPS);
+    }
 
-	return hr;
+    return hr;
 }
 
 HRESULT NALPacketSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter^ dataWriter)
 {
-	// Write out the NAL packet
-	auto aBuffer = Platform::ArrayReference<uint8_t>(avPacket->data, avPacket->size);
-	dataWriter->WriteBytes(aBuffer);
-	return S_OK;
+    // Write out the NAL packet
+    auto aBuffer = Platform::ArrayReference<uint8_t>(avPacket->data, avPacket->size);
+    dataWriter->WriteBytes(aBuffer);
+    return S_OK;
 }
 
 HRESULT NALPacketSampleProvider::WriteNALPacket(AVPacket* avPacket, IBuffer^* pBuffer)
 {
-	// Write out the NAL packet as-is
-	return CompressedSampleProvider::CreateBufferFromPacket(avPacket, pBuffer);
+    // Write out the NAL packet as-is
+    return CompressedSampleProvider::CreateBufferFromPacket(avPacket, pBuffer);
 }

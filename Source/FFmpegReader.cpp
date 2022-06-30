@@ -22,8 +22,8 @@
 using namespace FFmpegInteropX;
 
 FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<MediaSampleProvider^>* initProviders)
-	: m_pAvFormatCtx(avFormatCtx)
-	, sampleProviders(initProviders)
+    : m_pAvFormatCtx(avFormatCtx)
+    , sampleProviders(initProviders)
 {
 }
 
@@ -35,44 +35,44 @@ FFmpegReader::~FFmpegReader()
 // sample provider
 int FFmpegReader::ReadPacket()
 {
-	int ret;
-	AVPacket *avPacket = av_packet_alloc();
-	if (!avPacket)
-	{
-		return E_OUTOFMEMORY;
-	}
+    int ret;
+    AVPacket* avPacket = av_packet_alloc();
+    if (!avPacket)
+    {
+        return E_OUTOFMEMORY;
+    }
 
-	ret = av_read_frame(m_pAvFormatCtx, avPacket);
-	if (ret < 0)
-	{
-		av_packet_free(&avPacket);
-		return ret;
-	}
+    ret = av_read_frame(m_pAvFormatCtx, avPacket);
+    if (ret < 0)
+    {
+        av_packet_free(&avPacket);
+        return ret;
+    }
 
-	if (avPacket->stream_index >= (int)sampleProviders->size())
-	{
-		// new stream detected. if this is a subtitle stream, we could create it now.
-		av_packet_free(&avPacket);
-		return ret;
-	}
+    if (avPacket->stream_index >= (int)sampleProviders->size())
+    {
+        // new stream detected. if this is a subtitle stream, we could create it now.
+        av_packet_free(&avPacket);
+        return ret;
+    }
 
-	if (avPacket->stream_index < 0)
-	{
-		av_packet_free(&avPacket);
-		return E_FAIL;
-	}
+    if (avPacket->stream_index < 0)
+    {
+        av_packet_free(&avPacket);
+        return E_FAIL;
+    }
 
-	MediaSampleProvider^ provider = sampleProviders->at(avPacket->stream_index);
-	if (provider)
-	{
-		provider->QueuePacket(avPacket);
-	}
-	else
-	{
-		DebugMessage(L"Ignoring unused stream\n");
-		av_packet_free(&avPacket);
-	}
+    MediaSampleProvider^ provider = sampleProviders->at(avPacket->stream_index);
+    if (provider)
+    {
+        provider->QueuePacket(avPacket);
+    }
+    else
+    {
+        DebugMessage(L"Ignoring unused stream\n");
+        av_packet_free(&avPacket);
+    }
 
-	return ret;
+    return ret;
 }
 
