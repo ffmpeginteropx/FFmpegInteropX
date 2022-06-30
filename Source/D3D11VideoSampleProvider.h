@@ -52,9 +52,9 @@ namespace FFmpegInteropX
             ReleaseTrackedSamples();
         }
 
-        virtual void Flush() override
+        virtual void Flush(bool flushBuffers) override
         {
-            UncompressedVideoSampleProvider::Flush();
+            UncompressedVideoSampleProvider::Flush(flushBuffers);
             ReturnTrackedSamples();
         }
 

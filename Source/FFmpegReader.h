@@ -20,6 +20,7 @@
 
 #include <deque>
 #include <ppltasks.h>
+#include <agents.h>
 
 #include "MediaSourceConfig.h"
 #include "MediaSampleProvider.h"
@@ -48,6 +49,7 @@ namespace FFmpegInteropX
         ~FFmpegReader();
         bool TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, MediaSampleProvider^ videoStream, MediaSampleProvider^ audioStream);
         HRESULT SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, MediaSampleProvider^ videoStream, MediaSampleProvider^ audioStream);
+        void OnTimer(int value);
         void ReadDataLoop();
         void FlushCodecs();
         bool CheckNeedsSleep(bool wasSleeping);
@@ -59,12 +61,14 @@ namespace FFmpegInteropX
         MediaSampleProvider^ fullStream;
 
         std::mutex mutex;
-        bool isReading;
+        bool isEnabled;
+        bool isSleeping;
         int forceReadStream;
-        int result;
+        int readResult;
         task<void> readTask;
-        task_completion_event<void> sleepEvent;
         task_completion_event<void> waitStreamEvent;
+        call<int>* sleepTimerTarget;
+        timer<int>* sleepTimer;
 
         bool isFirstSeekAfterStreamSwitch;
         bool isLastSeekForward;
