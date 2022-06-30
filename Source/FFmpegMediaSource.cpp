@@ -120,7 +120,11 @@ FFmpegMediaSource::~FFmpegMediaSource()
     videoStreams.clear();
 
     avformat_close_input(&avFormatCtx);
-    av_free(avIOCtx);
+
+    // must set opaque pointer to NULL, othewise ffmpeg will assume it is some internal URLContext and crash trying to free it
+    avIOCtx->opaque = NULL;
+    avio_closep(&avIOCtx);
+    
     av_dict_free(&avDict);
 
     if (fileStreamData != nullptr)
@@ -143,7 +147,11 @@ FFmpegMediaSource::~FFmpegMediaSource()
     SAFE_RELEASE(deviceContext);
     SAFE_RELEASE(deviceManager);
 
-    PlaybackSession = nullptr;
+    if (PlaybackSession)
+    {
+        PlaybackSession->PositionChanged -= sessionPositionEvent;
+        PlaybackSession = nullptr;
+    }
 
     mutexGuard.unlock();
 }
@@ -1600,13 +1608,6 @@ void FFmpegMediaSource::OnStarting(MediaStreamSource^ sender, MediaStreamSourceS
     // Perform seek operation when MediaStreamSource received seek event from MediaElement
     if (request->StartPosition && request->StartPosition->Value.Duration <= mediaDuration.Duration && (!isFirstSeek || request->StartPosition->Value.Duration > 0))
     {
-        TimeSpan actualPosition = request->StartPosition->Value;
-        auto hr = Seek(request->StartPosition->Value, actualPosition, true);
-        if (SUCCEEDED(hr))
-        {
-            request->SetActualStartPosition(actualPosition);
-        }
-
         if (currentVideoStream && !currentVideoStream->IsEnabled)
         {
             currentVideoStream->EnableStream();
@@ -1615,6 +1616,13 @@ void FFmpegMediaSource::OnStarting(MediaStreamSource^ sender, MediaStreamSourceS
         if (currentAudioStream && !currentAudioStream->IsEnabled)
         {
             currentAudioStream->EnableStream();
+        }
+
+        TimeSpan actualPosition = request->StartPosition->Value;
+        auto hr = Seek(request->StartPosition->Value, actualPosition, true);
+        if (SUCCEEDED(hr))
+        {
+            request->SetActualStartPosition(actualPosition);
         }
     }
 
