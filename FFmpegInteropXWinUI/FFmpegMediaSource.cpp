@@ -1525,8 +1525,11 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
 		if (avFormatCtx)
 			avformat_close_input(&avFormatCtx);
-		if (avIOCtx)
-			av_free(avIOCtx);
+        if (avIOCtx)
+        {
+            avIOCtx->opaque = NULL;
+            avio_closep(&avIOCtx);
+        }
 		if (avDict)
 			av_dict_free(&avDict);
 
@@ -1549,8 +1552,11 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		SAFE_RELEASE(device);
 		SAFE_RELEASE(deviceContext);
 		SAFE_RELEASE(deviceManager);
-
-		PlaybackSession(nullptr);
+        if (PlaybackSession())
+        {
+            PlaybackSession().PositionChanged(sessionPositionEvent);
+            PlaybackSession(nullptr);
+        }
 
 		mutexGuard.unlock();
 	}
@@ -1823,13 +1829,6 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 		// Perform seek operation when MediaStreamSource received seek event from MediaElement
 		if (request.StartPosition() && request.StartPosition().Value().count() <= mediaDuration.count() && (!isFirstSeek || request.StartPosition().Value().count() > 0))
 		{
-			TimeSpan actualPosition = request.StartPosition().Value();
-			auto hr = Seek(request.StartPosition().Value(), actualPosition, true);
-			if (SUCCEEDED(hr))
-			{
-				request.SetActualStartPosition(actualPosition);
-			}
-
 			if (currentVideoStream && !currentVideoStream->IsEnabled())
 			{
 				currentVideoStream->EnableStream();
@@ -1839,6 +1838,13 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 			{
 				currentAudioStream->EnableStream();
 			}
+
+            TimeSpan actualPosition = request.StartPosition().Value();
+            auto hr = Seek(request.StartPosition().Value(), actualPosition, true);
+            if (SUCCEEDED(hr))
+            {
+                request.SetActualStartPosition(actualPosition);
+            }
 		}
 
 		isFirstSeek = false;
