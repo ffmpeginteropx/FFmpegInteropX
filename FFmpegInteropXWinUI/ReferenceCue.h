@@ -7,31 +7,31 @@
 
 namespace winrt::FFmpegInteropXWinUI::implementation
 {
-	struct ReferenceCue : ReferenceCueT<ReferenceCue>
-	{
-		ReferenceCue() = default;
+    struct ReferenceCue : ReferenceCueT<ReferenceCue>
+    {
+        ReferenceCue() = default;
 
-		ReferenceCue(Windows::Media::Core::IMediaCue const& other);
-		void StartTime(Windows::Foundation::TimeSpan const& value);
-		Windows::Foundation::TimeSpan StartTime();
-		void Duration(Windows::Foundation::TimeSpan const& value);
-		Windows::Foundation::TimeSpan Duration();
-		void Id(hstring const& value);
-		hstring Id();
+        ReferenceCue(Windows::Media::Core::IMediaCue const& other);
+        void StartTime(Windows::Foundation::TimeSpan const& value);
+        Windows::Foundation::TimeSpan StartTime();
+        void Duration(Windows::Foundation::TimeSpan const& value);
+        Windows::Foundation::TimeSpan Duration();
+        void Id(hstring const& value);
+        hstring Id();
 
-	public:
-		winrt::hstring id{};
+    public:
+        winrt::hstring id{};
 
-		winrt::Windows::Foundation::TimeSpan duration{};
+        winrt::Windows::Foundation::TimeSpan duration{};
 
-		winrt::Windows::Foundation::TimeSpan startTime{};
+        winrt::Windows::Foundation::TimeSpan startTime{};
 
-		winrt::Windows::Media::Core::IMediaCue cueRef = { nullptr };
-	};
+        winrt::Windows::Media::Core::IMediaCue cueRef = { nullptr };
+    };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation
 {
-	struct ReferenceCue : ReferenceCueT<ReferenceCue, implementation::ReferenceCue>
-	{
-	};
+    struct ReferenceCue : ReferenceCueT<ReferenceCue, implementation::ReferenceCue>
+    {
+    };
 }

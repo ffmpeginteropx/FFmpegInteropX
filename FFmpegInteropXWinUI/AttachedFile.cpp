@@ -26,6 +26,6 @@ namespace winrt::FFmpegInteropXWinUI::implementation
 
     winrt::Windows::Storage::Streams::IBuffer AttachedFile::GetBuffer()
     {
-       return NativeBuffer::NativeBufferFactory::CreateNativeBuffer(stream->codecpar->extradata, (DWORD)Size());
+        return NativeBuffer::NativeBufferFactory::CreateNativeBuffer(stream->codecpar->extradata, (DWORD)Size());
     }
 }

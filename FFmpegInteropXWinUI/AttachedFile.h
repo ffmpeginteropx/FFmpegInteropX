@@ -7,28 +7,28 @@
 
 namespace winrt::FFmpegInteropXWinUI::implementation
 {
-	struct AttachedFile : AttachedFileT<AttachedFile>
-	{
-		AttachedFile() = default;
+    struct AttachedFile : AttachedFileT<AttachedFile>
+    {
+        AttachedFile() = default;
 
-		hstring Name();
-		hstring MimeType();
-		uint64_t Size();
+        hstring Name();
+        hstring MimeType();
+        uint64_t Size();
 
-	public:
-		winrt::Windows::Storage::Streams::IBuffer GetBuffer();
+    public:
+        winrt::Windows::Storage::Streams::IBuffer GetBuffer();
 
-		AttachedFile(hstring  const& name, hstring  const& mimeType, AVStream* stream)
-		{
-			this->name = name;
-			this->mimeType = mimeType;
-			this->stream = stream;
-		}
+        AttachedFile(hstring  const& name, hstring  const& mimeType, AVStream* stream)
+        {
+            this->name = name;
+            this->mimeType = mimeType;
+            this->stream = stream;
+        }
 
-	private:
-		hstring name{};
-		hstring mimeType{};
+    private:
+        hstring name{};
+        hstring mimeType{};
 
-		AVStream* stream = NULL;
-	};
+        AVStream* stream = NULL;
+    };
 }

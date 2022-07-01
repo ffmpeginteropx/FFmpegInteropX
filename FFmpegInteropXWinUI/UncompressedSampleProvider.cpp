@@ -25,182 +25,182 @@ using namespace FFmpegInteropX;
 using namespace winrt::FFmpegInteropXWinUI;
 
 UncompressedSampleProvider::UncompressedSampleProvider(
-	std::shared_ptr<FFmpegReader> reader,
-	AVFormatContext* avFormatCtx,
-	AVCodecContext* avCodecCtx,
-	MediaSourceConfig config,
-	int streamIndex,
-	HardwareDecoderStatus hardwareDecoderStatus
+    std::shared_ptr<FFmpegReader> reader,
+    AVFormatContext* avFormatCtx,
+    AVCodecContext* avCodecCtx,
+    MediaSourceConfig config,
+    int streamIndex,
+    HardwareDecoderStatus hardwareDecoderStatus
 ) : MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
 {
-	decoder = DecoderEngine::FFmpegSoftwareDecoder;
+    decoder = DecoderEngine::FFmpegSoftwareDecoder;
 }
 
 HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface)
 {
-	HRESULT hr = S_OK;
+    HRESULT hr = S_OK;
 
-	AVFrame* avFrame = av_frame_alloc();
-	unsigned int errorCount = 0;
+    AVFrame* avFrame = av_frame_alloc();
+    unsigned int errorCount = 0;
 
-	if (!avFrame)
-	{
-		hr = E_OUTOFMEMORY;
-	}
+    if (!avFrame)
+    {
+        hr = E_OUTOFMEMORY;
+    }
 
-	int64_t firstPacketPos = 0;
-	while (SUCCEEDED(hr))
-	{
-		hr = GetFrameFromFFmpegDecoder(&avFrame, samplePts, sampleDuration, firstPacketPos);
+    int64_t firstPacketPos = 0;
+    while (SUCCEEDED(hr))
+    {
+        hr = GetFrameFromFFmpegDecoder(&avFrame, samplePts, sampleDuration, firstPacketPos);
 
-		if (hr == S_FALSE)
-		{
-			// end of stream reached
-			break;
-		}
+        if (hr == S_FALSE)
+        {
+            // end of stream reached
+            break;
+        }
 
-		if (SUCCEEDED(hr))
-		{
-			hr = CreateBufferFromFrame(pBuffer, surface, avFrame, samplePts, sampleDuration);
-			
-			if (SUCCEEDED(hr))
-			{
-				// sample created. update m_nextFramePts in case pts or duration have changed
-				nextFramePts = samplePts + sampleDuration;
-				break;
-			}
-		}
+        if (SUCCEEDED(hr))
+        {
+            hr = CreateBufferFromFrame(pBuffer, surface, avFrame, samplePts, sampleDuration);
 
-		if (!SUCCEEDED(hr) && errorCount++ < m_config.as<implementation::MediaSourceConfig>()->SkipErrors())
-		{
-			// unref any buffers in old frame
-			av_frame_unref(avFrame);
+            if (SUCCEEDED(hr))
+            {
+                // sample created. update m_nextFramePts in case pts or duration have changed
+                nextFramePts = samplePts + sampleDuration;
+                break;
+            }
+        }
 
-			// try a few more times
-			m_isDiscontinuous = true;
-			hr = S_OK;
-		}
-	}
+        if (!SUCCEEDED(hr) && errorCount++ < m_config.as<implementation::MediaSourceConfig>()->SkipErrors())
+        {
+            // unref any buffers in old frame
+            av_frame_unref(avFrame);
 
-	if (avFrame)
-	{
-		av_frame_free(&avFrame);
-	}
+            // try a few more times
+            m_isDiscontinuous = true;
+            hr = S_OK;
+        }
+    }
 
-	return hr;
+    if (avFrame)
+    {
+        av_frame_free(&avFrame);
+    }
+
+    return hr;
 }
 
 HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos)
 {
-	HRESULT hr = S_OK;
+    HRESULT hr = S_OK;
 
-	while (SUCCEEDED(hr))
-	{
-		HRESULT decodeFrame;
-		// Try to get a frame from the decoder.
-		decodeFrame = frameProvider->GetFrame(avFrame);
+    while (SUCCEEDED(hr))
+    {
+        HRESULT decodeFrame;
+        // Try to get a frame from the decoder.
+        decodeFrame = frameProvider->GetFrame(avFrame);
 
-		if (decodeFrame == AVERROR(EAGAIN))
-		{
-			// The decoder doesn't have enough data to produce a frame,
-			// we need to feed a new packet.
-			hr = FeedPacketToDecoder(firstPacketPos);
-		}
-		else if (decodeFrame == AVERROR_EOF)
-		{
-			DebugMessage(L"End of stream reached. No more samples in decoder.\n");
-			hr = S_FALSE;
-			break;
-		}
-		else if (decodeFrame < 0)
-		{
-			DebugMessage(L"Failed to get a frame from the decoder\n");
-			hr = E_FAIL;
-			break;
-		}
-		else
-		{
-			// Update the timestamp
-			if ((*avFrame)->pts != AV_NOPTS_VALUE)
-			{
-				framePts = (*avFrame)->pts;
-			}
-			else
-			{
-				framePts = nextFramePts;
-			}
+        if (decodeFrame == AVERROR(EAGAIN))
+        {
+            // The decoder doesn't have enough data to produce a frame,
+            // we need to feed a new packet.
+            hr = FeedPacketToDecoder(firstPacketPos);
+        }
+        else if (decodeFrame == AVERROR_EOF)
+        {
+            DebugMessage(L"End of stream reached. No more samples in decoder.\n");
+            hr = S_FALSE;
+            break;
+        }
+        else if (decodeFrame < 0)
+        {
+            DebugMessage(L"Failed to get a frame from the decoder\n");
+            hr = E_FAIL;
+            break;
+        }
+        else
+        {
+            // Update the timestamp
+            if ((*avFrame)->pts != AV_NOPTS_VALUE)
+            {
+                framePts = (*avFrame)->pts;
+            }
+            else
+            {
+                framePts = nextFramePts;
+            }
 
-			frameDuration = (*avFrame)->pkt_duration;
-			nextFramePts = framePts + frameDuration;
+            frameDuration = (*avFrame)->pkt_duration;
+            nextFramePts = framePts + frameDuration;
 
-			hr = S_OK;
-			break;
-		}
-	}
+            hr = S_OK;
+            break;
+        }
+    }
 
-	return hr;
+    return hr;
 }
 
 HRESULT UncompressedSampleProvider::FeedPacketToDecoder(int64_t& firstPacketPos)
 {
-	HRESULT hr = S_OK;
+    HRESULT hr = S_OK;
 
-	AVPacket* avPacket = NULL;
-	LONGLONG pts = 0;
-	LONGLONG dur = 0;
+    AVPacket* avPacket = NULL;
+    LONGLONG pts = 0;
+    LONGLONG dur = 0;
 
-	hr = GetNextPacket(&avPacket, pts, dur);
-	if (hr == S_FALSE)
-	{
-		// End of stream reached. Feed NULL packet to decoder to enter draining mode.
-		DebugMessage(L"End of stream reached. Enter draining mode.\n");
-		int sendPacketResult = avcodec_send_packet(m_pAvCodecCtx, NULL);
-		if (sendPacketResult < 0)
-		{
-			hr = E_FAIL;
-			DebugMessage(L"Decoder failed to enter draining mode.\n");
-		}
-		else
-		{
-			hr = S_OK;
-		}
-	}
-	else if (SUCCEEDED(hr))
-	{
-		// Feed packet to decoder.
-		if (!firstPacketPos)
-			firstPacketPos = avPacket->pos;
-		int sendPacketResult = avcodec_send_packet(m_pAvCodecCtx, avPacket);
-		if (sendPacketResult == AVERROR(EAGAIN))
-		{
-			// The decoder should have been drained and always ready to access input
-			_ASSERT(FALSE);
-			hr = E_UNEXPECTED;
-		}
-		else if (sendPacketResult < 0)
-		{
-			// We failed to send the packet
-			hr = E_FAIL;
-			DebugMessage(L"Decoder failed on the sample.\n");
-		}
+    hr = GetNextPacket(&avPacket, pts, dur);
+    if (hr == S_FALSE)
+    {
+        // End of stream reached. Feed NULL packet to decoder to enter draining mode.
+        DebugMessage(L"End of stream reached. Enter draining mode.\n");
+        int sendPacketResult = avcodec_send_packet(m_pAvCodecCtx, NULL);
+        if (sendPacketResult < 0)
+        {
+            hr = E_FAIL;
+            DebugMessage(L"Decoder failed to enter draining mode.\n");
+        }
+        else
+        {
+            hr = S_OK;
+        }
+    }
+    else if (SUCCEEDED(hr))
+    {
+        // Feed packet to decoder.
+        if (!firstPacketPos)
+            firstPacketPos = avPacket->pos;
+        int sendPacketResult = avcodec_send_packet(m_pAvCodecCtx, avPacket);
+        if (sendPacketResult == AVERROR(EAGAIN))
+        {
+            // The decoder should have been drained and always ready to access input
+            _ASSERT(FALSE);
+            hr = E_UNEXPECTED;
+        }
+        else if (sendPacketResult < 0)
+        {
+            // We failed to send the packet
+            hr = E_FAIL;
+            DebugMessage(L"Decoder failed on the sample.\n");
+        }
 
-		// store first packet pts as nextFramePts, in case frames do not carry correct pts values
-		if (SUCCEEDED(hr) && !hasNextFramePts)
-		{
-			nextFramePts = pts;
-			hasNextFramePts = true;
-		}
-	}
+        // store first packet pts as nextFramePts, in case frames do not carry correct pts values
+        if (SUCCEEDED(hr) && !hasNextFramePts)
+        {
+            nextFramePts = pts;
+            hasNextFramePts = true;
+        }
+    }
 
-	av_packet_free(&avPacket);
+    av_packet_free(&avPacket);
 
-	return hr;
+    return hr;
 }
 
 void UncompressedSampleProvider::Flush()
 {
-	MediaSampleProvider::Flush();
+    MediaSampleProvider::Flush();
 
-	// after seek we need to get first packet pts again
-	hasNextFramePts = false;
+    // after seek we need to get first packet pts again
+    hasNextFramePts = false;
 }

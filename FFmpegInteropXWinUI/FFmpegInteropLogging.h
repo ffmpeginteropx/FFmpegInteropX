@@ -7,20 +7,20 @@
 
 namespace winrt::FFmpegInteropXWinUI::implementation
 {
-	struct FFmpegInteropLogging : FFmpegInteropLoggingT<FFmpegInteropLogging>
-	{
-		FFmpegInteropLogging() = default;
+    struct FFmpegInteropLogging : FFmpegInteropLoggingT<FFmpegInteropLogging>
+    {
+        FFmpegInteropLogging() = default;
 
-		static void SetLogLevel(FFmpegInteropXWinUI::LogLevel const& level);
-		static void SetLogProvider(FFmpegInteropXWinUI::ILogProvider const& logProvider);
-		static void SetDefaultLogProvider();
+        static void SetLogLevel(FFmpegInteropXWinUI::LogLevel const& level);
+        static void SetLogProvider(FFmpegInteropXWinUI::ILogProvider const& logProvider);
+        static void SetDefaultLogProvider();
 
-		static ILogProvider s_pLogProvider;
-	};
+        static ILogProvider s_pLogProvider;
+    };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation
 {
-	struct FFmpegInteropLogging : FFmpegInteropLoggingT<FFmpegInteropLogging, implementation::FFmpegInteropLogging>
-	{
-	};
+    struct FFmpegInteropLogging : FFmpegInteropLoggingT<FFmpegInteropLogging, implementation::FFmpegInteropLogging>
+    {
+    };
 }

@@ -653,34 +653,34 @@ runtimeclass ReferenceCue : Windows.Media.Core.IMediaCue
     runtimeclass VideoEffectConfiguration
     {
         VideoEffectConfiguration();
-    ///<summary>Adjusts the brightness of the image. Default value is 0, recommended range -1 to 1.</summary>
-    Single Brightness{get; set; };
+///<summary>Adjusts the brightness of the image. Default value is 0, recommended range -1 to 1.</summary>
+Single Brightness{get; set; };
 
-    ///<summary>Adjusts the contrast of the image. Default value is 0, recommended range -1 to 1.</summary>
-    Single Contrast{ get; set; };
+///<summary>Adjusts the contrast of the image. Default value is 0, recommended range -1 to 1.</summary>
+Single Contrast{ get; set; };
 
-    ///<summary>Adjusts the saturation of the image. Default value is 0, recommended range -1 to 1.</summary>
-    Single Saturation{ get; set; };
+///<summary>Adjusts the saturation of the image. Default value is 0, recommended range -1 to 1.</summary>
+Single Saturation{ get; set; };
 
-    ///<summary>Adjusts the color temperature of the image. Default value is 0, allowed range -1 to 1.</summary>
-    Single Temperature{ get; set; };
+///<summary>Adjusts the color temperature of the image. Default value is 0, allowed range -1 to 1.</summary>
+Single Temperature{ get; set; };
 
-    ///<summary>Adjusts the tint of the image. Default value is 0, allowed range -1 to 1.</summary>
-    Single Tint{ get; set; };
+///<summary>Adjusts the tint of the image. Default value is 0, allowed range -1 to 1.</summary>
+Single Tint{ get; set; };
 
-    ///<summary>Adjusts the sharpness of the image. Default value is 0, allowed range 0 to 10.</summary>
-    Single Sharpness{ get; set; };
+///<summary>Adjusts the sharpness of the image. Default value is 0, allowed range 0 to 10.</summary>
+Single Sharpness{ get; set; };
 
-    ///<summary>Adjusts which areas are sharpened. Default value is 0, allowed range 0 to 10.</summary>
-    Single SharpnessThreshold{ get; set; };
+///<summary>Adjusts which areas are sharpened. Default value is 0, allowed range 0 to 10.</summary>
+Single SharpnessThreshold{ get; set; };
 
-    [default_overload]
-    void AddVideoEffect(Windows.Media.Playback.MediaPlayer player);
-    [default_overload]
-    void AddVideoEffect(Windows.Media.Playback.MediaPlayer player, Boolean isOptional);
+[default_overload]
+void AddVideoEffect(Windows.Media.Playback.MediaPlayer player);
+[default_overload]
+void AddVideoEffect(Windows.Media.Playback.MediaPlayer player, Boolean isOptional);
 
-    void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player);
+void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player);
 
-    void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player, Boolean isOptional);
+void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player, Boolean isOptional);
 }
 }

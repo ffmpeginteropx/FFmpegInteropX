@@ -29,52 +29,52 @@ namespace winrt::FFmpegInteropXWinUI::implementation
     {
         return channels;
     }
-    
+
     hstring AudioStreamInfo::ChannelLayout()
     {
         return channelLayout;
     }
-    
+
     int32_t AudioStreamInfo::SampleRate()
     {
         return sampleRate;
     }
-    
+
     int32_t AudioStreamInfo::BitsPerSample()
     {
         return bitsPerSample;
     }
-    
+
     FFmpegInteropXWinUI::DecoderEngine AudioStreamInfo::DecoderEngine()
     {
         return decoderEngine;
     }
-    
+
     hstring AudioStreamInfo::Name()
     {
         return name;
     }
-    
+
     hstring AudioStreamInfo::Language()
     {
         return language;
     }
-    
+
     hstring AudioStreamInfo::CodecName()
     {
         return codecName;
     }
-    
+
     FFmpegInteropXWinUI::StreamDisposition AudioStreamInfo::Disposition()
     {
         return disposition;
     }
-    
+
     int64_t AudioStreamInfo::Bitrate()
     {
         return bitrate;
     }
-    
+
     bool AudioStreamInfo::IsDefault()
     {
         return isDefault;

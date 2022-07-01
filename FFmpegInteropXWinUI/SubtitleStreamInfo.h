@@ -7,39 +7,39 @@
 
 namespace winrt::FFmpegInteropXWinUI::implementation
 {
-	struct SubtitleStreamInfo : SubtitleStreamInfoT<SubtitleStreamInfo>
-	{
-		SubtitleStreamInfo() = default;
+    struct SubtitleStreamInfo : SubtitleStreamInfoT<SubtitleStreamInfo>
+    {
+        SubtitleStreamInfo() = default;
 
-		SubtitleStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropXWinUI::StreamDisposition const& disposition, bool isDefault, bool isForced, Windows::Media::Core::TimedMetadataTrack const& track, bool isExternal);
-		bool IsExternal();
-		bool IsForced();
-		Windows::Media::Core::TimedMetadataTrack SubtitleTrack();
-		hstring Name();
-		hstring Language();
-		hstring CodecName();
-		FFmpegInteropXWinUI::StreamDisposition Disposition();
-		int64_t Bitrate();
-		bool IsDefault();
+        SubtitleStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropXWinUI::StreamDisposition const& disposition, bool isDefault, bool isForced, Windows::Media::Core::TimedMetadataTrack const& track, bool isExternal);
+        bool IsExternal();
+        bool IsForced();
+        Windows::Media::Core::TimedMetadataTrack SubtitleTrack();
+        hstring Name();
+        hstring Language();
+        hstring CodecName();
+        FFmpegInteropXWinUI::StreamDisposition Disposition();
+        int64_t Bitrate();
+        bool IsDefault();
 
-		hstring name{};
-		hstring language{};
-		hstring codecName{};
-		StreamDisposition disposition;
-		bool isDefault = false;
-		bool isForced = false;
-		Windows::Media::Core::TimedMetadataTrack track = { nullptr };
-		bool isExternal = false;
-		bool SetDefault()
-		{
-			isDefault = true;
-			return isDefault;
-		}
-	};
+        hstring name{};
+        hstring language{};
+        hstring codecName{};
+        StreamDisposition disposition;
+        bool isDefault = false;
+        bool isForced = false;
+        Windows::Media::Core::TimedMetadataTrack track = { nullptr };
+        bool isExternal = false;
+        bool SetDefault()
+        {
+            isDefault = true;
+            return isDefault;
+        }
+    };
 }
 namespace winrt::FFmpegInteropXWinUI::factory_implementation
 {
-	struct SubtitleStreamInfo : SubtitleStreamInfoT<SubtitleStreamInfo, implementation::SubtitleStreamInfo>
-	{
-	};
+    struct SubtitleStreamInfo : SubtitleStreamInfoT<SubtitleStreamInfo, implementation::SubtitleStreamInfo>
+    {
+    };
 }

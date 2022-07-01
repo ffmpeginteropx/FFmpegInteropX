@@ -75,15 +75,15 @@ extern "C"
 template<class T>
 std::vector<T> to_vector(IVector<T> input)
 {
-	return to_vector(input.GetView())
+    return to_vector(input.GetView())
 }
 
 template<class T>
 std::vector<T> to_vector(IVectorView<T> input)
 {
-	std::vector<T> output;
-	for (auto i : input)
-		output.emplace_back(i);
-	return output;
+    std::vector<T> output;
+    for (auto i : input)
+        output.emplace_back(i);
+    return output;
 }
 

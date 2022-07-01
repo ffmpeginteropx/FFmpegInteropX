@@ -10,29 +10,29 @@
 class CritSec
 {
 public:
-	CRITICAL_SECTION m_criticalSection;
+    CRITICAL_SECTION m_criticalSection;
 public:
-	CritSec()
-	{
-		InitializeCriticalSectionEx(&m_criticalSection, 100, 0);
-	}
+    CritSec()
+    {
+        InitializeCriticalSectionEx(&m_criticalSection, 100, 0);
+    }
 
-	~CritSec()
-	{
-		DeleteCriticalSection(&m_criticalSection);
-	}
+    ~CritSec()
+    {
+        DeleteCriticalSection(&m_criticalSection);
+    }
 
-	_Acquires_lock_(m_criticalSection)
-		void Lock()
-	{
-		EnterCriticalSection(&m_criticalSection);
-	}
+    _Acquires_lock_(m_criticalSection)
+        void Lock()
+    {
+        EnterCriticalSection(&m_criticalSection);
+    }
 
-	_Releases_lock_(m_criticalSection)
-		void Unlock()
-	{
-		LeaveCriticalSection(&m_criticalSection);
-	}
+    _Releases_lock_(m_criticalSection)
+        void Unlock()
+    {
+        LeaveCriticalSection(&m_criticalSection);
+    }
 };
 
 
@@ -48,18 +48,18 @@ public:
 class AutoLock
 {
 private:
-	CritSec *m_pCriticalSection;
+    CritSec* m_pCriticalSection;
 public:
-	_Acquires_lock_(m_pCriticalSection)
-		AutoLock(CritSec& crit)
-	{
-		m_pCriticalSection = &crit;
-		m_pCriticalSection->Lock();
-	}
+    _Acquires_lock_(m_pCriticalSection)
+        AutoLock(CritSec& crit)
+    {
+        m_pCriticalSection = &crit;
+        m_pCriticalSection->Lock();
+    }
 
-	_Releases_lock_(m_pCriticalSection)
-		~AutoLock()
-	{
-		m_pCriticalSection->Unlock();
-	}
+    _Releases_lock_(m_pCriticalSection)
+        ~AutoLock()
+    {
+        m_pCriticalSection->Unlock();
+    }
 };
