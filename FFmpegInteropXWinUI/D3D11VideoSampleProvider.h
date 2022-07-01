@@ -136,13 +136,9 @@ namespace FFmpegInteropX
 
                 // AddRef the sample on native interface to prevent it from being collected before Processed is called
                 auto sampleNative = sample.as<winrt::Windows::Foundation::IUnknown>();
-                //sampleNative->AddRef();
-                auto OnProcessed_handler = [this](winrt::Windows::Media::Core::MediaStreamSample sender, winrt::Windows::Foundation::IInspectable args)
-                {
-                    this->OnProcessed(sender, args);
-                };
+
                 // Attach Processed event and store in samples list
-                auto token = sample.Processed(winrt::Windows::Foundation::TypedEventHandler<winrt::Windows::Media::Core::MediaStreamSample, winrt::Windows::Foundation::IInspectable>(OnProcessed_handler));
+                auto token = sample.Processed(winrt::Windows::Foundation::TypedEventHandler<winrt::Windows::Media::Core::MediaStreamSample, winrt::Windows::Foundation::IInspectable>(this, &D3D11VideoSampleProvider::OnProcessed));
                 trackedSamples.insert_or_assign(sampleNative, token);
             }
 
@@ -162,7 +158,6 @@ namespace FFmpegInteropX
             else
             {
                 // Release the sample's native interface and return texture to pool
-                // sampleNative->Release();
                 trackedSamples.erase(mapEntry);
 
                 ReturnTextureToPool(sender);
@@ -200,7 +195,6 @@ namespace FFmpegInteropX
                 auto sample = sampleNative.as<winrt::Windows::Media::Core::MediaStreamSample>();
 
                 sample.Processed(entry.second);
-                //sampleNative->Release();
             }
 
             trackedSamples.clear();
@@ -216,7 +210,6 @@ namespace FFmpegInteropX
                 auto sample = sampleNative.as<winrt::Windows::Media::Core::MediaStreamSample>();
 
                 sample.Processed(entry.second);
-                //sampleNative->Release();
 
                 // return texture to pool
                 ReturnTextureToPool(sample);
