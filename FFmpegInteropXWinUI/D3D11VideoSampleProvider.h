@@ -19,13 +19,13 @@ namespace FFmpegInteropX
     private:
         const AVCodec* hwCodec;
         const AVCodec* swCodec;
-
+    public:
 
         D3D11VideoSampleProvider(
             std::shared_ptr<FFmpegInteropX::FFmpegReader> reader,
             AVFormatContext* avFormatCtx,
             AVCodecContext* avCodecCtx,
-            MediaSourceConfig config,
+            winrt::FFmpegInteropXWinUI::MediaSourceConfig const& config,
             int streamIndex,
             HardwareDecoderStatus hardwareDecoderStatus)
             : UncompressedVideoSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
@@ -453,7 +453,7 @@ namespace FFmpegInteropX
         }
 
         std::unique_ptr<TexturePool> texturePool;
-        std::map<winrt::impl::com_ref<winrt::Windows::Foundation::IUnknown>, EventRegistrationToken> trackedSamples;
+        std::map<winrt::impl::com_ref<winrt::Windows::Foundation::IUnknown>, winrt::event_token> trackedSamples;
         std::mutex samplesMutex;
     };
 }
