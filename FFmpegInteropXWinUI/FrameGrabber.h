@@ -2,7 +2,7 @@
 #include "FrameGrabber.g.h"
 #include "FFmpegMediaSource.h"
 #include "UncompressedVideoSampleProvider.h"
-#include <NativeBuffer.h>
+#include "NativeBuffer.h"
 
 using namespace NativeBuffer;
 // Note: Remove this static_assert after copying these generated source files to your project.

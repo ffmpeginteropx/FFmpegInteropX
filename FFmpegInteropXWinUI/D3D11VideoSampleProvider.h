@@ -3,12 +3,12 @@
 #include "UncompressedVideoSampleProvider.h"
 #include "TexturePool.h"
 #include "DirectXInteropHelper.h"
-#include <FFmpegReader.h>
+#include "FFmpegReader.h"
+#include "FFmpegUtils.h"
 
 extern "C"
 {
 #include <libavutil/hwcontext_d3d11va.h>
-#include <FFmpegUtils.h>
 }
 
 

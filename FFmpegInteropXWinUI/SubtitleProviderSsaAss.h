@@ -1,9 +1,7 @@
 #pragma once
-#include <pch.h>
+#include "pch.h"
 #include "SubtitleProvider.h"
-#include <string>
-#include <codecvt>
-#include <AttachedFileHelper.h>
+#include "AttachedFileHelper.h"
 
 namespace FFmpegInteropX
 {

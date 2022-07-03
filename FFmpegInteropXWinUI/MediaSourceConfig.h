@@ -1,5 +1,5 @@
 #pragma once
-#include <pch.h>
+#include "pch.h"
 #include "MediaSourceConfig.g.h"
 using namespace winrt::Windows::Foundation::Collections;
 // Note: Remove this static_assert after copying these generated source files to your project.

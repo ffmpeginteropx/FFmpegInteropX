@@ -1,6 +1,6 @@
 #pragma once
 #include "CodecChecker.g.h"
-#include <pch.h>
+#include "pch.h"
 #include "CodecRequiredEventArgs.h"
 
 // Note: Remove this static_assert after copying these generated source files to your project.

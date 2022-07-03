@@ -1,6 +1,6 @@
 #pragma once
 #include "FFmpegMediaSource.g.h"
-#include <pch.h>
+#include "pch.h"
 #include "MediaSampleProvider.h"
 #include "SubtitleProvider.h"
 #include "AttachedFile.h"

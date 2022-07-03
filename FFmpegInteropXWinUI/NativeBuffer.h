@@ -1,11 +1,5 @@
 #pragma once
 
-//#include <wrl.h>
-//#include <wrl/implements.h>
-//#include <windows.storage.streams.h>
-//#include <robuffer.h>
-//#include <vector>
-
 namespace NativeBuffer
 {
     struct __declspec(uuid("905a0fef-bc53-11df-8c49-001e4fc686da")) IBufferByteAccess : ::IUnknown

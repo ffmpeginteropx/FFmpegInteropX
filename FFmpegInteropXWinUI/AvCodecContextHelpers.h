@@ -1,11 +1,14 @@
 #pragma once
+
+#include "pch.h"
+
 extern "C"
-#include <pch.h>
 {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/channel_layout.h>
 }
+
 namespace FFmpegInteropX
 {
     class AvCodecContextHelpers

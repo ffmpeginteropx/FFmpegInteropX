@@ -28,7 +28,6 @@
 
 #include <mfapi.h>
 #include <mfidl.h>
-#include <robuffer.h>
 #include <guiddef.h>
 
 #include <vector>

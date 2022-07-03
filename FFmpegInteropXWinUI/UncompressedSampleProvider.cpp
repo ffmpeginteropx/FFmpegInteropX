@@ -17,9 +17,10 @@
 //*****************************************************************************
 
 #include "pch.h"
-#include "UncompressedSampleProvider.h"
 #include <d3d11.h>
-#include <DirectXInteropHelper.h>
+
+#include "UncompressedSampleProvider.h"
+#include "DirectXInteropHelper.h"
 
 using namespace FFmpegInteropX;
 using namespace winrt::FFmpegInteropXWinUI;
