@@ -17,18 +17,19 @@
 //*****************************************************************************
 
 #include "pch.h"
-#include "UncompressedSampleProvider.h"
 #include <d3d11.h>
-#include <DirectXInteropHelper.h>
+
+#include "UncompressedSampleProvider.h"
+#include "DirectXInteropHelper.h"
 
 using namespace FFmpegInteropX;
-
+using namespace winrt::FFmpegInteropX;
 
 UncompressedSampleProvider::UncompressedSampleProvider(
-    FFmpegReader^ reader,
+    std::shared_ptr<FFmpegReader> reader,
     AVFormatContext* avFormatCtx,
     AVCodecContext* avCodecCtx,
-    MediaSourceConfig^ config,
+    MediaSourceConfig config,
     int streamIndex,
     HardwareDecoderStatus hardwareDecoderStatus
 ) : MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
@@ -36,7 +37,7 @@ UncompressedSampleProvider::UncompressedSampleProvider(
     decoder = DecoderEngine::FFmpegSoftwareDecoder;
 }
 
-HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface)
+HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface)
 {
     HRESULT hr = S_OK;
 
@@ -71,7 +72,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, in
             }
         }
 
-        if (!SUCCEEDED(hr) && errorCount++ < m_config->SkipErrors)
+        if (!SUCCEEDED(hr) && errorCount++ < m_config.as<implementation::MediaSourceConfig>()->SkipErrors())
         {
             // unref any buffers in old frame
             av_frame_unref(avFrame);

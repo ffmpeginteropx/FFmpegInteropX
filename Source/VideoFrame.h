@@ -1,155 +1,77 @@
 #pragma once
+#include "VideoFrame.g.h"
+#include "NativeBuffer.h"
+#include <winrt/Windows.Graphics.Imaging.h>
+// Note: Remove this static_assert after copying these generated source files to your project.
+// This assertion exists to avoid compiling these generated source files directly.
+//static_assert(false, "Do not compile generated C++/WinRT source files directly");
+using namespace winrt::Windows::Graphics::Imaging;
+using namespace NativeBuffer;
 
-#include <robuffer.h>
-#include <pplawait.h>
-
-namespace FFmpegInteropX
+namespace winrt::FFmpegInteropX::implementation
 {
-    using namespace Windows::Foundation;
-    using namespace Windows::Graphics::Imaging;
-    using namespace Windows::Media::MediaProperties;
-    using namespace Windows::Storage::Streams;
-    using namespace Concurrency;
-
-    public ref class VideoFrame sealed
+    struct VideoFrame : VideoFrameT<VideoFrame>
     {
-    public:
-        property IBuffer^ PixelData { IBuffer^ get() { return pixelData; }}
-        property unsigned int PixelWidth { unsigned int get() { return pixelWidth; }}
-        property unsigned int PixelHeight { unsigned int get() { return pixelHeight; }}
-        property MediaRatio^ PixelAspectRatio { MediaRatio^ get() { return pixelAspectRatio; } }
-        property TimeSpan Timestamp { TimeSpan get() { return timestamp; }}
+        VideoFrame() = default;
 
-        VideoFrame(IBuffer^ pixelData, unsigned int width, unsigned int height, MediaRatio^ pixelAspectRatio, TimeSpan timestamp)
-        {
-            this->pixelData = pixelData;
-            this->pixelWidth = width;
-            this->pixelHeight = height;
-            this->pixelAspectRatio = pixelAspectRatio;
-            if (pixelAspectRatio != nullptr &&
-                pixelAspectRatio->Numerator > 0 &&
-                pixelAspectRatio->Denominator > 0 &&
-                pixelAspectRatio->Numerator != pixelAspectRatio->Denominator)
-            {
-                hasNonSquarePixels = true;
-            }
-            this->timestamp = timestamp;
-        }
-
-        virtual ~VideoFrame()
-        {
-
-        }
-
-        IAsyncAction^ EncodeAsBmpAsync(IRandomAccessStream^ stream)
-        {
-            return create_async([this, stream]
-                {
-                    return this->Encode(stream, BitmapEncoder::BmpEncoderId);
-                });
-        }
-
-        IAsyncAction^ EncodeAsJpegAsync(IRandomAccessStream^ stream)
-        {
-            return create_async([this, stream]
-                {
-                    return this->Encode(stream, BitmapEncoder::JpegEncoderId);
-                });
-        }
-
-        IAsyncAction^ EncodeAsPngAsync(IRandomAccessStream^ stream)
-        {
-            return create_async([this, stream]
-                {
-                    return this->Encode(stream, BitmapEncoder::PngEncoderId);
-                });
-        }
-
-        property unsigned int DisplayWidth
-        {
-            unsigned int get()
-            {
-                if (hasNonSquarePixels)
-                {
-                    if (pixelAspectRatio->Numerator > pixelAspectRatio->Denominator)
-                    {
-                        return (unsigned int)round(((double)pixelAspectRatio->Numerator / pixelAspectRatio->Denominator) * pixelWidth);
-                    }
-                }
-                return pixelWidth;
-            }
-        }
-
-        property unsigned int DisplayHeight
-        {
-            unsigned int get()
-            {
-                if (hasNonSquarePixels)
-                {
-                    if (pixelAspectRatio->Numerator < pixelAspectRatio->Denominator)
-                    {
-                        return (unsigned int)round(((double)pixelAspectRatio->Denominator / pixelAspectRatio->Numerator) * pixelHeight);
-                    }
-                }
-                return pixelHeight;
-            }
-        }
-
-        property double DisplayAspectRatio
-        {
-            double get()
-            {
-                double result = (double)pixelWidth / pixelHeight;
-                if (hasNonSquarePixels)
-                {
-                    return result * pixelAspectRatio->Numerator / pixelAspectRatio->Denominator;
-                }
-                return result;
-            }
-        }
+        VideoFrame(Windows::Storage::Streams::IBuffer const& pixelData, uint32_t width, uint32_t height, Windows::Media::MediaProperties::MediaRatio const& pixelAspectRatio, Windows::Foundation::TimeSpan const& timestamp);
+        Windows::Storage::Streams::IBuffer PixelData();
+        uint32_t PixelWidth();
+        uint32_t PixelHeight();
+        Windows::Media::MediaProperties::MediaRatio PixelAspectRatio();
+        Windows::Foundation::TimeSpan Timestamp();
+        Windows::Foundation::IAsyncAction EncodeAsBmpAsync(Windows::Storage::Streams::IRandomAccessStream stream);
+        Windows::Foundation::IAsyncAction EncodeAsJpegAsync(Windows::Storage::Streams::IRandomAccessStream stream);
+        Windows::Foundation::IAsyncAction EncodeAsPngAsync(Windows::Storage::Streams::IRandomAccessStream stream);
+        uint32_t DisplayWidth();
+        uint32_t DisplayHeight();
+        double DisplayAspectRatio();
 
     private:
-        IBuffer^ pixelData;
-        unsigned int pixelWidth;
-        unsigned int pixelHeight;
-        TimeSpan timestamp;
-        MediaRatio^ pixelAspectRatio;
-        bool hasNonSquarePixels;
+        winrt::Windows::Storage::Streams::IBuffer pixelData = { nullptr };
+        unsigned int pixelWidth = 0;
+        unsigned int pixelHeight = 0;
+        winrt::Windows::Foundation::TimeSpan timestamp{};
+        winrt::Windows::Media::MediaProperties::MediaRatio pixelAspectRatio = { nullptr };
+        bool hasNonSquarePixels = false;
 
-        task<void> Encode(IRandomAccessStream^ stream, Guid encoderGuid)
+        winrt::Windows::Foundation::IAsyncAction Encode(winrt::Windows::Storage::Streams::IRandomAccessStream stream, winrt::guid encoderGuid)
         {
             // Query the IBufferByteAccess interface.  
-            Microsoft::WRL::ComPtr<IBufferByteAccess> bufferByteAccess;
-            reinterpret_cast<IInspectable*>(pixelData)->QueryInterface(IID_PPV_ARGS(&bufferByteAccess));
+            winrt::com_ptr<IBufferByteAccess> bufferByteAccess;
+            (pixelData).as(IID_PPV_ARGS(&bufferByteAccess));
 
             // Retrieve the buffer data.  
             byte* pixels = nullptr;
             bufferByteAccess->Buffer(&pixels);
-            auto length = pixelData->Length;
+            auto length = pixelData.Length();
 
-            return create_task(BitmapEncoder::CreateAsync(encoderGuid, stream)).then([this, pixels, length](task<BitmapEncoder^> encoder)
-                {
-                    auto encoderValue = encoder.get();
+            auto encoderValue = co_await winrt::Windows::Graphics::Imaging::BitmapEncoder::CreateAsync(encoderGuid, stream);
 
-                    if (hasNonSquarePixels)
-                    {
-                        encoderValue->BitmapTransform->ScaledWidth = DisplayWidth;
-                        encoderValue->BitmapTransform->ScaledHeight = DisplayHeight;
-                        encoderValue->BitmapTransform->InterpolationMode = BitmapInterpolationMode::Linear;
-                    }
+            if (hasNonSquarePixels)
+            {
+                encoderValue.BitmapTransform().ScaledWidth(DisplayWidth());
+                encoderValue.BitmapTransform().ScaledHeight(DisplayHeight());
+                encoderValue.BitmapTransform().InterpolationMode(BitmapInterpolationMode::Linear);
+            }
 
-                    encoderValue->SetPixelData(
-                        BitmapPixelFormat::Bgra8,
-                        BitmapAlphaMode::Ignore,
-                        pixelWidth,
-                        pixelHeight,
-                        72,
-                        72,
-                        ArrayReference<byte>(pixels, length));
+            encoderValue.SetPixelData(
+                BitmapPixelFormat::Bgra8,
+                BitmapAlphaMode::Ignore,
+                pixelWidth,
+                pixelHeight,
+                72,
+                72,
+                std::vector<byte>(pixels, pixels + length));
 
-                    return encoderValue->FlushAsync();
-                });
+            co_await encoderValue.FlushAsync();
         }
 
+    };
+}
+namespace winrt::FFmpegInteropX::factory_implementation
+{
+    struct VideoFrame : VideoFrameT<VideoFrame, implementation::VideoFrame>
+    {
     };
 }

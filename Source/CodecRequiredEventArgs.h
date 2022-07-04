@@ -1,43 +1,23 @@
 #pragma once
+#include "CodecRequiredEventArgs.g.h"
 
-namespace FFmpegInteropX
+// Note: Remove this static_assert after copying these generated source files to your project.
+// This assertion exists to avoid compiling these generated source files directly.
+//static_assert(false, "Do not compile generated C++/WinRT source files directly");
+
+namespace winrt::FFmpegInteropX::implementation
 {
-    using namespace Platform;
-    using namespace Windows::Foundation;
-
-    ///<summary>Specifies the reason why a codec extension installation is recommended.</summary>
-    public enum class CodecRequiredReason
+    struct CodecRequiredEventArgs : CodecRequiredEventArgsT<CodecRequiredEventArgs>
     {
-        ///<summary>Unknown.</summary>
-        Unknown = 0x00,
+        CodecRequiredEventArgs() = default;
 
-        ///<summary>The codec extension will allow hardware acceleration of a specific format.</summary>
-        HardwareAcceleration = 0x01
-    };
+        FFmpegInteropX::CodecRequiredReason Reason();
+        hstring FormatName();
+        hstring StoreExtensionName();
+        hstring ProductId();
+        Windows::Foundation::IAsyncOperation<bool> OpenStorePageAsync();
 
-    public ref class CodecRequiredEventArgs sealed
-    {
-    public:
-        ///<summary>The reason why a new codec extension is recommended.</summary>
-        property CodecRequiredReason Reason { CodecRequiredReason get() { return reason; } }
-
-        ///<summary>The name of the video or audio format (e.g. "HEVC" or "VP9").</summary>
-        property String^ FormatName { String^ get() { return codecName; } }
-
-        ///<summary>The non-localized name of the proposed extension in the Windows Store.</summary>
-        property String^ StoreExtensionName { String^ get() { return storeExtensionName; } }
-
-        ///<summary>The ProductId of the proposed extension.</summary>
-        property String^ ProductId { String^ get() { return productId; } }
-
-        ///<summary>This will open the Windows Store page of the proposed codec extension.</summary>
-        IAsyncOperation<bool>^ OpenStorePageAsync()
-        {
-            return Windows::System::Launcher::LaunchUriAsync(ref new Uri("ms-windows-store://pdp/?ProductId=" + productId));
-        }
-
-    internal:
-        CodecRequiredEventArgs(CodecRequiredReason reason, String^ codecName, String^ storeExtensionName, String^ productId)
+        CodecRequiredEventArgs(CodecRequiredReason reason, hstring  const& codecName, hstring  const& storeExtensionName, hstring  const& productId)
         {
             this->reason = reason;
             this->codecName = codecName;
@@ -47,9 +27,8 @@ namespace FFmpegInteropX
 
     private:
         CodecRequiredReason reason;
-        String^ codecName;
-        String^ storeExtensionName;
-        String^ productId;
+        hstring codecName{};
+        hstring storeExtensionName{};
+        hstring productId{};
     };
-
 }

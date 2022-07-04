@@ -5,15 +5,13 @@ extern "C"
 }
 namespace FFmpegInteropX
 {
-    ref class IAvEffect abstract
+    class IAvEffect
     {
     public:
         virtual	~IAvEffect() {}
 
-    internal:
+        virtual HRESULT AddFrame(AVFrame* frame) = 0;
 
-        virtual HRESULT AddFrame(AVFrame* frame) abstract;
-
-        virtual HRESULT GetFrame(AVFrame* frame) abstract;
+        virtual HRESULT GetFrame(AVFrame* frame) = 0;
     };
 }

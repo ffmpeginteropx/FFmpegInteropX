@@ -1,52 +1,35 @@
-﻿//*****************************************************************************
-//
-//	Copyright 2015 Microsoft Corporation
-//
-//	Licensed under the Apache License, Version 2.0 (the "License");
-//	you may not use this file except in compliance with the License.
-//	You may obtain a copy of the License at
-//
-//	http ://www.apache.org/licenses/LICENSE-2.0
-//
-//	Unless required by applicable law or agreed to in writing, software
-//	distributed under the License is distributed on an "AS IS" BASIS,
-//	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//	See the License for the specific language governing permissions and
-//	limitations under the License.
-//
-//*****************************************************************************
-
 #pragma once
-#include <mutex>
-#include <collection.h>
-
-#include "Enumerations.h"
-#include "FFmpegReader.h"
+#include "FFmpegMediaSource.g.h"
+#include "pch.h"
 #include "MediaSampleProvider.h"
-#include "MediaThumbnailData.h"
-#include "VideoFrame.h"
-#include "StreamInfo.h"
 #include "SubtitleProvider.h"
+#include "AttachedFile.h"
 #include "AttachedFileHelper.h"
+#include "MediaSourceConfig.h"
 #include "CodecChecker.h"
 #include "MediaMetadata.h"
+#include "AudioStreamInfo.h"
+#include "VideoStreamInfo.h"
+#include "SubtitleStreamInfo.h"
+#include "ChapterInfo.h"
+#include "FormatInfo.h"
 
-extern "C"
-{
-#include <libavformat/avformat.h>
-}
+// Note: Remove this static_assert after copying these generated source files to your project.
+// This assertion exists to avoid compiling these generated source files directly.
+//static_assert(false, "Do not compile generated C++/WinRT source files directly");
 
-namespace FFmpegInteropX
+namespace winrt::FFmpegInteropX::implementation
 {
-    using namespace Platform;
-    using namespace Windows::Foundation;
-    using namespace Windows::Foundation::Collections;
-    using namespace Windows::Media::Core;
-    using namespace Windows::Media::Playback;
-    using namespace Platform::Collections;
-    using namespace Windows::UI::Core;
-    using namespace Windows::UI::Xaml;
-    namespace WFM = Windows::Foundation::Metadata;
+    using namespace winrt::Windows::Foundation;
+    using namespace winrt::Windows::Foundation::Collections;
+    using namespace winrt::Windows::Media::Core;
+    using namespace winrt::Windows::Media::Playback;
+    using namespace winrt::Windows::Foundation::Collections;
+    using namespace winrt::Windows::UI::Core;
+    using namespace winrt::Windows::UI::Xaml;
+    namespace WFM = winrt::Windows::Foundation::Metadata;
+    using namespace winrt::Windows::Storage::Streams;
+    using namespace FFmpegInteropX;
 
     enum ByteOrderMark
     {
@@ -55,318 +38,167 @@ namespace FFmpegInteropX
         UTF8
     };
 
-    ///<summary>This is the main class that allows media playback with ffmpeg.</summary>
-    public ref class FFmpegMediaSource sealed
+    struct FFmpegMediaSource : FFmpegMediaSourceT<FFmpegMediaSource>
     {
-    public:
-        ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
-        static IAsyncOperation<FFmpegMediaSource^>^ CreateFromStreamAsync(IRandomAccessStream^ stream, MediaSourceConfig^ config);
-
-        ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
-        static IAsyncOperation<FFmpegMediaSource^>^ CreateFromStreamAsync(IRandomAccessStream^ stream) { return CreateFromStreamAsync(stream, ref new MediaSourceConfig()); }
-
-        ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-        static IAsyncOperation<FFmpegMediaSource^>^ CreateFromUriAsync(String^ uri, MediaSourceConfig^ config);
-
-        ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-        static IAsyncOperation<FFmpegMediaSource^>^ CreateFromUriAsync(String^ uri) { return CreateFromUriAsync(uri, ref new MediaSourceConfig()); }
-
-        ///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
-        void SetSubtitleDelay(TimeSpan delay);
-
-        ///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
-        [WFM::DefaultOverload]
-        void SetFFmpegAudioFilters(String^ audioFilters);
-
-        ///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
-        ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-        [WFM::DefaultOverload]
-        void SetFFmpegVideoFilters(String^ videoEffects);
-
-        ///<summary>Disables audio effects.</summary>
-        void DisableAudioEffects();
-
-        ///<summary>Disables video effects.</summary>
-        void DisableVideoEffects();
-
-        ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
-        MediaThumbnailData^ ExtractThumbnail();
-
-        ///<summary>Gets the MediaStreamSource. Using the MediaStreamSource will prevent subtitles from working. Please use CreateMediaPlaybackItem instead.</summary>
-        MediaStreamSource^ GetMediaStreamSource();
-
-        ///<summary>Creates a MediaPlaybackItem for playback.</summary>
-        MediaPlaybackItem^ CreateMediaPlaybackItem();
-
-        ///<summary>Creates a MediaPlaybackItem for playback which starts at the specified stream offset.</summary>
-        MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime);
-
-        ///<summary>Creates a MediaPlaybackItem for playback which starts at the specified stream offset and ends after the specified duration.</summary>
-        MediaPlaybackItem^ CreateMediaPlaybackItem(TimeSpan startTime, TimeSpan durationLimit);
-
-        ///<summary>Adds an external subtitle from a stream.</summary>
-        ///<param name="stream">The subtitle stream.</param>
-        ///<param name="streamName">The name to use for the subtitle.</param>
-        IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream, String^ streamName);
-
-        ///<summary>Adds an external subtitle from a stream.</summary>
-        ///<param name="stream">The subtitle stream.</param>
-        IAsyncOperation<IVectorView<SubtitleStreamInfo^>^>^ AddExternalSubtitleAsync(IRandomAccessStream^ stream)
-        {
-            return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName);
-        }
-
-        ///<summary>Destroys the FFmpegMediaSource instance and releases all resources.</summary>
+        FFmpegMediaSource() = default;
         virtual ~FFmpegMediaSource();
 
-        // Properties
-
-        ///<summary>Gets the configuration that has been passed when creating the MSS instance.</summary>
-        property MediaSourceConfig^ Configuration
-        {
-            MediaSourceConfig^ get()
-            {
-                return config;
-            }
-        }
-
-        property IMapView<String^, IVectorView<String^>^>^ MetadataTags
-        {
-            IMapView<String^, IVectorView<String^>^>^ get()
-            {
-                metadata->LoadMetadataTags(avFormatCtx);
-                return metadata->MetadataTags;
-            }
-        }
-
-        ///<summary>Gets the duration of the stream. Returns zero, if this is streaming media.</summary>
-        property TimeSpan Duration
-        {
-            TimeSpan get()
-            {
-                return mediaDuration;
-            };
-        };
-
-        ///<summary>Gets the current video stream information.</summary>
-        property VideoStreamInfo^ CurrentVideoStream
-        {
-            VideoStreamInfo^ get()
-            {
-                auto stream = currentVideoStream;
-                return stream ? stream->VideoInfo : nullptr;
-            }
-        }
-
-        ///<summary>Gets the current audio stream information.</summary>
-        property AudioStreamInfo^ CurrentAudioStream
-        {
-            AudioStreamInfo^ get()
-            {
-                auto stream = currentAudioStream;
-                return stream ? stream->AudioInfo : nullptr;
-            }
-        }
-
-        ///<summary>Gets video stream information</summary>
-        property IVectorView<VideoStreamInfo^>^ VideoStreams
-        {
-            IVectorView<VideoStreamInfo^>^ get() { return videoStreamInfos; }
-        }
-
-        ///<summary>Gets audio stream information.</summary>
-        property IVectorView<AudioStreamInfo^>^ AudioStreams
-        {
-            IVectorView<AudioStreamInfo^>^ get() { return audioStreamInfos; }
-        }
-
-        ///<summary>Gets subtitle stream information.</summary>
-        property IVectorView<SubtitleStreamInfo^>^ SubtitleStreams
-        {
-            IVectorView<SubtitleStreamInfo^>^ get() { return subtitleStreamInfos; }
-        }
-
-        ///<summary>Gets chapter information.</summary>
-        property IVectorView<ChapterInfo^>^ ChapterInfos
-        {
-            IVectorView<ChapterInfo^>^ get() { return chapterInfos; }
-        }
-
-        ///<summary>Gets chapter information.</summary>
-        property FormatInfo^ FormatInfo
-        {
-            FFmpegInteropX::FormatInfo^ get() { return formatInfo; }
-        }
-
-        ///<summary>Gets a boolean indication if a thumbnail is embedded in the file.</summary>
-        property bool HasThumbnail
-        {
-            bool get() { return thumbnailStreamIndex; }
-        }
-
-        ///<summary>Gets the MediaPlaybackItem that was created before by using CreateMediaPlaybackItem.</summary>
-        property MediaPlaybackItem^ PlaybackItem
-        {
-            MediaPlaybackItem^ get()
-            {
-                return playbackItem;
-            }
-        }
-
-        ///<summary>The current subtitle delay used by this instance.</summary>
-        property TimeSpan SubtitleDelay
-        {
-            TimeSpan get() { return subtitleDelay; }
-        }
-
-        ///<summary>Gets or sets the BufferTime of the MediaStreamSource.</summary>
-        ///<remarks>A value of 0 is recommended for local files, streaming sources should use higher values.</remarks>
-        property TimeSpan BufferTime
-        {
-            TimeSpan get() { return mss->BufferTime; }
-            void set(TimeSpan value) { mss->BufferTime = value; }
-        }
-
-        ///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
-        ///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this property.</remarks>
-        property Windows::Media::Playback::MediaPlaybackSession^ PlaybackSession
-        {
-            MediaPlaybackSession^ get() { return session; }
-            void set(MediaPlaybackSession^ value)
-            {
-                mutexGuard.lock();
-                if (session)
-                {
-                    session->PositionChanged -= sessionPositionEvent;
-                }
-                session = value;
-                if (value)
-                {
-                    sessionPositionEvent = value->PositionChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackSession^, Platform::Object^>(this, &FFmpegInteropX::FFmpegMediaSource::OnPositionChanged);
-                }
-                mutexGuard.unlock();
-            }
-        }
+        static Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config);
+        static Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream);
+        static Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config);
+        static Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri);
+        void SetSubtitleDelay(Windows::Foundation::TimeSpan const& delay);
+        void SetFFmpegAudioFilters(hstring const& audioFilters);
+        void SetFFmpegVideoFilters(hstring const& videoEffects);
+        void DisableAudioEffects();
+        void DisableVideoEffects();
+        FFmpegInteropX::MediaThumbnailData ExtractThumbnail();
+        Windows::Media::Core::MediaStreamSource GetMediaStreamSource();
+        Windows::Media::Playback::MediaPlaybackItem CreateMediaPlaybackItem();
+        Windows::Media::Playback::MediaPlaybackItem CreateMediaPlaybackItem(Windows::Foundation::TimeSpan const& startTime);
+        Windows::Media::Playback::MediaPlaybackItem CreateMediaPlaybackItem(Windows::Foundation::TimeSpan const& startTime, Windows::Foundation::TimeSpan const& durationLimit);
+        Windows::Foundation::IAsyncOperation<Windows::Foundation::Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> AddExternalSubtitleAsync(Windows::Storage::Streams::IRandomAccessStream stream, hstring streamName);
+        Windows::Foundation::IAsyncOperation<Windows::Foundation::Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> AddExternalSubtitleAsync(Windows::Storage::Streams::IRandomAccessStream stream);
+        FFmpegInteropX::MediaSourceConfig Configuration();
+        winrt::Windows::Foundation::Collections::IMapView<hstring, winrt::Windows::Foundation::Collections::IVectorView<hstring>> MetadataTags();
+        Windows::Foundation::TimeSpan Duration();
+        FFmpegInteropX::VideoStreamInfo CurrentVideoStream();
+        FFmpegInteropX::AudioStreamInfo CurrentAudioStream();
+        Windows::Foundation::Collections::IVectorView<FFmpegInteropX::VideoStreamInfo> VideoStreams();
+        Windows::Foundation::Collections::IVectorView<FFmpegInteropX::AudioStreamInfo> AudioStreams();
+        Windows::Foundation::Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> SubtitleStreams();
+        Windows::Foundation::Collections::IVectorView<FFmpegInteropX::ChapterInfo> ChapterInfos();
+        FFmpegInteropX::FormatInfo FormatInfo();
+        bool HasThumbnail();
+        Windows::Media::Playback::MediaPlaybackItem PlaybackItem();
+        Windows::Foundation::TimeSpan SubtitleDelay();
+        Windows::Foundation::TimeSpan BufferTime();
+        void BufferTime(winrt::Windows::Foundation::TimeSpan const& value);
+        Windows::Media::Playback::MediaPlaybackSession PlaybackSession();
+        void PlaybackSession(Windows::Media::Playback::MediaPlaybackSession const& value);
+        void Close();
+        FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, CoreDispatcher const& dispatcher);
 
     private:
-        FFmpegMediaSource(MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
 
-        HRESULT CreateMediaStreamSource(IRandomAccessStream^ stream);
-        HRESULT CreateMediaStreamSource(String^ uri);
+        HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);
+        HRESULT CreateMediaStreamSource(hstring const& uri);
         HRESULT InitFFmpegContext();
-        MediaSource^ CreateMediaSource();
-        MediaSampleProvider^ CreateAudioStream(AVStream* avStream, int index);
-        MediaSampleProvider^ CreateVideoStream(AVStream* avStream, int index);
-        SubtitleProvider^ CreateSubtitleSampleProvider(AVStream* avStream, int index);
-        MediaSampleProvider^ CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
-        MediaSampleProvider^ CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
-        HRESULT ParseOptions(PropertySet^ ffmpegOptions);
-        void OnStarting(MediaStreamSource^ sender, MediaStreamSourceStartingEventArgs^ args);
-        void OnSampleRequested(MediaStreamSource^ sender, MediaStreamSourceSampleRequestedEventArgs^ args);
+        MediaSource CreateMediaSource();
+        std::shared_ptr<MediaSampleProvider> CreateAudioStream(AVStream* avStream, int index);
+        std::shared_ptr<MediaSampleProvider> CreateVideoStream(AVStream* avStream, int index);
+        std::shared_ptr<SubtitleProvider> CreateSubtitleSampleProvider(AVStream* avStream, int index);
+        std::shared_ptr<MediaSampleProvider> CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
+        std::shared_ptr<MediaSampleProvider> CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
+        HRESULT ParseOptions(PropertySet const& ffmpegOptions);
+        void OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args);
+        void OnSampleRequested(MediaStreamSource const& sender, MediaStreamSourceSampleRequestedEventArgs const& args);
         void CheckVideoDeviceChanged();
-        void OnSwitchStreamsRequested(MediaStreamSource^ sender, MediaStreamSourceSwitchStreamsRequestedEventArgs^ args);
-        void OnAudioTracksChanged(MediaPlaybackItem^ sender, IVectorChangedEventArgs^ args);
-        void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList^ sender, TimedMetadataPresentationModeChangedEventArgs^ args);
-        void InitializePlaybackItem(MediaPlaybackItem^ playbackitem);
-        bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus^ status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
+        void OnSwitchStreamsRequested(MediaStreamSource  const& sender, MediaStreamSourceSwitchStreamsRequestedEventArgs  const& args);
+        void OnAudioTracksChanged(MediaPlaybackItem  const& sender, IVectorChangedEventArgs  const& args);
+        void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList  const& sender, TimedMetadataPresentationModeChangedEventArgs  const& args);
+        void InitializePlaybackItem(MediaPlaybackItem  const& playbackitem);
+        bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
 
         void FlushStreams()
         {
             // Flush all active streams
             for each (auto stream in sampleProviders)
             {
-                if (stream && stream->IsEnabled)
+                if (stream && stream->IsEnabled())
                 {
                     stream->Flush();
                 }
             }
         }
 
-    internal:
-        static FFmpegMediaSource^ CreateFromStream(IRandomAccessStream^ stream, MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
-        static FFmpegMediaSource^ CreateFromUri(String^ uri, MediaSourceConfig^ config, CoreDispatcher^ dispatcher);
-        static FFmpegMediaSource^ CreateFromUri(String^ uri, MediaSourceConfig^ config);
+    public://internal:
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, CoreDispatcher  const& dispatcher);
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, CoreDispatcher  const& dispatcher);
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config);
         HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek);
 
-        property MediaSampleProvider^ VideoSampleProvider
+        std::shared_ptr<MediaSampleProvider> VideoSampleProvider()
         {
-            MediaSampleProvider^ get()
-            {
-                return currentVideoStream;
-            }
+            return currentVideoStream;
         }
 
-        FFmpegReader^ m_pReader;
-        AVDictionary* avDict;
-        AVIOContext* avIOCtx;
-        AVFormatContext* avFormatCtx;
-        IStream* fileStreamData;
+        std::shared_ptr<FFmpegReader> m_pReader;
+        AVDictionary* avDict = NULL;
+        AVIOContext* avIOCtx = NULL;
+        AVFormatContext* avFormatCtx = NULL;
+        winrt::com_ptr<IStream> fileStreamData;
         ByteOrderMark streamByteOrderMark;
-        MediaSourceConfig^ config;
+        winrt::com_ptr<MediaSourceConfig> config = { nullptr };
 
     private:
 
-        MediaStreamSource^ mss;
-        EventRegistrationToken startingRequestedToken;
-        EventRegistrationToken sampleRequestedToken;
-        EventRegistrationToken switchStreamRequestedToken;
-        MediaPlaybackItem^ playbackItem;
-        Vector<AudioStreamInfo^>^ audioStrInfos;
-        Vector<SubtitleStreamInfo^>^ subtitleStrInfos;
-        Vector<VideoStreamInfo^>^ videoStrInfos;
+        MediaStreamSource mss = { nullptr };
+        winrt::event_token startingRequestedToken{};
+        winrt::event_token sampleRequestedToken{};
+        winrt::event_token switchStreamRequestedToken{};
+        MediaPlaybackItem playbackItem = { nullptr };
+        IVector<winrt::FFmpegInteropX::AudioStreamInfo> audioStrInfos = { nullptr };
+        IVector<winrt::FFmpegInteropX::SubtitleStreamInfo> subtitleStrInfos = { nullptr };
+        IVector<winrt::FFmpegInteropX::VideoStreamInfo> videoStrInfos = { nullptr };
 
-        std::vector<MediaSampleProvider^> sampleProviders;
-        std::vector<MediaSampleProvider^> audioStreams;
-        std::vector<SubtitleProvider^> subtitleStreams;
-        std::vector<MediaSampleProvider^> videoStreams;
+        std::vector<std::shared_ptr<MediaSampleProvider>> sampleProviders;
+        std::vector<std::shared_ptr<MediaSampleProvider>> audioStreams;
+        std::vector< std::shared_ptr<SubtitleProvider>> subtitleStreams;
+        std::vector<std::shared_ptr<MediaSampleProvider>> videoStreams;
 
-        MediaSampleProvider^ currentVideoStream;
-        MediaSampleProvider^ currentAudioStream;
-        String^ currentAudioEffects;
-        int thumbnailStreamIndex;
+        std::shared_ptr<MediaSampleProvider> currentVideoStream;
+        std::shared_ptr<MediaSampleProvider> currentAudioStream;
+        hstring currentAudioEffects{};
+        int thumbnailStreamIndex = 0;
 
-        EventRegistrationToken audioTracksChangedToken;
-        EventRegistrationToken subtitlePresentationModeChangedToken;
+        winrt::event_token audioTracksChangedToken{};
+        winrt::event_token subtitlePresentationModeChangedToken{};
 
 
-        IVectorView<VideoStreamInfo^>^ videoStreamInfos;
-        IVectorView<AudioStreamInfo^>^ audioStreamInfos;
-        IVectorView<SubtitleStreamInfo^>^ subtitleStreamInfos;
-        IVectorView<ChapterInfo^>^ chapterInfos;
-        FFmpegInteropX::FormatInfo^ formatInfo;
+        IVectorView<winrt::FFmpegInteropX::VideoStreamInfo> videoStreamInfos = { nullptr };
+        IVectorView<winrt::FFmpegInteropX::AudioStreamInfo> audioStreamInfos = { nullptr };
+        IVectorView<winrt::FFmpegInteropX::SubtitleStreamInfo> subtitleStreamInfos = { nullptr };
+        IVectorView<winrt::FFmpegInteropX::ChapterInfo> chapterInfos = { nullptr };
+        winrt::FFmpegInteropX::FormatInfo formatInfo = { nullptr };
 
-        AttachedFileHelper^ attachedFileHelper;
+        std::shared_ptr<AttachedFileHelper> attachedFileHelper = NULL;
 
-        MediaMetadata^ metadata;
+        std::shared_ptr<MediaMetadata> metadata = NULL;
 
         std::recursive_mutex mutexGuard;
-        CoreDispatcher^ dispatcher;
-        MediaPlaybackSession^ session;
-        EventRegistrationToken sessionPositionEvent;
+        CoreDispatcher dispatcher = { nullptr };
+        MediaPlaybackSession session = { nullptr };
+        winrt::event_token sessionPositionEvent{};
 
-        String^ videoCodecName;
-        String^ audioCodecName;
-        TimeSpan mediaDuration;
-        TimeSpan subtitleDelay;
-        unsigned char* fileStreamBuffer;
+        hstring videoCodecName{};
+        hstring audioCodecName{};
+        TimeSpan mediaDuration{};
+        TimeSpan subtitleDelay{};
+        unsigned char* fileStreamBuffer = NULL;
         bool isFirstSeek;
-        AVBufferRef* avHardwareContext;
-        AVBufferRef* avHardwareContextDefault;
-        ID3D11Device* device;
-        ID3D11DeviceContext* deviceContext;
-        HANDLE deviceHandle;
-        IMFDXGIDeviceManager* deviceManager;
+        AVBufferRef* avHardwareContext = NULL;
+        AVBufferRef* avHardwareContextDefault = NULL;
+        ID3D11Device* device = NULL;
+        ID3D11DeviceContext* deviceContext = NULL;
+        HANDLE deviceHandle = NULL;
+        IMFDXGIDeviceManager* deviceManager = NULL;
 
-        bool isFirstSeekAfterStreamSwitch;
-        bool isLastSeekForward;
-        TimeSpan lastSeekStart;
-        TimeSpan lastSeekActual;
+        bool isFirstSeekAfterStreamSwitch = false;
+        bool isLastSeekForward = false;
+        TimeSpan lastSeekStart{};
+        TimeSpan lastSeekActual{};
 
-        TimeSpan actualPosition;
-        TimeSpan lastPosition;
+        TimeSpan currentPosition{};
+        TimeSpan lastPosition{};
 
-        static CoreDispatcher^ GetCurrentDispatcher();
-        void OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession^ sender, Platform::Object^ args);
+        static CoreDispatcher GetCurrentDispatcher();
+        void OnPositionChanged(Windows::Media::Playback::MediaPlaybackSession const& sender, winrt::Windows::Foundation::IInspectable const& args);
     };
-
+}
+namespace winrt::FFmpegInteropX::factory_implementation
+{
+    struct FFmpegMediaSource : FFmpegMediaSourceT<FFmpegMediaSource, implementation::FFmpegMediaSource>
+    {
+    };
 }

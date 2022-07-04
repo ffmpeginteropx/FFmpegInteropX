@@ -1,90 +1,84 @@
 #pragma once
 
-#include <collection.h>
-#include <pplawait.h>
+#include "pch.h"
 
 extern "C"
 {
 #include <libavformat\avformat.h>
 }
-
+#include <ppltasks.h>
 #include "AttachedFile.h"
-
-using namespace Platform;
-using namespace Windows::Foundation;
-using namespace Windows::Storage;
-using namespace Windows::Storage::Streams;
-
-using namespace Concurrency;
 
 namespace FFmpegInteropX
 {
-    ref class AttachedFileHelper sealed
+    using namespace winrt::Windows::Foundation;
+    using namespace winrt::Windows::Storage;
+    using namespace winrt::Windows::Storage::Streams;
+
+    class AttachedFileHelper
     {
     public:
         virtual ~AttachedFileHelper()
         {
-            if (extractedFiles.size() > 0)
+            if (extractedFiles.Size() > 0)
             {
-                CleanupTempFiles(config->AttachmentCacheFolderName, InstanceId);
+                CleanupTempFiles(config.AttachmentCacheFolderName(), InstanceId());
             }
         }
 
-    internal:
-
-        AttachedFileHelper(MediaSourceConfig^ config)
+        AttachedFileHelper(winrt::FFmpegInteropX::MediaSourceConfig const& config)
         {
             this->config = config;
         }
 
-        property Vector<AttachedFile^>^ AttachedFiles { Vector<AttachedFile^>^ get() { return attachedFiles; } }
-        property String^ InstanceId { String^ get() { return instanceId; } }
+        winrt::Windows::Foundation::Collections::IVector<winrt::FFmpegInteropX::AttachedFile> AttachedFiles() { return attachedFiles; }
+        winrt::hstring InstanceId() { return instanceId; }
 
-        void AddAttachedFile(AttachedFile^ file)
+        void AddAttachedFile(winrt::FFmpegInteropX::AttachedFile const& file)
         {
-            attachedFiles->Append(file);
+            attachedFiles.Append(file);
         }
 
-        task<StorageFile^> ExtractFileAsync(AttachedFile^ attachment)
+        winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Storage::StorageFile> ExtractFileAsync(winrt::FFmpegInteropX::AttachedFile attachment)
         {
-            StorageFile^ file;
-            auto result = extractedFiles.find(attachment->Name);
-            if (result != extractedFiles.end())
+            StorageFile file = { nullptr };
+            auto result = extractedFiles.Lookup(attachment.Name());
+            if (result != nullptr)
             {
-                file = result->second;
+                file = result;
             }
             else
             {
-                if (this->instanceId == nullptr)
+                if (this->instanceId.empty())
                 {
                     GUID gdn;
                     CoCreateGuid(&gdn);
-                    instanceId = Guid(gdn).ToString();
+                    instanceId = winrt::to_hstring(winrt::guid(gdn));
                 }
 
-                auto folder = co_await ApplicationData::Current->TemporaryFolder->CreateFolderAsync(
-                    config->AttachmentCacheFolderName, CreationCollisionOption::OpenIfExists);
-                auto instanceFolder = co_await folder->CreateFolderAsync(instanceId, CreationCollisionOption::OpenIfExists);
-                file = co_await instanceFolder->CreateFileAsync(attachment->Name, CreationCollisionOption::ReplaceExisting);
-                co_await FileIO::WriteBufferAsync(file, attachment->GetBuffer());
+                auto folder = co_await ApplicationData::Current().TemporaryFolder().CreateFolderAsync(
+                    config.AttachmentCacheFolderName(), CreationCollisionOption::OpenIfExists);
+                auto instanceFolder = co_await folder.CreateFolderAsync(instanceId, CreationCollisionOption::OpenIfExists);
+                file = (co_await instanceFolder.CreateFileAsync(attachment.Name(), CreationCollisionOption::ReplaceExisting));
+                co_await FileIO::WriteBufferAsync(file, attachment.as<winrt::FFmpegInteropX::implementation::AttachedFile>()->GetBuffer());
 
-                extractedFiles[attachment->Name] = file;
+                extractedFiles.Insert(attachment.Name(), file);
             }
             co_return file;
         };
 
-        static task<void> CleanupTempFiles(String^ folderName, String^ instanceId)
+        static winrt::Windows::Foundation::IAsyncAction CleanupTempFiles(winrt::hstring folderName, winrt::hstring instanceId)
         {
             try
             {
-                auto folder = co_await ApplicationData::Current->TemporaryFolder->GetFolderAsync(folderName);
-                auto instancefolder = co_await folder->GetFolderAsync(instanceId);
-                auto files = co_await instancefolder->GetFilesAsync();
-                for each (auto file in files)
+                auto folder = co_await ApplicationData::Current().TemporaryFolder().GetFolderAsync(folderName);
+                auto instancefolder = co_await folder.GetFolderAsync(instanceId);
+                auto files = co_await instancefolder.GetFilesAsync();
+                for (auto file : files)
                 {
-                    co_await file->DeleteAsync();
+                    co_await file.DeleteAsync();
                 }
-                co_await instancefolder->DeleteAsync();
+                co_await instancefolder.DeleteAsync();
             }
             catch (...)
             {
@@ -93,10 +87,10 @@ namespace FFmpegInteropX
         }
 
     private:
-        std::map<String^, StorageFile^> extractedFiles;
-        Vector<AttachedFile^>^ attachedFiles = ref new Vector<AttachedFile^>();
-        MediaSourceConfig^ config;
-        String^ instanceId;
+        winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Storage::StorageFile> extractedFiles{ winrt::single_threaded_map<winrt::hstring, winrt::Windows::Storage::StorageFile>() };
+        winrt::Windows::Foundation::Collections::IVector<winrt::FFmpegInteropX::AttachedFile> attachedFiles{ winrt::single_threaded_vector<winrt::FFmpegInteropX::AttachedFile>() };
+        winrt::FFmpegInteropX::MediaSourceConfig config = { nullptr };
+        winrt::hstring instanceId{};
     };
 
 }

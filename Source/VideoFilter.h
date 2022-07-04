@@ -1,10 +1,12 @@
 #pragma once
+#include "pch.h"
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "IAvEffect.h"
 #include <sstream>
+#include "StringUtils.h"
 
 extern "C"
 {
@@ -15,33 +17,34 @@ extern "C"
 #include <libavfilter/buffersink.h>
 #include <libavfilter/buffersrc.h>
 #include <libavfilter/avfilter.h>
+#include <libavcodec/avcodec.h>
 }
 
 namespace FFmpegInteropX
 {
-    using namespace Windows::Foundation::Collections;
-    using namespace Windows::Media::Playback;
-    using namespace Windows::Foundation;
-    using namespace Platform;
-    using namespace Windows::Storage;
+    using namespace winrt::Windows::Foundation::Collections;
+    using namespace winrt::Windows::Media::Playback;
+    using namespace winrt::Windows::Foundation;
 
-    ref class VideoFilter : public IAvEffect
+    using namespace winrt::Windows::Storage;
+
+    class VideoFilter : public IAvEffect
     {
-        const AVFilter* AVSource;
-        const AVFilter* AVSink;
+        const AVFilter* AVSource = NULL;
+        const AVFilter* AVSink = NULL;
 
-        AVFilterGraph* graph;
-        AVFilterContext* avSource_ctx, * avSink_ctx;
+        AVFilterGraph* graph = NULL;
+        AVFilterContext* avSource_ctx = NULL, * avSink_ctx = NULL;
 
-        AVCodecContext* inputCodecCtx;
-        AVStream* inputStream;
+        AVCodecContext* inputCodecCtx = NULL;
+        AVStream* inputStream = NULL;
 
-        String^ filterDefinition;
-        bool isInitialized;
+        winrt::hstring filterDefinition{};
+        bool isInitialized = false;
 
         AVPixelFormat format;
-        int width;
-        int height;
+        int width = 0;
+        int height = 0;
 
         HRESULT AllocGraph()
         {
@@ -57,8 +60,6 @@ namespace FFmpegInteropX
 
         HRESULT AllocSource(AVFrame* avFrame)
         {
-            AVDictionary* options_dict = NULL;
-
             int hr;
 
             /* Create the buffer filter;
@@ -176,8 +177,8 @@ namespace FFmpegInteropX
         }
 
 
-    internal:
-        VideoFilter(AVCodecContext* m_inputCodecCtx, AVStream* inputStream, String^ filterDefinition)
+    public:
+        VideoFilter(AVCodecContext* m_inputCodecCtx, AVStream* inputStream, winrt::hstring filterDefinition)
         {
             this->inputCodecCtx = m_inputCodecCtx;
             this->inputStream = inputStream;

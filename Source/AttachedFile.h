@@ -1,44 +1,34 @@
 #pragma once
+#include "AttachedFile.g.h"
 
-extern "C"
+// Note: Remove this static_assert after copying these generated source files to your project.
+// This assertion exists to avoid compiling these generated source files directly.
+//static_assert(false, "Do not compile generated C++/WinRT source files directly");
+
+namespace winrt::FFmpegInteropX::implementation
 {
-#include <libavformat\avformat.h>
-}
-
-#include "NativeBufferFactory.h"
-
-using namespace Platform;
-using namespace Windows::Storage;
-using namespace Windows::Storage::Streams;
-
-namespace FFmpegInteropX
-{
-    public ref class AttachedFile sealed
+    struct AttachedFile : AttachedFileT<AttachedFile>
     {
+        AttachedFile() = default;
+
+        hstring Name();
+        hstring MimeType();
+        uint64_t Size();
+
     public:
-        property String^ Name { String^ get() { return name; } };
-        property String^ MimeType { String^ get() { return mimeType; } };
-        property uint64 Size { uint64 get() { return stream->codecpar->extradata_size; }}
+        winrt::Windows::Storage::Streams::IBuffer GetBuffer();
 
-    internal:
-
-        AttachedFile(String^ name, String^ mimeType, AVStream* stream)
+        AttachedFile(hstring  const& name, hstring  const& mimeType, AVStream* stream)
         {
             this->name = name;
             this->mimeType = mimeType;
             this->stream = stream;
         }
 
-        IBuffer^ GetBuffer()
-        {
-            return NativeBuffer::NativeBufferFactory::CreateNativeBuffer(stream->codecpar->extradata, (DWORD)Size);
-        }
-
     private:
-        String^ name;
-        String^ mimeType;
+        hstring name{};
+        hstring mimeType{};
 
-        AVStream* stream;
+        AVStream* stream = NULL;
     };
-
 }

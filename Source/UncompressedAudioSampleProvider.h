@@ -17,36 +17,36 @@
 //*****************************************************************************
 
 #pragma once
+#include <winrt/FFmpegInteropX.h>
 #include "UncompressedSampleProvider.h"
 
 namespace FFmpegInteropX
 {
-    ref class UncompressedAudioSampleProvider : UncompressedSampleProvider
+    class UncompressedAudioSampleProvider : public UncompressedSampleProvider
     {
     public:
         virtual ~UncompressedAudioSampleProvider();
 
-    internal:
         UncompressedAudioSampleProvider(
-            FFmpegReader^ reader,
+            std::shared_ptr<FFmpegReader> reader,
             AVFormatContext* avFormatCtx,
             AVCodecContext* avCodecCtx,
-            MediaSourceConfig^ config,
+            winrt::FFmpegInteropX::MediaSourceConfig const& config,
             int streamIndex);
-        virtual HRESULT CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
-        IMediaStreamDescriptor^ CreateStreamDescriptor() override;
-        HRESULT CheckFormatChanged(AVSampleFormat format, int channels, uint64 channelLayout, int sampleRate);
+        virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
+        winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
+        HRESULT CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate);
         HRESULT UpdateResampler();
 
 
     private:
-        SwrContext* m_pSwrCtx;
+        SwrContext* m_pSwrCtx = NULL;
         AVSampleFormat inSampleFormat, outSampleFormat;
-        int inSampleRate, outSampleRate, inChannels, outChannels;
-        uint64 inChannelLayout, outChannelLayout;
-        int bytesPerSample;
-        bool needsUpdateResampler;
-        bool useResampler;
+        int inSampleRate = 0, outSampleRate = 0, inChannels = 0, outChannels = 0;
+        UINT64 inChannelLayout = 0, outChannelLayout = 0;
+        int bytesPerSample = 0;
+        bool needsUpdateResampler = false;
+        bool useResampler = false;
     };
 }
 

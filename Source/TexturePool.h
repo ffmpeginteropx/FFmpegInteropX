@@ -1,14 +1,12 @@
 #pragma once
 #include <d3d11.h>
-#include <DirectXInteropHelper.h>
+#include "DirectXInteropHelper.h"
 
 namespace FFmpegInteropX
 {
-    using namespace Platform;
-
-    ref class TexturePool
+    class TexturePool
     {
-    internal:
+    public:
 
         TexturePool(ID3D11Device* device, int initialPoolSize)
         {
@@ -17,14 +15,14 @@ namespace FFmpegInteropX
             this->initialPoolSize = initialPoolSize;
         }
 
-    private:
+    public:
         ~TexturePool()
         {
             Clear();
             SAFE_RELEASE(device);
         }
 
-    internal:
+    public:
 
         void Clear()
         {
@@ -62,7 +60,7 @@ namespace FFmpegInteropX
 
             // pre-allocate pool
             ID3D11Texture2D* copy_tex;
-            HRESULT hr;
+            HRESULT hr = S_OK;
             for (int i = 0; i < initialPoolSize; i++)
             {
                 hr = device->CreateTexture2D(&desc_shared, NULL, &copy_tex);
@@ -122,10 +120,10 @@ namespace FFmpegInteropX
         }
 
     private:
-        ID3D11Device* device;
+        ID3D11Device* device = NULL;
         std::vector<ID3D11Texture2D*> pool;
         D3D11_TEXTURE2D_DESC desc_shared;
-        int initialPoolSize;
+        int initialPoolSize = 0;
     };
 
 }

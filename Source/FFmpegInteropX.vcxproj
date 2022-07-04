@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
       <Configuration>Debug</Configuration>
@@ -35,7 +36,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</ProjectGuid>
+    <ProjectGuid>{5F6BFB93-C423-4EA3-A02A-B4E25D892135}</ProjectGuid>
     <Keyword>WindowsRuntimeComponent</Keyword>
     <ProjectName>FFmpegInteropX</ProjectName>
     <RootNamespace>FFmpegInteropX</RootNamespace>
@@ -98,79 +99,6 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AbstractEffectFactory.h" />
-    <ClInclude Include="AttachedFile.h" />
-    <ClInclude Include="AttachedFileHelper.h" />
-    <ClInclude Include="AudioEffectFactory.h" />
-    <ClInclude Include="AudioFilter.h" />
-    <ClInclude Include="AvCodecContextHelpers.h" />
-    <ClInclude Include="CodecChecker.h" />
-    <ClInclude Include="BasicVideoEffect.h" />
-    <ClInclude Include="CodecRequiredEventArgs.h" />
-    <ClInclude Include="CompressedSampleProvider.h" />
-    <ClInclude Include="CritSec.h" />
-    <ClInclude Include="CharacterEncoding.h" />
-    <ClInclude Include="D3D11VideoSampleProvider.h" />
-    <ClInclude Include="DirectXInteropHelper.h" />
-    <ClInclude Include="Enumerations.h" />
-    <ClInclude Include="MediaSourceConfig.h" />
-    <ClInclude Include="FFmpegInteropLogging.h" />
-    <ClInclude Include="FFmpegMediaSource.h" />
-    <ClInclude Include="FFmpegReader.h" />
-    <ClInclude Include="FrameGrabber.h" />
-    <ClInclude Include="H264AVCSampleProvider.h" />
-    <ClInclude Include="IAvEffect.h" />
-    <ClInclude Include="KeyStringValuePair.h" />
-    <ClInclude Include="LanguageTagConverter.h" />
-    <ClInclude Include="NALPacketSampleProvider.h" />
-    <ClInclude Include="HEVCSampleProvider.h" />
-    <ClInclude Include="ILogProvider.h" />
-    <ClInclude Include="MediaSampleProvider.h" />
-    <ClInclude Include="MediaThumbnailData.h" />
-    <ClInclude Include="NativeBuffer.h" />
-    <ClInclude Include="NativeBufferFactory.h" />
-    <ClInclude Include="ReferenceCue.h" />
-    <ClInclude Include="StreamInfo.h" />
-    <ClInclude Include="StringUtils.h" />
-    <ClInclude Include="SubtitleProvider.h" />
-    <ClInclude Include="SubtitleProviderBitmap.h" />
-    <ClInclude Include="SubtitleProviderSsaAss.h" />
-    <ClInclude Include="TexturePool.h" />
-    <ClInclude Include="TimeSpanHelpers.h" />
-    <ClInclude Include="MediaMetadata.h" />
-    <ClInclude Include="UncompressedAudioSampleProvider.h" />
-    <ClInclude Include="UncompressedFrameProvider.h" />
-    <ClInclude Include="UncompressedSampleProvider.h" />
-    <ClInclude Include="UncompressedVideoSampleProvider.h" />
-    <ClInclude Include="VideoEffectConfiguration.h" />
-    <ClInclude Include="VideoEffectFactory.h" />
-    <ClInclude Include="VideoFilter.h" />
-    <ClInclude Include="VideoFrame.h" />
-    <ClInclude Include="pch.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="CodecChecker.cpp" />
-    <ClCompile Include="BasicVideoEffect.cpp" />
-    <ClCompile Include="CompressedSampleProvider.cpp" />
-    <ClCompile Include="CharacterEncoding.cpp" />
-    <ClCompile Include="DirectXInteropHelper.cpp" />
-    <ClCompile Include="FFmpegInteropLogging.cpp" />
-    <ClCompile Include="FFmpegMediaSource.cpp" />
-    <ClCompile Include="FFmpegReader.cpp" />
-    <ClCompile Include="FrameGrabber.cpp" />
-    <ClCompile Include="H264AVCSampleProvider.cpp" />
-    <ClCompile Include="NALPacketSampleProvider.cpp" />
-    <ClCompile Include="HEVCSampleProvider.cpp" />
-    <ClCompile Include="MediaSampleProvider.cpp" />
-    <ClCompile Include="NativeBufferFactory.cpp" />
-    <ClCompile Include="UncompressedAudioSampleProvider.cpp" />
-    <ClCompile Include="UncompressedSampleProvider.cpp" />
-    <ClCompile Include="UncompressedVideoSampleProvider.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader>Create</PrecompiledHeader>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\Build-FFmpeg.ps1" />
     <None Include="..\Build-FFmpegInteropX.ps1" />
     <None Include="..\Docker\dockerfile" />
@@ -186,13 +114,113 @@
     <None Include="..\README.md" />
     <None Include="..\Build\Repack-NuGet.ps1" />
     <None Include="..\Build\Start-DevShell.ps1" />
+    <None Include="cpp.hint" />
     <None Include="FFmpegInteropLibs.props" />
+    <None Include="FFmpegInteropX.def" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AbstractEffectFactory.h" />
+    <ClInclude Include="AttachedFile.h" />
+    <ClInclude Include="AttachedFileHelper.h" />
+    <ClInclude Include="AudioEffectFactory.h" />
+    <ClInclude Include="AudioFilter.h" />
+    <ClInclude Include="AudioStreamInfo.h" />
+    <ClInclude Include="AvCodecContextHelpers.h" />
+    <ClInclude Include="BasicVideoEffect.h" />
+    <ClInclude Include="ChapterInfo.h" />
+    <ClInclude Include="CharacterEncoding.h" />
+    <ClInclude Include="CodecChecker.h" />
+    <ClInclude Include="CodecRequiredEventArgs.h" />
+    <ClInclude Include="CompressedSampleProvider.h" />
+    <ClInclude Include="CritSec.h" />
+    <ClInclude Include="D3D11VideoSampleProvider.h" />
+    <ClInclude Include="DirectXInteropHelper.h" />
+    <ClInclude Include="FFmpegInteropLogging.h" />
+    <ClInclude Include="FFmpegMediaSource.h" />
+    <ClInclude Include="FFmpegReader.h" />
+    <ClInclude Include="FFmpegUtils.h" />
+    <ClInclude Include="FormatInfo.h" />
+    <ClInclude Include="FrameGrabber.h" />
+    <ClInclude Include="H264AVCSampleProvider.h" />
+    <ClInclude Include="HEVCSampleProvider.h" />
+    <ClInclude Include="IAvEffect.h" />
+    <ClInclude Include="LanguageTagConverter.h" />
+    <ClInclude Include="MediaMetadata.h" />
+    <ClInclude Include="MediaSampleProvider.h" />
+    <ClInclude Include="MediaSourceConfig.h" />
+    <ClInclude Include="MediaThumbnailData.h" />
+    <ClInclude Include="NALPacketSampleProvider.h" />
+    <ClInclude Include="NativeBuffer.h" />
+    <ClInclude Include="NativeBufferFactory.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="ReferenceCue.h" />
+    <ClInclude Include="StringUtils.h" />
+    <ClInclude Include="SubtitleProvider.h" />
+    <ClInclude Include="SubtitleProviderBitmap.h" />
+    <ClInclude Include="SubtitleProviderSsaAss.h" />
+    <ClInclude Include="SubtitleStreamInfo.h" />
+    <ClInclude Include="TexturePool.h" />
+    <ClInclude Include="TimeSpanHelpers.h" />
+    <ClInclude Include="UncompressedAudioSampleProvider.h" />
+    <ClInclude Include="UncompressedFrameProvider.h" />
+    <ClInclude Include="UncompressedSampleProvider.h" />
+    <ClInclude Include="UncompressedVideoSampleProvider.h" />
+    <ClInclude Include="VideoEffectConfiguration.h" />
+    <ClInclude Include="VideoEffectFactory.h" />
+    <ClInclude Include="VideoFilter.h" />
+    <ClInclude Include="VideoFrame.h" />
+    <ClInclude Include="VideoStreamInfo.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AttachedFile.cpp" />
+    <ClCompile Include="AttachedFileHelper.cpp" />
+    <ClCompile Include="AudioStreamInfo.cpp" />
+    <ClCompile Include="BasicVideoEffect.cpp" />
+    <ClCompile Include="ChapterInfo.cpp" />
+    <ClCompile Include="CharacterEncoding.cpp" />
+    <ClCompile Include="CodecChecker.cpp" />
+    <ClCompile Include="CodecRequiredEventArgs.cpp" />
+    <ClCompile Include="CompressedSampleProvider.cpp" />
+    <ClCompile Include="D3D11VideoSampleProvider.cpp" />
+    <ClCompile Include="DirectXInteropHelper.cpp" />
+    <ClCompile Include="FFmpegInteropLogging.cpp" />
+    <ClCompile Include="FFmpegMediaSource.cpp" />
+    <ClCompile Include="FFmpegReader.cpp" />
+    <ClCompile Include="FFmpegUtils.cpp" />
+    <ClCompile Include="FormatInfo.cpp" />
+    <ClCompile Include="FrameGrabber.cpp" />
+    <ClCompile Include="H264AVCSampleProvider.cpp" />
+    <ClCompile Include="HEVCSampleProvider.cpp" />
+    <ClCompile Include="LanguageTagConverter.cpp" />
+    <ClCompile Include="MediaSampleProvider.cpp" />
+    <ClCompile Include="MediaSourceConfig.cpp" />
+    <ClCompile Include="MediaThumbnailData.cpp" />
+    <ClCompile Include="NALPacketSampleProvider.cpp" />
+    <ClCompile Include="NativeBufferFactory.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="ReferenceCue.cpp" />
+    <ClCompile Include="SubtitleProvider.cpp" />
+    <ClCompile Include="SubtitleProviderSsaAss.cpp" />
+    <ClCompile Include="SubtitleStreamInfo.cpp" />
+    <ClCompile Include="UncompressedAudioSampleProvider.cpp" />
+    <ClCompile Include="UncompressedSampleProvider.cpp" />
+    <ClCompile Include="UncompressedVideoSampleProvider.cpp" />
+    <ClCompile Include="VideoEffectConfiguration.cpp" />
+    <ClCompile Include="VideoFrame.cpp" />
+    <ClCompile Include="VideoStreamInfo.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="FFmpegInteropX.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets" Condition="Exists('..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets')" />
     <Import Project="..\packages\FFmpegInteropX.FFmpegUWP.5.0.0\build\native\FFmpegInteropX.FFmpegUWP.targets" Condition="Exists('..\packages\FFmpegInteropX.FFmpegUWP.5.0.0\build\native\FFmpegInteropX.FFmpegUWP.targets')" />
+    <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -200,5 +228,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Win2D.uwp.1.24.0\build\native\Win2D.uwp.targets'))" />
     <Error Condition="!Exists('..\packages\FFmpegInteropX.FFmpegUWP.5.0.0\build\native\FFmpegInteropX.FFmpegUWP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FFmpegInteropX.FFmpegUWP.5.0.0\build\native\FFmpegInteropX.FFmpegUWP.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.targets'))" />
   </Target>
 </Project>

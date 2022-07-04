@@ -1,4 +1,5 @@
 #pragma once
+#include "pch.h"
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
@@ -21,24 +22,24 @@ extern "C"
 
 namespace FFmpegInteropX
 {
-    using namespace Windows::Foundation::Collections;
-    using namespace Windows::Media::Playback;
-    using namespace Windows::Foundation;
-    using namespace Platform;
-    using namespace Windows::Storage;
+    using namespace winrt::Windows::Foundation::Collections;
+    using namespace winrt::Windows::Media::Playback;
+    using namespace winrt::Windows::Foundation;
 
-    ref class AudioFilter : public IAvEffect
+    using namespace winrt::Windows::Storage;
+
+    class AudioFilter : public IAvEffect
     {
-        const AVFilter* AVSource;
-        const AVFilter* AVSink;
+        const AVFilter* AVSource = NULL;
+        const AVFilter* AVSink = NULL;
 
-        AVFilterGraph* graph;
-        AVFilterContext* avSource_ctx, * avSink_ctx;
+        AVFilterGraph* graph = NULL;
+        AVFilterContext* avSource_ctx = NULL, * avSink_ctx = NULL;
 
-        AVCodecContext* inputCodecCtx;
+        AVCodecContext* inputCodecCtx = NULL;
 
-        String^ filterDefinition;
-        bool isInitialized;
+        winrt::hstring filterDefinition{};
+        bool isInitialized = false;
         char channel_layout_name[256];
 
         HRESULT InitFilterGraph(AVFrame* frame)
@@ -180,9 +181,7 @@ namespace FFmpegInteropX
         }
 
 
-    internal:
-
-        AudioFilter(AVCodecContext* m_inputCodecCtx, String^ filterDefinition)
+        AudioFilter(AVCodecContext* m_inputCodecCtx, winrt::hstring const& filterDefinition)
         {
             this->inputCodecCtx = m_inputCodecCtx;
             this->filterDefinition = filterDefinition;

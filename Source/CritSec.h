@@ -43,6 +43,7 @@ public:
 //
 //  Note: The AutoLock object must go out of scope before the CritSec.
 //////////////////////////////////////////////////////////////////////////
+#include "pch.h"
 
 class AutoLock
 {

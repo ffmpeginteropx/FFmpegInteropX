@@ -1,24 +1,23 @@
 #pragma once
-
+#include "pch.h"
 #include "MediaSampleProvider.h"
 
 namespace FFmpegInteropX
 {
-    ref class CompressedSampleProvider : MediaSampleProvider
+    class CompressedSampleProvider : public MediaSampleProvider
     {
     public:
         virtual ~CompressedSampleProvider();
 
-    internal:
-        CompressedSampleProvider(FFmpegReader^ reader, AVFormatContext* avFormatCtx, AVCodecContext* avCodecCtx, MediaSourceConfig^ config, int streamIndex, HardwareDecoderStatus hardwareDecoderStatus);
-        CompressedSampleProvider(FFmpegReader^ reader, AVFormatContext* avFormatCtx, AVCodecContext* avCodecCtx, MediaSourceConfig^ config, int streamIndex, VideoEncodingProperties^ encodingProperties, HardwareDecoderStatus hardwareDecoderStatus);
-        CompressedSampleProvider(FFmpegReader^ reader, AVFormatContext* avFormatCtx, AVCodecContext* avCodecCtx, MediaSourceConfig^ config, int streamIndex, AudioEncodingProperties^ encodingProperties, HardwareDecoderStatus hardwareDecoderStatus);
-        virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) override;
-        virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer);
-        virtual IMediaStreamDescriptor^ CreateStreamDescriptor() override;
+        CompressedSampleProvider(std::shared_ptr<FFmpegReader> reader, AVFormatContext* avFormatCtx, AVCodecContext* avCodecCtx, winrt::FFmpegInteropX::MediaSourceConfig const& config, int streamIndex, HardwareDecoderStatus hardwareDecoderStatus);
+        CompressedSampleProvider(std::shared_ptr<FFmpegReader> reader, AVFormatContext* avFormatCtx, AVCodecContext* avCodecCtx, winrt::FFmpegInteropX::MediaSourceConfig const& config, int streamIndex, winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& encodingProperties, HardwareDecoderStatus hardwareDecoderStatus);
+        CompressedSampleProvider(std::shared_ptr<FFmpegReader> reader, AVFormatContext* avFormatCtx, AVCodecContext* avCodecCtx, winrt::FFmpegInteropX::MediaSourceConfig const& config, int streamIndex, winrt::Windows::Media::MediaProperties::AudioEncodingProperties const& encodingProperties, HardwareDecoderStatus hardwareDecoderStatus);
+        virtual HRESULT CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface) override;
+        virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, winrt::Windows::Storage::Streams::IBuffer* pBuffer);
+        virtual winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
 
     private:
-        VideoEncodingProperties^ videoEncodingProperties;
-        AudioEncodingProperties^ audioEncodingProperties;
+        winrt::Windows::Media::MediaProperties::VideoEncodingProperties videoEncodingProperties = { nullptr };
+        winrt::Windows::Media::MediaProperties::AudioEncodingProperties audioEncodingProperties = { nullptr };
     };
 }

@@ -1,59 +1,60 @@
 #pragma once
+#pragma once
 #include "pch.h"
-#include "KeyStringValuePair.h"
 
 namespace FFmpegInteropX
 {
-    using namespace Platform;
-    using namespace Platform::Collections;
-    using namespace Windows::Foundation;
-    using namespace Windows::Foundation::Collections;
+    using namespace winrt::Windows::Foundation;
+    using namespace winrt::Windows::Foundation::Collections;
 
-    ref class MediaMetadata sealed
+    class MediaMetadata
     {
-        Map<String^, IVectorView<String^>^>^ entries;
+        IMap<winrt::hstring, IVectorView<winrt::hstring>> entries = { nullptr };
         bool tagsLoaded = false;
-    internal:
+    public:
 
         MediaMetadata()
         {
-            entries = ref new Map<String^, IVectorView<String^>^>();
+            entries = winrt::single_threaded_map<winrt::hstring, IVectorView<winrt::hstring>>();
         }
 
         void LoadMetadataTags(AVFormatContext* m_pAvFormatCtx)
         {
             if (!tagsLoaded)
             {
+                auto entriesLocal = winrt::single_threaded_map<winrt::hstring, IVector<winrt::hstring>>();
                 if (m_pAvFormatCtx->metadata)
                 {
                     AVDictionaryEntry* entry = NULL;
-                    auto localEntries = ref new Map<String^, IVector<String^>^>();
+
                     do {
                         entry = av_dict_get(m_pAvFormatCtx->metadata, "", entry, AV_DICT_IGNORE_SUFFIX);
                         if (entry)
                         {
                             auto key = StringUtils::Utf8ToPlatformString(entry->key);
                             auto value = StringUtils::Utf8ToPlatformString(entry->value);
-                            if (localEntries->HasKey(key))
+                            if (entries.HasKey(key))
                             {
-                                auto vector = localEntries->Lookup(key);
-                                vector->Append(value);
+                                auto valueList = entriesLocal.Lookup(key);
+                                valueList.Append(value);
                             }
                             else
                             {
-                                auto vector = ref new Vector<String^>();
-                                vector->Append(value);
-                                localEntries->Insert(key, vector);
+                                auto valueList = winrt::single_threaded_vector<winrt::hstring>();
+                                valueList.Append(value);
+                                entriesLocal.Insert(key, valueList);
                             }
+                            /*auto kvp = winrt::single_threaded_map<winrt::hstring, winrt::hstring>(StringUtils::Utf8ToPlatformString(entry->key),
+                                StringUtils::Utf8ToPlatformString(entry->value))
+                            entries.Append({
+                                 });*/
                         }
-
 
                     } while (entry);
 
-
-                    for (auto kvp : localEntries)
+                    for (auto kvp : entriesLocal)
                     {
-                        entries->Insert(kvp->Key, kvp->Value->GetView());
+                        entries.Insert(kvp.Key(), kvp.Value().GetView());
                     }
                 }
                 tagsLoaded = true;
@@ -61,17 +62,12 @@ namespace FFmpegInteropX
         }
 
 
-        property IMapView<String^, IVectorView<String^>^>^ MetadataTags
+        IMapView<winrt::hstring, IVectorView<winrt::hstring>> MetadataTags()
         {
-            IMapView<String^, IVectorView<String^>^>^ get()
-            {
-                return entries->GetView();
-            }
+            return entries.GetView();
         }
 
     };
-
-
 }
 
 

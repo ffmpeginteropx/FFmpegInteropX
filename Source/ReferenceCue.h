@@ -1,35 +1,37 @@
 #pragma once
-#include<pch.h>
+#include "ReferenceCue.g.h"
 
-namespace FFmpegInteropX
+// Note: Remove this static_assert after copying these generated source files to your project.
+// This assertion exists to avoid compiling these generated source files directly.
+//static_assert(false, "Do not compile generated C++/WinRT source files directly");
+
+namespace winrt::FFmpegInteropX::implementation
 {
-    using namespace Platform;
-    using namespace Windows::Foundation;
-    using namespace Windows::Media::Core;
-
-    ref class ReferenceCue : IMediaCue
+    struct ReferenceCue : ReferenceCueT<ReferenceCue>
     {
-    internal:
+        ReferenceCue() = default;
 
-        ReferenceCue(IMediaCue^ other)
-        {
-            this->CueRef = other;
-            this->Duration = other->Duration;
-            this->Id = other->Id;
-            this->StartTime = other->StartTime;
-        }
+        ReferenceCue(Windows::Media::Core::IMediaCue const& other);
+        void StartTime(Windows::Foundation::TimeSpan const& value);
+        Windows::Foundation::TimeSpan StartTime();
+        void Duration(Windows::Foundation::TimeSpan const& value);
+        Windows::Foundation::TimeSpan Duration();
+        void Id(hstring const& value);
+        hstring Id();
 
     public:
-        virtual property String^ Id;
+        winrt::hstring id{};
 
-        virtual property TimeSpan Duration;
+        winrt::Windows::Foundation::TimeSpan duration{};
 
-        virtual property TimeSpan StartTime;
+        winrt::Windows::Foundation::TimeSpan startTime{};
 
-        property IMediaCue^ CueRef;
+        winrt::Windows::Media::Core::IMediaCue cueRef = { nullptr };
     };
 }
-
-
-
-
+namespace winrt::FFmpegInteropX::factory_implementation
+{
+    struct ReferenceCue : ReferenceCueT<ReferenceCue, implementation::ReferenceCue>
+    {
+    };
+}

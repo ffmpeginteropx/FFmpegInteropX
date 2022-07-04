@@ -30,64 +30,67 @@ extern "C"
 
 using namespace FFmpegInteropX;
 using namespace NativeBuffer;
-using namespace Windows::Media::MediaProperties;
+using namespace winrt::Windows::Media::MediaProperties;
+using namespace winrt::Windows::Foundation;
+using namespace winrt::Windows::Media::Core;
 
 UncompressedVideoSampleProvider::UncompressedVideoSampleProvider(
-    FFmpegReader^ reader,
+    std::shared_ptr<FFmpegReader> reader,
     AVFormatContext* avFormatCtx,
     AVCodecContext* avCodecCtx,
-    MediaSourceConfig^ config,
+    MediaSourceConfig const& config,
     int streamIndex,
     HardwareDecoderStatus hardwareDecoderStatus)
     : UncompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
 {
+    m_pSwsCtx = NULL;
 }
 
 void UncompressedVideoSampleProvider::SelectOutputFormat()
 {
-    if (m_config->IsFrameGrabber)
+    if (m_config.as<implementation::MediaSourceConfig>()->IsFrameGrabber)
     {
         m_OutputPixelFormat = AV_PIX_FMT_BGRA;
-        outputMediaSubtype = MediaEncodingSubtypes::Bgra8;
+        outputMediaSubtype = MediaEncodingSubtypes::Bgra8();
     }
-    else if (m_config->VideoOutputAllowIyuv && (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P || m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P)
+    else if (m_config.VideoOutputAllowIyuv() && (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P || m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P)
         && m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1 && decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
     {
         // if format is yuv and yuv is allowed and codec supports direct buffer decoding, use yuv
         m_OutputPixelFormat = m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P ? AV_PIX_FMT_YUVJ420P : AV_PIX_FMT_YUV420P;
-        outputMediaSubtype = MediaEncodingSubtypes::Iyuv;
+        outputMediaSubtype = MediaEncodingSubtypes::Iyuv();
     }
-    else if (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P10LE && m_config->VideoOutputAllow10bit)
+    else if (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P10LE && m_config.VideoOutputAllow10bit())
     {
         m_OutputPixelFormat = AV_PIX_FMT_P010LE;
         OLECHAR* guidString;
         StringFromCLSID(MFVideoFormat_P010, &guidString);
 
-        outputMediaSubtype = ref new String(guidString);
+        outputMediaSubtype = winrt::hstring(guidString);
 
         // ensure memory is freed
         ::CoTaskMemFree(guidString);
     }
-    else if (m_config->VideoOutputAllowNv12)
+    else if (m_config.VideoOutputAllowNv12())
     {
         // NV12 is generally the preferred format
         m_OutputPixelFormat = AV_PIX_FMT_NV12;
-        outputMediaSubtype = MediaEncodingSubtypes::Nv12;
+        outputMediaSubtype = MediaEncodingSubtypes::Nv12();
     }
-    else if (m_config->VideoOutputAllowIyuv)
+    else if (m_config.VideoOutputAllowIyuv())
     {
         m_OutputPixelFormat = m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P ? AV_PIX_FMT_YUVJ420P : AV_PIX_FMT_YUV420P;
-        outputMediaSubtype = MediaEncodingSubtypes::Iyuv;
+        outputMediaSubtype = MediaEncodingSubtypes::Iyuv();
     }
-    else if (m_config->VideoOutputAllowBgra8)
+    else if (m_config.VideoOutputAllowBgra8())
     {
         m_OutputPixelFormat = AV_PIX_FMT_BGRA;
-        outputMediaSubtype = MediaEncodingSubtypes::Bgra8;
+        outputMediaSubtype = MediaEncodingSubtypes::Bgra8();
     }
     else // if no format is allowed, we still use NV12
     {
         m_OutputPixelFormat = AV_PIX_FMT_NV12;
-        outputMediaSubtype = MediaEncodingSubtypes::Nv12;
+        outputMediaSubtype = MediaEncodingSubtypes::Nv12();
     }
 
     outputWidth = outputFrameWidth = m_pAvCodecCtx->width;
@@ -109,14 +112,14 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
     }
 }
 
-IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor()
+IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
 {
     SelectOutputFormat();
 
-    frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new VideoEffectFactory(m_pAvCodecCtx, m_pAvStream));
+    frameProvider = std::shared_ptr<UncompressedFrameProvider>(new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, std::shared_ptr< VideoEffectFactory>(new VideoEffectFactory(m_pAvCodecCtx, m_pAvStream))));
 
     auto videoProperties = VideoEncodingProperties::CreateUncompressed(outputMediaSubtype, outputFrameWidth, outputFrameHeight);
-    auto properties = videoProperties->Properties;
+    auto properties = videoProperties.Properties();
     auto codecPar = m_pAvStream->codecpar;
 
     SetCommonVideoEncodingProperties(videoProperties, false);
@@ -128,7 +131,7 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
     area.OffsetX.value = 0;
     area.OffsetY.fract = 0;
     area.OffsetY.value = 0;
-    properties->Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, ref new Array<uint8_t>((byte*)&area, sizeof(MFVideoArea)));
+    properties.Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, winrt::single_threaded_vector<uint8_t>(std::vector<uint8_t>((uint8_t*)&area, (uint8_t*)&area + sizeof(MFVideoArea))));
 
     if (codecPar->color_primaries != AVCOL_PRI_UNSPECIFIED)
     {
@@ -172,7 +175,7 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
             break;
         }
 
-        properties->Insert(MF_MT_VIDEO_PRIMARIES, PropertyValue::CreateUInt32(videoPrimaries));
+        properties.Insert(MF_MT_VIDEO_PRIMARIES, PropertyValue::CreateUInt32(videoPrimaries));
     }
 
     if (codecPar->color_trc != AVCOL_TRC_UNSPECIFIED)
@@ -227,20 +230,20 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
             break;
         }
 
-        properties->Insert(MF_MT_TRANSFER_FUNCTION, PropertyValue::CreateUInt32(videoTransferFunc));
+        properties.Insert(MF_MT_TRANSFER_FUNCTION, PropertyValue::CreateUInt32(videoTransferFunc));
     }
 
     if (codecPar->color_range != AVCOL_RANGE_UNSPECIFIED)
     {
         MFNominalRange nominalRange{ codecPar->color_range == AVCOL_RANGE_JPEG ? MFNominalRange_0_255 : MFNominalRange_16_235 };
-        properties->Insert(MF_MT_VIDEO_NOMINAL_RANGE, PropertyValue::CreateUInt32(nominalRange));
+        properties.Insert(MF_MT_VIDEO_NOMINAL_RANGE, PropertyValue::CreateUInt32(nominalRange));
     }
 
     AVContentLightMetadata* contentLightMetadata{ reinterpret_cast<AVContentLightMetadata*>(av_stream_get_side_data(m_pAvStream, AV_PKT_DATA_CONTENT_LIGHT_LEVEL, nullptr)) };
     if (contentLightMetadata != nullptr)
     {
-        properties->Insert(MF_MT_MAX_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxCLL));
-        properties->Insert(MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxFALL));
+        properties.Insert(MF_MT_MAX_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxCLL));
+        properties.Insert(MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxFALL));
     }
 
     AVMasteringDisplayMetadata* masteringDisplayMetadata{ reinterpret_cast<AVMasteringDisplayMetadata*>(av_stream_get_side_data(m_pAvStream, AV_PKT_DATA_MASTERING_DISPLAY_METADATA, nullptr)) };
@@ -248,9 +251,9 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
     {
         if (masteringDisplayMetadata->has_luminance)
         {
-            constexpr uint32_t MASTERING_DISP_LUMINANCE_SCALE{ 10000 };
-            properties->Insert(MF_MT_MIN_MASTERING_LUMINANCE, PropertyValue::CreateUInt32(static_cast<uint32_t>(MASTERING_DISP_LUMINANCE_SCALE * av_q2d(masteringDisplayMetadata->min_luminance))));
-            properties->Insert(MF_MT_MAX_MASTERING_LUMINANCE, PropertyValue::CreateUInt32(static_cast<uint32_t>(av_q2d(masteringDisplayMetadata->max_luminance))));
+            constexpr UINT32 MASTERING_DISP_LUMINANCE_SCALE{ 10000 };
+            properties.Insert(MF_MT_MIN_MASTERING_LUMINANCE, PropertyValue::CreateUInt32(static_cast<UINT32>(MASTERING_DISP_LUMINANCE_SCALE * av_q2d(masteringDisplayMetadata->min_luminance))));
+            properties.Insert(MF_MT_MAX_MASTERING_LUMINANCE, PropertyValue::CreateUInt32(static_cast<UINT32>(av_q2d(masteringDisplayMetadata->max_luminance))));
         }
 
         if (masteringDisplayMetadata->has_primaries)
@@ -266,14 +269,14 @@ IMediaStreamDescriptor^ UncompressedVideoSampleProvider::CreateStreamDescriptor(
                 static_cast<float>(av_q2d(masteringDisplayMetadata->white_point[0])),
                 static_cast<float>(av_q2d(masteringDisplayMetadata->white_point[1]))
             };
-            auto data = Platform::ArrayReference<uint8_t>(reinterpret_cast<uint8_t*>(&customVideoPrimaries), sizeof(customVideoPrimaries));
-            properties->Insert(MF_MT_CUSTOM_VIDEO_PRIMARIES, PropertyValue::CreateUInt8Array(data));
+            auto data = winrt::array_view<UINT8>(reinterpret_cast<UINT8*>(&customVideoPrimaries), sizeof(customVideoPrimaries));
+            properties.Insert(MF_MT_CUSTOM_VIDEO_PRIMARIES, PropertyValue::CreateUInt8Array(data));
         }
     }
 
-    videoProperties->Properties->Insert(MF_MT_INTERLACE_MODE, (uint32)_MFVideoInterlaceMode::MFVideoInterlace_MixedInterlaceOrProgressive);
+    videoProperties.Properties().Insert(MF_MT_INTERLACE_MODE, winrt::box_value((UINT32)_MFVideoInterlaceMode::MFVideoInterlace_MixedInterlaceOrProgressive));
 
-    return ref new VideoStreamDescriptor(videoProperties);
+    return VideoStreamDescriptor(videoProperties);
 }
 
 HRESULT UncompressedVideoSampleProvider::InitializeScalerIfRequired(AVFrame* avFrame)
@@ -324,8 +327,11 @@ UncompressedVideoSampleProvider::~UncompressedVideoSampleProvider()
     }
 }
 
-HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
+HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
 {
+    UNREFERENCED_PARAMETER(surface);
+    UNREFERENCED_PARAMETER(frameDuration);
+
     HRESULT hr = S_OK;
     CheckFrameSize(avFrame);
 
@@ -346,14 +352,14 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
     {
         // Same format and size but non-contiguous buffer: Copy to contiguous buffer
         int linesize[4];
-        uint8_t* data[4];
+        UINT8* data[4];
         AVBufferRef* buffer;
 
         hr = FillLinesAndBuffer(linesize, data, &buffer, outputFrameWidth, outputFrameHeight, false);
 
         if (SUCCEEDED(hr))
         {
-            av_image_copy(data, linesize, (const uint8_t**)avFrame->data, avFrame->linesize, m_OutputPixelFormat, outputWidth, outputHeight);
+            av_image_copy(data, linesize, (const UINT8**)avFrame->data, avFrame->linesize, m_OutputPixelFormat, outputWidth, outputHeight);
             *pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, (UINT32)buffer->size, free_buffer, buffer);
         }
     }
@@ -365,7 +371,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
         if (SUCCEEDED(hr))
         {
             int linesize[4];
-            uint8_t* data[4];
+            UINT8* data[4];
             AVBufferRef* buffer;
 
             hr = FillLinesAndBuffer(linesize, data, &buffer, outputFrameWidth, outputFrameHeight, false);
@@ -373,7 +379,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
             if (SUCCEEDED(hr))
             {
                 // Convert to output format using FFmpeg software scaler
-                if (sws_scale(m_pSwsCtx, (const uint8_t**)(avFrame->data), avFrame->linesize, 0, avFrame->height, data, linesize) > 0)
+                if (sws_scale(m_pSwsCtx, (const UINT8**)(avFrame->data), avFrame->linesize, 0, avFrame->height, data, linesize) > 0)
                 {
                     *pBuffer = NativeBufferFactory::CreateNativeBuffer(buffer->data, (UINT32)buffer->size, free_buffer, buffer);
                 }
@@ -404,7 +410,7 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::ReadFrameProperties(AVFram
     m_interlaced_frame = avFrame->interlaced_frame == 1;
     m_top_field_first = avFrame->top_field_first == 1;
     m_chroma_location = avFrame->chroma_location;
-    if (m_config->IsFrameGrabber && !IsCleanSample)
+    if (m_config.as<implementation::MediaSourceConfig>()->IsFrameGrabber && !IsCleanSample)
     {
         if (m_interlaced_frame)
         {
@@ -432,7 +438,7 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::ReadFrameProperties(AVFram
         if (entry)
         {
             auto value = atoi(entry->value);
-            uint32 rotationAngle = 0;
+            UINT32 rotationAngle = 0;
             switch (value)
             {
             case 8:
@@ -447,9 +453,9 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::ReadFrameProperties(AVFram
             }
             if (rotationAngle)
             {
-                auto videoProperties = ((VideoStreamDescriptor^)this->StreamDescriptor)->EncodingProperties;
-                Platform::Guid MF_MT_VIDEO_ROTATION(0xC380465D, 0x2271, 0x428C, 0x9B, 0x83, 0xEC, 0xEA, 0x3B, 0x4A, 0x85, 0xC1);
-                videoProperties->Properties->Insert(MF_MT_VIDEO_ROTATION, (uint32)rotationAngle);
+                auto videoProperties = this->StreamDescriptor().as<VideoStreamDescriptor>().EncodingProperties();
+                //Platform::Guid MF_MT_VIDEO_ROTATION(0xC380465D, 0x2271, 0x428C, 0x9B, 0x83, 0xEC, 0xEA, 0x3B, 0x4A, 0x85, 0xC1);
+                videoProperties.Properties().Insert(MF_MT_VIDEO_ROTATION, winrt::box_value((UINT32)rotationAngle));
             }
         }
     }
@@ -472,9 +478,9 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::ReadFrameProperties(AVFram
         auto masteringDisplayMetadata = reinterpret_cast<AVMasteringDisplayMetadata*>(sideData->data);
         if (masteringDisplayMetadata->has_luminance)
         {
-            constexpr uint32_t MASTERING_DISP_LUMINANCE_SCALE{ 10000 };
-            minLuminance = PropertyValue::CreateUInt32(static_cast<uint32_t>(MASTERING_DISP_LUMINANCE_SCALE * av_q2d(masteringDisplayMetadata->min_luminance)));
-            maxLuminance = PropertyValue::CreateUInt32(static_cast<uint32_t>(av_q2d(masteringDisplayMetadata->max_luminance)));
+            constexpr UINT32 MASTERING_DISP_LUMINANCE_SCALE{ 10000 };
+            minLuminance = PropertyValue::CreateUInt32(static_cast<UINT32>(MASTERING_DISP_LUMINANCE_SCALE * av_q2d(masteringDisplayMetadata->min_luminance)));
+            maxLuminance = PropertyValue::CreateUInt32(static_cast<UINT32>(av_q2d(masteringDisplayMetadata->max_luminance)));
         }
         else
         {
@@ -494,7 +500,7 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::ReadFrameProperties(AVFram
                 static_cast<float>(av_q2d(masteringDisplayMetadata->white_point[0])),
                 static_cast<float>(av_q2d(masteringDisplayMetadata->white_point[1]))
             };
-            auto data = Platform::ArrayReference<uint8_t>(reinterpret_cast<uint8_t*>(&customVideoPrimaries), sizeof(customVideoPrimaries));
+            auto data = winrt::array_view<UINT8>(reinterpret_cast<UINT8*>(&customVideoPrimaries), sizeof(customVideoPrimaries));
             customPrimaries = PropertyValue::CreateUInt8Array(data);
         }
         else
@@ -508,35 +514,35 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::ReadFrameProperties(AVFram
     }
 }
 
-HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample^ sample)
+HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample  const& sample)
 {
     if (m_interlaced_frame)
     {
-        sample->ExtendedProperties->Insert(MFSampleExtension_Interlaced, TRUE);
-        sample->ExtendedProperties->Insert(MFSampleExtension_BottomFieldFirst, m_top_field_first ? safe_cast<Platform::Object^>(FALSE) : TRUE);
-        sample->ExtendedProperties->Insert(MFSampleExtension_RepeatFirstField, safe_cast<Platform::Object^>(FALSE));
+        sample.ExtendedProperties().Insert(MFSampleExtension_Interlaced, winrt::box_value(TRUE));
+        sample.ExtendedProperties().Insert(MFSampleExtension_BottomFieldFirst, m_top_field_first ? winrt::box_value(FALSE) : winrt::box_value(TRUE));
+        sample.ExtendedProperties().Insert(MFSampleExtension_RepeatFirstField, winrt::box_value(FALSE));
     }
     else
     {
-        sample->ExtendedProperties->Insert(MFSampleExtension_Interlaced, safe_cast<Platform::Object^>(FALSE));
+        sample.ExtendedProperties().Insert(MFSampleExtension_Interlaced, winrt::box_value(FALSE));
     }
 
     switch (m_chroma_location)
     {
     case AVCHROMA_LOC_LEFT:
-        sample->ExtendedProperties->Insert(MF_MT_VIDEO_CHROMA_SITING, (uint32)MFVideoChromaSubsampling_MPEG2);
+        sample.ExtendedProperties().Insert(MF_MT_VIDEO_CHROMA_SITING, winrt::box_value((UINT32)MFVideoChromaSubsampling_MPEG2));
         break;
     case AVCHROMA_LOC_CENTER:
-        sample->ExtendedProperties->Insert(MF_MT_VIDEO_CHROMA_SITING, (uint32)MFVideoChromaSubsampling_MPEG1);
+        sample.ExtendedProperties().Insert(MF_MT_VIDEO_CHROMA_SITING, winrt::box_value((UINT32)MFVideoChromaSubsampling_MPEG1));
         break;
     case AVCHROMA_LOC_TOPLEFT:
         if (m_interlaced_frame)
         {
-            sample->ExtendedProperties->Insert(MF_MT_VIDEO_CHROMA_SITING, (uint32)MFVideoChromaSubsampling_DV_PAL);
+            sample.ExtendedProperties().Insert(MF_MT_VIDEO_CHROMA_SITING, winrt::box_value((UINT32)MFVideoChromaSubsampling_DV_PAL));
         }
         else
         {
-            sample->ExtendedProperties->Insert(MF_MT_VIDEO_CHROMA_SITING, (uint32)MFVideoChromaSubsampling_Cosited);
+            sample.ExtendedProperties().Insert(MF_MT_VIDEO_CHROMA_SITING, winrt::box_value((UINT32)MFVideoChromaSubsampling_Cosited));
         }
         break;
     default:
@@ -545,25 +551,25 @@ HRESULT UncompressedVideoSampleProvider::SetSampleProperties(MediaStreamSample^ 
 
     if (maxCLL && maxFALL)
     {
-        sample->ExtendedProperties->Insert(MF_MT_MAX_LUMINANCE_LEVEL, maxCLL);
-        sample->ExtendedProperties->Insert(MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, maxFALL);
+        sample.ExtendedProperties().Insert(MF_MT_MAX_LUMINANCE_LEVEL, maxCLL);
+        sample.ExtendedProperties().Insert(MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, maxFALL);
     }
 
     if (minLuminance && maxLuminance)
     {
-        sample->ExtendedProperties->Insert(MF_MT_MIN_MASTERING_LUMINANCE, minLuminance);
-        sample->ExtendedProperties->Insert(MF_MT_MAX_MASTERING_LUMINANCE, maxLuminance);
+        sample.ExtendedProperties().Insert(MF_MT_MIN_MASTERING_LUMINANCE, minLuminance);
+        sample.ExtendedProperties().Insert(MF_MT_MAX_MASTERING_LUMINANCE, maxLuminance);
     }
 
     if (customPrimaries)
     {
-        sample->ExtendedProperties->Insert(MF_MT_CUSTOM_VIDEO_PRIMARIES, customPrimaries);
+        sample.ExtendedProperties().Insert(MF_MT_CUSTOM_VIDEO_PRIMARIES, customPrimaries);
     }
 
     return S_OK;
 }
 
-HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte** data, AVBufferRef** buffer, int width, int height, bool isSourceBuffer)
+HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, BYTE** data, AVBufferRef** buffer, int width, int height, bool isSourceBuffer)
 {
     // this method more or less follows the ffmpeg av_image_alloc() implementation
 
@@ -614,9 +620,9 @@ HRESULT UncompressedVideoSampleProvider::FillLinesAndBuffer(int* linesize, byte*
 
 AVBufferRef* UncompressedVideoSampleProvider::AllocateBuffer(int requestedSize, AVBufferPool** bufferPool, int* bufferPoolSize)
 {
-    if (m_config->IsFrameGrabber && TargetBuffer)
+    if (m_config.as<implementation::MediaSourceConfig>()->IsFrameGrabber && TargetBuffer)
     {
-        auto bufferRef = av_buffer_create(TargetBuffer, requestedSize, [](void*, byte*) {}, NULL, 0);
+        auto bufferRef = av_buffer_create(TargetBuffer, requestedSize, [](void*, BYTE*) {}, NULL, 0);
         return bufferRef;
     }
 
@@ -646,7 +652,7 @@ AVBufferRef* UncompressedVideoSampleProvider::AllocateBuffer(int requestedSize, 
 
 int UncompressedVideoSampleProvider::get_buffer2(AVCodecContext* avCodecContext, AVFrame* frame, int flags)
 {
-    auto provider = reinterpret_cast<UncompressedVideoSampleProvider^>(avCodecContext->opaque);
+    auto provider = reinterpret_cast<UncompressedVideoSampleProvider*>(avCodecContext->opaque);
 
     if (frame->format == AV_PIX_FMT_D3D11 || frame->format == AV_PIX_FMT_D3D11VA_VLD)
     {
@@ -737,8 +743,8 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* av
         outputFrameWidth = frameWidth;
         outputFrameHeight = frameHeight;
 
-        VideoDescriptor->EncodingProperties->Width = outputFrameWidth;
-        VideoDescriptor->EncodingProperties->Height = outputFrameHeight;
+        VideoDescriptor().EncodingProperties().Width(outputFrameWidth);
+        VideoDescriptor().EncodingProperties().Height(outputFrameHeight);
 
         MFVideoArea area;
         area.Area.cx = outputWidth;
@@ -747,6 +753,6 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* av
         area.OffsetX.value = 0;
         area.OffsetY.fract = 0;
         area.OffsetY.value = 0;
-        VideoDescriptor->EncodingProperties->Properties->Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, ref new Array<uint8_t>((byte*)&area, sizeof(MFVideoArea)));
+        VideoDescriptor().EncodingProperties().Properties().Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, winrt::single_threaded_vector<uint8_t>(std::vector<uint8_t>((uint8_t*)&area, (uint8_t*)&area + sizeof(MFVideoArea))));
     }
 }
