@@ -145,7 +145,7 @@ namespace FFmpegInteropX
             return UncompressedVideoSampleProvider::SetSampleProperties(sample);
         };
 
-        void OnProcessed(winrt::Windows::Media::Core::MediaStreamSample const& sender, winrt::Windows::Foundation::IInspectable const& args)
+        void OnProcessed(winrt::Windows::Media::Core::MediaStreamSample const& sender, winrt::Windows::Foundation::IInspectable const&)
         {
             std::lock_guard<std::mutex> lock(samplesMutex);
 
@@ -218,26 +218,26 @@ namespace FFmpegInteropX
             trackedSamples.clear();
         }
 
-        virtual HRESULT SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) override
+        virtual HRESULT SetHardwareDevice(ID3D11Device* newDevice, ID3D11DeviceContext* newDeviceContext, AVBufferRef* avHardwareContext) override
         {
             HRESULT hr = S_OK;
 
             bool isCompatible = false;
-            hr = CheckHWAccelerationCompatible(device, isCompatible);
+            hr = CheckHWAccelerationCompatible(newDevice, isCompatible);
 
             if (SUCCEEDED(hr))
             {
                 if (isCompatible)
                 {
-                    bool needsReinit = this->device;
+                    bool needsReinit = device;
 
-                    SAFE_RELEASE(this->device);
-                    SAFE_RELEASE(this->deviceContext);
+                    SAFE_RELEASE(device);
+                    SAFE_RELEASE(deviceContext);
 
-                    device->AddRef();
-                    context->AddRef();
-                    this->device = device;
-                    this->deviceContext = context;
+                    newDevice->AddRef();
+                    newDeviceContext->AddRef();
+                    device = newDevice;
+                    deviceContext = newDeviceContext;
 
                     if (needsReinit)
                     {
@@ -251,8 +251,8 @@ namespace FFmpegInteropX
                 }
                 else
                 {
-                    SAFE_RELEASE(this->device);
-                    SAFE_RELEASE(this->deviceContext);
+                    SAFE_RELEASE(device);
+                    SAFE_RELEASE(deviceContext);
                     av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
 
                     if (swCodec)
@@ -313,7 +313,7 @@ namespace FFmpegInteropX
             return hr;
         }
 
-        HRESULT CheckHWAccelerationCompatible(ID3D11Device* device, bool& isCompatible)
+        HRESULT CheckHWAccelerationCompatible(ID3D11Device* newDevice, bool& isCompatible)
         {
             HRESULT hr = S_OK;
             isCompatible = true;
@@ -331,7 +331,7 @@ namespace FFmpegInteropX
                     auto requiredProfile = av1Profiles[m_pAvCodecCtx->profile];
 
                     ID3D11VideoDevice* videoDevice = NULL;
-                    hr = device->QueryInterface(&videoDevice);
+                    hr = newDevice->QueryInterface(&videoDevice);
 
                     // check profile exists
                     if (SUCCEEDED(hr))
