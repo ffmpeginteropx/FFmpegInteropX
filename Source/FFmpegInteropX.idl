@@ -230,7 +230,7 @@ namespace FFmpegInteropX
         BasicVideoEffect();
     }
 
-
+    [bindable]
     runtimeclass CharacterEncoding
     {
         CharacterEncoding();
