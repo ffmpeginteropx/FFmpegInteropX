@@ -24,8 +24,9 @@ namespace FFmpegInteropX
     using namespace winrt::Windows::Storage::Streams;
     using namespace winrt::Windows::Media::MediaProperties;
     using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
-    using namespace winrt::FFmpegInteropXWinUI;
     using namespace std;
+
+    using namespace winrt::FFmpegInteropX;
 
     class FFmpegReader;
 

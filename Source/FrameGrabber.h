@@ -53,7 +53,7 @@ namespace winrt::FFmpegInteropX::implementation
             // the IBuffer from WriteableBitmap can only be accessed on UI thread
             // so we need to check it and get its pointer here already
 
-            auto sampleProvider = std::static_pointer_cast<FFmpegInteropX::UncompressedVideoSampleProvider>(interopMSS->VideoSampleProvider());
+            auto sampleProvider = std::static_pointer_cast<UncompressedVideoSampleProvider>(interopMSS->VideoSampleProvider());
             auto streamDescriptor = (interopMSS->VideoSampleProvider()->StreamDescriptor().as<VideoStreamDescriptor>());
             pixelAspectRatio = streamDescriptor.EncodingProperties().PixelAspectRatio();
             if (DecodePixelWidth() > 0 &&

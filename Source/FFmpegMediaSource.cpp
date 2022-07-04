@@ -18,16 +18,16 @@
 #include "ChapterInfo.h"
 #include "FFmpegReader.h"
 
-
-using namespace winrt::Windows::Storage::Streams;
-//using namespace winrt::Windows::Media::MediaProperties;
-using namespace FFmpegInteropX;
 // Note: Remove this static_assert after copying these generated source files to your project.
 // This assertion exists to avoid compiling these generated source files directly.
 //static_assert(false, "Do not compile generated C++/WinRT source files directly");
 
 namespace winrt::FFmpegInteropX::implementation
 {
+    using namespace winrt::Windows::Storage::Streams;
+    //using namespace winrt::Windows::Media::MediaProperties;
+    using namespace ::FFmpegInteropX;
+
     // Static functions passed to FFmpeg
     static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
     {
@@ -502,7 +502,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (SUCCEEDED(hr))
         {
-            m_pReader = std::shared_ptr<FFmpegInteropX::FFmpegReader>(new FFmpegInteropX::FFmpegReader(avFormatCtx, &sampleProviders));
+            m_pReader = std::shared_ptr<FFmpegReader>(new FFmpegReader(avFormatCtx, &sampleProviders));
             if (m_pReader == nullptr)
             {
                 hr = E_OUTOFMEMORY;
@@ -1907,7 +1907,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             if (SUCCEEDED(hr))
             {
-                hr = FFmpegInteropX::D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
+                hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
             }
 
             if (SUCCEEDED(hr))

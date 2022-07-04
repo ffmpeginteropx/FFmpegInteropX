@@ -11,10 +11,8 @@ namespace FFmpegInteropX
 {
     //using namespace winrt::Windows::UI::Core;
     //using namespace winrt::Windows::Media::Playback;
-    //using namespace winrt::FFmpegInteropXWinUI;
     //using namespace winrt::Windows::Media::Core;
     //using namespace winrt::Windows::Foundation;
-    //using namespace winrt::FFmpegInteropXWinUI;
 
     class SubtitleProvider :
         public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
