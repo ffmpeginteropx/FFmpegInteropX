@@ -24,7 +24,7 @@ RUN curl -SL --output git.zip https://github.com/git-for-windows/git/releases/do
 	&& setx PATH "%PATH%;C:\git\cmd"
 	
 # Clone FFmpegInteropX
-RUN git clone https://github.com/ffmpeginteropx/FFmpegInteropX.git --recursive -branch release-1.0
+RUN git clone https://github.com/ffmpeginteropx/FFmpegInteropX.git --recursive
 
 # Install build tools
 RUN cd FFmpegInteropX `
