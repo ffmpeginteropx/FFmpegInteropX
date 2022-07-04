@@ -1,4 +1,4 @@
-﻿//*****************************************************************************
+//*****************************************************************************
 //
 //	Copyright 2015 Microsoft Corporation
 //
@@ -67,7 +67,8 @@ MainPage::MainPage()
     mediaPlayerElement->SetMediaPlayer(mediaPlayer);
 
     // populate character encodings
-    cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
+    //cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings(); //TODO fix!!
+
     Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);
 }
 

@@ -464,9 +464,11 @@ namespace winrt::FFmpegInteropX::implementation
 
     Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config)
     {
+        winrt::apartment_context caller; // Capture calling context.
         auto dispatcher = GetCurrentDispatcher();
         co_await winrt::resume_background();
         auto result = CreateFromStream(stream, config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>(), dispatcher);
+        co_await caller;
         co_return result.as<FFmpegInteropX::FFmpegMediaSource>();;
     }
 
@@ -477,9 +479,11 @@ namespace winrt::FFmpegInteropX::implementation
 
     Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config)
     {
+        winrt::apartment_context caller; // Capture calling context.
         auto dispatcher = GetCurrentDispatcher();
         co_await winrt::resume_background();
         auto result = CreateFromUri(uri, config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>(), dispatcher);
+        co_await caller;
         co_return result.as<FFmpegInteropX::FFmpegMediaSource>();
     }
 
@@ -1276,6 +1280,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     Windows::Foundation::IAsyncOperation<Windows::Foundation::Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(Windows::Storage::Streams::IRandomAccessStream stream, hstring streamName)
     {
+        winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
 
         auto cancellation = co_await get_cancellation_token();
@@ -1376,6 +1381,7 @@ namespace winrt::FFmpegInteropX::implementation
             throw;
         }
         mutexGuard.unlock();
+        co_await caller;
         co_return externalSubsParser->SubtitleStreams();
     }
 

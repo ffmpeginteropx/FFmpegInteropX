@@ -10,6 +10,7 @@ namespace winrt::FFmpegInteropX::implementation
 {
     Windows::Foundation::IAsyncOperation<FFmpegInteropX::FrameGrabber> FrameGrabber::CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream)
     {
+        winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
         auto config = winrt::make_self<MediaSourceConfig>();
         config->IsFrameGrabber = true;
@@ -24,11 +25,13 @@ namespace winrt::FFmpegInteropX::implementation
         {
             throw_hresult(E_INVALIDARG); //S "No video stream found in file (or no suitable decoder available).");
         }
+        co_await caller;
         co_return winrt::make<FrameGrabber>(result);
     }
 
     Windows::Foundation::IAsyncOperation<FFmpegInteropX::FrameGrabber> FrameGrabber::CreateFromUriAsync(hstring uri)
     {
+        winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
 
         auto config = winrt::make_self<MediaSourceConfig>();
@@ -48,6 +51,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             throw_hresult(E_INVALIDARG);
         }
+        co_await caller;
         co_return winrt::make<FrameGrabber>(result);
     }
 
@@ -84,6 +88,7 @@ namespace winrt::FFmpegInteropX::implementation
     Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractVideoFrameAsync(Windows::Foundation::TimeSpan position, bool exactSeek, int32_t maxFrameSkip, Windows::Storage::Streams::IBuffer targetBuffer)
     {
         PrepareDecoding(targetBuffer);
+        winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
 
         auto cancellation = co_await get_cancellation_token();
@@ -101,7 +106,11 @@ namespace winrt::FFmpegInteropX::implementation
 
         while (true)
         {
-            if (cancellation()) co_return nullptr;
+            if (cancellation())
+            {
+                co_await caller;
+                co_return nullptr;
+            }
 
             auto sample = interopMSS->VideoSampleProvider()->GetNextSample();
             if (sample == nullptr)
@@ -145,6 +154,7 @@ namespace winrt::FFmpegInteropX::implementation
                 pixelAspectRatio,
                 sample.Timestamp());
 
+            co_await caller;
             co_return result;
         }
     }
