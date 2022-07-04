@@ -28,55 +28,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Build\FFmpegConfig.sh">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\README.md">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="FFmpegInteropLibs.props">
-      <Filter>Build</Filter>
-    </None>
     <None Include="packages.config" />
-    <None Include="..\Build-FFmpeg.ps1">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\AppVeyor_Build.bat">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\README-BUILD.md">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\Build-FFmpegInteropX.ps1">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.nuspec">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.targets">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\Build\FFmpegInteropX.nuspec">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\Build\FFmpegInteropX.targets">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\NuGet.Config">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\Build\Repack-NuGet.ps1">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\Build\InstallTools.ps1">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\Build\Start-DevShell.ps1">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\Docker\dockerfile">
-      <Filter>Build</Filter>
-    </None>
     <None Include="cpp.hint" />
     <None Include="FFmpegInteropX.def" />
   </ItemGroup>
@@ -94,7 +46,6 @@
     <ClInclude Include="CodecChecker.h" />
     <ClInclude Include="CodecRequiredEventArgs.h" />
     <ClInclude Include="CompressedSampleProvider.h" />
-    <ClInclude Include="CritSec.h" />
     <ClInclude Include="D3D11VideoSampleProvider.h" />
     <ClInclude Include="DirectXInteropHelper.h" />
     <ClInclude Include="FFmpegInteropLogging.h" />
@@ -170,8 +121,12 @@
     <ClCompile Include="VideoEffectConfiguration.cpp" />
     <ClCompile Include="VideoFrame.cpp" />
     <ClCompile Include="VideoStreamInfo.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
   </ItemGroup>
 </Project>

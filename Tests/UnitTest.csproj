@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -143,8 +143,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Source\FFmpegInteropX.vcxproj">
-      <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
-      <Name>FFmpegInterop</Name>
+      <Project>{5f6bfb93-c423-4ea3-a02a-b4e25d892135}</Project>
+      <Name>FFmpegInteropX</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
