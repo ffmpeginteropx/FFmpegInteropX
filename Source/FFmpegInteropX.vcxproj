@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22000.197\build\Microsoft.Windows.SDK.BuildTools.props" Condition="Exists('..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22000.197\build\Microsoft.Windows.SDK.BuildTools.props')" />
   <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.props')" />
@@ -41,7 +41,7 @@
     <CppWinRTOptimized>true</CppWinRTOptimized>
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
     <MinimalCoreWin>true</MinimalCoreWin>
-    <ProjectGuid>{9CFA3B3E-B7AF-4629-84E2-C962C5B046B1}</ProjectGuid>
+    <ProjectGuid>{5F6BFB93-C423-4EA3-A02A-B4E25D892135}</ProjectGuid>
     <ProjectName>FFmpegInteropX</ProjectName>
     <RootNamespace>FFmpegInteropX</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
@@ -219,6 +219,7 @@
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="ReferenceCue.cpp" />
     <ClCompile Include="SubtitleProvider.cpp" />
     <ClCompile Include="SubtitleProviderSsaAss.cpp" />
