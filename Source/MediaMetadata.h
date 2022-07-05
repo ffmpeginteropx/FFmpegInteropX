@@ -40,7 +40,7 @@ namespace FFmpegInteropX
                             }
                             else
                             {
-                                auto valueList = winrt::single_threaded_vector<winrt::hstring>();
+                                auto valueList = winrt::single_threaded_observable_vector<winrt::hstring>();
                                 valueList.Append(value);
                                 entriesLocal.Insert(key, valueList);
                             }

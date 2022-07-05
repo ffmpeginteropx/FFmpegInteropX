@@ -179,9 +179,9 @@ namespace winrt::FFmpegInteropX::implementation
             isRegisteredMutex.unlock();
         }
         subtitleDelay = config->DefaultSubtitleDelay();
-        audioStrInfos = winrt::single_threaded_vector<winrt::FFmpegInteropX::AudioStreamInfo>();
-        subtitleStrInfos = winrt::single_threaded_vector<winrt::FFmpegInteropX::SubtitleStreamInfo>();
-        videoStrInfos = winrt::single_threaded_vector<winrt::FFmpegInteropX::VideoStreamInfo>();
+        audioStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::AudioStreamInfo>();
+        subtitleStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::SubtitleStreamInfo>();
+        videoStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::VideoStreamInfo>();
         auto implConfig = config;
         if (!implConfig->IsExternalSubtitleParser && !implConfig->IsFrameGrabber)
         {
@@ -700,7 +700,7 @@ namespace winrt::FFmpegInteropX::implementation
                     }
                 }
 
-                auto chapters = winrt::single_threaded_vector<winrt::FFmpegInteropX::ChapterInfo>();
+                auto chapters = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::ChapterInfo>();
                 if (avFormatCtx->chapters && avFormatCtx->nb_chapters > 1)
                 {
                     for (size_t i = 0; i < avFormatCtx->nb_chapters; i++)
