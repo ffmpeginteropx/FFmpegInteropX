@@ -20,7 +20,7 @@ namespace winrt::FFmpegInteropX::implementation
                 if (internalView == nullptr)
                 {
                     //populate and create the vector.
-                    internalMap = winrt::single_threaded_vector<winrt::FFmpegInteropX::CharacterEncoding>();
+                    internalMap = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::CharacterEncoding>();
                     internalMap.Append(winrt::make_self<CharacterEncoding>(65001, L"CP65001", L"Unicode (UTF-8)").as< winrt::FFmpegInteropX::CharacterEncoding>());
                     internalMap.Append(winrt::make_self<CharacterEncoding>(1200, L"CP1200", L"Unicode UTF-16, little endian byte order (BMP of ISO 10646)").as< winrt::FFmpegInteropX::CharacterEncoding>());
                     internalMap.Append(winrt::make_self<CharacterEncoding>(1201, L"CP1201", L"Unicode UTF-16, big endian byte order").as< winrt::FFmpegInteropX::CharacterEncoding>());
