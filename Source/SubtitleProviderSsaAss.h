@@ -205,6 +205,7 @@ namespace FFmpegInteropX
                     padding.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
                     padding.Start = (double)marginL * 100 / width;
                     padding.End = (double)marginR * 100 / width;
+                    padding.Before = 0;
                     padding.After = (double)marginV * 100 / height;
 
                     subRegion = CopyRegion(cueRegion);
@@ -432,13 +433,20 @@ namespace FFmpegInteropX
                                     double x = min(posX / width, 1);
                                     double y = min(posY / height, 1);
 
-                                    winrt::Windows::Media::Core::TimedTextPadding padding;
-                                    padding.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+                                    winrt::Windows::Media::Core::TimedTextPadding padding
+                                    {
+                                        0, 0, 0, 0, winrt::Windows::Media::Core::TimedTextUnit::Percentage
+                                    };
 
-                                    winrt::Windows::Media::Core::TimedTextSize extent;
-                                    winrt::Windows::Media::Core::TimedTextPoint pos;
-                                    extent.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
-                                    pos.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+                                    winrt::Windows::Media::Core::TimedTextSize extent
+                                    {
+                                        0, 0, winrt::Windows::Media::Core::TimedTextUnit::Percentage
+                                    };
+
+                                    winrt::Windows::Media::Core::TimedTextPoint pos
+                                    {
+                                        0, 0, winrt::Windows::Media::Core::TimedTextUnit::Percentage
+                                    };
 
                                     double size;
 
@@ -726,16 +734,19 @@ namespace FFmpegInteropX
             SubtitleRegion.LineHeight(LineHeight);
             winrt::Windows::Media::Core::TimedTextPadding padding;
             padding.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
-            padding.Start = 0;
             if (width > 0 && height > 0)
             {
                 padding.Start = (double)marginL * 100 / width;
                 padding.End = (double)marginR * 100 / width;
+                padding.Before = 0;
                 padding.After = (double)marginV * 100 / height;
             }
             else
             {
+                padding.Before = 0;
                 padding.After = 12;
+                padding.Start = 0;
+                padding.End = 0;
             }
             SubtitleRegion.Padding(padding);
 
