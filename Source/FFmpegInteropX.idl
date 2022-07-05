@@ -659,6 +659,7 @@ runtimeclass ReferenceCue : Windows.Media.Core.IMediaCue
     ReferenceCue(Windows.Media.Core.IMediaCue other);
 }
 
+    [bindable]
     runtimeclass VideoEffectConfiguration
     {
         VideoEffectConfiguration();
