@@ -108,14 +108,7 @@ namespace FFmpegInteropX
                     }
                 }
 
-                if (ssaVersion >= 3)
-                {
-                    textIndex = 9;
-                }
-                else
-                {
-                    textIndex = 8;
-                }
+                textIndex = 9;
             }
         }
 
@@ -138,6 +131,8 @@ namespace FFmpegInteropX
             auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
             if (result > 0 && gotSubtitle && subtitle.num_rects > 0)
             {
+                // ASS Format:    Layer, Start, End,   Style, Name, MarginL, MarginR, MarginV, Effect, Text
+                // Actual Format:        Int??, Int??, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 auto str = StringUtils::Utf8ToWString(subtitle.rects[0]->ass);
 
                 int startStyle = -1;
@@ -145,7 +140,7 @@ namespace FFmpegInteropX
                 int lastComma = -1;
                 int marginL = 0, marginR = 0, marginV = 0;
                 bool hasError = false;
-                for (int i = 0; i < textIndex; i++)
+                for (int i = 1; i < textIndex; i++)
                 {
                     auto nextComma = str.find(',', lastComma + 1);
                     if (nextComma != str.npos)
