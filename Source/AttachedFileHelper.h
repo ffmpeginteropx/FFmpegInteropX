@@ -42,7 +42,7 @@ namespace FFmpegInteropX
         winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Storage::StorageFile> ExtractFileAsync(winrt::FFmpegInteropX::AttachedFile attachment)
         {
             StorageFile file = { nullptr };
-            auto result = extractedFiles.Lookup(attachment.Name());
+            auto result = extractedFiles.TryLookup(attachment.Name());
             if (result != nullptr)
             {
                 file = result;

@@ -604,7 +604,7 @@ namespace FFmpegInteropX
 
                     // try with hex colors
                     auto count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-                        "%[,],%[,],%f,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
+                        "%[^,],%[^,],%f,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
                         name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
                         &size, &color, &secondaryColor, &outlineColor, &backColor,
                         &bold, &italic, &underline, &strikeout,
@@ -616,7 +616,7 @@ namespace FFmpegInteropX
                     {
                         // try with decimal colors
                         count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-                            "%[,],%[,],%f,%i,%i,%i,%i,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
+                            "%[^,],%[^,],%f,%i,%i,%i,%i,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
                             name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
                             &size, &color, &secondaryColor, &outlineColor, &backColor,
                             &bold, &italic, &underline, &strikeout,

@@ -16,7 +16,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     hstring AttachedFile::MimeType()
     {
-        throw this->mimeType;
+        return this->mimeType;
     }
 
     uint64_t AttachedFile::Size()
