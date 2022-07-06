@@ -284,7 +284,7 @@ namespace FFmpegInteropX
         Double DisplayAspectRatio{ get; };
     }
 
-    runtimeclass CodecChecker
+    static runtimeclass CodecChecker
     {
         ///<summary>This event is raised if a codec is required to improve playback experience.</summary>
         ///<remarks>The event is only raised once per codec. It will be raised again after a call to RefreshAsync().</remarks>
@@ -373,7 +373,7 @@ namespace FFmpegInteropX
         Windows.Foundation.IAsyncOperation<VideoFrame> ExtractNextVideoFrameAsync();
     }
 
-    runtimeclass FFmpegInteropLogging
+    static runtimeclass FFmpegInteropLogging
     {
         static void SetLogLevel(LogLevel level);
         static void SetLogProvider(ILogProvider logProvider);
