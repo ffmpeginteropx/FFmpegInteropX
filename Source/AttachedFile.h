@@ -9,8 +9,6 @@ namespace winrt::FFmpegInteropX::implementation
 {
     struct AttachedFile : AttachedFileT<AttachedFile>
     {
-        AttachedFile() = default;
-
         hstring Name();
         hstring MimeType();
         uint64_t Size();

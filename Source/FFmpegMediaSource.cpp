@@ -474,7 +474,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream)
     {
-        return CreateFromStreamAsync(stream, winrt::make_self<MediaSourceConfig>().as<winrt::FFmpegInteropX::MediaSourceConfig>());
+        return CreateFromStreamAsync(stream, FFmpegInteropX::MediaSourceConfig());
     }
 
     Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config)
@@ -489,7 +489,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
     {
-        return CreateFromUriAsync(uri, winrt::make_self<MediaSourceConfig>().as<winrt::FFmpegInteropX::MediaSourceConfig>());
+        return CreateFromUriAsync(uri, FFmpegInteropX::MediaSourceConfig());
     }
 
     HRESULT FFmpegMediaSource::InitFFmpegContext()

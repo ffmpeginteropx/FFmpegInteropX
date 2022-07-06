@@ -7,10 +7,8 @@
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    struct FFmpegInteropLogging : FFmpegInteropLoggingT<FFmpegInteropLogging>
+    struct FFmpegInteropLogging
     {
-        FFmpegInteropLogging() = default;
-
         static void SetLogLevel(FFmpegInteropX::LogLevel const& level);
         static void SetLogProvider(FFmpegInteropX::ILogProvider const& logProvider);
         static void SetDefaultLogProvider();

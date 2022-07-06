@@ -46,9 +46,8 @@ namespace winrt::FFmpegInteropX::implementation
         }
     };
 
-    struct CodecChecker : CodecCheckerT<CodecChecker>
+    struct CodecChecker
     {
-        CodecChecker() = default;
         static winrt::event_token CodecRequired(winrt::Windows::Foundation::EventHandler<winrt::FFmpegInteropX::CodecRequiredEventArgs> const& handler);
         static void CodecRequired(winrt::event_token const& token) noexcept;
         static Windows::Foundation::IAsyncAction InitializeAsync();
@@ -145,9 +144,8 @@ namespace winrt::FFmpegInteropX::implementation
 
         static void RaiseCodecRequired(CodecRequiredReason reason, hstring const& codecName, hstring const& storeEntryName, hstring const& uri)
         {
-            auto sender = IInspectable();
-            auto args = winrt::make_self<winrt::FFmpegInteropX::implementation::CodecRequiredEventArgs>(reason, codecName, storeEntryName, uri);
-            m_codecRequiredEvent(sender, *args);
+            FFmpegInteropX::CodecRequiredEventArgs args(reason, codecName, storeEntryName, uri);
+            m_codecRequiredEvent(winrt::Windows::Foundation::IInspectable(), args);
         }
 
         static  HardwareAccelerationStatus HardwareAccelerationH264() { return hardwareAccelerationH264; };

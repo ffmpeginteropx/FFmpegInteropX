@@ -9,8 +9,6 @@ namespace winrt::FFmpegInteropX::implementation
 {
     struct FormatInfo : FormatInfoT<FormatInfo>
     {
-        FormatInfo() = default;
-
         FormatInfo(hstring const& title, hstring const& formatName, Windows::Foundation::TimeSpan const& duration, int64_t bitrate);
         hstring Title();
         hstring FormatName();

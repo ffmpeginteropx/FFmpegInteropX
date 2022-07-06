@@ -9,8 +9,6 @@ namespace winrt::FFmpegInteropX::implementation
 {
     struct SubtitleStreamInfo : SubtitleStreamInfoT<SubtitleStreamInfo>
     {
-        SubtitleStreamInfo() = default;
-
         SubtitleStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropX::StreamDisposition const& disposition, bool isDefault, bool isForced, Windows::Media::Core::TimedMetadataTrack const& track, bool isExternal);
         bool IsExternal();
         bool IsForced();

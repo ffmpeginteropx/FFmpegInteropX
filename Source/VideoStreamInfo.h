@@ -9,8 +9,6 @@ namespace winrt::FFmpegInteropX::implementation
 {
     struct VideoStreamInfo : VideoStreamInfoT<VideoStreamInfo>
     {
-        VideoStreamInfo() = default;
-
         VideoStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropX::StreamDisposition const& disposition, int64_t bitrate, bool isDefault, int32_t pixelWidth, int32_t pixelHeight, double displayAspectRatio, int32_t bitsPerSample, double framesPerSecond, FFmpegInteropX::HardwareDecoderStatus const& hwAccel, FFmpegInteropX::DecoderEngine const& decoderEngine);
         int32_t PixelWidth();
         int32_t PixelHeight();

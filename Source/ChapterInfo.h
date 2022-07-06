@@ -9,8 +9,6 @@ namespace winrt::FFmpegInteropX::implementation
 {
     struct ChapterInfo : ChapterInfoT<ChapterInfo>
     {
-        ChapterInfo() = default;
-
         ChapterInfo(hstring const& title, Windows::Foundation::TimeSpan const& startTime, Windows::Foundation::TimeSpan const& duration);
         hstring Title();
         Windows::Foundation::TimeSpan StartTime();
