@@ -10,7 +10,6 @@ namespace winrt::FFmpegInteropX::implementation
 {
     struct CharacterEncoding : CharacterEncodingT<CharacterEncoding>
     {
-        CharacterEncoding();
         CharacterEncoding(int p_codePage, hstring const& p_name, hstring const& p_description);
 
         static Windows::Foundation::Collections::IVectorView<FFmpegInteropX::CharacterEncoding> GetCharacterEncodings();

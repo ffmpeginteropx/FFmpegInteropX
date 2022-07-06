@@ -99,7 +99,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
-	  <CompileAsWinRT>false</CompileAsWinRT>
+      <CompileAsWinRT>false</CompileAsWinRT>
       <ModuleDefinitionFile>FFmpegInteropX.def</ModuleDefinitionFile>
       <AdditionalDependencies>shcore.lib;runtimeobject.lib;mfuuid.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -215,6 +215,22 @@
     <Midl Include="FFmpegInteropX.idl" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\.editorconfig" />
+    <None Include="..\Build-FFmpeg.ps1" />
+    <None Include="..\Build-FFmpegInteropX.ps1" />
+    <None Include="..\Build\AppVeyor_Build.bat" />
+    <None Include="..\Build\FFmpegConfig.sh" />
+    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.nuspec" />
+    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.targets" />
+    <None Include="..\Build\FFmpegInteropX.nuspec" />
+    <None Include="..\Build\FFmpegInteropX.pfx" />
+    <None Include="..\Build\FFmpegInteropX.targets" />
+    <None Include="..\Build\InstallTools.ps1" />
+    <None Include="..\Build\Repack-NuGet.ps1" />
+    <None Include="..\Build\Start-DevShell.ps1" />
+    <None Include="..\LICENSE" />
+    <None Include="..\README-BUILD.md" />
+    <None Include="..\README.md" />
     <None Include="cpp.hint" />
     <None Include="FFmpegInteropX.def" />
     <None Include="packages.config" />

@@ -239,7 +239,7 @@ namespace FFmpegInteropX
     [bindable]
     runtimeclass CharacterEncoding
     {
-        CharacterEncoding();
+        CharacterEncoding(Int32 codePage, String name, String description);
         String Name {get; };
         String Description{ get; };
         Int32 WindowsCodePage{ get; };

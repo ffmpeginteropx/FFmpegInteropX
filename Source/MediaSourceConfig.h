@@ -238,7 +238,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
         bool m_DownmixAudioStreamsToStereo = false;
-        CharacterEncoding m_CharacterEncoding = {};
+        CharacterEncoding m_CharacterEncoding{ nullptr };
     };
 }
 namespace winrt::FFmpegInteropX::factory_implementation
