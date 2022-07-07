@@ -670,7 +670,7 @@ namespace FFmpegInteropX
                     int encoding;
 
                     auto count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-                        "%[,],%[,],%f,%i,%i,%i,%i,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
+                        "%[^,],%[^,],%f,%i,%i,%i,%i,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
                         name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
                         &size, &color, &secondaryColor, &outlineColor, &backColor,
                         &bold, &italic, &borderstyle,
@@ -681,7 +681,7 @@ namespace FFmpegInteropX
                     {
                         // try with hex colors
                         count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-                            "%[,],%[,],%f,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
+                            "%[^,],%[^,],%f,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
                             name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
                             &size, &color, &secondaryColor, &outlineColor, &backColor,
                             &bold, &italic, &borderstyle,
@@ -955,12 +955,6 @@ namespace FFmpegInteropX
             winrt::Windows::Media::Core::TimedTextDouble size;
             size.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
             size.Value = fontSize * (100.0 / 36);
-
-            // scale to actual video resolution
-            if (videoWidth > 0 && width > 0)
-            {
-                size.Value *= ((double)videoWidth / width);
-            }
 
             return size;
         }

@@ -52,7 +52,11 @@ namespace FFmpegInteropX
                 if (this->instanceId.empty())
                 {
                     GUID gdn;
-                    CoCreateGuid(&gdn);
+                    auto hr = CoCreateGuid(&gdn);
+                    if (FAILED(hr))
+                    {
+                        winrt::throw_hresult(hr);
+                    }
                     instanceId = winrt::to_hstring(winrt::guid(gdn));
                 }
 
