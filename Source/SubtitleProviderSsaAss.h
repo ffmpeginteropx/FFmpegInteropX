@@ -954,7 +954,7 @@ namespace FFmpegInteropX
         {
             winrt::Windows::Media::Core::TimedTextDouble size;
             size.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
-            size.Value = fontSize * (100.0 / 36);
+            size.Value = fontSize * 2.7;
 
             return size;
         }
