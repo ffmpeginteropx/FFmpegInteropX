@@ -933,7 +933,7 @@ namespace FFmpegInteropX
         {
             TimedTextDouble size;
             size.Unit = TimedTextUnit::Percentage;
-            size.Value = fontSize * (100.0 / 36);
+            size.Value = fontSize * 2.7;
             return size;
         }
 
