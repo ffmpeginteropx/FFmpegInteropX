@@ -477,7 +477,7 @@ namespace winrt::FFmpegInteropX::implementation
         return CreateFromStreamAsync(stream, FFmpegInteropX::MediaSourceConfig());
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config)
+    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring const& uri, FFmpegInteropX::MediaSourceConfig config)
     {
         winrt::apartment_context caller; // Capture calling context.
         auto dispatcher = GetCurrentDispatcher();
@@ -487,7 +487,7 @@ namespace winrt::FFmpegInteropX::implementation
         co_return result.as<FFmpegInteropX::FFmpegMediaSource>();
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
+    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring const& uri)
     {
         return CreateFromUriAsync(uri, FFmpegInteropX::MediaSourceConfig());
     }
@@ -1539,10 +1539,6 @@ namespace winrt::FFmpegInteropX::implementation
         if (avDict)
             av_dict_free(&avDict);
 
-        if (fileStreamData != nullptr)
-        {
-            fileStreamData->Release();
-        }
         if (avHardwareContext)
         {
             av_buffer_unref(&avHardwareContext);

@@ -258,4 +258,21 @@
     <Error Condition="!Exists('..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22000.197\build\Microsoft.Windows.SDK.BuildTools.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22000.197\build\Microsoft.Windows.SDK.BuildTools.targets'))" />
     <Error Condition="!Exists('..\packages\Win2D.uwp.1.26.0\build\native\Win2D.uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Win2D.uwp.1.26.0\build\native\Win2D.uwp.targets'))" />
   </Target>
+  <Target Name="AfterBuild">
+    <PropertyGroup>
+      <XmlDocFile>$(OutDir)$(TargetName).xml</XmlDocFile>
+      <XmlDoc>$([System.IO.File]::ReadAllText($(XmlDocFile)))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('winrt.' + TargetName + '.implementation',TargetName))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('winrt.hstring','System.String'))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('std.chrono.duration&amp;lt;System.Int64,std.ratio&amp;lt;0x01,0x0989680&amp;gt;&amp;gt;','System.TimeSpan'))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('!System.Runtime.CompilerServices.IsConst*',''))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('!System.Runtime.CompilerServices.IsImplicitlyDereferenced',''))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('winrt.',''))</XmlDoc>
+    </PropertyGroup>
+    <WriteLinesToFile
+      File="$(XmlDocFile)"
+      Lines="$(XmlDoc)"
+      Overwrite="true"
+      Encoding="UTF-8"/>
+  </Target>
 </Project>

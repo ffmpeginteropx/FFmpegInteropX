@@ -45,7 +45,7 @@ HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, 
     if (buf == nullptr || length < 7)
     {
         // The data isn't present
-        hr = E_FAIL;
+        return E_FAIL;
     }
 
     /* Extradata is in hvcC format */

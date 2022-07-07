@@ -99,11 +99,11 @@ namespace FFmpegInteropX
         int sourceBufferPoolSize = 0;
         AVBufferPool* targetBufferPool = NULL;
         int targetBufferPoolSize = 0;
-        AVPixelFormat m_OutputPixelFormat;
+        AVPixelFormat m_OutputPixelFormat = AVPixelFormat::AV_PIX_FMT_NONE;
         SwsContext* m_pSwsCtx = NULL;
         bool m_interlaced_frame = 0;
         bool m_top_field_first = 0;
-        AVChromaLocation m_chroma_location;
+        AVChromaLocation m_chroma_location = AVChromaLocation::AVCHROMA_LOC_UNSPECIFIED;
         bool hasFirstInterlacedFrame = 0;
         winrt::Windows::Foundation::IInspectable maxCLL = { nullptr };
         winrt::Windows::Foundation::IInspectable maxFALL = { nullptr };

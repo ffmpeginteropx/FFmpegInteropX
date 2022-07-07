@@ -41,7 +41,8 @@ namespace FFmpegInteropX
 
     private:
         SwrContext* m_pSwrCtx = NULL;
-        AVSampleFormat inSampleFormat, outSampleFormat;
+        AVSampleFormat inSampleFormat = AVSampleFormat::AV_SAMPLE_FMT_NONE;
+        AVSampleFormat outSampleFormat = AVSampleFormat::AV_SAMPLE_FMT_NONE;
         int inSampleRate = 0, outSampleRate = 0, inChannels = 0, outChannels = 0;
         UINT64 inChannelLayout = 0, outChannelLayout = 0;
         int bytesPerSample = 0;

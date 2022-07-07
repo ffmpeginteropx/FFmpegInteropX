@@ -3,6 +3,11 @@
 #include <shcore.h>
 #include <memory>
 
+// prevent compiler warnings due to name conflicts
+#pragma push_macro("GetCurrentTime")
+#pragma push_macro("TRY")
+#undef GetCurrentTime
+#undef TRY
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
@@ -22,6 +27,8 @@
 #include <winrt/Windows.Storage.FileProperties.h>
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.System.h>
+#pragma pop_macro("TRY")
+#pragma pop_macro("GetCurrentTime")
 
 #include <d3d11.h>
 #include <windows.graphics.directx.direct3d11.interop.h>

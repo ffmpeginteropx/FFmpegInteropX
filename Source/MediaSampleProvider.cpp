@@ -180,7 +180,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
             auto layout = m_pAvCodecCtx->channel_layout ? m_pAvCodecCtx->channel_layout : AvCodecContextHelpers::GetDefaultChannelLayout(channels);
             av_get_channel_layout_string(channelLayoutName, 256, channels, layout);
             channelLayout = StringUtils::Utf8ToPlatformString(channelLayoutName);
-            delete channelLayoutName;
+            delete[] channelLayoutName;
         }
 
         streamInfo = AudioStreamInfo(

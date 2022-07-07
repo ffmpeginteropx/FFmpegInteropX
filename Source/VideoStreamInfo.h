@@ -15,6 +15,12 @@ namespace winrt::FFmpegInteropX::implementation
         double DisplayAspectRatio();
         int32_t BitsPerSample();
         double FramesPerSecond();
+
+        ///<summary>Override the frame rate of the video stream.</summary>
+        ///<remarks>
+        /// This must be set before calling CreatePlaybackItem().
+        /// Setting this can cause A/V desync, since it will only affect this stream.
+        /// </remarks>
         double FramesPerSecondOverride();
         void FramesPerSecondOverride(double value);
         FFmpegInteropX::HardwareDecoderStatus HardwareDecoderStatus();

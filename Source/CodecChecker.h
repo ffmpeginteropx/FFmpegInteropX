@@ -24,9 +24,9 @@ namespace winrt::FFmpegInteropX::implementation
     class HardwareAccelerationStatus
     {
     public:
-        bool IsAvailable;
+        bool IsAvailable = false;
         std::vector<std::pair<int, VideoResolution>> SupportedProfiles;
-        VideoResolution MaxResolution;
+        VideoResolution MaxResolution = VideoResolution::UnknownResolution;
 
         void Reset()
         {
@@ -48,10 +48,19 @@ namespace winrt::FFmpegInteropX::implementation
 
     struct CodecChecker
     {
+        ///<summary>This event is raised if a codec is required to improve playback experience.</summary>
+        ///<remarks>The event is only raised once per codec. It will be raised again after a call to RefreshAsync().</remarks>
         static winrt::event_token CodecRequired(winrt::Windows::Foundation::EventHandler<winrt::FFmpegInteropX::CodecRequiredEventArgs> const& handler);
         static void CodecRequired(winrt::event_token const& token) noexcept;
+
+        ///<summary>This will pre-initialize the hardware acceleration status.</summary>
+        ///<remarks>This can be called on app startup, but it is not required.</remarks>
         static Windows::Foundation::IAsyncAction InitializeAsync();
+
+        ///<summary>This will refresh the hardware acceleration status.</summary>
+        ///<remarks>Call this after installing a codec or after a change of the active GPU.</remarks>
         static Windows::Foundation::IAsyncAction RefreshAsync();
+
         static Windows::Foundation::IAsyncOperation<bool> CheckIsMpeg2VideoExtensionInstalledAsync();
         static Windows::Foundation::IAsyncOperation<bool> CheckIsVP9VideoExtensionInstalledAsync();
         static Windows::Foundation::IAsyncOperation<bool> CheckIsHEVCVideoExtensionInstalledAsync();

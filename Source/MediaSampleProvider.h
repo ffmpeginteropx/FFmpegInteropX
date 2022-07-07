@@ -192,7 +192,7 @@ namespace FFmpegInteropX
         int m_streamIndex = 0;
         INT64 m_startOffset = 0;
         double timeBaseFactor = 0;
-        DecoderEngine decoder;
+        DecoderEngine decoder = DecoderEngine::FFmpegSoftwareDecoder;
         ID3D11Device* device = NULL;
         ID3D11DeviceContext* deviceContext = NULL;
 

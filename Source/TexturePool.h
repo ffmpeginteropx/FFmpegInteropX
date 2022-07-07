@@ -122,7 +122,7 @@ namespace FFmpegInteropX
     private:
         ID3D11Device* device = NULL;
         std::vector<ID3D11Texture2D*> pool;
-        D3D11_TEXTURE2D_DESC desc_shared;
+        D3D11_TEXTURE2D_DESC desc_shared{};
         int initialPoolSize = 0;
     };
 

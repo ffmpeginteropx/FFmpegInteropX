@@ -29,7 +29,7 @@ namespace winrt::FFmpegInteropX::implementation
         co_return winrt::make<FrameGrabber>(result);
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FrameGrabber> FrameGrabber::CreateFromUriAsync(hstring uri)
+    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FrameGrabber> FrameGrabber::CreateFromUriAsync(hstring const& uri)
     {
         winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();

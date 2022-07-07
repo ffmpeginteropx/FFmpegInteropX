@@ -67,10 +67,7 @@ MainPage::MainPage()
     mediaPlayerElement->SetMediaPlayer(mediaPlayer);
 
     // populate character encodings
-    //cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings(); //TODO fix!!
-    auto encodings = CharacterEncoding::GetCharacterEncodings();
-   
-    cbEncodings->ItemsSource = encodings;
+    cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
 
     Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);
 }

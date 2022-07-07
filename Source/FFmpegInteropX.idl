@@ -448,7 +448,7 @@ namespace FFmpegInteropX
         ///<summary>Gets the configuration that has been passed when creating the MSS instance.</summary>
         MediaSourceConfig Configuration{ get; };
 
-
+        ///<summary>Gets the metadata tags available in the file.</summary>
         IMapView<String, IVectorView<String> > MetadataTags{ get; };
 
         ///<summary>Gets the duration of the stream. Returns zero, if this is streaming media.</summary>
@@ -472,7 +472,7 @@ namespace FFmpegInteropX
         ///<summary>Gets chapter information.</summary>
         IVectorView<ChapterInfo> ChapterInfos{ get; };
 
-        ///<summary>Gets chapter information.</summary>
+        ///<summary>Gets format information.</summary>
         FormatInfo FormatInfo{ get; };
 
         ///<summary>Gets a boolean indication if a thumbnail is embedded in the file.</summary>
@@ -526,6 +526,7 @@ namespace FFmpegInteropX
         ///<remarks>Encoded as: 30*Major + 3*Minor. So Level 6.0 = 30*6 = 180, 5.1 = 30*5 + 3*1 = 163, 4.1 = 123.
         ///Many HEVC HW decoders support even very high levels, so we disable the check by default.</remarks>
         Int32 SystemDecoderHEVCMaxLevel{ get; set; };
+
         ///<summary>Allow video output in IYuv format.</summary>
         Boolean VideoOutputAllowIyuv{ get; set; };
 
@@ -675,6 +676,7 @@ namespace FFmpegInteropX
 
         [default_overload]
         void AddVideoEffect(Windows.Media.Playback.MediaPlayer player);
+
         [default_overload]
         void AddVideoEffect(Windows.Media.Playback.MediaPlayer player, Boolean isOptional);
 
