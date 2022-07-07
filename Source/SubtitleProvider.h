@@ -528,6 +528,33 @@ namespace FFmpegInteropX
             OutputDebugString(L"Subtitle track error.");
         }
 
+        void ClearSubtitles()
+        {
+            try
+            {
+                pendingCues.clear();
+                pendingRefCues.clear();
+                isPreviousCueInfiniteDuration = false;
+                negativePositionCues.clear();
+
+                if (referenceTrack != nullptr)
+                {
+                    while (referenceTrack.Cues().Size() > 0)
+                    {
+                        referenceTrack.RemoveCue(referenceTrack.Cues().GetAt(0));
+                    }
+                }
+
+                while (SubtitleTrack.Cues().Size() > 0)
+                {
+                    SubtitleTrack.RemoveCue(SubtitleTrack.Cues().GetAt(0));
+                }
+            }
+            catch (...)
+            {
+            }
+        }
+
     public:
 
         void Flush() override
@@ -538,28 +565,14 @@ namespace FFmpegInteropX
 
                 mutex.lock();
 
-                try
+                if (dispatcher)
                 {
-                    while (SubtitleTrack.Cues().Size() > 0)
-                    {
-                        SubtitleTrack.RemoveCue(SubtitleTrack.Cues().GetAt(0));
-                    }
-
-                    if (referenceTrack != nullptr)
-                    {
-                        while (referenceTrack.Cues().Size() > 0)
-                        {
-                            referenceTrack.RemoveCue(referenceTrack.Cues().GetAt(0));
-                        }
-                    }
-
-                    pendingCues.clear();
-                    pendingRefCues.clear();
-                    isPreviousCueInfiniteDuration = false;
-                    negativePositionCues.clear();
+                    dispatcher.RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal,
+                        winrt::Windows::UI::Core::DispatchedHandler([this] { ClearSubtitles(); }));
                 }
-                catch (...)
+                else
                 {
+                    ClearSubtitles();
                 }
 
                 mutex.unlock();
@@ -569,7 +582,7 @@ namespace FFmpegInteropX
     private:
 
         std::recursive_mutex mutex;
-        int cueCount;
+        int cueCount = 0;
         std::vector<winrt::Windows::Media::Core::IMediaCue> pendingCues;
         std::vector<winrt::Windows::Media::Core::IMediaCue> pendingRefCues;
         std::vector<winrt::Windows::Media::Core::IMediaCue> pendingChangedDurationCues;

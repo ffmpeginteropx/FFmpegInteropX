@@ -923,10 +923,10 @@ namespace FFmpegInteropX
                             names.Append(L"System.Title");
                             auto properties{ file.Properties().RetrievePropertiesAsync(names).get() };
                             auto title = winrt::unbox_value<winrt::hstring>(properties.Lookup(L"System.Title"));
-                            if (title.empty())
+                            if (!title.empty())
                             {
                                 auto fontFamily = std::wstring(title);
-                                if (str.compare(fontFamily) == 0)
+                                if (fontFamily.find(str.data(), 0, str.size() - 1) == 0)
                                 {
                                     result = L"ms-appdata:///temp/" + m_config.AttachmentCacheFolderName() + L"/" + attachedFileHelper->InstanceId() + L"/" + attachment.Name() + L"#" + StringUtils::WStringToPlatformString(str);
                                     break;
@@ -953,8 +953,8 @@ namespace FFmpegInteropX
         winrt::Windows::Media::Core::TimedTextDouble GetFontSize(double fontSize)
         {
             winrt::Windows::Media::Core::TimedTextDouble size;
-            size.Unit = winrt::Windows::Media::Core::TimedTextUnit::Pixels;
-            size.Value = fontSize;
+            size.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+            size.Value = fontSize * (100.0 / 36);
 
             // scale to actual video resolution
             if (videoWidth > 0 && width > 0)
