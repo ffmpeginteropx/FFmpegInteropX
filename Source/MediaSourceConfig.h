@@ -86,8 +86,8 @@ namespace FFmpegInteropX
 
             SubtitleStyle->FontFamily = "default";
             TimedTextDouble fontSize;
-            fontSize.Unit = TimedTextUnit::Pixels;
-            fontSize.Value = 44;
+            fontSize.Unit = TimedTextUnit::Percentage;
+            fontSize.Value = 100;
             SubtitleStyle->FontSize = fontSize;
             SubtitleStyle->LineAlignment = TimedTextLineAlignment::Center;
             if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.TimedTextStyle", "FontStyle"))

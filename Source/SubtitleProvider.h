@@ -483,6 +483,35 @@ namespace FFmpegInteropX
             OutputDebugString(L"Subtitle track error.");
         }
 
+        void ClearSubtitles()
+        {
+            mutex.lock();
+            try
+            {
+                pendingCues.clear();
+                pendingRefCues.clear();
+                isPreviousCueInfiniteDuration = false;
+                negativePositionCues.clear();
+
+                if (referenceTrack != nullptr)
+                {
+                    while (referenceTrack->Cues->Size > 0)
+                    {
+                        referenceTrack->RemoveCue(referenceTrack->Cues->GetAt(0));
+                    }
+                }
+
+                while (SubtitleTrack->Cues->Size > 0)
+                {
+                    SubtitleTrack->RemoveCue(SubtitleTrack->Cues->GetAt(0));
+                }
+            }
+            catch (...)
+            {
+            }
+            mutex.unlock();
+        }
+
     public:
 
         void Flush() override
@@ -491,33 +520,16 @@ namespace FFmpegInteropX
             {
                 CompressedSampleProvider::Flush();
 
-                mutex.lock();
-
-                try
+                if (dispatcher)
                 {
-                    while (SubtitleTrack->Cues->Size > 0)
-                    {
-                        SubtitleTrack->RemoveCue(SubtitleTrack->Cues->GetAt(0));
-                    }
-
-                    if (referenceTrack != nullptr)
-                    {
-                        while (referenceTrack->Cues->Size > 0)
-                        {
-                            referenceTrack->RemoveCue(referenceTrack->Cues->GetAt(0));
-                        }
-                    }
-
-                    pendingCues.clear();
-                    pendingRefCues.clear();
-                    isPreviousCueInfiniteDuration = false;
-                    negativePositionCues.clear();
+                    auto task = create_task(dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
+                        ref new Windows::UI::Core::DispatchedHandler([this] { ClearSubtitles(); })));
+                    task.wait();
                 }
-                catch (...)
+                else
                 {
+                    ClearSubtitles();
                 }
-
-                mutex.unlock();
             }
         }
 

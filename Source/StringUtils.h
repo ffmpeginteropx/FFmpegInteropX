@@ -14,8 +14,7 @@ namespace FFmpegInteropX
 
             std::string s_str = std::string(char_array);
             std::wstring wid_str = std::wstring(s_str.begin(), s_str.end());
-            const wchar_t* w_char = wid_str.c_str();
-            return ref new String(w_char);
+            return WStringToPlatformString(wid_str);
         }
 
         static std::wstring Utf8ToWString(const char* char_array)
@@ -33,12 +32,17 @@ namespace FFmpegInteropX
         static String^ Utf8ToPlatformString(const char* char_array)
         {
             auto wid_str = Utf8ToWString(char_array);
-            return ref new String(wid_str.c_str(), (int)wid_str.size());
+            return WStringToPlatformString(wid_str);
         }
 
         static String^ WStringToPlatformString(const std::wstring& input)
         {
-            return ref new Platform::String(input.c_str(), (unsigned int)input.length());
+            auto size = input.size();
+            if (input[size - 1] == 0)
+            {
+                size--;
+            }
+            return ref new Platform::String(input.c_str(), (unsigned int)size);
         }
 
         static std::string PlatformStringToUtf8String(String^ value)

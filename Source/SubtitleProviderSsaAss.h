@@ -905,7 +905,7 @@ namespace FFmpegInteropX
                             if (title != nullptr)
                             {
                                 auto fontFamily = std::wstring(title->Data());
-                                if (str.compare(fontFamily) == 0)
+                                if (fontFamily.find(str.data(), 0, str.size() - 1) == 0)
                                 {
                                     result = "ms-appdata:///temp/" + m_config->AttachmentCacheFolderName + "/" + attachedFileHelper->InstanceId + "/" + attachment->Name + "#" + StringUtils::WStringToPlatformString(str);
                                     break;
@@ -932,15 +932,8 @@ namespace FFmpegInteropX
         TimedTextDouble GetFontSize(double fontSize)
         {
             TimedTextDouble size;
-            size.Unit = TimedTextUnit::Pixels;
-            size.Value = fontSize;
-
-            // scale to actual video resolution
-            if (videoWidth > 0 && width > 0)
-            {
-                size.Value *= ((double)videoWidth / width);
-            }
-
+            size.Unit = TimedTextUnit::Percentage;
+            size.Value = fontSize * (100.0 / 36);
             return size;
         }
 
