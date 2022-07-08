@@ -7,24 +7,17 @@ namespace FFmpegInteropX
     class StringUtils
     {
     public:
-        static winrt::hstring AnsiStringToPlatformString(const char* char_array)
-        {
-            if (!char_array) return winrt::hstring(L"");
-
-            std::string s_str = std::string(char_array);
-            std::wstring wid_str = std::wstring(s_str.begin(), s_str.end());
-            return WStringToPlatformString(wid_str);
-        }
-
         static std::wstring Utf8ToWString(const char* char_array)
         {
-            if (!char_array) return std::wstring(L"");
-
             auto required_size = MultiByteToWideChar(CP_UTF8, 0, char_array, -1, NULL, 0);
-            std::wstring wid_str = std::wstring(required_size, '?');
-            auto result = MultiByteToWideChar(CP_UTF8, 0, char_array, -1, wid_str.data(), required_size);
-            assert(result == required_size);
-            return wid_str;
+            if (required_size > 0)
+            {
+                std::wstring wid_str = std::wstring(required_size - 1, '?');
+                auto result = MultiByteToWideChar(CP_UTF8, 0, char_array, -1, (LPWSTR)wid_str.data(), required_size);
+                assert(result == required_size);
+                return wid_str;
+            }
+            return std::wstring(L"");
         }
 
         static winrt::hstring Utf8ToPlatformString(const char* char_array)
@@ -35,14 +28,20 @@ namespace FFmpegInteropX
 
         static winrt::hstring WStringToPlatformString(const std::wstring& input)
         {
-            auto size = input.size();
-            auto sizeWithotTrailingZero = input[size - 1] == 0 ? size - 1 : size;
-            return winrt::hstring(input.c_str(), sizeWithotTrailingZero);
+            return winrt::hstring(input.c_str(), (winrt::hstring::size_type)input.size());
         }
 
         static std::string PlatformStringToUtf8String(winrt::hstring value)
         {
-            return to_string(value);
+            int required_size = WideCharToMultiByte(CP_UTF8, 0, value.data(), -1, NULL, 0, NULL, NULL);
+            if (required_size > 0)
+            {
+                std::string s_str = std::string(required_size - 1, '?');
+                auto result = WideCharToMultiByte(CP_UTF8, 0, value.data(), -1, (LPSTR)s_str.data(), required_size, NULL, NULL);
+                assert(result == required_size);
+                return s_str;
+            }
+            return std::string("");
         }
 
     };

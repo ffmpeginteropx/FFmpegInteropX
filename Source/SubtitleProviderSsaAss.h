@@ -633,7 +633,20 @@ namespace FFmpegInteropX
                         auto verticalAlignment = GetVerticalAlignment(alignment, true);
                         auto horizontalAlignment = GetHorizontalAlignment(alignment, true);
 
-                        StoreSubtitleStyle(name, font, size, color, outlineColor, bold, italic, underline, strikeout, outline, horizontalAlignment, verticalAlignment, marginL, marginR, marginV);
+                        auto platformColor = ColorFromArgb(color << 8 | color >> 24);
+                        auto platformOutlineColor = ColorFromArgb(outlineColor << 8 | color >> 24);
+
+                        if (platformColor.A == 0)
+                        {
+                            platformColor.A = 255;
+                        }
+
+                        if (platformOutlineColor.A == 0)
+                        {
+                            platformOutlineColor.A = 255;
+                        }
+
+                        StoreSubtitleStyle(name, font, size, platformColor, platformOutlineColor, bold, italic, underline, strikeout, outline, horizontalAlignment, verticalAlignment, marginL, marginR, marginV);
                     }
                 }
                 else
@@ -672,7 +685,7 @@ namespace FFmpegInteropX
                     auto count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
                         "%[^,],%[^,],%f,%i,%i,%i,%i,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
                         name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
-                        &size, &color, &secondaryColor, &outlineColor, &backColor,
+                        &size, &color, &secondaryColor, &backColor, &outlineColor,
                         &bold, &italic, &borderstyle,
                         &outline, &shadow, &alignment,
                         &marginL, &marginR, &marginV, &alpha, &encoding);
@@ -683,7 +696,7 @@ namespace FFmpegInteropX
                         count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
                             "%[^,],%[^,],%f,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%f,%i,%i,%f,%f,%f,%f,%i",
                             name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
-                            &size, &color, &secondaryColor, &outlineColor, &backColor,
+                            &size, &color, &secondaryColor, &backColor, &outlineColor,
                             &bold, &italic, &borderstyle,
                             &outline, &shadow, &alignment,
                             &marginL, &marginR, &marginV, &alpha, &encoding);
@@ -694,7 +707,10 @@ namespace FFmpegInteropX
                         auto verticalAlignment = GetVerticalAlignment(alignment, false);
                         auto horizontalAlignment = GetHorizontalAlignment(alignment, false);
 
-                        StoreSubtitleStyle(name, font, size, color, outlineColor, bold, italic, 0, 0, outline, horizontalAlignment, verticalAlignment, marginL, marginR, marginV);
+                        auto platformColor = ColorFromArgb(color << 8 | 0x000000FF);
+                        auto platforOutlineColor = ColorFromArgb(outlineColor << 8 | 0x000000FF);
+
+                        StoreSubtitleStyle(name, font, size, platformColor, platforOutlineColor, bold, italic, 0, 0, outline, horizontalAlignment, verticalAlignment, marginL, marginR, marginV);
                     }
                 }
                 else
@@ -704,7 +720,7 @@ namespace FFmpegInteropX
             }
         }
 
-        void StoreSubtitleStyle(char* name, char* font, float size, int color, int outlineColor, int bold, int italic, int underline, int strikeout, float outline, winrt::Windows::Media::Core::TimedTextLineAlignment horizontalAlignment, winrt::Windows::Media::Core::TimedTextDisplayAlignment verticalAlignment, float marginL, float marginR, float marginV)
+        void StoreSubtitleStyle(char* name, char* font, float size, winrt::Windows::UI::Color color, winrt::Windows::UI::Color outlineColor, int bold, int italic, int underline, int strikeout, float outline, winrt::Windows::Media::Core::TimedTextLineAlignment horizontalAlignment, winrt::Windows::Media::Core::TimedTextDisplayAlignment verticalAlignment, float marginL, float marginR, float marginV)
         {
             auto wname = StringUtils::Utf8ToWString(name);
 
@@ -760,7 +776,7 @@ namespace FFmpegInteropX
                 SubtitleStyle.FontStyle(italic ? winrt::Windows::Media::Core::TimedTextFontStyle::Italic : winrt::Windows::Media::Core::TimedTextFontStyle::Normal);
             }
             SubtitleStyle.FontWeight(bold ? winrt::Windows::Media::Core::TimedTextWeight::Bold : winrt::Windows::Media::Core::TimedTextWeight::Normal);
-            SubtitleStyle.Foreground(ColorFromArgb(color << 8 | 0x000000FF));
+            SubtitleStyle.Foreground(color);
             SubtitleStyle.Background(winrt::Windows::UI::Colors::Transparent()); //ColorFromArgb(backColor);
             winrt::Windows::Media::Core::TimedTextDouble outlineRadius;
             outlineRadius.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
@@ -771,7 +787,7 @@ namespace FFmpegInteropX
             outlineThickness.Value = outline * 1.4;
             SubtitleStyle.OutlineThickness(outlineThickness);
             SubtitleStyle.FlowDirection(winrt::Windows::Media::Core::TimedTextFlowDirection::LeftToRight);
-            SubtitleStyle.OutlineColor(ColorFromArgb(outlineColor << 8 | 0x000000FF));
+            SubtitleStyle.OutlineColor(outlineColor);
 
             if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"IsUnderlineEnabled"))
             {
@@ -926,7 +942,7 @@ namespace FFmpegInteropX
                             if (!title.empty())
                             {
                                 auto fontFamily = std::wstring(title);
-                                if (fontFamily.find(str.data(), 0, str.size() - 1) == 0)
+                                if (fontFamily.find(str) == 0)
                                 {
                                     result = L"ms-appdata:///temp/" + m_config.AttachmentCacheFolderName() + L"/" + attachedFileHelper->InstanceId() + L"/" + attachment.Name() + L"#" + StringUtils::WStringToPlatformString(str);
                                     break;
