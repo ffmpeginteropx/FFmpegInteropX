@@ -158,7 +158,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Source\FFmpegInteropX.vcxproj">
-      <Project>{5f6bfb93-c423-4ea3-a02a-b4e25d892135}</Project>
+      <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
       <Name>FFmpegInteropX</Name>
     </ProjectReference>
   </ItemGroup>

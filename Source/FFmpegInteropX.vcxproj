@@ -6,7 +6,7 @@
     <CppWinRTOptimized>true</CppWinRTOptimized>
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
     <MinimalCoreWin>true</MinimalCoreWin>
-    <ProjectGuid>{5F6BFB93-C423-4EA3-A02A-B4E25D892135}</ProjectGuid>
+    <ProjectGuid>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</ProjectGuid>
     <ProjectName>FFmpegInteropX</ProjectName>
     <RootNamespace>FFmpegInteropX</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
