@@ -135,9 +135,9 @@ namespace FFmpegInteropX
                 // Actual Format:        Int??, Int??, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 auto str = StringUtils::Utf8ToWString(subtitle.rects[0]->ass);
 
-                int startStyle = -1;
-                int endStyle = -1;
-                int lastComma = -1;
+                INT64 startStyle = -1;
+                INT64 endStyle = -1;
+                INT64 lastComma = -1;
                 int marginL = 0, marginR = 0, marginV = 0;
                 bool hasError = false;
                 for (int i = 1; i < textIndex; i++)
@@ -147,11 +147,11 @@ namespace FFmpegInteropX
                     {
                         if (i == 2)
                         {
-                            startStyle = (int)nextComma + 1;
+                            startStyle = (INT64)nextComma + 1;
                         }
                         else if (i == 3)
                         {
-                            endStyle = (int)nextComma;
+                            endStyle = (INT64)nextComma;
                         }
                         else if (i == 4)
                         {

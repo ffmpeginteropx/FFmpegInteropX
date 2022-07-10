@@ -228,7 +228,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
             auto bufferRef = av_buffer_ref(avFrame->buf[0]);
             if (bufferRef)
             {
-                auto size = min(bufferRef->size, avFrame->nb_samples * outChannels * bytesPerSample);
+                auto size = min(bufferRef->size, (size_t)avFrame->nb_samples * outChannels * bytesPerSample);
                 *pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)size, free_buffer, bufferRef);
             }
             else
@@ -241,7 +241,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
     if (SUCCEEDED(hr))
     {
         // always update duration with real decoded sample duration
-        auto actualDuration = (long long)avFrame->nb_samples * m_pAvStream->time_base.den / (outSampleRate * m_pAvStream->time_base.num);
+        auto actualDuration = (long long)avFrame->nb_samples * m_pAvStream->time_base.den / ((long long)outSampleRate * m_pAvStream->time_base.num);
         if (actualDuration == 0)
         {
             actualDuration = 1;

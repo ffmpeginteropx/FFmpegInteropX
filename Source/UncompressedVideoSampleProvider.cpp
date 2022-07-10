@@ -63,13 +63,7 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
     else if (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P10LE && m_config.VideoOutputAllow10bit())
     {
         m_OutputPixelFormat = AV_PIX_FMT_P010LE;
-        OLECHAR* guidString;
-        StringFromCLSID(MFVideoFormat_P010, &guidString);
-
-        outputMediaSubtype = winrt::hstring(guidString);
-
-        // ensure memory is freed
-        ::CoTaskMemFree(guidString);
+        outputMediaSubtype = winrt::to_hstring(MFVideoFormat_P010);
     }
     else if (m_config.VideoOutputAllowNv12())
     {
