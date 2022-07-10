@@ -13,7 +13,7 @@ using namespace Windows::Storage::Streams;
 
 namespace FFmpegInteropX
 {
-    public ref class AttachedFile sealed
+    ref class AttachedFile sealed
     {
     public:
         property String^ Name { String^ get() { return name; } };
