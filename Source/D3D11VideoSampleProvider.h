@@ -323,7 +323,7 @@ namespace FFmpegInteropX
                 isCompatible = m_pAvCodecCtx->profile >= 0 && m_pAvCodecCtx->profile <= 2;
                 if (isCompatible)
                 {
-                    auto const av1Profiles = new const GUID[3]{
+                    const GUID av1Profiles[3] {
                         D3D11_DECODER_PROFILE_AV1_VLD_PROFILE0,
                         D3D11_DECODER_PROFILE_AV1_VLD_PROFILE1,
                         D3D11_DECODER_PROFILE_AV1_VLD_PROFILE2
