@@ -1,22 +1,18 @@
 #pragma once
-#include "AttachedFile.g.h"
 
-// Note: Remove this static_assert after copying these generated source files to your project.
-// This assertion exists to avoid compiling these generated source files directly.
-//static_assert(false, "Do not compile generated C++/WinRT source files directly");
-
-namespace winrt::FFmpegInteropX::implementation
+namespace FFmpegInteropX
 {
-    struct AttachedFile : AttachedFileT<AttachedFile>
+    class AttachedFile 
     {
-        hstring Name();
-        hstring MimeType();
+    public:
+        winrt::hstring Name();
+        winrt::hstring MimeType();
         uint64_t Size();
 
     public:
         winrt::Windows::Storage::Streams::IBuffer GetBuffer();
 
-        AttachedFile(hstring  const& name, hstring  const& mimeType, AVStream* stream)
+        AttachedFile(winrt::hstring  const& name, winrt::hstring  const& mimeType, AVStream* stream)
         {
             this->name = name;
             this->mimeType = mimeType;
@@ -24,8 +20,8 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
     private:
-        hstring name{};
-        hstring mimeType{};
+        winrt::hstring name{};
+        winrt::hstring mimeType{};
 
         AVStream* stream = NULL;
     };

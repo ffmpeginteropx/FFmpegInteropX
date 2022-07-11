@@ -215,14 +215,6 @@ namespace FFmpegInteropX
 
     };
 
-    [bindable]
-    runtimeclass AttachedFile
-    {
-        String Name { get; };
-        String MimeType { get; };
-        UInt64 Size{ get; };
-    }
-
     [default_interface]
     runtimeclass BasicVideoEffect : Windows.Media.Effects.IBasicVideoEffect
     {

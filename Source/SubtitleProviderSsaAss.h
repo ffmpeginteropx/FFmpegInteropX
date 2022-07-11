@@ -931,7 +931,7 @@ namespace FFmpegInteropX
                 {
                     for (auto attachment : attachedFileHelper->AttachedFiles())
                     {
-                        std::wstring mime(attachment.MimeType());
+                        std::wstring mime(attachment->MimeType());
                         if (mime.find(L"font") != mime.npos)
                         {
                             auto file{ attachedFileHelper->ExtractFileAsync(attachment).get() };
@@ -944,7 +944,7 @@ namespace FFmpegInteropX
                                 auto fontFamily = std::wstring(title);
                                 if (fontFamily.find(str) == 0)
                                 {
-                                    result = L"ms-appdata:///temp/" + m_config.AttachmentCacheFolderName() + L"/" + attachedFileHelper->InstanceId() + L"/" + attachment.Name() + L"#" + StringUtils::WStringToPlatformString(str);
+                                    result = L"ms-appdata:///temp/" + m_config.AttachmentCacheFolderName() + L"/" + attachedFileHelper->InstanceId() + L"/" + attachment->Name() + L"#" + StringUtils::WStringToPlatformString(str);
                                     break;
                                 }
                             }

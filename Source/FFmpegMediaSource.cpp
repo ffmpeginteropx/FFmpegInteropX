@@ -541,8 +541,8 @@ namespace winrt::FFmpegInteropX::implementation
                         auto name = StringUtils::Utf8ToPlatformString(fileName->value);
                         auto mime = mimetype ? StringUtils::Utf8ToPlatformString(mimetype->value) : L"";
 
-                        auto file = winrt::make_self<AttachedFile>(name, mime, avStream);
-                        attachedFileHelper->AddAttachedFile(file.as<winrt::FFmpegInteropX::AttachedFile>());
+                        auto file = std::shared_ptr<::FFmpegInteropX::AttachedFile>(new ::FFmpegInteropX::AttachedFile(name, mime, avStream));
+                        attachedFileHelper->AddAttachedFile(file);
                     }
                 }
             }
