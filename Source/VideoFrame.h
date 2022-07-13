@@ -62,7 +62,7 @@ namespace winrt::FFmpegInteropX::implementation
                 pixelHeight,
                 72,
                 72,
-                std::vector<byte>(pixels, pixels + length));
+                array_view(pixels, length));
 
             co_await encoderValue.FlushAsync();
         }

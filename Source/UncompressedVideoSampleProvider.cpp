@@ -125,7 +125,7 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
     area.OffsetX.value = 0;
     area.OffsetY.fract = 0;
     area.OffsetY.value = 0;
-    properties.Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, winrt::single_threaded_vector<uint8_t>(std::vector<uint8_t>((uint8_t*)&area, (uint8_t*)&area + sizeof(MFVideoArea))));
+    properties.Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, PropertyValue::CreateUInt8Array(winrt::array_view((uint8_t*)&area, sizeof(MFVideoArea))));
 
     if (codecPar->color_primaries != AVCOL_PRI_UNSPECIFIED)
     {
@@ -747,6 +747,6 @@ void FFmpegInteropX::UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* av
         area.OffsetX.value = 0;
         area.OffsetY.fract = 0;
         area.OffsetY.value = 0;
-        VideoDescriptor().EncodingProperties().Properties().Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, winrt::single_threaded_vector<uint8_t>(std::vector<uint8_t>((uint8_t*)&area, (uint8_t*)&area + sizeof(MFVideoArea))));
+        VideoDescriptor().EncodingProperties().Properties().Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, PropertyValue::CreateUInt8Array(winrt::array_view((uint8_t*)&area, sizeof(MFVideoArea))));
     }
 }

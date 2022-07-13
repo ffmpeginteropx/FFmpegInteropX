@@ -1099,7 +1099,7 @@ namespace winrt::FFmpegInteropX::implementation
                 case AV_CODEC_ID_BMP: extension = L".bmp"; break;
                 }
 
-                auto vector = std::vector<uint8_t>(imageStream->attached_pic.data, imageStream->attached_pic.data + imageStream->attached_pic.size);
+                auto vector = array_view(imageStream->attached_pic.data, imageStream->attached_pic.size);
                 DataWriter writer = DataWriter();
                 writer.WriteBytes(vector);
 
@@ -1622,7 +1622,7 @@ namespace winrt::FFmpegInteropX::implementation
             auto videoProperties = VideoEncodingProperties();
             videoProperties.Subtype(MediaEncodingSubtypes::Wmv3());
 
-            auto extradata = std::vector(avVideoCodecCtx->extradata_size, (uint8_t)*avVideoCodecCtx->extradata);
+            auto extradata = array_view(avVideoCodecCtx->extradata, avVideoCodecCtx->extradata_size);
             videoProperties.SetFormatUserData(extradata);
             videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
         }
@@ -1633,7 +1633,7 @@ namespace winrt::FFmpegInteropX::implementation
             auto videoProperties = VideoEncodingProperties();
             videoProperties.Subtype(MediaEncodingSubtypes::Wvc1());
 
-            auto extradata = std::vector(avVideoCodecCtx->extradata_size, (uint8_t)*avVideoCodecCtx->extradata);
+            auto extradata = array_view(avVideoCodecCtx->extradata, avVideoCodecCtx->extradata_size);
             videoProperties.SetFormatUserData(extradata);
             videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
         }
