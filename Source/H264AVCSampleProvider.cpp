@@ -69,7 +69,7 @@ HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, 
         dataWriter.WriteByte(1);
 
         auto bufferStart = buf + pos;
-        auto buffer = std::vector(nalsize, *bufferStart);
+        auto buffer = winrt::array_view(bufferStart, nalsize);
         dataWriter.WriteBytes(buffer);
 
         pos += nalsize;
@@ -92,7 +92,7 @@ HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, 
         dataWriter.WriteByte(1);
 
         auto bufferStart = buf + pos;
-        auto buffer = std::vector(nalsize, *bufferStart);
+        auto buffer = winrt::array_view(bufferStart, nalsize);
         dataWriter.WriteBytes(buffer);
 
         pos += nalsize;
@@ -148,8 +148,9 @@ HRESULT H264AVCSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, 
         }
 
         // Write the rest of the packet to the stream
-        auto vBuffer = std::vector(size, avPacket->data[index]);
-        dataWriter.WriteBytes(vBuffer);
+        auto bufferStart = avPacket->data + index;
+        auto buffer = winrt::array_view(bufferStart, size);
+        dataWriter.WriteBytes(buffer);
         index += size;
     } while (index < packetSize);
 

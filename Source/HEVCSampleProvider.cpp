@@ -78,7 +78,7 @@ HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYT
                     dataWriter.WriteByte(1);
 
                     auto bufferStart = buf + pos;
-                    auto buffer = std::vector(nalsize, *bufferStart);
+                    auto buffer = winrt::array_view(bufferStart, nalsize);
                     dataWriter.WriteBytes(buffer);
 
                     pos += nalsize;
@@ -88,7 +88,7 @@ HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYT
         else
         {
             /* The stream and extradata contains raw NAL packets. No decoding needed. */
-            auto extra = std::vector(length, *buf);
+            auto extra = winrt::array_view(buf, length);
             dataWriter.WriteBytes(extra);
         }
     }
