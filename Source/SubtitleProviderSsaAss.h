@@ -6,6 +6,7 @@
 namespace FFmpegInteropX
 {
     using namespace winrt::Windows::Storage::FileProperties;
+    using namespace winrt::Windows::Media::Core;
 
     class SubtitleProviderSsaAss : public SubtitleProvider
     {
@@ -22,7 +23,7 @@ namespace FFmpegInteropX
                 avCodecCtx,
                 config,
                 index,
-                winrt::Windows::Media::Core::TimedMetadataKind::Subtitle,
+                TimedMetadataKind::Subtitle,
                 dispatcher
             )
         {
@@ -119,7 +120,7 @@ namespace FFmpegInteropX
             videoHeight = frameHeight;
         }
 
-        virtual winrt::Windows::Media::Core::IMediaCue CreateCue(AVPacket* packet, winrt::Windows::Foundation::TimeSpan* position, winrt::Windows::Foundation::TimeSpan* duration) override
+        virtual IMediaCue CreateCue(AVPacket* packet, winrt::Windows::Foundation::TimeSpan* position, winrt::Windows::Foundation::TimeSpan* duration) override
         {
             UNREFERENCED_PARAMETER(duration);
             UNREFERENCED_PARAMETER(position);
@@ -197,12 +198,12 @@ namespace FFmpegInteropX
 
                 auto cueStyle = !m_config.OverrideSubtitleStyles() && style.get() != nullptr ? style->Style : m_config.SubtitleStyle();
                 auto cueRegion = !m_config.OverrideSubtitleStyles() && style.get() != nullptr ? style->Region : m_config.SubtitleRegion();
-                winrt::Windows::Media::Core::TimedTextRegion subRegion = nullptr;
+                TimedTextRegion subRegion = nullptr;
 
                 if ((marginL > 0 || marginR > 0 || marginV > 0) && width > 0 && height > 0)
                 {
-                    winrt::Windows::Media::Core::TimedTextPadding padding;
-                    padding.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+                    TimedTextPadding padding;
+                    padding.Unit = TimedTextUnit::Percentage;
                     padding.Start = (double)marginL * 100 / width;
                     padding.End = (double)marginR * 100 / width;
                     padding.Before = 0;
@@ -222,15 +223,15 @@ namespace FFmpegInteropX
                     find_and_replace(str, L"\\h", L" ");
                     str.erase(str.find_last_not_of(L" \n\r") + 1);
 
-                    winrt::Windows::Media::Core::TimedTextCue cue = winrt::Windows::Media::Core::TimedTextCue();
+                    TimedTextCue cue = TimedTextCue();
                     cue.CueRegion(cueRegion);
                     cue.CueStyle(cueStyle);
 
-                    winrt::Windows::Media::Core::TimedTextLine textLine = winrt::Windows::Media::Core::TimedTextLine();
+                    TimedTextLine textLine = TimedTextLine();
 
 
-                    winrt::Windows::Media::Core::TimedTextStyle subStyle = nullptr;
-                    winrt::Windows::Media::Core::TimedTextSubformat subFormat = nullptr;
+                    TimedTextStyle subStyle = nullptr;
+                    TimedTextSubformat subFormat = nullptr;
 
                     bool isDrawing = false;
                     size_t drawingStart = 0;
@@ -247,7 +248,7 @@ namespace FFmpegInteropX
                                 // create a subformat with default style for beginning of text (UWP seems to need subformats for all text, if used)
                                 if (nextEffect > 0 && subFormat == nullptr)
                                 {
-                                    subFormat = winrt::Windows::Media::Core::TimedTextSubformat();
+                                    subFormat = TimedTextSubformat();
                                     subFormat.SubformatStyle(cueStyle);
                                     subFormat.StartIndex(0);
                                 }
@@ -261,7 +262,7 @@ namespace FFmpegInteropX
 
                                 // create new subformat for following text
                                 subStyle = subStyle != nullptr ? CopyStyle(subStyle) : CopyStyle(cueStyle);
-                                subFormat = winrt::Windows::Media::Core::TimedTextSubformat();
+                                subFormat = TimedTextSubformat();
                                 subFormat.SubformatStyle(subStyle);
                                 subFormat.StartIndex((int)nextEffect);
 
@@ -378,33 +379,33 @@ namespace FFmpegInteropX
                                         }
                                         else if (tag.compare(L"b0") == 0)
                                         {
-                                            subStyle.FontWeight(winrt::Windows::Media::Core::TimedTextWeight::Normal);
+                                            subStyle.FontWeight(TimedTextWeight::Normal);
                                         }
                                         else if (tag.compare(L"b1") == 0)
                                         {
-                                            subStyle.FontWeight(winrt::Windows::Media::Core::TimedTextWeight::Bold);
+                                            subStyle.FontWeight(TimedTextWeight::Bold);
                                         }
-                                        else if (tag.compare(L"i0") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"FontStyle"))
+                                        else if (tag.compare(L"i0") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
                                         {
-                                            subStyle.FontStyle(winrt::Windows::Media::Core::TimedTextFontStyle::Normal);
+                                            subStyle.FontStyle(TimedTextFontStyle::Normal);
                                         }
-                                        else if (tag.compare(L"i1") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"FontStyle"))
+                                        else if (tag.compare(L"i1") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
                                         {
-                                            subStyle.FontStyle(winrt::Windows::Media::Core::TimedTextFontStyle::Italic);
+                                            subStyle.FontStyle(TimedTextFontStyle::Italic);
                                         }
-                                        else if (tag.compare(L"u0") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"IsUnderlineEnabled"))
+                                        else if (tag.compare(L"u0") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
                                         {
                                             subStyle.IsUnderlineEnabled(false);
                                         }
-                                        else if (tag.compare(L"u1") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"IsUnderlineEnabled"))
+                                        else if (tag.compare(L"u1") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
                                         {
                                             subStyle.IsUnderlineEnabled(true);
                                         }
-                                        else if (tag.compare(L"s0") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"IsLineThroughEnabled"))
+                                        else if (tag.compare(L"s0") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
                                         {
                                             subStyle.IsLineThroughEnabled(false);
                                         }
-                                        else if (tag.compare(L"s1") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"IsLineThroughEnabled"))
+                                        else if (tag.compare(L"s1") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
                                         {
                                             subStyle.IsLineThroughEnabled(true);
                                         }
@@ -433,33 +434,33 @@ namespace FFmpegInteropX
                                     double x = min(posX / width, 1);
                                     double y = min(posY / height, 1);
 
-                                    winrt::Windows::Media::Core::TimedTextPadding padding
+                                    TimedTextPadding padding
                                     {
-                                        0, 0, 0, 0, winrt::Windows::Media::Core::TimedTextUnit::Percentage
+                                        0, 0, 0, 0, TimedTextUnit::Percentage
                                     };
 
-                                    winrt::Windows::Media::Core::TimedTextSize extent
+                                    TimedTextSize extent
                                     {
-                                        0, 0, winrt::Windows::Media::Core::TimedTextUnit::Percentage
+                                        0, 0, TimedTextUnit::Percentage
                                     };
 
-                                    winrt::Windows::Media::Core::TimedTextPoint pos
+                                    TimedTextPoint pos
                                     {
-                                        0, 0, winrt::Windows::Media::Core::TimedTextUnit::Percentage
+                                        0, 0, TimedTextUnit::Percentage
                                     };
 
                                     double size;
 
                                     switch (subRegion.DisplayAlignment())
                                     {
-                                    case  winrt::Windows::Media::Core::TimedTextDisplayAlignment::Before:
+                                    case  TimedTextDisplayAlignment::Before:
                                         pos.Y = y * 100;
                                         extent.Height = (1.0 - y) * 100;
                                         break;
-                                    case  winrt::Windows::Media::Core::TimedTextDisplayAlignment::After:
+                                    case  TimedTextDisplayAlignment::After:
                                         extent.Height = y * 100;
                                         break;
-                                    case  winrt::Windows::Media::Core::TimedTextDisplayAlignment::Center:
+                                    case  TimedTextDisplayAlignment::Center:
                                         size = min(y, 1 - y);
                                         pos.Y = (y - size) * 100;
                                         extent.Height = (size * 2) * 100;
@@ -470,14 +471,14 @@ namespace FFmpegInteropX
 
                                     switch (subStyle.LineAlignment())
                                     {
-                                    case  winrt::Windows::Media::Core::TimedTextLineAlignment::Start:
+                                    case  TimedTextLineAlignment::Start:
                                         pos.X = x * 100;
                                         extent.Width = (1.0 - x) * 100;
                                         break;
-                                    case  winrt::Windows::Media::Core::TimedTextLineAlignment::End:
+                                    case  TimedTextLineAlignment::End:
                                         extent.Width = x * 100;
                                         break;
-                                    case  winrt::Windows::Media::Core::TimedTextLineAlignment::Center:
+                                    case  TimedTextLineAlignment::Center:
                                         size = min(x, 1 - x);
                                         pos.X = (x - size) * 100;
                                         extent.Width = (size * 2) * 100;
@@ -720,36 +721,36 @@ namespace FFmpegInteropX
             }
         }
 
-        void StoreSubtitleStyle(char* name, char* font, float size, winrt::Windows::UI::Color color, winrt::Windows::UI::Color outlineColor, int bold, int italic, int underline, int strikeout, float outline, winrt::Windows::Media::Core::TimedTextLineAlignment horizontalAlignment, winrt::Windows::Media::Core::TimedTextDisplayAlignment verticalAlignment, float marginL, float marginR, float marginV)
+        void StoreSubtitleStyle(char* name, char* font, float size, winrt::Windows::UI::Color color, winrt::Windows::UI::Color outlineColor, int bold, int italic, int underline, int strikeout, float outline, TimedTextLineAlignment horizontalAlignment, TimedTextDisplayAlignment verticalAlignment, float marginL, float marginR, float marginV)
         {
             auto wname = StringUtils::Utf8ToWString(name);
 
-            auto SubtitleRegion = winrt::Windows::Media::Core::TimedTextRegion();
+            auto SubtitleRegion = TimedTextRegion();
             SubtitleRegion.Name(StringUtils::WStringToPlatformString(wname));
 
-            winrt::Windows::Media::Core::TimedTextSize extent;
-            extent.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+            TimedTextSize extent;
+            extent.Unit = TimedTextUnit::Percentage;
             extent.Width = 100;
             extent.Height = 100;
             SubtitleRegion.Extent(extent);
-            winrt::Windows::Media::Core::TimedTextPoint position;
-            position.Unit = winrt::Windows::Media::Core::TimedTextUnit::Pixels;
+            TimedTextPoint position;
+            position.Unit = TimedTextUnit::Pixels;
             position.X = 0;
             position.Y = 0;
             SubtitleRegion.Position(position);
             SubtitleRegion.DisplayAlignment(verticalAlignment);
             SubtitleRegion.Background(winrt::Windows::UI::Colors::Transparent());
-            SubtitleRegion.ScrollMode(winrt::Windows::Media::Core::TimedTextScrollMode::Rollup);
-            SubtitleRegion.TextWrapping(winrt::Windows::Media::Core::TimedTextWrapping::Wrap);
-            SubtitleRegion.WritingMode(winrt::Windows::Media::Core::TimedTextWritingMode::LeftRightTopBottom);
+            SubtitleRegion.ScrollMode(TimedTextScrollMode::Rollup);
+            SubtitleRegion.TextWrapping(TimedTextWrapping::Wrap);
+            SubtitleRegion.WritingMode(TimedTextWritingMode::LeftRightTopBottom);
             SubtitleRegion.IsOverflowClipped(false);
             SubtitleRegion.ZIndex(0);
-            winrt::Windows::Media::Core::TimedTextDouble LineHeight;
-            LineHeight.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+            TimedTextDouble LineHeight;
+            LineHeight.Unit = TimedTextUnit::Percentage;
             LineHeight.Value = 100;
             SubtitleRegion.LineHeight(LineHeight);
-            winrt::Windows::Media::Core::TimedTextPadding padding;
-            padding.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+            TimedTextPadding padding;
+            padding.Unit = TimedTextUnit::Percentage;
             if (width > 0 && height > 0)
             {
                 padding.Start = (double)marginL * 100 / width;
@@ -766,35 +767,35 @@ namespace FFmpegInteropX
             }
             SubtitleRegion.Padding(padding);
 
-            auto SubtitleStyle = winrt::Windows::Media::Core::TimedTextStyle();
+            auto SubtitleStyle = TimedTextStyle();
 
             SubtitleStyle.FontFamily(GetFontFamily(font));
             SubtitleStyle.FontSize(GetFontSize(size));
             SubtitleStyle.LineAlignment(horizontalAlignment);
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"FontStyle"))
+            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
             {
-                SubtitleStyle.FontStyle(italic ? winrt::Windows::Media::Core::TimedTextFontStyle::Italic : winrt::Windows::Media::Core::TimedTextFontStyle::Normal);
+                SubtitleStyle.FontStyle(italic ? TimedTextFontStyle::Italic : TimedTextFontStyle::Normal);
             }
-            SubtitleStyle.FontWeight(bold ? winrt::Windows::Media::Core::TimedTextWeight::Bold : winrt::Windows::Media::Core::TimedTextWeight::Normal);
+            SubtitleStyle.FontWeight(bold ? TimedTextWeight::Bold : TimedTextWeight::Normal);
             SubtitleStyle.Foreground(color);
             SubtitleStyle.Background(winrt::Windows::UI::Colors::Transparent()); //ColorFromArgb(backColor);
-            winrt::Windows::Media::Core::TimedTextDouble outlineRadius;
-            outlineRadius.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+            TimedTextDouble outlineRadius;
+            outlineRadius.Unit = TimedTextUnit::Percentage;
             outlineRadius.Value = outline * 1.4;
             SubtitleStyle.OutlineRadius(outlineRadius);
-            winrt::Windows::Media::Core::TimedTextDouble outlineThickness;
-            outlineThickness.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+            TimedTextDouble outlineThickness;
+            outlineThickness.Unit = TimedTextUnit::Percentage;
             outlineThickness.Value = outline * 1.4;
             SubtitleStyle.OutlineThickness(outlineThickness);
-            SubtitleStyle.FlowDirection(winrt::Windows::Media::Core::TimedTextFlowDirection::LeftToRight);
+            SubtitleStyle.FlowDirection(TimedTextFlowDirection::LeftToRight);
             SubtitleStyle.OutlineColor(outlineColor);
 
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"IsUnderlineEnabled"))
+            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
             {
                 SubtitleStyle.IsUnderlineEnabled(underline);
             }
 
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"IsLineThroughEnabled"))
+            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
             {
                 SubtitleStyle.IsLineThroughEnabled(strikeout);
             }
@@ -811,9 +812,9 @@ namespace FFmpegInteropX
             }
         }
 
-        winrt::Windows::Media::Core::TimedTextStyle CopyStyle(winrt::Windows::Media::Core::TimedTextStyle const& style)
+        TimedTextStyle CopyStyle(TimedTextStyle const& style)
         {
-            auto copy = winrt::Windows::Media::Core::TimedTextStyle();
+            auto copy = TimedTextStyle();
             copy.Background(style.Background());
             copy.FlowDirection(style.FlowDirection());
             copy.FontFamily(style.FontFamily());
@@ -827,15 +828,15 @@ namespace FFmpegInteropX
             copy.OutlineRadius(style.OutlineRadius());
             copy.OutlineThickness(style.OutlineThickness());
 
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"FontStyle"))
+            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
             {
                 copy.FontStyle(style.FontStyle());
             }
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"IsLineThroughEnabled"))
+            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
             {
                 copy.IsLineThroughEnabled(style.IsLineThroughEnabled());
             }
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.winrt::Windows::Media::Core::TimedTextStyle", L"IsUnderlineEnabled"))
+            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
             {
                 copy.IsUnderlineEnabled(style.IsUnderlineEnabled());
             }
@@ -843,9 +844,9 @@ namespace FFmpegInteropX
             return copy;
         }
 
-        winrt::Windows::Media::Core::TimedTextRegion CopyRegion(winrt::Windows::Media::Core::TimedTextRegion const& region)
+        TimedTextRegion CopyRegion(TimedTextRegion const& region)
         {
-            auto copy = winrt::Windows::Media::Core::TimedTextRegion();
+            auto copy = TimedTextRegion();
             copy.Background(region.Background());
             copy.DisplayAlignment(region.DisplayAlignment());
             copy.Extent(region.Extent());
@@ -861,7 +862,7 @@ namespace FFmpegInteropX
             return copy;
         }
 
-        winrt::Windows::Media::Core::TimedTextDisplayAlignment GetVerticalAlignment(int alignment, bool numpadAlignment, winrt::Windows::Media::Core::TimedTextDisplayAlignment defaultAlignment = winrt::Windows::Media::Core::TimedTextDisplayAlignment::Before)
+        TimedTextDisplayAlignment GetVerticalAlignment(int alignment, bool numpadAlignment, TimedTextDisplayAlignment defaultAlignment = TimedTextDisplayAlignment::Before)
         {
             // 1 2 3	bottom left center right
             // 4 5 8	top left
@@ -872,19 +873,19 @@ namespace FFmpegInteropX
             // 11		center right
             if (!numpadAlignment)
             {
-                return alignment <= 3 ? winrt::Windows::Media::Core::TimedTextDisplayAlignment::After :
-                    alignment >= 9 ? winrt::Windows::Media::Core::TimedTextDisplayAlignment::Center :
+                return alignment <= 3 ? TimedTextDisplayAlignment::After :
+                    alignment >= 9 ? TimedTextDisplayAlignment::Center :
                     defaultAlignment;
             }
             else
             {
-                return alignment <= 3 ? winrt::Windows::Media::Core::TimedTextDisplayAlignment::After :
-                    alignment <= 6 ? winrt::Windows::Media::Core::TimedTextDisplayAlignment::Center :
+                return alignment <= 3 ? TimedTextDisplayAlignment::After :
+                    alignment <= 6 ? TimedTextDisplayAlignment::Center :
                     defaultAlignment;
             }
         }
 
-        winrt::Windows::Media::Core::TimedTextLineAlignment GetHorizontalAlignment(int alignment, bool numpadAlignment, winrt::Windows::Media::Core::TimedTextLineAlignment defaultAlignment = winrt::Windows::Media::Core::TimedTextLineAlignment::End)
+        TimedTextLineAlignment GetHorizontalAlignment(int alignment, bool numpadAlignment, TimedTextLineAlignment defaultAlignment = TimedTextLineAlignment::End)
         {
             // 1 2 3	bottom left center right
             // 4 5 8	top left
@@ -895,14 +896,14 @@ namespace FFmpegInteropX
             // 11		center right
             if (!numpadAlignment)
             {
-                return alignment == 2 || alignment == 6 || alignment == 10 ? winrt::Windows::Media::Core::TimedTextLineAlignment::Center :
-                    alignment == 1 || alignment == 4 || alignment == 5 || alignment == 8 || alignment == 9 ? winrt::Windows::Media::Core::TimedTextLineAlignment::Start :
+                return alignment == 2 || alignment == 6 || alignment == 10 ? TimedTextLineAlignment::Center :
+                    alignment == 1 || alignment == 4 || alignment == 5 || alignment == 8 || alignment == 9 ? TimedTextLineAlignment::Start :
                     defaultAlignment;
             }
             else
             {
-                return alignment == 2 || alignment == 5 || alignment == 8 ? winrt::Windows::Media::Core::TimedTextLineAlignment::Center :
-                    alignment == 1 || alignment == 4 || alignment == 7 ? winrt::Windows::Media::Core::TimedTextLineAlignment::Start :
+                return alignment == 2 || alignment == 5 || alignment == 8 ? TimedTextLineAlignment::Center :
+                    alignment == 1 || alignment == 4 || alignment == 7 ? TimedTextLineAlignment::Start :
                     defaultAlignment;
             }
         }
@@ -966,10 +967,10 @@ namespace FFmpegInteropX
             return result;
         }
 
-        winrt::Windows::Media::Core::TimedTextDouble GetFontSize(double fontSize)
+        TimedTextDouble GetFontSize(double fontSize)
         {
-            winrt::Windows::Media::Core::TimedTextDouble size;
-            size.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+            TimedTextDouble size;
+            size.Unit = TimedTextUnit::Percentage;
             size.Value = fontSize * 2.7;
 
             return size;
@@ -1024,8 +1025,8 @@ namespace FFmpegInteropX
         {
         public:
             winrt::hstring Name{};
-            winrt::Windows::Media::Core::TimedTextRegion Region = { nullptr };
-            winrt::Windows::Media::Core::TimedTextStyle Style = { nullptr };
+            TimedTextRegion Region = { nullptr };
+            TimedTextStyle Style = { nullptr };
         };
 
         ~SubtitleProviderSsaAss()

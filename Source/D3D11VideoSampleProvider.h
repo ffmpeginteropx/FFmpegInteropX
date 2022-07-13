@@ -14,6 +14,8 @@ extern "C"
 
 namespace FFmpegInteropX
 {
+    using namespace winrt::Windows::Media::Core;
+
     class D3D11VideoSampleProvider : public UncompressedVideoSampleProvider
     {
     private:
@@ -128,7 +130,7 @@ namespace FFmpegInteropX
             return hr;
         }
 
-        virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample const& sample) override
+        virtual HRESULT SetSampleProperties(MediaStreamSample const& sample) override
         {
             if (sample.Direct3D11Surface())
             {
@@ -138,14 +140,14 @@ namespace FFmpegInteropX
                 auto sampleNative = sample.as<winrt::Windows::Foundation::IUnknown>();
 
                 // Attach Processed event and store in samples list
-                auto token = sample.Processed(winrt::Windows::Foundation::TypedEventHandler<winrt::Windows::Media::Core::MediaStreamSample, winrt::Windows::Foundation::IInspectable>(this, &D3D11VideoSampleProvider::OnProcessed));
+                auto token = sample.Processed(winrt::Windows::Foundation::TypedEventHandler<MediaStreamSample, winrt::Windows::Foundation::IInspectable>(this, &D3D11VideoSampleProvider::OnProcessed));
                 trackedSamples.insert_or_assign(sampleNative, token);
             }
 
             return UncompressedVideoSampleProvider::SetSampleProperties(sample);
         };
 
-        void OnProcessed(winrt::Windows::Media::Core::MediaStreamSample const& sender, winrt::Windows::Foundation::IInspectable const&)
+        void OnProcessed(MediaStreamSample const& sender, winrt::Windows::Foundation::IInspectable const&)
         {
             std::lock_guard<std::mutex> lock(samplesMutex);
 
@@ -164,7 +166,7 @@ namespace FFmpegInteropX
             }
         }
 
-        void ReturnTextureToPool(winrt::Windows::Media::Core::MediaStreamSample const& sample)
+        void ReturnTextureToPool(MediaStreamSample const& sample)
         {
             IDXGISurface* surface = NULL;
             ID3D11Texture2D* texture = NULL;
@@ -192,7 +194,7 @@ namespace FFmpegInteropX
             {
                 // detach Processed event and release native interface
                 auto sampleNative = entry.first;
-                auto sample = sampleNative.as<winrt::Windows::Media::Core::MediaStreamSample>();
+                auto sample = sampleNative.as<MediaStreamSample>();
 
                 sample.Processed(entry.second);
             }
@@ -207,7 +209,7 @@ namespace FFmpegInteropX
             {
                 // detach Processed event and release native interface
                 auto sampleNative = entry.first;
-                auto sample = sampleNative.as<winrt::Windows::Media::Core::MediaStreamSample>();
+                auto sample = sampleNative.as<MediaStreamSample>();
 
                 sample.Processed(entry.second);
 
@@ -384,7 +386,7 @@ namespace FFmpegInteropX
             return hr;
         }
 
-        static HRESULT InitializeHardwareDeviceContext(winrt::Windows::Media::Core::MediaStreamSource sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, IMFDXGIDeviceManager* deviceManager, HANDLE* outDeviceHandle)
+        static HRESULT InitializeHardwareDeviceContext(MediaStreamSource sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, IMFDXGIDeviceManager* deviceManager, HANDLE* outDeviceHandle)
         {
             ID3D11Device* device = nullptr;
             ID3D11DeviceContext* deviceContext = nullptr;

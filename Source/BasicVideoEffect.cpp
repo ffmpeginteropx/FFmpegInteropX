@@ -30,7 +30,12 @@ using namespace winrt::Microsoft::Graphics::Canvas::Effects;
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    void BasicVideoEffect::SetProperties(Windows::Foundation::Collections::IPropertySet const& configuration)
+    using namespace Effects;
+    using namespace Microsoft::Graphics::Canvas;
+    using namespace Windows::Foundation::Collections;
+    using namespace Windows::Media::MediaProperties;
+
+    void BasicVideoEffect::SetProperties(IPropertySet const& configuration)
     {
         inputConfiguration = configuration;
         effectConfiguration = winrt::unbox_value< winrt::FFmpegInteropX::VideoEffectConfiguration>(configuration.Lookup(L"config"));
@@ -41,9 +46,9 @@ namespace winrt::FFmpegInteropX::implementation
         return false;
     }
 
-    Windows::Media::Effects::MediaMemoryTypes BasicVideoEffect::SupportedMemoryTypes()
+    MediaMemoryTypes BasicVideoEffect::SupportedMemoryTypes()
     {
-        return winrt::Windows::Media::Effects::MediaMemoryTypes::Gpu;
+        return MediaMemoryTypes::Gpu;
     }
 
     bool BasicVideoEffect::TimeIndependent()
@@ -51,7 +56,7 @@ namespace winrt::FFmpegInteropX::implementation
         return true;
     }
 
-    Windows::Foundation::Collections::IVectorView<Windows::Media::MediaProperties::VideoEncodingProperties> BasicVideoEffect::SupportedEncodingProperties()
+    IVectorView<VideoEncodingProperties> BasicVideoEffect::SupportedEncodingProperties()
     {
         auto encodingProperties = VideoEncodingProperties();
         encodingProperties.Subtype(L"ARGB32");
@@ -60,13 +65,13 @@ namespace winrt::FFmpegInteropX::implementation
         return vector.GetView();
     }
 
-    void BasicVideoEffect::SetEncodingProperties(Windows::Media::MediaProperties::VideoEncodingProperties const& encodingProperties, Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice const& device)
+    void BasicVideoEffect::SetEncodingProperties(VideoEncodingProperties const& encodingProperties, Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice const& device)
     {
         UNREFERENCED_PARAMETER(encodingProperties);
         canvasDevice = CanvasDevice::CreateFromDirect3D11Device(device);
     }
 
-    void BasicVideoEffect::ProcessFrame(Windows::Media::Effects::ProcessVideoFrameContext const& context)
+    void BasicVideoEffect::ProcessFrame(ProcessVideoFrameContext const& context)
     {
         try
         {
@@ -110,7 +115,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    void BasicVideoEffect::Close(Windows::Media::Effects::MediaEffectClosedReason const& reason)
+    void BasicVideoEffect::Close(MediaEffectClosedReason const& reason)
     {
         UNREFERENCED_PARAMETER(reason);
         canvasDevice = nullptr;

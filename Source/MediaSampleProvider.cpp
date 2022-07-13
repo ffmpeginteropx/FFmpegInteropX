@@ -22,7 +22,6 @@
 #include "FFmpegReader.h"
 #include "LanguageTagConverter.h"
 #include "AvCodecContextHelpers.h"
-//#include "SubtitleProvider.h"
 #include "Mfapi.h"
 
 using namespace FFmpegInteropX;

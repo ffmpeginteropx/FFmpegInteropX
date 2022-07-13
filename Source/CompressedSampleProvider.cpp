@@ -4,6 +4,7 @@
 
 using namespace FFmpegInteropX;
 using namespace winrt::FFmpegInteropX;
+using namespace winrt::Windows::Media::Core;
 
 CompressedSampleProvider::CompressedSampleProvider(
     std::shared_ptr<FFmpegReader> reader,
@@ -87,17 +88,17 @@ HRESULT CompressedSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, win
     return hr;
 }
 
-winrt::Windows::Media::Core::IMediaStreamDescriptor CompressedSampleProvider::CreateStreamDescriptor()
+IMediaStreamDescriptor CompressedSampleProvider::CreateStreamDescriptor()
 {
-    winrt::Windows::Media::Core::IMediaStreamDescriptor mediaStreamDescriptor;
+    IMediaStreamDescriptor mediaStreamDescriptor;
     if (videoEncodingProperties != nullptr)
     {
         SetCommonVideoEncodingProperties(videoEncodingProperties, true);
-        mediaStreamDescriptor = winrt::Windows::Media::Core::VideoStreamDescriptor(videoEncodingProperties);
+        mediaStreamDescriptor = VideoStreamDescriptor(videoEncodingProperties);
     }
     else
     {
-        auto audioStreamDescriptor = winrt::Windows::Media::Core::AudioStreamDescriptor(audioEncodingProperties);
+        auto audioStreamDescriptor = AudioStreamDescriptor(audioEncodingProperties);
         if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.AudioStreamDescriptor", L"TrailingEncoderPadding"))
         {
             if (m_pAvStream->codecpar->initial_padding > 0)

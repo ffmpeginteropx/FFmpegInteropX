@@ -5,6 +5,9 @@
 
 namespace FFmpegInteropX
 {
+    using namespace winrt::Windows::Graphics::Imaging;
+    using namespace winrt::Windows::Media::Core;
+
     struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
     {
         virtual HRESULT __stdcall GetBuffer(uint8_t** value, uint32_t* capacity) = 0;
@@ -20,7 +23,7 @@ namespace FFmpegInteropX
             winrt::FFmpegInteropX::MediaSourceConfig const& config,
             int index,
             winrt::Windows::UI::Core::CoreDispatcher  const& dispatcher)
-            : SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, winrt::Windows::Media::Core::TimedMetadataKind::ImageSubtitle, dispatcher)
+            : SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index,TimedMetadataKind::ImageSubtitle, dispatcher)
         {
         }
 
@@ -38,7 +41,7 @@ namespace FFmpegInteropX
             }
         }
 
-        virtual winrt::Windows::Media::Core::IMediaCue CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) override
+        virtual IMediaCue CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) override
         {
             // only decode image subtitles if the stream is selected
             if (!IsEnabled())
@@ -61,11 +64,11 @@ namespace FFmpegInteropX
                 {
                     if (!dummyBitmap)
                     {
-                        dummyBitmap = winrt::Windows::Graphics::Imaging::SoftwareBitmap(winrt::Windows::Graphics::Imaging::BitmapPixelFormat::Bgra8, 16, 16, winrt::Windows::Graphics::Imaging::BitmapAlphaMode::Premultiplied);
+                        dummyBitmap = SoftwareBitmap(BitmapPixelFormat::Bgra8, 16, 16, BitmapAlphaMode::Premultiplied);
                     }
 
                     // inserty dummy cue
-                    winrt::Windows::Media::Core::ImageCue cue = winrt::Windows::Media::Core::ImageCue();
+                   ImageCue cue =ImageCue();
                     cue.SoftwareBitmap(dummyBitmap);
                     avsubtitle_free(&subtitle);
 
@@ -73,12 +76,10 @@ namespace FFmpegInteropX
                 }
 
                 int width, height, offsetX, offsetY;
-                winrt::Windows::Media::Core::TimedTextSize cueSize;
-                winrt::Windows::Media::Core::TimedTextPoint cuePosition;
+               TimedTextSize cueSize;
+               TimedTextPoint cuePosition;
                 if (subtitle.num_rects > 0 && CheckSize(subtitle, width, height, offsetX, offsetY, cueSize, cuePosition))
                 {
-                    using namespace winrt::Windows::Graphics::Imaging;
-
                     auto bitmap = SoftwareBitmap(BitmapPixelFormat::Bgra8, width, height, BitmapAlphaMode::Straight);
                     {
                         auto buffer = bitmap.LockBuffer(BitmapBufferAccessMode::Write);
@@ -120,7 +121,7 @@ namespace FFmpegInteropX
                         }
                     }
 
-                    winrt::Windows::Media::Core::ImageCue cue = winrt::Windows::Media::Core::ImageCue();
+                   ImageCue cue =ImageCue();
                     cue.SoftwareBitmap(SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8, BitmapAlphaMode::Premultiplied));
                     cue.Position(cuePosition);
                     cue.Extent(cueSize);
@@ -146,7 +147,7 @@ namespace FFmpegInteropX
 
     private:
 
-        bool CheckSize(AVSubtitle& subtitle, int& width, int& height, int& offsetX, int& offsetY, winrt::Windows::Media::Core::TimedTextSize& cueSize, winrt::Windows::Media::Core::TimedTextPoint& cuePosition)
+        bool CheckSize(AVSubtitle& subtitle, int& width, int& height, int& offsetX, int& offsetY,TimedTextSize& cueSize,TimedTextPoint& cuePosition)
         {
             if (!GetInitialSize())
             {
@@ -192,12 +193,12 @@ namespace FFmpegInteropX
                 }
             }
 
-            cueSize.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+            cueSize.Unit =TimedTextUnit::Percentage;
             cueSize.Width = (double)width * 100 / subtitleWidth;
             cueSize.Height = (double)height * 100 / targetHeight;
 
             // for some reason, all bitmap cues are moved down by 5% by uwp. we need to compensate for that.
-            cuePosition.Unit = winrt::Windows::Media::Core::TimedTextUnit::Percentage;
+            cuePosition.Unit =TimedTextUnit::Percentage;
             cuePosition.X = (double)offsetX * 100 / subtitleWidth;
             cuePosition.Y = ((double)(offsetY - heightOffset) * 100 / targetHeight) - 5;
 
@@ -237,7 +238,7 @@ namespace FFmpegInteropX
         int subtitleWidth = 0;
         int subtitleHeight = 0;
         int optimalHeight = 0;
-        winrt::Windows::Graphics::Imaging::SoftwareBitmap dummyBitmap = { nullptr };
+        SoftwareBitmap dummyBitmap = { nullptr };
 
     };
 }
