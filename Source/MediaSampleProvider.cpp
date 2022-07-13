@@ -456,6 +456,10 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
         videoProperties.Width(m_pAvCodecCtx->width);
         videoProperties.Height(m_pAvCodecCtx->height);
         videoProperties.ProfileId(m_pAvCodecCtx->profile);
+        if (m_pAvCodecCtx->bit_rate > 0)
+        {
+            videoProperties.Bitrate((unsigned int)m_pAvCodecCtx->bit_rate);
+        }
     }
 
     if (m_pAvCodecCtx->sample_aspect_ratio.num > 0 &&
@@ -500,8 +504,6 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
         videoProperties.FrameRate().Numerator(m_pAvStream->avg_frame_rate.num);
         videoProperties.FrameRate().Denominator(m_pAvStream->avg_frame_rate.den);
     }
-
-    videoProperties.Bitrate((unsigned int)m_pAvCodecCtx->bit_rate);
 }
 
 void MediaSampleProvider::Detach()
