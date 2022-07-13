@@ -28,7 +28,7 @@ NALPacketSampleProvider::NALPacketSampleProvider(
     AVCodecContext* avCodecCtx,
     MediaSourceConfig const& config,
     int streamIndex,
-    VideoEncodingProperties pencodingProperties,
+    VideoEncodingProperties const& pencodingProperties,
     HardwareDecoderStatus hardwareDecoderStatus)
     : CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, pencodingProperties, hardwareDecoderStatus)
 {

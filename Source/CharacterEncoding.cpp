@@ -18,6 +18,7 @@ namespace winrt::FFmpegInteropX::implementation
                 if (internalView == nullptr)
                 {
                     //populate and create the vector.
+                    //observable vector is used to work around a bug in xaml/c++winrt which makes binding not work
                     internalMap = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::CharacterEncoding>();
                     internalMap.Append(FFmpegInteropX::CharacterEncoding(0, L"", L"System locale"));
                     internalMap.Append(FFmpegInteropX::CharacterEncoding(65001, L"CP65001", L"Unicode (UTF-8)"));

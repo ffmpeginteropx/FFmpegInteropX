@@ -169,7 +169,7 @@ namespace FFmpegInteropX
             IDXGISurface* surface = NULL;
             ID3D11Texture2D* texture = NULL;
 
-            HRESULT hr = DirectXInteropHelper::GetDXGISurface2(sample.Direct3D11Surface(), &surface);
+            HRESULT hr = DirectXInteropHelper::GetDXGISurface(sample.Direct3D11Surface(), &surface);
 
             if (SUCCEEDED(hr))
             {

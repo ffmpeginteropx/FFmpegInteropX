@@ -16,7 +16,7 @@ winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface DirectXInteropHe
     return result;
 }
 
-HRESULT DirectXInteropHelper::GetDXGISurface2(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface source, IDXGISurface** dxgiSurface)
+HRESULT DirectXInteropHelper::GetDXGISurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface source, IDXGISurface** dxgiSurface)
 {
     using IUnknown = ::IUnknown;
 
