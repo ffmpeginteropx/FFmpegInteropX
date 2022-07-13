@@ -47,7 +47,7 @@ namespace FFmpegInteropX
             InitializeNameLanguageCodec();
 
             SubtitleTrack = winrt::Windows::Media::Core::TimedMetadataTrack(Name, Language, timedMetadataKind);
-            SubtitleTrack.Label(Name.empty() ? Name : Language);
+            SubtitleTrack.Label(!Name.empty() ? Name : Language);
 
 
             auto OnCueEntered_handler = [this](winrt::Windows::Media::Core::TimedMetadataTrack sender, winrt::Windows::Media::Core::MediaCueEventArgs args)
