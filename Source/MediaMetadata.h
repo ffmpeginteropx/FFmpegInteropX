@@ -33,21 +33,15 @@ namespace FFmpegInteropX
                         {
                             auto key = StringUtils::Utf8ToPlatformString(entry->key);
                             auto value = StringUtils::Utf8ToPlatformString(entry->value);
-                            if (entries.HasKey(key))
+
+                            auto valueList = entriesLocal.TryLookup(key);
+                            if (!valueList)
                             {
-                                auto valueList = entriesLocal.Lookup(key);
-                                valueList.Append(value);
-                            }
-                            else
-                            {
-                                auto valueList = winrt::single_threaded_observable_vector<winrt::hstring>();
-                                valueList.Append(value);
+                                valueList = winrt::single_threaded_observable_vector<winrt::hstring>();
                                 entriesLocal.Insert(key, valueList);
                             }
-                            /*auto kvp = winrt::single_threaded_map<winrt::hstring, winrt::hstring>(StringUtils::Utf8ToPlatformString(entry->key),
-                                StringUtils::Utf8ToPlatformString(entry->value))
-                            entries.Append({
-                                 });*/
+
+                            valueList.Append(value);
                         }
 
                     } while (entry);

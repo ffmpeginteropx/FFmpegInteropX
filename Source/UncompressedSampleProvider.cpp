@@ -72,7 +72,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int
             }
         }
 
-        if (!SUCCEEDED(hr) && errorCount++ < m_config.as<implementation::MediaSourceConfig>()->SkipErrors())
+        if (!SUCCEEDED(hr) && errorCount++ < m_config.SkipErrors())
         {
             // unref any buffers in old frame
             av_frame_unref(avFrame);

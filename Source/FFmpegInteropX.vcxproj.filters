@@ -103,9 +103,6 @@
     <ClInclude Include="BasicVideoEffect.h">
       <Filter>Effects</Filter>
     </ClInclude>
-    <ClInclude Include="LanguageTagConverter.h">
-      <Filter>Effects</Filter>
-    </ClInclude>
     <ClInclude Include="VideoEffectFactory.h">
       <Filter>Effects</Filter>
     </ClInclude>
@@ -214,6 +211,9 @@
     <ClInclude Include="MediaThumbnailData.h">
       <Filter>Metadata</Filter>
     </ClInclude>
+    <ClInclude Include="LanguageTagConverter.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -233,9 +233,6 @@
       <Filter>Helpers</Filter>
     </ClCompile>
     <ClCompile Include="BasicVideoEffect.cpp">
-      <Filter>Effects</Filter>
-    </ClCompile>
-    <ClCompile Include="LanguageTagConverter.cpp">
       <Filter>Effects</Filter>
     </ClCompile>
     <ClCompile Include="ReferenceCue.cpp">
@@ -304,6 +301,9 @@
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="MediaThumbnailData.cpp">
       <Filter>Metadata</Filter>
+    </ClCompile>
+    <ClCompile Include="LanguageTagConverter.cpp">
+      <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
