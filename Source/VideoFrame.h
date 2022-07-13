@@ -12,8 +12,6 @@ namespace winrt::FFmpegInteropX::implementation
 {
     struct VideoFrame : VideoFrameT<VideoFrame>
     {
-        VideoFrame() = default;
-
         VideoFrame(Windows::Storage::Streams::IBuffer const& pixelData, uint32_t width, uint32_t height, Windows::Media::MediaProperties::MediaRatio const& pixelAspectRatio, Windows::Foundation::TimeSpan const& timestamp);
         Windows::Storage::Streams::IBuffer PixelData();
         uint32_t PixelWidth();
