@@ -24,128 +24,13 @@
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    using namespace winrt::Windows::Storage::Streams;
-    //using namespace winrt::Windows::Media::MediaProperties;
-    using namespace ::FFmpegInteropX;
+    using namespace Windows::Foundation;
+    using namespace Windows::Storage::Streams;
+    using namespace Windows::Media::Playback;
 
     // Static functions passed to FFmpeg
-    static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
-    {
-        FFmpegMediaSource* mss = reinterpret_cast<FFmpegMediaSource*>(ptr);
-        ULONG bytesRead = 0;
-        HRESULT hr = mss->fileStreamData->Read(buf, bufSize, &bytesRead);
-
-        if (FAILED(hr))
-        {
-            return -1;
-        }
-
-        // Check beginning of file for BOM on first read
-        if (mss->streamByteOrderMark == ByteOrderMark::Unchecked)
-        {
-            if (bytesRead >= 4)
-            {
-                auto bom = ((uint32_t*)buf)[0];
-                if ((bom & 0x00FFFFFF) == 0x00BFBBEF)
-                {
-                    mss->streamByteOrderMark = ByteOrderMark::UTF8;
-                }
-                else
-                {
-                    mss->streamByteOrderMark = ByteOrderMark::Unknown;
-                }
-            }
-            else
-            {
-                mss->streamByteOrderMark = ByteOrderMark::Unknown;
-            }
-        }
-
-        // If we succeed but don't have any bytes, assume end of file
-        if (bytesRead == 0)
-        {
-            return AVERROR_EOF;  // Let FFmpeg know that we have reached eof
-        }
-
-        return bytesRead;
-    }
-
-    // Static function to seek in file stream. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
-    static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence)
-    {
-        FFmpegMediaSource* mss = reinterpret_cast<FFmpegMediaSource*>(ptr);
-        if (whence == AVSEEK_SIZE)
-        {
-            // get stream size
-            STATSTG status;
-            if (FAILED(mss->fileStreamData->Stat(&status, STATFLAG_NONAME)))
-            {
-                return -1;
-            }
-            return status.cbSize.QuadPart;
-        }
-        else
-        {
-            LARGE_INTEGER in;
-            in.QuadPart = pos;
-            ULARGE_INTEGER out = { 0 };
-
-            if (FAILED(mss->fileStreamData->Seek(in, whence, &out)))
-            {
-                return -1;
-            }
-
-            return out.QuadPart; // Return the new position:
-        }
-    }
-
-    static int is_hwaccel_pix_fmt(enum AVPixelFormat pix_fmt)
-    {
-        const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(pix_fmt);
-        return desc->flags & AV_PIX_FMT_FLAG_HWACCEL;
-    }
-
-    static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelFormat* fmt)
-    {
-        AVPixelFormat result_sw = (AVPixelFormat)-1;
-        AVPixelFormat result_hw = (AVPixelFormat)-1;
-        AVPixelFormat format;
-        int index = 0;
-        do
-        {
-            format = fmt[index++];
-
-            //		
-            if (format != -1)
-            {
-                if (s->hw_device_ctx && format == AV_PIX_FMT_D3D11)
-                {
-                    // we only support D3D11 HW format (not D3D11_VLD)
-                    result_hw = format;
-                }
-                else if (result_sw == -1 && !is_hwaccel_pix_fmt(format))
-                {
-                    // take first non hw accelerated format
-                    result_sw = format;
-                }
-                else if (format == AV_PIX_FMT_NV12 && result_sw != AV_PIX_FMT_YUVA420P)
-                {
-                    // switch SW format to NV12 if available, unless this is an alpha channel file
-                    result_sw = format;
-                }
-            }
-        } while (format != -1);
-
-
-        if (result_hw != -1)
-        {
-            return result_hw;
-        }
-        else
-        {
-            return result_sw;
-        }
-    }
+    static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize);
+    static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence);
 
     // Flag for ffmpeg global setup
     static bool isRegistered = false;
@@ -417,8 +302,8 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::InitializePlaybackItem(MediaPlaybackItem const& playbackitem)
     {
-        audioTracksChangedToken = playbackitem.AudioTracksChanged(Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem, Windows::Foundation::Collections::IVectorChangedEventArgs>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnAudioTracksChanged));
-        subtitlePresentationModeChangedToken = playbackitem.TimedMetadataTracks().PresentationModeChanged(Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackTimedMetadataTrackList, Windows::Media::Playback::TimedMetadataPresentationModeChangedEventArgs>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnPresentationModeChanged));
+        audioTracksChangedToken = playbackitem.AudioTracksChanged(TypedEventHandler<MediaPlaybackItem, Collections::IVectorChangedEventArgs>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnAudioTracksChanged));
+        subtitlePresentationModeChangedToken = playbackitem.TimedMetadataTracks().PresentationModeChanged(TypedEventHandler<MediaPlaybackTimedMetadataTrackList, TimedMetadataPresentationModeChangedEventArgs>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnPresentationModeChanged));
 
         if (config->AutoSelectForcedSubtitles())
         {
@@ -462,7 +347,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config)
+    IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config)
     {
         winrt::apartment_context caller; // Capture calling context.
         auto dispatcher = GetCurrentDispatcher();
@@ -472,12 +357,12 @@ namespace winrt::FFmpegInteropX::implementation
         co_return result.as<FFmpegInteropX::FFmpegMediaSource>();;
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream)
+    IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(IRandomAccessStream stream)
     {
         return CreateFromStreamAsync(stream, FFmpegInteropX::MediaSourceConfig());
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring const& uri, FFmpegInteropX::MediaSourceConfig config)
+    IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config)
     {
         winrt::apartment_context caller; // Capture calling context.
         auto dispatcher = GetCurrentDispatcher();
@@ -487,9 +372,57 @@ namespace winrt::FFmpegInteropX::implementation
         co_return result.as<FFmpegInteropX::FFmpegMediaSource>();
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring const& uri)
+    IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
     {
         return CreateFromUriAsync(uri, FFmpegInteropX::MediaSourceConfig());
+    }
+
+    static int is_hwaccel_pix_fmt(enum AVPixelFormat pix_fmt)
+    {
+        const AVPixFmtDescriptor* desc = av_pix_fmt_desc_get(pix_fmt);
+        return desc->flags & AV_PIX_FMT_FLAG_HWACCEL;
+    }
+
+    static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelFormat* fmt)
+    {
+        AVPixelFormat result_sw = (AVPixelFormat)-1;
+        AVPixelFormat result_hw = (AVPixelFormat)-1;
+        AVPixelFormat format;
+        int index = 0;
+        do
+        {
+            format = fmt[index++];
+
+            //		
+            if (format != -1)
+            {
+                if (s->hw_device_ctx && format == AV_PIX_FMT_D3D11)
+                {
+                    // we only support D3D11 HW format (not D3D11_VLD)
+                    result_hw = format;
+                }
+                else if (result_sw == -1 && !is_hwaccel_pix_fmt(format))
+                {
+                    // take first non hw accelerated format
+                    result_sw = format;
+                }
+                else if (format == AV_PIX_FMT_NV12 && result_sw != AV_PIX_FMT_YUVA420P)
+                {
+                    // switch SW format to NV12 if available, unless this is an alpha channel file
+                    result_sw = format;
+                }
+            }
+        } while (format != -1);
+
+
+        if (result_hw != -1)
+        {
+            return result_hw;
+        }
+        else
+        {
+            return result_sw;
+        }
     }
 
     HRESULT FFmpegMediaSource::InitFFmpegContext()
@@ -745,7 +678,7 @@ namespace winrt::FFmpegInteropX::implementation
                 // Assign initial BufferTime to MediaStreamSource
                 mss.BufferTime(fileStreamData ? config->DefaultBufferTime() : config->DefaultBufferTimeUri());
 
-                if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.MediaStreamSource", L"MaxSupportedPlaybackRate"))
+                if (Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.MediaStreamSource", L"MaxSupportedPlaybackRate"))
                 {
                     mss.MaxSupportedPlaybackRate(config->MaxSupportedPlaybackRate());
                 }
@@ -825,7 +758,7 @@ namespace winrt::FFmpegInteropX::implementation
                         }
                         else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
                         {
-                            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsEnumNamedValuePresent(L"Windows.Media.Core.TimedMetadataKind", L"ImageSubtitle"))
+                            if (Metadata::ApiInformation::IsEnumNamedValuePresent(L"Windows.Media.Core.TimedMetadataKind", L"ImageSubtitle"))
                             {
                                 avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, dispatcher));
                             }
@@ -1083,7 +1016,7 @@ namespace winrt::FFmpegInteropX::implementation
 
 
 
-    void FFmpegMediaSource::SetSubtitleDelay(Windows::Foundation::TimeSpan const& delay)
+    void FFmpegMediaSource::SetSubtitleDelay(TimeSpan const& delay)
     {
         mutexGuard.lock();
         try
@@ -1224,7 +1157,7 @@ namespace winrt::FFmpegInteropX::implementation
         return source;
     }
 
-    Windows::Media::Playback::MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem()
+    MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem()
     {
         mutexGuard.lock();
         try
@@ -1242,7 +1175,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    Windows::Media::Playback::MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(Windows::Foundation::TimeSpan const& startTime)
+    MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan const& startTime)
     {
         mutexGuard.lock();
         try
@@ -1260,7 +1193,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    Windows::Media::Playback::MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(Windows::Foundation::TimeSpan const& startTime, Windows::Foundation::TimeSpan const& durationLimit)
+    MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan const& startTime, TimeSpan const& durationLimit)
     {
         mutexGuard.lock();
         try
@@ -1278,7 +1211,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    Windows::Foundation::IAsyncOperation<Windows::Foundation::Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(Windows::Storage::Streams::IRandomAccessStream stream, hstring streamName)
+    IAsyncOperation<Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream stream, hstring streamName)
     {
         winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
@@ -1385,7 +1318,7 @@ namespace winrt::FFmpegInteropX::implementation
         co_return externalSubsParser->SubtitleStreams();
     }
 
-    Windows::Foundation::IAsyncOperation<Windows::Foundation::Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(Windows::Storage::Streams::IRandomAccessStream stream)
+    IAsyncOperation<Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream stream)
     {
         return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName());
     }
@@ -1395,13 +1328,13 @@ namespace winrt::FFmpegInteropX::implementation
         return config.as<winrt::FFmpegInteropX::MediaSourceConfig>();
     }
 
-    winrt::Windows::Foundation::Collections::IMapView<hstring, winrt::Windows::Foundation::Collections::IVectorView<hstring>> FFmpegMediaSource::MetadataTags()
+    Collections::IMapView<hstring, Collections::IVectorView<hstring>> FFmpegMediaSource::MetadataTags()
     {
         metadata->LoadMetadataTags(avFormatCtx);
         return metadata->MetadataTags();
     }
 
-    Windows::Foundation::TimeSpan FFmpegMediaSource::Duration()
+    TimeSpan FFmpegMediaSource::Duration()
     {
         return mediaDuration;
     }
@@ -1418,22 +1351,22 @@ namespace winrt::FFmpegInteropX::implementation
         return stream ? stream->AudioInfo() : nullptr;
     }
 
-    Windows::Foundation::Collections::IVectorView<FFmpegInteropX::VideoStreamInfo> FFmpegMediaSource::VideoStreams()
+    Collections::IVectorView<FFmpegInteropX::VideoStreamInfo> FFmpegMediaSource::VideoStreams()
     {
         return videoStreamInfos;
     }
 
-    Windows::Foundation::Collections::IVectorView<FFmpegInteropX::AudioStreamInfo> FFmpegMediaSource::AudioStreams()
+    Collections::IVectorView<FFmpegInteropX::AudioStreamInfo> FFmpegMediaSource::AudioStreams()
     {
         return audioStreamInfos;
     }
 
-    Windows::Foundation::Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> FFmpegMediaSource::SubtitleStreams()
+    Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> FFmpegMediaSource::SubtitleStreams()
     {
         return subtitleStreamInfos;
     }
 
-    Windows::Foundation::Collections::IVectorView<FFmpegInteropX::ChapterInfo> FFmpegMediaSource::ChapterInfos()
+    Collections::IVectorView<FFmpegInteropX::ChapterInfo> FFmpegMediaSource::ChapterInfos()
     {
         return chapterInfos;
     }
@@ -1448,32 +1381,32 @@ namespace winrt::FFmpegInteropX::implementation
         return thumbnailStreamIndex;
     }
 
-    Windows::Media::Playback::MediaPlaybackItem FFmpegMediaSource::PlaybackItem()
+    MediaPlaybackItem FFmpegMediaSource::PlaybackItem()
     {
         return playbackItem;
     }
 
-    Windows::Foundation::TimeSpan FFmpegMediaSource::SubtitleDelay()
+    TimeSpan FFmpegMediaSource::SubtitleDelay()
     {
         return subtitleDelay;
     }
 
-    Windows::Foundation::TimeSpan FFmpegMediaSource::BufferTime()
+    TimeSpan FFmpegMediaSource::BufferTime()
     {
         return mss.BufferTime();
     }
 
-    void FFmpegMediaSource::BufferTime(winrt::Windows::Foundation::TimeSpan const& value)
+    void FFmpegMediaSource::BufferTime(TimeSpan const& value)
     {
         mss.BufferTime(value);
     }
 
-    Windows::Media::Playback::MediaPlaybackSession FFmpegMediaSource::PlaybackSession()
+    MediaPlaybackSession FFmpegMediaSource::PlaybackSession()
     {
         return session;
     }
 
-    void FFmpegMediaSource::PlaybackSession(Windows::Media::Playback::MediaPlaybackSession const& value)
+    void FFmpegMediaSource::PlaybackSession(MediaPlaybackSession const& value)
     {
         mutexGuard.lock();
         if (session)
@@ -1483,7 +1416,7 @@ namespace winrt::FFmpegInteropX::implementation
         session = value;
         if (value)
         {
-            sessionPositionEvent = value.PositionChanged(Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackSession, winrt::Windows::Foundation::IInspectable>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnPositionChanged));
+            sessionPositionEvent = value.PositionChanged(TypedEventHandler<MediaPlaybackSession, IInspectable>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnPositionChanged));
         }
         mutexGuard.unlock();
     }
@@ -1600,7 +1533,7 @@ namespace winrt::FFmpegInteropX::implementation
         return audioSampleProvider;
     }
 
-    bool FFmpegMediaSource::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel)
+    bool FFmpegMediaSource::CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus const& status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel)
     {
         UNREFERENCED_PARAMETER(maxProfile);
         bool result = false;
@@ -1667,7 +1600,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
         else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC &&
             CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC(), hardwareDecoderStatus, config->SystemDecoderHEVCMaxProfile(), config->SystemDecoderHEVCMaxLevel()) &&
-            winrt::Windows::Foundation::Metadata::ApiInformation::IsMethodPresent(L"Windows.Media.MediaProperties.VideoEncodingProperties", L"CreateHevc"))
+            Metadata::ApiInformation::IsMethodPresent(L"Windows.Media.MediaProperties.VideoEncodingProperties", L"CreateHevc"))
         {
             auto videoProperties = VideoEncodingProperties::CreateHevc();
 
@@ -1714,7 +1647,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
         else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP9 &&
             CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP9(), hardwareDecoderStatus, -1, -1) &&
-            winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.MediaProperties.MediaEncodingSubtypes", L"Vp9"))
+            Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.MediaProperties.MediaEncodingSubtypes", L"Vp9"))
         {
             auto videoProperties = VideoEncodingProperties();
             videoProperties.Subtype(MediaEncodingSubtypes::Vp9());
@@ -1723,7 +1656,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
         else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP8 &&
             CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP8(), hardwareDecoderStatus, -1, -1) &&
-            winrt::Windows::Foundation::Metadata::ApiInformation::IsTypePresent(L"Windows.Media.Core.CodecSubtypes"))
+            Metadata::ApiInformation::IsTypePresent(L"Windows.Media.Core.CodecSubtypes"))
 
         {
             auto videoProperties = VideoEncodingProperties();
@@ -1769,7 +1702,7 @@ namespace winrt::FFmpegInteropX::implementation
             while (options.HasCurrent())
             {
                 auto key = StringUtils::PlatformStringToUtf8String(options.Current().Key());
-                auto stringValue = options.Current().Value().try_as<winrt::Windows::Foundation::IStringable>();
+                auto stringValue = options.Current().Value().try_as<IStringable>();
                 if (stringValue)
                 {
                     auto value = StringUtils::PlatformStringToUtf8String(stringValue.ToString());
@@ -2010,7 +1943,7 @@ namespace winrt::FFmpegInteropX::implementation
         mutexGuard.unlock();
     }
 
-    HRESULT FFmpegMediaSource::Seek(TimeSpan position, TimeSpan& actualPosition, bool allowFastSeek)
+    HRESULT FFmpegMediaSource::Seek(TimeSpan const& position, TimeSpan& actualPosition, bool allowFastSeek)
     {
         auto hr = S_OK;
 
@@ -2190,7 +2123,7 @@ namespace winrt::FFmpegInteropX::implementation
         return hr;
     }
 
-    void FFmpegMediaSource::OnPositionChanged(winrt::Windows::Media::Playback::MediaPlaybackSession const& sender, winrt::Windows::Foundation::IInspectable const& args)
+    void FFmpegMediaSource::OnPositionChanged(MediaPlaybackSession const& sender, IInspectable const& args)
     {
         UNREFERENCED_PARAMETER(sender);
         UNREFERENCED_PARAMETER(args);
@@ -2198,5 +2131,76 @@ namespace winrt::FFmpegInteropX::implementation
         lastPosition = currentPosition;
         currentPosition = sender.Position();
         mutexGuard.unlock();
+    }
+
+    // Static functions passed to FFmpeg
+    static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize)
+    {
+        FFmpegMediaSource* mss = reinterpret_cast<FFmpegMediaSource*>(ptr);
+        ULONG bytesRead = 0;
+        HRESULT hr = mss->fileStreamData->Read(buf, bufSize, &bytesRead);
+
+        if (FAILED(hr))
+        {
+            return -1;
+        }
+
+        // Check beginning of file for BOM on first read
+        if (mss->streamByteOrderMark == ByteOrderMark::Unchecked)
+        {
+            if (bytesRead >= 4)
+            {
+                auto bom = ((uint32_t*)buf)[0];
+                if ((bom & 0x00FFFFFF) == 0x00BFBBEF)
+                {
+                    mss->streamByteOrderMark = ByteOrderMark::UTF8;
+                }
+                else
+                {
+                    mss->streamByteOrderMark = ByteOrderMark::Unknown;
+                }
+            }
+            else
+            {
+                mss->streamByteOrderMark = ByteOrderMark::Unknown;
+            }
+        }
+
+        // If we succeed but don't have any bytes, assume end of file
+        if (bytesRead == 0)
+        {
+            return AVERROR_EOF;  // Let FFmpeg know that we have reached eof
+        }
+
+        return bytesRead;
+    }
+
+    // Static function to seek in file stream. Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
+    static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence)
+    {
+        FFmpegMediaSource* mss = reinterpret_cast<FFmpegMediaSource*>(ptr);
+        if (whence == AVSEEK_SIZE)
+        {
+            // get stream size
+            STATSTG status;
+            if (FAILED(mss->fileStreamData->Stat(&status, STATFLAG_NONAME)))
+            {
+                return -1;
+            }
+            return status.cbSize.QuadPart;
+        }
+        else
+        {
+            LARGE_INTEGER in;
+            in.QuadPart = pos;
+            ULARGE_INTEGER out = { 0 };
+
+            if (FAILED(mss->fileStreamData->Seek(in, whence, &out)))
+            {
+                return -1;
+            }
+
+            return out.QuadPart; // Return the new position:
+        }
     }
 }

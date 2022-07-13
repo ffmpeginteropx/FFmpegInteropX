@@ -11,6 +11,8 @@ using namespace NativeBuffer;
 
 namespace winrt::FFmpegInteropX::implementation
 {
+    using namespace Windows::Foundation;
+
     struct FrameGrabber : FrameGrabberT<FrameGrabber>
     {
         FrameGrabber(winrt::com_ptr<winrt::FFmpegInteropX::implementation::FFmpegMediaSource> interopMSS)
@@ -19,13 +21,13 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         /// <summary>Creates a new FrameGrabber from the specified stream.</summary>
-        static Windows::Foundation::IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream);
+        static IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream);
 
         /// <summary>Creates a new FrameGrabber from the specified uri.</summary>
-        static Windows::Foundation::IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromUriAsync(hstring const& uri);
+        static IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromUriAsync(hstring uri);
 
         /// <summary>The duration of the video stream.</summary>
-        Windows::Foundation::TimeSpan Duration();
+        TimeSpan Duration();
 
         /// <summary>Gets or sets the decode pixel width.</summary>
         int32_t DecodePixelWidth();
@@ -44,31 +46,31 @@ namespace winrt::FFmpegInteropX::implementation
         /// <param name="maxFrameSkip">If exactSeek=true, this limits the number of frames to decode after the key frame.</param>
         /// <param name="targetBuffer">The target buffer which shall contain the decoded pixel data.</param>
         /// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
-        Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(Windows::Foundation::TimeSpan position, bool exactSeek, int32_t maxFrameSkip, Windows::Storage::Streams::IBuffer targetBuffer);
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int32_t maxFrameSkip, Windows::Storage::Streams::IBuffer targetBuffer);
 
         /// <summary>Extracts the next consecutive video frame in the file. Returns <c>null</c> at end of stream.</summary>
         /// <param name="targetBuffer">The target buffer which shall contain the decoded pixel data.</param>
-        Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractNextVideoFrameAsync(Windows::Storage::Streams::IBuffer targetBuffer);
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractNextVideoFrameAsync(Windows::Storage::Streams::IBuffer targetBuffer);
 
         /// <summary>Extracts a video frame at the specififed position.</summary>
         /// <param name="position">The position of the requested frame.</param>
         /// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
         /// <param name="maxFrameSkip">If exactSeek=true, this limits the number of frames to decode after the key frame.</param>
         /// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
-        Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(Windows::Foundation::TimeSpan position, bool exactSeek, int32_t maxFrameSkip);
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int32_t maxFrameSkip);
 
         /// <summary>Extracts a video frame at the specififed position.</summary>
         /// <param name="position">The position of the requested frame.</param>
         /// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
-        Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(Windows::Foundation::TimeSpan position, bool exactSeek);
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(TimeSpan position, bool exactSeek);
 
         /// <summary>Extracts a video frame at the specififed position.</summary>
         /// <param name="position">The position of the requested frame.</param>
         /// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
-        Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(Windows::Foundation::TimeSpan position);
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(TimeSpan position);
 
         /// <summary>Extracts the next consecutive video frame in the file. Returns <c>null</c> at end of stream.</summary>
-        Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractNextVideoFrameAsync();
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractNextVideoFrameAsync();
 
         void Close();
 

@@ -8,7 +8,9 @@
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FrameGrabber> FrameGrabber::CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream)
+    using namespace Windows::Foundation;
+
+    IAsyncOperation<FFmpegInteropX::FrameGrabber> FrameGrabber::CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream)
     {
         winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
@@ -29,7 +31,7 @@ namespace winrt::FFmpegInteropX::implementation
         co_return winrt::make<FrameGrabber>(result);
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::FrameGrabber> FrameGrabber::CreateFromUriAsync(hstring const& uri)
+    IAsyncOperation<FFmpegInteropX::FrameGrabber> FrameGrabber::CreateFromUriAsync(hstring uri)
     {
         winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
@@ -55,7 +57,7 @@ namespace winrt::FFmpegInteropX::implementation
         co_return winrt::make<FrameGrabber>(result);
     }
 
-    Windows::Foundation::TimeSpan FrameGrabber::Duration()
+    TimeSpan FrameGrabber::Duration()
     {
         return interopMSS->Duration();
     }
@@ -85,7 +87,7 @@ namespace winrt::FFmpegInteropX::implementation
         return interopMSS->CurrentVideoStream();
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractVideoFrameAsync(Windows::Foundation::TimeSpan position, bool exactSeek, int32_t maxFrameSkip, Windows::Storage::Streams::IBuffer targetBuffer)
+    IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int32_t maxFrameSkip, Windows::Storage::Streams::IBuffer targetBuffer)
     {
         PrepareDecoding(targetBuffer);
         winrt::apartment_context caller; // Capture calling context.
@@ -159,7 +161,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractNextVideoFrameAsync(Windows::Storage::Streams::IBuffer targetBuffer)
+    IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractNextVideoFrameAsync(Windows::Storage::Streams::IBuffer targetBuffer)
     {
         PrepareDecoding(targetBuffer);
 
@@ -179,22 +181,22 @@ namespace winrt::FFmpegInteropX::implementation
         co_return nullptr;
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractVideoFrameAsync(Windows::Foundation::TimeSpan position, bool exactSeek, int32_t maxFrameSkip)
+    IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int32_t maxFrameSkip)
     {
         return ExtractVideoFrameAsync(position, exactSeek, maxFrameSkip, nullptr);
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractVideoFrameAsync(Windows::Foundation::TimeSpan position, bool exactSeek)
+    IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractVideoFrameAsync(TimeSpan position, bool exactSeek)
     {
         return ExtractVideoFrameAsync(position, exactSeek, 0, nullptr);
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractVideoFrameAsync(Windows::Foundation::TimeSpan position)
+    IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractVideoFrameAsync(TimeSpan position)
     {
         return ExtractVideoFrameAsync(position, false, 0, nullptr);
     }
 
-    Windows::Foundation::IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractNextVideoFrameAsync()
+    IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractNextVideoFrameAsync()
     {
         return ExtractNextVideoFrameAsync(nullptr);
     }
