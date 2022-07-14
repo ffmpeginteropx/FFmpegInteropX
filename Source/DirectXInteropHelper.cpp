@@ -1,37 +1,31 @@
 #include "pch.h"
 #include "DirectXInteropHelper.h"
-extern "C" {
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
-}
+
 using namespace FFmpegInteropX;
-//TODO: review this file later
+using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
 
-
-winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface DirectXInteropHelper::GetSurface(IDXGISurface* source)
+IDirect3DSurface DirectXInteropHelper::GetSurface(IDXGISurface* source)
 {
-    winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface result;
+    IDirect3DSurface result;
     winrt::com_ptr<::IInspectable> inspectableSurface;
     winrt::check_hresult(CreateDirect3D11SurfaceFromDXGISurface(source, reinterpret_cast<::IInspectable**>(winrt::put_abi(inspectableSurface))));
     inspectableSurface.as(result);
     return result;
 }
 
-HRESULT DirectXInteropHelper::GetDXGISurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface source, IDXGISurface** dxgiSurface)
+HRESULT DirectXInteropHelper::GetDXGISurface(IDirect3DSurface source, IDXGISurface** dxgiSurface)
 {
-    using IUnknown = ::IUnknown;
+    auto dxgiInterfaceAccess = source.as<::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess>();
 
-    winrt::com_ptr<::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess> dxgiInterfaceAccess{
-        source.as<::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess>()
-    };
-
-    winrt::com_ptr<::IDXGISurface> nativeSurface;
+    winrt::com_ptr<IDXGISurface> nativeSurface;
     auto hr = dxgiInterfaceAccess->GetInterface(
         __uuidof(nativeSurface),
         nativeSurface.put_void());
+
     if (SUCCEEDED(hr))
     {
-        *dxgiSurface = nativeSurface.get();
-        (*dxgiSurface)->AddRef();//not sure why this is needed, but without it the texture pool doesn't work
+        *dxgiSurface = nativeSurface.detach();
     }
     return hr;
 
@@ -39,7 +33,7 @@ HRESULT DirectXInteropHelper::GetDXGISurface(winrt::Windows::Graphics::DirectX::
 
 HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(winrt::Windows::Media::Core::MediaStreamSource source, IMFDXGIDeviceManager** deviceManager)
 {
-    winrt::com_ptr<::IMFDXGIDeviceManagerSource> surfaceManager;
+    winrt::com_ptr<IMFDXGIDeviceManagerSource> surfaceManager;
     source.as(surfaceManager);
     auto hr = surfaceManager->GetManager(deviceManager);
     return hr;
@@ -73,5 +67,4 @@ HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* de
     }
 
     return hr;
-
 }
