@@ -302,8 +302,8 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::InitializePlaybackItem(MediaPlaybackItem const& playbackitem)
     {
-        audioTracksChangedToken = playbackitem.AudioTracksChanged(TypedEventHandler<MediaPlaybackItem, Collections::IVectorChangedEventArgs>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnAudioTracksChanged));
-        subtitlePresentationModeChangedToken = playbackitem.TimedMetadataTracks().PresentationModeChanged(TypedEventHandler<MediaPlaybackTimedMetadataTrackList, TimedMetadataPresentationModeChangedEventArgs>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnPresentationModeChanged));
+        audioTracksChangedToken = playbackitem.AudioTracksChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnAudioTracksChanged });
+        subtitlePresentationModeChangedToken = playbackitem.TimedMetadataTracks().PresentationModeChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnPresentationModeChanged });
 
         if (config->AutoSelectForcedSubtitles())
         {
@@ -694,9 +694,10 @@ namespace winrt::FFmpegInteropX::implementation
                 auto codecStr = StringUtils::Utf8ToPlatformString(avFormatCtx->iformat->name);
                 formatInfo = winrt::FFmpegInteropX::FormatInfo(titleStr, codecStr, mediaDuration, avFormatCtx->bit_rate);
 
-                startingRequestedToken = mss.Starting(TypedEventHandler<MediaStreamSource, MediaStreamSourceStartingEventArgs>(this, &FFmpegMediaSource::OnStarting));
-                sampleRequestedToken = mss.SampleRequested(TypedEventHandler<MediaStreamSource, MediaStreamSourceSampleRequestedEventArgs>(this, &FFmpegMediaSource::OnSampleRequested));
-                switchStreamRequestedToken = mss.SwitchStreamsRequested(TypedEventHandler<MediaStreamSource, MediaStreamSourceSwitchStreamsRequestedEventArgs>(this, &FFmpegMediaSource::OnSwitchStreamsRequested));
+                // using strong reference here would create circle references, since we store MSS and MediaPlaybackItem here.
+                startingRequestedToken = mss.Starting({ get_weak(), &FFmpegMediaSource::OnStarting });
+                sampleRequestedToken = mss.SampleRequested({ get_weak(), &FFmpegMediaSource::OnSampleRequested });
+                switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
             }
         }
 
@@ -1213,6 +1214,8 @@ namespace winrt::FFmpegInteropX::implementation
 
     IAsyncOperation<Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream stream, hstring streamName)
     {
+        auto strong = get_strong();
+
         winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
 
@@ -1416,7 +1419,7 @@ namespace winrt::FFmpegInteropX::implementation
         session = value;
         if (value)
         {
-            sessionPositionEvent = value.PositionChanged(TypedEventHandler<MediaPlaybackSession, IInspectable>(this, &FFmpegInteropX::implementation::FFmpegMediaSource::OnPositionChanged));
+            sessionPositionEvent = value.PositionChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnPositionChanged });
         }
         mutexGuard.unlock();
     }

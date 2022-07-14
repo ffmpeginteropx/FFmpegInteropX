@@ -35,6 +35,8 @@ namespace winrt::FFmpegInteropX::implementation
 
         winrt::Windows::Foundation::IAsyncAction Encode(winrt::Windows::Storage::Streams::IRandomAccessStream stream, winrt::guid encoderGuid)
         {
+            auto strong = get_strong();
+
             // Query the IBufferByteAccess interface.  
             winrt::com_ptr<IBufferByteAccess> bufferByteAccess;
             (pixelData).as(IID_PPV_ARGS(&bufferByteAccess));

@@ -16,7 +16,7 @@ namespace FFmpegInteropX
 {
     using namespace winrt::Windows::Media::Core;
 
-    class D3D11VideoSampleProvider : public UncompressedVideoSampleProvider
+    class D3D11VideoSampleProvider : public UncompressedVideoSampleProvider, public std::enable_shared_from_this<D3D11VideoSampleProvider>
     {
     private:
         const AVCodec* hwCodec;
@@ -140,7 +140,7 @@ namespace FFmpegInteropX
                 auto sampleNative = sample.as<winrt::Windows::Foundation::IUnknown>();
 
                 // Attach Processed event and store in samples list
-                auto token = sample.Processed(winrt::Windows::Foundation::TypedEventHandler<MediaStreamSample, winrt::Windows::Foundation::IInspectable>(this, &D3D11VideoSampleProvider::OnProcessed));
+                auto token = sample.Processed(weak_handler(this, &D3D11VideoSampleProvider::OnProcessed));
                 trackedSamples.insert_or_assign(sampleNative, token);
             }
 
@@ -151,7 +151,7 @@ namespace FFmpegInteropX
         {
             std::lock_guard<std::mutex> lock(samplesMutex);
 
-            auto sampleNative = sender.as<winrt::Windows::Foundation::IUnknown>();// reinterpret_cast<IUnknown*>();
+            auto sampleNative = sender.as<winrt::Windows::Foundation::IUnknown>();
             auto mapEntry = trackedSamples.find(sampleNative);
             if (mapEntry == trackedSamples.end())
             {
@@ -270,6 +270,8 @@ namespace FFmpegInteropX
 
             texturePool.reset();
             texturePool = nullptr;
+
+            ReleaseTrackedSamples();
 
             return hr;
         }

@@ -49,26 +49,14 @@ namespace FFmpegInteropX
             SubtitleTrack = TimedMetadataTrack(Name, Language, timedMetadataKind);
             SubtitleTrack.Label(!Name.empty() ? Name : Language);
 
-
-            auto OnCueEntered_handler = [this](TimedMetadataTrack sender, MediaCueEventArgs args)
-            {
-                OnCueEntered(sender, args);
-            };
-
-            auto OnTrackFailed_handler = [this](TimedMetadataTrack sender, TimedMetadataTrackFailedEventArgs args)
-            {
-                OnTrackFailed(sender, args);
-            };
-
-
             if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
             {
                 if (Metadata::ApiInformation::IsEnumNamedValuePresent(L"Windows.Media.Core.TimedMetadataKind", L"ImageSubtitle") &&
                     timedMetadataKind == TimedMetadataKind::ImageSubtitle)
                 {
-                    SubtitleTrack.CueEntered(TypedEventHandler<TimedMetadataTrack, MediaCueEventArgs>(OnCueEntered_handler));
+                    SubtitleTrack.CueEntered(weak_handler(this, &SubtitleProvider::OnCueEntered));
                 }
-                SubtitleTrack.TrackFailed(TypedEventHandler<TimedMetadataTrack, TimedMetadataTrackFailedEventArgs>(OnTrackFailed_handler));
+                SubtitleTrack.TrackFailed(weak_handler(this, &SubtitleProvider::OnTrackFailed));
             }
 
             InitializeStreamInfo();
@@ -198,7 +186,7 @@ namespace FFmpegInteropX
             newDelay = delay;
             try
             {
-                StartTimer();
+                TriggerUpdateCues();
             }
             catch (...)
             {
@@ -295,12 +283,12 @@ namespace FFmpegInteropX
             else if (isPreviousCueInfiniteDuration)
             {
                 pendingRefCues.push_back(ReferenceCue(cue));
-                StartTimer();
+                TriggerUpdateCues();
             }
             else
             {
                 pendingCues.push_back(cue);
-                StartTimer();
+                TriggerUpdateCues();
             }
         }
 
@@ -352,36 +340,28 @@ namespace FFmpegInteropX
             mutex.unlock();
         }
 
-        void StartTimer()
+        void TriggerUpdateCues()
         {
             if (dispatcher != nullptr && IsEnabled())
             {
-                //auto thisPointer = std::make_shared<SubtitleProvider>(&this);
-                std::weak_ptr<SubtitleProvider> wr = weak_from_this();
                 dispatcher.RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal,
-                    winrt::Windows::UI::Core::DispatchedHandler([wr]
-                        {
-                            auto thisInstance = wr.lock();
-                            if (thisInstance != nullptr) {
-                                if (thisInstance->timer == nullptr)
-                                {
-                                    auto OnTick_handler = [thisInstance](winrt::Windows::Foundation::IInspectable sender, winrt::Windows::Foundation::IInspectable args)
-                                    {
-                                        if (thisInstance != nullptr)
-                                            thisInstance->OnTick(sender, args);
-                                    };
-                                    thisInstance->timer = winrt::Windows::UI::Xaml::DispatcherTimer();
-                                    thisInstance->timer.Interval(TimeSpan(10000));
-                                    thisInstance->timer.Tick(EventHandler<winrt::Windows::Foundation::IInspectable>(OnTick_handler));
-                                }
-                                thisInstance->timer.Start();
-                            }
-                        }));
+                    weak_handler(this, &SubtitleProvider::StartDispatcherTimer));
             }
             else
             {
                 OnTick(nullptr, nullptr);
             }
+        }
+
+        void StartDispatcherTimer()
+        {
+            if (timer == nullptr)
+            {
+                timer = winrt::Windows::UI::Xaml::DispatcherTimer();
+                timer.Interval(TimeSpan(10000));
+                timer.Tick(weak_handler(this, &SubtitleProvider::OnTick));
+            }
+            timer.Start();
         }
 
         void OnTick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args)
@@ -492,20 +472,8 @@ namespace FFmpegInteropX
             if (referenceTrack == nullptr)
             {
                 referenceTrack = TimedMetadataTrack(L"ReferenceTrack_" + Name, L"", TimedMetadataKind::Custom);
-
-                auto OnRefCueEntered_handler = [this](TimedMetadataTrack sender, MediaCueEventArgs args)
-                {
-                    this->OnRefCueEntered(sender, args);
-                };
-
-                auto OnTimedMetadataTracksChanged_handler = [this](MediaPlaybackItem sender, IVectorChangedEventArgs args)
-                {
-                    this->OnTimedMetadataTracksChanged(sender, args);
-                };
-
-                referenceTrack.CueEntered(TypedEventHandler<TimedMetadataTrack, MediaCueEventArgs>(OnRefCueEntered_handler));
-
-                PlaybackItem.TimedMetadataTracksChanged(TypedEventHandler<MediaPlaybackItem, IVectorChangedEventArgs>(OnTimedMetadataTracksChanged_handler));
+                referenceTrack.CueEntered(weak_handler(this, &SubtitleProvider::OnRefCueEntered));
+                PlaybackItem.TimedMetadataTracksChanged(weak_handler(this, &SubtitleProvider::OnTimedMetadataTracksChanged));
                 PlaybackItem.Source().ExternalTimedMetadataTracks().Append(referenceTrack);
             }
         }
@@ -568,7 +536,7 @@ namespace FFmpegInteropX
                 if (dispatcher)
                 {
                     dispatcher.RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal,
-                        winrt::Windows::UI::Core::DispatchedHandler([this] { ClearSubtitles(); }));
+                        weak_handler(this, &SubtitleProvider::ClearSubtitles));
                 }
                 else
                 {

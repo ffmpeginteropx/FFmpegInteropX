@@ -89,6 +89,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int32_t maxFrameSkip, Windows::Storage::Streams::IBuffer targetBuffer)
     {
+        auto strong = get_strong();
         PrepareDecoding(targetBuffer);
         winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
@@ -163,22 +164,25 @@ namespace winrt::FFmpegInteropX::implementation
 
     IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractNextVideoFrameAsync(Windows::Storage::Streams::IBuffer targetBuffer)
     {
+        auto strong = get_strong();
         PrepareDecoding(targetBuffer);
+        winrt::apartment_context caller; // Capture calling context.
+        co_await winrt::resume_background();
 
+        VideoFrame result{ nullptr };
         auto sample = interopMSS->VideoSampleProvider()->GetNextSample();
-
         if (sample)
         {
-            auto result = VideoFrame(
+            result = VideoFrame(
                 sample.Buffer(),
                 width,
                 height,
                 pixelAspectRatio,
                 sample.Timestamp());
-            co_return result;
         }
 
-        co_return nullptr;
+        co_await caller;
+        co_return result;
     }
 
     IAsyncOperation<FFmpegInteropX::VideoFrame> FrameGrabber::ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int32_t maxFrameSkip)
