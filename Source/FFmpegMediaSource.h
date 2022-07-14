@@ -171,7 +171,7 @@ namespace winrt::FFmpegInteropX::implementation
         void FlushStreams()
         {
             // Flush all active streams
-            for each (auto stream in sampleProviders)
+            for (auto &stream : sampleProviders)
             {
                 if (stream && stream->IsEnabled())
                 {

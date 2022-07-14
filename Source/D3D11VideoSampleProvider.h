@@ -190,7 +190,7 @@ namespace FFmpegInteropX
         void ReleaseTrackedSamples()
         {
             std::lock_guard<std::mutex> lock(samplesMutex);
-            for (auto entry : trackedSamples)
+            for (auto &entry : trackedSamples)
             {
                 // detach Processed event and release native interface
                 auto sampleNative = entry.first;
@@ -205,7 +205,7 @@ namespace FFmpegInteropX
         void ReturnTrackedSamples()
         {
             std::lock_guard<std::mutex> lock(samplesMutex);
-            for (auto entry : trackedSamples)
+            for (auto &entry : trackedSamples)
             {
                 // detach Processed event and release native interface
                 auto sampleNative = entry.first;

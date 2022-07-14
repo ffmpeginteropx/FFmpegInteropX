@@ -328,7 +328,7 @@ namespace FFmpegInteropX
                     }
                 }
 
-                for (auto cue : remove)
+                for (auto &cue : remove)
                 {
                     SubtitleTrack.RemoveCue(cue);
                 }
@@ -372,13 +372,13 @@ namespace FFmpegInteropX
 
             try
             {
-                for (auto cue : pendingChangedDurationCues)
+                for (auto &cue : pendingChangedDurationCues)
                 {
                     SubtitleTrack.RemoveCue(cue);
                     SubtitleTrack.AddCue(cue);
                 }
 
-                for (auto cue : pendingCues)
+                for (auto &cue : pendingCues)
                 {
                     SubtitleTrack.AddCue(cue);
                 }
@@ -387,7 +387,7 @@ namespace FFmpegInteropX
                 {
                     EnsureRefTrackInitialized();
 
-                    for (auto cue : pendingRefCues)
+                    for (auto &cue : pendingRefCues)
                     {
                         referenceTrack.AddCue(cue);
                     }
@@ -433,7 +433,7 @@ namespace FFmpegInteropX
 
             std::vector<std::pair<IMediaCue, long long>> newNegativePositionCues;
 
-            for (auto c : cues)
+            for (auto &c : cues)
             {
                 TimeSpan cStartTime = c.StartTime();
 

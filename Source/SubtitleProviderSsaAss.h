@@ -282,7 +282,7 @@ namespace FFmpegInteropX
                                 }
                                 tags.push_back(effectContent.substr(start, end));
 
-                                for each (auto tag in tags)
+                                for (auto &tag : tags)
                                 {
                                     try
                                     {
@@ -962,7 +962,7 @@ namespace FFmpegInteropX
             {
                 try
                 {
-                    for (auto attachment : attachedFileHelper->AttachedFiles())
+                    for (auto &attachment : attachedFileHelper->AttachedFiles())
                     {
                         std::wstring mime(attachment->MimeType());
                         if (mime.find(L"font") != mime.npos)
@@ -1063,7 +1063,7 @@ namespace FFmpegInteropX
 
         ~SubtitleProviderSsaAss()
         {
-            for (auto s : styles)
+            for (auto &s : styles)
             {
                 s.second.reset();
             }

@@ -124,6 +124,16 @@ namespace FFmpegInteropX
             return S_OK;
         };
 
+        void FreeHardwareDevice()
+        {
+            if (m_pAvCodecCtx->hw_device_ctx)
+            {
+                av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
+            }
+            SAFE_RELEASE(device);
+            SAFE_RELEASE(deviceContext);
+        }
+
         virtual void NotifyCreateSource()
         {
             if (m_pAvFormatCtx->start_time != AV_NOPTS_VALUE)
@@ -177,7 +187,7 @@ namespace FFmpegInteropX
         winrt::Windows::Media::Core::IMediaStreamDescriptor m_streamDescriptor = nullptr;
         HardwareDecoderStatus hardwareDecoderStatus;
 
-    public:
+    protected:
         // The FFmpeg context. Because they are complex types
         // we declare them as internal so they don't get exposed
         // externally

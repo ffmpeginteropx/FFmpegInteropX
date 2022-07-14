@@ -67,8 +67,7 @@ namespace winrt::FFmpegInteropX::implementation
         audioStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::AudioStreamInfo>();
         subtitleStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::SubtitleStreamInfo>();
         videoStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::VideoStreamInfo>();
-        auto implConfig = config;
-        if (!implConfig->IsExternalSubtitleParser && !implConfig->IsFrameGrabber)
+        if (!config->IsExternalSubtitleParser && !config->IsFrameGrabber)
         {
             metadata = std::shared_ptr<MediaMetadata>(new MediaMetadata());
         }
@@ -258,7 +257,7 @@ namespace winrt::FFmpegInteropX::implementation
         UNREFERENCED_PARAMETER(sender);
         mutexGuard.lock();
         int index = 0;
-        for each (auto stream in subtitleStreams)
+        for (auto &stream : subtitleStreams)
         {
             if (stream->SubtitleTrack == args.Track())
             {
@@ -308,9 +307,9 @@ namespace winrt::FFmpegInteropX::implementation
         if (config->AutoSelectForcedSubtitles())
         {
             int index = 0;
-            for each (auto stream in subtitleStreams)
+            for (auto stream : subtitleStreamInfos)
             {
-                if (subtitleStreamInfos.GetAt(index).IsForced())
+                if (stream.IsForced())
                 {
                     playbackitem.TimedMetadataTracks().SetPresentationMode(index, TimedMetadataTrackPresentationMode::PlatformPresented);
                     break;
@@ -320,7 +319,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
 
-        for each (auto stream in subtitleStreams)
+        for (auto &stream : subtitleStreams)
         {
             stream->PlaybackItem = playbackItem;
         }
@@ -445,9 +444,9 @@ namespace winrt::FFmpegInteropX::implementation
                 hr = E_OUTOFMEMORY;
             }
         }
-        auto implConfig = config;
+
         // do not use start time for pure subtitle files
-        if (implConfig->IsExternalSubtitleParser && avFormatCtx->nb_streams == 1)
+        if (config->IsExternalSubtitleParser && avFormatCtx->nb_streams == 1)
         {
             avFormatCtx->start_time = AV_NOPTS_VALUE;
         }
@@ -488,7 +487,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             std::shared_ptr<MediaSampleProvider> stream = nullptr;
 
-            if (avStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && !implConfig->IsFrameGrabber && !implConfig->IsExternalSubtitleParser)
+            if (avStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && !config->IsFrameGrabber && !config->IsExternalSubtitleParser)
             {
                 stream = CreateAudioStream(avStream, index);
                 if (stream)
@@ -507,11 +506,11 @@ namespace winrt::FFmpegInteropX::implementation
                     }
                 }
             }
-            else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && avStream->disposition == AV_DISPOSITION_ATTACHED_PIC && thumbnailStreamIndex == AVERROR_STREAM_NOT_FOUND && !implConfig->IsExternalSubtitleParser)
+            else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && avStream->disposition == AV_DISPOSITION_ATTACHED_PIC && thumbnailStreamIndex == AVERROR_STREAM_NOT_FOUND && !config->IsExternalSubtitleParser)
             {
                 thumbnailStreamIndex = index;
             }
-            else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && !implConfig->IsExternalSubtitleParser)
+            else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && !config->IsExternalSubtitleParser)
             {
                 stream = CreateVideoStream(avStream, index);
                 if (stream)
@@ -548,7 +547,7 @@ namespace winrt::FFmpegInteropX::implementation
                     }
 
                     // enable all subtitle streams for external subtitle parsing
-                    if (implConfig->IsExternalSubtitleParser)
+                    if (config->IsExternalSubtitleParser)
                     {
                         (std::reinterpret_pointer_cast<SubtitleProvider>(stream))->EnableStream();
                     }
@@ -584,11 +583,12 @@ namespace winrt::FFmpegInteropX::implementation
         if (currentVideoStream)
         {
             auto videoDescriptor = (currentVideoStream->StreamDescriptor().as<VideoStreamDescriptor>());
-            auto pixelAspect = (double)videoDescriptor.EncodingProperties().PixelAspectRatio().Numerator() / videoDescriptor.EncodingProperties().PixelAspectRatio().Denominator();
-            auto videoAspect = ((double)currentVideoStream->m_pAvCodecCtx->width / currentVideoStream->m_pAvCodecCtx->height) / pixelAspect;
-            for (auto stream : subtitleStreams)
+            auto encodingProperties = videoDescriptor.EncodingProperties();
+            auto pixelAspect = (double)encodingProperties.PixelAspectRatio().Numerator() / encodingProperties.PixelAspectRatio().Denominator();
+            auto videoAspect = ((double)encodingProperties.Width() / encodingProperties.Height()) / pixelAspect;
+            for (auto &stream : subtitleStreams)
             {
-                stream->NotifyVideoFrameSize(currentVideoStream->m_pAvCodecCtx->width, currentVideoStream->m_pAvCodecCtx->height, videoAspect);
+                stream->NotifyVideoFrameSize(encodingProperties.Width(), encodingProperties.Height(), videoAspect);
             }
         }
 
@@ -608,7 +608,7 @@ namespace winrt::FFmpegInteropX::implementation
             mss = MediaStreamSource(currentVideoStream->StreamDescriptor());
             currentVideoStream->EnableStream();
         }
-        else if (subtitleStreams.size() == 0 || !implConfig->IsExternalSubtitleParser)
+        else if (subtitleStreams.size() == 0 || !config->IsExternalSubtitleParser)
         {
             //only fail if there are no media streams (audio, video, or subtitle)
             hr = E_FAIL;
@@ -617,7 +617,7 @@ namespace winrt::FFmpegInteropX::implementation
         if (mss != nullptr) {
             if (SUCCEEDED(hr))
             {
-                for each (auto stream in audioStreams)
+                for (auto &stream : audioStreams)
                 {
                     if (stream != currentAudioStream)
                     {
@@ -625,7 +625,7 @@ namespace winrt::FFmpegInteropX::implementation
                     }
                 }
 
-                for each (auto stream in videoStreams)
+                for (auto &stream : videoStreams)
                 {
                     if (stream != currentVideoStream)
                     {
@@ -1022,7 +1022,7 @@ namespace winrt::FFmpegInteropX::implementation
         mutexGuard.lock();
         try
         {
-            for each (auto subtitleStream in subtitleStreams)
+            for (auto &subtitleStream : subtitleStreams)
             {
                 subtitleStream->SetSubtitleDelay(delay);
             }
@@ -1120,7 +1120,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     MediaSource FFmpegMediaSource::CreateMediaSource()
     {
-        for (auto stream : sampleProviders)
+        for (auto &stream : sampleProviders)
         {
             if (stream)
             {
@@ -1130,7 +1130,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (this->config->IsFrameGrabber) throw_hresult(E_UNEXPECTED);
         MediaSource source = MediaSource::CreateFromMediaStreamSource(mss);
-        for each (auto stream in subtitleStreams)
+        for (auto &stream : subtitleStreams)
         {
             source.ExternalTimedMetadataTracks().Append(stream->SubtitleTrack);
         }
@@ -1249,11 +1249,12 @@ namespace winrt::FFmpegInteropX::implementation
         {
             if (videoDescriptor)
             {
-                auto pixelAspect = (double)videoDescriptor.EncodingProperties().PixelAspectRatio().Numerator() / videoDescriptor.EncodingProperties().PixelAspectRatio().Denominator();
-                auto videoAspect = ((double)currentVideoStream->m_pAvCodecCtx->width / currentVideoStream->m_pAvCodecCtx->height) / pixelAspect;
-                for each (auto subtitleStream in externalSubsParser->subtitleStreams)
+                auto encodingProperties = videoDescriptor.EncodingProperties();
+                auto pixelAspect = (double)encodingProperties.PixelAspectRatio().Numerator() / encodingProperties.PixelAspectRatio().Denominator();
+                auto videoAspect = ((double)encodingProperties.Width() / encodingProperties.Height()) / pixelAspect;
+                for (auto &subtitleStream : externalSubsParser->subtitleStreams)
                 {
-                    subtitleStream->NotifyVideoFrameSize(currentVideoStream->m_pAvCodecCtx->width, currentVideoStream->m_pAvCodecCtx->height, videoAspect);
+                    subtitleStream->NotifyVideoFrameSize(encodingProperties.Width(), encodingProperties.Height(), videoAspect);
                 }
             }
 
@@ -1276,7 +1277,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             int subtitleTracksCount = 0;
 
-            for each (auto externalSubtitle in externalSubsParser->subtitleStreams)
+            for (auto &externalSubtitle : externalSubsParser->subtitleStreams)
             {
                 if (externalSubtitle->SubtitleTrack.Cues().Size() > 0)
                 {
@@ -1451,13 +1452,13 @@ namespace winrt::FFmpegInteropX::implementation
             m_pReader.reset();;
         }
 
-        for (auto x : subtitleStreams)
+        for (auto &x : subtitleStreams)
             x.reset();
-        for (auto x : sampleProviders)
+        for (auto &x : sampleProviders)
             x.reset();
-        for (auto x : audioStreams)
+        for (auto &x : audioStreams)
             x.reset();
-        for (auto x : videoStreams)
+        for (auto &x : videoStreams)
             x.reset();
 
         subtitleStreams.clear();
@@ -1737,7 +1738,7 @@ namespace winrt::FFmpegInteropX::implementation
             if (SUCCEEDED(hr))
             {
                 // assign device and context
-                for each (auto stream in videoStreams)
+                for (auto &stream : videoStreams)
                 {
                     // set device pointers to stream
                     hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
@@ -1751,12 +1752,9 @@ namespace winrt::FFmpegInteropX::implementation
             else
             {
                 // unref all hw device contexts
-                for each (auto stream in videoStreams)
+                for (auto &stream : videoStreams)
                 {
-                    if (stream->m_pAvCodecCtx->hw_device_ctx)
-                    {
-                        av_buffer_unref(&stream->m_pAvCodecCtx->hw_device_ctx);
-                    }
+                    stream->FreeHardwareDevice();
                 }
                 av_buffer_unref(&avHardwareContext);
                 SAFE_RELEASE(device);
@@ -1820,7 +1818,7 @@ namespace winrt::FFmpegInteropX::implementation
     {
         bool hasDeviceChanged = false;
         HRESULT hr = S_OK;
-        if (currentVideoStream->device)
+        if (deviceManager)
         {
             hr = deviceManager->TestDevice(deviceHandle);
             hasDeviceChanged = hr == MF_E_DXGI_NEW_VIDEO_DEVICE;
@@ -1851,7 +1849,7 @@ namespace winrt::FFmpegInteropX::implementation
             if (SUCCEEDED(hr))
             {
                 // assign device and context
-                for each (auto stream in videoStreams)
+                for (auto &stream : videoStreams)
                 {
                     // set device pointers to stream
                     hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
@@ -1920,7 +1918,7 @@ namespace winrt::FFmpegInteropX::implementation
             currentVideoStream = nullptr;
         }
 
-        for each (auto stream in audioStreams)
+        for (auto &stream : audioStreams)
         {
             if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
             {
@@ -1932,7 +1930,7 @@ namespace winrt::FFmpegInteropX::implementation
                 }
             }
         }
-        for each (auto stream in videoStreams)
+        for (auto &stream : videoStreams)
         {
             if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
             {

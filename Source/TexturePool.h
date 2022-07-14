@@ -26,7 +26,7 @@ namespace FFmpegInteropX
 
         void Clear()
         {
-            for each (auto texture in pool)
+            for (auto &texture : pool)
             {
                 texture->Release();
             }

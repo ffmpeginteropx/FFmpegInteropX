@@ -322,7 +322,7 @@ namespace winrt::FFmpegInteropX::implementation
                 // check profile, if restricted
                 if (status.SupportedProfiles.size() > 0)
                 {
-                    for each (auto profileInfo in status.SupportedProfiles)
+                    for (auto& profileInfo : status.SupportedProfiles)
                     {
                         if (profileInfo.first == profile)
                         {
@@ -541,7 +541,7 @@ namespace winrt::FFmpegInteropX::implementation
         //{
         //	auto query =  CodecQuery();
         //	auto codecs = co_await query->FindAllAsync(CodecKind::Video, CodecCategory::Decoder, videoCodecSubtype);
-        //	for each (auto codec in codecs)
+        //	for (auto codec in codecs)
         //	{
         //		if (codec->IsTrusted)
         //		{
