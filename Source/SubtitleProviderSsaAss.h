@@ -7,6 +7,7 @@ namespace FFmpegInteropX
 {
     using namespace winrt::Windows::Storage::FileProperties;
     using namespace winrt::Windows::Media::Core;
+    using namespace winrt::Windows::Foundation::Metadata;
 
     class SubtitleProviderSsaAss : public SubtitleProvider
     {
@@ -385,27 +386,27 @@ namespace FFmpegInteropX
                                         {
                                             subStyle.FontWeight(TimedTextWeight::Bold);
                                         }
-                                        else if (tag.compare(L"i0") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
+                                        else if (tag.compare(L"i0") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
                                         {
                                             subStyle.FontStyle(TimedTextFontStyle::Normal);
                                         }
-                                        else if (tag.compare(L"i1") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
+                                        else if (tag.compare(L"i1") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
                                         {
                                             subStyle.FontStyle(TimedTextFontStyle::Italic);
                                         }
-                                        else if (tag.compare(L"u0") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
+                                        else if (tag.compare(L"u0") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
                                         {
                                             subStyle.IsUnderlineEnabled(false);
                                         }
-                                        else if (tag.compare(L"u1") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
+                                        else if (tag.compare(L"u1") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
                                         {
                                             subStyle.IsUnderlineEnabled(true);
                                         }
-                                        else if (tag.compare(L"s0") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
+                                        else if (tag.compare(L"s0") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
                                         {
                                             subStyle.IsLineThroughEnabled(false);
                                         }
-                                        else if (tag.compare(L"s1") == 0 && winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
+                                        else if (tag.compare(L"s1") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
                                         {
                                             subStyle.IsLineThroughEnabled(true);
                                         }
@@ -772,7 +773,7 @@ namespace FFmpegInteropX
             SubtitleStyle.FontFamily(GetFontFamily(font));
             SubtitleStyle.FontSize(GetFontSize(size));
             SubtitleStyle.LineAlignment(horizontalAlignment);
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
+            if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
             {
                 SubtitleStyle.FontStyle(italic ? TimedTextFontStyle::Italic : TimedTextFontStyle::Normal);
             }
@@ -790,12 +791,12 @@ namespace FFmpegInteropX
             SubtitleStyle.FlowDirection(TimedTextFlowDirection::LeftToRight);
             SubtitleStyle.OutlineColor(outlineColor);
 
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
+            if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
             {
                 SubtitleStyle.IsUnderlineEnabled(underline);
             }
 
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
+            if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
             {
                 SubtitleStyle.IsLineThroughEnabled(strikeout);
             }
@@ -828,17 +829,48 @@ namespace FFmpegInteropX
             copy.OutlineRadius(style.OutlineRadius());
             copy.OutlineThickness(style.OutlineThickness());
 
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
+            // ITimedTextStyle2
+            if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
             {
                 copy.FontStyle(style.FontStyle());
             }
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
+            if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
             {
                 copy.IsLineThroughEnabled(style.IsLineThroughEnabled());
             }
-            if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
+            if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
             {
                 copy.IsUnderlineEnabled(style.IsUnderlineEnabled());
+            }
+            if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsOverlineEnabled"))
+            {
+                copy.IsOverlineEnabled(style.IsOverlineEnabled());
+            }
+
+            // ITimedTextStyle3
+            if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"Bouten"))
+            {
+                auto copyBouten = copy.Bouten();
+                auto styleBouten = style.Bouten();
+                copyBouten.Color(styleBouten.Color());
+                copyBouten.Position(styleBouten.Position());
+            }
+            if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontAngleInDegrees"))
+            {
+                copy.FontAngleInDegrees(style.FontAngleInDegrees());
+            }
+            if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsTextCombined"))
+            {
+                copy.IsTextCombined(style.IsTextCombined());
+            }
+            if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"Ruby"))
+            {
+                auto copyRuby = copy.Ruby();
+                auto styleRuby = style.Ruby();
+                copyRuby.Align(styleRuby.Align());
+                copyRuby.Position(styleRuby.Position());
+                copyRuby.Reserve(styleRuby.Reserve());
+                copyRuby.Text(styleRuby.Text());
             }
 
             return copy;
