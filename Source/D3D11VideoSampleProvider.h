@@ -160,6 +160,7 @@ namespace FFmpegInteropX
             else
             {
                 // Release the sample's native interface and return texture to pool
+                sender.Processed(mapEntry->second);
                 trackedSamples.erase(mapEntry);
 
                 ReturnTextureToPool(sender);
@@ -450,7 +451,7 @@ namespace FFmpegInteropX
         }
 
         std::unique_ptr<TexturePool> texturePool;
-        std::map<winrt::impl::com_ref<winrt::Windows::Foundation::IUnknown>, winrt::event_token> trackedSamples;
+        std::map<winrt::Windows::Foundation::IUnknown, winrt::event_token> trackedSamples;
         std::mutex samplesMutex;
     };
 }

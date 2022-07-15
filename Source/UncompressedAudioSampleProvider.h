@@ -40,6 +40,9 @@ namespace FFmpegInteropX
 
 
     private:
+
+        static void free_resample_buffer(void* ptr);
+
         SwrContext* m_pSwrCtx = NULL;
         AVSampleFormat inSampleFormat = AVSampleFormat::AV_SAMPLE_FMT_NONE;
         AVSampleFormat outSampleFormat = AVSampleFormat::AV_SAMPLE_FMT_NONE;

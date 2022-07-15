@@ -67,8 +67,9 @@ MediaSampleProvider::~MediaSampleProvider()
 {
     DebugMessage(L"~MediaSampleProvider\n");
 
-    avcodec_close(m_pAvCodecCtx);
     avcodec_free_context(&m_pAvCodecCtx);
+
+    Flush();
 
     SAFE_RELEASE(device);
     SAFE_RELEASE(deviceContext);
@@ -509,7 +510,6 @@ void MediaSampleProvider::Detach()
 {
     Flush();
     m_pReader = nullptr;
-    avcodec_close(m_pAvCodecCtx);
     avcodec_free_context(&m_pAvCodecCtx);
 }
 

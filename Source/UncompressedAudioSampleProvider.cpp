@@ -219,7 +219,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
             else
             {
                 auto size = min(aBufferSize, (unsigned int)(resampledDataSize * outChannels * bytesPerSample));
-                *pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(resampledData[0], size, av_freep, resampledData);
+                *pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(resampledData[0], size, free_resample_buffer, resampledData);
             }
         }
         else
@@ -269,3 +269,9 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
     return hr;
 }
 
+void FFmpegInteropX::UncompressedAudioSampleProvider::free_resample_buffer(void* ptr)
+{
+    uint8_t** resampledData = (uint8_t**)ptr;
+    av_freep(&resampledData[0]); // free actual data
+    av_free(resampledData);      // free array of pointers
+}
