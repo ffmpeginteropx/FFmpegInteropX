@@ -240,30 +240,26 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
 
     if (SUCCEEDED(hr))
     {
+        // Try to get the best effort timestamp for the frame.
+        if (avFrame->best_effort_timestamp != AV_NOPTS_VALUE)
+            framePts = avFrame->best_effort_timestamp;
+
         // always update duration with real decoded sample duration
         auto actualDuration = (long long)avFrame->nb_samples * m_pAvStream->time_base.den / ((long long)outSampleRate * m_pAvStream->time_base.num);
         if (actualDuration == 0)
         {
             actualDuration = 1;
         }
+
         if (frameDuration != actualDuration)
         {
-            // TODO check if this can be removed. start_skip_samples was made internal in ffmpeg 4.4...
-            //// compensate for start encoder padding (gapless playback)
-            //if (m_pAvStream->nb_decoded_frames == 1 && m_pAvStream->start_skip_samples > 0)
-            //{
-            //	// check if duration difference matches encoder padding
-            //	auto skipDuration = (long long)m_pAvStream->start_skip_samples * m_pAvStream->time_base.den / (outSampleRate * m_pAvStream->time_base.num);
-            //	if (skipDuration == frameDuration - actualDuration)
-            //	{
-            //		framePts += skipDuration;
-            //	}
-            //}
+            // compensate for start encoder padding (gapless playback)
+            if (framePts == 0 && m_startOffset > 0 && (m_pAvStream->start_time + actualDuration) == frameDuration)
+            {
+                framePts = m_pAvStream->start_time;
+            }
             frameDuration = actualDuration;
         }
-        // Try to get the best effort timestamp for the frame.
-        if (avFrame->best_effort_timestamp != AV_NOPTS_VALUE)
-            framePts = avFrame->best_effort_timestamp;
     }
 
     return hr;
