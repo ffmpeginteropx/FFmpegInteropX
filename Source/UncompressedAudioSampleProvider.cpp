@@ -33,19 +33,19 @@ extern "C"
 using namespace FFmpegInteropX;
 
 UncompressedAudioSampleProvider::UncompressedAudioSampleProvider(
-    FFmpegReader^ reader,
+    std::shared_ptr<FFmpegReader> reader,
     AVFormatContext* avFormatCtx,
     AVCodecContext* avCodecCtx,
-    MediaSourceConfig^ config,
+    winrt::FFmpegInteropX::MediaSourceConfig const& config,
     int streamIndex)
     : UncompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, HardwareDecoderStatus::Unknown)
     , m_pSwrCtx(nullptr)
 {
 }
 
-IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor()
+winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvider::CreateStreamDescriptor()
 {
-    frameProvider = ref new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, ref new AudioEffectFactory(m_pAvCodecCtx));
+    frameProvider = std::shared_ptr<UncompressedFrameProvider>(new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, std::shared_ptr<AudioEffectFactory>(new AudioEffectFactory(m_pAvCodecCtx))));
 
     auto format = m_pAvCodecCtx->sample_fmt != AV_SAMPLE_FMT_NONE ? m_pAvCodecCtx->sample_fmt : AV_SAMPLE_FMT_S16;
     auto channels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
@@ -68,7 +68,7 @@ IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor(
     outChannels = inChannels;
     outChannelLayout = inChannelLayout;
 
-    if (m_config->DownmixAudioStreamsToStereo && outChannelLayout > AV_CH_LAYOUT_STEREO)
+    if (m_config.DownmixAudioStreamsToStereo() && outChannelLayout > AV_CH_LAYOUT_STEREO)
     {
         // use existing downmix channels, if available, otherwise perform manual downmix using resampler
         if (outChannelLayout & AV_CH_LAYOUT_STEREO_DOWNMIX)
@@ -110,18 +110,18 @@ IMediaStreamDescriptor^ UncompressedAudioSampleProvider::CreateStreamDescriptor(
         : (UINT32)outChannelLayout;
 
     // set encoding properties
-    auto encodingProperties = ref new AudioEncodingProperties();
-    encodingProperties->Subtype = outSampleFormat == AV_SAMPLE_FMT_FLT ? MediaEncodingSubtypes::Float : MediaEncodingSubtypes::Pcm;
-    encodingProperties->BitsPerSample = bitsPerSample;
-    encodingProperties->SampleRate = outSampleRate;
-    encodingProperties->ChannelCount = outChannels;
-    encodingProperties->Bitrate = bitsPerSample * outSampleRate * outChannels;
-    encodingProperties->Properties->Insert(MF_MT_AUDIO_CHANNEL_MASK, reportedChannelLayout);
+    auto encodingProperties = winrt::Windows::Media::MediaProperties::AudioEncodingProperties();
+    encodingProperties.Subtype(outSampleFormat == AV_SAMPLE_FMT_FLT ? MediaEncodingSubtypes::Float() : MediaEncodingSubtypes::Pcm());
+    encodingProperties.BitsPerSample(bitsPerSample);
+    encodingProperties.SampleRate(outSampleRate);
+    encodingProperties.ChannelCount(outChannels);
+    encodingProperties.Bitrate(bitsPerSample * outSampleRate * outChannels);
+    encodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value(reportedChannelLayout));
 
-    return ref new AudioStreamDescriptor(encodingProperties);
+    return winrt::Windows::Media::Core::AudioStreamDescriptor(encodingProperties);
 }
 
-HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, uint64 channelLayout, int sampleRate)
+HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate)
 {
     HRESULT hr = S_OK;
 
@@ -190,8 +190,10 @@ UncompressedAudioSampleProvider::~UncompressedAudioSampleProvider()
     swr_free(&m_pSwrCtx);
 }
 
-HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer, IDirect3DSurface^* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
+HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
 {
+    UNREFERENCED_PARAMETER(surface);
+
     HRESULT hr = S_OK;
 
     hr = CheckFormatChanged((AVSampleFormat)avFrame->format, avFrame->channels, avFrame->channel_layout, avFrame->sample_rate);
@@ -217,7 +219,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
             else
             {
                 auto size = min(aBufferSize, (unsigned int)(resampledDataSize * outChannels * bytesPerSample));
-                *pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(resampledData[0], size, av_freep, resampledData);
+                *pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(resampledData[0], size, free_resample_buffer, resampledData);
             }
         }
         else
@@ -226,7 +228,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
             auto bufferRef = av_buffer_ref(avFrame->buf[0]);
             if (bufferRef)
             {
-                auto size = min(bufferRef->size, avFrame->nb_samples * outChannels * bytesPerSample);
+                auto size = min(bufferRef->size, (size_t)avFrame->nb_samples * outChannels * bytesPerSample);
                 *pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)size, free_buffer, bufferRef);
             }
             else
@@ -238,25 +240,24 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
 
     if (SUCCEEDED(hr))
     {
+        // Try to get the best effort timestamp for the frame.
+        if (avFrame->best_effort_timestamp != AV_NOPTS_VALUE)
+            framePts = avFrame->best_effort_timestamp;
+
         // always update duration with real decoded sample duration
-        auto actualDuration = (long long)avFrame->nb_samples * m_pAvStream->time_base.den / (outSampleRate * m_pAvStream->time_base.num);
+        auto actualDuration = (long long)avFrame->nb_samples * m_pAvStream->time_base.den / ((long long)outSampleRate * m_pAvStream->time_base.num);
         if (actualDuration == 0)
         {
             actualDuration = 1;
         }
+
         if (frameDuration != actualDuration)
         {
-            // TODO check if this can be removed. start_skip_samples was made internal in ffmpeg 4.4...
-            //// compensate for start encoder padding (gapless playback)
-            //if (m_pAvStream->nb_decoded_frames == 1 && m_pAvStream->start_skip_samples > 0)
-            //{
-            //	// check if duration difference matches encoder padding
-            //	auto skipDuration = (long long)m_pAvStream->start_skip_samples * m_pAvStream->time_base.den / (outSampleRate * m_pAvStream->time_base.num);
-            //	if (skipDuration == frameDuration - actualDuration)
-            //	{
-            //		framePts += skipDuration;
-            //	}
-            //}
+            // compensate for start encoder padding (gapless playback)
+            if (framePts == 0 && m_startOffset > 0 && (m_pAvStream->start_time + actualDuration) == frameDuration)
+            {
+                framePts = m_pAvStream->start_time;
+            }
             frameDuration = actualDuration;
         }
     }
@@ -264,3 +265,9 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer^* pBuffer
     return hr;
 }
 
+void FFmpegInteropX::UncompressedAudioSampleProvider::free_resample_buffer(void* ptr)
+{
+    uint8_t** resampledData = (uint8_t**)ptr;
+    av_freep(&resampledData[0]); // free actual data
+    av_free(resampledData);      // free array of pointers
+}

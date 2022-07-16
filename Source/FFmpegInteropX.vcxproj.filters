@@ -26,62 +26,86 @@
     <Filter Include="NuGet">
       <UniqueIdentifier>{6ec5dc49-1ce3-43ae-8a32-385d881df05e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="StreamInfos">
+      <UniqueIdentifier>{4457f816-73b3-40f6-90e2-995463632565}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp" />
-    <ClCompile Include="FFmpegMediaSource.cpp" />
-    <ClCompile Include="FFmpegReader.cpp" />
-    <ClCompile Include="FFmpegInteropLogging.cpp" />
-    <ClCompile Include="FrameGrabber.cpp" />
-    <ClCompile Include="CompressedSampleProvider.cpp">
-      <Filter>SampleProviders</Filter>
-    </ClCompile>
-    <ClCompile Include="H264AVCSampleProvider.cpp">
-      <Filter>SampleProviders</Filter>
-    </ClCompile>
-    <ClCompile Include="HEVCSampleProvider.cpp">
-      <Filter>SampleProviders</Filter>
-    </ClCompile>
-    <ClCompile Include="MediaSampleProvider.cpp">
-      <Filter>SampleProviders</Filter>
-    </ClCompile>
-    <ClCompile Include="NALPacketSampleProvider.cpp">
-      <Filter>SampleProviders</Filter>
-    </ClCompile>
-    <ClCompile Include="UncompressedAudioSampleProvider.cpp">
-      <Filter>SampleProviders</Filter>
-    </ClCompile>
-    <ClCompile Include="UncompressedSampleProvider.cpp">
-      <Filter>SampleProviders</Filter>
-    </ClCompile>
-    <ClCompile Include="UncompressedVideoSampleProvider.cpp">
-      <Filter>SampleProviders</Filter>
-    </ClCompile>
-    <ClCompile Include="NativeBufferFactory.cpp">
-      <Filter>Helpers</Filter>
-    </ClCompile>
-    <ClCompile Include="CharacterEncoding.cpp">
-      <Filter>Helpers</Filter>
-    </ClCompile>
-    <ClCompile Include="CodecChecker.cpp" />
-    <ClCompile Include="BasicVideoEffect.cpp">
-      <Filter>Effects</Filter>
-    </ClCompile>
-    <ClCompile Include="DirectXInteropHelper.cpp">
-      <Filter>Helpers</Filter>
-    </ClCompile>
+    <None Include="packages.config" />
+    <None Include="FFmpegInteropX.def" />
+    <None Include="..\Build\AppVeyor_Build.bat">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Build\FFmpegConfig.sh">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.pfx">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Build\InstallTools.ps1">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Build\Repack-NuGet.ps1">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Build\Start-DevShell.ps1">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.targets">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.targets">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\.editorconfig">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Build-FFmpeg.ps1">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Build-FFmpegInteropX.ps1">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\LICENSE">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\README.md">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\README-BUILD.md">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h" />
+    <ClInclude Include="CodecChecker.h" />
+    <ClInclude Include="CodecRequiredEventArgs.h" />
+    <ClInclude Include="FFmpegInteropLogging.h" />
     <ClInclude Include="FFmpegMediaSource.h" />
     <ClInclude Include="FFmpegReader.h" />
-    <ClInclude Include="ILogProvider.h" />
-    <ClInclude Include="FFmpegInteropLogging.h" />
-    <ClInclude Include="MediaThumbnailData.h" />
-    <ClInclude Include="VideoFrame.h" />
-    <ClInclude Include="MediaSourceConfig.h" />
-    <ClInclude Include="StreamInfo.h" />
+    <ClInclude Include="FFmpegUtils.h" />
     <ClInclude Include="FrameGrabber.h" />
+    <ClInclude Include="MediaSourceConfig.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="VideoFrame.h" />
+    <ClInclude Include="AttachedFile.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="AttachedFileHelper.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="BasicVideoEffect.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoEffectFactory.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
     <ClInclude Include="AbstractEffectFactory.h">
       <Filter>Effects</Filter>
     </ClInclude>
@@ -91,13 +115,22 @@
     <ClInclude Include="AudioFilter.h">
       <Filter>Effects</Filter>
     </ClInclude>
-    <ClInclude Include="IAvEffect.h">
-      <Filter>Effects</Filter>
+    <ClInclude Include="ReferenceCue.h">
+      <Filter>Subtitles</Filter>
     </ClInclude>
-    <ClInclude Include="VideoEffectFactory.h">
-      <Filter>Effects</Filter>
+    <ClInclude Include="SubtitleProvider.h">
+      <Filter>Subtitles</Filter>
+    </ClInclude>
+    <ClInclude Include="SubtitleProviderBitmap.h">
+      <Filter>Subtitles</Filter>
+    </ClInclude>
+    <ClInclude Include="SubtitleProviderSsaAss.h">
+      <Filter>Subtitles</Filter>
     </ClInclude>
     <ClInclude Include="CompressedSampleProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
+    <ClInclude Include="D3D11VideoSampleProvider.h">
       <Filter>SampleProviders</Filter>
     </ClInclude>
     <ClInclude Include="H264AVCSampleProvider.h">
@@ -124,14 +157,41 @@
     <ClInclude Include="UncompressedVideoSampleProvider.h">
       <Filter>SampleProviders</Filter>
     </ClInclude>
-    <ClInclude Include="SubtitleProvider.h">
-      <Filter>Subtitles</Filter>
+    <ClInclude Include="VideoEffectConfiguration.h">
+      <Filter>Effects</Filter>
     </ClInclude>
-    <ClInclude Include="SubtitleProviderBitmap.h">
-      <Filter>Subtitles</Filter>
+    <ClInclude Include="AudioStreamInfo.h">
+      <Filter>StreamInfos</Filter>
     </ClInclude>
-    <ClInclude Include="SubtitleProviderSsaAss.h">
-      <Filter>Subtitles</Filter>
+    <ClInclude Include="ChapterInfo.h">
+      <Filter>StreamInfos</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoStreamInfo.h">
+      <Filter>StreamInfos</Filter>
+    </ClInclude>
+    <ClInclude Include="FormatInfo.h">
+      <Filter>StreamInfos</Filter>
+    </ClInclude>
+    <ClInclude Include="SubtitleStreamInfo.h">
+      <Filter>StreamInfos</Filter>
+    </ClInclude>
+    <ClInclude Include="IAvEffect.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="AvCodecContextHelpers.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoFilter.h">
+      <Filter>Effects</Filter>
+    </ClInclude>
+    <ClInclude Include="StringUtils.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="TexturePool.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeSpanHelpers.h">
+      <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="NativeBuffer.h">
       <Filter>Helpers</Filter>
@@ -139,106 +199,117 @@
     <ClInclude Include="NativeBufferFactory.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="CritSec.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="LanguageTagConverter.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="ReferenceCue.h">
-      <Filter>Subtitles</Filter>
-    </ClInclude>
-    <ClInclude Include="TimeSpanHelpers.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
     <ClInclude Include="CharacterEncoding.h">
       <Filter>Helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="AvCodecContextHelpers.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="AttachedFile.h" />
-    <ClInclude Include="AttachedFileHelper.h" />
-    <ClInclude Include="CodecChecker.h" />
-    <ClInclude Include="MediaMetadata.h">
-      <Filter>Metadata</Filter>
-    </ClInclude>
-    <ClInclude Include="KeyStringValuePair.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="StringUtils.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="VideoEffectConfiguration.h">
-      <Filter>Effects</Filter>
-    </ClInclude>
-    <ClInclude Include="BasicVideoEffect.h">
-      <Filter>Effects</Filter>
-    </ClInclude>
-    <ClInclude Include="Enumerations.h" />
-    <ClInclude Include="CodecRequiredEventArgs.h" />
-    <ClInclude Include="D3D11VideoSampleProvider.h">
-      <Filter>SampleProviders</Filter>
-    </ClInclude>
-    <ClInclude Include="TexturePool.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="VideoFilter.h">
-      <Filter>Effects</Filter>
     </ClInclude>
     <ClInclude Include="DirectXInteropHelper.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="MediaMetadata.h">
+      <Filter>Metadata</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaThumbnailData.h">
+      <Filter>Metadata</Filter>
+    </ClInclude>
+    <ClInclude Include="LanguageTagConverter.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Build\FFmpegConfig.sh">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\README.md">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="FFmpegInteropLibs.props">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="packages.config" />
-    <None Include="..\Build-FFmpeg.ps1">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\AppVeyor_Build.bat">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\README-BUILD.md">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\Build-FFmpegInteropX.ps1">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.nuspec">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.targets">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\Build\FFmpegInteropX.nuspec">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\Build\FFmpegInteropX.targets">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\NuGet.Config">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\Build\Repack-NuGet.ps1">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\Build\InstallTools.ps1">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\Build\Start-DevShell.ps1">
-      <Filter>Build</Filter>
-    </None>
-    <None Include="..\Docker\dockerfile">
-      <Filter>Build</Filter>
-    </None>
+    <ClCompile Include="CodecChecker.cpp" />
+    <ClCompile Include="CodecRequiredEventArgs.cpp" />
+    <ClCompile Include="FFmpegInteropLogging.cpp" />
+    <ClCompile Include="FFmpegMediaSource.cpp" />
+    <ClCompile Include="FFmpegReader.cpp" />
+    <ClCompile Include="FFmpegUtils.cpp" />
+    <ClCompile Include="FrameGrabber.cpp" />
+    <ClCompile Include="MediaSourceConfig.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="VideoFrame.cpp" />
+    <ClCompile Include="AttachedFile.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="AttachedFileHelper.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="BasicVideoEffect.cpp">
+      <Filter>Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="ReferenceCue.cpp">
+      <Filter>Subtitles</Filter>
+    </ClCompile>
+    <ClCompile Include="SubtitleProvider.cpp">
+      <Filter>Subtitles</Filter>
+    </ClCompile>
+    <ClCompile Include="SubtitleProviderSsaAss.cpp">
+      <Filter>Subtitles</Filter>
+    </ClCompile>
+    <ClCompile Include="CompressedSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11VideoSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="H264AVCSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="HEVCSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="MediaSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="NALPacketSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="UncompressedAudioSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="UncompressedSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="UncompressedVideoSampleProvider.cpp">
+      <Filter>SampleProviders</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoEffectConfiguration.cpp">
+      <Filter>Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioStreamInfo.cpp">
+      <Filter>StreamInfos</Filter>
+    </ClCompile>
+    <ClCompile Include="ChapterInfo.cpp">
+      <Filter>StreamInfos</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoStreamInfo.cpp">
+      <Filter>StreamInfos</Filter>
+    </ClCompile>
+    <ClCompile Include="FormatInfo.cpp">
+      <Filter>StreamInfos</Filter>
+    </ClCompile>
+    <ClCompile Include="SubtitleStreamInfo.cpp">
+      <Filter>StreamInfos</Filter>
+    </ClCompile>
+    <ClCompile Include="NativeBufferFactory.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="CharacterEncoding.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectXInteropHelper.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="MediaThumbnailData.cpp">
+      <Filter>Metadata</Filter>
+    </ClCompile>
+    <ClCompile Include="LanguageTagConverter.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="FFmpegInteropX.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.txt" />
   </ItemGroup>
 </Project>

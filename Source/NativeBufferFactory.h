@@ -1,13 +1,14 @@
 #pragma once
+#include "pch.h"
 
 namespace NativeBuffer
 {
-    ref class NativeBufferFactory
+    class NativeBufferFactory
     {
-    internal:
-        static Windows::Storage::Streams::IBuffer^ CreateNativeBuffer(UINT32 nNumberOfBytes);
-        static Windows::Storage::Streams::IBuffer^ CreateNativeBuffer(LPVOID lpBuffer, UINT32 nNumberOfBytes);
-        static Windows::Storage::Streams::IBuffer^ CreateNativeBuffer(LPVOID lpBuffer, UINT32 nNumberOfBytes, void(*free)(void* opaque), void* opaque);
-        static Windows::Storage::Streams::IBuffer^ CreateNativeBuffer(LPVOID lpBuffer, UINT32 nNumberOfBytes, Platform::Object^ pObject);
+    public:
+        static winrt::Windows::Storage::Streams::IBuffer CreateNativeBuffer(UINT32 nNumberOfBytes);
+        static winrt::Windows::Storage::Streams::IBuffer CreateNativeBuffer(LPVOID lpBuffer, UINT32 nNumberOfBytes);
+        static winrt::Windows::Storage::Streams::IBuffer CreateNativeBuffer(LPVOID lpBuffer, UINT32 nNumberOfBytes, void(*free)(void* opaque), void* opaque);
+        static winrt::Windows::Storage::Streams::IBuffer CreateNativeBuffer(LPVOID lpBuffer, UINT32 nNumberOfBytes, const winrt::Windows::Foundation::IInspectable& pObject);
     };
 }

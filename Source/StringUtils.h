@@ -1,54 +1,47 @@
+#pragma once
+#include "pch.h"
 #include <string.h>
-#include <codecvt>
 
 namespace FFmpegInteropX
 {
-    using namespace Platform;
-
-    ref class StringUtils sealed
+    class StringUtils
     {
-    internal:
-        static String^ AnsiStringToPlatformString(const char* char_array)
-        {
-            if (!char_array) return "";
-
-            std::string s_str = std::string(char_array);
-            std::wstring wid_str = std::wstring(s_str.begin(), s_str.end());
-            const wchar_t* w_char = wid_str.c_str();
-            return ref new String(w_char);
-        }
-
+    public:
         static std::wstring Utf8ToWString(const char* char_array)
         {
-            if (!char_array) return std::wstring(L"");
-
             auto required_size = MultiByteToWideChar(CP_UTF8, 0, char_array, -1, NULL, 0);
-            wchar_t* buffer = (wchar_t*)calloc(required_size, sizeof(wchar_t));
-            auto result = MultiByteToWideChar(CP_UTF8, 0, char_array, -1, buffer, required_size);
-            std::wstring wid_str = std::wstring(buffer);
-            free(buffer);
-            return wid_str;
+            if (required_size > 0)
+            {
+                std::wstring wid_str = std::wstring(required_size - 1, '?');
+                auto result = MultiByteToWideChar(CP_UTF8, 0, char_array, -1, (LPWSTR)wid_str.data(), required_size);
+                assert(result == required_size);
+                return wid_str;
+            }
+            return std::wstring(L"");
         }
 
-        static String^ Utf8ToPlatformString(const char* char_array)
+        static winrt::hstring Utf8ToPlatformString(const char* char_array)
         {
             auto wid_str = Utf8ToWString(char_array);
-            return ref new String(wid_str.c_str(), (int)wid_str.size());
+            return WStringToPlatformString(wid_str);
         }
 
-        static String^ WStringToPlatformString(const std::wstring& input)
+        static winrt::hstring WStringToPlatformString(const std::wstring& input)
         {
-            return ref new Platform::String(input.c_str(), (unsigned int)input.length());
+            return winrt::hstring(input.c_str(), (winrt::hstring::size_type)input.size());
         }
 
-        static std::string PlatformStringToUtf8String(String^ value)
+        static std::string PlatformStringToUtf8String(winrt::hstring value)
         {
-            int required_size = WideCharToMultiByte(CP_UTF8, 0, value->Data(), -1, NULL, 0, NULL, NULL);
-            char* buffer = (char*)calloc(required_size, sizeof(char));
-            auto result = WideCharToMultiByte(CP_UTF8, 0, value->Data(), -1, buffer, required_size, NULL, NULL);
-            std::string s_str = std::string(buffer);
-            free(buffer);
-            return s_str;
+            int required_size = WideCharToMultiByte(CP_UTF8, 0, value.data(), -1, NULL, 0, NULL, NULL);
+            if (required_size > 0)
+            {
+                std::string s_str = std::string(required_size - 1, '?');
+                auto result = WideCharToMultiByte(CP_UTF8, 0, value.data(), -1, (LPSTR)s_str.data(), required_size, NULL, NULL);
+                assert(result == required_size);
+                return s_str;
+            }
+            return std::string("");
         }
 
     };

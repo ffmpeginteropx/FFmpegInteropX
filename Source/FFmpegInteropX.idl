@@ -1,0 +1,679 @@
+namespace FFmpegInteropX
+{
+    enum LogLevel
+    {
+        Panic = 0,
+        Fatal = 8,
+        Error = 16,
+        Warning = 24,
+        Info = 32,
+        Verbose = 40,
+        Debug = 48,
+        Trace = 56
+    };
+
+    enum HardwareDecoderStatus
+    {
+        Unknown,
+        Available,
+        NotAvailable
+    };
+
+    enum DecoderEngine
+    {
+        SystemDecoder,
+        FFmpegSoftwareDecoder,
+        FFmpegD3D11HardwareDecoder
+    };
+
+    enum CodecRequiredReason
+    {
+        ///<summary>Unknown.</summary>
+        Unknown = 0x00,
+
+        ///<summary>The codec extension will allow hardware acceleration of a specific format.</summary>
+        HardwareAcceleration = 0x01
+    };
+
+    enum VideoDecoderMode
+    {
+        ///<summary>Use FFmpeg D3D11 hardware acceleration, if available. Otherwise, use FFmpeg software decoder</summary>
+        ///<remarks>The VideoStreamInfo will show the actual decoder only after playback has started.</remarks>
+        Automatic,
+        ///<summary>Automatically detect hardware acceleration capabilities and use system decoders for those formats.</summary>
+        ///<remarks>For some formats, installation of video codecs is required for this to work. Check CodecChecker.CodecRequired event.</remarks>
+        AutomaticSystemDecoder,
+        ///<summary>Force use of system decoder.</summary>
+        ForceSystemDecoder,
+        ///<summary>Force use of ffmpeg software decoder.</summary>
+        ForceFFmpegSoftwareDecoder
+    };
+
+    [flags]
+    ///<summary>This flags enumeration describes the content or intention of a stream.</summary>
+    enum StreamDisposition
+    {
+        ///<summary>Unknown disposition.</summary>
+        Unknown = 0,
+        ///<summary>The stream should be chosen by default among other streams of the same type, unless the user has explicitly specified otherwise.</summary>
+        Default = 1 << 0,
+        ///<summary>The stream is not in original language.</summary>
+        Dub = 1 << 1,
+        ///<summary>The stream is in original language.</summary>
+        Original = (1 << 2),
+        ///<summary>The stream is a commentary track.</summary>
+        Comment = (1 << 3),
+        ///<summary>The stream contains song lyrics.</summary>
+        Lyrics = (1 << 4),
+        ///<summary>The stream contains karaoke audio.</summary>
+        Karaoke = (1 << 5),
+        ///<summary>Track should be used during playback by default.</summary>
+        ///<remarks>Useful for subtitle track that should be displayed even when user did not explicitly ask for subitles. </remarks>
+        Forced = (1 << 6),
+        ///<summary>The stream is intended for hearing impaired audiences.</summary>
+        HearingImpaired = (1 << 7),
+        ///<summary>The stream is intended for visually impaired audiences.</summary>
+        VisualImpaired = (1 << 8),
+        ///<summary>The audio stream contains music and sound effects without voice.</summary>
+        CleanEffects = (1 << 9),
+        ///<summary>The stream is stored in the file as an attached picture/"cover art" (e.g. APIC frame in ID3v2)</summary>
+        AttachedPic = (1 << 10),
+        ///<summary>The stream is sparse, and contains thumbnail images, often corresponding to chapter markers.</summary>
+        ///<remarks>Only ever used with AV_DISPOSITION_ATTACHED_PIC.</remarks>
+        TimesThumbnails = (1 << 11),
+        ///<summary>The subtitle stream contains captions, providing a transcription and possibly a translation of audio.</summary>
+        ///<remarks>Typically intended for hearing-impaired audiences.</remarks>
+        Captions = (1 << 16),
+        ///<summary>The subtitle stream contains a textual description of the video content.</summary>
+        ///<remarks>Typically intended for visually-impaired audiences or for the cases where the video cannot be seen.</remarks>
+        Descriptions = (1 << 17),
+        ///<summary>The subtitle stream contains time-aligned metadata that is not intended to be directly presented to the user.</summary>
+        Metadata = (1 << 18),
+        ///<summary>The audio stream is intended to be mixed with another stream before presentation.</summary>
+        Dependent = (1 << 19),
+        ///<summary>The video stream contains still images.</summary>
+        StillImage = 1 << 20
+    };
+
+    interface IStreamInfo
+    {
+        String Name{ get; };
+        String Language{ get; };
+        String CodecName{ get; };
+        StreamDisposition Disposition{ get; };
+        Int64 Bitrate{ get; };
+        Boolean IsDefault{ get; };
+    }
+
+    [bindable]
+    runtimeclass AudioStreamInfo : IStreamInfo
+    {
+        AudioStreamInfo(
+            String  name,
+            String  language,
+            String  codecName,
+            StreamDisposition disposition,
+            Int64 bitrate,
+            Boolean isDefault,
+            Int32 channels,
+            String  channelLayout,
+            Int32 sampleRate,
+            Int32 bitsPerSample,
+            DecoderEngine decoderEngine);
+
+
+        Int32 Channels{ get; };
+        String ChannelLayout{ get; };
+        Int32 SampleRate{ get; };
+        Int32 BitsPerSample{ get; };
+
+        DecoderEngine DecoderEngine{ get; };
+    }
+
+    [bindable]
+    runtimeclass VideoStreamInfo : IStreamInfo
+    {
+        VideoStreamInfo(
+            String  name,
+            String  language,
+            String  codecName,
+            StreamDisposition disposition,
+            Int64 bitrate,
+            Boolean isDefault,
+            Int32 pixelWidth,
+            Int32 pixelHeight,
+            Double displayAspectRatio,
+            Int32 bitsPerSample,
+            Double framesPerSecond,
+            HardwareDecoderStatus hwAccel,
+            DecoderEngine decoderEngine);
+
+
+        Int32 PixelWidth{ get; };
+        Int32 PixelHeight{ get; };
+        Double DisplayAspectRatio{ get; };
+        Int32 BitsPerSample{ get; };
+        Double FramesPerSecond{ get; };
+
+        ///<summary>Override the frame rate of the video stream.</summary>
+        ///<remarks>
+        /// This must be set before calling CreatePlaybackItem().
+        /// Setting this can cause A/V desync, since it will only affect this stream.
+        /// </remarks>
+        Double FramesPerSecondOverride{ get; };
+
+        HardwareDecoderStatus HardwareDecoderStatus{ get; };
+        DecoderEngine DecoderEngine{ get; };
+    }
+
+    [bindable]
+    runtimeclass SubtitleStreamInfo : IStreamInfo
+    {
+        SubtitleStreamInfo(
+            String  name,
+            String  language,
+            String  codecName,
+            StreamDisposition disposition,
+            Boolean isDefault,
+            Boolean isForced,
+            Windows.Media.Core.TimedMetadataTrack  track,
+            Boolean isExternal);
+
+        Boolean IsExternal{ get; };
+        Boolean IsForced{ get; };
+
+        Windows.Media.Core.TimedMetadataTrack SubtitleTrack{ get; };
+    }
+
+    [bindable]
+    runtimeclass ChapterInfo
+    {
+         ChapterInfo(
+             String  title,
+            Windows.Foundation.TimeSpan startTime,
+            Windows.Foundation.TimeSpan duration);
+
+         String Title{ get; };
+         Windows.Foundation.TimeSpan StartTime{ get; };
+         Windows.Foundation.TimeSpan Duration{ get; };
+
+    };
+
+    [bindable]
+    runtimeclass FormatInfo
+    {
+         FormatInfo(
+            String  title,
+            String  formatName,
+            Windows.Foundation.TimeSpan duration,
+            Int64 bitrate);
+
+         String  Title{ get; };
+         String  FormatName{ get; };
+         Windows.Foundation.TimeSpan Duration{ get; };
+         Int64 Bitrate{ get; };
+
+    };
+
+    [default_interface]
+    runtimeclass BasicVideoEffect : Windows.Media.Effects.IBasicVideoEffect
+    {
+        BasicVideoEffect();
+    }
+
+    [bindable]
+    runtimeclass CharacterEncoding
+    {
+        CharacterEncoding(Int32 codePage, String name, String description);
+        String Name {get; };
+        String Description{ get; };
+        Int32 WindowsCodePage{ get; };
+        static Windows.Foundation.Collections.IVectorView<CharacterEncoding> GetCharacterEncodings();
+        static CharacterEncoding GetSystemDefault();
+    }
+
+    runtimeclass CodecRequiredEventArgs
+    {
+        CodecRequiredEventArgs(CodecRequiredReason reason, String codecName, String storeExtensionName, String productId);
+
+        ///<summary>The reason why a new codec extension is recommended.</summary>
+        CodecRequiredReason Reason { get; };
+
+        ///<summary>The name of the video or audio format (e.g. "HEVC" or "VP9").</summary>
+        String  FormatName{ get; };
+
+        ///<summary>The non-localized name of the proposed extension in the Windows Store.</summary>
+        String  StoreExtensionName{ get; };
+
+        ///<summary>The ProductId of the proposed extension.</summary>
+        String  ProductId{ get; };
+
+        ///<summary>This will open the Windows Store page of the proposed codec extension.</summary>
+        Windows.Foundation.IAsyncOperation<Boolean> OpenStorePageAsync();
+    }
+
+    [bindable]
+    runtimeclass VideoFrame
+    {
+        Windows.Storage.Streams.IBuffer PixelData { get; };
+        UInt32 PixelWidth { get; };
+        UInt32 PixelHeight{ get; };
+        Windows.Media.MediaProperties.MediaRatio PixelAspectRatio{ get; };
+        Windows.Foundation.TimeSpan Timestamp{ get; };
+
+        VideoFrame(Windows.Storage.Streams.IBuffer pixelData, UInt32 width, UInt32 height, Windows.Media.MediaProperties.MediaRatio pixelAspectRatio, Windows.Foundation.TimeSpan timestamp);
+
+
+        Windows.Foundation.IAsyncAction EncodeAsBmpAsync(Windows.Storage.Streams.IRandomAccessStream stream);
+
+        Windows.Foundation.IAsyncAction EncodeAsJpegAsync(Windows.Storage.Streams.IRandomAccessStream stream);
+        Windows.Foundation.IAsyncAction EncodeAsPngAsync(Windows.Storage.Streams.IRandomAccessStream stream);
+
+        UInt32 DisplayWidth{ get; };
+
+        UInt32 DisplayHeight{ get; };
+
+        Double DisplayAspectRatio{ get; };
+    }
+
+    static runtimeclass CodecChecker
+    {
+        ///<summary>This event is raised if a codec is required to improve playback experience.</summary>
+        ///<remarks>The event is only raised once per codec. It will be raised again after a call to RefreshAsync().</remarks>
+        static event Windows.Foundation.EventHandler<CodecRequiredEventArgs> CodecRequired;
+
+        ///<summary>This will pre-initialize the hardware acceleration status.</summary>
+        ///<remarks>This can be called on app startup, but it is not required.</remarks>
+        static Windows.Foundation.IAsyncAction InitializeAsync();
+
+        ///<summary>This will refresh the hardware acceleration status.</summary>
+        ///<remarks>Call this after installing a codec or after a change of the active GPU.</remarks>
+        static Windows.Foundation.IAsyncAction RefreshAsync();
+
+        static Windows.Foundation.IAsyncOperation<Boolean> CheckIsMpeg2VideoExtensionInstalledAsync();
+
+        static Windows.Foundation.IAsyncOperation<Boolean> CheckIsVP9VideoExtensionInstalledAsync();
+
+        static Windows.Foundation.IAsyncOperation<Boolean> CheckIsHEVCVideoExtensionInstalledAsync();
+
+        static Windows.Foundation.IAsyncOperation<Boolean> OpenMpeg2VideoExtensionStoreEntryAsync();
+
+        static Windows.Foundation.IAsyncOperation<Boolean> OpenVP9VideoExtensionStoreEntryAsync();
+
+        static Windows.Foundation.IAsyncOperation<Boolean> OpenHEVCVideoExtensionStoreEntryAsync();
+    }
+
+    interface ILogProvider
+    {
+        void Log(LogLevel level, String message);
+    };
+
+    [bindable]
+    runtimeclass FrameGrabber : Windows.Foundation.IClosable
+    {
+        /// <summary>The duration of the video stream.</summary>
+        Windows.Foundation.TimeSpan Duration{get; };
+
+        /// <summary>Gets or sets the decode pixel width.</summary>
+        Int32 DecodePixelWidth{ get; set; };
+
+        /// <summary>Gets or sets the decode pixel height.</summary>
+        Int32 DecodePixelHeight{ get; set; };
+
+        /// <summary>Gets the current video stream information.</summary>
+        VideoStreamInfo CurrentVideoStream{ get; };
+
+        /// <summary>Creates a new FrameGrabber from the specified stream.</summary>
+        static Windows.Foundation.IAsyncOperation<FrameGrabber> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream);
+
+        /// <summary>Creates a new FrameGrabber from the specified uri.</summary>
+        static Windows.Foundation.IAsyncOperation<FrameGrabber> CreateFromUriAsync(String uri);
+
+
+        /// <summary>Extracts a video frame at the specififed position.</summary>
+        /// <param name="position">The position of the requested frame.</param>
+        /// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
+        /// <param name="maxFrameSkip">If exactSeek=true, this limits the number of frames to decode after the key frame.</param>
+        /// <param name="targetBuffer">The target buffer which shall contain the decoded pixel data.</param>
+        /// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
+        Windows.Foundation.IAsyncOperation<VideoFrame> ExtractVideoFrameAsync(Windows.Foundation.TimeSpan position, Boolean exactSeek, Int32 maxFrameSkip, Windows.Storage.Streams.IBuffer targetBuffer);
+
+        /// <summary>Extracts the next consecutive video frame in the file. Returns <c>null</c> at end of stream.</summary>
+        /// <param name="targetBuffer">The target buffer which shall contain the decoded pixel data.</param>
+        Windows.Foundation.IAsyncOperation<VideoFrame> ExtractNextVideoFrameAsync(Windows.Storage.Streams.IBuffer targetBuffer);
+
+        /// <summary>Extracts a video frame at the specififed position.</summary>
+        /// <param name="position">The position of the requested frame.</param>
+        /// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
+        /// <param name="maxFrameSkip">If exactSeek=true, this limits the number of frames to decode after the key frame.</param>
+        /// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
+        Windows.Foundation.IAsyncOperation<VideoFrame> ExtractVideoFrameAsync(Windows.Foundation.TimeSpan position, Boolean exactSeek, Int32 maxFrameSkip);
+
+        /// <summary>Extracts a video frame at the specififed position.</summary>
+        /// <param name="position">The position of the requested frame.</param>
+        /// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
+        /// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
+        Windows.Foundation.IAsyncOperation<VideoFrame> ExtractVideoFrameAsync(Windows.Foundation.TimeSpan position, Boolean exactSeek);
+
+        /// <summary>Extracts a video frame at the specififed position.</summary>
+        /// <param name="position">The position of the requested frame.</param>
+        /// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
+        Windows.Foundation.IAsyncOperation<VideoFrame> ExtractVideoFrameAsync(Windows.Foundation.TimeSpan position);
+
+
+        /// <summary>Extracts the next consecutive video frame in the file. Returns <c>null</c> at end of stream.</summary>
+        Windows.Foundation.IAsyncOperation<VideoFrame> ExtractNextVideoFrameAsync();
+    }
+
+    static runtimeclass FFmpegInteropLogging
+    {
+        static void SetLogLevel(LogLevel level);
+        static void SetLogProvider(ILogProvider logProvider);
+        static void SetDefaultLogProvider();
+    }
+
+    [bindable]
+    runtimeclass MediaThumbnailData : Windows.Foundation.IClosable
+    {
+        MediaThumbnailData(Windows.Storage.Streams.IBuffer buffer, String extension);
+        Windows.Storage.Streams.IBuffer  Buffer{get; };
+        String Extension{ get; };
+    }
+
+    [bindable]
+    runtimeclass FFmpegMediaSource : Windows.Foundation.IClosable
+    {
+        ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream, MediaSourceConfig config);
+
+        ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream);
+
+        ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromUriAsync(String uri, MediaSourceConfig config);
+
+        ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromUriAsync(String uri);
+
+        ///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
+        void SetSubtitleDelay(Windows.Foundation.TimeSpan delay);
+
+        ///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
+        void SetFFmpegAudioFilters(String audioFilters);
+
+        ///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
+        ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+        void SetFFmpegVideoFilters(String videoEffects);
+
+        ///<summary>Disables audio effects.</summary>
+        void DisableAudioEffects();
+
+        ///<summary>Disables video effects.</summary>
+        void DisableVideoEffects();
+
+        ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
+        MediaThumbnailData ExtractThumbnail();
+
+        ///<summary>Gets the MediaStreamSource. Using the MediaStreamSource will prevent subtitles from working. Please use CreateMediaPlaybackItem instead.</summary>
+        Windows.Media.Core.MediaStreamSource GetMediaStreamSource();
+
+        ///<summary>Creates a MediaPlaybackItem for playback.</summary>
+        Windows.Media.Playback.MediaPlaybackItem CreateMediaPlaybackItem();
+
+        ///<summary>Creates a MediaPlaybackItem for playback which starts at the specified stream offset.</summary>
+        Windows.Media.Playback.MediaPlaybackItem CreateMediaPlaybackItem(Windows.Foundation.TimeSpan startTime);
+
+        ///<summary>Creates a MediaPlaybackItem for playback which starts at the specified stream offset and ends after the specified duration.</summary>
+        Windows.Media.Playback.MediaPlaybackItem CreateMediaPlaybackItem(Windows.Foundation.TimeSpan startTime, Windows.Foundation.TimeSpan durationLimit);
+
+        ///<summary>Adds an external subtitle from a stream.</summary>
+        ///<param name="stream">The subtitle stream.</param>
+        ///<param name="streamName">The name to use for the subtitle.</param>
+        Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<SubtitleStreamInfo> > AddExternalSubtitleAsync(Windows.Storage.Streams.IRandomAccessStream stream, String streamName);
+
+        ///<summary>Adds an external subtitle from a stream.</summary>
+        ///<param name="stream">The subtitle stream.</param>
+        Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<SubtitleStreamInfo> > AddExternalSubtitleAsync(Windows.Storage.Streams.IRandomAccessStream stream);
+
+        // Properties
+
+        ///<summary>Gets the configuration that has been passed when creating the MSS instance.</summary>
+        MediaSourceConfig Configuration{ get; };
+
+        ///<summary>Gets the metadata tags available in the file.</summary>
+        IMapView<String, IVectorView<String> > MetadataTags{ get; };
+
+        ///<summary>Gets the duration of the stream. Returns zero, if this is streaming media.</summary>
+        Windows.Foundation.TimeSpan Duration{ get; };
+
+        ///<summary>Gets the current video stream information.</summary>
+        VideoStreamInfo CurrentVideoStream{ get; };
+
+        ///<summary>Gets the current audio stream information.</summary>
+        AudioStreamInfo CurrentAudioStream{ get; };
+
+        ///<summary>Gets video stream information</summary>
+        IVectorView<VideoStreamInfo> VideoStreams{ get; };
+
+        ///<summary>Gets audio stream information.</summary>
+        IVectorView<AudioStreamInfo> AudioStreams{ get; };
+
+        ///<summary>Gets subtitle stream information.</summary>
+        IVectorView<SubtitleStreamInfo> SubtitleStreams{ get; };
+
+        ///<summary>Gets chapter information.</summary>
+        IVectorView<ChapterInfo> ChapterInfos{ get; };
+
+        ///<summary>Gets format information.</summary>
+        FormatInfo FormatInfo{ get; };
+
+        ///<summary>Gets a boolean indication if a thumbnail is embedded in the file.</summary>
+        Boolean HasThumbnail{ get; };
+
+        ///<summary>Gets the MediaPlaybackItem that was created before by using CreateMediaPlaybackItem.</summary>
+        Windows.Media.Playback.MediaPlaybackItem PlaybackItem{ get; };
+
+
+        ///<summary>The current subtitle delay used by this instance.</summary>
+        Windows.Foundation.TimeSpan SubtitleDelay{ get; };
+
+        ///<summary>Gets or sets the BufferTime of the MediaStreamSource.</summary>
+        ///<remarks>A value of 0 is recommended for local files, streaming sources should use higher values.</remarks>
+        Windows.Foundation.TimeSpan BufferTime{ get; set; };
+
+        ///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
+        ///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this .</remarks>
+        Windows.Media.Playback.MediaPlaybackSession PlaybackSession{ get; set; };
+    }
+
+    [default_interface]
+    [bindable]
+    runtimeclass MediaSourceConfig
+    {
+        MediaSourceConfig();
+
+        ///<summary>Enable passthrough for MP3 audio to system decoder.</summary>
+        ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
+        Boolean PassthroughAudioMP3{ get; set; };
+
+        ///<summary>Enable passthrough for AAC audio to system decoder.</summary>
+        ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
+        Boolean PassthroughAudioAAC{ get; set; };
+
+        ///<summary>Sets the video decoder mode. Default is AutoDetection.</summary>
+        VideoDecoderMode VideoDecoderMode{ get; set; };
+
+        ///<summary>Max profile allowed for H264 system decoder. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
+        Int32 SystemDecoderH264MaxProfile{ get; set; };
+
+        ///<summary>Max level allowed for H264 system decoder. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
+        ///<remarks>Most H264 HW decoders only support Level 4.1, so this is the default.</remarks>
+        Int32 SystemDecoderH264MaxLevel{ get; set; };
+
+
+        ///<summary>Max profile allowed for HEVC system decoder. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
+        Int32 SystemDecoderHEVCMaxProfile{ get; set; };
+
+        ///<summary>Max level allowed for HEVC system decoder. Default: Disabled (-1).</summary>
+        ///<remarks>Encoded as: 30*Major + 3*Minor. So Level 6.0 = 30*6 = 180, 5.1 = 30*5 + 3*1 = 163, 4.1 = 123.
+        ///Many HEVC HW decoders support even very high levels, so we disable the check by default.</remarks>
+        Int32 SystemDecoderHEVCMaxLevel{ get; set; };
+
+        ///<summary>Allow video output in IYuv format.</summary>
+        Boolean VideoOutputAllowIyuv{ get; set; };
+
+        ///<summary>Allow video output in 10bit formats.</summary>
+        Boolean VideoOutputAllow10bit{ get; set; };
+
+        ///<summary>Allow video output in BGRA format - required for video transparency.</summary>
+        Boolean VideoOutputAllowBgra8{ get; set; };
+
+        ///<summary>Allow video output in NV12 format.</summary>
+        Boolean VideoOutputAllowNv12{ get; set; };
+
+
+        ///<summary>The maximum number of broken frames to skipp in a stream before stopping decoding.</summary>
+        UInt32 SkipErrors{ get; set; };
+
+        ///<summary>The maximum number of video decoding threads.</summary>
+        UInt32 MaxVideoThreads{ get; set; };
+
+        ///<summary>The maximum number of audio decoding threads.</summary>
+        UInt32 MaxAudioThreads{ get; set; };
+
+        ///<summary>The maximum supported playback rate. This is set on the media stream source itself. 
+        /// This does not modify what the transport control default UI shows as available playback speeds. Custom UI is necessary!</summary>
+        Double MaxSupportedPlaybackRate{ get; set; };
+
+        ///<summary>The buffer size in bytes to use for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
+        UInt32 StreamBufferSize{ get; set; };
+
+        ///<summary>Additional options to use when creating the ffmpeg AVFormatContext.</summary>
+        Windows.Foundation.Collections.PropertySet FFmpegOptions{ get; set; };
+
+
+        ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
+        ///<remarks>A value of 0 is recommended for local files, to avoid framework bugs and unneccessary memory consumption.</remarks>
+        Windows.Foundation.TimeSpan DefaultBufferTime{ get; set; };
+
+        ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for URI sources.</summary>
+        ///<remarks>Default is 5 seconds. You might want to use higher values, especially for DASH stream sources.</remarks>
+        Windows.Foundation.TimeSpan DefaultBufferTimeUri{ get; set; };
+
+
+        ///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>
+        Boolean AutoSelectForcedSubtitles{ get; set; };
+
+        ///<summary>Use SubtitleRegion and SubtitleStyle from config class, even if custom styles are defined for a subtitle.</summary>
+        Boolean OverrideSubtitleStyles{ get; set; };
+
+        ///<summary>Default region to use for subtitles.</summary>
+        Windows.Media.Core.TimedTextRegion SubtitleRegion{ get; set; };
+
+        ///<summary>Default style to use for subtitles.</summary>
+        Windows.Media.Core.TimedTextStyle SubtitleStyle{ get; set; };
+
+        ///<summary>Enable conversion of ANSI encoded subtitles to UTF-8.</summary>
+        Boolean AutoCorrectAnsiSubtitles{ get; set; };
+
+        ///<summary>The character encoding used to decode ANSI encoded subtitles. By default, the active windows codepage is used.</summary>
+        CharacterEncoding AnsiSubtitleEncoding{ get; set; };
+
+        ///<summary>The subtitle delay will be initially applied to all subtitle tracks.
+        ///Use SetSubtitleDelay() on the FFmpegMediaSource instance if you want to change the delay during playback.</summary>
+        Windows.Foundation.TimeSpan DefaultSubtitleDelay{ get; set; };
+
+        /// <summary>FFmpegMediaSource will seek to the closest video keyframe, if set to true.</summary>
+        /// <remarks>
+        /// For FastSeek to work, you must use the MediaPlayer for playback, and assign
+        /// MediaPlayer.PlaybackSession to the FFmpegMediaSource.PlaybackSession .
+        /// </remarks>
+        Boolean FastSeek{ get; set; };
+
+        ///<summary>Ensure that audio plays without artifacts after fast seeking.</summary>
+        ///<remarks>This will slightly reduce the speed of fast seeking. Enabled by default.</remarks>
+        Boolean FastSeekCleanAudio{ get; set; };
+
+        ///<summary>Try to improve stream switching times when FastSeek is enabled.</summary>
+        Boolean FastSeekSmartStreamSwitching{ get; set; };
+
+        ///<summary>The default name to use for audio streams.</summary>
+        String DefaultAudioStreamName{ get; set; };
+
+        ///<summary>The default name to use for subtitle streams.</summary>
+        String DefaultSubtitleStreamName{ get; set; };
+
+        ///<summary>The default name to use for external subtitle streams.</summary>
+        String DefaultExternalSubtitleStreamName{ get; set; };
+
+        ///<summary>Use subtitle font files that are embedded in the media file.</summary>
+        Boolean UseEmbeddedSubtitleFonts{ get; set; };
+
+        ///<summary>The folder where attachments such as fonts are stored (inside the app's temp folder).</summary>
+        String AttachmentCacheFolderName{ get; set; };
+
+        ///<summary>The minimum amount of time a subtitle should be shown. Default is 0.</summary>
+        Windows.Foundation.TimeSpan MinimumSubtitleDuration{ get; set; };
+
+        ///<summary>Each subtitle's duration is extended by this amount. Default is 0.</summary>
+        Windows.Foundation.TimeSpan AdditionalSubtitleDuration{ get; set; };
+
+        ///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
+        Boolean PreventModifiedSubtitleDurationOverlap{ get; set; };
+
+
+        ///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
+        ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+        String FFmpegVideoFilters{ get; set; };
+
+        ///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegMediaSource.SetFFmpegAudioFilters().</summary>
+        String FFmpegAudioFilters{ get; set; };
+
+        ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
+        Boolean DownmixAudioStreamsToStereo{ get; set; };
+    }
+
+    [default_interface]
+    runtimeclass ReferenceCue : Windows.Media.Core.IMediaCue
+    {
+        ReferenceCue(Windows.Media.Core.IMediaCue other);
+    }
+
+    [default_interface]
+    [bindable]
+    runtimeclass VideoEffectConfiguration
+    {
+        VideoEffectConfiguration();
+
+        ///<summary>Adjusts the brightness of the image. Default value is 0, recommended range -1 to 1.</summary>
+        Single Brightness{get; set; };
+
+        ///<summary>Adjusts the contrast of the image. Default value is 0, recommended range -1 to 1.</summary>
+        Single Contrast{ get; set; };
+
+        ///<summary>Adjusts the saturation of the image. Default value is 0, recommended range -1 to 1.</summary>
+        Single Saturation{ get; set; };
+
+        ///<summary>Adjusts the color temperature of the image. Default value is 0, allowed range -1 to 1.</summary>
+        Single Temperature{ get; set; };
+
+        ///<summary>Adjusts the tint of the image. Default value is 0, allowed range -1 to 1.</summary>
+        Single Tint{ get; set; };
+
+        ///<summary>Adjusts the sharpness of the image. Default value is 0, allowed range 0 to 10.</summary>
+        Single Sharpness{ get; set; };
+
+        ///<summary>Adjusts which areas are sharpened. Default value is 0, allowed range 0 to 10.</summary>
+        Single SharpnessThreshold{ get; set; };
+
+        [default_overload]
+        void AddVideoEffect(Windows.Media.Playback.MediaPlayer player);
+
+        [default_overload]
+        void AddVideoEffect(Windows.Media.Playback.MediaPlayer player, Boolean isOptional);
+
+        void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player);
+
+        void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player, Boolean isOptional);
+    }
+}

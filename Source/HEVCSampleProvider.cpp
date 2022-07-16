@@ -22,12 +22,12 @@
 using namespace FFmpegInteropX;
 
 HEVCSampleProvider::HEVCSampleProvider(
-    FFmpegReader^ reader,
+    std::shared_ptr<FFmpegReader> reader,
     AVFormatContext* avFormatCtx,
     AVCodecContext* avCodecCtx,
-    MediaSourceConfig^ config,
+    MediaSourceConfig const& config,
     int streamIndex,
-    VideoEncodingProperties^ encodingProperties,
+    VideoEncodingProperties encodingProperties,
     HardwareDecoderStatus hardwareDecoderStatus)
     : H264AVCSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareDecoderStatus)
 {
@@ -37,11 +37,9 @@ HEVCSampleProvider::~HEVCSampleProvider()
 {
 }
 
-HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length)
+HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length)
 {
     HRESULT hr = S_OK;
-    int spsLength = 0;
-    int ppsLength = 0;
 
     // Get the position of the SPS
     if (buf == nullptr || length < 4)
@@ -61,7 +59,7 @@ HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf
 
             /* Decode nal units from hvcC. */
             for (i = 0; i < num_arrays; i++) {
-                int type = buf[pos++] & 0x3f;
+                //int type = buf[pos++] & 0x3f;
                 int cnt = ReadMultiByteValue(buf, pos, 2);
                 pos += 2;
 
@@ -74,13 +72,14 @@ HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf
                     }
 
                     // Write the NAL unit to the stream
-                    dataWriter->WriteByte(0);
-                    dataWriter->WriteByte(0);
-                    dataWriter->WriteByte(0);
-                    dataWriter->WriteByte(1);
+                    dataWriter.WriteByte(0);
+                    dataWriter.WriteByte(0);
+                    dataWriter.WriteByte(0);
+                    dataWriter.WriteByte(1);
 
-                    auto data = Platform::ArrayReference<uint8_t>(buf + pos, nalsize);
-                    dataWriter->WriteBytes(data);
+                    auto bufferStart = buf + pos;
+                    auto buffer = winrt::array_view(bufferStart, nalsize);
+                    dataWriter.WriteBytes(buffer);
 
                     pos += nalsize;
                 }
@@ -89,8 +88,8 @@ HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf
         else
         {
             /* The stream and extradata contains raw NAL packets. No decoding needed. */
-            auto extra = Platform::ArrayReference<uint8_t>(buf, length);
-            dataWriter->WriteBytes(extra);
+            auto extra = winrt::array_view(buf, length);
+            dataWriter.WriteBytes(extra);
         }
     }
 

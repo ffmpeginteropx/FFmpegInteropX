@@ -21,21 +21,20 @@
 
 namespace FFmpegInteropX
 {
-    ref class HEVCSampleProvider :
+    class HEVCSampleProvider :
         public H264AVCSampleProvider
     {
     public:
         virtual ~HEVCSampleProvider();
 
-    internal:
         HEVCSampleProvider(
-            FFmpegReader^ reader,
+            std::shared_ptr<FFmpegReader> reader,
             AVFormatContext* avFormatCtx,
             AVCodecContext* avCodecCtx,
-            MediaSourceConfig^ config,
+            MediaSourceConfig const& config,
             int streamIndex,
-            VideoEncodingProperties^ encodingProperties,
+            VideoEncodingProperties encodingProperties,
             HardwareDecoderStatus hardwareDecoderStatus);
-        virtual HRESULT GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length) override;
+        virtual HRESULT GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length) override;
     };
 }

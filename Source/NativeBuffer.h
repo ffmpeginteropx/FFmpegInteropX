@@ -1,19 +1,15 @@
 #pragma once
 
-#include <wrl.h>
-#include <wrl/implements.h>
-#include <windows.storage.streams.h>
-#include <robuffer.h>
-#include <vector>
-
 namespace NativeBuffer
 {
-    class NativeBuffer :
-        public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<Microsoft::WRL::RuntimeClassType::WinRtClassicComMix>,
-        ABI::Windows::Storage::Streams::IBuffer,
-        Windows::Storage::Streams::IBufferByteAccess>
+    struct __declspec(uuid("905a0fef-bc53-11df-8c49-001e4fc686da")) IBufferByteAccess : ::IUnknown
     {
-        InspectableClass(L"NativeBuffer.NativeBuffer", BaseTrust)
+        virtual HRESULT __stdcall Buffer(uint8_t** value) = 0;
+    };
+
+    struct NativeBuffer : winrt::implements<NativeBuffer, winrt::Windows::Storage::Streams::IBuffer, IBufferByteAccess>
+    {
+        //InspectableClass("NativeBuffer.NativeBuffer", BaseTrust)
 
     public:
         virtual ~NativeBuffer()
@@ -26,7 +22,7 @@ namespace NativeBuffer
         }
 
 
-        STDMETHODIMP RuntimeClassInitialize(byte* buffer, UINT32 totalSize)
+        NativeBuffer(byte* buffer, UINT32 totalSize)
         {
             m_length = totalSize;
             m_buffer = buffer;
@@ -34,10 +30,10 @@ namespace NativeBuffer
             m_opaque = NULL;
             m_pObject = nullptr;
 
-            return S_OK;
+            //return S_OK;
         }
 
-        STDMETHODIMP RuntimeClassInitialize(byte* buffer, UINT32 totalSize, void(*free)(void* opaque), void* opaque)
+        NativeBuffer(byte* buffer, UINT32 totalSize, void(*free)(void* opaque), void* opaque)
         {
             m_length = totalSize;
             m_buffer = buffer;
@@ -45,10 +41,10 @@ namespace NativeBuffer
             m_opaque = opaque;
             m_pObject = nullptr;
 
-            return S_OK;
+            //return S_OK;
         }
 
-        STDMETHODIMP RuntimeClassInitialize(byte* buffer, UINT32 totalSize, Platform::Object^ pObject)
+        NativeBuffer(byte* buffer, UINT32 totalSize, winrt::Windows::Foundation::IInspectable pObject)
         {
             m_length = totalSize;
             m_buffer = buffer;
@@ -56,41 +52,25 @@ namespace NativeBuffer
             m_opaque = NULL;
             m_pObject = pObject;
 
-            return S_OK;
+            //return S_OK;
         }
 
-        STDMETHODIMP Buffer(byte** value)
+        HRESULT __stdcall Buffer(uint8_t** value) final
         {
             *value = m_buffer;
-
             return S_OK;
         }
 
-        STDMETHODIMP get_Capacity(UINT32* value)
-        {
-            *value = m_length;
-
-            return S_OK;
-        }
-
-        STDMETHODIMP get_Length(UINT32* value)
-        {
-            *value = m_length;
-
-            return S_OK;
-        }
-
-        STDMETHODIMP put_Length(UINT32 value)
-        {
-            return E_FAIL;
-        }
+        uint32_t Capacity() const { return m_length; }
+        uint32_t Length() const { return m_length; }
+        void Length(uint32_t length) { m_length = length; }
 
 
     private:
-        UINT32 m_length;
-        byte* m_buffer;
+        UINT32 m_length = 0;
+        byte* m_buffer = NULL;
         void(*m_free)(void* opaque);
         void* m_opaque;
-        Platform::Object^ m_pObject;
+        winrt::Windows::Foundation::IInspectable m_pObject = { nullptr };
     };
 }

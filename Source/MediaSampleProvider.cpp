@@ -22,15 +22,20 @@
 #include "FFmpegReader.h"
 #include "LanguageTagConverter.h"
 #include "AvCodecContextHelpers.h"
+#include "Mfapi.h"
 
 using namespace FFmpegInteropX;
-using namespace Windows::Media::MediaProperties;
+using namespace winrt::Windows::Media::MediaProperties;
+using namespace winrt::Windows::Globalization;
+using namespace winrt::Windows::Media::Core;
+using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
+using namespace winrt::Windows::Storage::Streams;
 
 MediaSampleProvider::MediaSampleProvider(
-    FFmpegReader^ reader,
+    std::shared_ptr<FFmpegReader> reader,
     AVFormatContext* avFormatCtx,
     AVCodecContext* avCodecCtx,
-    MediaSourceConfig^ config,
+    winrt::FFmpegInteropX::MediaSourceConfig const& config,
     int streamIndex,
     HardwareDecoderStatus hardwareDecoderStatus)
     : m_pReader(reader)
@@ -62,8 +67,9 @@ MediaSampleProvider::~MediaSampleProvider()
 {
     DebugMessage(L"~MediaSampleProvider\n");
 
-    avcodec_close(m_pAvCodecCtx);
     avcodec_free_context(&m_pAvCodecCtx);
+
+    Flush();
 
     SAFE_RELEASE(device);
     SAFE_RELEASE(deviceContext);
@@ -93,60 +99,60 @@ void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
     if (language)
     {
         Language = StringUtils::Utf8ToPlatformString(language->value);
-        if (Language->Length() == 3)
+        if (Language.size() == 3)
         {
-            auto entry = LanguageTagConverter::TryGetLanguage(Language);
+            auto entry = FFmpegInteropX::LanguageTagConverter::TryGetLanguage(Language);
             if (entry != nullptr)
             {
                 try
                 {
-                    auto winLanguage = ref new Windows::Globalization::Language(entry->TwoLetterCode);
-                    Language = winLanguage->DisplayName;
+                    auto winLanguage = winrt::Windows::Globalization::Language(entry->TwoLetterCode());
+                    Language = winLanguage.DisplayName();
                 }
                 catch (...)
                 {
-                    Language = entry->EnglishName;
+                    Language = entry->EnglishName();
                 }
             }
         }
-        else if (Language->Length() == 2)
+        else if (Language.size() == 2)
         {
             try
             {
-                auto winLanguage = ref new Windows::Globalization::Language(Language);
-                Language = winLanguage->DisplayName;
+                auto winLanguage = winrt::Windows::Globalization::Language(Language);
+                Language = winLanguage.DisplayName();
             }
             catch (...)
             {
             }
         }
 
-        if (!Name)
+        if (Name.empty())
         {
             Name = Language;
         }
     }
 
-    if (!Name && (m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO || m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE))
+    if (Name.empty() && (m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO || m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE))
     {
         int count = 0;
         int number = 0;
-        for (unsigned int i = 0; i < m_pAvFormatCtx->nb_streams; i++)
+        for (int i = 0; i < (int)m_pAvFormatCtx->nb_streams; i++)
         {
             if (m_pAvFormatCtx->streams[i]->codecpar->codec_type == m_pAvStream->codecpar->codec_type)
             {
                 count++;
-                if (i == StreamIndex)
+                if (i == StreamIndex())
                 {
                     number = count;
                 }
             }
         }
 
-        String^ name = m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ? m_config->DefaultAudioStreamName : m_config->DefaultSubtitleStreamName;
+        winrt::hstring name = m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ? m_config.DefaultAudioStreamName() : m_config.DefaultSubtitleStreamName();
         if (count > 1)
         {
-            name = name + " " + number.ToString();
+            name = name + L" " + to_wstring(number);
         }
         Name = name;
     }
@@ -167,61 +173,52 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
         auto channels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
         auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
 
-        String^ channelLayout = "";
+        winrt::hstring channelLayout = L"";
         char* channelLayoutName = new char[256];
         if (channelLayoutName)
         {
             auto layout = m_pAvCodecCtx->channel_layout ? m_pAvCodecCtx->channel_layout : AvCodecContextHelpers::GetDefaultChannelLayout(channels);
             av_get_channel_layout_string(channelLayoutName, 256, channels, layout);
             channelLayout = StringUtils::Utf8ToPlatformString(channelLayoutName);
-            delete channelLayoutName;
+            delete[] channelLayoutName;
         }
 
-        streamInfo = ref new AudioStreamInfo(
+        streamInfo = AudioStreamInfo(
             Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
-            channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder);
+            channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder());
 
         break;
     }
     case AVMEDIA_TYPE_VIDEO:
     {
-        auto streamDescriptor = dynamic_cast<VideoStreamDescriptor^>(StreamDescriptor);
-        auto pixelAspect = (double)streamDescriptor->EncodingProperties->PixelAspectRatio->Numerator / streamDescriptor->EncodingProperties->PixelAspectRatio->Denominator;
+        auto streamDescriptor = StreamDescriptor().as<VideoStreamDescriptor>();
+        auto pixelAspect = (double)streamDescriptor.EncodingProperties().PixelAspectRatio().Numerator() / streamDescriptor.EncodingProperties().PixelAspectRatio().Denominator();
         auto videoAspect = ((double)m_pAvCodecCtx->width / m_pAvCodecCtx->height) / pixelAspect;
         auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
         auto framesPerSecond = m_pAvStream->avg_frame_rate.num > 0 && m_pAvStream->avg_frame_rate.den > 0 ? av_q2d(m_pAvStream->avg_frame_rate) : 0.0;
 
-        streamInfo = ref new VideoStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
+        streamInfo = VideoStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
             m_pAvStream->codecpar->width, m_pAvStream->codecpar->height, videoAspect,
-            bitsPerSample, framesPerSecond, HardwareAccelerationStatus, Decoder);
-
-        break;
-    }
-    case AVMEDIA_TYPE_SUBTITLE:
-    {
-        auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
-
-        streamInfo = ref new SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
-            false, forced, ((SubtitleProvider^)this)->SubtitleTrack, m_config->IsExternalSubtitleParser);
+            bitsPerSample, framesPerSecond, HardwareAccelerationStatus(), Decoder());
 
         break;
     }
     }
 }
 
-MediaStreamSample^ MediaSampleProvider::GetNextSample()
+MediaStreamSample MediaSampleProvider::GetNextSample()
 {
     DebugMessage(L"GetNextSample\n");
 
     HRESULT hr = S_OK;
 
-    MediaStreamSample^ sample;
+    MediaStreamSample sample = { nullptr };
     if (m_isEnabled)
     {
-        IBuffer^ buffer = nullptr;
+        IBuffer buffer = nullptr;
         LONGLONG pts = 0;
         LONGLONG dur = 0;
-        IDirect3DSurface^ surface;
+        IDirect3DSurface surface;
         hr = CreateNextSampleBuffer(&buffer, pts, dur, &surface);
 
         if (hr == S_OK)
@@ -237,8 +234,8 @@ MediaStreamSample^ MediaSampleProvider::GetNextSample()
             {
                 sample = MediaStreamSample::CreateFromBuffer(buffer, position);
             }
-            sample->Duration = duration;
-            sample->Discontinuous = m_isDiscontinuous;
+            sample.Duration(duration);
+            sample.Discontinuous(m_isDiscontinuous);
 
             LastSampleTimestamp = position;
 
@@ -340,7 +337,7 @@ HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpa
     return hr;
 }
 
-HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan timestamp)
+HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan const& timestamp)
 {
     HRESULT hr = S_OK;
     bool foundPacket = false;
@@ -452,31 +449,35 @@ void MediaSampleProvider::DisableStream()
     m_pAvStream->discard = AVDISCARD_ALL;
 }
 
-void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoProperties, bool isCompressedFormat)
+void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperties const& videoProperties, bool isCompressedFormat)
 {
     if (isCompressedFormat)
     {
-        videoProperties->Width = m_pAvCodecCtx->width;
-        videoProperties->Height = m_pAvCodecCtx->height;
-        videoProperties->ProfileId = m_pAvCodecCtx->profile;
+        videoProperties.Width(m_pAvCodecCtx->width);
+        videoProperties.Height(m_pAvCodecCtx->height);
+        videoProperties.ProfileId(m_pAvCodecCtx->profile);
+        if (m_pAvCodecCtx->bit_rate > 0)
+        {
+            videoProperties.Bitrate((unsigned int)m_pAvCodecCtx->bit_rate);
+        }
     }
 
     if (m_pAvCodecCtx->sample_aspect_ratio.num > 0 &&
         m_pAvCodecCtx->sample_aspect_ratio.den > 0 &&
         m_pAvCodecCtx->sample_aspect_ratio.num != m_pAvCodecCtx->sample_aspect_ratio.den)
     {
-        videoProperties->PixelAspectRatio->Numerator = m_pAvCodecCtx->sample_aspect_ratio.num;
-        videoProperties->PixelAspectRatio->Denominator = m_pAvCodecCtx->sample_aspect_ratio.den;
+        videoProperties.PixelAspectRatio().Numerator(m_pAvCodecCtx->sample_aspect_ratio.num);
+        videoProperties.PixelAspectRatio().Denominator(m_pAvCodecCtx->sample_aspect_ratio.den);
     }
     else
     {
-        videoProperties->PixelAspectRatio->Numerator = 1;
-        videoProperties->PixelAspectRatio->Denominator = 1;
+        videoProperties.PixelAspectRatio().Numerator(1);
+        videoProperties.PixelAspectRatio().Denominator(1);
     }
 
     // set video rotation
     bool rotateVideo = false;
-    int rotationAngle;
+    int rotationAngle = 0;
     AVDictionaryEntry* rotate_tag = av_dict_get(m_pAvStream->metadata, "rotate", NULL, 0);
     if (rotate_tag != NULL)
     {
@@ -489,30 +490,26 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
     }
     if (rotateVideo)
     {
-        Platform::Guid MF_MT_VIDEO_ROTATION(0xC380465D, 0x2271, 0x428C, 0x9B, 0x83, 0xEC, 0xEA, 0x3B, 0x4A, 0x85, 0xC1);
-        videoProperties->Properties->Insert(MF_MT_VIDEO_ROTATION, (uint32)rotationAngle);
+        videoProperties.Properties().Insert(MF_MT_VIDEO_ROTATION, winrt::box_value((UINT32)rotationAngle));
     }
 
     // Detect the correct framerate
     if (m_pAvCodecCtx->framerate.num != 0 || m_pAvCodecCtx->framerate.den != 1)
     {
-        videoProperties->FrameRate->Numerator = m_pAvCodecCtx->framerate.num;
-        videoProperties->FrameRate->Denominator = m_pAvCodecCtx->framerate.den;
+        videoProperties.FrameRate().Numerator(m_pAvCodecCtx->framerate.num);
+        videoProperties.FrameRate().Denominator(m_pAvCodecCtx->framerate.den);
     }
     else if (m_pAvStream->avg_frame_rate.num != 0 || m_pAvStream->avg_frame_rate.den != 0)
     {
-        videoProperties->FrameRate->Numerator = m_pAvStream->avg_frame_rate.num;
-        videoProperties->FrameRate->Denominator = m_pAvStream->avg_frame_rate.den;
+        videoProperties.FrameRate().Numerator(m_pAvStream->avg_frame_rate.num);
+        videoProperties.FrameRate().Denominator(m_pAvStream->avg_frame_rate.den);
     }
-
-    videoProperties->Bitrate = (unsigned int)m_pAvCodecCtx->bit_rate;
 }
 
 void MediaSampleProvider::Detach()
 {
     Flush();
     m_pReader = nullptr;
-    avcodec_close(m_pAvCodecCtx);
     avcodec_free_context(&m_pAvCodecCtx);
 }
 

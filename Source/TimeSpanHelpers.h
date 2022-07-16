@@ -1,75 +1,15 @@
 #pragma once
 
-using namespace Windows::Foundation;
+using namespace winrt::Windows::Foundation;
 
-inline bool operator<(const TimeSpan& span, const TimeSpan& other)
+inline winrt::Windows::Foundation::TimeSpan operator*(const winrt::Windows::Foundation::TimeSpan& span, const double factor)
 {
-    return span.Duration < other.Duration;
-}
-inline bool operator<=(const TimeSpan& span, const TimeSpan& other)
-{
-    return span.Duration <= other.Duration;
-}
-inline bool operator>(const TimeSpan& span, const TimeSpan& other)
-{
-    return span.Duration > other.Duration;
-}
-inline bool operator>=(const TimeSpan& span, const TimeSpan& other)
-{
-    return span.Duration >= other.Duration;
-}
-inline bool operator==(const TimeSpan& span, const TimeSpan& other)
-{
-    return span.Duration == other.Duration;
-}
-inline bool operator!=(const TimeSpan& span, const TimeSpan& other)
-{
-    return span.Duration != other.Duration;
+    auto mult = (long long)(span.count() * factor);
+    return TimeSpan{ mult };
 }
 
-inline TimeSpan operator+(const TimeSpan& span, const TimeSpan& other)
+inline winrt::Windows::Foundation::TimeSpan operator/(const winrt::Windows::Foundation::TimeSpan& span, const double factor)
 {
-    TimeSpan result;
-    result.Duration = span.Duration + other.Duration;
-    return result;
-}
-
-inline TimeSpan operator-(const TimeSpan& span, const TimeSpan& other)
-{
-    TimeSpan result;
-    result.Duration = span.Duration - other.Duration;
-    return result;
-}
-
-inline TimeSpan& operator+=(TimeSpan& span, const TimeSpan& other)
-{
-    span.Duration += other.Duration;
-    return span;
-}
-
-inline TimeSpan& operator-=(TimeSpan& span, const TimeSpan& other)
-{
-    span.Duration -= other.Duration;
-    return span;
-}
-
-inline TimeSpan operator*(const TimeSpan& span, const double factor)
-{
-    TimeSpan result;
-    result.Duration = (long long)(span.Duration * factor);
-    return result;
-}
-
-inline TimeSpan operator/(const TimeSpan& span, const double factor)
-{
-    TimeSpan result;
-    result.Duration = (long long)(span.Duration / factor);
-    return result;
-}
-
-inline TimeSpan ToTimeSpan(long long ticks)
-{
-    TimeSpan result;
-    result.Duration = ticks;
-    return result;
+    auto mult = (long long)(span.count() / factor);
+    return TimeSpan{ mult };
 }

@@ -21,28 +21,27 @@
 
 namespace FFmpegInteropX
 {
-    ref class NALPacketSampleProvider :
+    class NALPacketSampleProvider :
         public CompressedSampleProvider
     {
     public:
         virtual ~NALPacketSampleProvider();
         virtual void Flush() override;
 
-    internal:
         NALPacketSampleProvider(
-            FFmpegReader^ reader,
+            std::shared_ptr<FFmpegReader> reader,
             AVFormatContext* avFormatCtx,
             AVCodecContext* avCodecCtx,
-            MediaSourceConfig^ config,
+            MediaSourceConfig const& config,
             int streamIndex,
-            VideoEncodingProperties^ encodingProperties,
+            VideoEncodingProperties const& encodingProperties,
             HardwareDecoderStatus hardwareDecoderStatus);
-        virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer) override;
-        virtual HRESULT GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length);
-        virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer^* pBuffer);
-        virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter^ dataWriter);
+        virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer* pBuffer) override;
+        virtual HRESULT GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length);
+        virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer* pBuffer);
+        virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter const& dataWriter);
 
     private:
-        bool m_bHasSentExtradata;
+        bool m_bHasSentExtradata = false;
     };
 }

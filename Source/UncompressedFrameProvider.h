@@ -10,19 +10,18 @@ extern "C"
 
 namespace FFmpegInteropX
 {
-    using namespace Windows::Foundation::Collections;
+    using namespace winrt::Windows::Foundation::Collections;
 
-    ref class UncompressedFrameProvider sealed
+    class UncompressedFrameProvider sealed
     {
-        IAvEffect^ filter;
-        AVFormatContext* m_pAvFormatCtx;
-        AVCodecContext* m_pAvCodecCtx;
-        AbstractEffectFactory^ m_effectFactory;
-        String^ pendingEffects;
+        std::shared_ptr<IAvEffect> filter;
+        AVFormatContext* m_pAvFormatCtx = NULL;
+        AVCodecContext* m_pAvCodecCtx = NULL;
+        std::shared_ptr<AbstractEffectFactory> m_effectFactory;
+        winrt::hstring pendingEffects{};
 
-    internal:
-
-        UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, AbstractEffectFactory^ p_effectFactory)
+    public:
+        UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, std::shared_ptr<AbstractEffectFactory> p_effectFactory)
         {
             m_pAvCodecCtx = p_pAvCodecCtx;
             m_pAvFormatCtx = p_pAvFormatCtx;
@@ -34,22 +33,22 @@ namespace FFmpegInteropX
             m_pAvCodecCtx = avCodecCtx;
         }
 
-        void UpdateFilter(String^ effects)
+        void UpdateFilter(winrt::hstring effects)
         {
-            if (effects)
+            if (!effects.empty())
             {
                 pendingEffects = effects;
             }
             else
             {
-                pendingEffects = nullptr;
+                pendingEffects.clear();
                 filter = nullptr;
             }
         }
 
         void DisableFilter()
         {
-            pendingEffects = nullptr;
+            pendingEffects.clear();
             filter = nullptr;
         }
 
@@ -57,9 +56,9 @@ namespace FFmpegInteropX
         {
             HRESULT hr = S_OK;
 
-            if (pendingEffects)
+            if (!pendingEffects.empty())
             {
-                if (pendingEffects->Length() > 0)
+                if (pendingEffects.size() > 0)
                 {
                     filter = m_effectFactory->CreateEffect(pendingEffects);
                 }
@@ -68,7 +67,7 @@ namespace FFmpegInteropX
                     filter = nullptr;
                 }
 
-                pendingEffects = nullptr;
+                pendingEffects.clear();
             }
 
             if (filter)

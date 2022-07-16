@@ -17,108 +17,122 @@
 //*****************************************************************************
 
 #pragma once
-#include "MediaSourceConfig.h"
-#include "TimeSpanHelpers.h"
-#include "Enumerations.h"
-#include "StreamInfo.h"
+#include "pch.h"
 
 namespace FFmpegInteropX
 {
-    using namespace Windows::Storage::Streams;
-    using namespace Windows::Media::Core;
-    using namespace Windows::Media::MediaProperties;
-    using namespace Windows::Graphics::DirectX::Direct3D11;
+    using namespace winrt::Windows::Storage::Streams;
+    using namespace winrt::Windows::Media::MediaProperties;
+    using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
+    using namespace std;
 
-    ref class FFmpegReader;
+    using namespace winrt::FFmpegInteropX;
 
-    ref class MediaSampleProvider abstract
+    class FFmpegReader;
+
+    class MediaSampleProvider
     {
     public:
         virtual ~MediaSampleProvider();
-        virtual MediaStreamSample^ GetNextSample();
+        virtual winrt::Windows::Media::Core::MediaStreamSample GetNextSample();
         virtual void Flush();
 
-        property IMediaStreamDescriptor^ StreamDescriptor
+        winrt::Windows::Media::Core::IMediaStreamDescriptor StreamDescriptor()
         {
-            IMediaStreamDescriptor^ get() { return m_streamDescriptor; }
+            return m_streamDescriptor;
         }
 
-        property VideoStreamDescriptor^ VideoDescriptor
+        winrt::Windows::Media::Core::VideoStreamDescriptor VideoDescriptor()
         {
-            VideoStreamDescriptor^ get() { return dynamic_cast<VideoStreamDescriptor^>(m_streamDescriptor); }
+            return m_streamDescriptor.as<winrt::Windows::Media::Core::VideoStreamDescriptor>();
         }
 
-        property AudioStreamDescriptor^ AudioDescriptor
+        winrt::Windows::Media::Core::AudioStreamDescriptor AudioDescriptor()
         {
-            AudioStreamDescriptor^ get() { return dynamic_cast<AudioStreamDescriptor^>(m_streamDescriptor); }
+            return m_streamDescriptor.as<winrt::Windows::Media::Core::AudioStreamDescriptor>();
         }
 
-        property IStreamInfo^ StreamInfo
+        IStreamInfo StreamInfo()
         {
-            IStreamInfo^ get() { return streamInfo; }
+            return streamInfo;
         }
 
-        property AudioStreamInfo^ AudioInfo
+        AudioStreamInfo AudioInfo()
         {
-            AudioStreamInfo^ get() { return dynamic_cast<AudioStreamInfo^>(streamInfo); }
+            return streamInfo.as<AudioStreamInfo>();
         }
 
-        property VideoStreamInfo^ VideoInfo
+        VideoStreamInfo VideoInfo()
         {
-            VideoStreamInfo^ get() { return dynamic_cast<VideoStreamInfo^>(streamInfo); }
+            return streamInfo.as<VideoStreamInfo>();
         }
 
-        property SubtitleStreamInfo^ SubtitleInfo
+        SubtitleStreamInfo SubtitleInfo()
         {
-            SubtitleStreamInfo^ get() { return dynamic_cast<SubtitleStreamInfo^>(streamInfo); }
+            return streamInfo.as<SubtitleStreamInfo>();
         }
 
-        property int StreamIndex
+        int StreamIndex()
         {
-            int get() { return m_streamIndex; }
+            return m_streamIndex;
         }
 
-        property bool IsEnabled
+        bool IsEnabled()
         {
-            bool get() { return m_isEnabled; }
+            return m_isEnabled;
         }
 
-        property HardwareDecoderStatus HardwareAccelerationStatus
+        HardwareDecoderStatus HardwareAccelerationStatus()
         {
-            HardwareDecoderStatus get() { return hardwareDecoderStatus; }
+            return hardwareDecoderStatus;
         }
 
-        property DecoderEngine Decoder
+        DecoderEngine Decoder()
         {
-            DecoderEngine get() { return decoder; }
+            return decoder;
         }
 
-        property bool IsCleanSample;
+        bool IsCleanSample = false;
 
-        property String^ Name;
-        property String^ Language;
-        property String^ CodecName;
-        property TimeSpan LastSampleTimestamp;
+        winrt::hstring Name{};
+        winrt::hstring Language{};
+        winrt::hstring CodecName{};
+        TimeSpan LastSampleTimestamp{};
 
-    internal:
         virtual HRESULT Initialize();
         void InitializeNameLanguageCodec();
         virtual void InitializeStreamInfo();
         virtual void QueuePacket(AVPacket* packet);
         AVPacket* PopPacket();
         HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
-        virtual HRESULT CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface) = 0;
+        virtual HRESULT CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface) = 0;
         HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
-        HRESULT SkipPacketsUntilTimestamp(TimeSpan timestamp);
-        virtual IMediaStreamDescriptor^ CreateStreamDescriptor() = 0;
-        virtual HRESULT SetSampleProperties(MediaStreamSample^ sample) { return S_OK; }; // can be overridded for setting extended properties
+        HRESULT SkipPacketsUntilTimestamp(TimeSpan const& timestamp);
+        virtual winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() = 0;
+        virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample const& sample) { UNREFERENCED_PARAMETER(sample); return S_OK; }; // can be overridded for setting extended properties
         void EnableStream();
         void DisableStream();
-        virtual void SetFilters(String^ filterDefinition) { };// override for setting effects in sample providers
+        virtual void SetFilters(winrt::hstring filterDefinition) { };// override for setting effects in sample providers
         virtual void DisableFilters() {};//override for disabling filters in sample providers;
-        virtual void SetCommonVideoEncodingProperties(VideoEncodingProperties^ videoEncodingProperties, bool isCompressedFormat);
+        virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& videoEncodingProperties, bool isCompressedFormat);
         virtual void Detach();
-        virtual HRESULT SetHardwareDevice(ID3D11Device* device, ID3D11DeviceContext* context, AVBufferRef* avHardwareContext) { return S_OK; };
+        virtual HRESULT SetHardwareDevice(ID3D11Device* newDevice, ID3D11DeviceContext* newDeviceContext, AVBufferRef* avHardwareContext)
+        {
+            UNREFERENCED_PARAMETER(newDevice);
+            UNREFERENCED_PARAMETER(newDeviceContext);
+            UNREFERENCED_PARAMETER(avHardwareContext);
+            return S_OK;
+        };
+
+        void FreeHardwareDevice()
+        {
+            if (m_pAvCodecCtx->hw_device_ctx)
+            {
+                av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
+            }
+            SAFE_RELEASE(device);
+            SAFE_RELEASE(deviceContext);
+        }
 
         virtual void NotifyCreateSource()
         {
@@ -126,10 +140,10 @@ namespace FFmpegInteropX
             {
                 auto streamStartTime = ConvertDuration(m_pAvStream->start_time);
 
-                if (m_pAvFormatCtx->start_time == streamStartTime.Duration / 10)
+                if (m_pAvFormatCtx->start_time == streamStartTime.count() / 10)
                 {
                     // use more precise start time
-                    m_startOffset = streamStartTime.Duration;
+                    m_startOffset = streamStartTime.count();
                 }
                 else
                 {
@@ -145,7 +159,7 @@ namespace FFmpegInteropX
 
         LONGLONG ConvertPosition(TimeSpan position)
         {
-            return LONGLONG((position.Duration + m_startOffset) / timeBaseFactor);
+            return LONGLONG((position.count() + m_startOffset) / timeBaseFactor);
         }
 
         TimeSpan ConvertDuration(LONGLONG duration)
@@ -155,42 +169,42 @@ namespace FFmpegInteropX
 
         LONGLONG ConvertDuration(TimeSpan duration)
         {
-            return LONGLONG(duration.Duration / timeBaseFactor);
+            return LONGLONG(duration.count() / timeBaseFactor);
         }
 
-    protected private:
+    protected:
         MediaSampleProvider(
-            FFmpegReader^ reader,
+            std::shared_ptr<FFmpegReader> reader,
             AVFormatContext* avFormatCtx,
             AVCodecContext* avCodecCtx,
-            MediaSourceConfig^ config,
+            MediaSourceConfig const& config,
             int streamIndex,
             HardwareDecoderStatus hardwareDecoderStatus);
 
     private:
         std::queue<AVPacket*> m_packetQueue;
-        int64 m_nextPacketPts;
-        IMediaStreamDescriptor^ m_streamDescriptor;
+        INT64 m_nextPacketPts = 0;
+        winrt::Windows::Media::Core::IMediaStreamDescriptor m_streamDescriptor = nullptr;
         HardwareDecoderStatus hardwareDecoderStatus;
 
-    internal:
+    protected:
         // The FFmpeg context. Because they are complex types
         // we declare them as internal so they don't get exposed
         // externally
-        MediaSourceConfig^ m_config;
-        FFmpegReader^ m_pReader;
-        AVFormatContext* m_pAvFormatCtx;
-        AVCodecContext* m_pAvCodecCtx;
-        AVStream* m_pAvStream;
-        IStreamInfo^ streamInfo;
+        MediaSourceConfig m_config = nullptr;
+        std::shared_ptr<FFmpegReader> m_pReader;
+        AVFormatContext* m_pAvFormatCtx = NULL;
+        AVCodecContext* m_pAvCodecCtx = NULL;
+        AVStream* m_pAvStream = NULL;
+        IStreamInfo streamInfo = nullptr;
         bool m_isEnabled = false;
-        bool m_isDiscontinuous;
-        int m_streamIndex;
-        int64 m_startOffset;
-        double timeBaseFactor;
-        DecoderEngine decoder;
-        ID3D11Device* device;
-        ID3D11DeviceContext* deviceContext;
+        bool m_isDiscontinuous = false;
+        int m_streamIndex = 0;
+        INT64 m_startOffset = 0;
+        double timeBaseFactor = 0;
+        DecoderEngine decoder = DecoderEngine::FFmpegSoftwareDecoder;
+        ID3D11Device* device = NULL;
+        ID3D11DeviceContext* deviceContext = NULL;
 
     };
 }
