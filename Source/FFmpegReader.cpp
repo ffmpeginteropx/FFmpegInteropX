@@ -142,7 +142,6 @@ HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan
     {
         int64_t seekTarget = stream->ConvertPosition(position);
 
-        TimeSpan videoSkipPts, audioSkipPts;
         if (TrySeekBuffered(position, actualPosition, fastSeek, videoStream, audioStream))
         {
             // all good
@@ -345,20 +344,20 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
 
 bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
 {
-    bool result = true;;
-    int vIndex; int aIndex;
+    bool result = true;
+    int vIndex = 0; int aIndex = 0;
 
     TimeSpan targetPosition = position;
 
     if (videoStream)
     {
         auto pts = videoStream->ConvertPosition(targetPosition);
-        vIndex = videoStream->buffer->TryFindPacketIndex(pts, true);
+        vIndex = videoStream->packetBuffer->TryFindPacketIndex(pts, true);
         result &= vIndex >= 0;
 
         if (result && fastSeek)
         {
-            auto targetPacket = videoStream->buffer->PeekPacketIndex(vIndex);
+            auto targetPacket = videoStream->packetBuffer->PeekPacketIndex(vIndex);
             if (targetPacket->pts != AV_NOPTS_VALUE)
             {
                 targetPosition = videoStream->ConvertPosition(targetPacket->pts);
@@ -369,7 +368,7 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
     if (result && audioStream)
     {
         auto pts = audioStream->ConvertPosition(targetPosition);
-        aIndex = audioStream->buffer->TryFindPacketIndex(pts, false);
+        aIndex = audioStream->packetBuffer->TryFindPacketIndex(pts, false);
         result &= aIndex >= 0;
     }
 
@@ -380,7 +379,7 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
 
         if (videoStream)
         {
-            videoStream->buffer->DropPackets(vIndex);
+            videoStream->packetBuffer->DropPackets(vIndex);
         }
 
         if (audioStream)
@@ -388,18 +387,19 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
             if (config.FastSeekCleanAudio() && aIndex > 0)
             {
                 aIndex--;
-                audioStream->buffer->DropPackets(aIndex);
+                audioStream->packetBuffer->DropPackets(aIndex);
 
                 // decode one audio sample to get clean output
                 auto sample = audioStream->GetNextSample();
                 if (sample)
                 {
-                    actualPosition = sample.Timestamp() + sample.Duration();
+                    // TODO check if this is a good idea
+                    //actualPosition = sample.Timestamp() + sample.Duration();
                 }
             }
             else
             {
-                audioStream->buffer->DropPackets(aIndex);
+                audioStream->packetBuffer->DropPackets(aIndex);
             }
         }
 
@@ -442,6 +442,7 @@ void FFmpegReader::ReadDataLoop()
 
 void FFmpegInteropX::FFmpegReader::OnTimer(int value)
 {
+    UNREFERENCED_PARAMETER(value);
     std::lock_guard<std::mutex> lock(mutex);
     if (isEnabled)
     {

@@ -46,7 +46,7 @@ MediaSampleProvider::MediaSampleProvider(
     , m_config(config)
     , m_streamIndex(streamIndex)
     , hardwareDecoderStatus(hardwareDecoderStatus)
-    , buffer(new StreamBuffer(streamIndex, config))
+    , packetBuffer(new StreamBuffer(streamIndex, config))
 {
     DebugMessage(L"MediaSampleProvider\n");
 
@@ -264,9 +264,9 @@ HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG& packet
 {
     HRESULT hr = S_OK;
 
-    if (buffer->ReadUntilNotEmpty(m_pReader))
+    if (packetBuffer->ReadUntilNotEmpty(m_pReader))
     {
-        auto packet = buffer->PopPacket();
+        auto packet = packetBuffer->PopPacket();
 
         *avPacket = packet;
 
@@ -303,10 +303,10 @@ HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpa
 {
     HRESULT hr = S_FALSE;
 
-    if (buffer->ReadUntilNotEmpty(m_pReader))
+    if (packetBuffer->ReadUntilNotEmpty(m_pReader))
     {
         // peek next packet and set pts value
-        auto packet = buffer->PeekPacket();
+        auto packet = packetBuffer->PeekPacket();
         auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
         if (pts != AV_NOPTS_VALUE)
         {
@@ -323,7 +323,7 @@ HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan const& timestamp
 {
     HRESULT hr = S_OK;
 
-    if (!buffer->SkipUntilTimestamp(m_pReader, ConvertPosition(timestamp)))
+    if (!packetBuffer->SkipUntilTimestamp(m_pReader, ConvertPosition(timestamp)))
     {
         hr = S_FALSE;
     }
@@ -337,7 +337,7 @@ void MediaSampleProvider::QueuePacket(AVPacket* packet)
 
     if (m_isEnabled)
     {
-        buffer->QueuePacket(packet);
+        packetBuffer->QueuePacket(packet);
     }
     else
     {
@@ -347,7 +347,7 @@ void MediaSampleProvider::QueuePacket(AVPacket* packet)
 
 bool MediaSampleProvider::IsBufferFull()
 {
-    return buffer->IsFull(this);
+    return packetBuffer->IsFull(this);
 }
 
 void MediaSampleProvider::Flush(bool flushBuffers)
@@ -359,7 +359,7 @@ void MediaSampleProvider::Flush(bool flushBuffers)
     }
     if (flushBuffers)
     {
-        buffer->Flush();
+        packetBuffer->Flush();
     }
     m_isDiscontinuous = true;
     IsCleanSample = false;

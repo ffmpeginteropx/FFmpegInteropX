@@ -188,7 +188,7 @@ namespace FFmpegInteropX
         HardwareDecoderStatus hardwareDecoderStatus;
 
     public:
-        std::shared_ptr<StreamBuffer> buffer;
+        std::shared_ptr<StreamBuffer> packetBuffer;
 
 
     protected:

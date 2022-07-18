@@ -18,9 +18,6 @@
 
 #pragma once
 
-#include <deque>
-#include <ppltasks.h>
-
 #include "FFmpegReader.h"
 #include "MediaSourceConfig.h"
 #include "MediaSampleProvider.h"

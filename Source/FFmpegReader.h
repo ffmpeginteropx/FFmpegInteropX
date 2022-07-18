@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <deque>
-#include <ppltasks.h>
 #include <agents.h>
 
 #include "MediaSourceConfig.h"
@@ -35,6 +33,7 @@ namespace FFmpegInteropX
     {
     public:
         FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders, MediaSourceConfig config);
+        virtual ~FFmpegReader();
 
         int ReadPacket();
         int ReadPacketForStream(StreamBuffer* buffer);
@@ -45,7 +44,6 @@ namespace FFmpegInteropX
 
     private:
 
-        ~FFmpegReader();
         bool TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
         HRESULT SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
         void OnTimer(int value);

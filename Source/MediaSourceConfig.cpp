@@ -105,7 +105,7 @@ namespace winrt::FFmpegInteropX::implementation
         m_AutoCorrectAnsiSubtitles = true;
         AnsiSubtitleEncoding(CharacterEncoding::GetSystemDefault());
 
-        m_FastSeek = false;
+        m_FastSeek = true;
         m_FastSeekCleanAudio = true;
         m_FastSeekSmartStreamSwitching = true;
 
