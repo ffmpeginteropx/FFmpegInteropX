@@ -554,12 +554,12 @@ namespace FFmpegInteropX
 
         ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
         ///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
-        //[deprecated]
+        [deprecated("Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
         Windows.Foundation.TimeSpan DefaultBufferTime{ get; set; };
 
         ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for URI sources.</summary>
         ///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
-        //[deprecated]
+        [deprecated("Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
         Windows.Foundation.TimeSpan DefaultBufferTimeUri{ get; set; };
 
         ///<summary>The maximum number of bytes to buffer ahead per stream.</summary>
