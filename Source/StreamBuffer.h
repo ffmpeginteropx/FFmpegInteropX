@@ -27,19 +27,19 @@
 
 namespace FFmpegInteropX
 {
-    ref class FFmpegReader;
+    class FFmpegReader;
 
-    ref class StreamBuffer
+    class StreamBuffer
     {
-    internal:
-        StreamBuffer(int streamIndex, MediaSourceConfig^ config)
+    public:
+        StreamBuffer(int streamIndex, winrt::FFmpegInteropX::MediaSourceConfig const& config)
             : config(config)
         {
             StreamIndex = streamIndex;
 
         }
 
-        property int StreamIndex;
+        int StreamIndex;
 
         void QueuePacket(AVPacket* packet)
         {
@@ -48,7 +48,7 @@ namespace FFmpegInteropX
             bufferSize += packet->size;
         }
 
-        bool ReadUntilNotEmpty(FFmpegReader^ reader)
+        bool ReadUntilNotEmpty(std::shared_ptr<FFmpegReader> reader)
         {
             while (IsEmpty())
             {
@@ -61,7 +61,7 @@ namespace FFmpegInteropX
             return !IsEmpty();
         }
 
-        bool SkipUntilTimestamp(FFmpegReader^ reader, LONGLONG target)
+        bool SkipUntilTimestamp(std::shared_ptr<FFmpegReader> reader, LONGLONG target)
         {
             bool foundPacket = false;
 
@@ -107,14 +107,14 @@ namespace FFmpegInteropX
             return buffer.empty();
         }
 
-        bool IsFull(MediaSampleProvider^ sampleProvider)
+        bool IsFull(MediaSampleProvider* sampleProvider)
         {
             std::lock_guard<std::mutex> lock(mutex);
-            auto maxSize = config->ReadAheadBufferSize;
-            auto maxDuration = config->ReadAheadBufferDuration;
+            auto maxSize = config.ReadAheadBufferSize();
+            auto maxDuration = config.ReadAheadBufferDuration();
 
             bool full = maxSize >= 0 && (long long)bufferSize > maxSize;
-            if (!full && maxDuration.Duration >= 0 && buffer.size() > 1)
+            if (!full && maxDuration.count() >= 0 && buffer.size() > 1)
             {
                 auto firstPacket = buffer.front();
                 auto lastPacket = buffer.back();
@@ -231,6 +231,6 @@ namespace FFmpegInteropX
         std::deque<AVPacket*> buffer;
         std::mutex mutex;
         size_t bufferSize;
-        MediaSourceConfig^ config;
+        winrt::FFmpegInteropX::MediaSourceConfig config;
     };
 }

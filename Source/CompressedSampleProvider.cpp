@@ -1,19 +1,18 @@
 #include "pch.h"
-
-#include <mfapi.h>
-
 #include "CompressedSampleProvider.h"
 #include "NativeBufferFactory.h"
 
 using namespace FFmpegInteropX;
+using namespace winrt::FFmpegInteropX;
+using namespace winrt::Windows::Media::Core;
 
 CompressedSampleProvider::CompressedSampleProvider(
-    FFmpegReader^ reader,
+    std::shared_ptr<FFmpegReader> reader,
     AVFormatContext* avFormatCtx,
     AVCodecContext* avCodecCtx,
-    MediaSourceConfig^ config,
+    MediaSourceConfig const& config,
     int streamIndex,
-    VideoEncodingProperties^ encodingProperties,
+    winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& encodingProperties,
     HardwareDecoderStatus hardwareDecoderStatus) :
     MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus),
     videoEncodingProperties(encodingProperties)
@@ -22,12 +21,12 @@ CompressedSampleProvider::CompressedSampleProvider(
 }
 
 CompressedSampleProvider::CompressedSampleProvider(
-    FFmpegReader^ reader,
+    std::shared_ptr<FFmpegReader> reader,
     AVFormatContext* avFormatCtx,
     AVCodecContext* avCodecCtx,
-    MediaSourceConfig^ config,
+    MediaSourceConfig const& config,
     int streamIndex,
-    AudioEncodingProperties^ encodingProperties,
+    winrt::Windows::Media::MediaProperties::AudioEncodingProperties const& encodingProperties,
     HardwareDecoderStatus hardwareDecoderStatus) :
     MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus),
     audioEncodingProperties(encodingProperties)
@@ -37,10 +36,10 @@ CompressedSampleProvider::CompressedSampleProvider(
 
 
 CompressedSampleProvider::CompressedSampleProvider(
-    FFmpegReader^ reader,
+    std::shared_ptr<FFmpegReader> reader,
     AVFormatContext* avFormatCtx,
     AVCodecContext* avCodecCtx,
-    MediaSourceConfig^ config,
+    MediaSourceConfig const& config,
     int streamIndex,
     HardwareDecoderStatus hardwareDecoderStatus) :
     MediaSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
@@ -52,8 +51,9 @@ CompressedSampleProvider::~CompressedSampleProvider()
 {
 }
 
-HRESULT CompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface^* surface)
+HRESULT CompressedSampleProvider::CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface)
 {
+    UNREFERENCED_PARAMETER(surface);
     HRESULT hr = S_OK;
 
     AVPacket* avPacket = NULL;
@@ -70,7 +70,7 @@ HRESULT CompressedSampleProvider::CreateNextSampleBuffer(IBuffer^* pBuffer, int6
     return hr;
 }
 
-HRESULT CompressedSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer)
+HRESULT CompressedSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, winrt::Windows::Storage::Streams::IBuffer* pBuffer)
 {
     HRESULT hr = S_OK;
 
@@ -88,33 +88,34 @@ HRESULT CompressedSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBu
     return hr;
 }
 
-IMediaStreamDescriptor^ CompressedSampleProvider::CreateStreamDescriptor()
+IMediaStreamDescriptor CompressedSampleProvider::CreateStreamDescriptor()
 {
-    IMediaStreamDescriptor^ mediaStreamDescriptor;
+    IMediaStreamDescriptor mediaStreamDescriptor;
     if (videoEncodingProperties != nullptr)
     {
         SetCommonVideoEncodingProperties(videoEncodingProperties, true);
-        mediaStreamDescriptor = ref new VideoStreamDescriptor(videoEncodingProperties);
+        mediaStreamDescriptor = VideoStreamDescriptor(videoEncodingProperties);
     }
     else
     {
-        auto audioStreamDescriptor = ref new AudioStreamDescriptor(audioEncodingProperties);
-        if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent("Windows.Media.Core.AudioStreamDescriptor", "TrailingEncoderPadding"))
+        auto audioStreamDescriptor = AudioStreamDescriptor(audioEncodingProperties);
+        if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.AudioStreamDescriptor", L"TrailingEncoderPadding"))
         {
             if (m_pAvStream->codecpar->initial_padding > 0)
             {
-                audioStreamDescriptor->LeadingEncoderPadding = (unsigned int)m_pAvStream->codecpar->initial_padding;
+                audioStreamDescriptor.LeadingEncoderPadding((unsigned int)m_pAvStream->codecpar->initial_padding);
             }
             if (m_pAvStream->codecpar->trailing_padding > 0)
             {
-                audioStreamDescriptor->TrailingEncoderPadding = (unsigned int)m_pAvStream->codecpar->trailing_padding;
+                audioStreamDescriptor.TrailingEncoderPadding((unsigned int)m_pAvStream->codecpar->trailing_padding);
             }
         }
 
         // Set channel layout
         if (m_pAvCodecCtx->channel_layout > 0 && m_pAvCodecCtx->channel_layout < 0x20000000)
         {
-            audioEncodingProperties->Properties->Insert(MF_MT_AUDIO_CHANNEL_MASK, (UINT32)m_pAvCodecCtx->channel_layout);
+
+            audioEncodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value((UINT32)m_pAvCodecCtx->channel_layout));
         }
 
         mediaStreamDescriptor = audioStreamDescriptor;

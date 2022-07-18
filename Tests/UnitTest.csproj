@@ -142,12 +142,6 @@
     <Content Include="TestFiles\silence with album art.mp3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Source\FFmpegInteropX.vcxproj">
-      <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
-      <Name>FFmpegInteropX</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
@@ -157,6 +151,12 @@
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.9</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Source\FFmpegInteropX.vcxproj">
+      <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
+      <Name>FFmpegInteropX</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

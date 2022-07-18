@@ -29,50 +29,49 @@ namespace FFmpegInteropX
 {
     using namespace Concurrency;
 
-    ref class StreamBuffer;
+    class StreamBuffer;
 
-    ref class FFmpegReader
+    class FFmpegReader
     {
-    internal:
-        FFmpegReader(AVFormatContext* avFormatCtx, std::vector<MediaSampleProvider^>* sampleProviders, MediaSourceConfig^ config);
+    public:
+        FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders, MediaSourceConfig config);
 
         int ReadPacket();
-        int ReadPacketForStream(StreamBuffer^ buffer);
+        int ReadPacketForStream(StreamBuffer* buffer);
         void Start();
         void Stop();
         void Flush();
-        HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool allowFastSeek, MediaSampleProvider^ videoStream, MediaSampleProvider^ audioStream);
-
+        HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool allowFastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
 
     private:
 
         ~FFmpegReader();
-        bool TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, MediaSampleProvider^ videoStream, MediaSampleProvider^ audioStream);
-        HRESULT SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, MediaSampleProvider^ videoStream, MediaSampleProvider^ audioStream);
+        bool TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
+        HRESULT SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
         void OnTimer(int value);
         void ReadDataLoop();
         void FlushCodecs();
         bool CheckNeedsSleep(bool wasSleeping);
 
         AVFormatContext* avFormatCtx;
-        std::vector<MediaSampleProvider^>* sampleProviders;
-        MediaSourceConfig^ config;
-        MediaSampleProvider^ lastStream;
-        MediaSampleProvider^ fullStream;
+        std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders{ nullptr };
+        MediaSourceConfig config;
+        std::shared_ptr<MediaSampleProvider> lastStream{ nullptr };
+        std::shared_ptr<MediaSampleProvider> fullStream{ nullptr };
 
         std::mutex mutex;
-        bool isEnabled;
-        bool isSleeping;
-        int forceReadStream;
-        int readResult;
+        bool isEnabled = false;
+        bool isSleeping = false;
+        int forceReadStream = 0;
+        int readResult = 0;
         task<void> readTask;
         task_completion_event<void> waitStreamEvent;
-        call<int>* sleepTimerTarget;
-        timer<int>* sleepTimer;
+        call<int>* sleepTimerTarget = NULL;
+        timer<int>* sleepTimer = NULL;
 
-        bool isFirstSeekAfterStreamSwitch;
-        bool isLastSeekForward;
-        TimeSpan lastSeekStart;
-        TimeSpan lastSeekActual;
+        bool isFirstSeekAfterStreamSwitch = false;
+        bool isLastSeekForward = false;
+        TimeSpan lastSeekStart { 0 };
+        TimeSpan lastSeekActual { 0 };
     };
 }

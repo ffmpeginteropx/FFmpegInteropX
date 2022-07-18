@@ -1,11 +1,12 @@
 #pragma once
+#include "pch.h"
 #include "IAvEffect.h"
 
 namespace FFmpegInteropX {
-    ref class AbstractEffectFactory abstract
+    class AbstractEffectFactory
     {
-    internal:
-        virtual IAvEffect^ CreateEffect(String^ definitions) abstract;
+    public:
+        virtual std::shared_ptr<IAvEffect> CreateEffect(winrt::hstring const& definitions) = 0;
     };
 }
 

@@ -1,27 +1,14 @@
 #pragma once
-
+#include "CodecChecker.g.h"
+#include "pch.h"
 #include "CodecRequiredEventArgs.h"
 
-#include <d3d11.h>
-#include <mutex>
-#include <pplawait.h>
+// Note: Remove this static_assert after copying these generated source files to your project.
+// This assertion exists to avoid compiling these generated source files directly.
+//static_assert(false, "Do not compile generated C++/WinRT source files directly");
 
-extern "C"
+namespace winrt::FFmpegInteropX::implementation
 {
-#include <libavcodec\avcodec.h>
-#include <libavformat\avformat.h>
-}
-
-namespace FFmpegInteropX
-{
-    using namespace Platform;
-    using namespace Platform::Collections;
-    using namespace Windows::Foundation;
-    using namespace Windows::Foundation::Collections;
-    using namespace Windows::Media::Core;
-    using namespace Windows::System;
-    using namespace Concurrency;
-
     enum VideoResolution
     {
         UnknownResolution,
@@ -34,12 +21,12 @@ namespace FFmpegInteropX
         UHD8K_DCI,
     };
 
-    ref class HardwareAccelerationStatus
+    class HardwareAccelerationStatus
     {
-    internal:
-        property bool IsAvailable;
-        property std::vector<std::pair<int, VideoResolution>> SupportedProfiles;
-        property VideoResolution MaxResolution;
+    public:
+        bool IsAvailable = false;
+        std::vector<std::pair<int, VideoResolution>> SupportedProfiles;
+        VideoResolution MaxResolution = VideoResolution::UnknownResolution;
 
         void Reset()
         {
@@ -59,74 +46,29 @@ namespace FFmpegInteropX
         }
     };
 
-
-    ///<summary>This static class handles hardware acceleration detection and status handling.</summary>
-    public ref class CodecChecker sealed
+    struct CodecChecker
     {
-    public:
-
         ///<summary>This event is raised if a codec is required to improve playback experience.</summary>
         ///<remarks>The event is only raised once per codec. It will be raised again after a call to RefreshAsync().</remarks>
-        static event EventHandler<CodecRequiredEventArgs^>^ CodecRequired;
+        static winrt::event_token CodecRequired(winrt::Windows::Foundation::EventHandler<winrt::FFmpegInteropX::CodecRequiredEventArgs> const& handler);
+        static void CodecRequired(winrt::event_token const& token) noexcept;
 
         ///<summary>This will pre-initialize the hardware acceleration status.</summary>
         ///<remarks>This can be called on app startup, but it is not required.</remarks>
-        static IAsyncAction^ InitializeAsync()
-        {
-            return create_async(&Initialize);
-        }
+        static Windows::Foundation::IAsyncAction InitializeAsync();
 
         ///<summary>This will refresh the hardware acceleration status.</summary>
         ///<remarks>Call this after installing a codec or after a change of the active GPU.</remarks>
-        static IAsyncAction^ RefreshAsync()
-        {
-            return create_async(&Refresh);
-        }
+        static Windows::Foundation::IAsyncAction RefreshAsync();
 
-        static IAsyncOperation<bool>^ CheckIsMpeg2VideoExtensionInstalledAsync()
-        {
-            hasCheckedMpeg2Extension = false;
-            return create_async(&CheckIsMpeg2VideoExtensionInstalled);
-        }
+        static Windows::Foundation::IAsyncOperation<bool> CheckIsMpeg2VideoExtensionInstalledAsync();
+        static Windows::Foundation::IAsyncOperation<bool> CheckIsVP9VideoExtensionInstalledAsync();
+        static Windows::Foundation::IAsyncOperation<bool> CheckIsHEVCVideoExtensionInstalledAsync();
+        static Windows::Foundation::IAsyncOperation<bool> OpenMpeg2VideoExtensionStoreEntryAsync();
+        static Windows::Foundation::IAsyncOperation<bool> OpenVP9VideoExtensionStoreEntryAsync();
+        static Windows::Foundation::IAsyncOperation<bool> OpenHEVCVideoExtensionStoreEntryAsync();
 
-        static IAsyncOperation<bool>^ CheckIsVP9VideoExtensionInstalledAsync()
-        {
-            hasCheckedVP9Extension = false;
-            return create_async(&CheckIsVP9VideoExtensionInstalled);
-        }
-
-        static IAsyncOperation<bool>^ CheckIsHEVCVideoExtensionInstalledAsync()
-        {
-            hasCheckedHEVCExtension = false;
-            return create_async(&CheckIsHEVCVideoExtensionInstalled);
-        }
-
-        static IAsyncOperation<bool>^ OpenMpeg2VideoExtensionStoreEntryAsync()
-        {
-            hasCheckedMpeg2Extension = false;
-            return create_async([] { return Launcher::LaunchUriAsync(ref new Uri("ms-windows-store://pdp/?ProductId=9n95q1zzpmh4")); });
-        }
-
-        static IAsyncOperation<bool>^ OpenVP9VideoExtensionStoreEntryAsync()
-        {
-            hasCheckedVP9Extension = false;
-            return create_async([] { return Launcher::LaunchUriAsync(ref new Uri("ms-windows-store://pdp/?ProductId=9n4d0msmp0pt")); });
-        }
-
-        static IAsyncOperation<bool>^ OpenHEVCVideoExtensionStoreEntryAsync()
-        {
-            hasCheckedHEVCExtension = false;
-#ifdef _M_AMD64
-            // open free x64 extension
-            return create_async([] { return Launcher::LaunchUriAsync(ref new Uri("ms-windows-store://pdp/?ProductId=9n4wgh0z6vhq")); });
-#else
-            // open paid extension for all other platforms
-            return create_async([] { return Launcher::LaunchUriAsync(ref new Uri("ms-windows-store://pdp/?ProductId=9nmzlz57r3t7")); });
-#endif // _WIN64
-
-        }
-
-    internal:
+        //internal:
 
         static void Initialize()
         {
@@ -165,25 +107,25 @@ namespace FFmpegInteropX
         static bool CheckIsMpeg2VideoExtensionInstalled()
         {
             return CheckIsVideoExtensionInstalled(
-                "Microsoft.MPEG2VideoExtension_8wekyb3d8bbwe",
+                L"Microsoft.MPEG2VideoExtension_8wekyb3d8bbwe",
                 hasCheckedMpeg2Extension, isMpeg2ExtensionInstalled);
         }
 
         static bool CheckIsVP9VideoExtensionInstalled()
         {
             return CheckIsVideoExtensionInstalled(
-                "Microsoft.VP9VideoExtensions_8wekyb3d8bbwe",
+                L"Microsoft.VP9VideoExtensions_8wekyb3d8bbwe",
                 hasCheckedVP9Extension, isVP9ExtensionInstalled);
         }
 
         static bool CheckIsHEVCVideoExtensionInstalled()
         {
             return CheckIsVideoExtensionInstalled(
-                "Microsoft.HEVCVideoExtension_8wekyb3d8bbwe",
+                L"Microsoft.HEVCVideoExtension_8wekyb3d8bbwe",
                 hasCheckedHEVCExtension, isHEVCExtensionInstalled);
         }
 
-        static bool CheckIsVideoExtensionInstalled(String^ appId, bool& hasCheckedExtension, bool& isExtensionInstalled)
+        static bool CheckIsVideoExtensionInstalled(hstring const& appId, bool& hasCheckedExtension, bool& isExtensionInstalled)
         {
             if (!hasCheckedExtension)
             {
@@ -209,28 +151,30 @@ namespace FFmpegInteropX
             return isExtensionInstalled;
         }
 
-        static void RaiseCodecRequired(CodecRequiredReason reason, String^ codecName, String^ storeEntryName, String^ uri)
+        static void RaiseCodecRequired(CodecRequiredReason reason, hstring const& codecName, hstring const& storeEntryName, hstring const& uri)
         {
-            CodecRequired(nullptr, ref new CodecRequiredEventArgs(reason, codecName, storeEntryName, uri));
+            FFmpegInteropX::CodecRequiredEventArgs args(reason, codecName, storeEntryName, uri);
+            m_codecRequiredEvent(winrt::Windows::Foundation::IInspectable(), args);
         }
 
-        static property HardwareAccelerationStatus^ HardwareAccelerationH264 { HardwareAccelerationStatus^ get() { return hardwareAccelerationH264; } }
-        static property HardwareAccelerationStatus^ HardwareAccelerationHEVC { HardwareAccelerationStatus^ get() { return hardwareAccelerationHEVC; } }
-        static property HardwareAccelerationStatus^ HardwareAccelerationWMV3 { HardwareAccelerationStatus^ get() { return hardwareAccelerationWMV3; } }
-        static property HardwareAccelerationStatus^ HardwareAccelerationVC1 { HardwareAccelerationStatus^ get() { return hardwareAccelerationVC1; } }
-        static property HardwareAccelerationStatus^ HardwareAccelerationVP9 { HardwareAccelerationStatus^ get() { return hardwareAccelerationVP9; } }
-        static property HardwareAccelerationStatus^ HardwareAccelerationVP8 { HardwareAccelerationStatus^ get() { return hardwareAccelerationVP8; } }
-        static property HardwareAccelerationStatus^ HardwareAccelerationMPEG2 { HardwareAccelerationStatus^ get() { return hardwareAccelerationMPEG2; } }
+        static  HardwareAccelerationStatus HardwareAccelerationH264() { return hardwareAccelerationH264; };
+
+        static  HardwareAccelerationStatus HardwareAccelerationHEVC() { return hardwareAccelerationHEVC; }
+        static  HardwareAccelerationStatus HardwareAccelerationWMV3() { return hardwareAccelerationWMV3; }
+        static  HardwareAccelerationStatus HardwareAccelerationVC1() { return hardwareAccelerationVC1; }
+        static  HardwareAccelerationStatus HardwareAccelerationVP9() { return hardwareAccelerationVP9; }
+        static  HardwareAccelerationStatus HardwareAccelerationVP8() { return hardwareAccelerationVP8; }
+        static  HardwareAccelerationStatus HardwareAccelerationMPEG2() { return hardwareAccelerationMPEG2; }
 
         static void PerformCheckHardwareAcceleration()
         {
-            hardwareAccelerationH264->Reset();
-            hardwareAccelerationHEVC->Reset();
-            hardwareAccelerationWMV3->Reset();
-            hardwareAccelerationVC1->Reset();
-            hardwareAccelerationVP8->Reset();
-            hardwareAccelerationVP9->Reset();
-            hardwareAccelerationMPEG2->Reset();
+            hardwareAccelerationH264.Reset();
+            hardwareAccelerationHEVC.Reset();
+            hardwareAccelerationWMV3.Reset();
+            hardwareAccelerationVC1.Reset();
+            hardwareAccelerationVP8.Reset();
+            hardwareAccelerationVP9.Reset();
+            hardwareAccelerationMPEG2.Reset();
 
             ID3D11Device* device = NULL;
             HRESULT hr;
@@ -266,15 +210,15 @@ namespace FFmpegInteropX
                             profile == D3D11_DECODER_PROFILE_H264_VLD_NOFGT ||
                             profile == D3D11_DECODER_PROFILE_H264_VLD_WITHFMOASO_NOFGT)
                         {
-                            if (!hardwareAccelerationH264->IsAvailable)
+                            if (!hardwareAccelerationH264.IsAvailable)
                             {
-                                hardwareAccelerationH264->IsAvailable = true;
-                                hardwareAccelerationH264->MaxResolution = CheckResolution(profile, videoDevice);
-                                hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_BASELINE);
-                                hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_CONSTRAINED_BASELINE);
-                                hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_EXTENDED);
-                                hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_MAIN);
-                                hardwareAccelerationH264->AppendProfile(FF_PROFILE_H264_HIGH);
+                                hardwareAccelerationH264.IsAvailable = true;
+                                hardwareAccelerationH264.MaxResolution = CheckResolution(profile, videoDevice);
+                                hardwareAccelerationH264.AppendProfile(FF_PROFILE_H264_BASELINE);
+                                hardwareAccelerationH264.AppendProfile(FF_PROFILE_H264_CONSTRAINED_BASELINE);
+                                hardwareAccelerationH264.AppendProfile(FF_PROFILE_H264_EXTENDED);
+                                hardwareAccelerationH264.AppendProfile(FF_PROFILE_H264_MAIN);
+                                hardwareAccelerationH264.AppendProfile(FF_PROFILE_H264_HIGH);
                             }
                             continue;
                         }
@@ -282,18 +226,18 @@ namespace FFmpegInteropX
                         if (profile == D3D11_DECODER_PROFILE_HEVC_VLD_MAIN ||
                             profile == D3D11_DECODER_PROFILE_HEVC_VLD_MAIN10)
                         {
-                            hardwareAccelerationHEVC->IsAvailable = true;
+                            hardwareAccelerationHEVC.IsAvailable = true;
 
                             auto resolution = CheckResolution(profile, videoDevice);
-                            hardwareAccelerationHEVC->MaxResolution = max(resolution, hardwareAccelerationHEVC->MaxResolution);
+                            hardwareAccelerationHEVC.MaxResolution = max(resolution, hardwareAccelerationHEVC.MaxResolution);
 
                             if (profile == D3D11_DECODER_PROFILE_HEVC_VLD_MAIN)
                             {
-                                hardwareAccelerationHEVC->AppendProfile(FF_PROFILE_HEVC_MAIN, resolution);
+                                hardwareAccelerationHEVC.AppendProfile(FF_PROFILE_HEVC_MAIN, resolution);
                             }
                             else
                             {
-                                hardwareAccelerationHEVC->AppendProfile(FF_PROFILE_HEVC_MAIN_10, resolution);
+                                hardwareAccelerationHEVC.AppendProfile(FF_PROFILE_HEVC_MAIN_10, resolution);
                             }
                             continue;
                         }
@@ -301,15 +245,15 @@ namespace FFmpegInteropX
                         if (profile == D3D11_DECODER_PROFILE_MPEG2_VLD ||
                             profile == D3D11_DECODER_PROFILE_MPEG2and1_VLD)
                         {
-                            if (!hardwareAccelerationMPEG2->IsAvailable)
+                            if (!hardwareAccelerationMPEG2.IsAvailable)
                             {
-                                hardwareAccelerationMPEG2->IsAvailable = true;
-                                hardwareAccelerationMPEG2->AppendProfile(FF_PROFILE_MPEG2_MAIN);
-                                hardwareAccelerationMPEG2->AppendProfile(FF_PROFILE_MPEG2_SIMPLE);
+                                hardwareAccelerationMPEG2.IsAvailable = true;
+                                hardwareAccelerationMPEG2.AppendProfile(FF_PROFILE_MPEG2_MAIN);
+                                hardwareAccelerationMPEG2.AppendProfile(FF_PROFILE_MPEG2_SIMPLE);
                             }
 
                             auto resolution = CheckResolution(profile, videoDevice);
-                            hardwareAccelerationMPEG2->MaxResolution = max(resolution, hardwareAccelerationMPEG2->MaxResolution);
+                            hardwareAccelerationMPEG2.MaxResolution = max(resolution, hardwareAccelerationMPEG2.MaxResolution);
                             continue;
                         }
 
@@ -318,39 +262,39 @@ namespace FFmpegInteropX
                         {
                             auto resolution = CheckResolution(profile, videoDevice);
 
-                            hardwareAccelerationVC1->IsAvailable = true;
-                            hardwareAccelerationVC1->MaxResolution = max(resolution, hardwareAccelerationVC1->MaxResolution);
+                            hardwareAccelerationVC1.IsAvailable = true;
+                            hardwareAccelerationVC1.MaxResolution = max(resolution, hardwareAccelerationVC1.MaxResolution);
 
-                            hardwareAccelerationWMV3->IsAvailable = true;
-                            hardwareAccelerationWMV3->MaxResolution = hardwareAccelerationVC1->MaxResolution;
+                            hardwareAccelerationWMV3.IsAvailable = true;
+                            hardwareAccelerationWMV3.MaxResolution = hardwareAccelerationVC1.MaxResolution;
                             continue;
                         }
 
                         if (profile == D3D11_DECODER_PROFILE_VP9_VLD_PROFILE0 ||
                             profile == D3D11_DECODER_PROFILE_VP9_VLD_10BIT_PROFILE2)
                         {
-                            hardwareAccelerationVP9->IsAvailable = true;
+                            hardwareAccelerationVP9.IsAvailable = true;
 
                             auto resolution = CheckResolution(profile, videoDevice);
-                            hardwareAccelerationVP9->MaxResolution = max(resolution, hardwareAccelerationVP9->MaxResolution);
+                            hardwareAccelerationVP9.MaxResolution = max(resolution, hardwareAccelerationVP9.MaxResolution);
 
                             if (profile == D3D11_DECODER_PROFILE_VP9_VLD_PROFILE0)
                             {
-                                hardwareAccelerationVP9->AppendProfile(FF_PROFILE_VP9_0, resolution);
+                                hardwareAccelerationVP9.AppendProfile(FF_PROFILE_VP9_0, resolution);
                             }
                             else
                             {
-                                hardwareAccelerationVP9->AppendProfile(FF_PROFILE_VP9_2, resolution);
+                                hardwareAccelerationVP9.AppendProfile(FF_PROFILE_VP9_2, resolution);
                             }
                             continue;
                         }
 
                         if (profile == D3D11_DECODER_PROFILE_VP8_VLD)
                         {
-                            hardwareAccelerationVP8->IsAvailable = true;
+                            hardwareAccelerationVP8.IsAvailable = true;
 
                             auto resolution = CheckResolution(profile, videoDevice);
-                            hardwareAccelerationVP8->MaxResolution = resolution;
+                            hardwareAccelerationVP8.MaxResolution = resolution;
                             continue;
                         }
                     }
@@ -368,17 +312,17 @@ namespace FFmpegInteropX
             }
         }
 
-        static bool CheckUseHardwareAcceleration(HardwareAccelerationStatus^ status, AVCodecID codecId, int profile, int width, int height)
+        static bool CheckUseHardwareAcceleration(HardwareAccelerationStatus status, AVCodecID codecId, int profile, int width, int height)
         {
             bool result = false;
 
             // auto detection
-            if (status->IsAvailable)
+            if (status.IsAvailable)
             {
                 // check profile, if restricted
-                if (status->SupportedProfiles.size() > 0)
+                if (status.SupportedProfiles.size() > 0)
                 {
-                    for each (auto profileInfo in status->SupportedProfiles)
+                    for (auto& profileInfo : status.SupportedProfiles)
                     {
                         if (profileInfo.first == profile)
                         {
@@ -405,7 +349,7 @@ namespace FFmpegInteropX
                     result &= CheckIsMpeg2VideoExtensionInstalled();
                     if (!result && !hasAskedInstallMpeg2Extension)
                     {
-                        RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, "MPEG2", "MPEG2 Video Extension", "9n95q1zzpmh4");
+                        RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, L"MPEG2", L"MPEG2 Video Extension", L"9n95q1zzpmh4");
                         hasAskedInstallMpeg2Extension = true;
                     }
                 }
@@ -414,8 +358,8 @@ namespace FFmpegInteropX
                     result &= CheckIsVP9VideoExtensionInstalled();
                     if (!result && !hasAskedInstallVP9Extension)
                     {
-                        String^ codecName = codecId == AV_CODEC_ID_VP9 ? "VP9" : "VP8";
-                        RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, codecName, "VP9 Video Extensions", "9n4d0msmp0pt");
+                        hstring codecName = codecId == AV_CODEC_ID_VP9 ? L"VP9" : L"VP8";
+                        RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, codecName, L"VP9 Video Extensions", L"9n4d0msmp0pt");
                         hasAskedInstallVP9Extension = true;
                     }
                 }
@@ -426,23 +370,23 @@ namespace FFmpegInteropX
                     {
 #ifdef _M_AMD64
                         // open free x64 extension
-                        RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, "HEVC", "HEVC Video Extensions from Device Manufacturer", "9n4wgh0z6vhq");
+                        RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, L"HEVC", L"HEVC Video Extensions from Device Manufacturer", L"9n4wgh0z6vhq");
 #else
                         // open paid extension for all other platforms
-                        RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, "HEVC", "HEVC Video Extensions", "9nmzlz57r3t7");
+                        RaiseCodecRequired(CodecRequiredReason::HardwareAcceleration, L"HEVC", L"HEVC Video Extensions", L"9nmzlz57r3t7");
 #endif // _WIN64
                         hasAskedInstallHEVCExtension = true;
                     }
                 }
 
-                CheckVideoResolution(result, width, height, status->MaxResolution);
+                CheckVideoResolution(result, width, height, status.MaxResolution);
             }
 
             return result;
         }
 
     private:
-
+        static winrt::event<Windows::Foundation::EventHandler<winrt::FFmpegInteropX::CodecRequiredEventArgs>> m_codecRequiredEvent;
         static std::mutex mutex;
 
         static bool hasCheckedHardwareAcceleration;
@@ -459,13 +403,13 @@ namespace FFmpegInteropX
         static bool hasAskedInstallVP9Extension;
         static bool hasAskedInstallHEVCExtension;
 
-        static HardwareAccelerationStatus^ hardwareAccelerationH264;
-        static HardwareAccelerationStatus^ hardwareAccelerationHEVC;
-        static HardwareAccelerationStatus^ hardwareAccelerationWMV3;
-        static HardwareAccelerationStatus^ hardwareAccelerationVC1;
-        static HardwareAccelerationStatus^ hardwareAccelerationVP9;
-        static HardwareAccelerationStatus^ hardwareAccelerationVP8;
-        static HardwareAccelerationStatus^ hardwareAccelerationMPEG2;
+        static HardwareAccelerationStatus hardwareAccelerationH264;
+        static HardwareAccelerationStatus hardwareAccelerationHEVC;
+        static HardwareAccelerationStatus hardwareAccelerationWMV3;
+        static HardwareAccelerationStatus hardwareAccelerationVC1;
+        static HardwareAccelerationStatus hardwareAccelerationVP9;
+        static HardwareAccelerationStatus hardwareAccelerationVP8;
+        static HardwareAccelerationStatus hardwareAccelerationMPEG2;
 
         inline static VideoResolution CheckResolution(GUID profile, ID3D11VideoDevice* videoDevice)
         {
@@ -568,39 +512,36 @@ namespace FFmpegInteropX
             }
         }
 
-        static task<bool> IsAppInstalledAsync(String^ packageName)
+        static IAsyncOperation<bool> IsAppInstalledAsync(hstring const& packageName)
         {
-            using namespace Windows::System;
-            return create_task(Launcher::QueryUriSupportAsync(ref new Uri("mailto:dummy@mail.com"), LaunchQuerySupportType::Uri, packageName)).then(
-                [](task<LaunchQuerySupportStatus> t)
+            using namespace winrt::Windows::System;
+            try
+            {
+                auto t = co_await Launcher::QueryUriSupportAsync(Uri(L"mailto:dummy@mail.com"), LaunchQuerySupportType::Uri, packageName);
+                switch (t)
                 {
-                    try
-                    {
-                        switch (t.get())
-                        {
-                        case LaunchQuerySupportStatus::Available:
-                        case LaunchQuerySupportStatus::NotSupported:
-                            return true;
-                            //case LaunchQuerySupportStatus.AppNotInstalled:
-                            //case LaunchQuerySupportStatus.AppUnavailable:
-                            //case LaunchQuerySupportStatus.Unknown:
-                        default:
-                            return false;
-                        }
-                    }
-                    catch (...)
-                    {
-                    }
-                    return false;
-                });
+                case LaunchQuerySupportStatus::Available:
+                case LaunchQuerySupportStatus::NotSupported:
+                    co_return true;
+                    //case LaunchQuerySupportStatus.AppNotInstalled:
+                    //case LaunchQuerySupportStatus.AppUnavailable:
+                    //case LaunchQuerySupportStatus.Unknown:
+                default:
+                    co_return false;
+                }
+            }
+            catch (...)
+            {
+            }
+            co_return false;
         }
 
         //// this works, but it takes 500ms on first call, so not using it right now...
-        //static task<bool> IsVideoCodecInstalledAsync(String^ videoCodecSubtype)
+        //static task<bool> IsVideoCodecInstalledAsync(hstring const& videoCodecSubtype)
         //{
-        //	auto query = ref new CodecQuery();
+        //	auto query =  CodecQuery();
         //	auto codecs = co_await query->FindAllAsync(CodecKind::Video, CodecCategory::Decoder, videoCodecSubtype);
-        //	for each (auto codec in codecs)
+        //	for (auto codec in codecs)
         //	{
         //		if (codec->IsTrusted)
         //		{
@@ -609,8 +550,11 @@ namespace FFmpegInteropX
         //	}
         //	return false;
         //}
-
     };
-
 }
-
+namespace winrt::FFmpegInteropX::factory_implementation
+{
+    struct CodecChecker : CodecCheckerT<CodecChecker, implementation::CodecChecker>
+    {
+    };
+}

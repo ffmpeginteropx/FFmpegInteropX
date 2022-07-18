@@ -20,16 +20,17 @@
 #include "NALPacketSampleProvider.h"
 
 using namespace FFmpegInteropX;
+using namespace winrt::Windows::Storage::Streams;
 
 NALPacketSampleProvider::NALPacketSampleProvider(
-    FFmpegReader^ reader,
+    std::shared_ptr<FFmpegReader> reader,
     AVFormatContext* avFormatCtx,
     AVCodecContext* avCodecCtx,
-    MediaSourceConfig^ config,
+    MediaSourceConfig const& config,
     int streamIndex,
-    VideoEncodingProperties^ encodingProperties,
+    VideoEncodingProperties const& pencodingProperties,
     HardwareDecoderStatus hardwareDecoderStatus)
-    : CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareDecoderStatus)
+    : CompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, pencodingProperties, hardwareDecoderStatus)
 {
 }
 
@@ -43,15 +44,15 @@ void NALPacketSampleProvider::Flush(bool flushBuffers)
     m_bHasSentExtradata = false;
 }
 
-HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuffer^* pBuffer)
+HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuffer* pBuffer)
 {
     HRESULT hr = S_OK;
-    DataWriter^ dataWriter = nullptr;
+    DataWriter dataWriter = nullptr;
 
     // On first frame, write the SPS and PPS
     if (!m_bHasSentExtradata)
     {
-        dataWriter = ref new DataWriter();
+        dataWriter = DataWriter();
         hr = GetSPSAndPPSBuffer(dataWriter, m_pAvCodecCtx->extradata, m_pAvCodecCtx->extradata_size);
         m_bHasSentExtradata = true;
     }
@@ -65,7 +66,7 @@ HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuf
             {
                 if (dataWriter == nullptr)
                 {
-                    dataWriter = ref new DataWriter();
+                    dataWriter = DataWriter();
                 }
                 hr = GetSPSAndPPSBuffer(dataWriter, avPacket->side_data[i].data, (UINT32)avPacket->side_data[i].size);
                 break;
@@ -88,7 +89,7 @@ HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuf
 
             if (SUCCEEDED(hr))
             {
-                *pBuffer = dataWriter->DetachBuffer();
+                *pBuffer = dataWriter.DetachBuffer();
             }
         }
     }
@@ -96,7 +97,7 @@ HRESULT NALPacketSampleProvider::CreateBufferFromPacket(AVPacket* avPacket, IBuf
     return hr;
 }
 
-HRESULT NALPacketSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length)
+HRESULT NALPacketSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length)
 {
     HRESULT hr = S_OK;
 
@@ -108,22 +109,22 @@ HRESULT NALPacketSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte
     else
     {
         // Write both SPS and PPS sequence as is from extradata
-        auto vSPSPPS = Platform::ArrayReference<uint8_t>(buf, length);
-        dataWriter->WriteBytes(vSPSPPS);
+        auto buffer = winrt::array_view(buf, length);
+        dataWriter.WriteBytes(buffer);
     }
 
     return hr;
 }
 
-HRESULT NALPacketSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter^ dataWriter)
+HRESULT NALPacketSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter const& dataWriter)
 {
     // Write out the NAL packet
-    auto aBuffer = Platform::ArrayReference<uint8_t>(avPacket->data, avPacket->size);
-    dataWriter->WriteBytes(aBuffer);
+    auto buffer = winrt::array_view(avPacket->data, avPacket->size);
+    dataWriter.WriteBytes(buffer);
     return S_OK;
 }
 
-HRESULT NALPacketSampleProvider::WriteNALPacket(AVPacket* avPacket, IBuffer^* pBuffer)
+HRESULT NALPacketSampleProvider::WriteNALPacket(AVPacket* avPacket, IBuffer* pBuffer)
 {
     // Write out the NAL packet as-is
     return CompressedSampleProvider::CreateBufferFromPacket(avPacket, pBuffer);

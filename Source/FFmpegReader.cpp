@@ -25,7 +25,7 @@ using namespace Concurrency;
 
 using namespace FFmpegInteropX;
 
-FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<MediaSampleProvider^>* initProviders, MediaSourceConfig^ config)
+FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<shared_ptr<MediaSampleProvider>>* initProviders, MediaSourceConfig config)
     : avFormatCtx(avFormatCtx)
     , sampleProviders(initProviders)
     , config(config)
@@ -40,7 +40,7 @@ void FFmpegReader::Start()
 {
     {
         std::lock_guard<std::mutex> lock(mutex);
-        if (!isEnabled && (config->ReadAheadBufferSize > 0 || config->ReadAheadBufferDuration.Duration > 0) && !config->IsFrameGrabber)
+        if (!isEnabled && (config.ReadAheadBufferSize() > 0 || config.ReadAheadBufferDuration().count() > 0) && !config.as<implementation::MediaSourceConfig>()->IsFrameGrabber)
         {
             sleepTimerTarget = new call<int>([this](int value) { OnTimer(value); });
             if (!sleepTimerTarget)
@@ -124,7 +124,7 @@ void FFmpegReader::Flush()
     readResult = 0;
 }
 
-HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool fastSeek, MediaSampleProvider^ videoStream, MediaSampleProvider^ audioStream)
+HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
 {
     Stop();
 
@@ -153,7 +153,7 @@ HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan
         }
         else
         {
-            if (av_seek_frame(avFormatCtx, stream->StreamIndex, seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
+            if (av_seek_frame(avFormatCtx, stream->StreamIndex(), seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
             {
                 hr = E_FAIL;
                 DebugMessage(L" - ### Error while seeking\n");
@@ -173,7 +173,7 @@ HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan
     return hr;
 }
 
-HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, MediaSampleProvider^ videoStream, MediaSampleProvider^ audioStream)
+HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
 {
     HRESULT hr = S_OK;
     int64_t seekTarget = videoStream->ConvertPosition(position);
@@ -220,7 +220,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
         max = videoStream->ConvertPosition(referenceTime);
     }
 
-    if (avformat_seek_file(avFormatCtx, videoStream->StreamIndex, min, seekTarget, max, 0) < 0)
+    if (avformat_seek_file(avFormatCtx, videoStream->StreamIndex(), min, seekTarget, max, 0) < 0)
     {
         hr = E_FAIL;
         DebugMessage(L" - ### Error while seeking\n");
@@ -237,18 +237,18 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
 
         if (hr == S_FALSE && isUriSource)
         {
-            if (dynamic_cast<UncompressedSampleProvider^>(videoStream))
+            //TODO if (dynamic_cast<UncompressedSampleProvider^>(videoStream))
             {
                 auto sample = videoStream->GetNextSample();
                 if (sample)
                 {
-                    timestampVideo = sample->Timestamp;
-                    timestampVideoDuration = sample->Duration;
+                    timestampVideo = sample.Timestamp();
+                    timestampVideoDuration = sample.Duration();
                     timestampVideo += timestampVideoDuration;
                     hr = S_OK;
                 }
             }
-            else
+            //else
             {
                 //hr = audioStream->GetNextPacketTimestamp(timestampVideo, timestampVideoDuration);
             }
@@ -260,7 +260,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
             min += videoStream->ConvertDuration(TimeSpan{ 50000000 });
             seekTarget += videoStream->ConvertDuration(TimeSpan{ 50000000 });
 
-            if (avformat_seek_file(avFormatCtx, videoStream->StreamIndex, min, seekTarget, max, 0) < 0)
+            if (avformat_seek_file(avFormatCtx, videoStream->StreamIndex(), min, seekTarget, max, 0) < 0)
             {
                 hr = E_FAIL;
                 DebugMessage(L" - ### Error while seeking\n");
@@ -295,10 +295,10 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                     // audio stream should start one sample before video
                     auto audioTarget = timestampVideo - timestampAudioDuration;
                     auto audioPreroll = timestampAudio - timestampVideo;
-                    if (audioPreroll.Duration > 0 && config->FastSeekCleanAudio && !isUriSource)
+                    if (audioPreroll.count() > 0 && config.FastSeekCleanAudio() && !isUriSource)
                     {
                         seekTarget = videoStream->ConvertPosition(audioTarget - audioPreroll);
-                        if (av_seek_frame(avFormatCtx, videoStream->StreamIndex, seekTarget, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_ANY) < 0)
+                        if (av_seek_frame(avFormatCtx, videoStream->StreamIndex(), seekTarget, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_ANY) < 0)
                         {
                             hr = E_FAIL;
                             DebugMessage(L" - ### Error while seeking\n");
@@ -315,23 +315,23 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                             auto sample = audioStream->GetNextSample();
                             if (sample)
                             {
-                                actualPosition = sample->Timestamp + sample->Duration;
+                                actualPosition = sample.Timestamp() + sample.Duration();
                             }
                         }
                     }
-                    else if (audioPreroll.Duration <= 0)
+                    else if (audioPreroll.count() <= 0)
                     {
                         // Negative audio preroll. Just drop all packets until target position.
                         audioStream->SkipPacketsUntilTimestamp(audioTarget);
 
                         hr = audioStream->GetNextPacketTimestamp(timestampAudio, timestampAudioDuration);
-                        if (hr == S_OK && (config->FastSeekCleanAudio || (timestampAudio + timestampAudioDuration) <= timestampVideo))
+                        if (hr == S_OK && (config.FastSeekCleanAudio() || (timestampAudio + timestampAudioDuration) <= timestampVideo))
                         {
                             // decode one audio sample to get clean output
                             auto sample = audioStream->GetNextSample();
                             if (sample)
                             {
-                                actualPosition = sample->Timestamp + sample->Duration;
+                                actualPosition = sample.Timestamp() + sample.Duration();
                             }
                         }
                     }
@@ -343,7 +343,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
     return hr;
 }
 
-bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, MediaSampleProvider^ videoStream, MediaSampleProvider^ audioStream)
+bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
 {
     bool result = true;;
     int vIndex; int aIndex;
@@ -385,7 +385,7 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
 
         if (audioStream)
         {
-            if (config->FastSeekCleanAudio && aIndex > 0)
+            if (config.FastSeekCleanAudio() && aIndex > 0)
             {
                 aIndex--;
                 audioStream->buffer->DropPackets(aIndex);
@@ -394,7 +394,7 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
                 auto sample = audioStream->GetNextSample();
                 if (sample)
                 {
-                    actualPosition = sample->Timestamp + sample->Duration;
+                    actualPosition = sample.Timestamp() + sample.Duration();
                 }
             }
             else
@@ -489,7 +489,7 @@ bool FFmpegReader::CheckNeedsSleep(bool wasSleeping)
 
 // Read the next packet from the stream and push it into the appropriate
 // sample provider
-int FFmpegReader::ReadPacket()
+int FFmpegInteropX::FFmpegReader::ReadPacket()
 {
     int ret;
     AVPacket* avPacket = av_packet_alloc();
@@ -526,7 +526,7 @@ int FFmpegReader::ReadPacket()
         }
         else
         {
-            MediaSampleProvider^ provider = sampleProviders->at(avPacket->stream_index);
+            auto provider = sampleProviders->at(avPacket->stream_index);
             if (provider)
             {
                 provider->QueuePacket(avPacket);
@@ -544,7 +544,7 @@ int FFmpegReader::ReadPacket()
 }
 
 
-int FFmpegReader::ReadPacketForStream(StreamBuffer^ buffer)
+int FFmpegReader::ReadPacketForStream(StreamBuffer* buffer)
 {
     if (!(buffer->IsEmpty()))
     {
@@ -606,4 +606,3 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer^ buffer)
 
     return readResult;
 }
-

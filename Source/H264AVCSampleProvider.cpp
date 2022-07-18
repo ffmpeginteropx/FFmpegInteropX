@@ -22,12 +22,12 @@
 using namespace FFmpegInteropX;
 
 H264AVCSampleProvider::H264AVCSampleProvider(
-    FFmpegReader^ reader,
+    std::shared_ptr<FFmpegReader> reader,
     AVFormatContext* avFormatCtx,
     AVCodecContext* avCodecCtx,
-    MediaSourceConfig^ config,
+    MediaSourceConfig const& config,
     int streamIndex,
-    VideoEncodingProperties^ encodingProperties,
+    VideoEncodingProperties encodingProperties,
     HardwareDecoderStatus hardwareDecoderStatus)
     : NALPacketSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, encodingProperties, hardwareDecoderStatus)
 {
@@ -37,17 +37,15 @@ H264AVCSampleProvider::~H264AVCSampleProvider()
 {
 }
 
-HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* buf, UINT32 length)
+HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length)
 {
     HRESULT hr = S_OK;
-    int spsLength = 0;
-    int ppsLength = 0;
 
     // Get the position of the SPS
     if (buf == nullptr || length < 7)
     {
         // The data isn't present
-        hr = E_FAIL;
+        return E_FAIL;
     }
 
     /* Extradata is in hvcC format */
@@ -65,13 +63,14 @@ HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* 
         }
 
         // Write the NAL unit to the stream
-        dataWriter->WriteByte(0);
-        dataWriter->WriteByte(0);
-        dataWriter->WriteByte(0);
-        dataWriter->WriteByte(1);
+        dataWriter.WriteByte(0);
+        dataWriter.WriteByte(0);
+        dataWriter.WriteByte(0);
+        dataWriter.WriteByte(1);
 
-        auto data = Platform::ArrayReference<uint8_t>(buf + pos, nalsize);
-        dataWriter->WriteBytes(data);
+        auto bufferStart = buf + pos;
+        auto buffer = winrt::array_view(bufferStart, nalsize);
+        dataWriter.WriteBytes(buffer);
 
         pos += nalsize;
     }
@@ -87,13 +86,14 @@ HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* 
         }
 
         // Write the NAL unit to the stream
-        dataWriter->WriteByte(0);
-        dataWriter->WriteByte(0);
-        dataWriter->WriteByte(0);
-        dataWriter->WriteByte(1);
+        dataWriter.WriteByte(0);
+        dataWriter.WriteByte(0);
+        dataWriter.WriteByte(0);
+        dataWriter.WriteByte(1);
 
-        auto data = Platform::ArrayReference<uint8_t>(buf + pos, nalsize);
-        dataWriter->WriteBytes(data);
+        auto bufferStart = buf + pos;
+        auto buffer = winrt::array_view(bufferStart, nalsize);
+        dataWriter.WriteBytes(buffer);
 
         pos += nalsize;
     }
@@ -102,24 +102,24 @@ HRESULT H264AVCSampleProvider::GetSPSAndPPSBuffer(DataWriter^ dataWriter, byte* 
 }
 
 // We cannot pass packet as-is. Use dataWriter approac
-HRESULT H264AVCSampleProvider::WriteNALPacket(AVPacket* avPacket, IBuffer^* pBuffer)
+HRESULT H264AVCSampleProvider::WriteNALPacket(AVPacket* avPacket, IBuffer* pBuffer)
 {
-    auto dataWriter = ref new DataWriter();
+    auto dataWriter = DataWriter();
     auto hr = WriteNALPacketAfterExtradata(avPacket, dataWriter);
     if (SUCCEEDED(hr))
     {
-        *pBuffer = dataWriter->DetachBuffer();
+        *pBuffer = dataWriter.DetachBuffer();
     }
     return hr;
 }
 
 // Write out an NAL packet converting stream offsets to start-codes
-HRESULT H264AVCSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter^ dataWriter)
+HRESULT H264AVCSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter const& dataWriter)
 {
     HRESULT hr = S_OK;
-    uint32 index = 0;
-    uint32 size = 0;
-    uint32 packetSize = (uint32)avPacket->size;
+    UINT32 index = 0;
+    UINT32 size = 0;
+    UINT32 packetSize = (UINT32)avPacket->size;
 
     do
     {
@@ -135,10 +135,10 @@ HRESULT H264AVCSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, 
         index += m_nalLenSize;
 
         // Write the NAL unit to the stream
-        dataWriter->WriteByte(0);
-        dataWriter->WriteByte(0);
-        dataWriter->WriteByte(0);
-        dataWriter->WriteByte(1);
+        dataWriter.WriteByte(0);
+        dataWriter.WriteByte(0);
+        dataWriter.WriteByte(0);
+        dataWriter.WriteByte(1);
 
         // Stop if index and size goes beyond packet size or overflow
         if (packetSize < (index + size) || (UINT32_MAX - index) < size)
@@ -148,15 +148,16 @@ HRESULT H264AVCSampleProvider::WriteNALPacketAfterExtradata(AVPacket* avPacket, 
         }
 
         // Write the rest of the packet to the stream
-        auto vBuffer = Platform::ArrayReference<uint8_t>(&(avPacket->data[index]), size);
-        dataWriter->WriteBytes(vBuffer);
+        auto bufferStart = avPacket->data + index;
+        auto buffer = winrt::array_view(bufferStart, size);
+        dataWriter.WriteBytes(buffer);
         index += size;
     } while (index < packetSize);
 
     return hr;
 }
 
-int H264AVCSampleProvider::ReadMultiByteValue(byte* buffer, int index, int numBytes)
+int H264AVCSampleProvider::ReadMultiByteValue(BYTE* buffer, int index, int numBytes)
 {
     if (numBytes == 4)
     {

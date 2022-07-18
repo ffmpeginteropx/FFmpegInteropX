@@ -1,105 +1,44 @@
 #pragma once
+#include "FrameGrabber.g.h"
 #include "FFmpegMediaSource.h"
-#include "MediaSourceConfig.h"
 #include "UncompressedVideoSampleProvider.h"
-#include <ppl.h>
-#include <robuffer.h>
+#include "NativeBuffer.h"
 
+using namespace NativeBuffer;
+// Note: Remove this static_assert after copying these generated source files to your project.
+// This assertion exists to avoid compiling these generated source files directly.
+//static_assert(false, "Do not compile generated C++/WinRT source files directly");
 
-namespace FFmpegInteropX {
+namespace winrt::FFmpegInteropX::implementation
+{
+    using namespace Windows::Foundation;
 
-    using namespace concurrency;
-    using namespace Windows::Storage::Streams;
-
-    /// <summary>Supports grabbing of video frames from a file.</summary>
-    public ref class FrameGrabber sealed
+    struct FrameGrabber : FrameGrabberT<FrameGrabber>
     {
-
-        FFmpegMediaSource^ interopMSS;
-        MediaRatio^ pixelAspectRatio;
-        int width;
-        int height;
-
-    internal:
-        FrameGrabber(FFmpegMediaSource^ interopMSS) {
+        FrameGrabber(winrt::com_ptr<winrt::FFmpegInteropX::implementation::FFmpegMediaSource> interopMSS)
+        {
             this->interopMSS = interopMSS;
         }
 
-    public:
-
-        virtual ~FrameGrabber() {
-            if (interopMSS)
-                delete interopMSS;
-        }
-
-        /// <summary>The duration of the video stream.</summary>
-        property TimeSpan Duration
-        {
-            TimeSpan get()
-            {
-                return interopMSS->Duration;
-            }
-        }
-
-        /// <summary>Gets or sets the decode pixel width.</summary>
-        property int DecodePixelWidth;
-
-        /// <summary>Gets or sets the decode pixel height.</summary>
-        property int DecodePixelHeight;
-
-        /// <summary>Gets the current video stream information.</summary>
-        property VideoStreamInfo^ CurrentVideoStream
-        {
-            VideoStreamInfo^ get() { return interopMSS->CurrentVideoStream; }
-        }
-
         /// <summary>Creates a new FrameGrabber from the specified stream.</summary>
-        static IAsyncOperation<FrameGrabber^>^ CreateFromStreamAsync(IRandomAccessStream^ stream)
-        {
-            return create_async([stream]
-                {
-                    MediaSourceConfig^ config = ref new MediaSourceConfig();
-                    config->IsFrameGrabber = true;
-                    config->VideoDecoderMode = VideoDecoderMode::ForceFFmpegSoftwareDecoder;
-
-                    auto result = FFmpegMediaSource::CreateFromStream(stream, config, nullptr);
-                    if (result == nullptr)
-                    {
-                        throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
-                    }
-                    if (result->VideoSampleProvider == nullptr)
-                    {
-                        throw ref new Exception(E_FAIL, "No video stream found in file (or no suitable decoder available).");
-                    }
-                    return ref new FrameGrabber(result);
-                });
-        }
+        static IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream);
 
         /// <summary>Creates a new FrameGrabber from the specified uri.</summary>
-        static IAsyncOperation<FrameGrabber^>^ CreateFromUriAsync(String^ uri)
-        {
-            return create_async([uri]
-                {
-                    MediaSourceConfig^ config = ref new MediaSourceConfig();
-                    config->IsFrameGrabber = true;
-                    config->VideoDecoderMode = VideoDecoderMode::ForceFFmpegSoftwareDecoder;
+        static IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromUriAsync(hstring uri);
 
-                    auto result = FFmpegMediaSource::CreateFromUri(uri, config);
-                    if (result == nullptr)
-                    {
-                        throw ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
-                    }
-                    if (result->CurrentVideoStream == nullptr)
-                    {
-                        throw ref new Exception(E_FAIL, "No video stream found in file (or no suitable decoder available).");
-                    }
-                    if (result->VideoSampleProvider == nullptr)
-                    {
-                        throw ref new Exception(E_FAIL, "No video stream found in file (or no suitable decoder available).");
-                    }
-                    return ref new FrameGrabber(result);
-                });
-        }
+        /// <summary>The duration of the video stream.</summary>
+        TimeSpan Duration();
+
+        /// <summary>Gets or sets the decode pixel width.</summary>
+        int32_t DecodePixelWidth();
+        void DecodePixelWidth(int32_t value);
+
+        /// <summary>Gets or sets the decode pixel height.</summary>
+        int32_t DecodePixelHeight();
+        void DecodePixelHeight(int32_t value);
+
+        /// <summary>Gets the current video stream information.</summary>
+        FFmpegInteropX::VideoStreamInfo CurrentVideoStream();
 
         /// <summary>Extracts a video frame at the specififed position.</summary>
         /// <param name="position">The position of the requested frame.</param>
@@ -107,170 +46,91 @@ namespace FFmpegInteropX {
         /// <param name="maxFrameSkip">If exactSeek=true, this limits the number of frames to decode after the key frame.</param>
         /// <param name="targetBuffer">The target buffer which shall contain the decoded pixel data.</param>
         /// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
-        IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int maxFrameSkip, IBuffer^ targetBuffer)
-        {
-            PrepareDecoding(targetBuffer);
-
-            return create_async([this, position, exactSeek, maxFrameSkip]
-                {
-                    bool seekSucceeded = false;
-                    if (interopMSS->Duration.Duration >= position.Duration)
-                    {
-                        TimeSpan actualPosition = position;
-                        seekSucceeded = SUCCEEDED(interopMSS->Seek(position, actualPosition, false));
-                    }
-
-                    int framesSkipped = 0;
-                    MediaStreamSample^ lastSample = nullptr;
-                    bool gotSample = true;
-
-                    while (true)
-                    {
-                        interruption_point();
-
-                        auto sample = interopMSS->VideoSampleProvider->GetNextSample();
-                        if (sample == nullptr)
-                        {
-                            // if we hit end of stream, use last decoded sample (if any), otherwise fail
-                            if (lastSample != nullptr)
-                            {
-                                sample = lastSample;
-                                gotSample = false;
-                            }
-                            else
-                            {
-                                throw ref new Exception(E_FAIL, "Failed to decode video frame, or end of stream.");
-                            }
-                        }
-                        else
-                        {
-                            lastSample = sample;
-                        }
-
-                        // if exact seek, continue decoding until we have the right sample
-                        if (gotSample && exactSeek && seekSucceeded && (position.Duration - sample->Timestamp.Duration > sample->Duration.Duration) &&
-                            (maxFrameSkip <= 0 || framesSkipped < maxFrameSkip))
-                        {
-                            framesSkipped++;
-                            continue;
-                        }
-
-                        //  make sure we have a clean sample (key frame, no half interlaced frame)
-                        if (gotSample && !interopMSS->VideoSampleProvider->IsCleanSample &&
-                            (maxFrameSkip <= 0 || framesSkipped < maxFrameSkip))
-                        {
-                            framesSkipped++;
-                            continue;
-                        }
-
-                        auto result = ref new VideoFrame(
-                            sample->Buffer,
-                            width,
-                            height,
-                            pixelAspectRatio,
-                            sample->Timestamp);
-
-                        return result;
-
-                    }
-                });
-        }
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int32_t maxFrameSkip, Windows::Storage::Streams::IBuffer targetBuffer);
 
         /// <summary>Extracts the next consecutive video frame in the file. Returns <c>null</c> at end of stream.</summary>
         /// <param name="targetBuffer">The target buffer which shall contain the decoded pixel data.</param>
-        IAsyncOperation<VideoFrame^>^ ExtractNextVideoFrameAsync(IBuffer^ targetBuffer)
-        {
-            PrepareDecoding(targetBuffer);
-
-            return create_async([this]
-                {
-                    auto sample = interopMSS->VideoSampleProvider->GetNextSample();
-                    VideoFrame^ result = nullptr;
-
-                    if (sample)
-                    {
-                        result = ref new VideoFrame(
-                            sample->Buffer,
-                            width,
-                            height,
-                            pixelAspectRatio,
-                            sample->Timestamp);
-                    }
-
-                    return result;
-                });
-        }
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractNextVideoFrameAsync(Windows::Storage::Streams::IBuffer targetBuffer);
 
         /// <summary>Extracts a video frame at the specififed position.</summary>
         /// <param name="position">The position of the requested frame.</param>
         /// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
         /// <param name="maxFrameSkip">If exactSeek=true, this limits the number of frames to decode after the key frame.</param>
         /// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
-        IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int maxFrameSkip) { return ExtractVideoFrameAsync(position, exactSeek, maxFrameSkip, nullptr); };
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(TimeSpan position, bool exactSeek, int32_t maxFrameSkip);
 
         /// <summary>Extracts a video frame at the specififed position.</summary>
         /// <param name="position">The position of the requested frame.</param>
         /// <param name="exactSeek">If set to false, this will decode the closest previous key frame, which is faster but not as precise.</param>
-        /// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
-        IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position, bool exactSeek) { return ExtractVideoFrameAsync(position, exactSeek, 0, nullptr); };
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(TimeSpan position, bool exactSeek);
 
         /// <summary>Extracts a video frame at the specififed position.</summary>
         /// <param name="position">The position of the requested frame.</param>
         /// <remarks>The IAsyncOperation result supports cancellation, so long running frame requests (exactSeek=true) can be interrupted.</remarks>
-        IAsyncOperation<VideoFrame^>^ ExtractVideoFrameAsync(TimeSpan position) { return ExtractVideoFrameAsync(position, false, 0, nullptr); };
-
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractVideoFrameAsync(TimeSpan position);
 
         /// <summary>Extracts the next consecutive video frame in the file. Returns <c>null</c> at end of stream.</summary>
-        IAsyncOperation<VideoFrame^>^ ExtractNextVideoFrameAsync() { return ExtractNextVideoFrameAsync(nullptr); };
+        IAsyncOperation<FFmpegInteropX::VideoFrame> ExtractNextVideoFrameAsync();
 
+        void Close();
 
     private:
+        winrt::com_ptr<winrt::FFmpegInteropX::implementation::FFmpegMediaSource> interopMSS = { nullptr };
+        winrt::Windows::Media::MediaProperties::MediaRatio pixelAspectRatio = { nullptr };
+        int width = 0;
+        int height = 0;
+        int decodePixelWidth = 0;
+        int decodePixelHeight = 0;
 
-        void PrepareDecoding(IBuffer^ targetBuffer)
+        void PrepareDecoding(winrt::Windows::Storage::Streams::IBuffer const& targetBuffer)
         {
             // the IBuffer from WriteableBitmap can only be accessed on UI thread
             // so we need to check it and get its pointer here already
 
-            auto sampleProvider = static_cast<UncompressedVideoSampleProvider^>(interopMSS->VideoSampleProvider);
-            auto streamDescriptor = static_cast<VideoStreamDescriptor^>(interopMSS->VideoSampleProvider->StreamDescriptor);
-            pixelAspectRatio = streamDescriptor->EncodingProperties->PixelAspectRatio;
-            if (DecodePixelWidth > 0 &&
-                DecodePixelHeight > 0)
+            auto sampleProvider = std::static_pointer_cast<UncompressedVideoSampleProvider>(interopMSS->VideoSampleProvider());
+            auto streamDescriptor = (interopMSS->VideoSampleProvider()->StreamDescriptor().as<VideoStreamDescriptor>());
+            pixelAspectRatio = streamDescriptor.EncodingProperties().PixelAspectRatio();
+            if (DecodePixelWidth() > 0 &&
+                DecodePixelHeight() > 0)
             {
-                sampleProvider->TargetWidth = DecodePixelWidth;
-                sampleProvider->TargetHeight = DecodePixelHeight;
-                pixelAspectRatio->Numerator = 1;
-                pixelAspectRatio->Denominator = 1;
+                sampleProvider->TargetWidth = DecodePixelWidth();
+                sampleProvider->TargetHeight = DecodePixelHeight();
+                pixelAspectRatio.Numerator(1);
+                pixelAspectRatio.Denominator(1);
             }
             else
             {
                 // lock frame size - no dynamic size changes during frame grabbing!
-                sampleProvider->TargetWidth = sampleProvider->VideoInfo->PixelWidth;
-                sampleProvider->TargetHeight = sampleProvider->VideoInfo->PixelHeight;
+                sampleProvider->TargetWidth = sampleProvider->VideoInfo().PixelWidth();
+                sampleProvider->TargetHeight = sampleProvider->VideoInfo().PixelHeight();
             }
             width = sampleProvider->TargetWidth;
             height = sampleProvider->TargetHeight;
 
-            byte* pixels = nullptr;
+            BYTE* pixels = nullptr;
             if (targetBuffer)
             {
-                auto length = targetBuffer->Length;
-                if (length != width * height * 4)
+                auto length = targetBuffer.Length();
+                if (length != (uint32_t)width * height * 4)
                 {
-                    throw ref new InvalidArgumentException();
+                    throw_hresult(E_INVALIDARG);
                 }
 
                 // Query the IBufferByteAccess interface.  
-                Microsoft::WRL::ComPtr<IBufferByteAccess> bufferByteAccess;
-                reinterpret_cast<IInspectable*>(targetBuffer)->QueryInterface(IID_PPV_ARGS(&bufferByteAccess));
+                winrt::com_ptr<IBufferByteAccess> bufferByteAccess;
+                targetBuffer.as(IID_PPV_ARGS(&bufferByteAccess));
 
                 // Retrieve the buffer data.  
                 bufferByteAccess->Buffer(&pixels);
             }
             sampleProvider->TargetBuffer = pixels;
         }
+
     };
 }
-
-
-
+namespace winrt::FFmpegInteropX::factory_implementation
+{
+    struct FrameGrabber : FrameGrabberT<FrameGrabber, implementation::FrameGrabber>
+    {
+    };
+}

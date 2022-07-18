@@ -1,21 +1,29 @@
 #pragma once
 
 #include "SubtitleProvider.h"
-#include <MemoryBuffer.h>
+#include <winrt/FFmpegInteropX.h>
 
 namespace FFmpegInteropX
 {
-    ref class SubtitleProviderBitmap : SubtitleProvider
+    using namespace winrt::Windows::Graphics::Imaging;
+    using namespace winrt::Windows::Media::Core;
+
+    struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
+    {
+        virtual HRESULT __stdcall GetBuffer(uint8_t** value, uint32_t* capacity) = 0;
+    };
+
+    class SubtitleProviderBitmap : public SubtitleProvider
     {
 
-    internal:
-        SubtitleProviderBitmap(FFmpegReader^ reader,
+    public:
+        SubtitleProviderBitmap(std::shared_ptr<FFmpegReader> reader,
             AVFormatContext* avFormatCtx,
             AVCodecContext* avCodecCtx,
-            MediaSourceConfig^ config,
+            MediaSourceConfig const& config,
             int index,
-            CoreDispatcher^ dispatcher)
-            : SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::ImageSubtitle, dispatcher)
+            winrt::Windows::UI::Core::CoreDispatcher  const& dispatcher)
+            : SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index,TimedMetadataKind::ImageSubtitle, dispatcher)
         {
         }
 
@@ -25,8 +33,8 @@ namespace FFmpegInteropX
 
             if (SUCCEEDED(hr))
             {
-                SubtitleTrack->CueEntered += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack^, Windows::Media::Core::MediaCueEventArgs^>(this, &FFmpegInteropX::SubtitleProviderBitmap::OnCueEntered);
-                SubtitleTrack->CueExited += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Core::TimedMetadataTrack^, Windows::Media::Core::MediaCueEventArgs^>(this, &FFmpegInteropX::SubtitleProviderBitmap::OnCueExited);
+                SubtitleTrack.CueEntered(weak_handler(this, &FFmpegInteropX::SubtitleProviderBitmap::OnCueEntered));
+                SubtitleTrack.CueExited(weak_handler(this, &FFmpegInteropX::SubtitleProviderBitmap::OnCueExited));
             }
 
             return S_OK;
@@ -46,7 +54,7 @@ namespace FFmpegInteropX
             }
         }
 
-        virtual IMediaCue^ CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) override
+        virtual IMediaCue CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) override
         {
             AVSubtitle* subtitle = (AVSubtitle*)malloc(sizeof(AVSubtitle));
             if (!subtitle)
@@ -60,15 +68,15 @@ namespace FFmpegInteropX
             {
                 if (subtitle->start_display_time > 0)
                 {
-                    position->Duration += (long long)10000 * subtitle->start_display_time;
+                    *position = TimeSpan{ position->count() + (long long)10000 * subtitle->start_display_time };
                 }
-                duration->Duration = (long long)10000 * subtitle->end_display_time;
+                *duration = TimeSpan{ (long long)10000 * subtitle->end_display_time };
 
                 if (subtitle->num_rects <= 0)
                 {
                     // inserty dummy cue
-                    ImageCue^ cue = ref new ImageCue();
-                    cue->SoftwareBitmap = GetDummyBitmap();
+                    ImageCue cue;
+                    cue.SoftwareBitmap(GetDummyBitmap());
                     avsubtitle_free(subtitle);
                     delete subtitle;
 
@@ -81,11 +89,11 @@ namespace FFmpegInteropX
                     TimedTextPoint cuePosition;
                     if (subtitle->num_rects > 0 && CheckSize(subtitle, width, height, offsetX, offsetY, cueSize, cuePosition))
                     {
-                        auto id = nextId++.ToString();
+                        auto id = winrt::to_hstring(nextId++);
                         map[id] = subtitle;
 
-                        ImageCue^ cue = ref new ImageCue();
-                        cue->Id = id;
+                        ImageCue cue;
+                        cue.Id(id);
                         return cue;
                     }
                     else if (subtitle->num_rects > 0)
@@ -102,7 +110,6 @@ namespace FFmpegInteropX
                 delete subtitle;
                 OutputDebugString(L"Failed to decode subtitle.");
             }
-
             return nullptr;
         }
 
@@ -112,7 +119,7 @@ namespace FFmpegInteropX
         {
             SubtitleProvider::Flush(flushBuffers);
 
-            if (!m_config->IsExternalSubtitleParser && flushBuffers)
+            if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser && flushBuffers)
             {
                 for (auto entry : map)
                 {
@@ -126,16 +133,16 @@ namespace FFmpegInteropX
 
     private:
 
-        void OnCueEntered(Windows::Media::Core::TimedMetadataTrack^ sender, Windows::Media::Core::MediaCueEventArgs^ args)
+        void OnCueEntered(TimedMetadataTrack sender, MediaCueEventArgs args)
         {
             mutex.lock();
             try
             {
                 //cleanup old cues to free memory
-                std::vector<IMediaCue^> remove;
-                for each (auto cue in SubtitleTrack->Cues)
+                std::vector<IMediaCue> remove;
+                for each (auto cue in SubtitleTrack.Cues())
                 {
-                    if (cue->StartTime + cue->Duration < args->Cue->StartTime)
+                    if (cue.StartTime() + cue.Duration() < args.Cue().StartTime())
                     {
                         remove.push_back(cue);
                     }
@@ -143,65 +150,61 @@ namespace FFmpegInteropX
 
                 for each (auto cue in remove)
                 {
-                    SubtitleTrack->RemoveCue(cue);
+                    SubtitleTrack.RemoveCue(cue);
                 }
 
-                auto cue = dynamic_cast<ImageCue^>(args->Cue);
-                if (cue && cue->Id && !cue->SoftwareBitmap)
+                auto cue = args.Cue().as<ImageCue>();
+                if (!cue.Id().empty() && !cue.SoftwareBitmap())
                 {
-                    auto subtitle = map.at(cue->Id);
+                    auto subtitle = map.at(cue.Id());
 
                     int width, height, offsetX, offsetY;
                     TimedTextSize cueSize;
                     TimedTextPoint cuePosition;
                     if (subtitle->num_rects > 0 && CheckSize(subtitle, width, height, offsetX, offsetY, cueSize, cuePosition))
                     {
-                        using namespace Windows::Graphics::Imaging;
+                        auto bitmap = SoftwareBitmap(BitmapPixelFormat::Bgra8, width, height, BitmapAlphaMode::Straight);
+                        auto buffer = bitmap.LockBuffer(BitmapBufferAccessMode::Write);
+                        auto reference = buffer.CreateReference();
 
-                        auto bitmap = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, width, height, BitmapAlphaMode::Straight);
-                        {
-                            auto buffer = bitmap->LockBuffer(BitmapBufferAccessMode::Write);
-                            auto reference = buffer->CreateReference();
+                        // Query the IBufferByteAccess interface.  
+                        winrt::com_ptr<IMemoryBufferByteAccess> bufferByteAccess;
+                        reference.as(IID_PPV_ARGS(&bufferByteAccess));
 
-                            // Query the IBufferByteAccess interface.  
-                            Microsoft::WRL::ComPtr<Windows::Foundation::IMemoryBufferByteAccess> bufferByteAccess;
-                            reinterpret_cast<IInspectable*>(reference)->QueryInterface(IID_PPV_ARGS(&bufferByteAccess));
+                        // Retrieve the buffer data.  
+                        BYTE* pixels = nullptr;
+                        unsigned int capacity;
+                        bufferByteAccess->GetBuffer(&pixels, &capacity);
 
-                            // Retrieve the buffer data.  
-                            byte* pixels = nullptr;
-                            unsigned int capacity;
-                            bufferByteAccess->GetBuffer(&pixels, &capacity);
-
-                            auto plane = buffer->GetPlaneDescription(0);
+                        auto plane = buffer.GetPlaneDescription(0);
 
                             for (unsigned int i = 0; i < subtitle->num_rects; i++)
                             {
                                 auto rect = subtitle->rects[i];
 
-                                for (int y = 0; y < rect->h; y++)
+                            for (int y = 0; y < rect->h; y++)
+                            {
+                                for (int x = 0; x < rect->w; x++)
                                 {
-                                    for (int x = 0; x < rect->w; x++)
+                                    auto inPointer = rect->data[0] + y * rect->linesize[0] + x;
+                                    auto color = inPointer[0];
+                                    if (color < rect->nb_colors)
                                     {
-                                        auto inPointer = rect->data[0] + y * rect->linesize[0] + x;
-                                        auto color = inPointer[0];
-                                        if (color < rect->nb_colors)
-                                        {
-                                            auto rgba = ((uint32*)rect->data[1])[color];
-                                            auto outPointer = pixels + plane.StartIndex + plane.Stride * ((y + rect->y) - offsetY) + 4 * ((x + rect->x) - offsetX);
-                                            ((uint32*)outPointer)[0] = rgba;
-                                        }
-                                        else
-                                        {
-                                            OutputDebugString(L"Error: Illegal subtitle color.");
-                                        }
+                                        auto rgba = ((uint32_t*)rect->data[1])[color];
+                                        auto outPointer = pixels + plane.StartIndex + plane.Stride * ((y + rect->y) - offsetY) + 4 * ((x + rect->x) - offsetX);
+                                        ((uint32_t*)outPointer)[0] = rgba;
+                                    }
+                                    else
+                                    {
+                                        OutputDebugString(L"Error: Illegal subtitle color.");
                                     }
                                 }
                             }
                         }
 
-                        cue->SoftwareBitmap = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8, BitmapAlphaMode::Premultiplied);
-                        cue->Position = cuePosition;
-                        cue->Extent = cueSize;
+                        cue.SoftwareBitmap(SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8, BitmapAlphaMode::Premultiplied));
+                        cue.Position(cuePosition);
+                        cue.Extent(cueSize);
                     }
                     else if (subtitle->num_rects > 0)
                     {
@@ -216,15 +219,15 @@ namespace FFmpegInteropX
             mutex.unlock();
         }
 
-        void OnCueExited(Windows::Media::Core::TimedMetadataTrack^ sender, Windows::Media::Core::MediaCueEventArgs^ args)
+        void OnCueExited(TimedMetadataTrack sender, MediaCueEventArgs args)
         {
             mutex.lock();
             try
             {
-                auto cue = dynamic_cast<ImageCue^>(args->Cue);
-                if (cue && cue->Id && cue->SoftwareBitmap)
+                auto cue = args.Cue().as<ImageCue>();
+                if (!cue.Id().empty() && cue.SoftwareBitmap())
                 {
-                    cue->SoftwareBitmap = GetDummyBitmap();
+                    cue.SoftwareBitmap(GetDummyBitmap());
                 }
             }
             catch (...)
@@ -234,17 +237,17 @@ namespace FFmpegInteropX
             mutex.unlock();
         }
 
-        SoftwareBitmap^ GetDummyBitmap()
+        SoftwareBitmap GetDummyBitmap()
         {
             if (!dummyBitmap)
             {
-                dummyBitmap = ref new SoftwareBitmap(BitmapPixelFormat::Bgra8, 16, 16, BitmapAlphaMode::Premultiplied);
+                dummyBitmap = SoftwareBitmap(BitmapPixelFormat::Bgra8, 16, 16, BitmapAlphaMode::Premultiplied);
             }
 
             return dummyBitmap;
         }
 
-        bool CheckSize(AVSubtitle* subtitle, int& width, int& height, int& offsetX, int& offsetY, TimedTextSize& cueSize, TimedTextPoint& cuePosition)
+        bool CheckSize(AVSubtitle* subtitle, int& width, int& height, int& offsetX, int& offsetY,TimedTextSize& cueSize,TimedTextPoint& cuePosition)
         {
             if (!GetInitialSize())
             {
@@ -290,12 +293,12 @@ namespace FFmpegInteropX
                 }
             }
 
-            cueSize.Unit = TimedTextUnit::Percentage;
+            cueSize.Unit =TimedTextUnit::Percentage;
             cueSize.Width = (double)width * 100 / subtitleWidth;
             cueSize.Height = (double)height * 100 / targetHeight;
 
             // for some reason, all bitmap cues are moved down by 5% by uwp. we need to compensate for that.
-            cuePosition.Unit = TimedTextUnit::Percentage;
+            cuePosition.Unit =TimedTextUnit::Percentage;
             cuePosition.X = (double)offsetX * 100 / subtitleWidth;
             cuePosition.Y = ((double)(offsetY - heightOffset) * 100 / targetHeight) - 5;
 
@@ -328,15 +331,15 @@ namespace FFmpegInteropX
         }
 
     private:
-        int videoWidth;
-        int videoHeight;
-        double videoAspectRatio;
-        bool hasSize;
-        int subtitleWidth;
-        int subtitleHeight;
-        int optimalHeight;
-        SoftwareBitmap^ dummyBitmap;
-        std::map<String^, AVSubtitle*> map;
-        int nextId;
+        int videoWidth = 0;
+        int videoHeight = 0;
+        double videoAspectRatio = 0.0;
+        bool hasSize = false;
+        int subtitleWidth = 0;
+        int subtitleHeight = 0;
+        int optimalHeight = 0;
+        SoftwareBitmap dummyBitmap = { nullptr };
+        std::map<winrt::hstring, AVSubtitle*> map;
+        int nextId = 0;
     };
 }
