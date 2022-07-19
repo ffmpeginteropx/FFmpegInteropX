@@ -87,6 +87,11 @@ namespace MediaPlayerCS
 
         private async void MainPage_KeyDown(CoreWindow sender, KeyEventArgs args)
         {
+            if (args.Handled)
+            {
+                return;
+            }
+
             if (args.VirtualKey == VirtualKey.Enter && (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down)
                == CoreVirtualKeyStates.Down && StorageApplicationPermissions.FutureAccessList.Entries.Count == 1)
             {

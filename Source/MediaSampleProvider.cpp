@@ -210,7 +210,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
 
 MediaStreamSample MediaSampleProvider::GetNextSample()
 {
-    DebugMessage(L"GetNextSample\n");
+    //DebugMessage(L"GetNextSample\n");
 
     HRESULT hr = S_OK;
 
@@ -333,7 +333,7 @@ HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan const& timestamp
 
 void MediaSampleProvider::QueuePacket(AVPacket* packet)
 {
-    DebugMessage(L" - QueuePacket\n");
+    //DebugMessage(L" - QueuePacket\n");
 
     if (m_isEnabled)
     {

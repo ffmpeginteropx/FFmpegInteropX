@@ -161,7 +161,7 @@ namespace FFmpegInteropX
             return buffer.at(index);
         }
 
-        int TryFindPacketIndex(LONGLONG pts, bool requireKeyFrame)
+        int TryFindPacketIndex(LONGLONG pts, bool requireKeyFrame, bool fastSeek)
         {
             std::lock_guard<std::mutex> lock(mutex);
 
@@ -170,28 +170,35 @@ namespace FFmpegInteropX
             int result = -1;
             for (auto packet : buffer)
             {
-                if (packet->pts <= pts)
+                if (packet->pts != AV_NOPTS_VALUE)
                 {
-                    if (!requireKeyFrame || packet->flags & AV_PKT_FLAG_KEY)
+                    // with fast seek, we can select a key frame behind seek target
+                    if (packet->pts <= pts || (fastSeek && result == -1))
                     {
-                        result = index;
-                        if (packet->pts + packet->duration >= pts)
+                        if (!requireKeyFrame || packet->flags & AV_PKT_FLAG_KEY)
                         {
-                            hasEnd = true;
-                            break;
+                            result = index;
                         }
                     }
-                }
-                else
-                {
-                    hasEnd = true;
-                    break;
+
+                    if (packet->pts + packet->duration >= pts && (!fastSeek || result > -1))
+                    {
+                        hasEnd = true;
+                        break;
+                    }
                 }
                 index++;
             }
 
+            if (hasEnd && result == -1 && !fastSeek)
+            {
+                // no key frame between current frame and target position. need to decode from here.
+                result = 0;
+            }
+
             if (result >= 0 && !hasEnd)
             {
+                // key frames found but buffer range not up to target position
                 result = -1;
             }
 

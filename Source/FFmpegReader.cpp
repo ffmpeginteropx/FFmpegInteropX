@@ -135,38 +135,33 @@ HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan
         readResult = 0;
     }
 
-    // Select the first valid stream either from video or audio
-    auto stream = videoStream ? videoStream : audioStream;
+    auto isForwardSeek = position > currentPosition;
 
-    if (stream)
+    if (isForwardSeek && TrySeekBuffered(position, actualPosition, fastSeek, videoStream, audioStream))
     {
-        int64_t seekTarget = stream->ConvertPosition(position);
-
-        if (TrySeekBuffered(position, actualPosition, fastSeek, videoStream, audioStream))
-        {
-            // all good
-        }
-        else if (fastSeek)
-        {
-            hr = SeekFast(position, actualPosition, currentPosition, videoStream, audioStream);
-        }
-        else
-        {
-            if (av_seek_frame(avFormatCtx, stream->StreamIndex(), seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
-            {
-                hr = E_FAIL;
-                DebugMessage(L" - ### Error while seeking\n");
-            }
-            else
-            {
-                // Flush all active streams with buffers
-                Flush();
-            }
-        }
+        // all good
+        DebugMessage(L"BufferedSeek!\n");
+    }
+    else if (fastSeek)
+    {
+        hr = SeekFast(position, actualPosition, currentPosition, videoStream, audioStream);
     }
     else
     {
-        hr = E_FAIL;
+        DebugMessage(L"NormalSeek\n");
+        // Select the first valid stream either from video or audio
+        auto stream = videoStream ? videoStream : audioStream;
+        int64_t seekTarget = stream->ConvertPosition(position);
+        if (av_seek_frame(avFormatCtx, stream->StreamIndex(), seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
+        {
+            hr = E_FAIL;
+            DebugMessage(L" - ### Error while seeking\n");
+        }
+        else
+        {
+            // Flush all active streams with buffers
+            Flush();
+        }
     }
 
     return hr;
@@ -174,6 +169,8 @@ HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan
 
 HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
 {
+    DebugMessage(L"SeekFast\n");
+
     HRESULT hr = S_OK;
     int64_t seekTarget = videoStream->ConvertPosition(position);
     bool isUriSource = avFormatCtx->url;
@@ -233,11 +230,14 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
         TimeSpan timestampVideo;
         TimeSpan timestampVideoDuration;
         hr = videoStream->GetNextPacketTimestamp(timestampVideo, timestampVideoDuration);
+        bool hasVideoPts = hr == S_OK;
 
-        if (hr == S_FALSE && isUriSource)
+        if (hr == S_FALSE)
         {
-            //TODO if (dynamic_cast<UncompressedSampleProvider^>(videoStream))
+            // S_FALSE means that the video packets do not contain timestamps
+            if (std::dynamic_pointer_cast<UncompressedSampleProvider>(videoStream))
             {
+                // If we do not use passthrough, we can decode (and drop) then next sample to get the correct time.
                 auto sample = videoStream->GetNextSample();
                 if (sample)
                 {
@@ -247,13 +247,14 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                     hr = S_OK;
                 }
             }
-            //else
+            else
             {
-                //hr = audioStream->GetNextPacketTimestamp(timestampVideo, timestampVideoDuration);
+                // Otherwise, try with audio stream instead
+                hr = audioStream->GetNextPacketTimestamp(timestampVideo, timestampVideoDuration);
             }
         }
 
-        while (hr == S_OK && seekForward && timestampVideo < referenceTime && !isUriSource)
+        while (hr == S_OK && seekForward && timestampVideo < referenceTime && !isUriSource && hasVideoPts)
         {
             // our min position was not respected. try again with higher min and target.
             min += videoStream->ConvertDuration(TimeSpan{ 50000000 });
@@ -345,14 +346,15 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
 bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
 {
     bool result = true;
-    int vIndex = 0; int aIndex = 0;
+    int vIndex = -1;
+    int aIndex = -1;
 
     TimeSpan targetPosition = position;
 
     if (videoStream)
     {
         auto pts = videoStream->ConvertPosition(targetPosition);
-        vIndex = videoStream->packetBuffer->TryFindPacketIndex(pts, true);
+        vIndex = videoStream->packetBuffer->TryFindPacketIndex(pts, true, fastSeek);
         result &= vIndex >= 0;
 
         if (result && fastSeek)
@@ -368,11 +370,16 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
     if (result && audioStream)
     {
         auto pts = audioStream->ConvertPosition(targetPosition);
-        aIndex = audioStream->packetBuffer->TryFindPacketIndex(pts, false);
+        aIndex = audioStream->packetBuffer->TryFindPacketIndex(pts, false, fastSeek);
         result &= aIndex >= 0;
     }
 
-    if (result)
+    if (result && vIndex == 0)
+    {
+        // We are at correct position already. No flush required.
+        DebugMessage(L"BufferedSeek: No flush\n");
+    }
+    else if (result)
     {
         // Flush all active streams but keep buffers
         FlushCodecs();

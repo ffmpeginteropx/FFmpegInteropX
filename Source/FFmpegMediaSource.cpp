@@ -1952,6 +1952,8 @@ namespace winrt::FFmpegInteropX::implementation
 
     HRESULT FFmpegMediaSource::Seek(const TimeSpan& position, TimeSpan& actualPosition, bool allowFastSeek)
     {
+        DebugMessage(L"Seek\n");
+
         auto diffCurrent = position - currentPosition;
         auto diffLast = position - lastPosition;
         bool isSeekBeforeStreamSwitch = allowFastSeek && config->FastSeekSmartStreamSwitching() && !isFirstSeekAfterStreamSwitch && diffCurrent.count() > 0 && diffCurrent.count() < 5000000 && diffLast.count() > 0 && diffLast.count() < 10000000;
