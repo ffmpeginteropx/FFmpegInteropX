@@ -106,7 +106,7 @@ void FFmpegReader::Stop()
 void FFmpegReader::FlushCodecs()
 {
     std::lock_guard<std::mutex> lock(mutex);
-    for (auto stream : *sampleProviders)
+    for (auto& stream : *sampleProviders)
     {
         if (stream)
             stream->Flush(false);
@@ -116,7 +116,7 @@ void FFmpegReader::FlushCodecs()
 void FFmpegReader::Flush()
 {
     std::lock_guard<std::mutex> lock(mutex);
-    for (auto stream : *sampleProviders)
+    for (auto& stream : *sampleProviders)
     {
         if (stream)
             stream->Flush(true);
@@ -254,7 +254,8 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
             }
         }
 
-        while (hr == S_OK && seekForward && timestampVideo < referenceTime && !isUriSource && hasVideoPts)
+        int seekCount = 0;
+        while (hr == S_OK && seekForward && timestampVideo < referenceTime && !isUriSource && hasVideoPts && seekCount++ < 10)
         {
             // our min position was not respected. try again with higher min and target.
             min += videoStream->ConvertDuration(TimeSpan{ 50000000 });
@@ -487,7 +488,7 @@ bool FFmpegReader::CheckNeedsSleep(bool wasSleeping)
     {
         sleep = false;
         fullStream = nullptr;
-        for (auto stream : *sampleProviders)
+        for (auto& stream : *sampleProviders)
         {
             if (stream && stream->IsBufferFull())
             {
@@ -540,7 +541,7 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
         }
         else
         {
-            auto provider = sampleProviders->at(avPacket->stream_index);
+            auto& provider = sampleProviders->at(avPacket->stream_index);
             if (provider)
             {
                 provider->QueuePacket(avPacket);

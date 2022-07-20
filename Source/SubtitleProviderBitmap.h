@@ -56,7 +56,7 @@ namespace FFmpegInteropX
 
         virtual IMediaCue CreateCue(AVPacket* packet, TimeSpan* position, TimeSpan* duration) override
         {
-            AVSubtitle* subtitle = (AVSubtitle*)malloc(sizeof(AVSubtitle));
+            AVSubtitle* subtitle = (AVSubtitle*)av_mallocz(sizeof(AVSubtitle));
             if (!subtitle)
             {
                 return nullptr;
@@ -107,7 +107,7 @@ namespace FFmpegInteropX
             else if (result <= 0)
             {
                 avsubtitle_free(subtitle);
-                delete subtitle;
+                av_freep(subtitle);
                 OutputDebugString(L"Failed to decode subtitle.");
             }
             return nullptr;
