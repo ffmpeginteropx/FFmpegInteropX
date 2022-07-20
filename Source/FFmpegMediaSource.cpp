@@ -44,7 +44,6 @@ namespace winrt::FFmpegInteropX::implementation
         , dispatcher(dispatcher)
     {
         avDict = NULL;
-        fileStreamBuffer = NULL;
         avHardwareContext = NULL;
         avHardwareContextDefault = NULL;
         device = NULL;
@@ -127,6 +126,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         }
 
+        unsigned char* fileStreamBuffer = NULL;
         if (SUCCEEDED(hr))
         {
             // Setup FFmpeg custom IO to access file as stream. This is necessary when accessing any file outside of app installation directory and appdata folder.
@@ -143,6 +143,7 @@ namespace winrt::FFmpegInteropX::implementation
             avIOCtx = avio_alloc_context(fileStreamBuffer, config->StreamBufferSize(), 0, (void*)winrt::get_abi(this), FileStreamRead, 0, FileStreamSeek);
             if (avIOCtx == nullptr)
             {
+                av_free(fileStreamBuffer);
                 hr = E_OUTOFMEMORY;
             }
         }
@@ -1404,11 +1405,6 @@ namespace winrt::FFmpegInteropX::implementation
         if (m_pReader != nullptr)
         {
             m_pReader.reset();;
-        }
-
-        if (fileStreamBuffer)
-        {
-            av_freep(fileStreamBuffer);
         }
 
         for (auto &x : subtitleStreams)

@@ -245,7 +245,6 @@ namespace winrt::FFmpegInteropX::implementation
         hstring audioCodecName{};
         TimeSpan mediaDuration{};
         TimeSpan subtitleDelay{};
-        unsigned char* fileStreamBuffer = NULL;
         bool isFirstSeek;
         AVBufferRef* avHardwareContext = NULL;
         AVBufferRef* avHardwareContextDefault = NULL;
