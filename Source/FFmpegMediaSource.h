@@ -236,7 +236,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         std::shared_ptr<MediaMetadata> metadata = { nullptr };
 
-        std::recursive_mutex mutexGuard;
+        winrt::slim_mutex mutex;
         CoreDispatcher dispatcher = { nullptr };
         MediaPlaybackSession session = { nullptr };
         winrt::event_token sessionPositionEvent{};

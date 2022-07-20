@@ -182,7 +182,7 @@ namespace FFmpegInteropX
 
         void SetSubtitleDelay(TimeSpan const& delay)
         {
-            mutex.lock();
+            auto guard = std::lock_guard(mutex);
             newDelay = delay;
             try
             {
@@ -190,9 +190,7 @@ namespace FFmpegInteropX
             }
             catch (...)
             {
-
             }
-            mutex.unlock();
         }
 
         int parseInt(std::wstring const& str)
@@ -230,7 +228,7 @@ namespace FFmpegInteropX
 
         void AddCue(IMediaCue const& cue)
         {
-            mutex.lock();
+            auto guard = std::lock_guard(mutex);
             try
             {
                 if (Metadata::ApiInformation::IsApiContractPresent(L"Windows.Phone.PhoneContract", 1, 0))
@@ -271,7 +269,6 @@ namespace FFmpegInteropX
             {
                 OutputDebugString(L"Failed to add subtitle cue.");
             }
-            mutex.unlock();
         }
 
         void DispatchCueToTrack(IMediaCue const& cue)
@@ -295,7 +292,7 @@ namespace FFmpegInteropX
         void OnRefCueEntered(TimedMetadataTrack const& sender, MediaCueEventArgs const& args)
         {
             UNREFERENCED_PARAMETER(sender);
-            mutex.lock();
+            auto guard = std::lock_guard(mutex);
             try {
                 //remove all cues from subtitle track
                 while (SubtitleTrack.Cues().Size() > 0)
@@ -309,13 +306,12 @@ namespace FFmpegInteropX
             catch (...)
             {
             }
-            mutex.unlock();
         }
 
         void OnCueEntered(TimedMetadataTrack const& sender, MediaCueEventArgs const& args)
         {
             UNREFERENCED_PARAMETER(sender);
-            mutex.lock();
+            auto guard = std::lock_guard(mutex);
             try
             {
                 //cleanup old cues to free memory
@@ -337,7 +333,6 @@ namespace FFmpegInteropX
             {
                 OutputDebugString(L"Failed to cleanup old cues.");
             }
-            mutex.unlock();
         }
 
         void TriggerUpdateCues()
@@ -368,7 +363,7 @@ namespace FFmpegInteropX
         {
             UNREFERENCED_PARAMETER(sender);
             UNREFERENCED_PARAMETER(args);
-            mutex.lock();
+            auto guard = std::lock_guard(mutex);
 
             try
             {
@@ -418,8 +413,6 @@ namespace FFmpegInteropX
             {
                 timer.Stop();
             }
-
-            mutex.unlock();
         }
 
         void UpdateCuePositions()
@@ -531,7 +524,7 @@ namespace FFmpegInteropX
             {
                 CompressedSampleProvider::Flush();
 
-                mutex.lock();
+                auto guard = std::lock_guard(mutex);
 
                 if (dispatcher)
                 {
@@ -542,8 +535,6 @@ namespace FFmpegInteropX
                 {
                     ClearSubtitles();
                 }
-
-                mutex.unlock();
             }
         }
 
