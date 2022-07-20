@@ -1406,6 +1406,11 @@ namespace winrt::FFmpegInteropX::implementation
             m_pReader.reset();;
         }
 
+        if (fileStreamBuffer)
+        {
+            av_freep(fileStreamBuffer);
+        }
+
         for (auto &x : subtitleStreams)
             x.reset();
         for (auto &x : sampleProviders)
