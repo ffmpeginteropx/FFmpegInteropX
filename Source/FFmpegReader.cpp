@@ -442,6 +442,12 @@ void FFmpegReader::ReadDataLoop()
         ret = ReadPacket();
         if (ret < 0)
         {
+            std::lock_guard<std::mutex> lock(mutex);
+            isEnabled = false;
+            sleepTimer->stop();
+            delete sleepTimer;
+            delete sleepTimerTarget;
+            waitStreamEvent.set();
             break;
         }
     }
@@ -556,13 +562,17 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer* buffer)
 {
     if (!(buffer->IsEmpty()))
     {
-        return readResult;
+        return 0;
     }
 
     bool manual;
     {
         std::lock_guard<std::mutex> lock(mutex);
         manual = !isEnabled;
+        if (readResult < 0)
+        {
+            return readResult;
+        }
     }
 
     if (manual)
@@ -596,7 +606,7 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer* buffer)
                     forceReadStream = -1;
                     break;
                 }
-                else if (readResult < 0)
+                else if (readResult < 0 || !isEnabled)
                 {
                     break;
                 }

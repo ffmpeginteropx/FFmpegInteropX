@@ -165,6 +165,21 @@ namespace FFmpegInteropX
         {
             std::lock_guard<std::mutex> lock(mutex);
 
+            if (buffer.size() == 0)
+            {
+                return -1;
+            }
+
+            auto firstPacket = buffer.front();
+            auto lastPacket = buffer.back();
+            auto firstPts = firstPacket->pts != AV_NOPTS_VALUE ? firstPacket->pts : firstPacket->dts;
+            auto lastPts = lastPacket->pts != AV_NOPTS_VALUE ? lastPacket->pts : lastPacket->dts;
+
+            if (firstPts != AV_NOPTS_VALUE && lastPts != AV_NOPTS_VALUE && (firstPts > pts || lastPts < pts))
+            {
+                return -1;
+            }
+
             bool hasEnd = false;
             int index = 0;
             int result = -1;

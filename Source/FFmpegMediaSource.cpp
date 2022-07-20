@@ -1785,12 +1785,12 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
 
-    m_pReader->Start();
+        m_pReader->Start();
 
-    isFirstSeek = false;
-    isFirstSeekAfterStreamSwitch = false;
-    mutexGuard.unlock();
-}
+        isFirstSeek = false;
+        isFirstSeekAfterStreamSwitch = false;
+        mutexGuard.unlock();
+    }
 
     void FFmpegMediaSource::OnSampleRequested(winrt::Windows::Media::Core::MediaStreamSource const& sender, winrt::Windows::Media::Core::MediaStreamSourceSampleRequestedEventArgs const& args)
     {
