@@ -12,7 +12,7 @@ namespace winrt::FFmpegInteropX::implementation
     {
         if (internalView == nullptr)
         {
-            auto guard = std::lock_guard(mutex);
+            std::lock_guard lock(mutex);
             try
             {
                 if (internalView == nullptr)

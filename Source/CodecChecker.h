@@ -74,7 +74,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             if (!hasCheckedHardwareAcceleration)
             {
-                auto guard = std::lock_guard(mutex);
+                std::lock_guard lock(mutex);
 
                 if (!hasCheckedHardwareAcceleration)
                 {
@@ -86,7 +86,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         static void Refresh()
         {
-            auto guard = std::lock_guard(mutex);
+            std::lock_guard lock(mutex);
 
             PerformCheckHardwareAcceleration();
             hasCheckedHardwareAcceleration = true;
@@ -125,7 +125,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             if (!hasCheckedExtension)
             {
-                auto guard = std::lock_guard(mutex);
+                std::lock_guard lock(mutex);
 
                 if (!hasCheckedExtension)
                 {
