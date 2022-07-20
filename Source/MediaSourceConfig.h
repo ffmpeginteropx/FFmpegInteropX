@@ -82,8 +82,13 @@ namespace winrt::FFmpegInteropX::implementation
         void MaxSupportedPlaybackRate(double value);
 
         ///<summary>The buffer size in bytes to use for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
+        //[deprecated("Deprecated due to irritating name. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
         uint32_t StreamBufferSize();
         void StreamBufferSize(uint32_t value);
+
+        ///<summary>The maximum number of bytes to read in one chunk for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
+        uint32_t FileStreamReadSize();
+        void FileStreamReadSize(uint32_t value);
 
         ///<summary>Additional options to use when creating the ffmpeg AVFormatContext.</summary>
         Windows::Foundation::Collections::PropertySet FFmpegOptions();
@@ -100,6 +105,11 @@ namespace winrt::FFmpegInteropX::implementation
         winrt::Windows::Foundation::TimeSpan DefaultBufferTimeUri();
         void DefaultBufferTimeUri(winrt::Windows::Foundation::TimeSpan const& value);
 
+
+        ///<summary>Enables or disables the read-ahead buffer.</summary>
+        ///<remarks>This value can be changed any time during playback.</remarks>
+        bool ReadAheadBufferEnabled();
+        void ReadAheadBufferEnabled(bool value);
 
         ///<summary>The maximum number of bytes to buffer ahead per stream.</summary>
         ///<remarks>This value can be changed any time during playback.</remarks>
@@ -229,10 +239,11 @@ namespace winrt::FFmpegInteropX::implementation
         unsigned int m_MaxVideoThreads = 0;
         unsigned int m_MaxAudioThreads = 0;
         double m_MaxSupportedPlaybackRate = 0.0;
-        unsigned int m_StreamBufferSize = 0;
+        unsigned int m_FileStreamReadSize = 0;
         winrt::Windows::Foundation::Collections::PropertySet m_FFmpegOptions = {};
         winrt::Windows::Foundation::TimeSpan m_DefaultBufferTime{};
         winrt::Windows::Foundation::TimeSpan m_DefaultBufferTimeUri{};
+        bool m_ReadAheadBufferEnabled = false;
         long long m_ReadAheadBufferSize = 0;
         winrt::Windows::Foundation::TimeSpan m_ReadAheadBufferDuration{};
         bool m_AutoSelectForcedSubtitles = false;

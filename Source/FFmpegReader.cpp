@@ -38,26 +38,24 @@ FFmpegReader::~FFmpegReader()
 
 void FFmpegReader::Start()
 {
+    std::lock_guard lock(mutex);
+    if (!isActive && (config.ReadAheadBufferEnabled() || config.ReadAheadBufferSize() > 0 || config.ReadAheadBufferDuration().count() > 0) && !config.as<implementation::MediaSourceConfig>()->IsFrameGrabber)
     {
-        std::lock_guard<std::mutex> lock(mutex);
-        if (!isEnabled && (config.ReadAheadBufferSize() > 0 || config.ReadAheadBufferDuration().count() > 0) && !config.as<implementation::MediaSourceConfig>()->IsFrameGrabber)
+        sleepTimerTarget = new call<int>([this](int value) { OnTimer(value); });
+        if (!sleepTimerTarget)
         {
-            sleepTimerTarget = new call<int>([this](int value) { OnTimer(value); });
-            if (!sleepTimerTarget)
-            {
-                return;
-            }
-
-            sleepTimer = new timer<int>(100u, 0, sleepTimerTarget, true);
-            if (!sleepTimer)
-            {
-                delete sleepTimerTarget;
-                return;
-            }
-
-            readTask = create_task([this]() { this->ReadDataLoop(); });
-            isEnabled = true;
+            return;
         }
+
+        sleepTimer = new timer<int>(100u, 0, sleepTimerTarget, true);
+        if (!sleepTimer)
+        {
+            delete sleepTimerTarget;
+            return;
+        }
+
+        readTask = create_task([this]() { this->ReadDataLoop(); });
+        isActive = true;
     }
 }
 
@@ -65,10 +63,10 @@ void FFmpegReader::Stop()
 {
     bool wait = false;
     {
-        std::lock_guard<std::mutex> lock(mutex);
-        if (isEnabled)
+        std::lock_guard lock(mutex);
+        if (isActive)
         {
-            isEnabled = false;
+            isActive = false;
             wait = true;
 
             sleepTimer->stop();
@@ -105,7 +103,7 @@ void FFmpegReader::Stop()
 
 void FFmpegReader::FlushCodecs()
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard lock(mutex);
     for (auto& stream : *sampleProviders)
     {
         if (stream)
@@ -115,7 +113,7 @@ void FFmpegReader::FlushCodecs()
 
 void FFmpegReader::Flush()
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard lock(mutex);
     for (auto& stream : *sampleProviders)
     {
         if (stream)
@@ -127,6 +125,8 @@ void FFmpegReader::Flush()
 HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
 {
     Stop();
+
+    std::lock_guard lock(mutex);
 
     auto hr = S_OK;
     if (readResult != 0)
@@ -424,13 +424,29 @@ void FFmpegReader::ReadDataLoop()
 
     while (true)
     {
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            if (!isEnabled)
-            {
-                break;
-            }
+        // Read next packet
+        ret = ReadPacket();
 
+        // Lock and check result
+        std::lock_guard lock(mutex);
+        if (!isActive)
+        {
+            // Stopped externally. No need to clean up.
+            break;
+        }
+        else if (ret < 0 || !config.ReadAheadBufferEnabled())
+        {
+            // Self stop. Cleanup.
+            isActive = false;
+            sleepTimer->stop();
+            delete sleepTimer;
+            delete sleepTimerTarget;
+            waitStreamEvent.set();
+            break;
+        }
+        else
+        {
+            // Check if needs sleep
             sleep = CheckNeedsSleep(sleep);
             if (sleep)
             {
@@ -439,26 +455,14 @@ void FFmpegReader::ReadDataLoop()
                 break;
             }
         }
-
-        ret = ReadPacket();
-        if (ret < 0)
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            isEnabled = false;
-            sleepTimer->stop();
-            delete sleepTimer;
-            delete sleepTimerTarget;
-            waitStreamEvent.set();
-            break;
-        }
     }
 }
 
 void FFmpegInteropX::FFmpegReader::OnTimer(int value)
 {
     UNREFERENCED_PARAMETER(value);
-    std::lock_guard<std::mutex> lock(mutex);
-    if (isEnabled)
+    std::lock_guard lock(mutex);
+    if (isActive)
     {
         readTask = create_task([this]() { ReadDataLoop(); });
         isSleeping = false;
@@ -482,9 +486,8 @@ bool FFmpegReader::CheckNeedsSleep(bool wasSleeping)
         sleep = true;
         fullStream = lastStream;
     }
-
     // check if we can stop sleeping
-    if (sleep && !fullStream && !fullStream->IsBufferFull())
+    else if (sleep && !fullStream && !fullStream->IsBufferFull())
     {
         sleep = false;
         fullStream = nullptr;
@@ -511,11 +514,11 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
 
     if (!avPacket)
     {
-        ret = E_OUTOFMEMORY;
+        return E_OUTOFMEMORY;
     }
 
     ret = av_read_frame(avFormatCtx, avPacket);
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard lock(mutex);
     readResult = ret;
 
     if (ret < 0)
@@ -568,8 +571,8 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer* buffer)
 
     bool manual;
     {
-        std::lock_guard<std::mutex> lock(mutex);
-        manual = !isEnabled;
+        std::lock_guard lock(mutex);
+        manual = !isActive;
         if (readResult < 0)
         {
             return readResult;
@@ -600,14 +603,14 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer* buffer)
         {
             task<void> waitStreamTask;
             {
-                std::lock_guard<std::mutex> lock(mutex);
+                std::lock_guard lock(mutex);
 
                 if (!(buffer->IsEmpty()))
                 {
                     forceReadStream = -1;
                     break;
                 }
-                else if (readResult < 0 || !isEnabled)
+                else if (readResult < 0 || !isActive)
                 {
                     break;
                 }

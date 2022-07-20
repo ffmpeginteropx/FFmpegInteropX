@@ -347,7 +347,7 @@ void MediaSampleProvider::QueuePacket(AVPacket* packet)
 
 bool MediaSampleProvider::IsBufferFull()
 {
-    return packetBuffer->IsFull(this);
+    return IsEnabled() && packetBuffer->IsFull(this);
 }
 
 void MediaSampleProvider::Flush(bool flushBuffers)

@@ -58,7 +58,7 @@ namespace FFmpegInteropX
         std::shared_ptr<MediaSampleProvider> fullStream{ nullptr };
 
         std::mutex mutex;
-        bool isEnabled = false;
+        bool isActive = false;
         bool isSleeping = false;
         int forceReadStream = 0;
         int readResult = 0;

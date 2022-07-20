@@ -33,14 +33,13 @@ namespace FFmpegInteropX
             : config(config)
         {
             StreamIndex = streamIndex;
-
         }
 
         int StreamIndex;
 
         void QueuePacket(AVPacket* packet)
         {
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard lock(mutex);
             buffer.push_back(packet);
             bufferSize += packet->size;
         }
@@ -100,13 +99,17 @@ namespace FFmpegInteropX
 
         bool IsEmpty()
         {
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard lock(mutex);
             return buffer.empty();
         }
 
         bool IsFull(MediaSampleProvider* sampleProvider)
         {
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard lock(mutex);
+            if (buffer.empty())
+            {
+                return false;
+            }
             auto maxSize = config.ReadAheadBufferSize();
             auto maxDuration = config.ReadAheadBufferDuration();
 
@@ -129,7 +132,7 @@ namespace FFmpegInteropX
 
         AVPacket* PopPacket()
         {
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard lock(mutex);
 
             AVPacket* packet = NULL;
             if (!buffer.empty())
@@ -144,7 +147,7 @@ namespace FFmpegInteropX
 
         AVPacket* PeekPacket()
         {
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard lock(mutex);
 
             AVPacket* packet = NULL;
             if (!buffer.empty())
@@ -157,13 +160,13 @@ namespace FFmpegInteropX
 
         AVPacket* PeekPacketIndex(int index)
         {
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard lock(mutex);
             return buffer.at(index);
         }
 
         int TryFindPacketIndex(LONGLONG pts, bool requireKeyFrame, bool fastSeek)
         {
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard lock(mutex);
 
             if (buffer.size() == 0)
             {
@@ -222,7 +225,7 @@ namespace FFmpegInteropX
 
         void Flush()
         {
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard lock(mutex);
             while (!buffer.empty())
             {
                 auto packet = buffer.front();
@@ -235,7 +238,7 @@ namespace FFmpegInteropX
 
         void DropPackets(int count)
         {
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard lock(mutex);
             for (int i = 0; i < count; i++)
             {
                 auto packet = buffer.front();
@@ -249,7 +252,7 @@ namespace FFmpegInteropX
     private:
         std::deque<AVPacket*> buffer;
         std::mutex mutex;
-        size_t bufferSize;
-        winrt::FFmpegInteropX::MediaSourceConfig config;
+        size_t bufferSize = 0;
+        winrt::FFmpegInteropX::MediaSourceConfig config{nullptr};
     };
 }

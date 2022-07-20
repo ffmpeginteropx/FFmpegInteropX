@@ -33,14 +33,14 @@ namespace winrt::FFmpegInteropX::implementation
         m_MaxAudioThreads = 2;
 
         m_MaxSupportedPlaybackRate = 4.0;
-        m_StreamBufferSize = 16384;
+        m_FileStreamReadSize = 16384;
 
         m_FFmpegOptions = PropertySet();
 
         m_DefaultBufferTime = TimeSpan{ 0 };
         m_DefaultBufferTimeUri = TimeSpan{ 50000000 };
 
-
+        m_ReadAheadBufferEnabled = true;
         m_ReadAheadBufferSize = 100 * 1024 * 1024;
         m_ReadAheadBufferDuration = TimeSpan{ 600000000 };
 
@@ -273,12 +273,22 @@ namespace winrt::FFmpegInteropX::implementation
 
     uint32_t MediaSourceConfig::StreamBufferSize()
     {
-        return m_StreamBufferSize;
+        return m_FileStreamReadSize;
     }
 
     void MediaSourceConfig::StreamBufferSize(uint32_t value)
     {
-        m_StreamBufferSize = value;
+        m_FileStreamReadSize = value;
+    }
+
+    uint32_t MediaSourceConfig::FileStreamReadSize()
+    {
+        return m_FileStreamReadSize;
+    }
+
+    void MediaSourceConfig::FileStreamReadSize(uint32_t value)
+    {
+        m_FileStreamReadSize = value;
     }
 
     Windows::Foundation::Collections::PropertySet MediaSourceConfig::FFmpegOptions()
@@ -309,6 +319,16 @@ namespace winrt::FFmpegInteropX::implementation
     void MediaSourceConfig::DefaultBufferTimeUri(Windows::Foundation::TimeSpan const& value)
     {
         m_DefaultBufferTimeUri = value;
+    }
+
+    void MediaSourceConfig::ReadAheadBufferEnabled(bool value)
+    {
+        m_ReadAheadBufferEnabled = value;
+    }
+
+    bool MediaSourceConfig::ReadAheadBufferEnabled()
+    {
+        return m_ReadAheadBufferEnabled;
     }
 
     void MediaSourceConfig::ReadAheadBufferSize(long long value)

@@ -93,6 +93,10 @@ namespace winrt::FFmpegInteropX::implementation
         ///<param name="stream">The subtitle stream.</param>
         IAsyncOperation<IVectorView<FFmpegInteropX::SubtitleStreamInfo>> AddExternalSubtitleAsync(IRandomAccessStream stream);
 
+        ///<summary>Starts filling the read-ahead buffer, if enabled in the configuration.</summary>
+        ///<remarks>Let the stream buffer fill before starting playback.</remarks>
+        void StartBuffering();
+
         ///<summary>Gets the configuration that has been passed when creating the MSS instance.</summary>
         FFmpegInteropX::MediaSourceConfig Configuration();
 

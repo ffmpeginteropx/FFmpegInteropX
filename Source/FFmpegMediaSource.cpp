@@ -133,7 +133,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             // Setup FFmpeg custom IO to access file as stream. This is necessary when accessing any file outside of app installation directory and appdata folder.
             // Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
-            fileStreamBuffer = (unsigned char*)av_malloc(config->StreamBufferSize());
+            fileStreamBuffer = (unsigned char*)av_malloc(config->FileStreamReadSize());
             if (fileStreamBuffer == nullptr)
             {
                 hr = E_OUTOFMEMORY;
@@ -1327,6 +1327,11 @@ namespace winrt::FFmpegInteropX::implementation
         return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName());
     }
 
+    void FFmpegMediaSource::StartBuffering()
+    {
+        m_pReader->Start();
+    }
+
     FFmpegInteropX::MediaSourceConfig FFmpegMediaSource::Configuration()
     {
         return config.as<winrt::FFmpegInteropX::MediaSourceConfig>();
@@ -1785,8 +1790,6 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
 
-        m_pReader->Start();
-
         isFirstSeek = false;
         isFirstSeekAfterStreamSwitch = false;
         mutexGuard.unlock();
@@ -1798,6 +1801,10 @@ namespace winrt::FFmpegInteropX::implementation
         mutexGuard.lock();
         if (mss != nullptr)
         {
+            if (config->ReadAheadBufferEnabled())
+            {
+                m_pReader->Start();
+            }
             if (currentAudioStream && args.Request().StreamDescriptor() == currentAudioStream->StreamDescriptor())
             {
                 auto sample = currentAudioStream->GetNextSample();
