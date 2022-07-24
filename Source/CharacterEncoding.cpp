@@ -12,7 +12,7 @@ namespace winrt::FFmpegInteropX::implementation
     {
         if (internalView == nullptr)
         {
-            mutex.lock();
+            std::lock_guard lock(mutex);
             try
             {
                 if (internalView == nullptr)
@@ -192,7 +192,6 @@ namespace winrt::FFmpegInteropX::implementation
             {
             }
             internalView = internalMap.GetView();
-            mutex.unlock();
         }
         return internalView;
     }

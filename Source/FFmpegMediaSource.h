@@ -229,7 +229,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         std::shared_ptr<MediaMetadata> metadata = { nullptr };
 
-        std::recursive_mutex mutexGuard;
+        std::recursive_mutex mutex;
         CoreDispatcher dispatcher = { nullptr };
         MediaPlaybackSession session = { nullptr };
         winrt::event_token sessionPositionEvent{};
@@ -238,7 +238,6 @@ namespace winrt::FFmpegInteropX::implementation
         hstring audioCodecName{};
         TimeSpan mediaDuration{};
         TimeSpan subtitleDelay{};
-        unsigned char* fileStreamBuffer = NULL;
         bool isFirstSeek;
         AVBufferRef* avHardwareContext = NULL;
         AVBufferRef* avHardwareContextDefault = NULL;

@@ -44,7 +44,6 @@ namespace winrt::FFmpegInteropX::implementation
         , dispatcher(dispatcher)
     {
         avDict = NULL;
-        fileStreamBuffer = NULL;
         avHardwareContext = NULL;
         avHardwareContextDefault = NULL;
         device = NULL;
@@ -54,14 +53,12 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (!isRegistered)
         {
-            isRegisteredMutex.lock();
+            std::lock_guard lock(isRegisteredMutex);
             if (!isRegistered)
             {
                 LanguageTagConverter::Initialize();
                 isRegistered = true;
             }
-
-            isRegisteredMutex.unlock();
         }
         subtitleDelay = config->DefaultSubtitleDelay();
         audioStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::AudioStreamInfo>();
@@ -129,6 +126,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         }
 
+        unsigned char* fileStreamBuffer = NULL;
         if (SUCCEEDED(hr))
         {
             // Setup FFmpeg custom IO to access file as stream. This is necessary when accessing any file outside of app installation directory and appdata folder.
@@ -145,6 +143,7 @@ namespace winrt::FFmpegInteropX::implementation
             avIOCtx = avio_alloc_context(fileStreamBuffer, config->StreamBufferSize(), 0, (void*)winrt::get_abi(this), FileStreamRead, 0, FileStreamSeek);
             if (avIOCtx == nullptr)
             {
+                av_free(fileStreamBuffer);
                 hr = E_OUTOFMEMORY;
             }
         }
@@ -255,7 +254,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList const& sender, TimedMetadataPresentationModeChangedEventArgs const& args)
     {
         UNREFERENCED_PARAMETER(sender);
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         int index = 0;
         for (auto &stream : subtitleStreams)
         {
@@ -273,13 +272,12 @@ namespace winrt::FFmpegInteropX::implementation
             }
             index++;
         }
-        mutexGuard.unlock();
     }
 
     void FFmpegMediaSource::OnAudioTracksChanged(MediaPlaybackItem const& sender, IVectorChangedEventArgs const& args)
     {
         UNREFERENCED_PARAMETER(args);
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         if (sender.AudioTracks().Size() == AudioStreams().Size())
         {
             for (unsigned int i = 0; i < AudioStreams().Size(); i++)
@@ -296,7 +294,6 @@ namespace winrt::FFmpegInteropX::implementation
                 }
             }
         }
-        mutexGuard.unlock();
     }
 
     void FFmpegMediaSource::InitializePlaybackItem(MediaPlaybackItem const& playbackitem)
@@ -1019,7 +1016,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::SetSubtitleDelay(TimeSpan const& delay)
     {
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         try
         {
             for (auto &subtitleStream : subtitleStreams)
@@ -1032,51 +1029,46 @@ namespace winrt::FFmpegInteropX::implementation
         catch (...)
         {
         }
-        mutexGuard.unlock();
     }
 
     void FFmpegMediaSource::SetFFmpegAudioFilters(hstring const& audioFilters)
     {
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         if (currentAudioStream)
         {
             currentAudioStream->SetFilters(audioFilters);
             currentAudioEffects = audioFilters;
         }
-        mutexGuard.unlock();
     }
 
     void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoEffects)
     {
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         if (currentVideoStream)
         {
             currentVideoStream->SetFilters(videoEffects);
             //TODO store and apply video effects on video stream change!
             //currentVideoEffects = videoEffects;
         }
-        mutexGuard.unlock();
     }
 
     void FFmpegMediaSource::DisableAudioEffects()
     {
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         if (currentAudioStream)
         {
             currentAudioStream->DisableFilters();
             currentAudioEffects = hstring();
         }
-        mutexGuard.unlock();
     }
 
     void FFmpegMediaSource::DisableVideoEffects()
     {
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         if (currentVideoStream)
         {
             currentVideoStream->DisableFilters();
         }
-        mutexGuard.unlock();
     }
 
     FFmpegInteropX::MediaThumbnailData FFmpegMediaSource::ExtractThumbnail()
@@ -1160,56 +1152,29 @@ namespace winrt::FFmpegInteropX::implementation
 
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem()
     {
-        mutexGuard.lock();
-        try
-        {
-            if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
-            playbackItem = MediaPlaybackItem(CreateMediaSource());
-            InitializePlaybackItem(playbackItem);
-            mutexGuard.unlock();
-            return playbackItem;
-        }
-        catch (...)
-        {
-            mutexGuard.unlock();
-            throw;
-        }
+        std::lock_guard lock(mutex);
+        if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
+        playbackItem = MediaPlaybackItem(CreateMediaSource());
+        InitializePlaybackItem(playbackItem);
+        return playbackItem;
     }
 
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan const& startTime)
     {
-        mutexGuard.lock();
-        try
-        {
-            if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
-            playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime);
-            InitializePlaybackItem(playbackItem);
-            mutexGuard.unlock();
-            return playbackItem;
-        }
-        catch (...)
-        {
-            mutexGuard.unlock();
-            throw;
-        }
+        std::lock_guard lock(mutex);
+        if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
+        playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime);
+        InitializePlaybackItem(playbackItem);
+        return playbackItem;
     }
 
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan const& startTime, TimeSpan const& durationLimit)
     {
-        mutexGuard.lock();
-        try
-        {
-            if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
-            playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime, durationLimit);
-            InitializePlaybackItem(playbackItem);
-            mutexGuard.unlock();
-            return playbackItem;
-        }
-        catch (...)
-        {
-            mutexGuard.unlock();
-            throw;
-        }
+        std::lock_guard lock(mutex);
+        if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
+        playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime, durationLimit);
+        InitializePlaybackItem(playbackItem);
+        return playbackItem;
     }
 
     IAsyncOperation<Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream stream, hstring streamName)
@@ -1267,57 +1232,48 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
 
-        mutexGuard.lock();
-        try
+        std::lock_guard lock(mutex);
+        if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
         {
-            if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
-            {
-                externalSubsParser->SetSubtitleDelay(SubtitleDelay());
-            }
+            externalSubsParser->SetSubtitleDelay(SubtitleDelay());
+        }
 
-            int subtitleTracksCount = 0;
+        int subtitleTracksCount = 0;
 
-            for (auto &externalSubtitle : externalSubsParser->subtitleStreams)
+        for (auto& externalSubtitle : externalSubsParser->subtitleStreams)
+        {
+            if (externalSubtitle->SubtitleTrack.Cues().Size() > 0)
             {
-                if (externalSubtitle->SubtitleTrack.Cues().Size() > 0)
+                // detach stream
+                externalSubtitle->Detach();
+
+                // find and add stream info
+                for (auto subtitleInfo : externalSubsParser->SubtitleStreams())
                 {
-                    // detach stream
-                    externalSubtitle->Detach();
-
-                    // find and add stream info
-                    for (auto subtitleInfo : externalSubsParser->SubtitleStreams())
+                    if (subtitleInfo.SubtitleTrack() == externalSubtitle->SubtitleTrack)
                     {
-                        if (subtitleInfo.SubtitleTrack() == externalSubtitle->SubtitleTrack)
-                        {
-                            subtitleStrInfos.Append(subtitleInfo);
-                            break;
-                        }
+                        subtitleStrInfos.Append(subtitleInfo);
+                        break;
                     }
-
-                    // add stream
-                    subtitleStreams.push_back(externalSubtitle);
-                    if (this->PlaybackItem() != nullptr)
-                    {
-                        PlaybackItem().Source().ExternalTimedMetadataTracks().Append(externalSubtitle->SubtitleTrack);
-                    }
-                    subtitleTracksCount++;
                 }
-            }
 
-            if (subtitleTracksCount == 0)
-            {
-                throw_hresult(E_INVALIDARG);
-                //throw ref new InvalidArgumentException("No subtitles found in file.");
+                // add stream
+                subtitleStreams.push_back(externalSubtitle);
+                if (this->PlaybackItem() != nullptr)
+                {
+                    PlaybackItem().Source().ExternalTimedMetadataTracks().Append(externalSubtitle->SubtitleTrack);
+                }
+                subtitleTracksCount++;
             }
-
-            subtitleStreamInfos = subtitleStrInfos.GetView();
         }
-        catch (...)
+
+        if (subtitleTracksCount == 0)
         {
-            mutexGuard.unlock();
-            throw;
+            throw_hresult(E_INVALIDARG);
         }
-        mutexGuard.unlock();
+
+        subtitleStreamInfos = subtitleStrInfos.GetView();
+
         co_await caller;
         co_return externalSubsParser->SubtitleStreams();
     }
@@ -1417,7 +1373,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::PlaybackSession(MediaPlaybackSession const& value)
     {
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         if (session)
         {
             session.PositionChanged(sessionPositionEvent);
@@ -1427,12 +1383,11 @@ namespace winrt::FFmpegInteropX::implementation
         {
             sessionPositionEvent = value.PositionChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnPositionChanged });
         }
-        mutexGuard.unlock();
     }
 
     void FFmpegMediaSource::Close()
     {
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         if (mss)
         {
             mss.Starting(startingRequestedToken);
@@ -1503,8 +1458,6 @@ namespace winrt::FFmpegInteropX::implementation
             PlaybackSession().PositionChanged(sessionPositionEvent);
             PlaybackSession(nullptr);
         }
-
-        mutexGuard.unlock();
     }
 
 
@@ -1734,7 +1687,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args)
     {
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         MediaStreamSourceStartingRequest request = args.Request();
 
         if (isFirstSeek && avHardwareContext)
@@ -1792,13 +1745,12 @@ namespace winrt::FFmpegInteropX::implementation
 
         isFirstSeek = false;
         isFirstSeekAfterStreamSwitch = false;
-        mutexGuard.unlock();
     }
 
     void FFmpegMediaSource::OnSampleRequested(winrt::Windows::Media::Core::MediaStreamSource const& sender, winrt::Windows::Media::Core::MediaStreamSourceSampleRequestedEventArgs const& args)
     {
         UNREFERENCED_PARAMETER(sender);
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         if (mss != nullptr)
         {
             if (config->ReadAheadBufferEnabled())
@@ -1821,7 +1773,6 @@ namespace winrt::FFmpegInteropX::implementation
                 args.Request().Sample(nullptr);
             }
         }
-        mutexGuard.unlock();
     }
 
 
@@ -1912,7 +1863,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::OnSwitchStreamsRequested(MediaStreamSource const& sender, MediaStreamSourceSwitchStreamsRequestedEventArgs const& args)
     {
         UNREFERENCED_PARAMETER(sender);
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         m_pReader->Stop();
         m_pReader->Flush();
 
@@ -1953,8 +1904,6 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         isFirstSeekAfterStreamSwitch = config->FastSeekSmartStreamSwitching();
-
-        mutexGuard.unlock();
     }
 
     HRESULT FFmpegMediaSource::Seek(const TimeSpan& position, TimeSpan& actualPosition, bool allowFastSeek)
@@ -1980,10 +1929,9 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(sender);
         UNREFERENCED_PARAMETER(args);
-        mutexGuard.lock();
+        std::lock_guard lock(mutex);
         lastPosition = currentPosition;
         currentPosition = sender.Position();
-        mutexGuard.unlock();
     }
 
     // Static functions passed to FFmpeg

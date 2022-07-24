@@ -8,11 +8,6 @@ namespace FFmpegInteropX
     using namespace winrt::Windows::Graphics::Imaging;
     using namespace winrt::Windows::Media::Core;
 
-    struct __declspec(uuid("5b0d3235-4dba-4d44-865e-8f1d0e4fd04d")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
-    {
-        virtual HRESULT __stdcall GetBuffer(uint8_t** value, uint32_t* capacity) = 0;
-    };
-
     class SubtitleProviderBitmap : public SubtitleProvider
     {
 
@@ -135,7 +130,7 @@ namespace FFmpegInteropX
 
         void OnCueEntered(TimedMetadataTrack sender, MediaCueEventArgs args)
         {
-            mutex.lock();
+            std::lock_guard lock(mutex);
             try
             {
                 //cleanup old cues to free memory
@@ -166,15 +161,7 @@ namespace FFmpegInteropX
                         auto bitmap = SoftwareBitmap(BitmapPixelFormat::Bgra8, width, height, BitmapAlphaMode::Straight);
                         auto buffer = bitmap.LockBuffer(BitmapBufferAccessMode::Write);
                         auto reference = buffer.CreateReference();
-
-                        // Query the IBufferByteAccess interface.  
-                        winrt::com_ptr<IMemoryBufferByteAccess> bufferByteAccess;
-                        reference.as(IID_PPV_ARGS(&bufferByteAccess));
-
-                        // Retrieve the buffer data.  
-                        BYTE* pixels = nullptr;
-                        unsigned int capacity;
-                        bufferByteAccess->GetBuffer(&pixels, &capacity);
+                        BYTE* pixels = reference.data();
 
                         auto plane = buffer.GetPlaneDescription(0);
 
@@ -216,12 +203,11 @@ namespace FFmpegInteropX
             {
                 OutputDebugString(L"Failed to render cue.");
             }
-            mutex.unlock();
         }
 
         void OnCueExited(TimedMetadataTrack sender, MediaCueEventArgs args)
         {
-            mutex.lock();
+            std::lock_guard lock(mutex);
             try
             {
                 auto cue = args.Cue().as<ImageCue>();
@@ -234,7 +220,6 @@ namespace FFmpegInteropX
             {
                 OutputDebugString(L"Failed to cleanup old cues.");
             }
-            mutex.unlock();
         }
 
         SoftwareBitmap GetDummyBitmap()

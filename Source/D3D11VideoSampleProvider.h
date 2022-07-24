@@ -134,7 +134,7 @@ namespace FFmpegInteropX
         {
             if (sample.Direct3D11Surface())
             {
-                std::lock_guard<std::mutex> lock(samplesMutex);
+                std::lock_guard lock(samplesMutex);
 
                 // AddRef the sample on native interface to prevent it from being collected before Processed is called
                 auto sampleNative = sample.as<winrt::Windows::Foundation::IUnknown>();
@@ -149,7 +149,7 @@ namespace FFmpegInteropX
 
         void OnProcessed(MediaStreamSample const& sender, winrt::Windows::Foundation::IInspectable const&)
         {
-            std::lock_guard<std::mutex> lock(samplesMutex);
+            std::lock_guard lock(samplesMutex);
 
             auto sampleNative = sender.as<winrt::Windows::Foundation::IUnknown>();
             auto mapEntry = trackedSamples.find(sampleNative);
@@ -190,7 +190,7 @@ namespace FFmpegInteropX
 
         void ReleaseTrackedSamples()
         {
-            std::lock_guard<std::mutex> lock(samplesMutex);
+            std::lock_guard lock(samplesMutex);
             for (auto &entry : trackedSamples)
             {
                 // detach Processed event and release native interface
@@ -205,7 +205,7 @@ namespace FFmpegInteropX
 
         void ReturnTrackedSamples()
         {
-            std::lock_guard<std::mutex> lock(samplesMutex);
+            std::lock_guard lock(samplesMutex);
             for (auto &entry : trackedSamples)
             {
                 // detach Processed event and release native interface

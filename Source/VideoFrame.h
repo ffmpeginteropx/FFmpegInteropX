@@ -37,13 +37,8 @@ namespace winrt::FFmpegInteropX::implementation
         {
             auto strong = get_strong();
 
-            // Query the IBufferByteAccess interface.  
-            winrt::com_ptr<IBufferByteAccess> bufferByteAccess;
-            (pixelData).as(IID_PPV_ARGS(&bufferByteAccess));
-
             // Retrieve the buffer data.  
-            byte* pixels = nullptr;
-            bufferByteAccess->Buffer(&pixels);
+            byte* pixels = pixelData.data();
             auto length = pixelData.Length();
 
             auto encoderValue = co_await winrt::Windows::Graphics::Imaging::BitmapEncoder::CreateAsync(encoderGuid, stream);

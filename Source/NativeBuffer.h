@@ -9,8 +9,6 @@ namespace NativeBuffer
 
     struct NativeBuffer : winrt::implements<NativeBuffer, winrt::Windows::Storage::Streams::IBuffer, IBufferByteAccess>
     {
-        //InspectableClass("NativeBuffer.NativeBuffer", BaseTrust)
-
     public:
         virtual ~NativeBuffer()
         {
