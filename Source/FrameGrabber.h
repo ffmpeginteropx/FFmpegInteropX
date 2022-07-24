@@ -116,12 +116,7 @@ namespace winrt::FFmpegInteropX::implementation
                     throw_hresult(E_INVALIDARG);
                 }
 
-                // Query the IBufferByteAccess interface.  
-                winrt::com_ptr<IBufferByteAccess> bufferByteAccess;
-                targetBuffer.as(IID_PPV_ARGS(&bufferByteAccess));
-
-                // Retrieve the buffer data.  
-                bufferByteAccess->Buffer(&pixels);
+                pixels = targetBuffer.data();
             }
             sampleProvider->TargetBuffer = pixels;
         }

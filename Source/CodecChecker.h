@@ -74,21 +74,19 @@ namespace winrt::FFmpegInteropX::implementation
         {
             if (!hasCheckedHardwareAcceleration)
             {
-                mutex.lock();
+                std::lock_guard lock(mutex);
 
                 if (!hasCheckedHardwareAcceleration)
                 {
                     PerformCheckHardwareAcceleration();
                     hasCheckedHardwareAcceleration = true;
                 }
-
-                mutex.unlock();
             }
         }
 
         static void Refresh()
         {
-            mutex.lock();
+            std::lock_guard lock(mutex);
 
             PerformCheckHardwareAcceleration();
             hasCheckedHardwareAcceleration = true;
@@ -100,8 +98,6 @@ namespace winrt::FFmpegInteropX::implementation
             hasAskedInstallMpeg2Extension = false;
             hasAskedInstallVP9Extension = false;
             hasAskedInstallHEVCExtension = false;
-
-            mutex.unlock();
         }
 
         static bool CheckIsMpeg2VideoExtensionInstalled()
@@ -129,7 +125,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             if (!hasCheckedExtension)
             {
-                mutex.lock();
+                std::lock_guard lock(mutex);
 
                 if (!hasCheckedExtension)
                 {
@@ -144,8 +140,6 @@ namespace winrt::FFmpegInteropX::implementation
                     }
                     hasCheckedExtension = true;
                 }
-
-                mutex.unlock();
             }
 
             return isExtensionInstalled;
