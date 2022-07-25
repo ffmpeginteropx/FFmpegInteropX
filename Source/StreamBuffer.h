@@ -164,7 +164,7 @@ namespace FFmpegInteropX
             return buffer.at(index);
         }
 
-        int TryFindPacketIndex(LONGLONG pts, bool requireKeyFrame, bool fastSeek)
+        int TryFindPacketIndex(LONGLONG pts, bool requireKeyFrame, bool fastSeek, bool isForwardSeek)
         {
             std::lock_guard lock(mutex);
 
@@ -175,52 +175,126 @@ namespace FFmpegInteropX
 
             auto firstPacket = buffer.front();
             auto lastPacket = buffer.back();
-            auto firstPts = firstPacket->pts != AV_NOPTS_VALUE ? firstPacket->pts : firstPacket->dts;
-            auto lastPts = lastPacket->pts != AV_NOPTS_VALUE ? lastPacket->pts : lastPacket->dts;
+            auto firstPts = GetTimestamp(firstPacket);
+            auto lastPts = GetTimestamp(lastPacket);
 
             if (firstPts != AV_NOPTS_VALUE && lastPts != AV_NOPTS_VALUE && (firstPts > pts || lastPts < pts))
             {
                 return -1;
             }
 
-            bool hasEnd = false;
+            if (requireKeyFrame && fastSeek)
+            {
+                return TryFindClosestKeyframe(pts, isForwardSeek);
+            }
+            else
+            {
+                return TryFindClosestPacket(pts);
+            }
+        }
+
+        int TryFindClosestPacket(long long target)
+        {
             int index = 0;
             int result = -1;
             for (auto packet : buffer)
             {
-                if (packet->pts != AV_NOPTS_VALUE)
+                auto pts = GetTimestamp(packet);
+                if (pts != AV_NOPTS_VALUE)
                 {
-                    // with fast seek, we can select a key frame behind seek target
-                    if (packet->pts <= pts || (fastSeek && result == -1))
+                    if (pts + packet->duration >= target)
                     {
-                        if (!requireKeyFrame || packet->flags & AV_PKT_FLAG_KEY)
-                        {
-                            result = index;
-                        }
-                    }
-
-                    if (packet->pts + packet->duration >= pts && (!fastSeek || result > -1))
-                    {
-                        hasEnd = true;
+                        result = index;
                         break;
                     }
                 }
                 index++;
             }
-
-            if (hasEnd && result == -1 && !fastSeek)
-            {
-                // no key frame between current frame and target position. need to decode from here.
-                result = 0;
-            }
-
-            if (result >= 0 && !hasEnd)
-            {
-                // key frames found but buffer range not up to target position
-                result = -1;
-            }
-
             return result;
+        }
+
+        int TryFindClosestKeyframe(long long target, bool isForwardSeek)
+        {
+            bool hasTarget = false;
+            int index = 0;
+            int packetBeforeIndex = -1;
+            int packetAfterIndex = -1;
+            long long packetBeforePts = -1;
+            long long packetAfterPts = -1;
+            for (auto packet : buffer)
+            {
+                auto pts = GetTimestamp(packet);
+                if (pts != AV_NOPTS_VALUE)
+                {
+                    if (pts <= target && packet->flags & AV_PKT_FLAG_KEY)
+                    {
+                        packetBeforeIndex = index;
+                        packetBeforePts = pts;
+                    }
+
+                    if (pts + packet->duration >= target)
+                    {
+                        hasTarget = true;
+                        if (packet->flags & AV_PKT_FLAG_KEY)
+                        {
+                            packetAfterIndex = index;
+                            packetAfterPts = pts;
+                            break;
+                        }
+                    }
+                }
+                index++;
+            }
+
+            if (hasTarget)
+            {
+                if (packetBeforeIndex >= 0 && packetAfterIndex >= 0)
+                {
+                    // keyframes before and after found. select closest.
+                    auto diffBefore = target - packetBeforePts;
+                    auto diffAfter = packetAfterPts - target;
+                    if (diffBefore <= diffAfter)
+                    {
+                        return packetBeforeIndex;
+                    }
+                    else
+                    {
+                        return packetAfterIndex;
+                    }
+                }
+                else if (packetBeforeIndex >= 0)
+                {
+                    // only keyframe before position found. return it.
+                    return packetBeforeIndex;
+                }
+                else
+                {
+                    // only keyframe after position found. use it or continue from current position.
+                    auto diffCurrent = target - GetTimestamp(buffer[0]);
+                    auto diffAfter = packetAfterPts - target;
+                    if (diffCurrent < diffAfter && !isForwardSeek)
+                    {
+                        return 0;
+                    }
+                    else
+                    {
+                        return packetAfterIndex;
+                    }
+                }
+
+                // no key frame between current frame and target position
+                return -1;
+            }
+            else
+            {
+                // target not found in buffer range
+                return -1;
+            }
+        }
+
+        long long GetTimestamp(AVPacket* packet)
+        {
+            return packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
         }
 
         void Flush()

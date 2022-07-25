@@ -70,8 +70,6 @@ void FFmpegReader::Stop()
             wait = true;
 
             sleepTimer->stop();
-            delete sleepTimer;
-            delete sleepTimerTarget;
         }
     }
 
@@ -90,6 +88,8 @@ void FFmpegReader::Stop()
                 Sleep(1);
             }
         }
+        delete sleepTimer;
+        delete sleepTimerTarget;
     }
 
     if (forceReadStream != -1)
@@ -101,9 +101,14 @@ void FFmpegReader::Stop()
     fullStream = nullptr;
 }
 
-void FFmpegReader::FlushCodecs()
+void FFmpegReader::Flush()
 {
     std::lock_guard lock(mutex);
+    FlushCodecsAndBuffers();
+}
+
+void FFmpegReader::FlushCodecs()
+{
     for (auto& stream : *sampleProviders)
     {
         if (stream)
@@ -111,9 +116,8 @@ void FFmpegReader::FlushCodecs()
     }
 }
 
-void FFmpegReader::Flush()
+void FFmpegReader::FlushCodecsAndBuffers()
 {
-    std::lock_guard lock(mutex);
     for (auto& stream : *sampleProviders)
     {
         if (stream)
@@ -137,7 +141,7 @@ HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan
 
     auto isForwardSeek = position > currentPosition;
 
-    if (isForwardSeek && TrySeekBuffered(position, actualPosition, fastSeek, videoStream, audioStream))
+    if (isForwardSeek && TrySeekBuffered(position, actualPosition, fastSeek, isForwardSeek, videoStream, audioStream))
     {
         // all good
         DebugMessage(L"BufferedSeek!\n");
@@ -160,7 +164,7 @@ HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan
         else
         {
             // Flush all active streams with buffers
-            Flush();
+            FlushCodecsAndBuffers();
         }
     }
 
@@ -224,7 +228,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
     else
     {
         // Flush all active streams with buffers
-        Flush();
+        FlushCodecsAndBuffers();
 
         // get and apply keyframe position for fast seeking
         TimeSpan timestampVideo;
@@ -269,7 +273,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
             else
             {
                 // Flush all active streams with buffers
-                Flush();
+                FlushCodecsAndBuffers();
 
                 // get updated timestamp
                 hr = videoStream->GetNextPacketTimestamp(timestampVideo, timestampVideoDuration);
@@ -307,7 +311,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                         else
                         {
                             // Flush all active streams with buffers
-                            Flush();
+                            FlushCodecsAndBuffers();
 
                             // Now drop all packets until desired keyframe position
                             videoStream->SkipPacketsUntilTimestamp(timestampVideo);
@@ -344,7 +348,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
     return hr;
 }
 
-bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
+bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, bool isForwardSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
 {
     bool result = true;
     int vIndex = -1;
@@ -355,7 +359,7 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
     if (videoStream)
     {
         auto pts = videoStream->ConvertPosition(targetPosition);
-        vIndex = videoStream->packetBuffer->TryFindPacketIndex(pts, true, fastSeek);
+        vIndex = videoStream->packetBuffer->TryFindPacketIndex(pts, true, fastSeek, isForwardSeek);
         result &= vIndex >= 0;
 
         if (result && fastSeek)
@@ -371,7 +375,7 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
     if (result && audioStream)
     {
         auto pts = audioStream->ConvertPosition(targetPosition);
-        aIndex = audioStream->packetBuffer->TryFindPacketIndex(pts, false, fastSeek);
+        aIndex = audioStream->packetBuffer->TryFindPacketIndex(pts, false, fastSeek, isForwardSeek);
         result &= aIndex >= 0;
     }
 

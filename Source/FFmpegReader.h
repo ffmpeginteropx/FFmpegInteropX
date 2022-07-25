@@ -44,11 +44,12 @@ namespace FFmpegInteropX
 
     private:
 
-        bool TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
+        bool TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, bool isForwardSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
         HRESULT SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
         void OnTimer(int value);
         void ReadDataLoop();
         void FlushCodecs();
+        void FlushCodecsAndBuffers();
         bool CheckNeedsSleep(bool wasSleeping);
 
         AVFormatContext* avFormatCtx;
@@ -57,7 +58,7 @@ namespace FFmpegInteropX
         std::shared_ptr<MediaSampleProvider> lastStream{ nullptr };
         std::shared_ptr<MediaSampleProvider> fullStream{ nullptr };
 
-        std::mutex mutex;
+        std::recursive_mutex mutex;
         bool isActive = false;
         bool isSleeping = false;
         int forceReadStream = 0;

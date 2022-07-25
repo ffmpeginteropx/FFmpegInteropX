@@ -1285,6 +1285,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::StartBuffering()
     {
+        std::lock_guard lock(mutex);
         m_pReader->Start();
     }
 
@@ -1690,57 +1691,64 @@ namespace winrt::FFmpegInteropX::implementation
         std::lock_guard lock(mutex);
         MediaStreamSourceStartingRequest request = args.Request();
 
-        if (isFirstSeek && avHardwareContext)
+        try
         {
-            HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, &deviceManager);
-            if (SUCCEEDED(hr)) hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
-
-            if (SUCCEEDED(hr))
+            if (isFirstSeek && avHardwareContext)
             {
-                // assign device and context
-                for (auto &stream : videoStreams)
-                {
-                    // set device pointers to stream
-                    hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+                HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, &deviceManager);
+                if (SUCCEEDED(hr)) hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
 
-                    if (!SUCCEEDED(hr))
+                if (SUCCEEDED(hr))
+                {
+                    // assign device and context
+                    for (auto& stream : videoStreams)
                     {
-                        break;
+                        // set device pointers to stream
+                        hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+
+                        if (!SUCCEEDED(hr))
+                        {
+                            break;
+                        }
                     }
                 }
-            }
-            else
-            {
-                // unref all hw device contexts
-                for (auto &stream : videoStreams)
+                else
                 {
-                    stream->FreeHardwareDevice();
+                    // unref all hw device contexts
+                    for (auto& stream : videoStreams)
+                    {
+                        stream->FreeHardwareDevice();
+                    }
+                    av_buffer_unref(&avHardwareContext);
+                    SAFE_RELEASE(device);
+                    SAFE_RELEASE(deviceContext);
                 }
-                av_buffer_unref(&avHardwareContext);
-                SAFE_RELEASE(device);
-                SAFE_RELEASE(deviceContext);
+            }
+
+            // Perform seek operation when MediaStreamSource received seek event from MediaElement
+            if (request.StartPosition() && request.StartPosition().Value().count() <= mediaDuration.count() && (!isFirstSeek || request.StartPosition().Value().count() > 0))
+            {
+                if (currentVideoStream && !currentVideoStream->IsEnabled())
+                {
+                    currentVideoStream->EnableStream();
+                }
+
+                if (currentAudioStream && !currentAudioStream->IsEnabled())
+                {
+                    currentAudioStream->EnableStream();
+                }
+
+                TimeSpan actualPosition = request.StartPosition().Value();
+                auto hr = Seek(request.StartPosition().Value(), actualPosition, true);
+                if (SUCCEEDED(hr))
+                {
+                    request.SetActualStartPosition(actualPosition);
+                }
             }
         }
-
-        // Perform seek operation when MediaStreamSource received seek event from MediaElement
-        if (request.StartPosition() && request.StartPosition().Value().count() <= mediaDuration.count() && (!isFirstSeek || request.StartPosition().Value().count() > 0))
+        catch (...)
         {
-            if (currentVideoStream && !currentVideoStream->IsEnabled())
-            {
-                currentVideoStream->EnableStream();
-            }
-
-            if (currentAudioStream && !currentAudioStream->IsEnabled())
-            {
-                currentAudioStream->EnableStream();
-            }
-
-            TimeSpan actualPosition = request.StartPosition().Value();
-            auto hr = Seek(request.StartPosition().Value(), actualPosition, true);
-            if (SUCCEEDED(hr))
-            {
-                request.SetActualStartPosition(actualPosition);
-            }
+            DebugMessage(L"Exception in OnStarting()!");
         }
 
         isFirstSeek = false;
@@ -1751,27 +1759,35 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
-        if (mss != nullptr)
+
+        try
         {
-            if (config->ReadAheadBufferEnabled())
+            if (mss != nullptr)
             {
-                m_pReader->Start();
+                if (config->ReadAheadBufferEnabled())
+                {
+                    m_pReader->Start();
+                }
+                if (currentAudioStream && args.Request().StreamDescriptor() == currentAudioStream->StreamDescriptor())
+                {
+                    auto sample = currentAudioStream->GetNextSample();
+                    args.Request().Sample(sample);
+                }
+                else if (currentVideoStream && args.Request().StreamDescriptor() == currentVideoStream->StreamDescriptor())
+                {
+                    CheckVideoDeviceChanged();
+                    auto sample = currentVideoStream->GetNextSample();
+                    args.Request().Sample(sample);
+                }
+                else
+                {
+                    args.Request().Sample(nullptr);
+                }
             }
-            if (currentAudioStream && args.Request().StreamDescriptor() == currentAudioStream->StreamDescriptor())
-            {
-                auto sample = currentAudioStream->GetNextSample();
-                args.Request().Sample(sample);
-            }
-            else if (currentVideoStream && args.Request().StreamDescriptor() == currentVideoStream->StreamDescriptor())
-            {
-                CheckVideoDeviceChanged();
-                auto sample = currentVideoStream->GetNextSample();
-                args.Request().Sample(sample);
-            }
-            else
-            {
-                args.Request().Sample(nullptr);
-            }
+        }
+        catch (...)
+        {
+            DebugMessage(L"Exception in OnSampleRequested()!");
         }
     }
 
@@ -1864,46 +1880,54 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
-        m_pReader->Stop();
-        m_pReader->Flush();
 
-        if (currentAudioStream && args.Request().OldStreamDescriptor() == currentAudioStream->StreamDescriptor())
+        try
         {
-            if (!currentAudioEffects.empty())
-            {
-                currentAudioStream->DisableFilters();
-            }
-            currentAudioStream->DisableStream();
-            currentAudioStream = nullptr;
-        }
-        if (currentVideoStream && args.Request().OldStreamDescriptor() == currentVideoStream->StreamDescriptor())
-        {
-            currentVideoStream->DisableStream();
-            currentVideoStream = nullptr;
-        }
+            m_pReader->Stop();
+            m_pReader->Flush();
 
-        for (auto &stream : audioStreams)
-        {
-            if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
+            if (currentAudioStream && args.Request().OldStreamDescriptor() == currentAudioStream->StreamDescriptor())
             {
-                currentAudioStream = stream;
-                currentAudioStream->EnableStream();
                 if (!currentAudioEffects.empty())
                 {
-                    currentAudioStream->SetFilters(currentAudioEffects);
+                    currentAudioStream->DisableFilters();
+                }
+                currentAudioStream->DisableStream();
+                currentAudioStream = nullptr;
+            }
+            if (currentVideoStream && args.Request().OldStreamDescriptor() == currentVideoStream->StreamDescriptor())
+            {
+                currentVideoStream->DisableStream();
+                currentVideoStream = nullptr;
+            }
+
+            for (auto& stream : audioStreams)
+            {
+                if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
+                {
+                    currentAudioStream = stream;
+                    currentAudioStream->EnableStream();
+                    if (!currentAudioEffects.empty())
+                    {
+                        currentAudioStream->SetFilters(currentAudioEffects);
+                    }
                 }
             }
-        }
-        for (auto &stream : videoStreams)
-        {
-            if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
+            for (auto& stream : videoStreams)
             {
-                currentVideoStream = stream;
-                currentVideoStream->EnableStream();
+                if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
+                {
+                    currentVideoStream = stream;
+                    currentVideoStream->EnableStream();
+                }
             }
-        }
 
-        isFirstSeekAfterStreamSwitch = config->FastSeekSmartStreamSwitching();
+            isFirstSeekAfterStreamSwitch = config->FastSeekSmartStreamSwitching();
+        }
+        catch (...)
+        {
+            DebugMessage(L"Exception in OnSwitchStreamsRequested()!");
+        }
     }
 
     HRESULT FFmpegMediaSource::Seek(const TimeSpan& position, TimeSpan& actualPosition, bool allowFastSeek)
