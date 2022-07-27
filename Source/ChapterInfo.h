@@ -10,11 +10,16 @@ namespace winrt::FFmpegInteropX::implementation
     struct ChapterInfo : ChapterInfoT<ChapterInfo>
     {
         ChapterInfo(hstring const& title, Windows::Foundation::TimeSpan const& startTime, Windows::Foundation::TimeSpan const& duration);
+        ChapterInfo(hstring const& codecName, hstring const& language);
         hstring Title();
+        hstring CodecName();
+        hstring Language();
         Windows::Foundation::TimeSpan StartTime();
         Windows::Foundation::TimeSpan Duration();
 
     private:
+        hstring codecName{};
+        hstring language{};
         hstring title{};
         TimeSpan startTime{};
         TimeSpan duration{};
