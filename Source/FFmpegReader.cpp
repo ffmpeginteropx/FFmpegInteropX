@@ -53,6 +53,25 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
         av_packet_free(&avPacket);
         return ret;
     }
+    winrt::FFmpegInteropX::ChapterInfo* tempTrack;
+    if (avPacket->stream_index != 1 && avPacket->stream_index != 0)
+    {
+        tempTrack = nullptr;
+    }
+    //----------------------------------------------------------------------
+    if (avSubtitleTracks_ptr && avSubtitleTracks_ptr->size() > 0)
+    {
+        for (size_t i = 0; i < avSubtitleTracks_ptr->size(); i++)
+        {
+            auto track = avSubtitleTracks_ptr->at(i);
+            auto index = (int)track.Index();
+            if (index == avPacket->stream_index)
+            {
+                tempTrack = &track;
+            }
+        }
+    }
+    //----------------------------------------------------------------------
 
     if (avPacket->stream_index >= (int)sampleProviders->size())
     {

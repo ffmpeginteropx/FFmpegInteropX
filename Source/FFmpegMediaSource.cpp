@@ -551,6 +551,7 @@ namespace winrt::FFmpegInteropX::implementation
                 {
 
                     //----------------------------------------------------------------------
+                    avStream->discard = AVDISCARD_DEFAULT;
                     auto avSubsCodec = avcodec_find_decoder(avStream->codecpar->codec_id);
                     if (avSubsCodec)
                     {
@@ -569,7 +570,7 @@ namespace winrt::FFmpegInteropX::implementation
                                 imageType = 1;
                             }
 
-                            auto avsub = winrt::FFmpegInteropX::ChapterInfo(codecName, lang, winrt::to_hstring(index), winrt::to_hstring(imageType));
+                            auto avsub = winrt::FFmpegInteropX::ChapterInfo(codecName, lang, index, winrt::to_hstring(imageType));
                             avsubtitlesvector.Append(avsub);
                         }
                     }
@@ -599,6 +600,17 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         avSubtitles = avsubtitlesvector.GetView();
+
+        if (avSubtitles.Size() > 0)
+        {
+            auto avsubs = std::make_shared<std::vector<winrt::FFmpegInteropX::ChapterInfo>>();
+            for (size_t i = 0; i < avsubtitlesvector.Size(); i++)
+            {
+                auto item = avsubtitlesvector.GetAt(i);
+                avsubs->push_back(item);
+            }
+            m_pReader->avSubtitleTracks_ptr = avsubs;
+        }
 
         if (!currentAudioStream && audioStreams.size() > 0)
         {

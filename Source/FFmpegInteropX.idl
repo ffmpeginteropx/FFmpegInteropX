@@ -193,11 +193,11 @@ namespace FFmpegInteropX
             Windows.Foundation.TimeSpan startTime,
             Windows.Foundation.TimeSpan duration);
 
-        ChapterInfo(String codecName, String language, String index, String imageType);
+        ChapterInfo(String codecName, String language, Int32 index, String imageType);
 
         String CodecName { get; };
         String Language { get; };
-        String Index { get; };
+        Int32 Index { get; };
         String ImageType { get; };
 
          String Title{ get; };
@@ -404,7 +404,7 @@ namespace FFmpegInteropX
     [bindable]
     runtimeclass FFmpegMediaSource : Windows.Foundation.IClosable
     {
-        //void AdjustTemperature(Single deltaFahrenheit);
+        void AdjustTemperature(Single deltaFahrenheit);
 
         event Windows.Foundation.EventHandler<FFmpegInteropX.MyEventArgs> TemperatureIsBelowFreezing;
 
