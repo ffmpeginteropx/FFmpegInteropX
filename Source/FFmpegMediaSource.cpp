@@ -476,7 +476,9 @@ namespace winrt::FFmpegInteropX::implementation
                 }
             }
         }
-
+        //----------------------------------------------------------------------
+        auto avsubtitlesvector = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::ChapterInfo>();
+        //----------------------------------------------------------------------
         for (int index = 0; index < (int)avFormatCtx->nb_streams; index++)
         {
             auto avStream = avFormatCtx->streams[index];
@@ -531,6 +533,22 @@ namespace winrt::FFmpegInteropX::implementation
                 stream = CreateSubtitleSampleProvider(avStream, index);
                 if (stream)
                 {
+
+                    //----------------------------------------------------------------------
+                    auto avSubsCodec = avcodec_find_decoder(avStream->codecpar->codec_id);
+                    if (avSubsCodec)
+                    {
+                        auto codecName = StringUtils::Utf8ToPlatformString(avSubsCodec->name);
+                        auto language = av_dict_get(avStream->metadata, "language", NULL, 0);
+                        if (language != NULL)
+                        {
+                            auto lang = StringUtils::Utf8ToPlatformString(language->value);
+                            auto avsub = winrt::FFmpegInteropX::ChapterInfo(codecName, lang);
+                            avsubtitlesvector.Append(avsub);
+                        }
+                    }
+                    //----------------------------------------------------------------------
+
                     if (index == subtitleStreamIndex)
                     {
                         stream->SubtitleInfo().as<implementation::SubtitleStreamInfo>()->SetDefault();
@@ -553,6 +571,8 @@ namespace winrt::FFmpegInteropX::implementation
 
             sampleProviders.push_back(stream);
         }
+
+        avSubtitles = avsubtitlesvector.GetView();
 
         if (!currentAudioStream && audioStreams.size() > 0)
         {
@@ -1329,6 +1349,11 @@ namespace winrt::FFmpegInteropX::implementation
     Collections::IVectorView<FFmpegInteropX::ChapterInfo> FFmpegMediaSource::ChapterInfos()
     {
         return chapterInfos;
+    }
+
+    Collections::IVectorView<FFmpegInteropX::ChapterInfo> FFmpegMediaSource::AvSubtitles()
+    {
+        return avSubtitles;
     }
 
     FFmpegInteropX::FormatInfo FFmpegMediaSource::FormatInfo()

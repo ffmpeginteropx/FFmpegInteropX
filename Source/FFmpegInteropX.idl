@@ -193,6 +193,11 @@ namespace FFmpegInteropX
             Windows.Foundation.TimeSpan startTime,
             Windows.Foundation.TimeSpan duration);
 
+        ChapterInfo(String codecName, String language);
+
+        String CodecName { get; };
+        String Language { get; };
+
          String Title{ get; };
          Windows.Foundation.TimeSpan StartTime{ get; };
          Windows.Foundation.TimeSpan Duration{ get; };
@@ -463,6 +468,9 @@ namespace FFmpegInteropX
 
         ///<summary>Gets chapter information.</summary>
         IVectorView<ChapterInfo> ChapterInfos{ get; };
+
+        ///<summary>Gets subtitles information.</summary>
+        IVectorView<ChapterInfo> AvSubtitles{ get; };
 
         ///<summary>Gets format information.</summary>
         FormatInfo FormatInfo{ get; };
