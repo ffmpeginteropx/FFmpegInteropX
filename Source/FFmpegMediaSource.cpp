@@ -109,6 +109,17 @@ namespace winrt::FFmpegInteropX::implementation
         return interopMSS;
     }
 
+    winrt::event_token FFmpegMediaSource::TemperatureIsBelowFreezing(Windows::Foundation::EventHandler<float> const& handler)
+    {
+        return m_temperatureIsBelowFreezingEvent.add(handler);
+    }
+
+    void FFmpegMediaSource::TemperatureIsBelowFreezing(winrt::event_token const& token) noexcept
+    {
+        //m_temperatureIsBelowFreezingEvent(*this, m_temperatureFahrenheit);
+        m_temperatureIsBelowFreezingEvent.remove(token);
+    }
+
     HRESULT FFmpegMediaSource::CreateMediaStreamSource(IRandomAccessStream const& stream)
     {
         HRESULT hr = S_OK;
