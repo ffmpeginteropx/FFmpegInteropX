@@ -391,12 +391,18 @@ namespace FFmpegInteropX
     runtimeclass MyEventArgs
     {
         Single TemperatureFahrenheit{ get; };
+        String Type{ get; };
+        Int32 Index{ get; };
+        Int32 StartTime{ get; };
+        Int32 Duration{ get; };
+        Int32 Width{ get; };
+        Int32 Height{ get; };
     }
 
     [bindable]
     runtimeclass FFmpegMediaSource : Windows.Foundation.IClosable
     {
-        void AdjustTemperature(Single deltaFahrenheit);
+        //void AdjustTemperature(Single deltaFahrenheit);
 
         event Windows.Foundation.EventHandler<FFmpegInteropX.MyEventArgs> TemperatureIsBelowFreezing;
 
