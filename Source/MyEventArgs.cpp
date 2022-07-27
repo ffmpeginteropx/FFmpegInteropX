@@ -36,4 +36,12 @@ namespace winrt::FFmpegInteropX::implementation
     {
         return height;
     }
+    winrt::Windows::Storage::Streams::IBuffer MyEventArgs::Buffer()
+    {
+        return buffer;
+    }
+    winrt::Windows::Storage::Streams::IBuffer MyEventArgs::Buffer2()
+    {
+        return buffer2;
+    }
 }

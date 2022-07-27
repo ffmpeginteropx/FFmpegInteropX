@@ -14,6 +14,8 @@ namespace winrt::FFmpegInteropX::implementation
         int32_t Duration();
         int32_t Width();
         int32_t Height();
+        winrt::Windows::Storage::Streams::IBuffer Buffer();
+        winrt::Windows::Storage::Streams::IBuffer Buffer2();
 
     private:
         float m_temperatureFahrenheit{ 0.f };
@@ -23,5 +25,7 @@ namespace winrt::FFmpegInteropX::implementation
         int32_t duration{};
         int32_t width{};
         int32_t height{};
+        winrt::Windows::Storage::Streams::IBuffer buffer{};
+        winrt::Windows::Storage::Streams::IBuffer buffer2{};
     };
 }

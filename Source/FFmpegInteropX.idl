@@ -397,6 +397,8 @@ namespace FFmpegInteropX
         Int32 Duration{ get; };
         Int32 Width{ get; };
         Int32 Height{ get; };
+        Windows.Storage.Streams.IBuffer Buffer{ get; };
+        Windows.Storage.Streams.IBuffer Buffer2{ get; };
     }
 
     [bindable]
