@@ -387,10 +387,16 @@ namespace FFmpegInteropX
         String Extension{ get; };
     }
 
+    [default_interface]
+    runtimeclass MyEventArgs
+    {
+        Single TemperatureFahrenheit{ get; };
+    }
+
     [bindable]
     runtimeclass FFmpegMediaSource : Windows.Foundation.IClosable
     {
-        event Windows.Foundation.EventHandler<Single> TemperatureIsBelowFreezing;
+        event Windows.Foundation.EventHandler<FFmpegInteropX.MyEventArgs> TemperatureIsBelowFreezing;
 
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream, MediaSourceConfig config);

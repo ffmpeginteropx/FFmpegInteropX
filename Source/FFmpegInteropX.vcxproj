@@ -148,6 +148,7 @@
     <ClInclude Include="MediaSampleProvider.h" />
     <ClInclude Include="MediaSourceConfig.h" />
     <ClInclude Include="MediaThumbnailData.h" />
+    <ClInclude Include="MyEventArgs.h" />
     <ClInclude Include="NALPacketSampleProvider.h" />
     <ClInclude Include="NativeBuffer.h" />
     <ClInclude Include="NativeBufferFactory.h" />
@@ -194,6 +195,7 @@
     <ClCompile Include="MediaSampleProvider.cpp" />
     <ClCompile Include="MediaSourceConfig.cpp" />
     <ClCompile Include="MediaThumbnailData.cpp" />
+    <ClCompile Include="MyEventArgs.cpp" />
     <ClCompile Include="NALPacketSampleProvider.cpp" />
     <ClCompile Include="NativeBufferFactory.cpp" />
     <ClCompile Include="pch.cpp">
@@ -269,10 +271,6 @@
       <XmlDoc>$(XmlDoc.Replace('!System.Runtime.CompilerServices.IsImplicitlyDereferenced',''))</XmlDoc>
       <XmlDoc>$(XmlDoc.Replace('winrt.',''))</XmlDoc>
     </PropertyGroup>
-    <WriteLinesToFile
-      File="$(XmlDocFile)"
-      Lines="$(XmlDoc)"
-      Overwrite="true"
-      Encoding="UTF-8"/>
+    <WriteLinesToFile File="$(XmlDocFile)" Lines="$(XmlDoc)" Overwrite="true" Encoding="UTF-8" />
   </Target>
 </Project>

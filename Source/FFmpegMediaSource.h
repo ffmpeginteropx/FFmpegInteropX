@@ -53,7 +53,7 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri);
 
-        winrt::event_token TemperatureIsBelowFreezing(Windows::Foundation::EventHandler<float> const& handler);
+        winrt::event_token TemperatureIsBelowFreezing(Windows::Foundation::EventHandler<FFmpegInteropX::MyEventArgs> const& handler);
 
         void TemperatureIsBelowFreezing(winrt::event_token const& token) noexcept;
 
@@ -155,7 +155,7 @@ namespace winrt::FFmpegInteropX::implementation
         FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, CoreDispatcher const& dispatcher);
 
     private:
-        winrt::event<Windows::Foundation::EventHandler<float>> m_temperatureIsBelowFreezingEvent;
+        winrt::event<Windows::Foundation::EventHandler<FFmpegInteropX::MyEventArgs>> m_temperatureIsBelowFreezingEvent;
         HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);
         HRESULT CreateMediaStreamSource(hstring const& uri);
         HRESULT InitFFmpegContext();
