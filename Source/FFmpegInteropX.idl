@@ -193,10 +193,12 @@ namespace FFmpegInteropX
             Windows.Foundation.TimeSpan startTime,
             Windows.Foundation.TimeSpan duration);
 
-        ChapterInfo(String codecName, String language);
+        ChapterInfo(String codecName, String language, String index, String imageType);
 
         String CodecName { get; };
         String Language { get; };
+        String Index { get; };
+        String ImageType { get; };
 
          String Title{ get; };
          Windows.Foundation.TimeSpan StartTime{ get; };

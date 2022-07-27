@@ -15,10 +15,12 @@ namespace winrt::FFmpegInteropX::implementation
         this->duration = duration;
     }
 
-    ChapterInfo::ChapterInfo(hstring const& codecName, hstring const& language)
+    ChapterInfo::ChapterInfo(hstring const& codecName, hstring const& language, hstring const& index, hstring const& imageType)
     {
         this->codecName = codecName;
         this->language = language;
+        this->index = index;
+        this->imageType = imageType;
     }
 
     hstring ChapterInfo::CodecName()
@@ -28,6 +30,14 @@ namespace winrt::FFmpegInteropX::implementation
     hstring ChapterInfo::Language()
     {
         return this->language;
+    }
+    hstring ChapterInfo::Index()
+    {
+        return this->index;
+    }
+    hstring ChapterInfo::ImageType()
+    {
+        return this->imageType;
     }
 
     hstring ChapterInfo::Title()

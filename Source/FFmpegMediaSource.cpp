@@ -543,7 +543,17 @@ namespace winrt::FFmpegInteropX::implementation
                         if (language != NULL)
                         {
                             auto lang = StringUtils::Utf8ToPlatformString(language->value);
-                            auto avsub = winrt::FFmpegInteropX::ChapterInfo(codecName, lang);
+                            int imageType = 0;
+                            if (avSubsCodec->id != AV_CODEC_ID_HDMV_PGS_SUBTITLE && avSubsCodec->id != AV_CODEC_ID_XSUB && avSubsCodec->id != AV_CODEC_ID_DVB_SUBTITLE)
+                            {
+                                imageType = 0;
+                            }
+                            else
+                            {
+                                imageType = 1;
+                            }
+
+                            auto avsub = winrt::FFmpegInteropX::ChapterInfo(codecName, lang, winrt::to_hstring(index), winrt::to_hstring(imageType));
                             avsubtitlesvector.Append(avsub);
                         }
                     }
