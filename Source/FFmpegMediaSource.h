@@ -57,6 +57,8 @@ namespace winrt::FFmpegInteropX::implementation
 
         void TemperatureIsBelowFreezing(winrt::event_token const& token) noexcept;
 
+        void AdjustTemperature(float deltaFahrenheit);
+
         ///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
         void SetSubtitleDelay(TimeSpan const& delay);
 

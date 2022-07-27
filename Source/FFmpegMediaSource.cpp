@@ -120,6 +120,11 @@ namespace winrt::FFmpegInteropX::implementation
         m_temperatureIsBelowFreezingEvent.remove(token);
     }
 
+    void FFmpegMediaSource::AdjustTemperature(float deltaFahrenheit)
+    {
+        //m_temperatureIsBelowFreezingEvent(*this, m_temperatureFahrenheit);
+    }
+
     HRESULT FFmpegMediaSource::CreateMediaStreamSource(IRandomAccessStream const& stream)
     {
         HRESULT hr = S_OK;
