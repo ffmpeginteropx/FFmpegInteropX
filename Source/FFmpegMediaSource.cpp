@@ -1352,6 +1352,24 @@ namespace winrt::FFmpegInteropX::implementation
         return metadata->MetadataTags();
     }
 
+    int32_t FFmpegMediaSource::PrimarySubtitleIndex()
+    {
+        return subtitleIndex;
+    }
+    void FFmpegMediaSource::PrimarySubtitleIndex(int32_t value)
+    {
+        subtitleIndex = value;
+    }
+
+    int32_t FFmpegMediaSource::SecondarySubtitleIndex()
+    {
+        return secsubtitleIndex;
+    }
+    void FFmpegMediaSource::SecondarySubtitleIndex(int32_t value)
+    {
+        secsubtitleIndex = value;
+    }
+
     TimeSpan FFmpegMediaSource::Duration()
     {
         return mediaDuration;

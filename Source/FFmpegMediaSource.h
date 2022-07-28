@@ -108,6 +108,13 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Gets the duration of the stream. Returns zero, if this is streaming media.</summary>
         TimeSpan Duration();
 
+        int32_t PrimarySubtitleIndex();
+        void PrimarySubtitleIndex(int32_t value);
+
+        int32_t SecondarySubtitleIndex();
+        void SecondarySubtitleIndex(int32_t value);
+
+
         ///<summary>Gets the current video stream information.</summary>
         FFmpegInteropX::VideoStreamInfo CurrentVideoStream();
 
@@ -157,6 +164,9 @@ namespace winrt::FFmpegInteropX::implementation
         FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, CoreDispatcher const& dispatcher);
 
     private:
+        int32_t subtitleIndex = -1;
+        int32_t secsubtitleIndex = -1;
+
         winrt::event<Windows::Foundation::EventHandler<FFmpegInteropX::MyEventArgs>> m_temperatureIsBelowFreezingEvent;
         HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);
         HRESULT CreateMediaStreamSource(hstring const& uri);
