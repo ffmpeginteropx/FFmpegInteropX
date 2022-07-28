@@ -126,6 +126,7 @@
     <ClInclude Include="AudioFilter.h" />
     <ClInclude Include="AudioStreamInfo.h" />
     <ClInclude Include="AvCodecContextHelpers.h" />
+    <ClInclude Include="AvSubtitleContextTrack.h" />
     <ClInclude Include="BasicVideoEffect.h" />
     <ClInclude Include="ChapterInfo.h" />
     <ClInclude Include="CharacterEncoding.h" />
@@ -175,6 +176,7 @@
     <ClCompile Include="AttachedFile.cpp" />
     <ClCompile Include="AttachedFileHelper.cpp" />
     <ClCompile Include="AudioStreamInfo.cpp" />
+    <ClCompile Include="AvSubtitleContextTrack.cpp" />
     <ClCompile Include="BasicVideoEffect.cpp" />
     <ClCompile Include="ChapterInfo.cpp" />
     <ClCompile Include="CharacterEncoding.cpp" />

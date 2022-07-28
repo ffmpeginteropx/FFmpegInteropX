@@ -16,24 +16,26 @@
 //
 //*****************************************************************************
 
-#pragma once
-
-#include "MediaSampleProvider.h"
+#include "pch.h"
 #include "AvSubtitleContextTrack.h"
-
-namespace FFmpegInteropX
+extern "C"
 {
-    class FFmpegReader
-    {
-    public:
-        virtual ~FFmpegReader();
-        int ReadPacket();
-        std::shared_ptr<FFmpegMediaSource> m_pSource;
-        std::shared_ptr<std::vector<AvSubtitleContextTrack*>> avSubtitleContextTracks_ptr;
-        FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders);
+#include "libavformat/avformat.h"
+}
 
-    private:
-        AVFormatContext* m_pAvFormatCtx = NULL;
-        std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders = NULL;
-    };
+using namespace FFmpegInteropX;
+
+FFmpegInteropX::AvSubtitleContextTrack::AvSubtitleContextTrack()
+{
+}
+
+FFmpegInteropX::AvSubtitleContextTrack::~AvSubtitleContextTrack()
+{
+    //if (this->avSubtitleCodecCtx != nullptr && this->avSubtitleCodecCtx)
+    //{
+    //    auto t = &this->avSubtitleCodecCtx;
+    //    avcodec_free_context(const_cast <AVCodecContext**>(t));
+    //    DebugMessage(L"AvSubtitleContextTrack reader destroyed1\n");
+    //}
+    DebugMessage(L"AvSubtitleContextTrack reader destroyed2\n");
 }

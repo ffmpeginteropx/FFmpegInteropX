@@ -33,6 +33,11 @@ namespace FFmpegInteropX
     class MediaSampleProvider
     {
     public:
+        //----------------------------------------------------------------------
+        AVStream* m_pAvStream = NULL;
+        INT64 m_startOffset = 0;
+        //----------------------------------------------------------------------
+
         virtual ~MediaSampleProvider();
         virtual winrt::Windows::Media::Core::MediaStreamSample GetNextSample();
         virtual void Flush();
@@ -195,12 +200,11 @@ namespace FFmpegInteropX
         std::shared_ptr<FFmpegReader> m_pReader;
         AVFormatContext* m_pAvFormatCtx = NULL;
         AVCodecContext* m_pAvCodecCtx = NULL;
-        AVStream* m_pAvStream = NULL;
+
         IStreamInfo streamInfo = nullptr;
         bool m_isEnabled = false;
         bool m_isDiscontinuous = false;
         int m_streamIndex = 0;
-        INT64 m_startOffset = 0;
         double timeBaseFactor = 0;
         DecoderEngine decoder = DecoderEngine::FFmpegSoftwareDecoder;
         ID3D11Device* device = NULL;

@@ -215,6 +215,7 @@
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="MyEventArgs.h" />
+    <ClInclude Include="AvSubtitleContextTrack.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -307,6 +308,7 @@
       <Filter>Helpers</Filter>
     </ClCompile>
     <ClCompile Include="MyEventArgs.cpp" />
+    <ClCompile Include="AvSubtitleContextTrack.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />

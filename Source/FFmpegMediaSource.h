@@ -164,8 +164,8 @@ namespace winrt::FFmpegInteropX::implementation
         FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, CoreDispatcher const& dispatcher);
 
     private:
-        int32_t subtitleIndex = -1;
-        int32_t secsubtitleIndex = -1;
+        int32_t subtitleIndex;
+        int32_t secsubtitleIndex;
 
         winrt::event<Windows::Foundation::EventHandler<FFmpegInteropX::MyEventArgs>> m_temperatureIsBelowFreezingEvent;
         HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);
