@@ -33,9 +33,6 @@ FFmpegInteropX::FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::ve
 
 FFmpegInteropX::FFmpegReader::~FFmpegReader()
 {
-    //----------------------------------------------------------------------
-    this->m_pSource = nullptr;
-    //----------------------------------------------------------------------
     DebugMessage(L"FFMpeg reader destroyed\n");
 }
 
@@ -91,9 +88,13 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
     std::shared_ptr<MediaSampleProvider> provider = sampleProviders->at(avPacket->stream_index);
 
 
-    if (tempTrack && tempTrack != nullptr && provider != nullptr && m_pSource != nullptr && m_pSource
-        && (m_pSource->PrimarySubtitleIndex() == avPacket->stream_index || m_pSource->SecondarySubtitleIndex() == avPacket->stream_index))
+    if (tempTrack && tempTrack != nullptr && provider != nullptr)
     {
+        //&& m_pSource != nullptr && m_pSource
+        //&& (m_pSource->PrimarySubtitleIndex() == avPacket->stream_index || m_pSource->SecondarySubtitleIndex() == avPacket->stream_index))
+        //auto avsub = winrt::FFmpegInteropX::ChapterInfo(codecName, lang, index, winrt::to_hstring(imageType));
+        auto args = winrt::FFmpegInteropX::MyEventArgs();
+        this->eventCallback(&args);
         int got = 0;
         AVSubtitle avSubtitle;
         auto result = avcodec_decode_subtitle2(tempTrack->avSubtitleCodecCtx, &avSubtitle, &got, avPacket);

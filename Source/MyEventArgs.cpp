@@ -4,13 +4,8 @@
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    MyEventArgs::MyEventArgs(float temperatureFahrenheit) : m_temperatureFahrenheit(temperatureFahrenheit)
+    MyEventArgs::MyEventArgs()
     {
-    }
-
-    float MyEventArgs::TemperatureFahrenheit()
-    {
-        return m_temperatureFahrenheit;
     }
     hstring MyEventArgs::Type()
     {

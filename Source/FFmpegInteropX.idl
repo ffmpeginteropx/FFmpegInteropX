@@ -390,7 +390,7 @@ namespace FFmpegInteropX
     [default_interface]
     runtimeclass MyEventArgs
     {
-        Single TemperatureFahrenheit{ get; };
+        MyEventArgs();
         String Type{ get; };
         Int32 Index{ get; };
         Int32 StartTime{ get; };

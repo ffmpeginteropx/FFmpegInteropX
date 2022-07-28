@@ -453,7 +453,10 @@ namespace winrt::FFmpegInteropX::implementation
         {
             //----------------------------------------------------------------------
             m_pReader = std::shared_ptr<FFmpegReader>(new FFmpegReader(avFormatCtx, &sampleProviders));
-            //m_pReader->m_pSource = std::shared_ptr<::FFmpegInteropX::FFmpegMediaSource>();
+
+            m_pReader->eventCallback = [this](MyEventArgs* s) {
+                this->AdjustTemperature(1);
+            };
             if (m_pReader == nullptr)
             {
                 hr = E_OUTOFMEMORY;

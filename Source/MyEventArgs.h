@@ -5,9 +5,7 @@ namespace winrt::FFmpegInteropX::implementation
 {
     struct MyEventArgs : MyEventArgsT<MyEventArgs>
     {
-        MyEventArgs() = default;
-        MyEventArgs(float temperatureFahrenheit);
-        float TemperatureFahrenheit();
+        MyEventArgs();
         hstring Type();
         int32_t Index();
         int32_t StartTime();
@@ -18,7 +16,6 @@ namespace winrt::FFmpegInteropX::implementation
         winrt::Windows::Storage::Streams::IBuffer Buffer2();
 
     private:
-        float m_temperatureFahrenheit{ 0.f };
         hstring type{};
         int32_t index{};
         int32_t starttime{};
@@ -27,5 +24,11 @@ namespace winrt::FFmpegInteropX::implementation
         int32_t height{};
         winrt::Windows::Storage::Streams::IBuffer buffer{};
         winrt::Windows::Storage::Streams::IBuffer buffer2{};
+    };
+}
+namespace winrt::FFmpegInteropX::factory_implementation
+{
+    struct MyEventArgs : MyEventArgsT<MyEventArgs, implementation::MyEventArgs>
+    {
     };
 }
