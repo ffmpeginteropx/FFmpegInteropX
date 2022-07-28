@@ -74,6 +74,8 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int
 
         if (!SUCCEEDED(hr) && errorCount++ < m_config.SkipErrors())
         {
+            DebugMessage(L"Decode error.\n");
+
             // unref any buffers in old frame
             av_frame_unref(avFrame);
 
