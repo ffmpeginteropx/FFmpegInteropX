@@ -175,11 +175,16 @@ void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::K
 
 task<void> MainPage::OpenUriStream(Platform::String^ uri)
 {
-    // Set FFmpeg specific options. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
-
+    // Set FFmpeg specific options:
+    // https://www.ffmpeg.org/ffmpeg-protocols.html
+    // https://www.ffmpeg.org/ffmpeg-formats.html
+    // 
+    // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
+    
     // Below are some sample options that you can set to configure RTSP streaming
-    // Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
-    // Config->FFmpegOptions->Insert("stimeout", 100000);
+    //Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
+    Config->FFmpegOptions->Insert("stimeout", 1000000);
+    Config->FFmpegOptions->Insert("timeout", 1000000);
 
     // Instantiate FFmpegMediaSource using the URI
     mediaPlayer->Source = nullptr;
