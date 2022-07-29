@@ -29,6 +29,7 @@ namespace FFmpegInteropX
         virtual ~FFmpegReader();
         int ReadPacket();
         std::function<void(AvSubtitleEventArgs*)> eventCallback;
+        std::function<void(int)> readCallback;
         std::shared_ptr<std::vector<AvSubtitleContextTrack*>> avSubtitleContextTracks_ptr;
         FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders);
 

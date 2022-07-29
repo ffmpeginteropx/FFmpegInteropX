@@ -453,9 +453,11 @@ namespace winrt::FFmpegInteropX::implementation
         {
             //----------------------------------------------------------------------
             m_pReader = std::shared_ptr<FFmpegReader>(new FFmpegReader(avFormatCtx, &sampleProviders));
-
             m_pReader->eventCallback = [this](AvSubtitleEventArgs* s) {
                 this->RaiseSubtitleCueEntered(s);
+            };
+            m_pReader->readCallback = [this](int r) {
+                this->BytesSnapshot(r);
             };
             if (m_pReader == nullptr)
             {
@@ -1395,6 +1397,15 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SecondarySubtitleIndex(int32_t value)
     {
         secsubtitleIndex = value;
+    }
+
+    int32_t FFmpegMediaSource::BytesSnapshot()
+    {
+        return _readed;
+    }
+    void FFmpegMediaSource::BytesSnapshot(int32_t value)
+    {
+        _readed += value;
     }
 
     TimeSpan FFmpegMediaSource::Duration()

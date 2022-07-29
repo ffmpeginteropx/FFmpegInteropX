@@ -55,6 +55,8 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
         av_packet_free(&avPacket);
         return ret;
     }
+    this->readCallback(avPacket->size);
+
     AvSubtitleContextTrack* tempTrack = nullptr;
     if (avPacket->stream_index != 1 && avPacket->stream_index != 0)
     {
