@@ -499,7 +499,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
         //----------------------------------------------------------------------
-        auto avsubtitlesvector = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::ChapterInfo>();
+        auto avsubtitlesvector = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::AvSubtitleTrack>();
         auto avsubtitlecontextsvector = std::vector<AvSubtitleContextTrack*>();
         //----------------------------------------------------------------------
         for (int index = 0; index < (int)avFormatCtx->nb_streams; index++)
@@ -588,7 +588,7 @@ namespace winrt::FFmpegInteropX::implementation
 
                                     avsubtitlecontextsvector.push_back(track);
 
-                                    auto avsub = winrt::FFmpegInteropX::ChapterInfo(codecName, lang, index, winrt::to_hstring(imageType));
+                                    auto avsub = winrt::FFmpegInteropX::AvSubtitleTrack(codecName, lang, index, winrt::to_hstring(imageType));
                                     avsubtitlesvector.Append(avsub);
                                 }
                          
@@ -1434,7 +1434,7 @@ namespace winrt::FFmpegInteropX::implementation
         return chapterInfos;
     }
 
-    Collections::IVectorView<FFmpegInteropX::ChapterInfo> FFmpegMediaSource::AvSubtitles()
+    Collections::IVectorView<FFmpegInteropX::AvSubtitleTrack> FFmpegMediaSource::AvSubtitles()
     {
         return avSubtitles;
     }

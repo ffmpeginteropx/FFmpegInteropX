@@ -18,6 +18,8 @@
 
 #include "pch.h"
 #include "FFmpegReader.h"
+#include "winrt/RuntimeComponentUtils.h"
+
 extern "C"
 {
 #include "libavformat/avformat.h"
@@ -88,11 +90,10 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
     std::shared_ptr<MediaSampleProvider> provider = sampleProviders->at(avPacket->stream_index);
 
 
-    if (tempTrack && tempTrack != nullptr && provider != nullptr)
+    if (tempTrack && tempTrack != nullptr && provider != nullptr && this->eventCallback != nullptr)
     {
         //&& m_pSource != nullptr && m_pSource
         //&& (m_pSource->PrimarySubtitleIndex() == avPacket->stream_index || m_pSource->SecondarySubtitleIndex() == avPacket->stream_index))
-        //auto avsub = winrt::FFmpegInteropX::ChapterInfo(codecName, lang, index, winrt::to_hstring(imageType));
 
         int got = 0;
         AVSubtitle avSubtitle;
@@ -101,57 +102,43 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
         auto frameDuration = avPacket->duration;
         if (got != 0)
         {
-            TimeSpan position;
-            TimeSpan duration;
-
-            position = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->pts) - provider->m_startOffset);
-            duration = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->duration));
+            TimeSpan position = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->pts) - provider->m_startOffset);
+            TimeSpan duration = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->duration));
             this->RaiseSubtitleCueEntered(avPacket, &avSubtitle, tempTrack, position, duration);
             avsubtitle_free(&avSubtitle);
-            av_packet_free(&avPacket);
         }
         else
         {
-            //DataWriter dataWriter = DataWriter();
-            //auto aBuffer = new Platform::Array<uint8_t>(avPacket->data, avPacket->size);
-            //dataWriter->WriteBytes(aBuffer);
-            //auto random = RuntimeComponentUtils::Zip::GetDecompressed(dataWriter->DetachBuffer());
-            //std::vector<uint8_t> vec(random->begin(), random->end());
-            //uint8_t* newdata = vec.data();
-            //avPacket->data = newdata;
-            //avPacket->buf = nullptr;
-            //avPacket->size = vec.size();
+            DataWriter dataWriter = DataWriter();
+            auto aBuffer = winrt::array_view<const uint8_t>(avPacket->data, avPacket->size);
+            dataWriter.WriteBytes(aBuffer);
+            auto random = winrt::RuntimeComponentUtils::Zip::GetDecompressed(dataWriter.DetachBuffer());
+            std::vector<uint8_t> vec(random.begin(), random.end());
+            uint8_t* newdata = vec.data();
+            avPacket->data = newdata;
+            avPacket->buf = nullptr;
+            avPacket->size = vec.size();
 
-            //auto result2 = avcodec_decode_subtitle2(tempTrack->avSubtitleCodecCtx, &avSubtitle, &got, avPacket);
-            //if (got)
-            //{
-            //    TimeSpan position;
-            //    TimeSpan duration;
-
-            //    position = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->pts) - provider->m_startOffset);
-            //    duration = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->duration));
-
-            //    //m_FFmpegInteropMSS->RaiseSubtitleCueEntered(*avPacket, avSubtitle, tempTrack, position, duration);
-            //}
-
+            auto result2 = avcodec_decode_subtitle2(tempTrack->avSubtitleCodecCtx, &avSubtitle, &got, avPacket);
+            if (got)
+            {
+                TimeSpan position = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->pts) - provider->m_startOffset);
+                TimeSpan duration = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->duration));
+                this->RaiseSubtitleCueEntered(avPacket, &avSubtitle, tempTrack, position, duration);
+            }
             avsubtitle_free(&avSubtitle);
-            av_packet_free(&avPacket);
-            return ret;
         }
+    }
+
+    if (provider)
+    {
+        provider->QueuePacket(avPacket);
     }
     else
     {
-        if (provider)
-        {
-            provider->QueuePacket(avPacket);
-        }
-        else
-        {
-            DebugMessage(L"Ignoring unused stream\n");
-            av_packet_free(&avPacket);
-        }
+        DebugMessage(L"Ignoring unused stream\n");
+        av_packet_free(&avPacket);
     }
-
 
     return ret;
 }

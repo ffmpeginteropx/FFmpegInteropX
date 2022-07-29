@@ -127,6 +127,7 @@
     <ClInclude Include="AudioStreamInfo.h" />
     <ClInclude Include="AvCodecContextHelpers.h" />
     <ClInclude Include="AvSubtitleContextTrack.h" />
+    <ClInclude Include="AvSubtitleTrack.h" />
     <ClInclude Include="BasicVideoEffect.h" />
     <ClInclude Include="ChapterInfo.h" />
     <ClInclude Include="CharacterEncoding.h" />
@@ -177,6 +178,7 @@
     <ClCompile Include="AttachedFileHelper.cpp" />
     <ClCompile Include="AudioStreamInfo.cpp" />
     <ClCompile Include="AvSubtitleContextTrack.cpp" />
+    <ClCompile Include="AvSubtitleTrack.cpp" />
     <ClCompile Include="BasicVideoEffect.cpp" />
     <ClCompile Include="ChapterInfo.cpp" />
     <ClCompile Include="CharacterEncoding.cpp" />
@@ -243,6 +245,11 @@
     <Text Include="readme.txt">
       <DeploymentContent>false</DeploymentContent>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\TPlayer\RuntimeComponentUtils\RuntimeComponentUtils.csproj">
+      <Project>{b0ec06a9-0e9e-400f-891a-1cfa5eadd504}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

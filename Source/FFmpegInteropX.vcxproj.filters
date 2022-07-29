@@ -216,6 +216,7 @@
     </ClInclude>
     <ClInclude Include="AvSubtitleEventArgs.h" />
     <ClInclude Include="AvSubtitleContextTrack.h" />
+    <ClInclude Include="AvSubtitleTrack.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -309,6 +310,7 @@
     </ClCompile>
     <ClCompile Include="AvSubtitleEventArgs.cpp" />
     <ClCompile Include="AvSubtitleContextTrack.cpp" />
+    <ClCompile Include="AvSubtitleTrack.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />

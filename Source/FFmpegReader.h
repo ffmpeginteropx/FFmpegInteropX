@@ -35,7 +35,7 @@ namespace FFmpegInteropX
     private:
         AVFormatContext* m_pAvFormatCtx = NULL;
         std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders = NULL;
-
+        //----------------------------------------------------------------------
         void RaiseSubtitleCueEntered(AVPacket* avPacket, AVSubtitle* avSubtitle, AvSubtitleContextTrack* tempTrack, TimeSpan pos, TimeSpan dur)
         {
             if (tempTrack->m_avSubtitleCodec->id != AV_CODEC_ID_HDMV_PGS_SUBTITLE && tempTrack->m_avSubtitleCodec->id != AV_CODEC_ID_XSUB && tempTrack->m_avSubtitleCodec->id != AV_CODEC_ID_DVB_SUBTITLE)
@@ -49,48 +49,32 @@ namespace FFmpegInteropX
             }
             else
             {
-                //SubtitleCueEventArgs^ cue = ref new SubtitleCueEventArgs();
+                auto index = avPacket->stream_index;
                 if (avSubtitle->rects != nullptr)
                 {
-                    //DataWriter^ ImageDataWriter = ref new DataWriter();
-                    //DataWriter^ paletteDataWriter = ref new DataWriter();
+                    DataWriter imageDataWriter = DataWriter();
+                    DataWriter paletteDataWriter = DataWriter();
+                    auto rect = (*avSubtitle->rects);
+                    auto imageData = rect->data[0];
+                    auto aBuffer = winrt::array_view<const uint8_t>(imageData, rect->w * rect->h);
+                    imageDataWriter.WriteBytes(aBuffer);
 
-                    auto imageData = (*avSubtitle->rects)->data[0];
-                  /*  auto aBuffer = ref new Platform::Array<uint8_t>(imageData, (*avSubtitle.rects)->w * (*avSubtitle.rects)->h);
-                    ImageDataWriter->WriteBytes(aBuffer);
-                    auto palette = (*avSubtitle.rects)->data[1];
-                    auto paletteBuffer = ref new Platform::Array<uint8_t>(palette, (*avSubtitle.rects)->nb_colors * 4);
-                    paletteDataWriter->WriteBytes(paletteBuffer);
+                    auto palette = rect->data[1];
+                    auto paletteBuffer = winrt::array_view<const uint8_t>(palette, rect->nb_colors * 4);
+                    paletteDataWriter.WriteBytes(paletteBuffer);
 
-
-                    cue->_index = avPacket.stream_index;
-                    cue->_starttime = pos.Duration / 10000;
-                    cue->_duration = dur.Duration / 10000;
-                    cue->_width = (*avSubtitle.rects)->w;
-                    cue->_height = (*avSubtitle.rects)->h;
-                    cue->_type = ref new Platform::String(L"IMAGE_SUBTITLE");
-                    cue->_ibuffer = ImageDataWriter->DetachBuffer();
-                    cue->_ibuffer2 = paletteDataWriter->DetachBuffer();
-                    SubtitleCueEntered(this, cue);*/
+                    auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(pos, dur, imageDataWriter.DetachBuffer(), paletteDataWriter.DetachBuffer(), index, rect->w, rect->h, winrt::hstring(L"IMAGE_SUBTITLE"));
+                    this->eventCallback(&args);
                 }
                 else
                 {
-                    auto index = avPacket->stream_index;
                     IBuffer buffer = nullptr;
                     IBuffer buffer2 = nullptr;
                     auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(pos, dur, buffer, buffer2, index, 0, 0, winrt::hstring(L"IMAGE_SUBTITLE"));
                     this->eventCallback(&args);
-                   /* cue->_index = avPacket.stream_index;
-                    cue->_starttime = pos.Duration / 10000;
-                    cue->_duration = dur.Duration / 10000;
-                    cue->_type = ref new Platform::String(L"IMAGE_SUBTITLE");
-                    SubtitleCueEntered(this, cue);*/
                 }
             }
-
-            /*      auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(position, duration, buffer, buffer2, 0, 1, 2, winrt::hstring());
-      this->eventCallback(&args);*/
         }
-
+        //----------------------------------------------------------------------
     };
 }

@@ -134,7 +134,7 @@ namespace winrt::FFmpegInteropX::implementation
         IVectorView<FFmpegInteropX::ChapterInfo> ChapterInfos();
 
         ///<summary>Gets subtitles information.</summary>
-        IVectorView<FFmpegInteropX::ChapterInfo> AvSubtitles();
+        IVectorView<FFmpegInteropX::AvSubtitleTrack> AvSubtitles();
 
         ///<summary>Gets format information.</summary>
         FFmpegInteropX::FormatInfo FormatInfo();
@@ -249,7 +249,7 @@ namespace winrt::FFmpegInteropX::implementation
         IVectorView<FFmpegInteropX::AudioStreamInfo> audioStreamInfos = { nullptr };
         IVectorView<FFmpegInteropX::SubtitleStreamInfo> subtitleStreamInfos = { nullptr };
         IVectorView<FFmpegInteropX::ChapterInfo> chapterInfos = { nullptr };
-        IVectorView<FFmpegInteropX::ChapterInfo> avSubtitles = { nullptr };
+        IVectorView<FFmpegInteropX::AvSubtitleTrack> avSubtitles = { nullptr };
         FFmpegInteropX::FormatInfo formatInfo = { nullptr };
 
         std::shared_ptr<AttachedFileHelper> attachedFileHelper = { nullptr };
