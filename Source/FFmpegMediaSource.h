@@ -53,11 +53,11 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri);
 
-        winrt::event_token TemperatureIsBelowFreezing(Windows::Foundation::EventHandler<FFmpegInteropX::AvSubtitleEventArgs> const& handler);
+        winrt::event_token SubtitleCueEntered(Windows::Foundation::EventHandler<FFmpegInteropX::AvSubtitleEventArgs> const& handler);
 
-        void TemperatureIsBelowFreezing(winrt::event_token const& token) noexcept;
+        void SubtitleCueEntered(winrt::event_token const& token) noexcept;
 
-        void AdjustTemperature(float deltaFahrenheit);
+        void RaiseSubtitleCueEntered(FFmpegInteropX::AvSubtitleEventArgs* args);
 
         ///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
         void SetSubtitleDelay(TimeSpan const& delay);
@@ -167,7 +167,7 @@ namespace winrt::FFmpegInteropX::implementation
         int32_t subtitleIndex;
         int32_t secsubtitleIndex;
 
-        winrt::event<Windows::Foundation::EventHandler<FFmpegInteropX::AvSubtitleEventArgs>> m_temperatureIsBelowFreezingEvent;
+        winrt::event<Windows::Foundation::EventHandler<FFmpegInteropX::AvSubtitleEventArgs>> m_subtitleCueEnteredEvent;
         HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);
         HRESULT CreateMediaStreamSource(hstring const& uri);
         HRESULT InitFFmpegContext();

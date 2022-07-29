@@ -109,20 +109,20 @@ namespace winrt::FFmpegInteropX::implementation
         return interopMSS;
     }
 
-    winrt::event_token FFmpegMediaSource::TemperatureIsBelowFreezing(Windows::Foundation::EventHandler<FFmpegInteropX::AvSubtitleEventArgs> const& handler)
+    winrt::event_token FFmpegMediaSource::SubtitleCueEntered(Windows::Foundation::EventHandler<FFmpegInteropX::AvSubtitleEventArgs> const& handler)
     {
-        return m_temperatureIsBelowFreezingEvent.add(handler);
+        return m_subtitleCueEnteredEvent.add(handler);
     }
 
-    void FFmpegMediaSource::TemperatureIsBelowFreezing(winrt::event_token const& token) noexcept
+    void FFmpegMediaSource::SubtitleCueEntered(winrt::event_token const& token) noexcept
     {
-        //m_temperatureIsBelowFreezingEvent(*this, m_temperatureFahrenheit);
-        m_temperatureIsBelowFreezingEvent.remove(token);
+        //m_subtitleCueEnteredEvent(*this, m_temperatureFahrenheit);
+        m_subtitleCueEnteredEvent.remove(token);
     }
 
-    void FFmpegMediaSource::AdjustTemperature(float deltaFahrenheit)
+    void FFmpegMediaSource::RaiseSubtitleCueEntered(FFmpegInteropX::AvSubtitleEventArgs* args)
     {
-        //m_temperatureIsBelowFreezingEvent(*this, m_temperatureFahrenheit);
+        m_subtitleCueEnteredEvent(*this, *args);
     }
 
     HRESULT FFmpegMediaSource::CreateMediaStreamSource(IRandomAccessStream const& stream)
@@ -455,7 +455,7 @@ namespace winrt::FFmpegInteropX::implementation
             m_pReader = std::shared_ptr<FFmpegReader>(new FFmpegReader(avFormatCtx, &sampleProviders));
 
             m_pReader->eventCallback = [this](AvSubtitleEventArgs* s) {
-                this->AdjustTemperature(1);
+                this->RaiseSubtitleCueEntered(s);
             };
             if (m_pReader == nullptr)
             {

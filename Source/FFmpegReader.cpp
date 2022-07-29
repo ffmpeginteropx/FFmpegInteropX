@@ -93,8 +93,7 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
         //&& m_pSource != nullptr && m_pSource
         //&& (m_pSource->PrimarySubtitleIndex() == avPacket->stream_index || m_pSource->SecondarySubtitleIndex() == avPacket->stream_index))
         //auto avsub = winrt::FFmpegInteropX::ChapterInfo(codecName, lang, index, winrt::to_hstring(imageType));
-        auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs();
-        this->eventCallback(&args);
+
         int got = 0;
         AVSubtitle avSubtitle;
         auto result = avcodec_decode_subtitle2(tempTrack->avSubtitleCodecCtx, &avSubtitle, &got, avPacket);
@@ -109,6 +108,10 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
             duration = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->duration));
 
             //m_FFmpegInteropMSS->RaiseSubtitleCueEntered(*avPacket, avSubtitle, tempTrack, position, duration);
+
+            auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(position, duration);
+            this->eventCallback(&args);
+
             avsubtitle_free(&avSubtitle);
             av_packet_free(&avPacket);
         }

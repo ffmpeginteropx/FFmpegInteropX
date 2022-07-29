@@ -390,11 +390,12 @@ namespace FFmpegInteropX
     [default_interface]
     runtimeclass AvSubtitleEventArgs
     {
+        AvSubtitleEventArgs(Windows.Foundation.TimeSpan startTime, Windows.Foundation.TimeSpan duration);
         AvSubtitleEventArgs();
         String Type{ get; };
         Int32 Index{ get; };
-        Int32 StartTime{ get; };
-        Int32 Duration{ get; };
+        Windows.Foundation.TimeSpan StartTime{ get; };
+        Windows.Foundation.TimeSpan Duration{ get; };
         Int32 Width{ get; };
         Int32 Height{ get; };
         Windows.Storage.Streams.IBuffer Buffer{ get; };
@@ -406,11 +407,9 @@ namespace FFmpegInteropX
     {
         Int32 PrimarySubtitleIndex { get; set; };
 
-    Int32 SecondarySubtitleIndex{ get; set; };
+        Int32 SecondarySubtitleIndex{ get; set; };
 
-        void AdjustTemperature(Single deltaFahrenheit);
-
-        event Windows.Foundation.EventHandler<FFmpegInteropX.AvSubtitleEventArgs> TemperatureIsBelowFreezing;
+        event Windows.Foundation.EventHandler<FFmpegInteropX.AvSubtitleEventArgs> SubtitleCueEntered;
 
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream, MediaSourceConfig config);

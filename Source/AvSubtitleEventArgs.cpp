@@ -4,6 +4,11 @@
 
 namespace winrt::FFmpegInteropX::implementation
 {
+    AvSubtitleEventArgs::AvSubtitleEventArgs(Windows::Foundation::TimeSpan const& startTime, Windows::Foundation::TimeSpan const& duration)
+    {
+        this->starttime = startTime;
+        this->duration = duration;
+    }
     AvSubtitleEventArgs::AvSubtitleEventArgs()
     {
     }
@@ -15,11 +20,11 @@ namespace winrt::FFmpegInteropX::implementation
     {
         return index;
     }
-    int32_t AvSubtitleEventArgs::StartTime()
+    Windows::Foundation::TimeSpan AvSubtitleEventArgs::StartTime()
     {
         return starttime;
     }
-    int32_t AvSubtitleEventArgs::Duration()
+    Windows::Foundation::TimeSpan AvSubtitleEventArgs::Duration()
     {
         return duration;
     }
