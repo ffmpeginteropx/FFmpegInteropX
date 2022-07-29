@@ -106,14 +106,7 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
 
             position = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->pts) - provider->m_startOffset);
             duration = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->duration));
-
-            //m_FFmpegInteropMSS->RaiseSubtitleCueEntered(*avPacket, avSubtitle, tempTrack, position, duration);
-
-            IBuffer buffer = nullptr;
-            IBuffer buffer2 = nullptr;
-            auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(position, duration, buffer, buffer2, 0, 1, 2, winrt::hstring());
-            this->eventCallback(&args);
-
+            this->RaiseSubtitleCueEntered(avPacket, &avSubtitle, tempTrack, position, duration);
             avsubtitle_free(&avSubtitle);
             av_packet_free(&avPacket);
         }
@@ -162,3 +155,4 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
 
     return ret;
 }
+

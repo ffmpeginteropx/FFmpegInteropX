@@ -10,6 +10,7 @@ namespace winrt::FFmpegInteropX::implementation
         this->duration = duration;
         this->buffer = buffer;
         this->buffer2 = buffer2;
+        this->index = index;
         this->width = width;
         this->height = height;
         this->type = type;
