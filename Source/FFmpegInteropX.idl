@@ -388,9 +388,9 @@ namespace FFmpegInteropX
     }
 
     [default_interface]
-    runtimeclass MyEventArgs
+    runtimeclass AvSubtitleEventArgs
     {
-        MyEventArgs();
+        AvSubtitleEventArgs();
         String Type{ get; };
         Int32 Index{ get; };
         Int32 StartTime{ get; };
@@ -410,7 +410,7 @@ namespace FFmpegInteropX
 
         void AdjustTemperature(Single deltaFahrenheit);
 
-        event Windows.Foundation.EventHandler<FFmpegInteropX.MyEventArgs> TemperatureIsBelowFreezing;
+        event Windows.Foundation.EventHandler<FFmpegInteropX.AvSubtitleEventArgs> TemperatureIsBelowFreezing;
 
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream, MediaSourceConfig config);

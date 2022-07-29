@@ -93,7 +93,7 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
         //&& m_pSource != nullptr && m_pSource
         //&& (m_pSource->PrimarySubtitleIndex() == avPacket->stream_index || m_pSource->SecondarySubtitleIndex() == avPacket->stream_index))
         //auto avsub = winrt::FFmpegInteropX::ChapterInfo(codecName, lang, index, winrt::to_hstring(imageType));
-        auto args = winrt::FFmpegInteropX::MyEventArgs();
+        auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs();
         this->eventCallback(&args);
         int got = 0;
         AVSubtitle avSubtitle;

@@ -214,7 +214,7 @@
     <ClInclude Include="LanguageTagConverter.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="MyEventArgs.h" />
+    <ClInclude Include="AvSubtitleEventArgs.h" />
     <ClInclude Include="AvSubtitleContextTrack.h" />
   </ItemGroup>
   <ItemGroup>
@@ -307,7 +307,7 @@
     <ClCompile Include="LanguageTagConverter.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="MyEventArgs.cpp" />
+    <ClCompile Include="AvSubtitleEventArgs.cpp" />
     <ClCompile Include="AvSubtitleContextTrack.cpp" />
   </ItemGroup>
   <ItemGroup>

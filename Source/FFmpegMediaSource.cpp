@@ -109,7 +109,7 @@ namespace winrt::FFmpegInteropX::implementation
         return interopMSS;
     }
 
-    winrt::event_token FFmpegMediaSource::TemperatureIsBelowFreezing(Windows::Foundation::EventHandler<FFmpegInteropX::MyEventArgs> const& handler)
+    winrt::event_token FFmpegMediaSource::TemperatureIsBelowFreezing(Windows::Foundation::EventHandler<FFmpegInteropX::AvSubtitleEventArgs> const& handler)
     {
         return m_temperatureIsBelowFreezingEvent.add(handler);
     }
@@ -454,7 +454,7 @@ namespace winrt::FFmpegInteropX::implementation
             //----------------------------------------------------------------------
             m_pReader = std::shared_ptr<FFmpegReader>(new FFmpegReader(avFormatCtx, &sampleProviders));
 
-            m_pReader->eventCallback = [this](MyEventArgs* s) {
+            m_pReader->eventCallback = [this](AvSubtitleEventArgs* s) {
                 this->AdjustTemperature(1);
             };
             if (m_pReader == nullptr)

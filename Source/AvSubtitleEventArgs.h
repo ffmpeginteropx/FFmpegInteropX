@@ -1,11 +1,11 @@
 #pragma once
-#include "MyEventArgs.g.h"
+#include "AvSubtitleEventArgs.g.h"
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    struct MyEventArgs : MyEventArgsT<MyEventArgs>
+    struct AvSubtitleEventArgs : AvSubtitleEventArgsT<AvSubtitleEventArgs>
     {
-        MyEventArgs();
+        AvSubtitleEventArgs();
         hstring Type();
         int32_t Index();
         int32_t StartTime();
@@ -28,7 +28,7 @@ namespace winrt::FFmpegInteropX::implementation
 }
 namespace winrt::FFmpegInteropX::factory_implementation
 {
-    struct MyEventArgs : MyEventArgsT<MyEventArgs, implementation::MyEventArgs>
+    struct AvSubtitleEventArgs : AvSubtitleEventArgsT<AvSubtitleEventArgs, implementation::AvSubtitleEventArgs>
     {
     };
 }
