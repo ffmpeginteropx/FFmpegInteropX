@@ -227,11 +227,16 @@ namespace MediaPlayerCS
 
                 try
                 {
-                    // Set FFmpeg specific options. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
+                    // Set FFmpeg specific options:
+                    // https://www.ffmpeg.org/ffmpeg-protocols.html
+                    // https://www.ffmpeg.org/ffmpeg-formats.html
+
+                    // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
 
                     // Below are some sample options that you can set to configure RTSP streaming
                     // Config.FFmpegOptions.Add("rtsp_flags", "prefer_tcp");
-                    // Config.FFmpegOptions.Add("stimeout", 100000);
+                    Config.FFmpegOptions.Add("stimeout", 1000000);
+                    Config.FFmpegOptions.Add("timeout", 1000000);
 
                     // Instantiate FFmpegMediaSource using the URI
                     mediaPlayer.Source = null;

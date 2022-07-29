@@ -261,14 +261,28 @@ MediaStreamSample MediaSampleProvider::GetNextSample()
 HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration)
 {
     HRESULT hr = S_OK;
+    unsigned int errorCount = 0;
 
     // Continue reading until there is an appropriate packet in the stream
     while (m_packetQueue.empty())
     {
-        if (m_pReader->ReadPacket() < 0)
+        auto result = m_pReader->ReadPacket();
+        if (result < 0)
         {
-            DebugMessage(L"GetNextPacket reaching EOF\n");
-            break;
+            if (result == AVERROR_EOF || (m_pAvFormatCtx->pb && m_pAvFormatCtx->pb->eof_reached))
+            {
+                DebugMessage(L"GetNextPacket reaching EOF\n");
+                break;
+            }
+            else if (errorCount++ >= m_config.SkipErrors())
+            {
+                DebugMessage(L"Aborting after to too many read errors.\n");
+                break;
+            }
+            else
+            {
+                DebugMessage(L"Read error.\n");
+            }
         }
     }
 
