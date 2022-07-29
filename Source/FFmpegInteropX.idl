@@ -390,7 +390,7 @@ namespace FFmpegInteropX
     [default_interface]
     runtimeclass AvSubtitleEventArgs
     {
-        AvSubtitleEventArgs(Windows.Foundation.TimeSpan startTime, Windows.Foundation.TimeSpan duration);
+        AvSubtitleEventArgs(Windows.Foundation.TimeSpan startTime, Windows.Foundation.TimeSpan duration, Windows.Storage.Streams.IBuffer buffer, Windows.Storage.Streams.IBuffer buffer2, Int32 index, Int32 width, Int32 height, String type);
         AvSubtitleEventArgs();
         String Type{ get; };
         Int32 Index{ get; };

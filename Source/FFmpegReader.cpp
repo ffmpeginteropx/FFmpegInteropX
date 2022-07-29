@@ -109,7 +109,9 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
 
             //m_FFmpegInteropMSS->RaiseSubtitleCueEntered(*avPacket, avSubtitle, tempTrack, position, duration);
 
-            auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(position, duration);
+            IBuffer buffer = nullptr;
+            IBuffer buffer2 = nullptr;
+            auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(position, duration, buffer, buffer2, 0, 1, 2, winrt::hstring());
             this->eventCallback(&args);
 
             avsubtitle_free(&avSubtitle);

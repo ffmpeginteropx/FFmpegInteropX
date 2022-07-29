@@ -5,7 +5,7 @@ namespace winrt::FFmpegInteropX::implementation
 {
     struct AvSubtitleEventArgs : AvSubtitleEventArgsT<AvSubtitleEventArgs>
     {
-        AvSubtitleEventArgs::AvSubtitleEventArgs(Windows::Foundation::TimeSpan const& startTime, Windows::Foundation::TimeSpan const& duration);
+        AvSubtitleEventArgs::AvSubtitleEventArgs(Windows::Foundation::TimeSpan const& startTime, Windows::Foundation::TimeSpan const& duration, winrt::Windows::Storage::Streams::IBuffer const& buffer, winrt::Windows::Storage::Streams::IBuffer const& buffer2, int32_t const& index, int32_t const& width, int32_t const& height, hstring const& type);
         AvSubtitleEventArgs::AvSubtitleEventArgs();
         hstring Type();
         int32_t Index();
