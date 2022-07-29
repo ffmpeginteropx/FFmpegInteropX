@@ -146,15 +146,14 @@ task<void> MainPage::OpenLocalFile(StorageFile^ file)
     // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
     try
     {
+        StorageApplicationPermissions::FutureAccessList->Clear();
+        StorageApplicationPermissions::FutureAccessList->Add(file);
+
         auto stream = co_await file->OpenAsync(FileAccessMode::Read);
         // Instantiate FFmpegMediaSource using the opened local file stream
         FFmpegMSS = co_await FFmpegMediaSource::CreateFromStreamAsync(stream, Config);
 
-        StorageApplicationPermissions::FutureAccessList->Clear();
-        StorageApplicationPermissions::FutureAccessList->Add(file);
-
         playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
-
 
         // Pass MediaPlaybackItem to Media Element
         mediaPlayer->Source = playbackItem;
@@ -189,16 +188,22 @@ void MainPage::URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::K
 
 task<void> MainPage::OpenUriStream(Platform::String^ uri)
 {
-    // Set FFmpeg specific options. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
-
-    // Below are some sample options that you can set to configure RTSP streaming
-    // Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
-    // Config->FFmpegOptions->Insert("stimeout", 100000);
+    // Set FFmpeg specific options:
+    // https://www.ffmpeg.org/ffmpeg-protocols.html
+    // https://www.ffmpeg.org/ffmpeg-formats.html
+    // 
+    // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
+    
+    //Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
+    Config->FFmpegOptions->Insert("stimeout", 1000000);
+    Config->FFmpegOptions->Insert("timeout", 1000000);
 
     // Instantiate FFmpegMediaSource using the URI
     mediaPlayer->Source = nullptr;
     try
     {
+        ApplicationData::Current->LocalSettings->Values->Insert("LastUri", uri);
+
         FFmpegMSS = co_await FFmpegMediaSource::CreateFromUriAsync(uri, Config);
         playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
@@ -207,8 +212,6 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
 
         // Close control panel after opening media
         Splitter->IsPaneOpen = false;
-
-        ApplicationData::Current->LocalSettings->Values->Insert("LastUri", uri);
     }
     catch (Exception^ ex)
     {

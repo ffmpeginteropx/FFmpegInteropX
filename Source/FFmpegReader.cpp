@@ -39,7 +39,7 @@ FFmpegReader::~FFmpegReader()
 void FFmpegReader::Start()
 {
     std::lock_guard lock(mutex);
-    if (!isActive && (config.ReadAheadBufferEnabled() || config.ReadAheadBufferSize() > 0 || config.ReadAheadBufferDuration().count() > 0) && !config.as<implementation::MediaSourceConfig>()->IsFrameGrabber)
+    if (!isActive && !isEof && config.ReadAheadBufferEnabled() && (config.ReadAheadBufferSize() > 0 || config.ReadAheadBufferDuration().count() > 0) && !config.as<implementation::MediaSourceConfig>()->IsFrameGrabber)
     {
         sleepTimerTarget = new call<int>([this](int value) { OnTimer(value); });
         if (!sleepTimerTarget)
@@ -124,6 +124,7 @@ void FFmpegReader::FlushCodecsAndBuffers()
             stream->Flush(true);
     }
     readResult = 0;
+    isEof = false;
 }
 
 HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
@@ -423,13 +424,12 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
 
 void FFmpegReader::ReadDataLoop()
 {
-    int ret = 0;
     bool sleep = false;
 
     while (true)
     {
         // Read next packet
-        ret = ReadPacket();
+        ReadPacket();
 
         // Lock and check result
         std::lock_guard lock(mutex);
@@ -438,7 +438,7 @@ void FFmpegReader::ReadDataLoop()
             // Stopped externally. No need to clean up.
             break;
         }
-        else if (ret < 0 || !config.ReadAheadBufferEnabled())
+        else if (isEof || !config.ReadAheadBufferEnabled())
         {
             // Self stop. Cleanup.
             isActive = false;
@@ -447,6 +447,11 @@ void FFmpegReader::ReadDataLoop()
             delete sleepTimerTarget;
             waitStreamEvent.set();
             break;
+        }
+        else if (readResult < 0 && avFormatCtx->url)
+        {
+            // if this is a uri stream, give it a little time to recover
+            Sleep(10);
         }
         else
         {
@@ -513,24 +518,40 @@ bool FFmpegReader::CheckNeedsSleep(bool wasSleeping)
 // sample provider
 int FFmpegInteropX::FFmpegReader::ReadPacket()
 {
-    int ret;
     AVPacket* avPacket = av_packet_alloc();
 
     if (!avPacket)
     {
+        DebugMessage(L"Out of memory!\n");
+        isEof = true;
         return E_OUTOFMEMORY;
     }
 
-    ret = av_read_frame(avFormatCtx, avPacket);
+    auto ret = av_read_frame(avFormatCtx, avPacket);
     std::lock_guard lock(mutex);
     readResult = ret;
 
-    if (ret < 0)
+    if (readResult < 0)
     {
+        if (readResult == AVERROR_EOF || (avFormatCtx->pb && avFormatCtx->pb->eof_reached))
+        {
+            DebugMessage(L"End of stream reached. Stop reading packets.\n");
+            isEof = true;
+        }
+        else if (errorCount++ <= config.SkipErrors())
+        {
+            DebugMessage(L"Read packet error. Retrying...\n");
+        }
+        else
+        {
+            DebugMessage(L"Packet read error. Stop reading packets.\n");
+            isEof = true;
+        }
         av_packet_free(&avPacket);
     }
     else
     {
+        errorCount = 0;
         if (avPacket->stream_index == forceReadStream)
         {
             forceReadStream = -1;
@@ -577,24 +598,20 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer* buffer)
     {
         std::lock_guard lock(mutex);
         manual = !isActive;
-        if (readResult < 0)
+        if (isEof)
         {
-            return readResult;
+            return AVERROR_EOF;
         }
     }
 
     if (manual)
     {
         // no read-ahead used
-        while (true)
+        while (!isEof)
         {
             ReadPacket();
 
             if (!(buffer->IsEmpty()))
-            {
-                break;
-            }
-            else if (readResult < 0)
             {
                 break;
             }
@@ -614,7 +631,7 @@ int FFmpegReader::ReadPacketForStream(StreamBuffer* buffer)
                     forceReadStream = -1;
                     break;
                 }
-                else if (readResult < 0 || !isActive)
+                else if (isEof || !isActive)
                 {
                     break;
                 }

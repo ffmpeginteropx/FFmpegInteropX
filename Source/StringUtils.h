@@ -44,5 +44,34 @@ namespace FFmpegInteropX
             return std::string("");
         }
 
+        inline static winrt::hstring ToString(winrt::Windows::Foundation::IInspectable inspectable)
+        {
+            auto valHstring = inspectable.try_as<winrt::hstring>();
+            if (valHstring.has_value())
+            {
+                return valHstring.value();
+            }
+            auto valI32 = inspectable.try_as<INT32>();
+            if (valI32.has_value())
+            {
+                return winrt::to_hstring(valI32.value());
+            }
+            auto valI64 = inspectable.try_as<INT64>();
+            if (valI64.has_value())
+            {
+                return winrt::to_hstring(valI64.value());
+            }
+            auto valf = inspectable.try_as<FLOAT>();
+            if (valf.has_value())
+            {
+                return winrt::to_hstring(valf.value());
+            }
+            auto vald = inspectable.try_as<DOUBLE>();
+            if (vald.has_value())
+            {
+                return winrt::to_hstring(vald.value());
+            }
+            return L"";
+        }
     };
 }

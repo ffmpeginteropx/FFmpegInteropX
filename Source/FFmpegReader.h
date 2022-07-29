@@ -61,6 +61,8 @@ namespace FFmpegInteropX
         std::recursive_mutex mutex;
         bool isActive = false;
         bool isSleeping = false;
+        bool isEof = false;
+        unsigned int errorCount = 0;
         int forceReadStream = 0;
         int readResult = 0;
         task<void> readTask;
