@@ -1408,6 +1408,15 @@ namespace winrt::FFmpegInteropX::implementation
         _readed += value;
     }
 
+    hstring FFmpegMediaSource::MFVideoPrimaries()
+    {
+        return _MFVideoPrimaries;
+    }
+    void FFmpegMediaSource::MFVideoPrimaries(hstring value)
+    {
+        _MFVideoPrimaries = value;
+    }
+
     TimeSpan FFmpegMediaSource::Duration()
     {
         return mediaDuration;
@@ -1761,6 +1770,11 @@ namespace winrt::FFmpegInteropX::implementation
         if (FAILED(hr))
         {
             videoSampleProvider = nullptr;
+        }
+
+        if (videoSampleProvider->_properties.size())
+        {
+            this->MFVideoPrimaries(videoSampleProvider->_properties.at(0));
         }
 
         return videoSampleProvider;

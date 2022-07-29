@@ -117,6 +117,9 @@ namespace winrt::FFmpegInteropX::implementation
         uint64_t BytesSnapshot();
         void BytesSnapshot(uint64_t value);
 
+        hstring MFVideoPrimaries();
+        void MFVideoPrimaries(hstring value);
+
 
         ///<summary>Gets the current video stream information.</summary>
         FFmpegInteropX::VideoStreamInfo CurrentVideoStream();
@@ -170,6 +173,7 @@ namespace winrt::FFmpegInteropX::implementation
         int32_t subtitleIndex;
         int32_t secsubtitleIndex;
         uint64_t _readed;
+        hstring _MFVideoPrimaries;
 
         winrt::event<Windows::Foundation::EventHandler<FFmpegInteropX::AvSubtitleEventArgs>> m_subtitleCueEnteredEvent;
         HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);

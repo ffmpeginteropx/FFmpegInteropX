@@ -414,6 +414,8 @@ namespace FFmpegInteropX
 
         UInt64 BytesSnapshot { get; };
 
+        String MFVideoPrimaries { get; };
+
         event Windows.Foundation.EventHandler<FFmpegInteropX.AvSubtitleEventArgs> SubtitleCueEntered;
 
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>

@@ -36,6 +36,7 @@ namespace FFmpegInteropX
         //----------------------------------------------------------------------
         AVStream* m_pAvStream = NULL;
         INT64 m_startOffset = 0;
+        std::vector<winrt::hstring> _properties = std::vector<winrt::hstring>();
         //----------------------------------------------------------------------
 
         virtual ~MediaSampleProvider();

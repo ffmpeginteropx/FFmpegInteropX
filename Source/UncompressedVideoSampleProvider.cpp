@@ -126,7 +126,6 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
     area.OffsetY.fract = 0;
     area.OffsetY.value = 0;
     properties.Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, PropertyValue::CreateUInt8Array(winrt::array_view((uint8_t*)&area, sizeof(MFVideoArea))));
-
     if (codecPar->color_primaries != AVCOL_PRI_UNSPECIFIED)
     {
         MFVideoPrimaries videoPrimaries{ MFVideoPrimaries_Unknown };
@@ -163,8 +162,8 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
 
         case AVCOL_PRI_BT2020:
             videoPrimaries = MFVideoPrimaries_BT2020;
+            this->_properties.push_back(winrt::hstring(L"MF_MT_VIDEO_PRIMARIES:MFVideoPrimaries_BT2020"));
             break;
-
         default:
             break;
         }
