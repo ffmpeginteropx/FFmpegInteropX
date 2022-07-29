@@ -360,23 +360,21 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
     if (videoStream)
     {
         auto pts = videoStream->ConvertPosition(targetPosition);
-        vIndex = videoStream->packetBuffer->TryFindPacketIndex(pts, true, fastSeek, isForwardSeek);
+        LONGLONG resultPts = pts;
+        vIndex = videoStream->packetBuffer->TryFindPacketIndex(pts, resultPts, true, fastSeek, isForwardSeek);
         result &= vIndex >= 0;
 
         if (result && fastSeek)
         {
-            auto targetPacket = videoStream->packetBuffer->PeekPacketIndex(vIndex);
-            if (targetPacket->pts != AV_NOPTS_VALUE)
-            {
-                targetPosition = videoStream->ConvertPosition(targetPacket->pts);
-            }
+            targetPosition = videoStream->ConvertPosition(resultPts);
         }
     }
 
     if (result && audioStream)
     {
         auto pts = audioStream->ConvertPosition(targetPosition);
-        aIndex = audioStream->packetBuffer->TryFindPacketIndex(pts, false, fastSeek, isForwardSeek);
+        LONGLONG resultPts = pts;
+        aIndex = audioStream->packetBuffer->TryFindPacketIndex(pts, resultPts, false, fastSeek, isForwardSeek);
         result &= aIndex >= 0;
     }
 
