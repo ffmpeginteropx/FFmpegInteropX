@@ -412,7 +412,7 @@ namespace FFmpegInteropX
 
         Int32 SecondarySubtitleIndex { get; set; };
 
-        Int32 BytesSnapshot { get; };
+        UInt64 BytesSnapshot { get; };
 
         event Windows.Foundation.EventHandler<FFmpegInteropX.AvSubtitleEventArgs> SubtitleCueEntered;
 

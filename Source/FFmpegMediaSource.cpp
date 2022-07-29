@@ -1399,11 +1399,11 @@ namespace winrt::FFmpegInteropX::implementation
         secsubtitleIndex = value;
     }
 
-    int32_t FFmpegMediaSource::BytesSnapshot()
+    uint64_t FFmpegMediaSource::BytesSnapshot()
     {
         return _readed;
     }
-    void FFmpegMediaSource::BytesSnapshot(int32_t value)
+    void FFmpegMediaSource::BytesSnapshot(uint64_t value)
     {
         _readed += value;
     }

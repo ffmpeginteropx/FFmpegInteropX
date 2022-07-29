@@ -114,8 +114,8 @@ namespace winrt::FFmpegInteropX::implementation
         int32_t SecondarySubtitleIndex();
         void SecondarySubtitleIndex(int32_t value);
 
-        int32_t BytesSnapshot();
-        void BytesSnapshot(int32_t value);
+        uint64_t BytesSnapshot();
+        void BytesSnapshot(uint64_t value);
 
 
         ///<summary>Gets the current video stream information.</summary>
@@ -169,7 +169,7 @@ namespace winrt::FFmpegInteropX::implementation
     private:
         int32_t subtitleIndex;
         int32_t secsubtitleIndex;
-        int32_t _readed;
+        uint64_t _readed;
 
         winrt::event<Windows::Foundation::EventHandler<FFmpegInteropX::AvSubtitleEventArgs>> m_subtitleCueEnteredEvent;
         HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);
