@@ -18,7 +18,7 @@
 
 #include "pch.h"
 #include "FFmpegReader.h"
-#include "winrt/RuntimeComponentUtils.h"
+//#include "winrt/RuntimeComponentUtils.h"
 
 extern "C"
 {
@@ -111,23 +111,24 @@ int FFmpegInteropX::FFmpegReader::ReadPacket()
         }
         else
         {
-            DataWriter dataWriter = DataWriter();
-            auto aBuffer = winrt::array_view<const uint8_t>(avPacket->data, avPacket->size);
-            dataWriter.WriteBytes(aBuffer);
-            auto random = winrt::RuntimeComponentUtils::Zip::GetDecompressed(dataWriter.DetachBuffer());
-            std::vector<uint8_t> vec(random.begin(), random.end());
-            uint8_t* newdata = vec.data();
-            avPacket->data = newdata;
-            avPacket->buf = nullptr;
-            avPacket->size = vec.size();
+            DebugMessage(L"Unable to decode subtitle stream, could be compressed\n");
+            /* DataWriter dataWriter = DataWriter();
+             auto aBuffer = winrt::array_view<const uint8_t>(avPacket->data, avPacket->size);
+             dataWriter.WriteBytes(aBuffer);
+             auto random = winrt::RuntimeComponentUtils::Zip::GetDecompressed(dataWriter.DetachBuffer());
+             std::vector<uint8_t> vec(random.begin(), random.end());
+             uint8_t* newdata = vec.data();
+             avPacket->data = newdata;
+             avPacket->buf = nullptr;
+             avPacket->size = vec.size();
 
-            auto result2 = avcodec_decode_subtitle2(tempTrack->avSubtitleCodecCtx, &avSubtitle, &got, avPacket);
-            if (got)
-            {
-                TimeSpan position = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->pts) - provider->m_startOffset);
-                TimeSpan duration = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->duration));
-                this->RaiseSubtitleCueEntered(avPacket, &avSubtitle, tempTrack, position, duration);
-            }
+             auto result2 = avcodec_decode_subtitle2(tempTrack->avSubtitleCodecCtx, &avSubtitle, &got, avPacket);
+             if (got)
+             {
+                 TimeSpan position = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->pts) - provider->m_startOffset);
+                 TimeSpan duration = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->duration));
+                 this->RaiseSubtitleCueEntered(avPacket, &avSubtitle, tempTrack, position, duration);
+             }*/
             avsubtitle_free(&avSubtitle);
         }
     }

@@ -246,11 +246,6 @@
       <DeploymentContent>false</DeploymentContent>
     </Text>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\TPlayer\RuntimeComponentUtils\RuntimeComponentUtils.csproj">
-      <Project>{b0ec06a9-0e9e-400f-891a-1cfa5eadd504}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\FFmpegInteropX.FFmpegUWP.5.0.0\build\native\FFmpegInteropX.FFmpegUWP.targets" Condition="Exists('..\packages\FFmpegInteropX.FFmpegUWP.5.0.0\build\native\FFmpegInteropX.FFmpegUWP.targets')" />
