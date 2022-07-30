@@ -19,29 +19,27 @@
 #pragma once
 #include "CompressedSampleProvider.h"
 
-namespace FFmpegInteropX
+
+class NALPacketSampleProvider :
+    public CompressedSampleProvider
 {
-    class NALPacketSampleProvider :
-        public CompressedSampleProvider
-    {
-    public:
-        virtual ~NALPacketSampleProvider();
-        virtual void Flush() override;
+public:
+    virtual ~NALPacketSampleProvider();
+    virtual void Flush() override;
 
-        NALPacketSampleProvider(
-            std::shared_ptr<FFmpegReader> reader,
-            AVFormatContext* avFormatCtx,
-            AVCodecContext* avCodecCtx,
-            MediaSourceConfig const& config,
-            int streamIndex,
-            VideoEncodingProperties const& encodingProperties,
-            HardwareDecoderStatus hardwareDecoderStatus);
-        virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer* pBuffer) override;
-        virtual HRESULT GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length);
-        virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer* pBuffer);
-        virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter const& dataWriter);
+    NALPacketSampleProvider(
+        std::shared_ptr<FFmpegReader> reader,
+        AVFormatContext* avFormatCtx,
+        AVCodecContext* avCodecCtx,
+        MediaSourceConfig const& config,
+        int streamIndex,
+        VideoEncodingProperties const& encodingProperties,
+        HardwareDecoderStatus hardwareDecoderStatus);
+    virtual HRESULT CreateBufferFromPacket(AVPacket* avPacket, IBuffer* pBuffer) override;
+    virtual HRESULT GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYTE* buf, UINT32 length);
+    virtual HRESULT WriteNALPacket(AVPacket* avPacket, IBuffer* pBuffer);
+    virtual HRESULT WriteNALPacketAfterExtradata(AVPacket* avPacket, DataWriter const& dataWriter);
 
-    private:
-        bool m_bHasSentExtradata = false;
-    };
-}
+private:
+    bool m_bHasSentExtradata = false;
+};

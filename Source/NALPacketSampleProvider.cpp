@@ -19,7 +19,6 @@
 #include "pch.h"
 #include "NALPacketSampleProvider.h"
 
-using namespace FFmpegInteropX;
 using namespace winrt::Windows::Storage::Streams;
 
 NALPacketSampleProvider::NALPacketSampleProvider(

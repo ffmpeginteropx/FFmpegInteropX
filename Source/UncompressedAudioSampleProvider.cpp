@@ -30,8 +30,6 @@ extern "C"
 #include <libswresample/swresample.h>
 }
 
-using namespace FFmpegInteropX;
-
 UncompressedAudioSampleProvider::UncompressedAudioSampleProvider(
     std::shared_ptr<FFmpegReader> reader,
     AVFormatContext* avFormatCtx,
@@ -265,7 +263,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
     return hr;
 }
 
-void FFmpegInteropX::UncompressedAudioSampleProvider::free_resample_buffer(void* ptr)
+void UncompressedAudioSampleProvider::free_resample_buffer(void* ptr)
 {
     uint8_t** resampledData = (uint8_t**)ptr;
     av_freep(&resampledData[0]); // free actual data

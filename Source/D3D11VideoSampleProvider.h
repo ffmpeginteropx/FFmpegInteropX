@@ -12,447 +12,445 @@ extern "C"
 }
 
 
-namespace FFmpegInteropX
+
+using namespace winrt::Windows::Media::Core;
+
+class D3D11VideoSampleProvider : public UncompressedVideoSampleProvider, public std::enable_shared_from_this<D3D11VideoSampleProvider>
 {
-    using namespace winrt::Windows::Media::Core;
+private:
+    const AVCodec* hwCodec;
+    const AVCodec* swCodec;
+public:
 
-    class D3D11VideoSampleProvider : public UncompressedVideoSampleProvider, public std::enable_shared_from_this<D3D11VideoSampleProvider>
+    D3D11VideoSampleProvider(
+        std::shared_ptr<FFmpegReader> reader,
+        AVFormatContext* avFormatCtx,
+        AVCodecContext* avCodecCtx,
+        winrt::FFmpegInteropX::MediaSourceConfig const& config,
+        int streamIndex,
+        HardwareDecoderStatus hardwareDecoderStatus)
+        : UncompressedVideoSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
     {
-    private:
-        const AVCodec* hwCodec;
-        const AVCodec* swCodec;
-    public:
+        decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
+        hwCodec = avCodecCtx->codec;
 
-        D3D11VideoSampleProvider(
-            std::shared_ptr<FFmpegInteropX::FFmpegReader> reader,
-            AVFormatContext* avFormatCtx,
-            AVCodecContext* avCodecCtx,
-            winrt::FFmpegInteropX::MediaSourceConfig const& config,
-            int streamIndex,
-            HardwareDecoderStatus hardwareDecoderStatus)
-            : UncompressedVideoSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
+        if (avCodecCtx->codec_id == AVCodecID::AV_CODEC_ID_AV1)
         {
-            decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
-            hwCodec = avCodecCtx->codec;
-
-            if (avCodecCtx->codec_id == AVCodecID::AV_CODEC_ID_AV1)
-            {
-                swCodec = avcodec_find_decoder_by_name("libdav1d");
-            }
-            else
-            {
-                swCodec = NULL;
-            }
+            swCodec = avcodec_find_decoder_by_name("libdav1d");
         }
-
-    public:
-
-        virtual ~D3D11VideoSampleProvider()
+        else
         {
-            ReleaseTrackedSamples();
+            swCodec = NULL;
         }
+    }
 
-        virtual void Flush() override
+public:
+
+    virtual ~D3D11VideoSampleProvider()
+    {
+        ReleaseTrackedSamples();
+    }
+
+    virtual void Flush() override
+    {
+        UncompressedVideoSampleProvider::Flush();
+        ReturnTrackedSamples();
+    }
+
+
+    virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override
+    {
+        HRESULT hr = S_OK;
+
+        if (avFrame->format == AV_PIX_FMT_D3D11)
         {
-            UncompressedVideoSampleProvider::Flush();
-            ReturnTrackedSamples();
-        }
-
-
-        virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override
-        {
-            HRESULT hr = S_OK;
-
-            if (avFrame->format == AV_PIX_FMT_D3D11)
+            if (!texturePool)
             {
-                if (!texturePool)
+                // init texture pool, fail if we did not get a device ptr
+                if (device && deviceContext)
                 {
-                    // init texture pool, fail if we did not get a device ptr
-                    if (device && deviceContext)
-                    {
-                        texturePool = std::unique_ptr< TexturePool>(new TexturePool(device, 5));
-                    }
-                    else
-                    {
-                        hr = E_FAIL;
-                    }
-                }
-                //copy texture data
-                if (SUCCEEDED(hr))
-                {
-                    //cast the AVframe to texture 2D
-                    auto decodedTexture = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
-                    ID3D11Texture2D* renderTexture = nullptr;
-                    //happy path:decoding and rendering on same GPU
-                    hr = texturePool->GetCopyTexture(decodedTexture, &renderTexture);
-                    deviceContext->CopySubresourceRegion(renderTexture, 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
-                    deviceContext->Flush();
-
-                    //create a IDXGISurface from the shared texture
-                    IDXGISurface* finalSurface = NULL;
-                    if (SUCCEEDED(hr))
-                    {
-                        hr = renderTexture->QueryInterface(&finalSurface);
-                    }
-
-                    //get the IDirect3DSurface pointer
-                    if (SUCCEEDED(hr))
-                    {
-                        *surface = DirectXInteropHelper::GetSurface(finalSurface);
-                    }
-
-                    if (SUCCEEDED(hr))
-                    {
-                        CheckFrameSize(avFrame);
-                        ReadFrameProperties(avFrame, framePts);
-                    }
-
-                    SAFE_RELEASE(finalSurface);
-                    SAFE_RELEASE(renderTexture);
-                    if (decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
-                    {
-                        decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
-                        VideoInfo().as<implementation::VideoStreamInfo>()->decoderEngine = decoder;
-                    }
-                }
-            }
-            else
-            {
-                hr = UncompressedVideoSampleProvider::CreateBufferFromFrame(pBuffer, surface, avFrame, framePts, frameDuration);
-
-                if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
-                {
-                    decoder = DecoderEngine::FFmpegSoftwareDecoder;
-                    VideoInfo().as<implementation::VideoStreamInfo>()->decoderEngine = decoder;
-                }
-            }
-
-            return hr;
-        }
-
-        virtual HRESULT SetSampleProperties(MediaStreamSample const& sample) override
-        {
-            if (sample.Direct3D11Surface())
-            {
-                std::lock_guard lock(samplesMutex);
-
-                // AddRef the sample on native interface to prevent it from being collected before Processed is called
-                auto sampleNative = sample.as<winrt::Windows::Foundation::IUnknown>();
-
-                // Attach Processed event and store in samples list
-                auto token = sample.Processed(weak_handler(this, &D3D11VideoSampleProvider::OnProcessed));
-                trackedSamples.insert_or_assign(sampleNative, token);
-            }
-
-            return UncompressedVideoSampleProvider::SetSampleProperties(sample);
-        };
-
-        void OnProcessed(MediaStreamSample const& sender, winrt::Windows::Foundation::IInspectable const&)
-        {
-            std::lock_guard lock(samplesMutex);
-
-            auto sampleNative = sender.as<winrt::Windows::Foundation::IUnknown>();
-            auto mapEntry = trackedSamples.find(sampleNative);
-            if (mapEntry == trackedSamples.end())
-            {
-                // sample was already released during Flush() or destructor
-            }
-            else
-            {
-                // Release the sample's native interface and return texture to pool
-                sender.Processed(mapEntry->second);
-                trackedSamples.erase(mapEntry);
-
-                ReturnTextureToPool(sender);
-            }
-        }
-
-        void ReturnTextureToPool(MediaStreamSample const& sample)
-        {
-            IDXGISurface* surface = NULL;
-            ID3D11Texture2D* texture = NULL;
-
-            HRESULT hr = DirectXInteropHelper::GetDXGISurface(sample.Direct3D11Surface(), &surface);
-
-            if (SUCCEEDED(hr))
-            {
-                hr = surface->QueryInterface(&texture);
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                texturePool->ReturnTexture(texture);
-            }
-
-            SAFE_RELEASE(surface);
-            SAFE_RELEASE(texture);
-        }
-
-        void ReleaseTrackedSamples()
-        {
-            std::lock_guard lock(samplesMutex);
-            for (auto &entry : trackedSamples)
-            {
-                // detach Processed event and release native interface
-                auto sampleNative = entry.first;
-                auto sample = sampleNative.as<MediaStreamSample>();
-
-                sample.Processed(entry.second);
-            }
-
-            trackedSamples.clear();
-        }
-
-        void ReturnTrackedSamples()
-        {
-            std::lock_guard lock(samplesMutex);
-            for (auto &entry : trackedSamples)
-            {
-                // detach Processed event and release native interface
-                auto sampleNative = entry.first;
-                auto sample = sampleNative.as<MediaStreamSample>();
-
-                sample.Processed(entry.second);
-
-                // return texture to pool
-                ReturnTextureToPool(sample);
-            }
-
-            trackedSamples.clear();
-        }
-
-        virtual HRESULT SetHardwareDevice(ID3D11Device* newDevice, ID3D11DeviceContext* newDeviceContext, AVBufferRef* avHardwareContext) override
-        {
-            HRESULT hr = S_OK;
-
-            bool isCompatible = false;
-            hr = CheckHWAccelerationCompatible(newDevice, isCompatible);
-
-            if (SUCCEEDED(hr))
-            {
-                if (isCompatible)
-                {
-                    bool needsReinit = device;
-
-                    SAFE_RELEASE(device);
-                    SAFE_RELEASE(deviceContext);
-
-                    newDevice->AddRef();
-                    newDeviceContext->AddRef();
-                    device = newDevice;
-                    deviceContext = newDeviceContext;
-
-                    if (needsReinit)
-                    {
-                        hr = UpdateCodecContext(hwCodec, avHardwareContext);
-                    }
-                    else if (!m_pAvCodecCtx->hw_device_ctx || m_pAvCodecCtx->hw_device_ctx->data != avHardwareContext->data)
-                    {
-                        av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
-                        m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
-                    }
+                    texturePool = std::unique_ptr< TexturePool>(new TexturePool(device, 5));
                 }
                 else
                 {
-                    SAFE_RELEASE(device);
-                    SAFE_RELEASE(deviceContext);
+                    hr = E_FAIL;
+                }
+            }
+            //copy texture data
+            if (SUCCEEDED(hr))
+            {
+                //cast the AVframe to texture 2D
+                auto decodedTexture = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
+                ID3D11Texture2D* renderTexture = nullptr;
+                //happy path:decoding and rendering on same GPU
+                hr = texturePool->GetCopyTexture(decodedTexture, &renderTexture);
+                deviceContext->CopySubresourceRegion(renderTexture, 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
+                deviceContext->Flush();
+
+                //create a IDXGISurface from the shared texture
+                IDXGISurface* finalSurface = NULL;
+                if (SUCCEEDED(hr))
+                {
+                    hr = renderTexture->QueryInterface(&finalSurface);
+                }
+
+                //get the IDirect3DSurface pointer
+                if (SUCCEEDED(hr))
+                {
+                    *surface = DirectXInteropHelper::GetSurface(finalSurface);
+                }
+
+                if (SUCCEEDED(hr))
+                {
+                    CheckFrameSize(avFrame);
+                    ReadFrameProperties(avFrame, framePts);
+                }
+
+                SAFE_RELEASE(finalSurface);
+                SAFE_RELEASE(renderTexture);
+                if (decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
+                {
+                    decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
+                    VideoInfo().as<implementation::VideoStreamInfo>()->decoderEngine = decoder;
+                }
+            }
+        }
+        else
+        {
+            hr = UncompressedVideoSampleProvider::CreateBufferFromFrame(pBuffer, surface, avFrame, framePts, frameDuration);
+
+            if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
+            {
+                decoder = DecoderEngine::FFmpegSoftwareDecoder;
+                VideoInfo().as<implementation::VideoStreamInfo>()->decoderEngine = decoder;
+            }
+        }
+
+        return hr;
+    }
+
+    virtual HRESULT SetSampleProperties(MediaStreamSample const& sample) override
+    {
+        if (sample.Direct3D11Surface())
+        {
+            std::lock_guard lock(samplesMutex);
+
+            // AddRef the sample on native interface to prevent it from being collected before Processed is called
+            auto sampleNative = sample.as<winrt::Windows::Foundation::IUnknown>();
+
+            // Attach Processed event and store in samples list
+            auto token = sample.Processed(weak_handler(this, &D3D11VideoSampleProvider::OnProcessed));
+            trackedSamples.insert_or_assign(sampleNative, token);
+        }
+
+        return UncompressedVideoSampleProvider::SetSampleProperties(sample);
+    };
+
+    void OnProcessed(MediaStreamSample const& sender, winrt::Windows::Foundation::IInspectable const&)
+    {
+        std::lock_guard lock(samplesMutex);
+
+        auto sampleNative = sender.as<winrt::Windows::Foundation::IUnknown>();
+        auto mapEntry = trackedSamples.find(sampleNative);
+        if (mapEntry == trackedSamples.end())
+        {
+            // sample was already released during Flush() or destructor
+        }
+        else
+        {
+            // Release the sample's native interface and return texture to pool
+            sender.Processed(mapEntry->second);
+            trackedSamples.erase(mapEntry);
+
+            ReturnTextureToPool(sender);
+        }
+    }
+
+    void ReturnTextureToPool(MediaStreamSample const& sample)
+    {
+        IDXGISurface* surface = NULL;
+        ID3D11Texture2D* texture = NULL;
+
+        HRESULT hr = DirectXInteropHelper::GetDXGISurface(sample.Direct3D11Surface(), &surface);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = surface->QueryInterface(&texture);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            texturePool->ReturnTexture(texture);
+        }
+
+        SAFE_RELEASE(surface);
+        SAFE_RELEASE(texture);
+    }
+
+    void ReleaseTrackedSamples()
+    {
+        std::lock_guard lock(samplesMutex);
+        for (auto& entry : trackedSamples)
+        {
+            // detach Processed event and release native interface
+            auto sampleNative = entry.first;
+            auto sample = sampleNative.as<MediaStreamSample>();
+
+            sample.Processed(entry.second);
+        }
+
+        trackedSamples.clear();
+    }
+
+    void ReturnTrackedSamples()
+    {
+        std::lock_guard lock(samplesMutex);
+        for (auto& entry : trackedSamples)
+        {
+            // detach Processed event and release native interface
+            auto sampleNative = entry.first;
+            auto sample = sampleNative.as<MediaStreamSample>();
+
+            sample.Processed(entry.second);
+
+            // return texture to pool
+            ReturnTextureToPool(sample);
+        }
+
+        trackedSamples.clear();
+    }
+
+    virtual HRESULT SetHardwareDevice(ID3D11Device* newDevice, ID3D11DeviceContext* newDeviceContext, AVBufferRef* avHardwareContext) override
+    {
+        HRESULT hr = S_OK;
+
+        bool isCompatible = false;
+        hr = CheckHWAccelerationCompatible(newDevice, isCompatible);
+
+        if (SUCCEEDED(hr))
+        {
+            if (isCompatible)
+            {
+                bool needsReinit = device;
+
+                SAFE_RELEASE(device);
+                SAFE_RELEASE(deviceContext);
+
+                newDevice->AddRef();
+                newDeviceContext->AddRef();
+                device = newDevice;
+                deviceContext = newDeviceContext;
+
+                if (needsReinit)
+                {
+                    hr = UpdateCodecContext(hwCodec, avHardwareContext);
+                }
+                else if (!m_pAvCodecCtx->hw_device_ctx || m_pAvCodecCtx->hw_device_ctx->data != avHardwareContext->data)
+                {
                     av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
-
-                    if (swCodec)
-                    {
-                        hr = UpdateCodecContext(swCodec, NULL);
-                    }
-                    else
-                    {
-                        hr = E_FAIL;
-                    }
+                    m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
                 }
-            }
-
-            texturePool.reset();
-            texturePool = nullptr;
-
-            ReleaseTrackedSamples();
-
-            return hr;
-        }
-
-        HRESULT UpdateCodecContext(const AVCodec* codec, AVBufferRef* avHardwareContext)
-        {
-            auto hr = S_OK;
-
-            avcodec_free_context(&m_pAvCodecCtx);
-
-            m_pAvCodecCtx = avcodec_alloc_context3(codec);
-            if (!m_pAvCodecCtx)
-            {
-                hr = E_OUTOFMEMORY;
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                // enable multi threading only for SW decoders
-                if (!avHardwareContext)
-                {
-                    unsigned threads = std::thread::hardware_concurrency();
-                    m_pAvCodecCtx->thread_count = m_config.MaxVideoThreads() == 0 ? threads : min(threads, m_config.MaxVideoThreads());
-                    m_pAvCodecCtx->thread_type = m_config.as<implementation::MediaSourceConfig>()->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
-                }
-
-                // initialize the stream parameters with demuxer information
-                hr = avcodec_parameters_to_context(m_pAvCodecCtx, m_pAvStream->codecpar);
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                m_pAvCodecCtx->hw_device_ctx = avHardwareContext ? av_buffer_ref(avHardwareContext) : NULL;
-                m_pAvCodecCtx->get_format = &FFmpegUtils::get_format;
-                hr = avcodec_open2(m_pAvCodecCtx, codec, NULL);
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                frameProvider->UpdateCodecContext(m_pAvCodecCtx);
-            }
-
-            return hr;
-        }
-
-        HRESULT CheckHWAccelerationCompatible(ID3D11Device* newDevice, bool& isCompatible)
-        {
-            HRESULT hr = S_OK;
-            isCompatible = true;
-
-            if (m_pAvCodecCtx->codec->id == AVCodecID::AV_CODEC_ID_AV1)
-            {
-                isCompatible = m_pAvCodecCtx->profile >= 0 && m_pAvCodecCtx->profile <= 2;
-                if (isCompatible)
-                {
-                    const GUID av1Profiles[3] {
-                        D3D11_DECODER_PROFILE_AV1_VLD_PROFILE0,
-                        D3D11_DECODER_PROFILE_AV1_VLD_PROFILE1,
-                        D3D11_DECODER_PROFILE_AV1_VLD_PROFILE2
-                    };
-                    auto requiredProfile = av1Profiles[m_pAvCodecCtx->profile];
-
-                    ID3D11VideoDevice* videoDevice = NULL;
-                    hr = newDevice->QueryInterface(&videoDevice);
-
-                    // check profile exists
-                    if (SUCCEEDED(hr))
-                    {
-                        isCompatible = false;
-                        GUID profile;
-                        int count = videoDevice->GetVideoDecoderProfileCount();
-                        for (int i = 0; i < count; i++)
-                        {
-                            hr = videoDevice->GetVideoDecoderProfile(i, &profile);
-                            if (FAILED(hr))
-                            {
-                                break;
-                            }
-                            else if (profile == requiredProfile)
-                            {
-                                isCompatible = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    // check resolution
-                    if (SUCCEEDED(hr) && isCompatible)
-                    {
-                        D3D11_VIDEO_DECODER_DESC desc;
-                        desc.Guid = requiredProfile;
-                        desc.OutputFormat = DXGI_FORMAT_NV12;
-
-                        desc.SampleWidth = m_pAvCodecCtx->coded_width;
-                        desc.SampleHeight = m_pAvCodecCtx->coded_height;
-
-                        UINT count;
-                        hr = videoDevice->GetVideoDecoderConfigCount(&desc, &count);
-                        if (SUCCEEDED(hr))
-                        {
-                            isCompatible = count > 0;
-                        }
-                    }
-
-                    SAFE_RELEASE(videoDevice);
-                }
-
-                if (FAILED(hr))
-                {
-                    isCompatible = false;
-                }
-            }
-
-            return hr;
-        }
-
-        static HRESULT InitializeHardwareDeviceContext(MediaStreamSource sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, IMFDXGIDeviceManager* deviceManager, HANDLE* outDeviceHandle)
-        {
-            ID3D11Device* device = nullptr;
-            ID3D11DeviceContext* deviceContext = nullptr;
-            ID3D11VideoDevice* videoDevice = nullptr;
-            ID3D11VideoContext* videoContext = nullptr;
-
-            HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(deviceManager, &device, &deviceContext, &videoDevice, outDeviceHandle);
-
-            if (SUCCEEDED(hr)) hr = deviceContext->QueryInterface(&videoContext);
-
-            auto dataBuffer = (AVHWDeviceContext*)avHardwareContext->data;
-            auto internalDirectXHwContext = (AVD3D11VADeviceContext*)dataBuffer->hwctx;
-
-            if (SUCCEEDED(hr))
-            {
-                // give ownership to FFmpeg
-
-                internalDirectXHwContext->device = device;
-                internalDirectXHwContext->device_context = deviceContext;
-                internalDirectXHwContext->video_device = videoDevice;
-                internalDirectXHwContext->video_context = videoContext;
             }
             else
             {
-                // release
                 SAFE_RELEASE(device);
                 SAFE_RELEASE(deviceContext);
-                SAFE_RELEASE(videoDevice);
-                SAFE_RELEASE(videoContext);
-            }
+                av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
 
-            if (SUCCEEDED(hr))
-            {
-                // multithread interface seems to be optional
-                ID3D10Multithread* multithread;
-                device->QueryInterface(&multithread);
-                if (multithread)
+                if (swCodec)
                 {
-                    multithread->SetMultithreadProtected(TRUE);
-                    multithread->Release();
+                    hr = UpdateCodecContext(swCodec, NULL);
+                }
+                else
+                {
+                    hr = E_FAIL;
                 }
             }
-
-            if (SUCCEEDED(hr))
-            {
-                hr = av_hwdevice_ctx_init(avHardwareContext);
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                // addref and hand out pointers
-                device->AddRef();
-                deviceContext->AddRef();
-                *outDevice = device;
-                *outDeviceContext = deviceContext;
-            }
-
-            return hr;
         }
 
-        std::unique_ptr<TexturePool> texturePool;
-        std::map<winrt::Windows::Foundation::IUnknown, winrt::event_token> trackedSamples;
-        std::mutex samplesMutex;
-    };
-}
+        texturePool.reset();
+        texturePool = nullptr;
+
+        ReleaseTrackedSamples();
+
+        return hr;
+    }
+
+    HRESULT UpdateCodecContext(const AVCodec* codec, AVBufferRef* avHardwareContext)
+    {
+        auto hr = S_OK;
+
+        avcodec_free_context(&m_pAvCodecCtx);
+
+        m_pAvCodecCtx = avcodec_alloc_context3(codec);
+        if (!m_pAvCodecCtx)
+        {
+            hr = E_OUTOFMEMORY;
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            // enable multi threading only for SW decoders
+            if (!avHardwareContext)
+            {
+                unsigned threads = std::thread::hardware_concurrency();
+                m_pAvCodecCtx->thread_count = m_config.MaxVideoThreads() == 0 ? threads : min(threads, m_config.MaxVideoThreads());
+                m_pAvCodecCtx->thread_type = m_config.as<implementation::MediaSourceConfig>()->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
+            }
+
+            // initialize the stream parameters with demuxer information
+            hr = avcodec_parameters_to_context(m_pAvCodecCtx, m_pAvStream->codecpar);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            m_pAvCodecCtx->hw_device_ctx = avHardwareContext ? av_buffer_ref(avHardwareContext) : NULL;
+            m_pAvCodecCtx->get_format = &FFmpegUtils::get_format;
+            hr = avcodec_open2(m_pAvCodecCtx, codec, NULL);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            frameProvider->UpdateCodecContext(m_pAvCodecCtx);
+        }
+
+        return hr;
+    }
+
+    HRESULT CheckHWAccelerationCompatible(ID3D11Device* newDevice, bool& isCompatible)
+    {
+        HRESULT hr = S_OK;
+        isCompatible = true;
+
+        if (m_pAvCodecCtx->codec->id == AVCodecID::AV_CODEC_ID_AV1)
+        {
+            isCompatible = m_pAvCodecCtx->profile >= 0 && m_pAvCodecCtx->profile <= 2;
+            if (isCompatible)
+            {
+                const GUID av1Profiles[3]{
+                    D3D11_DECODER_PROFILE_AV1_VLD_PROFILE0,
+                    D3D11_DECODER_PROFILE_AV1_VLD_PROFILE1,
+                    D3D11_DECODER_PROFILE_AV1_VLD_PROFILE2
+                };
+                auto requiredProfile = av1Profiles[m_pAvCodecCtx->profile];
+
+                ID3D11VideoDevice* videoDevice = NULL;
+                hr = newDevice->QueryInterface(&videoDevice);
+
+                // check profile exists
+                if (SUCCEEDED(hr))
+                {
+                    isCompatible = false;
+                    GUID profile;
+                    int count = videoDevice->GetVideoDecoderProfileCount();
+                    for (int i = 0; i < count; i++)
+                    {
+                        hr = videoDevice->GetVideoDecoderProfile(i, &profile);
+                        if (FAILED(hr))
+                        {
+                            break;
+                        }
+                        else if (profile == requiredProfile)
+                        {
+                            isCompatible = true;
+                            break;
+                        }
+                    }
+                }
+
+                // check resolution
+                if (SUCCEEDED(hr) && isCompatible)
+                {
+                    D3D11_VIDEO_DECODER_DESC desc;
+                    desc.Guid = requiredProfile;
+                    desc.OutputFormat = DXGI_FORMAT_NV12;
+
+                    desc.SampleWidth = m_pAvCodecCtx->coded_width;
+                    desc.SampleHeight = m_pAvCodecCtx->coded_height;
+
+                    UINT count;
+                    hr = videoDevice->GetVideoDecoderConfigCount(&desc, &count);
+                    if (SUCCEEDED(hr))
+                    {
+                        isCompatible = count > 0;
+                    }
+                }
+
+                SAFE_RELEASE(videoDevice);
+            }
+
+            if (FAILED(hr))
+            {
+                isCompatible = false;
+            }
+        }
+
+        return hr;
+    }
+
+    static HRESULT InitializeHardwareDeviceContext(MediaStreamSource sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, IMFDXGIDeviceManager* deviceManager, HANDLE* outDeviceHandle)
+    {
+        ID3D11Device* device = nullptr;
+        ID3D11DeviceContext* deviceContext = nullptr;
+        ID3D11VideoDevice* videoDevice = nullptr;
+        ID3D11VideoContext* videoContext = nullptr;
+
+        HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(deviceManager, &device, &deviceContext, &videoDevice, outDeviceHandle);
+
+        if (SUCCEEDED(hr)) hr = deviceContext->QueryInterface(&videoContext);
+
+        auto dataBuffer = (AVHWDeviceContext*)avHardwareContext->data;
+        auto internalDirectXHwContext = (AVD3D11VADeviceContext*)dataBuffer->hwctx;
+
+        if (SUCCEEDED(hr))
+        {
+            // give ownership to FFmpeg
+
+            internalDirectXHwContext->device = device;
+            internalDirectXHwContext->device_context = deviceContext;
+            internalDirectXHwContext->video_device = videoDevice;
+            internalDirectXHwContext->video_context = videoContext;
+        }
+        else
+        {
+            // release
+            SAFE_RELEASE(device);
+            SAFE_RELEASE(deviceContext);
+            SAFE_RELEASE(videoDevice);
+            SAFE_RELEASE(videoContext);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            // multithread interface seems to be optional
+            ID3D10Multithread* multithread;
+            device->QueryInterface(&multithread);
+            if (multithread)
+            {
+                multithread->SetMultithreadProtected(TRUE);
+                multithread->Release();
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            hr = av_hwdevice_ctx_init(avHardwareContext);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            // addref and hand out pointers
+            device->AddRef();
+            deviceContext->AddRef();
+            *outDevice = device;
+            *outDeviceContext = deviceContext;
+        }
+
+        return hr;
+    }
+
+    std::unique_ptr<TexturePool> texturePool;
+    std::map<winrt::Windows::Foundation::IUnknown, winrt::event_token> trackedSamples;
+    std::mutex samplesMutex;
+};
 

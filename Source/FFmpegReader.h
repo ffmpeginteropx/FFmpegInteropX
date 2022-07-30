@@ -20,18 +20,16 @@
 
 #include "MediaSampleProvider.h"
 
-namespace FFmpegInteropX
+
+class FFmpegReader
 {
-    class FFmpegReader
-    {
-    public:
-        virtual ~FFmpegReader();
-        int ReadPacket();
+public:
+    virtual ~FFmpegReader();
+    int ReadPacket();
 
-        FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders);
+    FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders);
 
-    private:
-        AVFormatContext* m_pAvFormatCtx = NULL;
-        std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders = NULL;
-    };
-}
+private:
+    AVFormatContext* m_pAvFormatCtx = NULL;
+    std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders = NULL;
+};
