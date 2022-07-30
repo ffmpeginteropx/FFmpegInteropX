@@ -1792,13 +1792,12 @@ namespace winrt::FFmpegInteropX::implementation
             while (options.HasCurrent())
             {
                 auto key = StringUtils::PlatformStringToUtf8String(options.Current().Key());
-                auto stringValue = options.Current().Value().try_as<IStringable>();
-                if (stringValue)
+                hstring value = StringUtils::ToString(options.Current().Value());
+                if (!value.empty())
                 {
-                    auto value = StringUtils::PlatformStringToUtf8String(stringValue.ToString());
-
                     // Add key and value pair entry
-                    if (av_dict_set(&avDict, key.c_str(), value.c_str(), 0) < 0)
+                    auto valCstr = StringUtils::PlatformStringToUtf8String(value);
+                    if (av_dict_set(&avDict, key.c_str(), valCstr.c_str(), 0) < 0)
                     {
                         hr = E_INVALIDARG;
                         break;
