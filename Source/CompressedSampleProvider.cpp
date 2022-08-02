@@ -2,7 +2,6 @@
 #include "CompressedSampleProvider.h"
 #include "NativeBufferFactory.h"
 
-using namespace FFmpegInteropX;
 using namespace winrt::FFmpegInteropX;
 using namespace winrt::Windows::Media::Core;
 

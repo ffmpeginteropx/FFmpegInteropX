@@ -1,28 +1,26 @@
 #pragma once
 
-namespace FFmpegInteropX
+
+class AttachedFile
 {
-    class AttachedFile 
+public:
+    winrt::hstring Name();
+    winrt::hstring MimeType();
+    uint64_t Size();
+
+public:
+    winrt::Windows::Storage::Streams::IBuffer GetBuffer();
+
+    AttachedFile(winrt::hstring  const& name, winrt::hstring  const& mimeType, AVStream* stream)
     {
-    public:
-        winrt::hstring Name();
-        winrt::hstring MimeType();
-        uint64_t Size();
+        this->name = name;
+        this->mimeType = mimeType;
+        this->stream = stream;
+    }
 
-    public:
-        winrt::Windows::Storage::Streams::IBuffer GetBuffer();
+private:
+    winrt::hstring name{};
+    winrt::hstring mimeType{};
 
-        AttachedFile(winrt::hstring  const& name, winrt::hstring  const& mimeType, AVStream* stream)
-        {
-            this->name = name;
-            this->mimeType = mimeType;
-            this->stream = stream;
-        }
-
-    private:
-        winrt::hstring name{};
-        winrt::hstring mimeType{};
-
-        AVStream* stream = NULL;
-    };
-}
+    AVStream* stream = NULL;
+};

@@ -22,7 +22,6 @@
 #include "UncompressedSampleProvider.h"
 #include "DirectXInteropHelper.h"
 
-using namespace FFmpegInteropX;
 using namespace winrt::FFmpegInteropX;
 
 UncompressedSampleProvider::UncompressedSampleProvider(

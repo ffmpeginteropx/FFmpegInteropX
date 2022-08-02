@@ -2,7 +2,6 @@
 #include "DirectXInteropHelper.h"
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
 
-using namespace FFmpegInteropX;
 using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
 
 IDirect3DSurface DirectXInteropHelper::GetSurface(IDXGISurface* source)

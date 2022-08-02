@@ -19,7 +19,6 @@
 #include "pch.h"
 #include "HEVCSampleProvider.h"
 
-using namespace FFmpegInteropX;
 
 HEVCSampleProvider::HEVCSampleProvider(
     std::shared_ptr<FFmpegReader> reader,

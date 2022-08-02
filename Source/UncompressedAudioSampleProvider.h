@@ -20,37 +20,35 @@
 #include <winrt/FFmpegInteropX.h>
 #include "UncompressedSampleProvider.h"
 
-namespace FFmpegInteropX
+
+class UncompressedAudioSampleProvider : public UncompressedSampleProvider
 {
-    class UncompressedAudioSampleProvider : public UncompressedSampleProvider
-    {
-    public:
-        virtual ~UncompressedAudioSampleProvider();
+public:
+    virtual ~UncompressedAudioSampleProvider();
 
-        UncompressedAudioSampleProvider(
-            std::shared_ptr<FFmpegReader> reader,
-            AVFormatContext* avFormatCtx,
-            AVCodecContext* avCodecCtx,
-            winrt::FFmpegInteropX::MediaSourceConfig const& config,
-            int streamIndex);
-        virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
-        winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
-        HRESULT CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate);
-        HRESULT UpdateResampler();
+    UncompressedAudioSampleProvider(
+        std::shared_ptr<FFmpegReader> reader,
+        AVFormatContext* avFormatCtx,
+        AVCodecContext* avCodecCtx,
+        winrt::FFmpegInteropX::MediaSourceConfig const& config,
+        int streamIndex);
+    virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
+    winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
+    HRESULT CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate);
+    HRESULT UpdateResampler();
 
 
-    private:
+private:
 
-        static void free_resample_buffer(void* ptr);
+    static void free_resample_buffer(void* ptr);
 
-        SwrContext* m_pSwrCtx = NULL;
-        AVSampleFormat inSampleFormat = AVSampleFormat::AV_SAMPLE_FMT_NONE;
-        AVSampleFormat outSampleFormat = AVSampleFormat::AV_SAMPLE_FMT_NONE;
-        int inSampleRate = 0, outSampleRate = 0, inChannels = 0, outChannels = 0;
-        UINT64 inChannelLayout = 0, outChannelLayout = 0;
-        int bytesPerSample = 0;
-        bool needsUpdateResampler = false;
-        bool useResampler = false;
-    };
-}
+    SwrContext* m_pSwrCtx = NULL;
+    AVSampleFormat inSampleFormat = AVSampleFormat::AV_SAMPLE_FMT_NONE;
+    AVSampleFormat outSampleFormat = AVSampleFormat::AV_SAMPLE_FMT_NONE;
+    int inSampleRate = 0, outSampleRate = 0, inChannels = 0, outChannels = 0;
+    UINT64 inChannelLayout = 0, outChannelLayout = 0;
+    int bytesPerSample = 0;
+    bool needsUpdateResampler = false;
+    bool useResampler = false;
+};
 
