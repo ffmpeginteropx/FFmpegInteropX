@@ -20,7 +20,7 @@ namespace NativeBuffer
         }
 
 
-        NativeBuffer(byte* buffer, UINT32 totalSize)
+        NativeBuffer(BYTE* buffer, UINT32 totalSize)
         {
             m_length = totalSize;
             m_buffer = buffer;
@@ -31,7 +31,7 @@ namespace NativeBuffer
             //return S_OK;
         }
 
-        NativeBuffer(byte* buffer, UINT32 totalSize, void(*free)(void* opaque), void* opaque)
+        NativeBuffer(BYTE* buffer, UINT32 totalSize, void(*free)(void* opaque), void* opaque)
         {
             m_length = totalSize;
             m_buffer = buffer;
@@ -42,7 +42,7 @@ namespace NativeBuffer
             //return S_OK;
         }
 
-        NativeBuffer(byte* buffer, UINT32 totalSize, winrt::Windows::Foundation::IInspectable pObject)
+        NativeBuffer(BYTE* buffer, UINT32 totalSize, winrt::Windows::Foundation::IInspectable pObject)
         {
             m_length = totalSize;
             m_buffer = buffer;
@@ -66,7 +66,7 @@ namespace NativeBuffer
 
     private:
         UINT32 m_length = 0;
-        byte* m_buffer = NULL;
+        BYTE* m_buffer = NULL;
         void(*m_free)(void* opaque);
         void* m_opaque;
         winrt::Windows::Foundation::IInspectable m_pObject = { nullptr };

@@ -21,61 +21,62 @@
 #include "MediaSampleProvider.h"
 #include "AvSubtitleContextTrack.h"
 
-namespace FFmpegInteropX
+extern "C"
 {
-    class FFmpegReader
-    {
-    public:
-        virtual ~FFmpegReader();
-        int ReadPacket();
-        std::function<void(AvSubtitleEventArgs*)> eventCallback;
-        std::function<void(int)> readCallback;
-        std::shared_ptr<std::vector<AvSubtitleContextTrack*>> avSubtitleContextTracks_ptr;
-        FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders);
+#include "libavformat/avformat.h"
+}
+class FFmpegReader
+{
+public:
+    virtual ~FFmpegReader();
+    int ReadPacket();
+    std::function<void(AvSubtitleEventArgs*)> eventCallback;
+    std::function<void(int)> readCallback;
+    std::shared_ptr<std::vector<AvSubtitleContextTrack*>> avSubtitleContextTracks_ptr;
+    FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders);
 
-    private:
-        AVFormatContext* m_pAvFormatCtx = NULL;
-        std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders = NULL;
-        //----------------------------------------------------------------------
-        void RaiseSubtitleCueEntered(AVPacket* avPacket, AVSubtitle* avSubtitle, AvSubtitleContextTrack* tempTrack, TimeSpan pos, TimeSpan dur)
+private:
+    AVFormatContext* m_pAvFormatCtx = NULL;
+    std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders = NULL;
+    //----------------------------------------------------------------------
+    void RaiseSubtitleCueEntered(AVPacket* avPacket, AVSubtitle* avSubtitle, AvSubtitleContextTrack* tempTrack, TimeSpan pos, TimeSpan dur)
+    {
+        if (tempTrack->m_avSubtitleCodec->id != AV_CODEC_ID_HDMV_PGS_SUBTITLE && tempTrack->m_avSubtitleCodec->id != AV_CODEC_ID_XSUB && tempTrack->m_avSubtitleCodec->id != AV_CODEC_ID_DVB_SUBTITLE)
         {
-            if (tempTrack->m_avSubtitleCodec->id != AV_CODEC_ID_HDMV_PGS_SUBTITLE && tempTrack->m_avSubtitleCodec->id != AV_CODEC_ID_XSUB && tempTrack->m_avSubtitleCodec->id != AV_CODEC_ID_DVB_SUBTITLE)
+            auto index = avPacket->stream_index;
+            DataWriter dataWriter = DataWriter();
+            auto aBuffer = winrt::array_view<const uint8_t>(avPacket->data, avPacket->size);
+            dataWriter.WriteBytes(aBuffer);
+            auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(pos, dur, dataWriter.DetachBuffer(), nullptr, index, 0, 0, winrt::hstring(L"TEXT"));
+            this->eventCallback(&args);
+        }
+        else
+        {
+            auto index = avPacket->stream_index;
+            if (avSubtitle->rects != nullptr)
             {
-                auto index = avPacket->stream_index;
-                DataWriter dataWriter = DataWriter();
-                auto aBuffer = winrt::array_view<const uint8_t>(avPacket->data, avPacket->size);
-                dataWriter.WriteBytes(aBuffer);
-                auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(pos, dur, dataWriter.DetachBuffer(), nullptr, index, 0, 0, winrt::hstring(L"TEXT"));
+                DataWriter imageDataWriter = DataWriter();
+                DataWriter paletteDataWriter = DataWriter();
+                auto rect = (*avSubtitle->rects);
+                auto imageData = rect->data[0];
+                auto aBuffer = winrt::array_view<const uint8_t>(imageData, rect->w * rect->h);
+                imageDataWriter.WriteBytes(aBuffer);
+
+                auto palette = rect->data[1];
+                auto paletteBuffer = winrt::array_view<const uint8_t>(palette, rect->nb_colors * 4);
+                paletteDataWriter.WriteBytes(paletteBuffer);
+
+                auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(pos, dur, imageDataWriter.DetachBuffer(), paletteDataWriter.DetachBuffer(), index, rect->w, rect->h, winrt::hstring(L"IMAGE_SUBTITLE"));
                 this->eventCallback(&args);
             }
             else
             {
-                auto index = avPacket->stream_index;
-                if (avSubtitle->rects != nullptr)
-                {
-                    DataWriter imageDataWriter = DataWriter();
-                    DataWriter paletteDataWriter = DataWriter();
-                    auto rect = (*avSubtitle->rects);
-                    auto imageData = rect->data[0];
-                    auto aBuffer = winrt::array_view<const uint8_t>(imageData, rect->w * rect->h);
-                    imageDataWriter.WriteBytes(aBuffer);
-
-                    auto palette = rect->data[1];
-                    auto paletteBuffer = winrt::array_view<const uint8_t>(palette, rect->nb_colors * 4);
-                    paletteDataWriter.WriteBytes(paletteBuffer);
-
-                    auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(pos, dur, imageDataWriter.DetachBuffer(), paletteDataWriter.DetachBuffer(), index, rect->w, rect->h, winrt::hstring(L"IMAGE_SUBTITLE"));
-                    this->eventCallback(&args);
-                }
-                else
-                {
-                    IBuffer buffer = nullptr;
-                    IBuffer buffer2 = nullptr;
-                    auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(pos, dur, buffer, buffer2, index, 0, 0, winrt::hstring(L"IMAGE_SUBTITLE"));
-                    this->eventCallback(&args);
-                }
+                IBuffer buffer = nullptr;
+                IBuffer buffer2 = nullptr;
+                auto args = winrt::FFmpegInteropX::AvSubtitleEventArgs(pos, dur, buffer, buffer2, index, 0, 0, winrt::hstring(L"IMAGE_SUBTITLE"));
+                this->eventCallback(&args);
             }
         }
-        //----------------------------------------------------------------------
-    };
-}
+    }
+    //----------------------------------------------------------------------
+};

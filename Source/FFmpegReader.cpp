@@ -18,6 +18,8 @@
 
 #include "pch.h"
 #include "FFmpegReader.h"
+#include "AvSubtitleContextTrack.h"
+
 //#include "winrt/RuntimeComponentUtils.h"
 
 extern "C"
@@ -25,22 +27,21 @@ extern "C"
 #include "libavformat/avformat.h"
 }
 
-using namespace FFmpegInteropX;
 
-FFmpegInteropX::FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* initProviders)
+FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* initProviders)
     : m_pAvFormatCtx(avFormatCtx)
     , sampleProviders(initProviders)
 {
 }
 
-FFmpegInteropX::FFmpegReader::~FFmpegReader()
+FFmpegReader::~FFmpegReader()
 {
     DebugMessage(L"FFMpeg reader destroyed\n");
 }
 
 // Read the next packet from the stream and push it into the appropriate
 // sample provider
-int FFmpegInteropX::FFmpegReader::ReadPacket()
+int FFmpegReader::ReadPacket()
 {
     int ret;
     AVPacket* avPacket = av_packet_alloc();

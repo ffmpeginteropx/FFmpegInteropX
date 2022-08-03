@@ -17,6 +17,7 @@
 #include "SubtitleProviderBitmap.h"
 #include "ChapterInfo.h"
 #include "FFmpegReader.h"
+#include "AvSubtitleContextTrack.h"
 
 // Note: Remove this static_assert after copying these generated source files to your project.
 // This assertion exists to avoid compiling these generated source files directly.
@@ -494,7 +495,7 @@ namespace winrt::FFmpegInteropX::implementation
                         auto name = StringUtils::Utf8ToPlatformString(fileName->value);
                         auto mime = mimetype ? StringUtils::Utf8ToPlatformString(mimetype->value) : L"";
 
-                        auto file = std::shared_ptr<::FFmpegInteropX::AttachedFile>(new ::FFmpegInteropX::AttachedFile(name, mime, avStream));
+                        auto file = std::shared_ptr<AttachedFile>(new AttachedFile(name, mime, avStream));
                         attachedFileHelper->AddAttachedFile(file);
                     }
                 }
