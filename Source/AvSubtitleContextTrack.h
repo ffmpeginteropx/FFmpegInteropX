@@ -12,8 +12,20 @@ namespace FFmpegInteropX
     class AvSubtitleContextTrack
     {
     public:
-        virtual ~AvSubtitleContextTrack();
-        AvSubtitleContextTrack();
+        virtual ~AvSubtitleContextTrack()
+        {
+            //if (this->avSubtitleCodecCtx != nullptr && this->avSubtitleCodecCtx)
+            //{
+            //    auto t = &this->avSubtitleCodecCtx;
+            //    avcodec_free_context(const_cast <AVCodecContext**>(t));
+            //    DebugMessage(L"AvSubtitleContextTrack reader destroyed1\n");
+            //}
+            DebugMessage(L"AvSubtitleContextTrack reader destroyed2\n");
+        }
+        AvSubtitleContextTrack()
+        {
+
+        }
         const AVCodec* m_avSubtitleCodec;
         AVCodecContext* avSubtitleCodecCtx;
         int index;

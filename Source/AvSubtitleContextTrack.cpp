@@ -18,24 +18,3 @@
 
 #include "pch.h"
 #include "AvSubtitleContextTrack.h"
-extern "C"
-{
-#include "libavformat/avformat.h"
-}
-
-using namespace FFmpegInteropX;
-
-FFmpegInteropX::AvSubtitleContextTrack::AvSubtitleContextTrack()
-{
-}
-
-FFmpegInteropX::AvSubtitleContextTrack::~AvSubtitleContextTrack()
-{
-    //if (this->avSubtitleCodecCtx != nullptr && this->avSubtitleCodecCtx)
-    //{
-    //    auto t = &this->avSubtitleCodecCtx;
-    //    avcodec_free_context(const_cast <AVCodecContext**>(t));
-    //    DebugMessage(L"AvSubtitleContextTrack reader destroyed1\n");
-    //}
-    DebugMessage(L"AvSubtitleContextTrack reader destroyed2\n");
-}
