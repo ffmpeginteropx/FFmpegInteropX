@@ -10,13 +10,10 @@ namespace winrt::FFmpegInteropX::implementation
     struct AvSubtitleTrack : AvSubtitleTrackT<AvSubtitleTrack>
     {
         AvSubtitleTrack(hstring const& codecName, hstring const& language, int32_t const& index, hstring const& imageType);
-        hstring Title();
         hstring CodecName();
         hstring Language();
         int32_t Index();
         hstring ImageType();
-        Windows::Foundation::TimeSpan StartTime();
-        Windows::Foundation::TimeSpan Duration();
 
     private:
         hstring codecName{};
