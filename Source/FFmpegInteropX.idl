@@ -339,6 +339,7 @@ namespace FFmpegInteropX
         /// <summary>Creates a new FrameGrabber from the specified uri.</summary>
         static Windows.Foundation.IAsyncOperation<FrameGrabber> CreateFromUriAsync(String uri);
 
+        static Windows.Foundation.IAsyncOperation<Boolean> CombineAsync(Windows.Storage.Streams.IRandomAccessStream outStream, Windows.Storage.Streams.IRandomAccessStream audioStream, Windows.Storage.Streams.IRandomAccessStream videoStream, String format);
 
         /// <summary>Extracts a video frame at the specififed position.</summary>
         /// <param name="position">The position of the requested frame.</param>

@@ -11,8 +11,6 @@ using namespace NativeBuffer;
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    using namespace Windows::Foundation;
-
     struct FrameGrabber : FrameGrabberT<FrameGrabber>
     {
         FrameGrabber(winrt::com_ptr<winrt::FFmpegInteropX::implementation::FFmpegMediaSource> interopMSS)
@@ -25,6 +23,8 @@ namespace winrt::FFmpegInteropX::implementation
 
         /// <summary>Creates a new FrameGrabber from the specified uri.</summary>
         static IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromUriAsync(hstring uri);
+
+        static IAsyncOperation<bool> CombineAsync(Windows::Storage::Streams::IRandomAccessStream outStream, Windows::Storage::Streams::IRandomAccessStream audioStream, Windows::Storage::Streams::IRandomAccessStream videoStream, winrt::hstring format);
 
         /// <summary>The duration of the video stream.</summary>
         TimeSpan Duration();
