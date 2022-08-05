@@ -262,10 +262,10 @@ namespace MediaPlayerCS
         {
             FrameGrabber frameGrabber;
             var uri = tbUri.Text;
+            bool exactSeek = grabFrameExactSeek.IsOn;
             if (currentFile != null)
             {
                 var stream = await currentFile.OpenAsync(FileAccessMode.Read);
-                bool exactSeek = grabFrameExactSeek.IsOn;
                 frameGrabber = await FrameGrabber.CreateFromStreamAsync(stream);
             }
             else if (!string.IsNullOrWhiteSpace(uri))
@@ -280,7 +280,6 @@ namespace MediaPlayerCS
 
             try
             {
-
                 var frame = await frameGrabber.ExtractVideoFrameAsync(mediaPlayer.PlaybackSession.Position, exactSeek);
 
                 var filePicker = new FileSavePicker();
