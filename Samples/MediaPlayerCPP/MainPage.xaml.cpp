@@ -255,8 +255,6 @@ task<void> MainPage::ExtractFrame()
                 DisplayErrorMessage("File has been created:\n" + file->Path);
             }
         }
-        if (frameGrabber)
-            delete frameGrabber;
     }
     catch (Exception^ ex)
     {
