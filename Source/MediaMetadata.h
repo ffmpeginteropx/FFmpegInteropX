@@ -33,8 +33,12 @@ public:
                         auto key = StringUtils::Utf8ToPlatformString(entry->key);
                         auto value = StringUtils::Utf8ToPlatformString(entry->value);
 
-                        auto valueList = entriesLocal.TryLookup(key);
-                        if (!valueList)
+                        IVector<winrt::hstring> valueList;
+                        if (entriesLocal.HasKey(key))
+                        {
+                            valueList = entriesLocal.Lookup(key);
+                        }
+                        else
                         {
                             valueList = winrt::single_threaded_observable_vector<winrt::hstring>();
                             entriesLocal.Insert(key, valueList);
