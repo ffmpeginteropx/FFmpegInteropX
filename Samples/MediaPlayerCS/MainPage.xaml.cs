@@ -280,23 +280,24 @@ namespace MediaPlayerCS
 
             try
             {
-                var frame = await frameGrabber.ExtractVideoFrameAsync(mediaPlayer.PlaybackSession.Position, exactSeek);
-
-                var filePicker = new FileSavePicker();
-                filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
-                filePicker.DefaultFileExtension = ".jpg";
-                filePicker.FileTypeChoices["Jpeg file"] = new[] { ".jpg" }.ToList();
-
-                var file = await filePicker.PickSaveFileAsync();
-                if (file != null)
+                using (var frame = await frameGrabber.ExtractVideoFrameAsync(mediaPlayer.PlaybackSession.Position, exactSeek))
                 {
-                    var outputStream = await file.OpenAsync(FileAccessMode.ReadWrite);
-                    await frame.EncodeAsJpegAsync(outputStream);
-                    outputStream.Dispose();
-                    bool launched = await Windows.System.Launcher.LaunchFileAsync(file, new LauncherOptions() { DisplayApplicationPicker = false });
-                    if (!launched)
+                    var filePicker = new FileSavePicker();
+                    filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+                    filePicker.DefaultFileExtension = ".jpg";
+                    filePicker.FileTypeChoices["Jpeg file"] = new[] { ".jpg" }.ToList();
+
+                    var file = await filePicker.PickSaveFileAsync();
+                    if (file != null)
                     {
-                        await DisplayErrorMessage("File has been created:\n" + file.Path);
+                        var outputStream = await file.OpenAsync(FileAccessMode.ReadWrite);
+                        await frame.EncodeAsJpegAsync(outputStream);
+                        outputStream.Dispose();
+                        bool launched = await Windows.System.Launcher.LaunchFileAsync(file, new LauncherOptions() { DisplayApplicationPicker = false });
+                        if (!launched)
+                        {
+                            await DisplayErrorMessage("File has been created:\n" + file.Path);
+                        }
                     }
                 }
                 frameGrabber?.Dispose();
