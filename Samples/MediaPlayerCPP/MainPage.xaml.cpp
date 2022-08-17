@@ -581,3 +581,13 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
         }
     }
 }
+
+double MediaPlayerCPP::MainPage::GetBufferSizeMB()
+{
+    return (double)Config->ReadAheadBufferSize / (1024*1024);
+}
+
+void MediaPlayerCPP::MainPage::SetBufferSizeMB(double value)
+{
+    Config->ReadAheadBufferSize = (long long)(value * (1024 * 1024));
+}

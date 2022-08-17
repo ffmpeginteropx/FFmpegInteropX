@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 //*****************************************************************************
 //
 //	Copyright 2015 Microsoft Corporation
@@ -59,6 +59,10 @@
                         <ToggleSwitch Header="Use System AAC Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioAAC}" Margin="0,0,0,20" />
 
                         <ToggleSwitch Header="Fast Seeking (keyframe seeking requires PlaybackSession property to be assigned)" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.FastSeek}" Margin="0,20,0,0" />
+
+                        <ToggleSwitch Header="Read-ahead buffering" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.ReadAheadBufferEnabled}" Margin="0,20,0,0" />
+                        <Slider Minimum="1" Maximum="100" SnapsTo="StepValues" TickFrequency="10" StepFrequency="1" Header="Read-ahead buffer duration (s)" Value="{x:Bind Path=Config.ReadAheadBufferDuration, Mode=TwoWay, Converter={StaticResource TimeSpanToDoubleConverter}}" />
+                        <Slider Minimum="1" Maximum="100" SnapsTo="StepValues" TickFrequency="10" StepFrequency="1" Header="Read-ahead buffer size (MB)" Value="{x:Bind GetBufferSizeMB(), BindBack=SetBufferSizeMB, Mode=TwoWay}" />
 
                         <Button Content="Extract Frame" Click="ExtractFrame" Margin="0,20,10,10" />
                         <ToggleSwitch x:Name="grabFrameExactSeek" Header="Exact Seek for Extract Frame" OffContent="OFF" OnContent="ON" IsOn="True"/>

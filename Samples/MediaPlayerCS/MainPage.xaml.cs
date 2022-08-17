@@ -285,13 +285,14 @@ namespace MediaPlayerCS
                 mediaPlayer.Source = null;
                 FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
 
-                var source = FFmpegMSS.CreateMediaPlaybackItem();
-
-                // Pass MediaStreamSource to Media Element
-                mediaPlayer.Source = source;
-
-                // Close control panel after opening media
-                Splitter.IsPaneOpen = false;
+                if (AutoCreatePlaybackItem)
+                {
+                    CreatePlaybackItemAndStartPlaybackInternal();
+                }
+                else
+                {
+                    playbackItem = null;
+                }
             }
             catch (Exception ex)
             {
@@ -605,6 +606,16 @@ namespace MediaPlayerCS
         {
             Config.FFmpegAudioFilters = ffmpegAudioFilters.Text;
             FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
+        }
+
+        private double GetBufferSizeMB()
+        {
+            return Config.ReadAheadBufferSize / (1024 * 1024);
+        }
+
+        private long SetBufferSizeMB(double value)
+        {
+            return Config.ReadAheadBufferSize = (long)(value * (1024 * 1024));
         }
     }
 }

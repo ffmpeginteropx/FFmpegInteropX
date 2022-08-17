@@ -571,7 +571,7 @@ namespace FFmpegInteropX
 
         ///<summary>Enables or disables the read-ahead buffer.</summary>
         ///<remarks>This value can be changed any time during playback.</remarks>
-        Int64 ReadAheadBufferEnabled{ get; set; };
+        Boolean ReadAheadBufferEnabled{ get; set; };
 
         ///<summary>The maximum number of bytes to buffer ahead per stream.</summary>
         ///<remarks>This value can be changed any time during playback.</remarks>
