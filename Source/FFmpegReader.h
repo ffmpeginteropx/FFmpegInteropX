@@ -70,7 +70,6 @@ namespace FFmpegInteropX
         call<int>* sleepTimerTarget = NULL;
         timer<int>* sleepTimer = NULL;
 
-        bool isFirstSeekAfterStreamSwitch = false;
         bool isLastSeekForward = false;
         TimeSpan lastSeekStart { 0 };
         TimeSpan lastSeekActual { 0 };
