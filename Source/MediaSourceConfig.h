@@ -6,212 +6,182 @@ using namespace winrt::Windows::Foundation::Collections;
 // This assertion exists to avoid compiling these generated source files directly.
 //static_assert(false, "Do not compile generated C++/WinRT source files directly");
 
+#define PROPERTY( name, type, defaultValue ) \
+    public: \
+        type name() { return _##name; } \
+        void name(type value) { _##name = value; } \
+    private: \
+        type _##name = defaultValue;
+
+#define PROPERTY_CONST( name, type, defaultValue ) \
+    public: \
+        type name() { return _##name; } \
+        void name(type const& value) { _##name = value; } \
+    private: \
+        type _##name = defaultValue;
+
 namespace winrt::FFmpegInteropX::implementation
 {
+    using namespace winrt::Windows::Foundation;
+    using namespace winrt::Windows::Foundation::Collections;
+    using namespace winrt::Windows::Media::Core;
+
     struct MediaSourceConfig : MediaSourceConfigT<MediaSourceConfig>
     {
-    public:
-        MediaSourceConfig();
-
-
         ///<summary>Enable passthrough for MP3 audio to system decoder.</summary>
         ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
-        bool PassthroughAudioMP3();
-        void PassthroughAudioMP3(bool value);
+        PROPERTY(PassthroughAudioMP3, bool, false);
 
         ///<summary>Enable passthrough for AAC audio to system decoder.</summary>
         ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
-        bool PassthroughAudioAAC();
-        void PassthroughAudioAAC(bool value);
+        PROPERTY(PassthroughAudioAAC, bool, false);
 
         ///<summary>Sets the video decoder mode. Default is AutoDetection.</summary>
-        FFmpegInteropX::VideoDecoderMode VideoDecoderMode();
-        void VideoDecoderMode(FFmpegInteropX::VideoDecoderMode const& value);
+        PROPERTY(VideoDecoderMode, FFmpegInteropX::VideoDecoderMode, VideoDecoderMode::Automatic);
 
         ///<summary>Max profile allowed for H264 system decoder. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
-        int32_t SystemDecoderH264MaxProfile();
-        void SystemDecoderH264MaxProfile(int32_t value);
+        PROPERTY(SystemDecoderH264MaxProfile, int32_t, FF_PROFILE_H264_HIGH);
 
         ///<summary>Max level allowed for H264 system decoder. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
         ///<remarks>Most H264 HW decoders only support Level 4.1, so this is the default.</remarks>
-        int32_t SystemDecoderH264MaxLevel();
-        void SystemDecoderH264MaxLevel(int32_t value);
+        PROPERTY(SystemDecoderH264MaxLevel, int32_t, 41);
 
 
         ///<summary>Max profile allowed for HEVC system decoder. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
-        int32_t SystemDecoderHEVCMaxProfile();
-        void SystemDecoderHEVCMaxProfile(int32_t value);
+        PROPERTY(SystemDecoderHEVCMaxProfile, int32_t, FF_PROFILE_HEVC_MAIN_10);
 
         ///<summary>Max level allowed for HEVC system decoder. Default: Disabled (-1).</summary>
         ///<remarks>Encoded as: 30*Major + 3*Minor. So Level 6.0 = 30*6 = 180, 5.1 = 30*5 + 3*1 = 163, 4.1 = 123.
         ///Many HEVC HW decoders support even very high levels, so we disable the check by default.</remarks>
-        int32_t SystemDecoderHEVCMaxLevel();
-        void SystemDecoderHEVCMaxLevel(int32_t value);
+        PROPERTY(SystemDecoderHEVCMaxLevel, int32_t, -1);
 
         ///<summary>Allow video output in IYuv format.</summary>
-        bool VideoOutputAllowIyuv();
-        void VideoOutputAllowIyuv(bool value);
+        PROPERTY(VideoOutputAllowIyuv, bool, false);
 
         ///<summary>Allow video output in 10bit formats.</summary>
-        bool VideoOutputAllow10bit();
-        void VideoOutputAllow10bit(bool value);
+        PROPERTY(VideoOutputAllow10bit, bool, true);
 
         ///<summary>Allow video output in BGRA format - required for video transparency.</summary>
-        bool VideoOutputAllowBgra8();
-        void VideoOutputAllowBgra8(bool value);
+        PROPERTY(VideoOutputAllowBgra8, bool, false);
 
         ///<summary>Allow video output in NV12 format.</summary>
-        bool VideoOutputAllowNv12();
-        void VideoOutputAllowNv12(bool value);
+        PROPERTY(VideoOutputAllowNv12, bool, true);
 
-        ///<summary>The maximum number of broken frames to skipp in a stream before stopping decoding.</summary>
-        uint32_t SkipErrors();
-        void SkipErrors(uint32_t value);
+        ///<summary>The maximum number of broken frames or packets to skip in a stream before stopping decoding.</summary>
+        PROPERTY(SkipErrors, int32_t, 50);
 
-        ///<summary>The maximum number of video decoding threads.</summary>
-        uint32_t MaxVideoThreads();
-        void MaxVideoThreads(uint32_t value);
+        ///<summary>The maximum number of video decoding threads. Set to 0 for usign the number of logical CPU cores.</summary>
+        PROPERTY(MaxVideoThreads, int32_t, 0);
 
-        ///<summary>The maximum number of audio decoding threads.</summary>
-        uint32_t MaxAudioThreads();
-        void MaxAudioThreads(uint32_t value);
+        ///<summary>The maximum number of audio decoding threads. Set to 0 for usign the number of logical CPU cores.</summary>
+        PROPERTY(MaxAudioThreads, int32_t, 2);
 
         ///<summary>The maximum supported playback rate. This is set on the media stream source itself. 
         /// This does not modify what the transport control default UI shows as available playback speeds. Custom UI is necessary!</summary>
-        double MaxSupportedPlaybackRate();
-        void MaxSupportedPlaybackRate(double value);
+        PROPERTY(MaxSupportedPlaybackRate, double, 4.0);
 
         ///<summary>The buffer size in bytes to use for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
         //[deprecated("Deprecated due to irritating name. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
-        uint32_t StreamBufferSize();
-        void StreamBufferSize(uint32_t value);
+        PROPERTY(StreamBufferSize, int32_t, 16384);
 
         ///<summary>The maximum number of bytes to read in one chunk for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
-        uint32_t FileStreamReadSize();
-        void FileStreamReadSize(uint32_t value);
+        PROPERTY(FileStreamReadSize, int32_t, 16384);
 
         ///<summary>Additional options to use when creating the ffmpeg AVFormatContext.</summary>
-        Windows::Foundation::Collections::PropertySet FFmpegOptions();
-        void FFmpegOptions(Windows::Foundation::Collections::PropertySet const& value);
+        PROPERTY_CONST(FFmpegOptions, PropertySet, PropertySet());
 
 
         ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
         ///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
-        winrt::Windows::Foundation::TimeSpan DefaultBufferTime();
-        void DefaultBufferTime(winrt::Windows::Foundation::TimeSpan const& value);
+        PROPERTY_CONST(DefaultBufferTime, TimeSpan, {});
 
         ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for URI sources.</summary>
         ///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
-        winrt::Windows::Foundation::TimeSpan DefaultBufferTimeUri();
-        void DefaultBufferTimeUri(winrt::Windows::Foundation::TimeSpan const& value);
+        PROPERTY_CONST(DefaultBufferTimeUri, TimeSpan, {});
 
 
         ///<summary>Enables or disables the read-ahead buffer.</summary>
         ///<remarks>This value can be changed any time during playback.</remarks>
-        bool ReadAheadBufferEnabled();
-        void ReadAheadBufferEnabled(bool value);
+        PROPERTY(ReadAheadBufferEnabled, bool, true);
 
         ///<summary>The maximum number of bytes to buffer ahead per stream.</summary>
         ///<remarks>This value can be changed any time during playback.</remarks>
-        long long ReadAheadBufferSize();
-        void ReadAheadBufferSize(long long value);
+        PROPERTY(ReadAheadBufferSize, int64_t, 100*1024*1024);
 
         ///<summary>The maximum duration to buffer ahead per stream.</summary>
         ///<remarks>This value can be changed any time during playback.</remarks>
-        winrt::Windows::Foundation::TimeSpan ReadAheadBufferDuration();
-        void ReadAheadBufferDuration(const winrt::Windows::Foundation::TimeSpan& value);
+        PROPERTY_CONST(ReadAheadBufferDuration, TimeSpan, TimeSpan{600000000});
 
 
         ///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>
-        bool AutoSelectForcedSubtitles();
-        void AutoSelectForcedSubtitles(bool value);
+        PROPERTY(AutoSelectForcedSubtitles, bool, true);
 
         ///<summary>Use SubtitleRegion and SubtitleStyle from config class, even if custom styles are defined for a subtitle.</summary>
-        bool OverrideSubtitleStyles();
-        void OverrideSubtitleStyles(bool value);
+        PROPERTY(OverrideSubtitleStyles, bool, false);
 
         ///<summary>Default region to use for subtitles.</summary>
-        Windows::Media::Core::TimedTextRegion SubtitleRegion();
-        void SubtitleRegion(Windows::Media::Core::TimedTextRegion const& value);
+        PROPERTY_CONST(SubtitleRegion, TimedTextRegion, CreateDefaultSubtitleRegion());
 
         ///<summary>Default style to use for subtitles.</summary>
-        Windows::Media::Core::TimedTextStyle SubtitleStyle();
-        void SubtitleStyle(Windows::Media::Core::TimedTextStyle const& value);
+        PROPERTY_CONST(SubtitleStyle, TimedTextStyle, CreateDefaultSubtitleStyle());
 
         ///<summary>Enable conversion of ANSI encoded subtitles to UTF-8.</summary>
-        bool AutoCorrectAnsiSubtitles();
-        void AutoCorrectAnsiSubtitles(bool value);
+        PROPERTY(AutoCorrectAnsiSubtitles, bool, true);
 
         ///<summary>The character encoding used to decode ANSI encoded subtitles. By default, the active windows codepage is used.</summary>
-        FFmpegInteropX::CharacterEncoding AnsiSubtitleEncoding();
-        void AnsiSubtitleEncoding(FFmpegInteropX::CharacterEncoding const& value);
+        PROPERTY_CONST(AnsiSubtitleEncoding, FFmpegInteropX::CharacterEncoding, CharacterEncoding::GetSystemDefault());
 
         ///<summary>The subtitle delay will be initially applied to all subtitle tracks.
         ///Use SetSubtitleDelay() on the FFmpegMediaSource instance if you want to change the delay during playback.</summary>
-        winrt::Windows::Foundation::TimeSpan DefaultSubtitleDelay();
-        void DefaultSubtitleDelay(winrt::Windows::Foundation::TimeSpan const& value);
+        PROPERTY_CONST(DefaultSubtitleDelay, TimeSpan, {});
 
         /// <summary>FFmpegMediaSource will seek to the closest video keyframe, if set to true.</summary>
         /// <remarks>
         /// For FastSeek to work, you must use the MediaPlayer for playback, and assign
         /// MediaPlayer.PlaybackSession to the FFmpegMediaSource.PlaybackSession .
         /// </remarks>
-        bool FastSeek();
-        void FastSeek(bool value);
+        PROPERTY(FastSeek, bool, true);
 
         ///<summary>Ensure that audio plays without artifacts after fast seeking.</summary>
         ///<remarks>This will slightly reduce the speed of fast seeking. Enabled by default.</remarks>
-        bool FastSeekCleanAudio();
-        void FastSeekCleanAudio(bool value);
+        PROPERTY(FastSeekCleanAudio, bool, true);
 
         ///<summary>Try to improve stream switching times when FastSeek is enabled.</summary>
-        bool FastSeekSmartStreamSwitching();
-        void FastSeekSmartStreamSwitching(bool value);
+        PROPERTY(FastSeekSmartStreamSwitching, bool, true);
 
         ///<summary>The default name to use for audio streams.</summary>
-        hstring DefaultAudioStreamName();
-        void DefaultAudioStreamName(hstring const& value);
+        PROPERTY_CONST(DefaultAudioStreamName, hstring, L"Audio Stream");
 
         ///<summary>The default name to use for subtitle streams.</summary>
-        hstring DefaultSubtitleStreamName();
-        void DefaultSubtitleStreamName(hstring const& value);
+        PROPERTY_CONST(DefaultSubtitleStreamName, hstring, L"Subtitle");
 
         ///<summary>The default name to use for external subtitle streams.</summary>
-        hstring DefaultExternalSubtitleStreamName();
-        void DefaultExternalSubtitleStreamName(hstring const& value);
+        PROPERTY_CONST(DefaultExternalSubtitleStreamName, hstring, L"External Subtitle");
 
         ///<summary>Use subtitle font files that are embedded in the media file.</summary>
-        bool UseEmbeddedSubtitleFonts();
-        void UseEmbeddedSubtitleFonts(bool value);
+        PROPERTY(UseEmbeddedSubtitleFonts, bool, true);
 
         ///<summary>The folder where attachments such as fonts are stored (inside the app's temp folder).</summary>
-        hstring AttachmentCacheFolderName();
-        void AttachmentCacheFolderName(hstring const& value);
+        PROPERTY_CONST(AttachmentCacheFolderName, hstring, L"FFmpegAttachmentCache");
 
         ///<summary>The minimum amount of time a subtitle should be shown. Default is 0.</summary>
-        winrt::Windows::Foundation::TimeSpan MinimumSubtitleDuration();
-        void MinimumSubtitleDuration(winrt::Windows::Foundation::TimeSpan const& value);
+        PROPERTY_CONST(MinimumSubtitleDuration, TimeSpan, {});
 
         ///<summary>Each subtitle's duration is extended by this amount. Default is 0.</summary>
-        winrt::Windows::Foundation::TimeSpan AdditionalSubtitleDuration();
-        void AdditionalSubtitleDuration(winrt::Windows::Foundation::TimeSpan const& value);
+        PROPERTY_CONST(AdditionalSubtitleDuration, TimeSpan, {});
 
         ///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
-        bool PreventModifiedSubtitleDurationOverlap();
-        void PreventModifiedSubtitleDurationOverlap(bool value);
+        PROPERTY(PreventModifiedSubtitleDurationOverlap, bool, true);
 
         ///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-        hstring FFmpegVideoFilters();
-        void FFmpegVideoFilters(hstring const& value);
+        PROPERTY_CONST(FFmpegVideoFilters, hstring, {});
 
         ///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegMediaSource.SetFFmpegAudioFilters().</summary>
-        hstring FFmpegAudioFilters();
-        void FFmpegAudioFilters(hstring const& value);
+        PROPERTY_CONST(FFmpegAudioFilters, hstring, {});
 
         ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
-        bool DownmixAudioStreamsToStereo();
-        void DownmixAudioStreamsToStereo(bool value);
+        PROPERTY(DownmixAudioStreamsToStereo, bool, false);
 
     public:
         //internal:
@@ -220,53 +190,74 @@ namespace winrt::FFmpegInteropX::implementation
         bool IsExternalSubtitleParser;
 
         /*Used to pass additional, specific options to external sub parsers*/
-        PropertySet AdditionalFFmpegSubtitleOptions = {};
+        PropertySet AdditionalFFmpegSubtitleOptions = {nullptr};
 
     private:
 
-        bool m_PassthroughAudioMP3 = false;
-        bool m_PassthroughAudioAAC = false;
-        winrt::FFmpegInteropX::VideoDecoderMode m_VideoDecoderMode;
-        int m_SystemDecoderH264MaxProfile = 0;
-        int m_SystemDecoderH264MaxLevel = 0;
-        int m_SystemDecoderHEVCMaxProfile = 0;
-        int m_SystemDecoderHEVCMaxLevel = 0;
-        bool m_VideoOutputAllowIyuv = false;
-        bool m_VideoOutputAllow10bit = false;
-        bool m_VideoOutputAllowBgra8 = false;
-        bool m_VideoOutputAllowNv12 = false;
-        unsigned int m_SkipErrors = 0;
-        unsigned int m_MaxVideoThreads = 0;
-        unsigned int m_MaxAudioThreads = 0;
-        double m_MaxSupportedPlaybackRate = 0.0;
-        unsigned int m_FileStreamReadSize = 0;
-        winrt::Windows::Foundation::Collections::PropertySet m_FFmpegOptions = {};
-        winrt::Windows::Foundation::TimeSpan m_DefaultBufferTime{};
-        winrt::Windows::Foundation::TimeSpan m_DefaultBufferTimeUri{};
-        bool m_ReadAheadBufferEnabled = false;
-        long long m_ReadAheadBufferSize = 0;
-        winrt::Windows::Foundation::TimeSpan m_ReadAheadBufferDuration{};
-        bool m_AutoSelectForcedSubtitles = false;
-        bool m_OverrideSubtitleStyles = false;
-        winrt::Windows::Media::Core::TimedTextRegion m_SubtitleRegion = {};
-        winrt::Windows::Media::Core::TimedTextStyle m_SubtitleStyle = {};
-        bool m_AutoCorrectAnsiSubtitles = false;
-        winrt::Windows::Foundation::TimeSpan m_DefaultSubtitleDelay{};
-        bool m_FastSeek = false;
-        bool m_FastSeekCleanAudio = false;
-        bool m_FastSeekSmartStreamSwitching = false;
-        hstring m_DefaultAudioStreamName{};
-        hstring m_DefaultSubtitleStreamName{};
-        hstring m_DefaultExternalSubtitleStreamName{};
-        bool m_UseEmbeddedSubtitleFonts = false;
-        hstring m_AttachmentCacheFolderName{};
-        winrt::Windows::Foundation::TimeSpan m_MinimumSubtitleDuration{};
-        winrt::Windows::Foundation::TimeSpan m_AdditionalSubtitleDuration{};
-        bool m_PreventModifiedSubtitleDurationOverlap = false;
-        hstring m_FFmpegVideoFilters{};
-        hstring m_FFmpegAudioFilters{};
-        bool m_DownmixAudioStreamsToStereo = false;
-        CharacterEncoding m_CharacterEncoding{ nullptr };
+        TimedTextRegion CreateDefaultSubtitleRegion()
+        {
+            auto region = TimedTextRegion();
+
+            TimedTextSize extent;
+            extent.Unit = TimedTextUnit::Percentage;
+            extent.Width = 100;
+            extent.Height = 88;
+            region.Extent(extent);
+            TimedTextPoint position;
+            position.Unit = TimedTextUnit::Pixels;
+            position.X = 0;
+            position.Y = 0;
+            region.Position(position);
+            region.DisplayAlignment(TimedTextDisplayAlignment::After);
+            region.Background(winrt::Windows::UI::Colors::Transparent());
+            region.ScrollMode(TimedTextScrollMode::Rollup);
+            region.TextWrapping(TimedTextWrapping::Wrap);
+            region.WritingMode(TimedTextWritingMode::LeftRightTopBottom);
+            region.IsOverflowClipped(false);
+            region.ZIndex(0);
+            TimedTextDouble LineHeight;
+            LineHeight.Unit = TimedTextUnit::Percentage;
+            LineHeight.Value = 100;
+            region.LineHeight(LineHeight);
+            TimedTextPadding padding;
+            padding.Unit = TimedTextUnit::Percentage;
+            padding.Start = 0;
+            padding.After = 0;
+            padding.Before = 0;
+            padding.End = 0;
+            region.Padding(padding);
+            region.Name(L"");
+
+            return region;
+        }
+
+        TimedTextStyle CreateDefaultSubtitleStyle()
+        {
+            auto style = TimedTextStyle();
+
+            style.FontFamily(L"default");
+            TimedTextDouble fontSize;
+            fontSize.Unit = TimedTextUnit::Percentage;
+            fontSize.Value = 100;
+            style.FontSize(fontSize);
+            style.LineAlignment(TimedTextLineAlignment::Center);
+            if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
+            {
+                style.FontStyle(TimedTextFontStyle::Normal);
+            }
+            style.FontWeight(TimedTextWeight::Normal);
+            style.Foreground(winrt::Windows::UI::Colors::White());
+            style.Background(Windows::UI::Colors::Transparent());
+            //OutlineRadius = new TimedTextDouble { Unit = TimedTextUnit.Percentage, Value = 10 },
+            TimedTextDouble outlineThickness;
+            outlineThickness.Unit = TimedTextUnit::Percentage;
+            outlineThickness.Value = 4.5;
+            style.OutlineThickness(outlineThickness);
+            style.FlowDirection(TimedTextFlowDirection::LeftToRight);
+            style.OutlineColor(winrt::Windows::UI::Color{ 0x80, 0, 0, 0 });
+
+            return style;
+        }
     };
 }
 namespace winrt::FFmpegInteropX::factory_implementation
