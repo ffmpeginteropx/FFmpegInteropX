@@ -107,6 +107,7 @@ task<void> MainPage::OpenLocalFile()
     try
     {
         FileOpenPicker^ filePicker = ref new FileOpenPicker();
+        filePicker->SettingsIdentifier = "VideoFile";
         filePicker->ViewMode = PickerViewMode::Thumbnail;
         filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
         filePicker->FileTypeFilter->Append("*");
@@ -235,6 +236,7 @@ task<void> MainPage::ExtractFrame()
         }
         auto frame = co_await frameGrabber->ExtractVideoFrameAsync(mediaPlayer->PlaybackSession->Position, exactSeek);
         auto filePicker = ref new FileSavePicker();
+        filePicker->SettingsIdentifier = "VideoFrame";
         filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
         filePicker->DefaultFileExtension = ".jpg";
         filePicker->FileTypeChoices->Insert("Jpeg file", ref new Platform::Collections::Vector<String^>(1, ".jpg"));
@@ -279,6 +281,7 @@ task<void> MediaPlayerCPP::MainPage::LoadSubtitleFile()
         try
         {
             FileOpenPicker^ filePicker = ref new FileOpenPicker();
+            filePicker->SettingsIdentifier = "SubtitleFile";
             filePicker->ViewMode = PickerViewMode::Thumbnail;
             filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
             filePicker->FileTypeFilter->Append("*");
@@ -317,6 +320,7 @@ task<void> MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg()
         try
         {
             FileOpenPicker^ filePicker = ref new FileOpenPicker();
+            filePicker->SettingsIdentifier = "SubtitleFile";
             filePicker->ViewMode = PickerViewMode::Thumbnail;
             filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
             filePicker->FileTypeFilter->Append("*");
