@@ -23,55 +23,52 @@
 #include "MediaSourceConfig.h"
 #include "MediaSampleProvider.h"
 
-namespace FFmpegInteropX
+using namespace Concurrency;
+
+class StreamBuffer;
+
+class FFmpegReader
 {
-    using namespace Concurrency;
+public:
+    FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders, MediaSourceConfig config);
+    virtual ~FFmpegReader();
 
-    class StreamBuffer;
+    int ReadPacket();
+    int ReadPacketForStream(StreamBuffer* buffer);
+    void Start();
+    void Stop();
+    void Flush();
+    HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool allowFastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
 
-    class FFmpegReader
-    {
-    public:
-        FFmpegReader(AVFormatContext* avFormatCtx, std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders, MediaSourceConfig config);
-        virtual ~FFmpegReader();
+private:
 
-        int ReadPacket();
-        int ReadPacketForStream(StreamBuffer* buffer);
-        void Start();
-        void Stop();
-        void Flush();
-        HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool allowFastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
+    bool TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, bool isForwardSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
+    HRESULT SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
+    void OnTimer(int value);
+    void ReadDataLoop();
+    void FlushCodecs();
+    void FlushCodecsAndBuffers();
+    bool CheckNeedsSleep(bool wasSleeping);
 
-    private:
+    AVFormatContext* avFormatCtx;
+    std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders{ nullptr };
+    MediaSourceConfig config;
+    std::shared_ptr<MediaSampleProvider> lastStream{ nullptr };
+    std::shared_ptr<MediaSampleProvider> fullStream{ nullptr };
 
-        bool TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, bool isForwardSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
-        HRESULT SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
-        void OnTimer(int value);
-        void ReadDataLoop();
-        void FlushCodecs();
-        void FlushCodecsAndBuffers();
-        bool CheckNeedsSleep(bool wasSleeping);
+    std::recursive_mutex mutex;
+    bool isActive = false;
+    bool isSleeping = false;
+    bool isEof = false;
+    unsigned int errorCount = 0;
+    int forceReadStream = 0;
+    int readResult = 0;
+    task<void> readTask;
+    task_completion_event<void> waitStreamEvent;
+    call<int>* sleepTimerTarget = NULL;
+    timer<int>* sleepTimer = NULL;
 
-        AVFormatContext* avFormatCtx;
-        std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders{ nullptr };
-        MediaSourceConfig config;
-        std::shared_ptr<MediaSampleProvider> lastStream{ nullptr };
-        std::shared_ptr<MediaSampleProvider> fullStream{ nullptr };
-
-        std::recursive_mutex mutex;
-        bool isActive = false;
-        bool isSleeping = false;
-        bool isEof = false;
-        unsigned int errorCount = 0;
-        int forceReadStream = 0;
-        int readResult = 0;
-        task<void> readTask;
-        task_completion_event<void> waitStreamEvent;
-        call<int>* sleepTimerTarget = NULL;
-        timer<int>* sleepTimer = NULL;
-
-        bool isLastSeekForward = false;
-        TimeSpan lastSeekStart { 0 };
-        TimeSpan lastSeekActual { 0 };
-    };
-}
+    bool isLastSeekForward = false;
+    TimeSpan lastSeekStart { 0 };
+    TimeSpan lastSeekActual { 0 };
+};

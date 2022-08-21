@@ -23,8 +23,6 @@
 
 using namespace Concurrency;
 
-using namespace FFmpegInteropX;
-
 FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<shared_ptr<MediaSampleProvider>>* initProviders, MediaSourceConfig config)
     : avFormatCtx(avFormatCtx)
     , sampleProviders(initProviders)
@@ -465,7 +463,7 @@ void FFmpegReader::ReadDataLoop()
     }
 }
 
-void FFmpegInteropX::FFmpegReader::OnTimer(int value)
+void FFmpegReader::OnTimer(int value)
 {
     UNREFERENCED_PARAMETER(value);
     std::lock_guard lock(mutex);
@@ -514,7 +512,7 @@ bool FFmpegReader::CheckNeedsSleep(bool wasSleeping)
 
 // Read the next packet from the stream and push it into the appropriate
 // sample provider
-int FFmpegInteropX::FFmpegReader::ReadPacket()
+int FFmpegReader::ReadPacket()
 {
     AVPacket* avPacket = av_packet_alloc();
 

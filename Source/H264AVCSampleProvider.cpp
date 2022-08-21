@@ -19,7 +19,6 @@
 #include "pch.h"
 #include "H264AVCSampleProvider.h"
 
-using namespace FFmpegInteropX;
 
 H264AVCSampleProvider::H264AVCSampleProvider(
     std::shared_ptr<FFmpegReader> reader,

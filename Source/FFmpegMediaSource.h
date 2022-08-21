@@ -28,7 +28,6 @@ namespace winrt::FFmpegInteropX::implementation
     using namespace winrt::Windows::UI::Xaml;
     namespace WFM = winrt::Windows::Foundation::Metadata;
     using namespace winrt::Windows::Storage::Streams;
-    using namespace ::FFmpegInteropX;
 
     enum ByteOrderMark
     {

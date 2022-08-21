@@ -253,7 +253,7 @@ namespace FFmpegInteropX
     }
 
     [bindable]
-    runtimeclass VideoFrame
+    runtimeclass VideoFrame : Windows.Foundation.IClosable
     {
         Windows.Storage.Streams.IBuffer PixelData { get; };
         UInt32 PixelWidth { get; };
@@ -263,9 +263,7 @@ namespace FFmpegInteropX
 
         VideoFrame(Windows.Storage.Streams.IBuffer pixelData, UInt32 width, UInt32 height, Windows.Media.MediaProperties.MediaRatio pixelAspectRatio, Windows.Foundation.TimeSpan timestamp);
 
-
         Windows.Foundation.IAsyncAction EncodeAsBmpAsync(Windows.Storage.Streams.IRandomAccessStream stream);
-
         Windows.Foundation.IAsyncAction EncodeAsJpegAsync(Windows.Storage.Streams.IRandomAccessStream stream);
         Windows.Foundation.IAsyncAction EncodeAsPngAsync(Windows.Storage.Streams.IRandomAccessStream stream);
 

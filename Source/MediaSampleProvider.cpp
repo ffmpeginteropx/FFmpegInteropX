@@ -25,7 +25,6 @@
 #include "AvCodecContextHelpers.h"
 #include "Mfapi.h"
 
-using namespace FFmpegInteropX;
 using namespace winrt::Windows::Media::MediaProperties;
 using namespace winrt::Windows::Globalization;
 using namespace winrt::Windows::Media::Core;
@@ -88,7 +87,7 @@ HRESULT MediaSampleProvider::Initialize()
     return m_streamDescriptor ? S_OK : E_FAIL;
 }
 
-void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
+void MediaSampleProvider::InitializeNameLanguageCodec()
 {
     // unfortunately, setting Name or Language on MediaStreamDescriptor does not have any effect, they are not shown in track selection list
     auto title = av_dict_get(m_pAvStream->metadata, "title", NULL, 0);
@@ -103,7 +102,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
         Language = StringUtils::Utf8ToPlatformString(language->value);
         if (Language.size() == 3)
         {
-            auto entry = FFmpegInteropX::LanguageTagConverter::TryGetLanguage(Language);
+            auto entry = LanguageTagConverter::TryGetLanguage(Language);
             if (entry != nullptr)
             {
                 try
@@ -166,7 +165,7 @@ void FFmpegInteropX::MediaSampleProvider::InitializeNameLanguageCodec()
     }
 }
 
-void FFmpegInteropX::MediaSampleProvider::InitializeStreamInfo()
+void MediaSampleProvider::InitializeStreamInfo()
 {
     switch (m_pAvCodecCtx->codec_type)
     {

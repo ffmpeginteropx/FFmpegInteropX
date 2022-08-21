@@ -37,6 +37,7 @@ using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using System.IO;
 
 namespace MediaPlayerCS
 {
@@ -193,6 +194,7 @@ namespace MediaPlayerCS
         private async void OpenLocalFile(object sender, RoutedEventArgs e)
         {
             FileOpenPicker filePicker = new FileOpenPicker();
+            filePicker.SettingsIdentifier = "VideoFile";
             filePicker.ViewMode = PickerViewMode.Thumbnail;
             filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
             filePicker.FileTypeFilter.Add("*");
@@ -302,20 +304,30 @@ namespace MediaPlayerCS
 
         private async void ExtractFrame(object sender, RoutedEventArgs e)
         {
-            if (currentFile == null || mediaPlayer.PlaybackSession == null)
+            FrameGrabber frameGrabber;
+            var uri = tbUri.Text;
+            bool exactSeek = grabFrameExactSeek.IsOn;
+            if (currentFile != null)
             {
-                await DisplayErrorMessage("Please open a video file first.");
+                var stream = await currentFile.OpenAsync(FileAccessMode.Read);
+                frameGrabber = await FrameGrabber.CreateFromStreamAsync(stream);
+            }
+            else if (!string.IsNullOrWhiteSpace(uri))
+            {
+                frameGrabber = await FrameGrabber.CreateFromUriAsync(uri);
             }
             else
             {
-                try
-                {
-                    var stream = await currentFile.OpenAsync(FileAccessMode.Read);
-                    bool exactSeek = grabFrameExactSeek.IsOn;
-                    var frameGrabber = await FrameGrabber.CreateFromStreamAsync(stream);
-                    var frame = await frameGrabber.ExtractVideoFrameAsync(mediaPlayer.PlaybackSession.Position, exactSeek);
+                await DisplayErrorMessage("Please open a video file first.");
+                return;
+            }
 
+            try
+            {
+                using (var frame = await frameGrabber.ExtractVideoFrameAsync(mediaPlayer.PlaybackSession.Position, exactSeek))
+                {
                     var filePicker = new FileSavePicker();
+                    filePicker.SettingsIdentifier = "VideoFrame";
                     filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
                     filePicker.DefaultFileExtension = ".jpg";
                     filePicker.FileTypeChoices["Jpeg file"] = new[] { ".jpg" }.ToList();
@@ -333,11 +345,13 @@ namespace MediaPlayerCS
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    await DisplayErrorMessage(ex.Message);
-                }
+                frameGrabber?.Dispose();
             }
+            catch (Exception ex)
+            {
+                await DisplayErrorMessage(ex.Message);
+            }
+
         }
 
         private async void LoadSubtitleFile(object sender, RoutedEventArgs e)
@@ -345,6 +359,7 @@ namespace MediaPlayerCS
             if (playbackItem != null)
             {
                 FileOpenPicker filePicker = new FileOpenPicker();
+                filePicker.SettingsIdentifier = "SubtitleFile";
                 filePicker.ViewMode = PickerViewMode.Thumbnail;
                 filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
                 filePicker.FileTypeFilter.Add("*");
@@ -421,6 +436,7 @@ namespace MediaPlayerCS
                 try
                 {
                     FileOpenPicker filePicker = new FileOpenPicker();
+                    filePicker.SettingsIdentifier = "SubtitleFile";
                     filePicker.ViewMode = PickerViewMode.Thumbnail;
                     filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
                     filePicker.FileTypeFilter.Add("*");

@@ -28,7 +28,6 @@ extern "C"
 #include <libavutil/mastering_display_metadata.h>
 }
 
-using namespace FFmpegInteropX;
 using namespace NativeBuffer;
 using namespace winrt::Windows::Media::MediaProperties;
 using namespace winrt::Windows::Foundation;
@@ -396,7 +395,7 @@ HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
 }
 
 
-void FFmpegInteropX::UncompressedVideoSampleProvider::ReadFrameProperties(AVFrame* avFrame, int64_t& framePts)
+void UncompressedVideoSampleProvider::ReadFrameProperties(AVFrame* avFrame, int64_t& framePts)
 {
     // Try to get the best effort timestamp for the frame.
     if (avFrame->best_effort_timestamp != AV_NOPTS_VALUE)
@@ -661,7 +660,7 @@ int UncompressedVideoSampleProvider::get_buffer2(AVCodecContext* avCodecContext,
 }
 
 
-void FFmpegInteropX::UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame)
+void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame)
 {
     outputDirectBuffer = true;
     int frameWidth = avFrame->width;

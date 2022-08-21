@@ -21,51 +21,48 @@
 #include "MediaSampleProvider.h"
 #include "UncompressedFrameProvider.h"
 
-namespace FFmpegInteropX
+class UncompressedSampleProvider abstract : public MediaSampleProvider
 {
-    class UncompressedSampleProvider abstract : public MediaSampleProvider
+public:
+    UncompressedSampleProvider(
+        std::shared_ptr<FFmpegReader> reader,
+        AVFormatContext* avFormatCtx,
+        AVCodecContext* avCodecCtx,
+        MediaSourceConfig config,
+        int streamIndex,
+        HardwareDecoderStatus hardwareDecoderStatus
+    );
+    virtual HRESULT CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface) override;
+    virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
     {
-    public:
-        UncompressedSampleProvider(
-            std::shared_ptr<FFmpegReader> reader,
-            AVFormatContext* avFormatCtx,
-            AVCodecContext* avCodecCtx,
-            MediaSourceConfig config,
-            int streamIndex,
-            HardwareDecoderStatus hardwareDecoderStatus
-        );
-        virtual HRESULT CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface) override;
-        virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
-        {
-            UNREFERENCED_PARAMETER(pBuffer);
-            UNREFERENCED_PARAMETER(surface);
-            UNREFERENCED_PARAMETER(avFrame);
-            UNREFERENCED_PARAMETER(framePts);
-            UNREFERENCED_PARAMETER(frameDuration);
-            return E_FAIL;
-        }; // must be overridden by specific decoders
-        virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos);
-        virtual HRESULT FeedPacketToDecoder(int64_t& firstPacketPos);
+        UNREFERENCED_PARAMETER(pBuffer);
+        UNREFERENCED_PARAMETER(surface);
+        UNREFERENCED_PARAMETER(avFrame);
+        UNREFERENCED_PARAMETER(framePts);
+        UNREFERENCED_PARAMETER(frameDuration);
+        return E_FAIL;
+    }; // must be overridden by specific decoders
+    virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos);
+    virtual HRESULT FeedPacketToDecoder(int64_t& firstPacketPos);
 
-        void SetFilters(winrt::hstring effects) override
-        {
-            frameProvider->UpdateFilter(effects);
-        }
+    void SetFilters(winrt::hstring effects) override
+    {
+        frameProvider->UpdateFilter(effects);
+    }
 
-        void DisableFilters() override
-        {
-            frameProvider->DisableFilter();
-        }
+    void DisableFilters() override
+    {
+        frameProvider->DisableFilter();
+    }
 
-        std::shared_ptr<UncompressedFrameProvider> frameProvider;
+    std::shared_ptr<UncompressedFrameProvider> frameProvider;
 
 
-    public:
-        virtual void Flush(bool flushBuffers) override;
+public:
+    virtual void Flush(bool flushBuffers) override;
 
-    private:
-        INT64 nextFramePts = 0;
-        bool hasNextFramePts = false;
-    };
-}
+private:
+    INT64 nextFramePts = 0;
+    bool hasNextFramePts = false;
+};
 

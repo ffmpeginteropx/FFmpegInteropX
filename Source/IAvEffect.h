@@ -3,15 +3,13 @@ extern "C"
 {
 #include <libavformat/avformat.h>
 }
-namespace FFmpegInteropX
+
+class IAvEffect
 {
-    class IAvEffect
-    {
-    public:
-        virtual	~IAvEffect() {}
+public:
+    virtual	~IAvEffect() {}
 
-        virtual HRESULT AddFrame(AVFrame* frame) = 0;
+    virtual HRESULT AddFrame(AVFrame* frame) = 0;
 
-        virtual HRESULT GetFrame(AVFrame* frame) = 0;
-    };
-}
+    virtual HRESULT GetFrame(AVFrame* frame) = 0;
+};
