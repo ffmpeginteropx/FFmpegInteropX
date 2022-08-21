@@ -70,10 +70,10 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>The maximum number of broken frames or packets to skip in a stream before stopping decoding.</summary>
         PROPERTY(SkipErrors, int32_t, 50);
 
-        ///<summary>The maximum number of video decoding threads. Set to 0 for usign the number of logical CPU cores.</summary>
+        ///<summary>The maximum number of video decoding threads. Setting to means using the number of logical CPU cores.</summary>
         PROPERTY(MaxVideoThreads, int32_t, 0);
 
-        ///<summary>The maximum number of audio decoding threads. Set to 0 for usign the number of logical CPU cores.</summary>
+        ///<summary>The maximum number of audio decoding threads. Setting to means using the number of logical CPU cores.</summary>
         PROPERTY(MaxAudioThreads, int32_t, 2);
 
         ///<summary>The maximum supported playback rate. This is set on the media stream source itself. 
@@ -93,11 +93,11 @@ namespace winrt::FFmpegInteropX::implementation
 
         ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
         ///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
-        PROPERTY_CONST(DefaultBufferTime, TimeSpan, {});
+        PROPERTY_CONST(DefaultBufferTime, TimeSpan, TimeSpan{ 0 });
 
         ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for URI sources.</summary>
         ///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
-        PROPERTY_CONST(DefaultBufferTimeUri, TimeSpan, {});
+        PROPERTY_CONST(DefaultBufferTimeUri, TimeSpan, TimeSpan{ 0 });
 
 
         ///<summary>Enables or disables the read-ahead buffer.</summary>
@@ -110,7 +110,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         ///<summary>The maximum duration to buffer ahead per stream.</summary>
         ///<remarks>This value can be changed any time during playback.</remarks>
-        PROPERTY_CONST(ReadAheadBufferDuration, TimeSpan, TimeSpan{600000000});
+        PROPERTY_CONST(ReadAheadBufferDuration, TimeSpan, TimeSpan{ 600000000 });
 
 
         ///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>
@@ -133,12 +133,12 @@ namespace winrt::FFmpegInteropX::implementation
 
         ///<summary>The subtitle delay will be initially applied to all subtitle tracks.
         ///Use SetSubtitleDelay() on the FFmpegMediaSource instance if you want to change the delay during playback.</summary>
-        PROPERTY_CONST(DefaultSubtitleDelay, TimeSpan, {});
+        PROPERTY_CONST(DefaultSubtitleDelay, TimeSpan, TimeSpan{ 0 });
 
         /// <summary>FFmpegMediaSource will seek to the closest video keyframe, if set to true.</summary>
         /// <remarks>
         /// For FastSeek to work, you must use the MediaPlayer for playback, and assign
-        /// MediaPlayer.PlaybackSession to the FFmpegMediaSource.PlaybackSession .
+        /// MediaPlayer.PlaybackSession to the FFmpegMediaSource.PlaybackSession property.
         /// </remarks>
         PROPERTY(FastSeek, bool, true);
 
@@ -165,10 +165,10 @@ namespace winrt::FFmpegInteropX::implementation
         PROPERTY_CONST(AttachmentCacheFolderName, hstring, L"FFmpegAttachmentCache");
 
         ///<summary>The minimum amount of time a subtitle should be shown. Default is 0.</summary>
-        PROPERTY_CONST(MinimumSubtitleDuration, TimeSpan, {});
+        PROPERTY_CONST(MinimumSubtitleDuration, TimeSpan, TimeSpan{ 0 });
 
         ///<summary>Each subtitle's duration is extended by this amount. Default is 0.</summary>
-        PROPERTY_CONST(AdditionalSubtitleDuration, TimeSpan, {});
+        PROPERTY_CONST(AdditionalSubtitleDuration, TimeSpan, TimeSpan{ 0 });
 
         ///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
         PROPERTY(PreventModifiedSubtitleDurationOverlap, bool, true);
@@ -197,7 +197,6 @@ namespace winrt::FFmpegInteropX::implementation
         TimedTextRegion CreateDefaultSubtitleRegion()
         {
             auto region = TimedTextRegion();
-
             TimedTextSize extent;
             extent.Unit = TimedTextUnit::Percentage;
             extent.Width = 100;
@@ -227,14 +226,12 @@ namespace winrt::FFmpegInteropX::implementation
             padding.End = 0;
             region.Padding(padding);
             region.Name(L"");
-
             return region;
         }
 
         TimedTextStyle CreateDefaultSubtitleStyle()
         {
             auto style = TimedTextStyle();
-
             style.FontFamily(L"default");
             TimedTextDouble fontSize;
             fontSize.Unit = TimedTextUnit::Percentage;
@@ -248,14 +245,12 @@ namespace winrt::FFmpegInteropX::implementation
             style.FontWeight(TimedTextWeight::Normal);
             style.Foreground(winrt::Windows::UI::Colors::White());
             style.Background(Windows::UI::Colors::Transparent());
-            //OutlineRadius = new TimedTextDouble { Unit = TimedTextUnit.Percentage, Value = 10 },
             TimedTextDouble outlineThickness;
             outlineThickness.Unit = TimedTextUnit::Percentage;
             outlineThickness.Value = 4.5;
             style.OutlineThickness(outlineThickness);
             style.FlowDirection(TimedTextFlowDirection::LeftToRight);
             style.OutlineColor(winrt::Windows::UI::Color{ 0x80, 0, 0, 0 });
-
             return style;
         }
     };

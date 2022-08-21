@@ -250,6 +250,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         TimeSpan currentPosition{ 0 };
         TimeSpan lastPosition{ 0 };
+        TimeSpan lastSeek{ 0 };
 
         static CoreDispatcher GetCurrentDispatcher();
         void OnPositionChanged(MediaPlaybackSession const& sender, IInspectable const& args);

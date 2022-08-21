@@ -107,6 +107,7 @@ void FFmpegReader::Flush()
 
 void FFmpegReader::FlushCodecs()
 {
+    DebugMessage(L"FlushCodecs\n");
     for (auto& stream : *sampleProviders)
     {
         if (stream)
@@ -116,6 +117,7 @@ void FFmpegReader::FlushCodecs()
 
 void FFmpegReader::FlushCodecsAndBuffers()
 {
+    DebugMessage(L"FlushCodecsAndBuffers\n");
     for (auto& stream : *sampleProviders)
     {
         if (stream)

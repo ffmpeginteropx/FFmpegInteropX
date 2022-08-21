@@ -351,7 +351,6 @@ bool MediaSampleProvider::IsBufferFull()
 
 void MediaSampleProvider::Flush(bool flushBuffers)
 {
-    DebugMessage(L"Flush\n");
     if (m_pAvCodecCtx)
     {
         avcodec_flush_buffers(m_pAvCodecCtx);

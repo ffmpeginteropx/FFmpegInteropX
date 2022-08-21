@@ -1945,13 +1945,14 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return S_OK;
         }
-        else if (position == currentPosition && currentPosition == lastPosition && !isFirstSeekAfterStreamSwitch)
+        else if (position == currentPosition && position == lastPosition && position == lastSeek && !isFirstSeekAfterStreamSwitch)
         {
             DebugMessage(L"Skipping double seek request.\n");
             return S_OK;
         }
         else
         {
+            lastSeek = position;
             return m_pReader->Seek(position, actualPosition, lastPosition, fastSeek, currentVideoStream, currentAudioStream);
         }
     }
