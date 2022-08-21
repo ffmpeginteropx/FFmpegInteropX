@@ -41,10 +41,9 @@ public:
     winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Storage::StorageFile> ExtractFileAsync(std::shared_ptr<AttachedFile> attachment)
     {
         StorageFile file = { nullptr };
-        auto result = extractedFiles.TryLookup(attachment->Name());
-        if (result != nullptr)
+        if (extractedFiles.HasKey(attachment->Name()))
         {
-            file = result;
+            file = extractedFiles.Lookup(attachment->Name());
         }
         else
         {

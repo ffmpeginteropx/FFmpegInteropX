@@ -158,6 +158,7 @@ namespace MediaPlayerCS
         private async void OpenLocalFile(object sender, RoutedEventArgs e)
         {
             FileOpenPicker filePicker = new FileOpenPicker();
+            filePicker.SettingsIdentifier = "VideoFile";
             filePicker.ViewMode = PickerViewMode.Thumbnail;
             filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
             filePicker.FileTypeFilter.Add("*");
@@ -283,6 +284,7 @@ namespace MediaPlayerCS
                 using (var frame = await frameGrabber.ExtractVideoFrameAsync(mediaPlayer.PlaybackSession.Position, exactSeek))
                 {
                     var filePicker = new FileSavePicker();
+                    filePicker.SettingsIdentifier = "VideoFrame";
                     filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
                     filePicker.DefaultFileExtension = ".jpg";
                     filePicker.FileTypeChoices["Jpeg file"] = new[] { ".jpg" }.ToList();
@@ -314,6 +316,7 @@ namespace MediaPlayerCS
             if (playbackItem != null)
             {
                 FileOpenPicker filePicker = new FileOpenPicker();
+                filePicker.SettingsIdentifier = "SubtitleFile";
                 filePicker.ViewMode = PickerViewMode.Thumbnail;
                 filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
                 filePicker.FileTypeFilter.Add("*");
@@ -390,6 +393,7 @@ namespace MediaPlayerCS
                 try
                 {
                     FileOpenPicker filePicker = new FileOpenPicker();
+                    filePicker.SettingsIdentifier = "SubtitleFile";
                     filePicker.ViewMode = PickerViewMode.Thumbnail;
                     filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
                     filePicker.FileTypeFilter.Add("*");
