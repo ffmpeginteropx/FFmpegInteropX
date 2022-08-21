@@ -13,7 +13,7 @@ param(
 
         Note. The PlatformToolset will be inferred from this value ('v141', 'v142'...)
     #>
-    [version] $VcVersion = '14.2',
+    [version] $VcVersion = '14.3',
 
     [ValidateSet('UWP', 'Desktop')]
     [string] $WindowsTarget = 'UWP',
@@ -53,7 +53,11 @@ param(
 
     [switch] $AllowParallelBuilds,
 
-    [switch] $SkipBuildPkgConfigFake
+    [switch] $SkipBuildPkgConfigFake,
+	
+    [switch] $SkipBuildLibs,
+	
+    [switch] $SkipConfigureFFmpeg
 
 )
 
@@ -68,7 +72,9 @@ function Build-Platform {
         [string] $VsLatestPath,
         [string] $BashExe = 'C:\msys64\usr\bin\bash.exe',
         [string] $LogFileName,
-        [bool] $SkipBuildPkgConfigFake
+		[bool] $SkipBuildPkgConfigFake,
+		[bool] $SkipBuildLibs,
+		[bool] $SkipConfigureFFmpeg
     )
 
     New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget | Out-Null
@@ -79,8 +85,8 @@ function Build-Platform {
     $hostArch = ( 'x86', 'x64' )[ [System.Environment]::Is64BitOperatingSystem ]
     $targetArch = $Platform.ToLower()
 
-    # Build x86 with x86 toolchain
-    if ($targetArch -eq 'x86')
+    # Build x86 and x64 with x86 toolchain
+    if (($targetArch -eq 'x86') -or ($targetArch -eq 'x64'))
     {
         $hostArch = 'x86' 
     }
@@ -97,222 +103,234 @@ function Build-Platform {
         -StartInPath "$PWD" `
         -DevCmdArguments "-arch=$targetArch -host_arch=$hostArch -winsdk=$WindowsTargetPlatformVersion -vcvars_ver=$VcVersion -app_platform=$WindowsTarget"
 
-    # Build pkg-config fake
-    if (! $SkipBuildPkgConfigFake) {
-        invoke MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
-            /p:OutputPath="$SolutionDir\Intermediate\" `
-            /p:Configuration=$Configuration `
-            /p:Platform=${Env:\PreferredToolArchitecture}
-
-        if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
-    }
-
-    New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget\$Platform -OutVariable build | Out-Null
-    New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable target | Out-Null
-    
-    if ($ClearBuildFolders) {
-        # Clean platform-specific build and output dirs.
-        Remove-Item -Force -Recurse $build\*
-        Remove-Item -Force -Recurse $target\*
-    }
-
-    ('lib', 'licenses', 'include') | ForEach-Object {
-        New-Item -ItemType Directory -Force $build\$_ | Out-Null
-        New-Item -ItemType Directory -Force $target\$_ | Out-Null
-    }
-    
-    $env:LIB += ";$build\lib"
-    $env:INCLUDE += ";$build\include"
-    $env:Path += ";$SolutionDir\Libs\gas-preprocessor"
-
-    # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
-    $libdefs = @(
-        @('zlib', 'libzlib', 'zlib'),
-        @('bzip2', 'libbz2', 'bz2'),
-        @('libiconv', 'libiconv', 'iconv'),
-        @('liblzma', 'liblzma', 'lzma'),
-        @('libxml2', 'libxml2', 'libxml2')
-        )
-
-    # Build all libraries
-    $libdefs | ForEach-Object {
-    
-        $folder = $_[0]
-        $project = $_[1]
-
-        Write-Host
-        Write-Host "Building Library ${folder}..."
-        Write-Host
-
-        # Decide vcvars target string based on target platform
-        if ($WindowsTarget -eq "UWP") { 
-            $configurationName = "${Configuration}WinRT"
-            $targetName = "${project}_winrt"
-        }
-        else {
-            $configurationName = ${Configuration}
-            $targetName = ${project}
-        }
-        $intDir = "$build\int\$project\"
-        $outDir = "$build\$project\"
-
-        invoke MSBuild.exe $SolutionDir\Libs\$folder\SMP\$project.vcxproj `
-            /p:OutDir=$outDir `
-            /p:IntDir=$intDir `
-            /p:Configuration=$configurationName `
-            /p:Platform=$Platform `
-            /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-            /p:PlatformToolset=$PlatformToolset `
-            /p:ForceImportBeforeCppTargets=$SolutionDir\Libs\build-scripts\LibOverrides.props `
-            /p:useenv=true
-
-        Copy-Item $build\$project\include\* $build\include\ -Recurse -Force
-        Copy-Item $build\$project\licenses\* $build\licenses\ -Recurse -Force
-        Copy-Item $build\$project\lib\$Platform\$targetName.lib $build\lib\ -Force
-        Copy-Item $build\$project\lib\$Platform\$targetName.pdb $build\lib\ -Force
-    }
-
-    # Rename all libraries to ffmpeg target names
-    $libdefs | ForEach-Object {
-
-        $project = $_[1];
-        $ffmpegTarget = $_[2];
-        $targetName = if ($WindowsTarget -eq "UWP") { "${project}_winrt" } else { $project }
-
-        Move-Item $build\lib\$targetName.lib $build\lib\$ffmpegTarget.lib -Force
-        Move-Item $build\lib\$targetName.pdb $build\lib\$ffmpegTarget.pdb -Force
-    }
-
-    # Fixup libxml2 includes for ffmpeg build
-    Copy-Item $build\include\libxml2\libxml $build\include\ -Force -Recurse
-
-    # Build openssl if not already exists
-	if (!(Test-Path("$build\lib\ssl.lib")) -or !(Test-Path("$build\lib\crypto.lib"))) {
+	New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget\$Platform -OutVariable build | Out-Null
+	New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable target | Out-Null
+	
+	$env:LIB += ";$build\lib"
+	$env:INCLUDE += ";$build\include"
+	$env:Path += ";$SolutionDir\Libs\gas-preprocessor"	
 		
-	    Write-Host
-        Write-Host "Building Library openssl..."
-        Write-Host
-		
-	    $opensslPlatforms = @{
-		    'x86'   = 'VC-WIN32'
-		    'x64'   = 'VC-WIN64A'
-		    'ARM'   = 'VC-WIN32-ARM'
-		    'ARM64' = 'VC-WIN64-ARM'
-	    }
-	    $opensslPlatform = $opensslPlatforms[$Platform]
+	if (! $SkipBuildLibs)
+	{
+		# Build pkg-config fake
+		if (! $SkipBuildPkgConfigFake) {
+			invoke MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
+				/p:OutputPath="$SolutionDir\Intermediate\" `
+				/p:Configuration=$Configuration `
+				/p:Platform=${Env:\PreferredToolArchitecture}
 
-	    if ($WindowsTarget -eq "UWP") { 
-		    $opensslPlatform = $opensslPlatform + "-UWP"
-	    }
+			if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
+		}
+		
+		if ($ClearBuildFolders) {
+			# Clean platform-specific build and output dirs.
+			Remove-Item -Force -Recurse $build\*
+			Remove-Item -Force -Recurse $target\*
+		}
 
-        New-Item -ItemType Directory -Force $build\int\openssl -OutVariable ssldir | Out-Null
+		('lib', 'licenses', 'include') | ForEach-Object {
+			New-Item -ItemType Directory -Force $build\$_ | Out-Null
+			New-Item -ItemType Directory -Force $target\$_ | Out-Null
+		}
+
+		# library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
+		$libdefs = @(
+			@('zlib', 'libzlib', 'zlib'),
+			@('bzip2', 'libbz2', 'bz2'),
+			@('libiconv', 'libiconv', 'iconv'),
+			@('liblzma', 'liblzma', 'lzma'),
+			@('libxml2', 'libxml2', 'libxml2')
+			)
+
+		# Build all libraries
+		$libdefs | ForEach-Object {
 		
-	    $oldPath = $env:Path
-	    $env:Path += ";$SolutionDir\Tools\perl\perl\bin;C$SolutionDir\Tools\perl\c\bin;$SolutionDir\Tools\nasm"
-        $oldDir = get-location
-	    set-location "$ssldir"
+			$folder = $_[0]
+			$project = $_[1]
+
+			Write-Host
+			Write-Host "Building Library ${folder}..."
+			Write-Host
+
+			# Decide vcvars target string based on target platform
+			if ($WindowsTarget -eq "UWP") { 
+				$configurationName = "${Configuration}WinRT"
+				$targetName = "${project}_winrt"
+			}
+			else {
+				$configurationName = ${Configuration}
+				$targetName = ${project}
+			}
+			$intDir = "$build\int\$project\"
+			$outDir = "$build\$project\"
+
+			invoke MSBuild.exe $SolutionDir\Libs\$folder\SMP\$project.vcxproj `
+				/p:OutDir=$outDir `
+				/p:IntDir=$intDir `
+				/p:Configuration=$configurationName `
+				/p:Platform=$Platform `
+				/p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+				/p:PlatformToolset=$PlatformToolset `
+				/p:ForceImportBeforeCppTargets=$SolutionDir\Libs\build-scripts\LibOverrides.props `
+				/p:useenv=true
+
+			Copy-Item $build\$project\include\* $build\include\ -Recurse -Force
+			Copy-Item $build\$project\licenses\* $build\licenses\ -Recurse -Force
+			Copy-Item $build\$project\lib\$Platform\$targetName.lib $build\lib\ -Force
+			Copy-Item $build\$project\lib\$Platform\$targetName.pdb $build\lib\ -Force
+		}
+
+		# Rename all libraries to ffmpeg target names
+		$libdefs | ForEach-Object {
+
+			$project = $_[1];
+			$ffmpegTarget = $_[2];
+			$targetName = if ($WindowsTarget -eq "UWP") { "${project}_winrt" } else { $project }
+
+			Move-Item $build\lib\$targetName.lib $build\lib\$ffmpegTarget.lib -Force
+			Move-Item $build\lib\$targetName.pdb $build\lib\$ffmpegTarget.pdb -Force
+		}
+
+		# Fixup libxml2 includes for ffmpeg build
+		Copy-Item $build\include\libxml2\libxml $build\include\ -Force -Recurse
+
+		# Build openssl if not already exists
+		if (!(Test-Path("$build\lib\ssl.lib")) -or !(Test-Path("$build\lib\crypto.lib"))) {
+			
+			Write-Host
+			Write-Host "Building Library openssl..."
+			Write-Host
+			
+			$opensslPlatforms = @{
+				'x86'   = 'VC-WIN32'
+				'x64'   = 'VC-WIN64A'
+				'ARM'   = 'VC-WIN32-ARM'
+				'ARM64' = 'VC-WIN64-ARM'
+			}
+			$opensslPlatform = $opensslPlatforms[$Platform]
+
+			if ($WindowsTarget -eq "UWP") { 
+				$opensslPlatform = $opensslPlatform + "-UWP"
+			}
+
+			New-Item -ItemType Directory -Force $build\int\openssl -OutVariable ssldir | Out-Null
+			
+			$oldPath = $env:Path
+			$env:Path += ";$SolutionDir\Tools\perl\perl\bin;C$SolutionDir\Tools\perl\c\bin;$SolutionDir\Tools\nasm"
+			$oldDir = get-location
+			set-location "$ssldir"
+			
+			try {
+				invoke perl $SolutionDir\Libs\openssl\Configure $opensslPlatform --prefix=$build --openssldir=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests no-secure-memory
+				invoke nmake clean
+				invoke nmake
+				invoke nmake install_sw
+			} finally {
+				set-location $oldDir
+				$env:Path = $oldPath
+			}
+			
+			Copy-Item -Force $SolutionDir\Libs\openssl\license.txt $build\licenses\openssl.txt
+			Copy-Item -Force $ssldir\libssl_static.lib $build\lib\ssl.lib
+			Copy-Item -Force $ssldir\libcrypto_static.lib $build\lib\crypto.lib
+			} else {
+			Write-Host
+			Write-Host "Openssl already exists in target build configuration. Skipping build."
+			Write-Host
+		}
+
+		#Build dav1d
+		Write-Host ""
+		Write-Host "Building Library dav1d..."
+		Write-Host ""
+		invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
 		
-        try {
-		    invoke perl $SolutionDir\Libs\openssl\Configure $opensslPlatform --prefix=$build --openssldir=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests no-secure-memory
-		    invoke nmake clean
-		    invoke nmake
-		    invoke nmake install_sw
-        } finally {
-            set-location $oldDir
-      	    $env:Path = $oldPath
-        }
-        
-	    Copy-Item -Force $SolutionDir\Libs\openssl\license.txt $build\licenses\openssl.txt
-	    Copy-Item -Force $ssldir\libssl_static.lib $build\lib\ssl.lib
-	    Copy-Item -Force $ssldir\libcrypto_static.lib $build\lib\crypto.lib
-        } else {
-		Write-Host
-        Write-Host "Openssl already exists in target build configuration. Skipping build."
-		Write-Host
+		if ($WindowsTarget -eq "Desktop") { 
+			
+			$env:Path += ";$(Split-Path $BashExe)"
+
+			#Build x265
+			Write-Host ""
+			Write-Host "Building Library x265..."
+			Write-Host ""
+
+			$cmakePlatforms = @{
+				'x86'   = 'Win32'
+				'x64'   = 'x64'
+				'ARM'   = 'ARM'
+				'ARM64' = 'ARM64'
+			}
+			$cmakePlatform = $cmakePlatforms[$Platform]
+
+			New-Item -ItemType Directory -Force $build\int\x265
+
+			invoke cmd.exe /C $SolutionDir\Libs\build-scripts\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
+			
+			Copy-Item $build\int\x265\x265-static.lib $build\lib\x265.lib -Force
+			Copy-Item $build\int\x265\include\* $build\include\ -Force
+			Copy-Item $SolutionDir\Libs\x265\COPYING $build\licenses\x265.txt -Force
+
+			#Build x264
+			Write-Host ""
+			Write-Host "Building Library x264..."
+			Write-Host ""
+			
+			$x264Archs = @{
+				'x86'   = 'x86'
+				'x64'   = 'x86_64'
+				'ARM'   = 'arm'
+				'ARM64' = 'aarch64'
+			}
+			$x264Arch = $x264Archs[$Platform]
+
+			New-Item -ItemType Directory -Force $build\x264
+
+			invoke $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
+
+			#Build libvpx
+			Write-Host
+			Write-Host "Building Library libvpx..."
+			Write-Host
+
+			$vpxArchs = @{
+				'x86'   = 'x86'
+				'x64'   = 'x86_64'
+				'ARM'   = 'armv7'
+				'ARM64' = 'arm64'
+			}
+			$vpxPlatforms = @{
+				'x86'   = 'win32'
+				'x64'   = 'win64'
+				'ARM'   = 'win32'
+				'ARM64' = 'win64'
+			}
+			$vpxArch = $vpxArchs[$Platform]
+			$vpxPlatform = $vpxPlatforms[$Platform]
+
+			New-Item -ItemType Directory -Force $build\libvpx
+			
+			invoke $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
+
+			Move-Item $build\lib\$cmakePlatform\vpxmd.lib $build\lib\vpx.lib -Force
+			Remove-Item $build\lib\$cmakePlatform -Force -Recurse
+		} 
 	}
-
-    #Build dav1d
-    Write-Host ""
-    Write-Host "Building Library dav1d..."
-    Write-Host ""
-    invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
-    
-    if ($WindowsTarget -eq "Desktop") { 
-        
-        $env:Path += ";$(Split-Path $BashExe)"
-
-        #Build x265
-        Write-Host ""
-        Write-Host "Building Library x265..."
-        Write-Host ""
-
-        $cmakePlatforms = @{
-            'x86'   = 'Win32'
-            'x64'   = 'x64'
-            'ARM'   = 'ARM'
-            'ARM64' = 'ARM64'
-        }
-        $cmakePlatform = $cmakePlatforms[$Platform]
-
-        New-Item -ItemType Directory -Force $build\int\x265
-
-        invoke cmd.exe /C $SolutionDir\Libs\build-scripts\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
-        
-        Copy-Item $build\int\x265\x265-static.lib $build\lib\x265.lib -Force
-        Copy-Item $build\int\x265\include\* $build\include\ -Force
-        Copy-Item $SolutionDir\Libs\x265\COPYING $build\licenses\x265.txt -Force
-
-        #Build x264
-        Write-Host ""
-        Write-Host "Building Library x264..."
-        Write-Host ""
-        
-        $x264Archs = @{
-            'x86'   = 'x86'
-            'x64'   = 'x86_64'
-            'ARM'   = 'arm'
-            'ARM64' = 'aarch64'
-        }
-        $x264Arch = $x264Archs[$Platform]
-
-        New-Item -ItemType Directory -Force $build\x264
-
-        invoke $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
-
-        #Build libvpx
-        Write-Host
-        Write-Host "Building Library libvpx..."
-        Write-Host
-
-        $vpxArchs = @{
-            'x86'   = 'x86'
-            'x64'   = 'x86_64'
-            'ARM'   = 'armv7'
-            'ARM64' = 'arm64'
-        }
-        $vpxPlatforms = @{
-            'x86'   = 'win32'
-            'x64'   = 'win64'
-            'ARM'   = 'win32'
-            'ARM64' = 'win64'
-        }
-        $vpxArch = $vpxArchs[$Platform]
-        $vpxPlatform = $vpxPlatforms[$Platform]
-
-        New-Item -ItemType Directory -Force $build\libvpx
-        
-        invoke $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
-
-        Move-Item $build\lib\$cmakePlatform\vpxmd.lib $build\lib\vpx.lib -Force
-        Remove-Item $build\lib\$cmakePlatform -Force -Recurse
-    } 
 
     # Build ffmpeg
     Write-Host
     Write-Host "Building FFmpeg..."
     Write-Host
+	
+	if ($SkipConfigureFFmpeg)
+	{
+		$ffmpegparam = "-SkipConfigure"
+	}
+	else
+	{
+		$ffmpegparam = ""
+	}
 
-    invoke $BashExe --login -x $SolutionDir\Build\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic
+    invoke $BashExe --login -x $SolutionDir\Build\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic $ffmpegparam
 
     # Copy PDBs to built binaries dir
     Get-ChildItem -Recurse -Include '*.pdb' $build\int\ffmpeg\ | Copy-Item -Destination $target\bin\ -Force
@@ -451,17 +469,28 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
         $clear = "-ClearBuildFolders"
     }
 
-    $skip = ""
+    $addparams = ""
+    if ($SkipBuildLibs)
+	{
+		$addparams += " -SkipBuildLibs"
+	}
+		
+    if ($SkipConfigureFFmpeg)
+	{
+		$addparams += " -SkipConfigureFFmpeg"
+	}
+
+    $skipPkgConfig = "" 
     foreach ($platform in $Platforms) {
         if ($SkipBuildPkgConfigFake)
         {
             $skip
         }
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skip"
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
         $processes[$platform] = $proc
     
         # only build PkgConfigFake once
-        $skip = "-SkipBuildPkgConfigFake"
+        $skipPkgConfig = "-SkipBuildPkgConfigFake"
     }
 
     foreach ($platform in $Platforms) {
@@ -505,7 +534,9 @@ else
                 -VsLatestPath $vsLatestPath `
                 -BashExe $BashExe `
                 -LogFileName $logFile `
-                -SkipBuildPkgConfigFake $SkipBuildPkgConfigFake
+                -SkipBuildPkgConfigFake $SkipBuildPkgConfigFake `
+                -SkipBuildLibs $SkipBuildLibs `
+                -SkipConfigureFFmpeg $SkipConfigureFFmpeg
         }
         catch
         {
