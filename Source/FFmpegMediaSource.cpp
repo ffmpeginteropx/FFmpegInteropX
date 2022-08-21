@@ -1319,51 +1319,54 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
 
-
-        std::lock_guard lock(mutex);
-        if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
+        Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> result;
         {
-            externalSubsParser->SetSubtitleDelay(SubtitleDelay());
-        }
-
-        int subtitleTracksCount = 0;
-
-        for (auto& externalSubtitle : externalSubsParser->subtitleStreams)
-        {
-            if (externalSubtitle->SubtitleTrack.Cues().Size() > 0)
+            std::lock_guard lock(mutex);
+            if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
             {
-                // detach stream
-                externalSubtitle->Detach();
-
-                // find and add stream info
-                for (auto subtitleInfo : externalSubsParser->SubtitleStreams())
-                {
-                    if (subtitleInfo.SubtitleTrack() == externalSubtitle->SubtitleTrack)
-                    {
-                        subtitleStrInfos.Append(subtitleInfo);
-                        break;
-                    }
-                }
-
-                // add stream
-                subtitleStreams.push_back(externalSubtitle);
-                if (this->PlaybackItem() != nullptr)
-                {
-                    PlaybackItem().Source().ExternalTimedMetadataTracks().Append(externalSubtitle->SubtitleTrack);
-                }
-                subtitleTracksCount++;
+                externalSubsParser->SetSubtitleDelay(SubtitleDelay());
             }
-        }
 
-        if (subtitleTracksCount == 0)
-        {
-            throw_hresult(E_INVALIDARG);
-        }
+            int subtitleTracksCount = 0;
 
-        subtitleStreamInfos = subtitleStrInfos.GetView();
+            for (auto& externalSubtitle : externalSubsParser->subtitleStreams)
+            {
+                if (externalSubtitle->SubtitleTrack.Cues().Size() > 0)
+                {
+                    // detach stream
+                    externalSubtitle->Detach();
+
+                    // find and add stream info
+                    for (auto subtitleInfo : externalSubsParser->SubtitleStreams())
+                    {
+                        if (subtitleInfo.SubtitleTrack() == externalSubtitle->SubtitleTrack)
+                        {
+                            subtitleStrInfos.Append(subtitleInfo);
+                            break;
+                        }
+                    }
+
+                    // add stream
+                    subtitleStreams.push_back(externalSubtitle);
+                    if (this->PlaybackItem() != nullptr)
+                    {
+                        PlaybackItem().Source().ExternalTimedMetadataTracks().Append(externalSubtitle->SubtitleTrack);
+                    }
+                    subtitleTracksCount++;
+                }
+            }
+
+            if (subtitleTracksCount == 0)
+            {
+                throw_hresult(E_INVALIDARG);
+            }
+
+            subtitleStreamInfos = subtitleStrInfos.GetView();
+            result = externalSubsParser->SubtitleStreams();
+        }
 
         co_await caller;
-        co_return externalSubsParser->SubtitleStreams();
+        co_return result;
     }
 
     IAsyncOperation<Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream stream)

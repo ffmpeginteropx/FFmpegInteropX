@@ -107,6 +107,7 @@ task<void> MainPage::OpenLocalFile()
     try
     {
         FileOpenPicker^ filePicker = ref new FileOpenPicker();
+        filePicker->SettingsIdentifier = "VideoFile";
         filePicker->ViewMode = PickerViewMode::Thumbnail;
         filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
         filePicker->FileTypeFilter->Append("*");
@@ -180,7 +181,7 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
     // https://www.ffmpeg.org/ffmpeg-formats.html
     // 
     // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
-    
+
     // Below are some sample options that you can set to configure RTSP streaming
     //Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
     Config->FFmpegOptions->Insert("stimeout", 1000000);
@@ -212,47 +213,56 @@ void MainPage::ExtractFrame(Platform::Object^ sender, Windows::UI::Xaml::RoutedE
 
 task<void> MainPage::ExtractFrame()
 {
-    if (currentFile == nullptr || !mediaPlayer->PlaybackSession)
+
+    // open the file that is currently playing
+    try
     {
-        DisplayErrorMessage("Please open a video file first.");
-    }
-    else
-    {
-        // open the file that is currently playing
-        try
-        {
+        FrameGrabber^ frameGrabber;
+        bool exactSeek = grabFrameExactSeek->IsOn;
+        String^ uri = tbUri->Text;
+        if (currentFile != nullptr) {
             auto stream = co_await currentFile->OpenAsync(FileAccessMode::Read);
-            bool exactSeek = grabFrameExactSeek->IsOn;
             // extract frame using FFmpegInterop and current position
-            auto frameGrabber = co_await FrameGrabber::CreateFromStreamAsync(stream);
-            auto frame = co_await frameGrabber->ExtractVideoFrameAsync(mediaPlayer->PlaybackSession->Position, exactSeek);
-            auto filePicker = ref new FileSavePicker();
-            filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
-            filePicker->DefaultFileExtension = ".jpg";
-            filePicker->FileTypeChoices->Insert("Jpeg file", ref new Platform::Collections::Vector<String^>(1, ".jpg"));
+            frameGrabber = co_await FrameGrabber::CreateFromStreamAsync(stream);
+        }
+        else if (uri != nullptr)
+        {
+            frameGrabber = co_await FrameGrabber::CreateFromUriAsync(uri);
+        }
+        else
+        {
+            DisplayErrorMessage("Please open a video file first.");
+            co_return;
+        }
+        auto frame = co_await frameGrabber->ExtractVideoFrameAsync(mediaPlayer->PlaybackSession->Position, exactSeek);
+        auto filePicker = ref new FileSavePicker();
+        filePicker->SettingsIdentifier = "VideoFrame";
+        filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
+        filePicker->DefaultFileExtension = ".jpg";
+        filePicker->FileTypeChoices->Insert("Jpeg file", ref new Platform::Collections::Vector<String^>(1, ".jpg"));
 
-            // Show file picker so user can select a file
-            auto file = co_await filePicker->PickSaveFileAsync();
-            if (file != nullptr)
+        // Show file picker so user can select a file
+        auto file = co_await filePicker->PickSaveFileAsync();
+        if (file != nullptr)
+        {
+            auto stream = co_await file->OpenAsync(FileAccessMode::ReadWrite);
+            // encode frame as jpeg file
+            co_await frame->EncodeAsJpegAsync(stream);
+            stream = nullptr;
+
+            // launch file after creation
+            auto launched = co_await Windows::System::Launcher::LaunchFileAsync(file);
+            if (!launched)
             {
-                auto stream = co_await file->OpenAsync(FileAccessMode::ReadWrite);
-                // encode frame as jpeg file
-                co_await frame->EncodeAsJpegAsync(stream);
-                stream = nullptr;
-
-                // launch file after creation
-                auto launched = co_await Windows::System::Launcher::LaunchFileAsync(file);
-                if (!launched)
-                {
-                    DisplayErrorMessage("File has been created:\n" + file->Path);
-                }
+                DisplayErrorMessage("File has been created:\n" + file->Path);
             }
         }
-        catch (Exception^ ex)
-        {
-            DisplayErrorMessage(ex->Message);
-        }
     }
+    catch (Exception^ ex)
+    {
+        DisplayErrorMessage(ex->Message);
+    }
+
 }
 
 void MediaPlayerCPP::MainPage::LoadSubtitleFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -271,6 +281,7 @@ task<void> MediaPlayerCPP::MainPage::LoadSubtitleFile()
         try
         {
             FileOpenPicker^ filePicker = ref new FileOpenPicker();
+            filePicker->SettingsIdentifier = "SubtitleFile";
             filePicker->ViewMode = PickerViewMode::Thumbnail;
             filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
             filePicker->FileTypeFilter->Append("*");
@@ -309,6 +320,7 @@ task<void> MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg()
         try
         {
             FileOpenPicker^ filePicker = ref new FileOpenPicker();
+            filePicker->SettingsIdentifier = "SubtitleFile";
             filePicker->ViewMode = PickerViewMode::Thumbnail;
             filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
             filePicker->FileTypeFilter->Append("*");
