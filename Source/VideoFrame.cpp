@@ -24,6 +24,16 @@ namespace winrt::FFmpegInteropX::implementation
         this->timestamp = timestamp;
     }
 
+    VideoFrame::~VideoFrame()
+    {
+        Close();
+    }
+
+    void VideoFrame::Close()
+    {
+        pixelData = { nullptr };
+    }
+
     Windows::Storage::Streams::IBuffer VideoFrame::PixelData()
     {
         return pixelData;
