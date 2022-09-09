@@ -8,7 +8,6 @@ public:
 
     TexturePool(winrt::com_ptr<ID3D11Device> device, int initialPoolSize)
     {
-        //device->AddRef();
         this->device = device;
         this->initialPoolSize = initialPoolSize;
     }
@@ -65,7 +64,7 @@ public:
 
             if (SUCCEEDED(hr))
             {
-                pool.push_back(copy_tex);
+                pool.push_back(WrapTexturePointer(copy_tex));
             }
             else
             {
@@ -92,7 +91,7 @@ public:
             if (pool.size() > 0)
             {
                 //use pool texture, if available
-                *result = pool.back();
+                pool.back().copy_to(result);
                 pool.pop_back();
             }
             else
@@ -112,14 +111,21 @@ public:
 
         if (desc.Width == desc_shared.Width && desc.Height == desc_shared.Height && desc.Format == desc_shared.Format)
         {
-            pool.push_back(texture);
-            texture->AddRef();
+            pool.push_back(WrapTexturePointer(texture));
         }
     }
 
 private:
+
+    winrt::com_ptr<ID3D11Texture2D> WrapTexturePointer(ID3D11Texture2D* texture)
+    {
+        winrt::com_ptr<ID3D11Texture2D> ptr;
+        ptr.copy_from(texture);
+        return ptr;
+    }
+
     winrt::com_ptr<ID3D11Device> device;
-    std::vector<ID3D11Texture2D*> pool;
+    std::vector<winrt::com_ptr<ID3D11Texture2D>> pool;
     D3D11_TEXTURE2D_DESC desc_shared{};
     int initialPoolSize = 0;
 };

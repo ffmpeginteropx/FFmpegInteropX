@@ -238,8 +238,6 @@ public:
                 SAFE_RELEASE(device);
                 SAFE_RELEASE(deviceContext);
 
-                //newDevice->AddRef();
-                //newDeviceContext->AddRef();
                 device = newDevice;
                 deviceContext = newDeviceContext;
 
@@ -447,8 +445,6 @@ public:
         if (SUCCEEDED(hr))
         {
             // addref and hand out pointers
-            //device->AddRef();
-            //deviceContext->AddRef();
             outDevice = device;
             outDeviceContext = deviceContext;
         }
