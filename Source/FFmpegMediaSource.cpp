@@ -1688,7 +1688,8 @@ namespace winrt::FFmpegInteropX::implementation
         if (isFirstSeek && avHardwareContext)
         {
             HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, &deviceManager);
-            if (SUCCEEDED(hr)) hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
+            if (SUCCEEDED(hr))
+                hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, device, deviceContext, deviceManager, &deviceHandle);
 
             if (SUCCEEDED(hr))
             {
@@ -1796,7 +1797,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             if (SUCCEEDED(hr))
             {
-                hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
+                hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, device, deviceContext, deviceManager, &deviceHandle);
             }
 
             if (SUCCEEDED(hr))

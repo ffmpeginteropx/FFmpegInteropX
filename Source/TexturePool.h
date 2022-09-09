@@ -6,9 +6,9 @@ class TexturePool
 {
 public:
 
-    TexturePool(ID3D11Device* device, int initialPoolSize)
+    TexturePool(winrt::com_ptr<ID3D11Device> device, int initialPoolSize)
     {
-        device->AddRef();
+        //device->AddRef();
         this->device = device;
         this->initialPoolSize = initialPoolSize;
     }
@@ -118,7 +118,7 @@ public:
     }
 
 private:
-    ID3D11Device* device = NULL;
+    winrt::com_ptr<ID3D11Device> device;
     std::vector<ID3D11Texture2D*> pool;
     D3D11_TEXTURE2D_DESC desc_shared{};
     int initialPoolSize = 0;

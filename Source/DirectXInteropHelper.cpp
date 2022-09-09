@@ -38,16 +38,19 @@ HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(winrt::Windows::M
     return hr;
 }
 
-HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* deviceManager, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, ID3D11VideoDevice** outVideoDevice, HANDLE* outDeviceHandle)
+HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* deviceManager, winrt::com_ptr<ID3D11Device>& outDevice, winrt::com_ptr<ID3D11DeviceContext>& outDeviceContext, winrt::com_ptr<ID3D11VideoDevice>& outVideoDevice, HANDLE* outDeviceHandle)
 {
-    ID3D11Device* device = NULL;
-    ID3D11DeviceContext* deviceContext = NULL;
-    ID3D11VideoDevice* videoDevice = NULL;
+    winrt::com_ptr<ID3D11Device> device;
+    winrt::com_ptr<ID3D11DeviceContext> deviceContext;
+    winrt::com_ptr<ID3D11VideoDevice> videoDevice;
 
     HRESULT hr = deviceManager->OpenDeviceHandle(outDeviceHandle);
-    if (SUCCEEDED(hr)) hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11Device, (void**)&device);
-    if (SUCCEEDED(hr) && outDeviceContext) device->GetImmediateContext(&deviceContext);
-    if (SUCCEEDED(hr) && outVideoDevice) hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11VideoDevice, (void**)&videoDevice);
+    if (SUCCEEDED(hr))
+        hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11Device, device.put_void());
+    if (SUCCEEDED(hr))
+        device->GetImmediateContext(deviceContext.put());
+    if (SUCCEEDED(hr))
+        hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11VideoDevice, videoDevice.put_void());
 
     if (!SUCCEEDED(hr))
     {
@@ -58,11 +61,11 @@ HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* de
     else
     {
         if (device)
-            *outDevice = device;
+            outDevice = device;
         if (deviceContext)
-            *outDeviceContext = deviceContext;
+            outDeviceContext = deviceContext;
         if (videoDevice)
-            *outVideoDevice = videoDevice;
+            outVideoDevice = videoDevice;
     }
 
     return hr;
