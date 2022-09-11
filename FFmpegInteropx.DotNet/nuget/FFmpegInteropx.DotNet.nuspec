@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>FFmpegInteropX.DotNet</id>
+    <version>0.1.0-prerelease</version>
+    <authors>FFMpegInteropX</authors>
+    <description>FFmpeginteropx projection assembly for .net 6</description>
+    <dependencies>
+      <group targetFramework="net6.0-windows10.0.19041.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <!--Support .NET 6, .NET Core 3, UAP, .NET Framework 4.6, C++ -->
+    <!--Architecture-netural assemblies-->
+    <file src="..\..\_build\AnyCPU\Debug\FFmpegInteropx.DotNet\bin\FFmpegInteropx.DotNet.dll" target="lib\net6.0-windows10.0.19041.0\FFmpegInteropx.DotNet.dll" />
+    <file src="..\..\Output\FFmpegInteropX\x64\Debug\FFmpegInteropX\FFmpegInteropX.dll" target="runtimes\win10-x64\native\FFmpegInteropX.dll" />
+    <!--To support x86 and Arm64, build SimpleMathComponent for those other architectures and uncomment the entries below.-->
+    <!--<file src="..\..\_build\Win32\Release\SimpleMathComponent\bin\SimpleMathComponent\SimpleMathComponent.dll" target="runtimes\win10-x86\native\SimpleMathComponent.dll" />-->
+    <!--<file src="..\..\_build\arm64\Release\SimpleMathComponent\bin\SimpleMathComponent\SimpleMathComponent.dll" target="runtimes\win10-arm64\native\SimpleMathComponent.dll" />-->
+  </files>
+</package>
