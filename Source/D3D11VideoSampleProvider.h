@@ -233,10 +233,7 @@ public:
         {
             if (isCompatible)
             {
-                bool needsReinit = device.get();
-
-                SAFE_RELEASE(device);
-                SAFE_RELEASE(deviceContext);
+                bool needsReinit = device.get();                             
 
                 device = newDevice;
                 deviceContext = newDeviceContext;
@@ -253,8 +250,8 @@ public:
             }
             else
             {
-                SAFE_RELEASE(device);
-                SAFE_RELEASE(deviceContext);
+                device = nullptr;
+                deviceContext = nullptr;
                 av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
 
                 if (swCodec)
@@ -376,7 +373,6 @@ public:
                     }
                 }
 
-                //SAFE_RELEASE(videoDevice);
             }
 
             if (FAILED(hr))
@@ -391,7 +387,7 @@ public:
     static HRESULT InitializeHardwareDeviceContext(MediaStreamSource sender,
         AVBufferRef* avHardwareContext,
         winrt::com_ptr<ID3D11Device>& outDevice,
-        winrt::com_ptr<ID3D11DeviceContext>&  outDeviceContext,
+        winrt::com_ptr<ID3D11DeviceContext>& outDeviceContext,
         IMFDXGIDeviceManager* deviceManager,
         HANDLE* outDeviceHandle)
     {
@@ -419,10 +415,10 @@ public:
         else
         {
             // release
-            SAFE_RELEASE(device);
-            SAFE_RELEASE(deviceContext);
-            SAFE_RELEASE(videoDevice);
-            SAFE_RELEASE(videoContext);
+            device = nullptr;
+            deviceContext = nullptr;
+            videoDevice = nullptr;
+            videoContext = nullptr;
         }
 
         if (SUCCEEDED(hr))

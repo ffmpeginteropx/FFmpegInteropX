@@ -132,8 +132,8 @@ public:
         {
             av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
         }
-        SAFE_RELEASE(device);
-        SAFE_RELEASE(deviceContext);
+        device = nullptr;
+        deviceContext = nullptr;
     }
 
     virtual void NotifyCreateSource()

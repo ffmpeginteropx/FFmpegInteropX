@@ -16,7 +16,7 @@ public:
     ~TexturePool()
     {
         Clear();
-        SAFE_RELEASE(device);
+        device = nullptr;
     }
 
 public:

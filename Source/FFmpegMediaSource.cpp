@@ -1446,8 +1446,8 @@ namespace winrt::FFmpegInteropX::implementation
         if (deviceHandle && deviceManager)
             deviceManager->CloseDeviceHandle(deviceHandle);
 
-        SAFE_RELEASE(device);
-        SAFE_RELEASE(deviceContext);
+        device = nullptr;
+        deviceContext = nullptr;
         SAFE_RELEASE(deviceManager);
         if (PlaybackSession())
         {
@@ -1713,8 +1713,8 @@ namespace winrt::FFmpegInteropX::implementation
                     stream->FreeHardwareDevice();
                 }
                 av_buffer_unref(&avHardwareContext);
-                SAFE_RELEASE(device);
-                SAFE_RELEASE(deviceContext);
+                device = nullptr;
+                deviceContext = nullptr;
             }
         }
 
@@ -1782,8 +1782,8 @@ namespace winrt::FFmpegInteropX::implementation
         {
             hr = S_OK;
             av_buffer_unref(&avHardwareContext);
-            SAFE_RELEASE(device);
-            SAFE_RELEASE(deviceContext);
+            device = nullptr;
+            deviceContext = nullptr;
 
             if (deviceHandle && deviceManager)
                 deviceManager->CloseDeviceHandle(deviceHandle);

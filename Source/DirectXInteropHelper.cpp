@@ -38,35 +38,28 @@ HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(winrt::Windows::M
     return hr;
 }
 
-HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* deviceManager, winrt::com_ptr<ID3D11Device>& outDevice, winrt::com_ptr<ID3D11DeviceContext>& outDeviceContext, winrt::com_ptr<ID3D11VideoDevice>& outVideoDevice, HANDLE* outDeviceHandle)
+HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(IMFDXGIDeviceManager* deviceManager,
+    winrt::com_ptr<ID3D11Device>& outDevice,
+    winrt::com_ptr<ID3D11DeviceContext>& outDeviceContext,
+    winrt::com_ptr<ID3D11VideoDevice>& outVideoDevice,
+    HANDLE* outDeviceHandle)
 {
-    winrt::com_ptr<ID3D11Device> device;
-    winrt::com_ptr<ID3D11DeviceContext> deviceContext;
-    winrt::com_ptr<ID3D11VideoDevice> videoDevice;
 
     HRESULT hr = deviceManager->OpenDeviceHandle(outDeviceHandle);
     if (SUCCEEDED(hr))
-        hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11Device, device.put_void());
+        hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11Device, outDevice.put_void());
     if (SUCCEEDED(hr))
-        device->GetImmediateContext(deviceContext.put());
+        outDevice->GetImmediateContext(outDeviceContext.put());
     if (SUCCEEDED(hr))
-        hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11VideoDevice, videoDevice.put_void());
+        hr = deviceManager->GetVideoService(*outDeviceHandle, IID_ID3D11VideoDevice, outVideoDevice.put_void());
 
     if (!SUCCEEDED(hr))
     {
-        SAFE_RELEASE(device);
-        SAFE_RELEASE(deviceContext);
-        SAFE_RELEASE(videoDevice);
+        outDevice = nullptr;
+        outDeviceContext = nullptr;
+        outVideoDevice = nullptr;
     }
-    else
-    {
-        if (device)
-            outDevice = device;
-        if (deviceContext)
-            outDeviceContext = deviceContext;
-        if (videoDevice)
-            outVideoDevice = videoDevice;
-    }
+    
 
     return hr;
 }
