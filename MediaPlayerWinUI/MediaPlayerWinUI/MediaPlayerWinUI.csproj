@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.1.4" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.1" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.2.220902.1-preview1" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.25188-preview" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 </Project>
