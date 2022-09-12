@@ -10,14 +10,19 @@
     </dependencies>
   </metadata>
   <files>
-    <!--Support .NET 6, .NET Core 3, UAP, .NET Framework 4.6, C++ -->
-    <!--Architecture-netural assemblies-->
-    <file src="..\..\_build\AnyCPU\Debug\FFmpegInteropx.DotNet\bin\FFmpegInteropx.DotNet.dll" target="lib\net6.0-windows10.0.19041.0\FFmpegInteropx.DotNet.dll" />
+    <!--the actual projection-->
+    <file src="..\..\Output\FFmpegInteropx.DotNet\AnyCPU\Debug\bin\FFmpegInteropx.DotNet.dll" target="lib\net6.0-windows10.0.19041.0\FFmpegInteropx.DotNet.dll" />
+    <!--x64-->
     <file src="..\..\Output\FFmpegInteropX\x64\Debug\FFmpegInteropX\FFmpegInteropX.dll" target="runtimes\win10-x64\native\FFmpegInteropX.dll" />
     <file src="..\..\Output\FFmpegInteropX\x64\Debug\FFmpegInteropX\FFmpegInteropX.winmd" target="runtimes\win10-x64\native\FFmpegInteropX.winmd" />
-
-    <!--To support x86 and Arm64, build SimpleMathComponent for those other architectures and uncomment the entries below.-->
-    <!--<file src="..\..\_build\Win32\Release\SimpleMathComponent\bin\SimpleMathComponent\SimpleMathComponent.dll" target="runtimes\win10-x86\native\SimpleMathComponent.dll" />-->
-    <!--<file src="..\..\_build\arm64\Release\SimpleMathComponent\bin\SimpleMathComponent\SimpleMathComponent.dll" target="runtimes\win10-arm64\native\SimpleMathComponent.dll" />-->
+    <!--x86-->
+    <file src="..\..\Output\FFmpegInteropX\x86\Debug\FFmpegInteropX\FFmpegInteropX.dll" target="runtimes\win10-x86\native\FFmpegInteropX.dll" />
+    <file src="..\..\Output\FFmpegInteropX\x86\Debug\FFmpegInteropX\FFmpegInteropX.winmd" target="runtimes\win10-x86\native\FFmpegInteropX.winmd" />
+    <!--AMR64-->
+    <file src="..\..\Output\FFmpegInteropX\ARM64\Debug\FFmpegInteropX\FFmpegInteropX.dll" target="runtimes\win10-arm64\native\FFmpegInteropX.dll" />
+    <file src="..\..\Output\FFmpegInteropX\ARM64\Debug\FFmpegInteropX\FFmpegInteropX.winmd" target="runtimes\win10-arm64\native\FFmpegInteropX.winmd" />
+    <!--ARM32-->
+    <file src="..\..\Output\FFmpegInteropX\ARM\Debug\FFmpegInteropX\FFmpegInteropX.dll" target="runtimes\win10-arm\native\FFmpegInteropX.dll" />
+    <file src="..\..\Output\FFmpegInteropX\ARM\Debug\FFmpegInteropX\FFmpegInteropX.winmd" target="runtimes\win10-arm\native\FFmpegInteropX.winmd" />
   </files>
 </package>
