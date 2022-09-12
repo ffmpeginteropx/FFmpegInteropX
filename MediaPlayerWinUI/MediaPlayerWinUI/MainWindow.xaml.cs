@@ -29,6 +29,7 @@ namespace MediaPlayerWinUI
 
         private void myButton_Click(object sender, RoutedEventArgs e)
         {
+            FFmpegInteropX.MediaSourceConfig config = new FFmpegInteropX.MediaSourceConfig();
             myButton.Content = "Clicked";
         }
     }

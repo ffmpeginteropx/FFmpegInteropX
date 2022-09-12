@@ -105,7 +105,7 @@ namespace FFmpegInteropX
         Boolean IsDefault{ get; };
     }
 
-    [bindable]
+    
     runtimeclass AudioStreamInfo : IStreamInfo
     {
         AudioStreamInfo(
@@ -130,7 +130,7 @@ namespace FFmpegInteropX
         DecoderEngine DecoderEngine{ get; };
     }
 
-    [bindable]
+    
     runtimeclass VideoStreamInfo : IStreamInfo
     {
         VideoStreamInfo(
@@ -166,7 +166,7 @@ namespace FFmpegInteropX
         DecoderEngine DecoderEngine{ get; };
     }
 
-    [bindable]
+    
     runtimeclass SubtitleStreamInfo : IStreamInfo
     {
         SubtitleStreamInfo(
@@ -185,7 +185,7 @@ namespace FFmpegInteropX
         Windows.Media.Core.TimedMetadataTrack SubtitleTrack{ get; };
     }
 
-    [bindable]
+    
     runtimeclass ChapterInfo
     {
          ChapterInfo(
@@ -199,7 +199,7 @@ namespace FFmpegInteropX
 
     };
 
-    [bindable]
+    
     runtimeclass FormatInfo
     {
          FormatInfo(
@@ -221,7 +221,7 @@ namespace FFmpegInteropX
         BasicVideoEffect();
     }
 
-    [bindable]
+    
     runtimeclass CharacterEncoding
     {
         CharacterEncoding(Int32 codePage, String name, String description);
@@ -252,7 +252,7 @@ namespace FFmpegInteropX
         Windows.Foundation.IAsyncOperation<Boolean> OpenStorePageAsync();
     }
 
-    [bindable]
+    
     runtimeclass VideoFrame : Windows.Foundation.IClosable
     {
         Windows.Storage.Streams.IBuffer PixelData { get; };
@@ -306,7 +306,7 @@ namespace FFmpegInteropX
         void Log(LogLevel level, String message);
     };
 
-    [bindable]
+    
     runtimeclass FrameGrabber : Windows.Foundation.IClosable
     {
         /// <summary>The duration of the video stream.</summary>
@@ -370,7 +370,7 @@ namespace FFmpegInteropX
         static void SetDefaultLogProvider();
     }
 
-    [bindable]
+    
     runtimeclass MediaThumbnailData : Windows.Foundation.IClosable
     {
         MediaThumbnailData(Windows.Storage.Streams.IBuffer buffer, String extension);
@@ -378,7 +378,7 @@ namespace FFmpegInteropX
         String Extension{ get; };
     }
 
-    [bindable]
+    
     runtimeclass FFmpegMediaSource : Windows.Foundation.IClosable
     {
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
@@ -484,8 +484,7 @@ namespace FFmpegInteropX
         Windows.Media.Playback.MediaPlaybackSession PlaybackSession{ get; set; };
     }
 
-    [default_interface]
-    [bindable]
+    [default_interface]    
     runtimeclass MediaSourceConfig
     {
         MediaSourceConfig();
@@ -637,8 +636,7 @@ namespace FFmpegInteropX
         ReferenceCue(Windows.Media.Core.IMediaCue other);
     }
 
-    [default_interface]
-    [bindable]
+    [default_interface]    
     runtimeclass VideoEffectConfiguration
     {
         VideoEffectConfiguration();
@@ -669,9 +667,5 @@ namespace FFmpegInteropX
 
         [default_overload]
         void AddVideoEffect(Windows.Media.Playback.MediaPlayer player, Boolean isOptional);
-
-        void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player);
-
-        void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player, Boolean isOptional);
     }
 }
