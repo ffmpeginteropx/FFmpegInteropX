@@ -1448,7 +1448,8 @@ namespace winrt::FFmpegInteropX::implementation
 
         device = nullptr;
         deviceContext = nullptr;
-        SAFE_RELEASE(deviceManager);
+        deviceManager = nullptr;
+
         if (PlaybackSession())
         {
             PlaybackSession().PositionChanged(sessionPositionEvent);
@@ -1687,7 +1688,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (isFirstSeek && avHardwareContext)
         {
-            HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, &deviceManager);
+            HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, deviceManager);
             if (SUCCEEDED(hr))
                 hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, device, deviceContext, deviceManager, &deviceHandle);
 

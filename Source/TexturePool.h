@@ -56,15 +56,15 @@ public:
         desc_shared.BindFlags = desc.BindFlags;
 
         // pre-allocate pool
-        ID3D11Texture2D* copy_tex;
+        winrt::com_ptr<ID3D11Texture2D> copy_tex;
         HRESULT hr = S_OK;
         for (int i = 0; i < initialPoolSize; i++)
         {
-            hr = device->CreateTexture2D(&desc_shared, NULL, &copy_tex);
+            hr = device->CreateTexture2D(&desc_shared, NULL, copy_tex.put());
 
             if (SUCCEEDED(hr))
             {
-                pool.push_back(WrapTexturePointer(copy_tex));
+                pool.push_back(copy_tex);
             }
             else
             {
@@ -74,7 +74,7 @@ public:
         return hr;
     }
 
-    HRESULT GetCopyTexture(ID3D11Texture2D* sourceTexture, ID3D11Texture2D** result)
+    HRESULT GetCopyTexture(ID3D11Texture2D* sourceTexture, winrt::com_ptr<ID3D11Texture2D>& result)
     {
         HRESULT hr = S_OK;
 
@@ -91,38 +91,31 @@ public:
             if (pool.size() > 0)
             {
                 //use pool texture, if available
-                pool.back().copy_to(result);
+                result = pool.back();
                 pool.pop_back();
             }
             else
             {
                 //otherwise create a new texture
-                hr = device->CreateTexture2D(&desc_shared, NULL, result);
+                hr = device->CreateTexture2D(&desc_shared, NULL, result.put());
             }
         }
 
         return hr;
     }
 
-    void ReturnTexture(ID3D11Texture2D* texture)
+    void ReturnTexture(winrt::com_ptr<ID3D11Texture2D> texture)
     {
         D3D11_TEXTURE2D_DESC desc;
         texture->GetDesc(&desc);
 
         if (desc.Width == desc_shared.Width && desc.Height == desc_shared.Height && desc.Format == desc_shared.Format)
         {
-            pool.push_back(WrapTexturePointer(texture));
+            pool.push_back(texture);
         }
     }
 
 private:
-
-    winrt::com_ptr<ID3D11Texture2D> WrapTexturePointer(ID3D11Texture2D* texture)
-    {
-        winrt::com_ptr<ID3D11Texture2D> ptr;
-        ptr.copy_from(texture);
-        return ptr;
-    }
 
     winrt::com_ptr<ID3D11Device> device;
     std::vector<winrt::com_ptr<ID3D11Texture2D>> pool;

@@ -250,7 +250,7 @@ namespace winrt::FFmpegInteropX::implementation
         com_ptr<ID3D11Device> device;
         com_ptr<ID3D11DeviceContext> deviceContext;
         HANDLE deviceHandle = NULL;
-        IMFDXGIDeviceManager* deviceManager = NULL;
+        com_ptr<IMFDXGIDeviceManager> deviceManager;
 
         bool isFirstSeekAfterStreamSwitch = false;
         bool isLastSeekForward = false;

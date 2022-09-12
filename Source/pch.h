@@ -76,7 +76,6 @@ extern "C"
 #else
 #define DebugMessage(x) OutputDebugString(x)
 #endif
-#define SAFE_RELEASE(p)      { if (p) { (p)->Release(); (p)=nullptr; } }
 
 template<class T>
 std::vector<T> inline to_vector(IVector<T> input)
