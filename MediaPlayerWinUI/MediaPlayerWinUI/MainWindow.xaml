@@ -8,5 +8,5 @@
     
     mc:Ignorable="d">
 
-    <local:MainPage></local:MainPage>
+    <local:MainPage x:Name="content"></local:MainPage>
 </Window>

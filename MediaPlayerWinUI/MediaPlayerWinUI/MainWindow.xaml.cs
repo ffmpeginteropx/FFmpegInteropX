@@ -48,6 +48,7 @@ namespace MediaPlayerWinUI
         public MainWindow()
         {
             this.InitializeComponent();
+            content.CurrentMainWindow = this;
         }
     }
 }

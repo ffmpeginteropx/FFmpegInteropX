@@ -56,6 +56,8 @@ namespace MediaPlayerWinUI
         private MediaPlaybackItem playbackItem;
         private MediaPlayer mediaPlayer;
 
+        public MainWindow CurrentMainWindow { get; set; }
+
         public bool AutoCreatePlaybackItem
         {
             get;
@@ -164,12 +166,13 @@ namespace MediaPlayerWinUI
 
         private async void OpenLocalFile(object sender, RoutedEventArgs e)
         {
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(CurrentMainWindow);
             FileOpenPicker filePicker = new FileOpenPicker();
             filePicker.SettingsIdentifier = "VideoFile";
             filePicker.ViewMode = PickerViewMode.Thumbnail;
             filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
             filePicker.FileTypeFilter.Add("*");
-
+            WinRT.Interop.InitializeWithWindow.Initialize(filePicker, hwnd);
             // Show file picker so user can select a file
             StorageFile file = await filePicker.PickSingleFileAsync();
 
@@ -502,7 +505,7 @@ namespace MediaPlayerWinUI
             }
         }
 
-        private async void MediaPlayer_MediaOpened(MediaPlayer sender, object args)
+        private void MediaPlayer_MediaOpened(MediaPlayer sender, object args)
         {
             var session = sender.PlaybackSession;
             if (session != null && FFmpegMSS != null)
@@ -514,11 +517,11 @@ namespace MediaPlayerWinUI
                 actualFFmpegMSS.Dispose();
             }
             actualFFmpegMSS = FFmpegMSS;
-            await CoreApplication.MainView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(
-                () =>
-                {
-                    tbSubtitleDelay.Text = "Subtitle delay: 0s";
-                }));
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                tbSubtitleDelay.Text = "Subtitle delay: 0s";
+            });
+
         }
 
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
