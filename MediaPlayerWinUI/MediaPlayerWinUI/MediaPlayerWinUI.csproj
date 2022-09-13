@@ -12,6 +12,7 @@
       https://api.nuget.org/v3/index.json;
       ../../FFmpegInteropx.DotNet/nuget
     </RestoreSources>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
