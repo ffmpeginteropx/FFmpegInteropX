@@ -49,6 +49,7 @@ namespace MediaPlayerWinUI
         {
             this.InitializeComponent();
             content.CurrentMainWindow = this;
+            Title = "MediaPlayerWinUI";
         }
     }
 }
