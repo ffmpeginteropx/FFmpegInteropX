@@ -37,7 +37,7 @@ namespace winrt::FFmpegInteropX::implementation
     std::mutex isRegisteredMutex;
 
     FFmpegMediaSource::FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig,
-        CoreDispatcher const& dispatcher)
+        DispatcherQueue const& dispatcher)
         : config(interopConfig)
         , thumbnailStreamIndex(AVERROR_STREAM_NOT_FOUND)
         , isFirstSeek(true)
@@ -75,7 +75,7 @@ namespace winrt::FFmpegInteropX::implementation
         Close();
     }
 
-    winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, CoreDispatcher const& dispatcher)
+    winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue const& dispatcher)
     {
         auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher);
         auto hr = interopMSS->CreateMediaStreamSource(stream);
@@ -86,7 +86,7 @@ namespace winrt::FFmpegInteropX::implementation
         return interopMSS;
     }
 
-    winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(hstring const& uri, winrt::com_ptr<MediaSourceConfig> const& config, CoreDispatcher const& dispatcher)
+    winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(hstring const& uri, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue const& dispatcher)
     {
         auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher);
         auto hr = interopMSS->CreateMediaStreamSource(uri);
@@ -323,19 +323,13 @@ namespace winrt::FFmpegInteropX::implementation
     }
 
 
-    CoreDispatcher FFmpegMediaSource::GetCurrentDispatcher()
+    DispatcherQueue FFmpegMediaSource::GetCurrentDispatcher()
     {
-        try {
-            //try get the current view
-            auto wnd = CoreWindow::GetForCurrentThread();
-            if (wnd == nullptr)
-            {
-                wnd = winrt::Windows::ApplicationModel::Core::CoreApplication::MainView().CoreWindow();
-            }
-            if (wnd != nullptr)
-                return wnd.Dispatcher();
-
-            return nullptr;
+        try
+        {
+            DispatcherQueue dispatcherQueue = DispatcherQueue::GetForCurrentThread();
+            //try get the current view      
+            return dispatcherQueue;
         }
         catch (...)
         {

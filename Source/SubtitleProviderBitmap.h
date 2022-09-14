@@ -16,7 +16,7 @@ public:
         AVCodecContext* avCodecCtx,
         winrt::FFmpegInteropX::MediaSourceConfig const& config,
         int index,
-        winrt::Windows::UI::Core::CoreDispatcher  const& dispatcher)
+        winrt::Windows::System::DispatcherQueue  const& dispatcher)
         : SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::ImageSubtitle, dispatcher)
     {
     }

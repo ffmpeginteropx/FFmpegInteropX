@@ -269,10 +269,6 @@
       <XmlDoc>$(XmlDoc.Replace('!System.Runtime.CompilerServices.IsImplicitlyDereferenced',''))</XmlDoc>
       <XmlDoc>$(XmlDoc.Replace('winrt.',''))</XmlDoc>
     </PropertyGroup>
-    <WriteLinesToFile
-      File="$(XmlDocFile)"
-      Lines="$(XmlDoc)"
-      Overwrite="true"
-      Encoding="UTF-8"/>
+    <WriteLinesToFile File="$(XmlDocFile)" Lines="$(XmlDoc)" Overwrite="true" Encoding="UTF-8" />
   </Target>
 </Project>
