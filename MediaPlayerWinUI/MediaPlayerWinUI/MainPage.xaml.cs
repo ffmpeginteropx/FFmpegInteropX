@@ -93,17 +93,17 @@ namespace MediaPlayerWinUI
             // populate character encodings
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
 
-            //Window.Current.CoreWindow.KeyDown += MainPage_KeyDown;
+            AddHandler(KeyDownEvent, new KeyEventHandler(MainPage_KeyDown), true);
         }
 
-        private async void MainPage_KeyDown(CoreWindow sender, KeyEventArgs args)
+        private async void MainPage_KeyDown(object sender, KeyRoutedEventArgs args)
         {
-            if (args.VirtualKey == VirtualKey.Enter && (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down)
+            if (args.Key == VirtualKey.Enter && (Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control) & CoreVirtualKeyStates.Down)
                == CoreVirtualKeyStates.Down && StorageApplicationPermissions.FutureAccessList.Entries.Count == 1)
             {
                 await TryOpenLastFile();
             }
-            if (args.VirtualKey == VirtualKey.V)
+            if (args.Key == VirtualKey.V && !args.Handled)
             {
                 if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
                 {
@@ -371,7 +371,12 @@ namespace MediaPlayerWinUI
                 FFmpegMSS = null;
                 playbackItem = null;
             }
-            DisplayErrorMessage(args.ErrorMessage);
+            var message = args.ErrorMessage;
+            if (String.IsNullOrEmpty(message) && args.ExtendedErrorCode != null)
+            {
+                message = args.ExtendedErrorCode.Message;
+            }
+            DisplayErrorMessage(message);
         }
 
         private void DisplayErrorMessage(string message)
@@ -562,9 +567,9 @@ namespace MediaPlayerWinUI
 
         private async Task ShowDialog(string text)
         {
-            ContentDialog dialog = new ContentDialog();
-            dialog.Content = text;
-            dialog.XamlRoot = CurrentMainWindow.Content.XamlRoot;
+            var dialog = new MessageDialog(text);
+            dialog.Title = "An error has occured.";
+            InitializeWithWindow.Initialize(dialog, WindowNative.GetWindowHandle(CurrentMainWindow));
             await dialog.ShowAsync();
         }
 

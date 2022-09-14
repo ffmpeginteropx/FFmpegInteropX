@@ -364,7 +364,12 @@ namespace MediaPlayerCS
             await CoreApplication.MainView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(
             async () =>
             {
-                await DisplayErrorMessage(args.ErrorMessage);
+                var message = args.ErrorMessage;
+                if (String.IsNullOrEmpty(message) && args.ExtendedErrorCode != null)
+                {
+                    message = args.ExtendedErrorCode.Message;
+                }
+                await DisplayErrorMessage(message);
             }));
         }
 
