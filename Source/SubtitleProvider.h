@@ -50,8 +50,7 @@ public:
 
         if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
         {
-            if (Metadata::ApiInformation::IsEnumNamedValuePresent(L"Windows.Media.Core.TimedMetadataKind", L"ImageSubtitle") &&
-                timedMetadataKind == TimedMetadataKind::ImageSubtitle)
+            if (timedMetadataKind == TimedMetadataKind::ImageSubtitle)
             {
                 SubtitleTrack.CueEntered(weak_handler(this, &SubtitleProvider::OnCueEntered));
             }
@@ -230,39 +229,7 @@ private:
         std::lock_guard lock(mutex);
         try
         {
-            if (Metadata::ApiInformation::IsApiContractPresent(L"Windows.Phone.PhoneContract", 1, 0))
-            {
-                /*This is a fix only to work around a bug in windows phones: when 2 different cues have the exact same start position and length, the runtime panics and throws an exception
-                The problem has only been observed in external subtitles so far, and only on phones. Might also be present on ARM64 devices*/
-                bool individualCue = true;
-                if (this->timedMetadataKind == TimedMetadataKind::Subtitle)
-                {
-                    for (int i = SubtitleTrack.Cues().Size() - 1; i >= 0; i--)
-                    {
-                        auto existingSub = SubtitleTrack.Cues().GetAt(i).as<TimedTextCue>();
-
-                        if (existingSub.StartTime() == cue.StartTime() && existingSub.Duration() == cue.Duration())
-                        {
-                            individualCue = false;
-                            auto timedTextCue = cue.as<TimedTextCue>();
-                            for (auto l : timedTextCue.Lines())
-                            {
-                                existingSub.Lines().Append(l);
-                            }
-                        }
-
-                        break;
-                    }
-                }
-                if (individualCue)
-                {
-                    DispatchCueToTrack(cue);
-                }
-            }
-            else
-            {
-                DispatchCueToTrack(cue);
-            }
+            DispatchCueToTrack(cue);
         }
         catch (...)
         {
