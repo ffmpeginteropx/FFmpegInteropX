@@ -23,6 +23,7 @@
   
   <PropertyGroup>
     <DefaultItemExcludes>**\*;*.*</DefaultItemExcludes>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
 
