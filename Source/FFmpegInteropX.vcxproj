@@ -106,6 +106,9 @@
       <ModuleDefinitionFile>FFmpegInteropX.def</ModuleDefinitionFile>
       <AdditionalDependencies>shcore.lib;runtimeobject.lib;mfuuid.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+	<Midl>
+      <PreprocessorDefinitions Condition="'$(WINUI)'==''">CPPCX</PreprocessorDefinitions>
+    </Midl>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
