@@ -87,7 +87,18 @@ function Build-Platform {
         /p:useenv=true
 
     if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.vcxproj." }
+	
+	if ($targetArch -eq "x64")
+	{
+	    MSBuild.exe $SolutionDir\Source\FFmpegInteropX.DotNet.csproj `
+			/restore `
+			/p:Configuration=$Configuration `
+			/p:Platform=AnyCPU `
+			/p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+			/p:useenv=true
+	}
 
+    if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.DotNet.csproj." }	
 }
 
 Write-Host

@@ -8,11 +8,12 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <RestoreSources>
-      https://api.nuget.org/v3/index.json;
-      ../../FFmpegInteropx.DotNet/nuget
-    </RestoreSources>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <IntDir>..\..\Intermediate\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <OutDir>..\..\Output\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FFMpegInteropx.DotNet" Version="0.1.0-prerelease" />
+    <PackageReference Include="FFmpegInteropX" Version="1.1.0-pre10" />
     <PackageReference Include="FFmpegInteropX.FFmpegUWP" Version="5.1.0-pre" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.0" />
   </ItemGroup>

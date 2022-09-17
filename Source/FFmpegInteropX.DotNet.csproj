@@ -13,18 +13,25 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <GeneratedNugetDir>.\nuget\</GeneratedNugetDir>
-    <NuspecFile>$(GeneratedNugetDir)FFmpegInteropX.DotNet.nuspec</NuspecFile>
-    <OutputPath>$(GeneratedNugetDir)</OutputPath>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IntDir>..\Intermediate\FFmpegInteropX.DotNet\$(Configuration)\</IntDir>
+    <OutDir>..\Output\FFmpegInteropX.DotNet\$(Configuration)\</OutDir>
   </PropertyGroup>
+  
+  <PropertyGroup>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <DefaultItemExcludes>**\*;*.*</DefaultItemExcludes>
+  </PropertyGroup>
+
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Source\FFmpegInteropX.vcxproj" />
+    <ProjectReference Include="FFmpegInteropX.vcxproj" />
   </ItemGroup>
 
 </Project>

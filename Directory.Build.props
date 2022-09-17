@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project>
-  <PropertyGroup>
-    <BuildOutDir>$([MSBuild]::NormalizeDirectory('$(SolutionDir)', 'Output'))</BuildOutDir>
-    <OutDir>$([MSBuild]::NormalizeDirectory('$(BuildOutDir)', '$(MSBuildProjectName)', '$(Platform)', '$(Configuration)', 'bin'))</OutDir>
-    <IntDir>$([MSBuild]::NormalizeDirectory('$(BuildOutDir)', '$(MSBuildProjectName)', '$(Platform)', '$(Configuration)', 'obj'))</IntDir>
-  </PropertyGroup>
-</Project>

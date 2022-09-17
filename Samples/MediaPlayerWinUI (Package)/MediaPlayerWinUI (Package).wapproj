@@ -44,15 +44,9 @@
     <EntryPointProjectUniqueName>..\MediaPlayerWinUI\MediaPlayerWinUI.csproj</EntryPointProjectUniqueName>
   </PropertyGroup>
   <PropertyGroup>
-    <RestoreSources>
-            https://api.nuget.org/v3/index.json;
-            ../../FFmpegInteropx.DotNet/nuget
-        </RestoreSources>
+    <IntDir>..\..\Intermediate\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <OutDir>..\..\Output\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="FFmpegInteropX.FFmpegUWP" Version="5.1.0-pre" />
-    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.0" />
-  </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
@@ -72,14 +66,6 @@
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
       <PublishProfile>Properties\PublishProfiles\win10-$(Platform).pubxml</PublishProfile>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.2.220902.1-preview1">
-      <IncludeAssets>build</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.25188-preview">
-      <IncludeAssets>build</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>
