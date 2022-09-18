@@ -385,27 +385,27 @@ public:
                                     {
                                         subStyle.FontWeight(TimedTextWeight::Bold);
                                     }
-                                    else if (tag.compare(L"i0") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
+                                    else if (tag.compare(L"i0") == 0)
                                     {
                                         subStyle.FontStyle(TimedTextFontStyle::Normal);
                                     }
-                                    else if (tag.compare(L"i1") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
+                                    else if (tag.compare(L"i1") == 0)
                                     {
                                         subStyle.FontStyle(TimedTextFontStyle::Italic);
                                     }
-                                    else if (tag.compare(L"u0") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
+                                    else if (tag.compare(L"u0") == 0)
                                     {
                                         subStyle.IsUnderlineEnabled(false);
                                     }
-                                    else if (tag.compare(L"u1") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
+                                    else if (tag.compare(L"u1") == 0)
                                     {
                                         subStyle.IsUnderlineEnabled(true);
                                     }
-                                    else if (tag.compare(L"s0") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
+                                    else if (tag.compare(L"s0") == 0)
                                     {
                                         subStyle.IsLineThroughEnabled(false);
                                     }
-                                    else if (tag.compare(L"s1") == 0 && ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
+                                    else if (tag.compare(L"s1") == 0)
                                     {
                                         subStyle.IsLineThroughEnabled(true);
                                     }
@@ -772,10 +772,7 @@ public:
         SubtitleStyle.FontFamily(GetFontFamily(font));
         SubtitleStyle.FontSize(GetFontSize(size));
         SubtitleStyle.LineAlignment(horizontalAlignment);
-        if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
-        {
-            SubtitleStyle.FontStyle(italic ? TimedTextFontStyle::Italic : TimedTextFontStyle::Normal);
-        }
+        SubtitleStyle.FontStyle(italic ? TimedTextFontStyle::Italic : TimedTextFontStyle::Normal);
         SubtitleStyle.FontWeight(bold ? TimedTextWeight::Bold : TimedTextWeight::Normal);
         SubtitleStyle.Foreground(color);
         SubtitleStyle.Background(winrt::Windows::UI::Colors::Transparent()); //ColorFromArgb(backColor);
@@ -789,16 +786,8 @@ public:
         SubtitleStyle.OutlineThickness(outlineThickness);
         SubtitleStyle.FlowDirection(TimedTextFlowDirection::LeftToRight);
         SubtitleStyle.OutlineColor(outlineColor);
-
-        if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
-        {
-            SubtitleStyle.IsUnderlineEnabled(underline);
-        }
-
-        if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
-        {
-            SubtitleStyle.IsLineThroughEnabled(strikeout);
-        }
+        SubtitleStyle.IsUnderlineEnabled(underline);
+        SubtitleStyle.IsLineThroughEnabled(strikeout);
 
         // sanity check style parameters
         if (wname.size() > 0 && SubtitleStyle.FontFamily().size() > 0 && SubtitleStyle.FontSize().Value > 0)
@@ -827,24 +816,10 @@ public:
         copy.OutlineColor(style.OutlineColor());
         copy.OutlineRadius(style.OutlineRadius());
         copy.OutlineThickness(style.OutlineThickness());
-
-        // ITimedTextStyle2
-        if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
-        {
-            copy.FontStyle(style.FontStyle());
-        }
-        if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsLineThroughEnabled"))
-        {
-            copy.IsLineThroughEnabled(style.IsLineThroughEnabled());
-        }
-        if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsUnderlineEnabled"))
-        {
-            copy.IsUnderlineEnabled(style.IsUnderlineEnabled());
-        }
-        if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"IsOverlineEnabled"))
-        {
-            copy.IsOverlineEnabled(style.IsOverlineEnabled());
-        }
+        copy.FontStyle(style.FontStyle());
+        copy.IsLineThroughEnabled(style.IsLineThroughEnabled());
+        copy.IsUnderlineEnabled(style.IsUnderlineEnabled());
+        copy.IsOverlineEnabled(style.IsOverlineEnabled());
 
         // ITimedTextStyle3
         if (ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"Bouten"))

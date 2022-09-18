@@ -674,11 +674,7 @@ namespace winrt::FFmpegInteropX::implementation
 
                 // Assign initial BufferTime to MediaStreamSource
                 mss.BufferTime(fileStreamData ? config->DefaultBufferTime() : config->DefaultBufferTimeUri());
-
-                if (Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.MediaStreamSource", L"MaxSupportedPlaybackRate"))
-                {
-                    mss.MaxSupportedPlaybackRate(config->MaxSupportedPlaybackRate());
-                }
+                mss.MaxSupportedPlaybackRate(config->MaxSupportedPlaybackRate());
 
                 if (mediaDuration.count() > 0)
                 {
@@ -756,10 +752,7 @@ namespace winrt::FFmpegInteropX::implementation
                         }
                         else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
                         {
-                            if (Metadata::ApiInformation::IsEnumNamedValuePresent(L"Windows.Media.Core.TimedMetadataKind", L"ImageSubtitle"))
-                            {
-                                avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, dispatcher));
-                            }
+                            avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, dispatcher));
                         }
                         else
                         {
@@ -1559,8 +1552,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
         else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC &&
-            CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC(), hardwareDecoderStatus, config->SystemDecoderHEVCMaxProfile(), config->SystemDecoderHEVCMaxLevel()) &&
-            Metadata::ApiInformation::IsMethodPresent(L"Windows.Media.MediaProperties.VideoEncodingProperties", L"CreateHevc"))
+            CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC(), hardwareDecoderStatus, config->SystemDecoderHEVCMaxProfile(), config->SystemDecoderHEVCMaxLevel()))
         {
             auto videoProperties = VideoEncodingProperties::CreateHevc();
 
@@ -1606,8 +1598,7 @@ namespace winrt::FFmpegInteropX::implementation
             videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
         }
         else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP9 &&
-            CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP9(), hardwareDecoderStatus, -1, -1) &&
-            Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.MediaProperties.MediaEncodingSubtypes", L"Vp9"))
+            CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP9(), hardwareDecoderStatus, -1, -1))
         {
             auto videoProperties = VideoEncodingProperties();
             videoProperties.Subtype(MediaEncodingSubtypes::Vp9());
@@ -1615,8 +1606,7 @@ namespace winrt::FFmpegInteropX::implementation
             videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, videoProperties, hardwareDecoderStatus));
         }
         else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VP8 &&
-            CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP8(), hardwareDecoderStatus, -1, -1) &&
-            Metadata::ApiInformation::IsTypePresent(L"Windows.Media.Core.CodecSubtypes"))
+            CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationVP8(), hardwareDecoderStatus, -1, -1))
 
         {
             auto videoProperties = VideoEncodingProperties();
