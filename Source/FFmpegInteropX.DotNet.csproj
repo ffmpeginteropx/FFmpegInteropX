@@ -13,8 +13,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <IntDir>..\Intermediate\FFmpegInteropX.DotNet\$(Configuration)\</IntDir>
-    <OutDir>..\Output\FFmpegInteropX.DotNet\$(Configuration)\</OutDir>
+    <IntDir>..\Intermediate\$(MSBuildProjectName)\$(Configuration)\</IntDir>
+    <OutDir>..\Output\$(MSBuildProjectName)\$(Configuration)\</OutDir>
   </PropertyGroup>
   
   <PropertyGroup>

@@ -44,8 +44,8 @@
     <EntryPointProjectUniqueName>..\MediaPlayerWinUI\MediaPlayerWinUI.csproj</EntryPointProjectUniqueName>
   </PropertyGroup>
   <PropertyGroup>
-    <IntDir>..\..\Intermediate\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
-    <OutDir>..\..\Output\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <IntDir>..\..\Intermediate\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <OutDir>..\..\Output\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
