@@ -29,7 +29,7 @@ public:
         MediaSourceConfig const& config,
         int index,
         TimedMetadataKind const& ptimedMetadataKind,
-        winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher)
+        winrt::Windows::System::DispatcherQueue const& pdispatcher)
         : CompressedSampleProvider(reader,
             avFormatCtx,
             avCodecCtx,
@@ -305,8 +305,7 @@ private:
     {
         if (dispatcher != nullptr && IsEnabled())
         {
-            dispatcher.RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal,
-                weak_handler(this, &SubtitleProvider::StartDispatcherTimer));
+            dispatcher.TryEnqueue(weak_handler(this, &SubtitleProvider::StartDispatcherTimer));
         }
         else
         {
@@ -318,7 +317,7 @@ private:
     {
         if (timer == nullptr)
         {
-            timer = winrt::Windows::UI::Xaml::DispatcherTimer();
+            timer = dispatcher.CreateTimer();
             timer.Interval(TimeSpan(10000));
             timer.Tick(weak_handler(this, &SubtitleProvider::OnTick));
         }
@@ -494,8 +493,7 @@ public:
 
             if (dispatcher)
             {
-                dispatcher.RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal,
-                    weak_handler(this, &SubtitleProvider::ClearSubtitles));
+                dispatcher.TryEnqueue(weak_handler(this, &SubtitleProvider::ClearSubtitles));
             }
             else
             {
@@ -512,8 +510,8 @@ private:
     std::vector<IMediaCue> pendingRefCues;
     std::vector<IMediaCue> pendingChangedDurationCues;
     TimedMetadataKind timedMetadataKind;
-    winrt::Windows::UI::Core::CoreDispatcher dispatcher = { nullptr };
-    winrt::Windows::UI::Xaml::DispatcherTimer timer = { nullptr };
+    winrt::Windows::System::DispatcherQueue dispatcher = { nullptr };
+    winrt::Windows::System::DispatcherQueueTimer timer = { nullptr };
     TimeSpan newDelay{};
     std::vector<std::pair<IMediaCue, long long>> negativePositionCues;
     bool isPreviousCueInfiniteDuration = false;

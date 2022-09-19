@@ -16,7 +16,7 @@ public:
         AVCodecContext* avCodecCtx,
         MediaSourceConfig const& config,
         int index,
-        winrt::Windows::UI::Core::CoreDispatcher const& dispatcher,
+        winrt::Windows::System::DispatcherQueue const& dispatcher,
         std::shared_ptr<AttachedFileHelper> attachedFileHelper)
         : SubtitleProvider(reader,
             avFormatCtx,

@@ -56,8 +56,6 @@ namespace winrt::FFmpegInteropX::implementation
 
         void AddVideoEffect(winrt::Windows::Media::Playback::MediaPlayer const& player);
         void AddVideoEffect(winrt::Windows::Media::Playback::MediaPlayer const& player, bool Optional);
-        void AddVideoEffect(winrt::Windows::UI::Xaml::Controls::MediaElement const& player);
-        void AddVideoEffect(winrt::Windows::UI::Xaml::Controls::MediaElement const& player, bool Optional);
 
     private:
         float _Brightness = 0;
