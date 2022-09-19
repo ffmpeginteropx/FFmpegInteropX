@@ -238,10 +238,7 @@ namespace winrt::FFmpegInteropX::implementation
             fontSize.Value = 100;
             style.FontSize(fontSize);
             style.LineAlignment(TimedTextLineAlignment::Center);
-            if (Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.TimedTextStyle", L"FontStyle"))
-            {
-                style.FontStyle(TimedTextFontStyle::Normal);
-            }
+            style.FontStyle(TimedTextFontStyle::Normal);
             style.FontWeight(TimedTextWeight::Normal);
             style.Foreground(winrt::Windows::UI::Colors::White());
             style.Background(Windows::UI::Colors::Transparent());

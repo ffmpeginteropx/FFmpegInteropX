@@ -28,6 +28,7 @@ namespace winrt::FFmpegInteropX::implementation
     using namespace winrt::Windows::UI::Xaml;
     namespace WFM = winrt::Windows::Foundation::Metadata;
     using namespace winrt::Windows::Storage::Streams;
+    using namespace winrt::Windows::System;
 
     enum ByteOrderMark
     {
@@ -148,7 +149,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         void Close();
 
-        FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, CoreDispatcher const& dispatcher);
+        FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, DispatcherQueue const& dispatcher);
 
     private:
 
@@ -173,8 +174,8 @@ namespace winrt::FFmpegInteropX::implementation
 
 
     public://internal:
-        static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, CoreDispatcher  const& dispatcher);
-        static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, CoreDispatcher  const& dispatcher);
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher);
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, DispatcherQueue  const& dispatcher);
         static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config);
         HRESULT Seek(TimeSpan const& position, TimeSpan& actualPosition, bool allowFastSeek);
 
@@ -229,7 +230,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::shared_ptr<MediaMetadata> metadata = { nullptr };
 
         std::recursive_mutex mutex;
-        CoreDispatcher dispatcher = { nullptr };
+        DispatcherQueue dispatcher = { nullptr };
         MediaPlaybackSession session = { nullptr };
         winrt::event_token sessionPositionEvent{};
 
@@ -252,7 +253,7 @@ namespace winrt::FFmpegInteropX::implementation
         TimeSpan lastPosition{ 0 };
         TimeSpan lastSeek{ 0 };
 
-        static CoreDispatcher GetCurrentDispatcher();
+        static DispatcherQueue GetCurrentDispatcher();
         void OnPositionChanged(MediaPlaybackSession const& sender, IInspectable const& args);
     };
 }

@@ -398,6 +398,11 @@ void MediaPlayerCPP::MainPage::OnMediaFailed(Windows::Media::Playback::MediaPlay
     Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
         ref new Windows::UI::Core::DispatchedHandler([this, args]
             {
+                auto message = args->ErrorMessage;
+                if ((!message || message->Length() == 0)) 
+                {
+                    message = args->ExtendedErrorCode.ToString();
+                }
                 DisplayErrorMessage(args->ErrorMessage);
             }));
 }

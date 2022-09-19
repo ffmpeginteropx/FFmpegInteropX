@@ -1,0 +1,109 @@
+<Page
+    x:Class="MediaPlayerWinUI.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MediaPlayerWinUI"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <local:TimeSpanToDoubleConverter x:Key="TimeSpanToDoubleConverter" />
+
+        <local:FloatToDoubleConverter x:Key="FloatToDoubleConverter" />
+    </Page.Resources>
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <SplitView Grid.Row="1" x:Name="Splitter">
+
+            <!-- Control panel -->
+            <SplitView.Pane>
+                <ScrollViewer>
+                    <StackPanel Margin="10, 50, 10, 0">
+                        <TextBlock x:Name="Header" Text="Open Local File or URI"/>
+                        <StackPanel Orientation="Horizontal">
+                            <AppBarButton Content="Open Local File" Icon="OpenFile" Margin="0, 10, 10, 0" Click="OpenLocalFile"/>
+                            <TextBox x:Name="tbUri" PlaceholderText="Enter URI and press Enter" InputScope="Url" Width="210" Height="30" KeyUp="URIBoxKeyUp"/>
+                        </StackPanel>
+                        <ToggleSwitch Header="Auto create playback item" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=AutoCreatePlaybackItem}"/>
+                        <Button Content="Start playback" Click="CreatePlaybackItemAndStartPlayback"  Margin="0,20,10,10" />
+
+                        <ToggleSwitch Header="Allow Hardware Accelection" OffContent="OFF" OnContent="ON" x:Name="AutoDetect" Toggled="AutoDetect_Toggled" />
+                        <ToggleSwitch Header="Force System Video Decoder" OffContent="OFF" OnContent="ON" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
+
+                        <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.VideoOutputAllowIyuv}"/>
+
+                        <ToggleSwitch Header="Use System MP3 Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioMP3}"/>
+                        <ToggleSwitch Header="Use System AAC Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioAAC}" Margin="0,0,0,20" />
+
+                        <ToggleSwitch Header="Fast Seeking (keyframe seeking requires PlaybackSession property to be assigned)" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.FastSeek}" Margin="0,20,0,0" />
+
+                        <Button Content="Extract Frame" Click="ExtractFrame"  Margin="0,20,10,10" />
+                        <ToggleSwitch x:Name="grabFrameExactSeek" Header="Exact Seek for Extract Frame" OffContent="OFF" OnContent="ON" IsOn="True"/>
+
+                        <ComboBox x:Name="cbEncodings" PlaceholderText="Select ANSI subtitle encoding" SelectionChanged="CbEncodings_SelectionChanged">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Description}" />
+                                        <TextBlock Text="-" Margin="10,0" />
+                                        <TextBlock Text="{Binding WindowsCodePage}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <Button Content="Load External Subtitle File (ffmpeg)" Click="LoadSubtitleFileFFmpeg"  Margin="0,20,10,10" />
+                        <Button Content="Load External Subtitle File (winAPI)" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
+
+                        <TextBlock x:Name="tbSubtitleDelay" Text="Subtitle delay: 0s" Margin="0,20,0,5"/>
+                        <StackPanel Orientation="Horizontal">
+                            <AppBarButton Icon="Remove" Label="Quicken subtitles" Click="QuickenSubtitles"></AppBarButton>
+                            <AppBarButton Icon="Add" Label="Delay subtitles" Click="DelaySubtitles"></AppBarButton>
+                        </StackPanel>
+
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Minimum subtitle duration (s)" Value="{x:Bind Path=Config.MinimumSubtitleDuration, Mode=TwoWay, Converter={StaticResource TimeSpanToDoubleConverter}}" />
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Additional subtitle duration (s)" Value="{x:Bind Path=Config.AdditionalSubtitleDuration, Mode=TwoWay, Converter={StaticResource TimeSpanToDoubleConverter}}" />
+                        <ToggleSwitch Header="Prevent subtitle overlap" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PreventModifiedSubtitleDurationOverlap}"/>
+
+                        <TextBlock Text="FFmpeg Effects (software):" Margin="0,20,0,5"/>
+
+                        <TextBox x:Name="ffmpegAudioFilters" Header="FFmpeg audio filters (hit 'return' to apply)" KeyDown="ffmpegAudioFilters_KeyDown" Margin="0,10,0,0" Text="aecho=0.8:0.9:1000|1800:0.3|0.25" />
+                        <TextBox x:Name="ffmpegVideoFilters" Header="FFmpeg video filters (hit 'return' to apply)" KeyDown="ffmpegVideoFilters_KeyDown" Margin="0,10,0,0" Text="colorchannelmixer=.3:.4:.3:0:.3:.4:.3:0:.3:.4:.3" />
+
+                        <TextBlock Text="GPU Video Postprocessing:" Margin="0,20,0,5"/>
+
+                        <ToggleSwitch x:Name="enableVideoEffects" Header="Enable GPU video postprocessing (applied on next file)" OffContent="OFF" OnContent="ON" Toggled="EnableVideoEffects_Toggled" Margin="0,10,0,0" />
+                        <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Contrast" Value="{x:Bind Path=VideoEffectConfiguration.Contrast, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Brightness" Value="{x:Bind Path=VideoEffectConfiguration.Brightness, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Saturation" Value="{x:Bind Path=VideoEffectConfiguration.Saturation, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Temperature" Value="{x:Bind Path=VideoEffectConfiguration.Temperature, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="-1" Maximum="1" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Tint" Value="{x:Bind Path=VideoEffectConfiguration.Tint, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="1" StepFrequency="0.1" Header="Sharpness" Value="{x:Bind Path=VideoEffectConfiguration.Sharpness, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="1" StepFrequency="0.1" Header="SharpnessThreshold" Value="{x:Bind Path=VideoEffectConfiguration.SharpnessThreshold, Mode=TwoWay, Converter={StaticResource FloatToDoubleConverter}}" />
+
+                    </StackPanel>
+                </ScrollViewer>
+            </SplitView.Pane>
+
+            <!-- Main content -->
+            <MediaPlayerElement x:Name="mediaPlayerElement"
+                        AreTransportControlsEnabled="True"
+                        AutoPlay="True"                        
+            />
+
+        </SplitView>
+
+        <!-- Control panel toggle button -->
+        <ToggleButton Grid.Row="0" VerticalAlignment="Top" Margin="2" IsChecked="{Binding ElementName=Splitter, Path=IsPaneOpen, Mode=TwoWay}">
+            <ToggleButton.Content>
+                <FontIcon x:Name="Hamburger" FontFamily="Segoe MDL2 Assets" Foreground="White" Glyph="&#xE700;"/>
+            </ToggleButton.Content>
+        </ToggleButton>
+    </Grid>
+</Page>
