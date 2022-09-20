@@ -675,12 +675,6 @@ namespace FFmpegInteropX
     };
 
     [default_interface]
-    runtimeclass ReferenceCue : Windows.Media.Core.IMediaCue
-    {
-        ReferenceCue(Windows.Media.Core.IMediaCue other);
-    }
-
-    [default_interface]
 #ifdef CPPCX
     [bindable]
 #endif

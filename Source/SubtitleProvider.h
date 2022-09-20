@@ -240,7 +240,8 @@ private:
         }
         else if (isPreviousCueInfiniteDuration)
         {
-            pendingRefCues.push_back(ReferenceCue(cue));
+            IMediaCue refCue = winrt::make<ReferenceCue>(cue);
+            pendingRefCues.push_back(refCue);
             TriggerUpdateCues();
         }
         else
@@ -255,14 +256,26 @@ private:
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
         try {
-            //remove all cues from subtitle track
-            while (SubtitleTrack.Cues().Size() > 0)
+            //remove all previous cues from subtitle track
+            std::vector<IMediaCue> remove;
+            auto enteredCue = args.Cue();
+            auto startTime = enteredCue.StartTime();
+            for (auto cue : SubtitleTrack.Cues())
             {
-                SubtitleTrack.RemoveCue(SubtitleTrack.Cues().GetAt(0));
+                if (cue.StartTime() + cue.Duration() < startTime)
+                {
+                    remove.push_back(cue);
+                }
             }
-            auto refCue = static_cast<ReferenceCue>(args.Cue());
-            SubtitleTrack.AddCue(refCue);
-            referenceTrack.RemoveCue(refCue);
+
+            for (auto& cue : remove)
+            {
+                SubtitleTrack.RemoveCue(cue);
+            }
+
+            auto refCue = winrt::get_self<ReferenceCue>(enteredCue);
+            SubtitleTrack.AddCue(refCue->CueRef());
+            referenceTrack.RemoveCue(enteredCue);
         }
         catch (...)
         {
@@ -276,10 +289,11 @@ private:
         try
         {
             //cleanup old cues to free memory
+            auto startTime = args.Cue().StartTime();
             std::vector<IMediaCue> remove;
             for (auto cue : SubtitleTrack.Cues())
             {
-                if (cue.StartTime() + cue.Duration() < args.Cue().StartTime())
+                if (cue.StartTime() + cue.Duration() < startTime)
                 {
                     remove.push_back(cue);
                 }
