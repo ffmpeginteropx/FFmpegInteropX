@@ -71,7 +71,7 @@ public:
                 ImageCue cue;
                 cue.SoftwareBitmap(GetDummyBitmap());
                 avsubtitle_free(subtitle);
-                delete subtitle;
+                av_freep(subtitle);
 
                 return cue;
             }
@@ -92,7 +92,7 @@ public:
                 else if (subtitle->num_rects > 0)
                 {
                     avsubtitle_free(subtitle);
-                    delete subtitle;
+                    av_freep(subtitle);
                     OutputDebugString(L"Error: Invalid subtitle size received.");
                 }
             }
@@ -118,7 +118,7 @@ public:
             {
                 auto subtitle = entry.second;
                 avsubtitle_free(subtitle);
-                delete subtitle;
+                av_freep(subtitle);
             }
             map.clear();
         }
@@ -146,8 +146,9 @@ private:
                 SubtitleTrack.RemoveCue(cue);
             }
 
-            auto cue = args.Cue().as<ImageCue>();
-            if (!cue.Id().empty() && !cue.SoftwareBitmap())
+            auto c = args.Cue();
+            auto cue = args.Cue().try_as<ImageCue>();
+            if (cue && !cue.Id().empty())
             {
                 auto subtitle = map.at(cue.Id());
 
@@ -157,37 +158,40 @@ private:
                 if (subtitle->num_rects > 0 && CheckSize(subtitle, width, height, offsetX, offsetY, cueSize, cuePosition))
                 {
                     auto bitmap = SoftwareBitmap(BitmapPixelFormat::Bgra8, width, height, BitmapAlphaMode::Straight);
-                    auto buffer = bitmap.LockBuffer(BitmapBufferAccessMode::Write);
-                    auto reference = buffer.CreateReference();
-                    BYTE* pixels = reference.data();
+                    {
+                        auto buffer = bitmap.LockBuffer(BitmapBufferAccessMode::Write);
+                        auto reference = buffer.CreateReference();
+                        BYTE* pixels = reference.data();
 
-                    auto plane = buffer.GetPlaneDescription(0);
+                        auto plane = buffer.GetPlaneDescription(0);
 
                         for (unsigned int i = 0; i < subtitle->num_rects; i++)
                         {
                             auto rect = subtitle->rects[i];
 
-                        for (int y = 0; y < rect->h; y++)
-                        {
-                            for (int x = 0; x < rect->w; x++)
+                            for (int y = 0; y < rect->h; y++)
                             {
-                                auto inPointer = rect->data[0] + y * rect->linesize[0] + x;
-                                auto color = inPointer[0];
-                                if (color < rect->nb_colors)
+                                for (int x = 0; x < rect->w; x++)
                                 {
-                                    auto rgba = ((uint32_t*)rect->data[1])[color];
-                                    auto outPointer = pixels + plane.StartIndex + plane.Stride * ((y + rect->y) - offsetY) + 4 * ((x + rect->x) - offsetX);
-                                    ((uint32_t*)outPointer)[0] = rgba;
-                                }
-                                else
-                                {
-                                    OutputDebugString(L"Error: Illegal subtitle color.");
+                                    auto inPointer = rect->data[0] + y * rect->linesize[0] + x;
+                                    auto color = inPointer[0];
+                                    if (color < rect->nb_colors)
+                                    {
+                                        auto rgba = ((uint32_t*)rect->data[1])[color];
+                                        auto outPointer = pixels + plane.StartIndex + plane.Stride * ((y + rect->y) - offsetY) + 4 * ((x + rect->x) - offsetX);
+                                        ((uint32_t*)outPointer)[0] = rgba;
+                                    }
+                                    else
+                                    {
+                                        OutputDebugString(L"Error: Illegal subtitle color.");
+                                    }
                                 }
                             }
                         }
                     }
 
-                    cue.SoftwareBitmap(SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8, BitmapAlphaMode::Premultiplied));
+                    auto converted = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8, BitmapAlphaMode::Premultiplied);
+                    cue.SoftwareBitmap(converted);
                     cue.Position(cuePosition);
                     cue.Extent(cueSize);
                 }
@@ -208,8 +212,8 @@ private:
         std::lock_guard lock(mutex);
         try
         {
-            auto cue = args.Cue().as<ImageCue>();
-            if (!cue.Id().empty() && cue.SoftwareBitmap())
+            auto cue = args.Cue().try_as<ImageCue>();
+            if (cue && !cue.Id().empty())
             {
                 cue.SoftwareBitmap(GetDummyBitmap());
             }
