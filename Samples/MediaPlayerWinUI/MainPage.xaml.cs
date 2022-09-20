@@ -62,7 +62,6 @@ namespace MediaPlayerWinUI
             Config = new MediaSourceConfig();
 
             this.InitializeComponent();
-
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
             AutoDetect.IsOn = true;

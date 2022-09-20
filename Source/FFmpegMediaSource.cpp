@@ -685,6 +685,7 @@ namespace winrt::FFmpegInteropX::implementation
                 startingRequestedToken = mss.Starting({ get_weak(), &FFmpegMediaSource::OnStarting });
                 sampleRequestedToken = mss.SampleRequested({ get_weak(), &FFmpegMediaSource::OnSampleRequested });
                 switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
+                closeToken = mss.Closed({ get_weak(), &FFmpegMediaSource::MediaStreamSourceClosed });
             }
         }
 
@@ -1378,6 +1379,7 @@ namespace winrt::FFmpegInteropX::implementation
             mss.Starting(startingRequestedToken);
             mss.SampleRequested(sampleRequestedToken);
             mss.SwitchStreamsRequested(switchStreamRequestedToken);
+            mss.Closed(closeToken);
             mss = nullptr;
         }
 
@@ -1662,6 +1664,11 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         return hr;
+    }
+
+    void FFmpegMediaSource::MediaStreamSourceClosed(MediaStreamSource const& sender, MediaStreamSourceClosedEventArgs const& args)
+    {
+        Close();
     }
 
     void FFmpegMediaSource::OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args)

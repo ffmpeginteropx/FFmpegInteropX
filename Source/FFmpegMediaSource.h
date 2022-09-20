@@ -159,6 +159,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::shared_ptr<MediaSampleProvider> CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
         std::shared_ptr<MediaSampleProvider> CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
         HRESULT ParseOptions(PropertySet const& ffmpegOptions);
+        void MediaStreamSourceClosed(MediaStreamSource const& sender, MediaStreamSourceClosedEventArgs const& args);
         void OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args);
         void OnSampleRequested(MediaStreamSource const& sender, MediaStreamSourceSampleRequestedEventArgs const& args);
         void CheckVideoDeviceChanged();
@@ -199,14 +200,14 @@ namespace winrt::FFmpegInteropX::implementation
         ByteOrderMark streamByteOrderMark;
         winrt::com_ptr<MediaSourceConfig> config = { nullptr };
 
-
     private:
-
 
         MediaStreamSource mss = { nullptr };
         winrt::event_token startingRequestedToken{};
         winrt::event_token sampleRequestedToken{};
         winrt::event_token switchStreamRequestedToken{};
+        winrt::event_token closeToken{};
+
         MediaPlaybackItem playbackItem = { nullptr };
         IVector<FFmpegInteropX::AudioStreamInfo> audioStrInfos = { nullptr };
         IVector<FFmpegInteropX::SubtitleStreamInfo> subtitleStrInfos = { nullptr };
@@ -224,7 +225,6 @@ namespace winrt::FFmpegInteropX::implementation
 
         winrt::event_token audioTracksChangedToken{};
         winrt::event_token subtitlePresentationModeChangedToken{};
-
 
         IVectorView<FFmpegInteropX::VideoStreamInfo> videoStreamInfos = { nullptr };
         IVectorView<FFmpegInteropX::AudioStreamInfo> audioStreamInfos = { nullptr };
