@@ -262,7 +262,7 @@ private:
             auto startTime = enteredCue.StartTime();
             for (auto cue : SubtitleTrack.Cues())
             {
-                if (cue.StartTime() + cue.Duration() < startTime)
+                if (cue.StartTime() < startTime)
                 {
                     remove.push_back(cue);
                 }
