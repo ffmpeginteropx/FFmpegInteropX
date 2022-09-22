@@ -102,7 +102,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         ///<summary>Enables or disables the read-ahead buffer.</summary>
         ///<remarks>This value can be changed any time during playback.</remarks>
-        PROPERTY(ReadAheadBufferEnabled, bool, true);
+        PROPERTY(ReadAheadBufferEnabled, bool, false);
 
         ///<summary>The maximum number of bytes to buffer ahead per stream.</summary>
         ///<remarks>This value can be changed any time during playback.</remarks>
