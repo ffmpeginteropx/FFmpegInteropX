@@ -11,8 +11,6 @@ extern "C"
 #include <libavutil/hwcontext_d3d11va.h>
 }
 
-
-
 using namespace winrt::Windows::Media::Core;
 
 class D3D11VideoSampleProvider : public UncompressedVideoSampleProvider, public std::enable_shared_from_this<D3D11VideoSampleProvider>
@@ -69,7 +67,7 @@ public:
                 // init texture pool, fail if we did not get a device ptr
                 if (device && deviceContext)
                 {
-                    texturePool = std::unique_ptr< TexturePool>(new TexturePool(device, 5));
+                    texturePool = std::unique_ptr<TexturePool>(new TexturePool(device, 5));
                 }
                 else
                 {
@@ -81,18 +79,14 @@ public:
             {
                 //cast the AVframe to texture 2D
                 auto decodedTexture = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
-                ID3D11Texture2D* renderTexture = nullptr;
+                winrt::com_ptr<ID3D11Texture2D> renderTexture;
                 //happy path:decoding and rendering on same GPU
-                hr = texturePool->GetCopyTexture(decodedTexture, &renderTexture);
-                deviceContext->CopySubresourceRegion(renderTexture, 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
+                hr = texturePool->GetCopyTexture(decodedTexture, renderTexture);
+                deviceContext->CopySubresourceRegion(renderTexture.get(), 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
                 deviceContext->Flush();
 
                 //create a IDXGISurface from the shared texture
-                IDXGISurface* finalSurface = NULL;
-                if (SUCCEEDED(hr))
-                {
-                    hr = renderTexture->QueryInterface(&finalSurface);
-                }
+                auto finalSurface = renderTexture.as<IDXGISurface>();
 
                 //get the IDirect3DSurface pointer
                 if (SUCCEEDED(hr))
@@ -106,8 +100,6 @@ public:
                     ReadFrameProperties(avFrame, framePts);
                 }
 
-                SAFE_RELEASE(finalSurface);
-                SAFE_RELEASE(renderTexture);
                 if (decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
                 {
                     decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
@@ -168,23 +160,14 @@ public:
 
     void ReturnTextureToPool(MediaStreamSample const& sample)
     {
-        IDXGISurface* surface = NULL;
-        ID3D11Texture2D* texture = NULL;
-
-        HRESULT hr = DirectXInteropHelper::GetDXGISurface(sample.Direct3D11Surface(), &surface);
+        winrt::com_ptr<IDXGISurface> surface;
+        HRESULT hr = DirectXInteropHelper::GetDXGISurface(sample.Direct3D11Surface(), surface);
 
         if (SUCCEEDED(hr))
         {
-            hr = surface->QueryInterface(&texture);
-        }
-
-        if (SUCCEEDED(hr))
-        {
+            auto texture = surface.as<ID3D11Texture2D>();
             texturePool->ReturnTexture(texture);
         }
-
-        SAFE_RELEASE(surface);
-        SAFE_RELEASE(texture);
     }
 
     void ReleaseTrackedSamples()
@@ -220,7 +203,9 @@ public:
         trackedSamples.clear();
     }
 
-    virtual HRESULT SetHardwareDevice(ID3D11Device* newDevice, ID3D11DeviceContext* newDeviceContext, AVBufferRef* avHardwareContext) override
+    virtual HRESULT SetHardwareDevice(winrt::com_ptr<ID3D11Device> newDevice,
+        winrt::com_ptr<ID3D11DeviceContext> newDeviceContext,
+        AVBufferRef* avHardwareContext) override
     {
         HRESULT hr = S_OK;
 
@@ -231,13 +216,12 @@ public:
         {
             if (isCompatible)
             {
-                bool needsReinit = device;
+                bool needsReinit = device.get();
 
-                SAFE_RELEASE(device);
-                SAFE_RELEASE(deviceContext);
+                // must explicitly reset com_ptr before assigning new value
+                device = nullptr;
+                deviceContext = nullptr;
 
-                newDevice->AddRef();
-                newDeviceContext->AddRef();
                 device = newDevice;
                 deviceContext = newDeviceContext;
 
@@ -253,8 +237,8 @@ public:
             }
             else
             {
-                SAFE_RELEASE(device);
-                SAFE_RELEASE(deviceContext);
+                device = nullptr;
+                deviceContext = nullptr;
                 av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
 
                 if (swCodec)
@@ -317,7 +301,7 @@ public:
         return hr;
     }
 
-    HRESULT CheckHWAccelerationCompatible(ID3D11Device* newDevice, bool& isCompatible)
+    HRESULT CheckHWAccelerationCompatible(winrt::com_ptr<ID3D11Device> newDevice, bool& isCompatible)
     {
         HRESULT hr = S_OK;
         isCompatible = true;
@@ -333,12 +317,10 @@ public:
                     D3D11_DECODER_PROFILE_AV1_VLD_PROFILE2
                 };
                 auto requiredProfile = av1Profiles[m_pAvCodecCtx->profile];
-
-                ID3D11VideoDevice* videoDevice = NULL;
-                hr = newDevice->QueryInterface(&videoDevice);
+                auto videoDevice = newDevice.try_as<ID3D11VideoDevice>();
 
                 // check profile exists
-                if (SUCCEEDED(hr))
+                if (videoDevice)
                 {
                     isCompatible = false;
                     GUID profile;
@@ -376,7 +358,6 @@ public:
                     }
                 }
 
-                SAFE_RELEASE(videoDevice);
             }
 
             if (FAILED(hr))
@@ -388,16 +369,21 @@ public:
         return hr;
     }
 
-    static HRESULT InitializeHardwareDeviceContext(MediaStreamSource sender, AVBufferRef* avHardwareContext, ID3D11Device** outDevice, ID3D11DeviceContext** outDeviceContext, IMFDXGIDeviceManager* deviceManager, HANDLE* outDeviceHandle)
+    static HRESULT InitializeHardwareDeviceContext(MediaStreamSource sender,
+        AVBufferRef* avHardwareContext,
+        winrt::com_ptr<ID3D11Device>& outDevice,
+        winrt::com_ptr<ID3D11DeviceContext>& outDeviceContext,
+        const winrt::com_ptr<IMFDXGIDeviceManager>& deviceManager,
+        HANDLE* outDeviceHandle)
     {
-        ID3D11Device* device = nullptr;
-        ID3D11DeviceContext* deviceContext = nullptr;
-        ID3D11VideoDevice* videoDevice = nullptr;
-        ID3D11VideoContext* videoContext = nullptr;
+        winrt::com_ptr<ID3D11Device> device;
+        winrt::com_ptr<ID3D11DeviceContext> deviceContext;
+        winrt::com_ptr<ID3D11VideoDevice> videoDevice;
+        winrt::com_ptr<ID3D11VideoContext> videoContext;
 
-        HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(deviceManager, &device, &deviceContext, &videoDevice, outDeviceHandle);
+        HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(deviceManager, device, deviceContext, videoDevice, outDeviceHandle);
 
-        if (SUCCEEDED(hr)) hr = deviceContext->QueryInterface(&videoContext);
+        if (SUCCEEDED(hr)) hr = deviceContext->QueryInterface(videoContext.put());
 
         auto dataBuffer = (AVHWDeviceContext*)avHardwareContext->data;
         auto internalDirectXHwContext = (AVD3D11VADeviceContext*)dataBuffer->hwctx;
@@ -406,30 +392,26 @@ public:
         {
             // give ownership to FFmpeg
 
-            internalDirectXHwContext->device = device;
-            internalDirectXHwContext->device_context = deviceContext;
-            internalDirectXHwContext->video_device = videoDevice;
-            internalDirectXHwContext->video_context = videoContext;
+            device.copy_to(&internalDirectXHwContext->device);
+            deviceContext.copy_to(&internalDirectXHwContext->device_context);
+            videoDevice.copy_to(&internalDirectXHwContext->video_device);
+            videoContext.copy_to(&internalDirectXHwContext->video_context);
         }
         else
         {
             // release
-            SAFE_RELEASE(device);
-            SAFE_RELEASE(deviceContext);
-            SAFE_RELEASE(videoDevice);
-            SAFE_RELEASE(videoContext);
+            device = nullptr;
+            deviceContext = nullptr;
+            videoDevice = nullptr;
+            videoContext = nullptr;
         }
 
         if (SUCCEEDED(hr))
         {
             // multithread interface seems to be optional
-            ID3D10Multithread* multithread;
-            device->QueryInterface(&multithread);
+            auto multithread = device.try_as<ID3D10Multithread>();
             if (multithread)
-            {
                 multithread->SetMultithreadProtected(TRUE);
-                multithread->Release();
-            }
         }
 
         if (SUCCEEDED(hr))
@@ -440,10 +422,8 @@ public:
         if (SUCCEEDED(hr))
         {
             // addref and hand out pointers
-            device->AddRef();
-            deviceContext->AddRef();
-            *outDevice = device;
-            *outDeviceContext = deviceContext;
+            outDevice = device;
+            outDeviceContext = deviceContext;
         }
 
         return hr;

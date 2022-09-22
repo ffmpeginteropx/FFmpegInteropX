@@ -1441,9 +1441,10 @@ namespace winrt::FFmpegInteropX::implementation
         if (deviceHandle && deviceManager)
             deviceManager->CloseDeviceHandle(deviceHandle);
 
-        SAFE_RELEASE(device);
-        SAFE_RELEASE(deviceContext);
-        SAFE_RELEASE(deviceManager);
+        device = nullptr;
+        deviceContext = nullptr;
+        deviceManager = nullptr;
+
         if (PlaybackSession())
         {
             PlaybackSession().PositionChanged(sessionPositionEvent);
@@ -1681,8 +1682,9 @@ namespace winrt::FFmpegInteropX::implementation
         {
             if (isFirstSeek && avHardwareContext)
             {
-                HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, &deviceManager);
-                if (SUCCEEDED(hr)) hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
+                HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, deviceManager);
+                if (SUCCEEDED(hr))
+                    hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, device, deviceContext, deviceManager, &deviceHandle);
 
                 if (SUCCEEDED(hr))
                 {
@@ -1706,8 +1708,8 @@ namespace winrt::FFmpegInteropX::implementation
                         stream->FreeHardwareDevice();
                     }
                     av_buffer_unref(&avHardwareContext);
-                    SAFE_RELEASE(device);
-                    SAFE_RELEASE(deviceContext);
+                    device = nullptr;
+                    deviceContext = nullptr;
                 }
             }
 
@@ -1792,8 +1794,8 @@ namespace winrt::FFmpegInteropX::implementation
         {
             hr = S_OK;
             av_buffer_unref(&avHardwareContext);
-            SAFE_RELEASE(device);
-            SAFE_RELEASE(deviceContext);
+            device = nullptr;
+            deviceContext = nullptr;
 
             if (deviceHandle && deviceManager)
                 deviceManager->CloseDeviceHandle(deviceHandle);
@@ -1807,7 +1809,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             if (SUCCEEDED(hr))
             {
-                hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, &device, &deviceContext, deviceManager, &deviceHandle);
+                hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, device, deviceContext, deviceManager, &deviceHandle);
             }
 
             if (SUCCEEDED(hr))
