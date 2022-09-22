@@ -392,10 +392,10 @@ public:
         {
             // give ownership to FFmpeg
 
-            internalDirectXHwContext->device = device.get();
-            internalDirectXHwContext->device_context = deviceContext.get();
-            internalDirectXHwContext->video_device = videoDevice.get();
-            internalDirectXHwContext->video_context = videoContext.get();
+            device.copy_to(&internalDirectXHwContext->device);
+            deviceContext.copy_to(&internalDirectXHwContext->device_context);
+            videoDevice.copy_to(&internalDirectXHwContext->video_device);
+            videoContext.copy_to(&internalDirectXHwContext->video_context);
         }
         else
         {
