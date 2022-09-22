@@ -29,7 +29,7 @@ public:
         MediaSourceConfig const& config,
         int index,
         TimedMetadataKind const& ptimedMetadataKind,
-        winrt::Windows::UI::Core::CoreDispatcher const& pdispatcher)
+        winrt::Windows::System::DispatcherQueue const& pdispatcher)
         : CompressedSampleProvider(reader,
             avFormatCtx,
             avCodecCtx,
@@ -50,8 +50,7 @@ public:
 
         if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
         {
-            if (Metadata::ApiInformation::IsEnumNamedValuePresent(L"Windows.Media.Core.TimedMetadataKind", L"ImageSubtitle") &&
-                timedMetadataKind == TimedMetadataKind::ImageSubtitle)
+            if (timedMetadataKind == TimedMetadataKind::ImageSubtitle)
             {
                 SubtitleTrack.CueEntered(weak_handler(this, &SubtitleProvider::OnCueEntered));
             }
@@ -230,39 +229,7 @@ private:
         std::lock_guard lock(mutex);
         try
         {
-            if (Metadata::ApiInformation::IsApiContractPresent(L"Windows.Phone.PhoneContract", 1, 0))
-            {
-                /*This is a fix only to work around a bug in windows phones: when 2 different cues have the exact same start position and length, the runtime panics and throws an exception
-                The problem has only been observed in external subtitles so far, and only on phones. Might also be present on ARM64 devices*/
-                bool individualCue = true;
-                if (this->timedMetadataKind == TimedMetadataKind::Subtitle)
-                {
-                    for (int i = SubtitleTrack.Cues().Size() - 1; i >= 0; i--)
-                    {
-                        auto existingSub = SubtitleTrack.Cues().GetAt(i).as<TimedTextCue>();
-
-                        if (existingSub.StartTime() == cue.StartTime() && existingSub.Duration() == cue.Duration())
-                        {
-                            individualCue = false;
-                            auto timedTextCue = cue.as<TimedTextCue>();
-                            for (auto l : timedTextCue.Lines())
-                            {
-                                existingSub.Lines().Append(l);
-                            }
-                        }
-
-                        break;
-                    }
-                }
-                if (individualCue)
-                {
-                    DispatchCueToTrack(cue);
-                }
-            }
-            else
-            {
-                DispatchCueToTrack(cue);
-            }
+            DispatchCueToTrack(cue);
         }
         catch (...)
         {
@@ -338,8 +305,7 @@ private:
     {
         if (dispatcher != nullptr && IsEnabled())
         {
-            dispatcher.RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal,
-                weak_handler(this, &SubtitleProvider::StartDispatcherTimer));
+            dispatcher.TryEnqueue(weak_handler(this, &SubtitleProvider::StartDispatcherTimer));
         }
         else
         {
@@ -351,7 +317,7 @@ private:
     {
         if (timer == nullptr)
         {
-            timer = winrt::Windows::UI::Xaml::DispatcherTimer();
+            timer = dispatcher.CreateTimer();
             timer.Interval(TimeSpan(10000));
             timer.Tick(weak_handler(this, &SubtitleProvider::OnTick));
         }
@@ -527,8 +493,7 @@ public:
 
             if (dispatcher)
             {
-                dispatcher.RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal,
-                    weak_handler(this, &SubtitleProvider::ClearSubtitles));
+                dispatcher.TryEnqueue(weak_handler(this, &SubtitleProvider::ClearSubtitles));
             }
             else
             {
@@ -545,8 +510,8 @@ private:
     std::vector<IMediaCue> pendingRefCues;
     std::vector<IMediaCue> pendingChangedDurationCues;
     TimedMetadataKind timedMetadataKind;
-    winrt::Windows::UI::Core::CoreDispatcher dispatcher = { nullptr };
-    winrt::Windows::UI::Xaml::DispatcherTimer timer = { nullptr };
+    winrt::Windows::System::DispatcherQueue dispatcher = { nullptr };
+    winrt::Windows::System::DispatcherQueueTimer timer = { nullptr };
     TimeSpan newDelay{};
     std::vector<std::pair<IMediaCue, long long>> negativePositionCues;
     bool isPreviousCueInfiniteDuration = false;

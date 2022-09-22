@@ -103,9 +103,11 @@ namespace FFmpegInteropX
         StreamDisposition Disposition{ get; };
         Int64 Bitrate{ get; };
         Boolean IsDefault{ get; };
-    }
+    };
 
+#ifdef CPPCX
     [bindable]
+#endif
     runtimeclass AudioStreamInfo : IStreamInfo
     {
         AudioStreamInfo(
@@ -128,9 +130,11 @@ namespace FFmpegInteropX
         Int32 BitsPerSample{ get; };
 
         DecoderEngine DecoderEngine{ get; };
-    }
+    };
 
+#ifdef CPPCX
     [bindable]
+#endif
     runtimeclass VideoStreamInfo : IStreamInfo
     {
         VideoStreamInfo(
@@ -164,9 +168,11 @@ namespace FFmpegInteropX
 
         HardwareDecoderStatus HardwareDecoderStatus{ get; };
         DecoderEngine DecoderEngine{ get; };
-    }
+    };
 
+#ifdef CPPCX
     [bindable]
+#endif
     runtimeclass SubtitleStreamInfo : IStreamInfo
     {
         SubtitleStreamInfo(
@@ -185,7 +191,9 @@ namespace FFmpegInteropX
         Windows.Media.Core.TimedMetadataTrack SubtitleTrack{ get; };
     }
 
+#ifdef CPPCX
     [bindable]
+#endif
     runtimeclass ChapterInfo
     {
          ChapterInfo(
@@ -209,7 +217,9 @@ namespace FFmpegInteropX
         String ImageType { get; };
     };
 
+#ifdef CPPCX
     [bindable]
+#endif
     runtimeclass FormatInfo
     {
          FormatInfo(
@@ -229,9 +239,11 @@ namespace FFmpegInteropX
     runtimeclass BasicVideoEffect : Windows.Media.Effects.IBasicVideoEffect
     {
         BasicVideoEffect();
-    }
+    };
 
+#ifdef CPPCX
     [bindable]
+#endif
     runtimeclass CharacterEncoding
     {
         CharacterEncoding(Int32 codePage, String name, String description);
@@ -240,7 +252,7 @@ namespace FFmpegInteropX
         Int32 WindowsCodePage{ get; };
         static Windows.Foundation.Collections.IVectorView<CharacterEncoding> GetCharacterEncodings();
         static CharacterEncoding GetSystemDefault();
-    }
+    };
 
     runtimeclass CodecRequiredEventArgs
     {
@@ -260,9 +272,11 @@ namespace FFmpegInteropX
 
         ///<summary>This will open the Windows Store page of the proposed codec extension.</summary>
         Windows.Foundation.IAsyncOperation<Boolean> OpenStorePageAsync();
-    }
+    };
 
+#ifdef CPPCX
     [bindable]
+#endif
     runtimeclass VideoFrame : Windows.Foundation.IClosable
     {
         Windows.Storage.Streams.IBuffer PixelData { get; };
@@ -282,7 +296,7 @@ namespace FFmpegInteropX
         UInt32 DisplayHeight{ get; };
 
         Double DisplayAspectRatio{ get; };
-    }
+    };
 
     static runtimeclass CodecChecker
     {
@@ -309,14 +323,16 @@ namespace FFmpegInteropX
         static Windows.Foundation.IAsyncOperation<Boolean> OpenVP9VideoExtensionStoreEntryAsync();
 
         static Windows.Foundation.IAsyncOperation<Boolean> OpenHEVCVideoExtensionStoreEntryAsync();
-    }
+    };
 
     interface ILogProvider
     {
         void Log(LogLevel level, String message);
     };
 
+#ifdef CPPCX
     [bindable]
+#endif
     runtimeclass FrameGrabber : Windows.Foundation.IClosable
     {
         /// <summary>The duration of the video stream.</summary>
@@ -372,22 +388,24 @@ namespace FFmpegInteropX
 
         /// <summary>Extracts the next consecutive video frame in the file. Returns <c>null</c> at end of stream.</summary>
         Windows.Foundation.IAsyncOperation<VideoFrame> ExtractNextVideoFrameAsync();
-    }
+    };
 
     static runtimeclass FFmpegInteropLogging
     {
         static void SetLogLevel(LogLevel level);
         static void SetLogProvider(ILogProvider logProvider);
         static void SetDefaultLogProvider();
-    }
+    };
 
+#ifdef CPPCX
     [bindable]
+#endif
     runtimeclass MediaThumbnailData : Windows.Foundation.IClosable
     {
         MediaThumbnailData(Windows.Storage.Streams.IBuffer buffer, String extension);
         Windows.Storage.Streams.IBuffer  Buffer{get; };
         String Extension{ get; };
-    }
+    };
 
     [default_interface]
     runtimeclass AvSubtitleEventArgs
@@ -405,6 +423,7 @@ namespace FFmpegInteropX
     }
 
     [bindable]
+#endif
     runtimeclass FFmpegMediaSource : Windows.Foundation.IClosable
     {
         Int32 PrimarySubtitleIndex { get; set; };
@@ -521,10 +540,12 @@ namespace FFmpegInteropX
         ///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
         ///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this .</remarks>
         Windows.Media.Playback.MediaPlaybackSession PlaybackSession{ get; set; };
-    }
+    };
 
     [default_interface]
+#ifdef CPPCX
     [bindable]
+#endif
     runtimeclass MediaSourceConfig
     {
         MediaSourceConfig();
@@ -668,7 +689,7 @@ namespace FFmpegInteropX
 
         ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
         Boolean DownmixAudioStreamsToStereo{ get; set; };
-    }
+    };
 
     [default_interface]
     runtimeclass ReferenceCue : Windows.Media.Core.IMediaCue
@@ -677,7 +698,9 @@ namespace FFmpegInteropX
     }
 
     [default_interface]
+#ifdef CPPCX
     [bindable]
+#endif
     runtimeclass VideoEffectConfiguration
     {
         VideoEffectConfiguration();
@@ -708,9 +731,5 @@ namespace FFmpegInteropX
 
         [default_overload]
         void AddVideoEffect(Windows.Media.Playback.MediaPlayer player, Boolean isOptional);
-
-        void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player);
-
-        void AddVideoEffect(Windows.UI.Xaml.Controls.MediaElement player, Boolean isOptional);
-    }
+    };
 }
