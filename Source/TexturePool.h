@@ -6,9 +6,8 @@ class TexturePool
 {
 public:
 
-    TexturePool(ID3D11Device* device, int initialPoolSize)
+    TexturePool(winrt::com_ptr<ID3D11Device> device, int initialPoolSize)
     {
-        device->AddRef();
         this->device = device;
         this->initialPoolSize = initialPoolSize;
     }
@@ -17,7 +16,7 @@ public:
     ~TexturePool()
     {
         Clear();
-        SAFE_RELEASE(device);
+        device = nullptr;
     }
 
 public:
@@ -57,11 +56,11 @@ public:
         desc_shared.BindFlags = desc.BindFlags;
 
         // pre-allocate pool
-        ID3D11Texture2D* copy_tex;
+        winrt::com_ptr<ID3D11Texture2D> copy_tex;
         HRESULT hr = S_OK;
         for (int i = 0; i < initialPoolSize; i++)
         {
-            hr = device->CreateTexture2D(&desc_shared, NULL, &copy_tex);
+            hr = device->CreateTexture2D(&desc_shared, NULL, copy_tex.put());
 
             if (SUCCEEDED(hr))
             {
@@ -75,7 +74,7 @@ public:
         return hr;
     }
 
-    HRESULT GetCopyTexture(ID3D11Texture2D* sourceTexture, ID3D11Texture2D** result)
+    HRESULT GetCopyTexture(ID3D11Texture2D* sourceTexture, winrt::com_ptr<ID3D11Texture2D>& result)
     {
         HRESULT hr = S_OK;
 
@@ -92,20 +91,20 @@ public:
             if (pool.size() > 0)
             {
                 //use pool texture, if available
-                *result = pool.back();
+                result = pool.back();
                 pool.pop_back();
             }
             else
             {
                 //otherwise create a new texture
-                hr = device->CreateTexture2D(&desc_shared, NULL, result);
+                hr = device->CreateTexture2D(&desc_shared, NULL, result.put());
             }
         }
 
         return hr;
     }
 
-    void ReturnTexture(ID3D11Texture2D* texture)
+    void ReturnTexture(winrt::com_ptr<ID3D11Texture2D> texture)
     {
         D3D11_TEXTURE2D_DESC desc;
         texture->GetDesc(&desc);
@@ -113,13 +112,13 @@ public:
         if (desc.Width == desc_shared.Width && desc.Height == desc_shared.Height && desc.Format == desc_shared.Format)
         {
             pool.push_back(texture);
-            texture->AddRef();
         }
     }
 
 private:
-    ID3D11Device* device = NULL;
-    std::vector<ID3D11Texture2D*> pool;
+
+    winrt::com_ptr<ID3D11Device> device;
+    std::vector<winrt::com_ptr<ID3D11Texture2D>> pool;
     D3D11_TEXTURE2D_DESC desc_shared{};
     int initialPoolSize = 0;
 };

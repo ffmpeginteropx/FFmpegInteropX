@@ -115,7 +115,10 @@ public:
     virtual void DisableFilters() {};//override for disabling filters in sample providers;
     virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& videoEncodingProperties, bool isCompressedFormat);
     virtual void Detach();
-    virtual HRESULT SetHardwareDevice(ID3D11Device* newDevice, ID3D11DeviceContext* newDeviceContext, AVBufferRef* avHardwareContext)
+
+    virtual HRESULT SetHardwareDevice(winrt::com_ptr<ID3D11Device> newDevice,
+        winrt::com_ptr<ID3D11DeviceContext> newDeviceContext,
+        AVBufferRef* avHardwareContext)
     {
         UNREFERENCED_PARAMETER(newDevice);
         UNREFERENCED_PARAMETER(newDeviceContext);
@@ -129,8 +132,8 @@ public:
         {
             av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
         }
-        SAFE_RELEASE(device);
-        SAFE_RELEASE(deviceContext);
+        device = nullptr;
+        deviceContext = nullptr;
     }
 
     virtual void NotifyCreateSource()
@@ -202,8 +205,8 @@ protected:
     INT64 m_startOffset = 0;
     double timeBaseFactor = 0;
     DecoderEngine decoder = DecoderEngine::FFmpegSoftwareDecoder;
-    ID3D11Device* device = NULL;
-    ID3D11DeviceContext* deviceContext = NULL;
+    winrt::com_ptr<ID3D11Device> device = NULL;
+    winrt::com_ptr<ID3D11DeviceContext> deviceContext = NULL;
 
 };
 
