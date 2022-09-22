@@ -479,6 +479,7 @@ public:
 
     void ClearSubtitles()
     {
+        std::lock_guard lock(mutex);
         try
         {
             pendingCues.clear();
