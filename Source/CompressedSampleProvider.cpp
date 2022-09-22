@@ -98,22 +98,18 @@ IMediaStreamDescriptor CompressedSampleProvider::CreateStreamDescriptor()
     else
     {
         auto audioStreamDescriptor = AudioStreamDescriptor(audioEncodingProperties);
-        if (winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(L"Windows.Media.Core.AudioStreamDescriptor", L"TrailingEncoderPadding"))
+        if (m_pAvStream->codecpar->initial_padding > 0)
         {
-            if (m_pAvStream->codecpar->initial_padding > 0)
-            {
-                audioStreamDescriptor.LeadingEncoderPadding((unsigned int)m_pAvStream->codecpar->initial_padding);
-            }
-            if (m_pAvStream->codecpar->trailing_padding > 0)
-            {
-                audioStreamDescriptor.TrailingEncoderPadding((unsigned int)m_pAvStream->codecpar->trailing_padding);
-            }
+            audioStreamDescriptor.LeadingEncoderPadding((unsigned int)m_pAvStream->codecpar->initial_padding);
+        }
+        if (m_pAvStream->codecpar->trailing_padding > 0)
+        {
+            audioStreamDescriptor.TrailingEncoderPadding((unsigned int)m_pAvStream->codecpar->trailing_padding);
         }
 
         // Set channel layout
         if (m_pAvCodecCtx->channel_layout > 0 && m_pAvCodecCtx->channel_layout < 0x20000000)
         {
-
             audioEncodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value((UINT32)m_pAvCodecCtx->channel_layout));
         }
 
