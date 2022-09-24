@@ -4,7 +4,7 @@
 
 ## Welcome to FFmpegInteropX
 
-FFmpegInteropX is an open-source project that aims to provide an easy way to use **FFmpeg** in **Windows 10/11 UWP Apps**. This allows you to decode a lot of formats that are not natively supported on Windows 10/11.
+FFmpegInteropX is an open-source project that aims to provide an easy way to use **FFmpeg** as a decoder library in **Windows 10/11 UWP Apps**. This allows you to decode a lot of formats that are not natively supported on Windows 10/11. Please note that only decoding is supported currently, we provide no encoding or transcoding support.
 
 FFmpegInteropX is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
 
@@ -19,6 +19,9 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
     - Support for AV1 hardware and software decoding
     - Dynamic detection of AV1 hardware decoding capabilities
 - [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 
+  - 5.1.100
+    - FFmpeg 5.1.1 build for UWP platform
+    - Includes unofficial "init_threads" option to speedup DASH stream loading
   - 5.0.0
     - FFmpeg 5.0.0 build for UWP platform
   - 4.4.100
