@@ -49,7 +49,7 @@ if [ "$variant" == "UWP" ]; then
         --enable-d3d11va \
         --disable-dxva2 \
         --disable-programs \
-        --extra-ldflags='-APPCONTAINER WindowsApp.lib' \
+        --extra-ldflags='-APPCONTAINER WindowsApp.lib ' \
         "
 
     cflags="\
@@ -115,7 +115,10 @@ if [ "$platform" = "ARM64" ]; then
     "
 fi
 
-eval $DIR/Libs/ffmpeg/configure $configureArgs || exit 1
+if [ "$4" != "-SkipConfigure" ]
+then
+	eval $DIR/Libs/ffmpeg/configure $configureArgs || exit 1
+fi
 
 make -j$(nproc) || exit
 make install || exit
