@@ -228,6 +228,11 @@ public:
         return hr;
     }
 
+    bool IsInitialized() override
+    {
+        return isInitialized;
+    }
+
 public:
     virtual ~VideoFilter()
     {
