@@ -1,13 +1,9 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
@@ -89,13 +85,38 @@ namespace MediaPlayerWinUI
             {
                 await TryOpenLastFile();
             }
+
+            if (args.Key == VirtualKey.Enter && (Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift) & CoreVirtualKeyStates.Down)
+               == CoreVirtualKeyStates.Down && StorageApplicationPermissions.FutureAccessList.Entries.Count == 1)
+            {
+                await TryOpenLastFile();
+            }
+
+            if (args.Handled)
+            {
+                return;
+            }
+
             if (args.Key == VirtualKey.V && !args.Handled)
             {
                 if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
                 {
-                    playbackItem.VideoTracks.SelectedIndex =
+                    bool reverse = (Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
+                    int index = reverse ?
+                        (playbackItem.VideoTracks.SelectedIndex - 1) % playbackItem.VideoTracks.Count :
                         (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
+                    playbackItem.VideoTracks.SelectedIndex = index;
                 }
+            }
+
+            if (args.Key == VirtualKey.Right && FFmpegMSS != null && mediaPlayer.PlaybackSession.CanSeek)
+            {
+                mediaPlayer.PlaybackSession.Position += TimeSpan.FromSeconds(5);
+            }
+
+            if (args.Key == VirtualKey.Left && FFmpegMSS != null && mediaPlayer.PlaybackSession.CanSeek)
+            {
+                mediaPlayer.PlaybackSession.Position -= TimeSpan.FromSeconds(5);
             }
         }
 
