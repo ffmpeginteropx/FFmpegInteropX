@@ -1677,7 +1677,7 @@ namespace winrt::FFmpegInteropX::implementation
     {
         std::lock_guard lock(mutex);
         MediaStreamSourceStartingRequest request = args.Request();
-
+        
         try
         {
             if (isFirstSeek && avHardwareContext)
@@ -1931,7 +1931,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return S_OK;
         }
-        else if (position == currentPosition && position == lastPosition && position == lastSeek && !isFirstSeekAfterStreamSwitch)
+        else if (position == currentPosition && position == lastPosition && position == lastSeek && !isFirstSeekAfterStreamSwitch && position.count() > 0)
         {
             DebugMessage(L"Skipping double seek request.\n");
             return S_OK;
