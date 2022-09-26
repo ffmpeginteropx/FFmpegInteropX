@@ -123,12 +123,12 @@ namespace MediaPlayerCS
             // wait for app window to be re-activated
             var tcs = new TaskCompletionSource<object>();
             WindowActivatedEventHandler handler = (s, e) =>
-               {
-                   if (e.WindowActivationState != CoreWindowActivationState.Deactivated)
-                   {
-                       tcs.TrySetResult(null);
-                   }
-               };
+            {
+                if (e.WindowActivationState != CoreWindowActivationState.Deactivated)
+                {
+                    tcs.TrySetResult(null);
+                }
+            };
             Window.Current.Activated += handler;
             await tcs.Task;
             Window.Current.Activated -= handler;
@@ -281,7 +281,7 @@ namespace MediaPlayerCS
 
             try
             {
-                using (var frame = await frameGrabber.ExtractVideoFrameAsync(mediaPlayer.PlaybackSession.Position, exactSeek))
+                var frame = await frameGrabber.ExtractVideoFrameAsync(mediaPlayer.PlaybackSession.Position, exactSeek);
                 {
                     var filePicker = new FileSavePicker();
                     filePicker.SettingsIdentifier = "VideoFrame";

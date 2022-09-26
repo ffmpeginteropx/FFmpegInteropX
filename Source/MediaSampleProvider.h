@@ -121,7 +121,10 @@ class FFmpegReader;
     virtual void DisableFilters() {};//override for disabling filters in sample providers;
     virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& videoEncodingProperties, bool isCompressedFormat);
     virtual void Detach();
-    virtual HRESULT SetHardwareDevice(ID3D11Device* newDevice, ID3D11DeviceContext* newDeviceContext, AVBufferRef* avHardwareContext)
+
+    virtual HRESULT SetHardwareDevice(winrt::com_ptr<ID3D11Device> newDevice,
+        winrt::com_ptr<ID3D11DeviceContext> newDeviceContext,
+        AVBufferRef* avHardwareContext)
     {
         UNREFERENCED_PARAMETER(newDevice);
         UNREFERENCED_PARAMETER(newDeviceContext);
@@ -135,8 +138,8 @@ class FFmpegReader;
         {
             av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
         }
-        SAFE_RELEASE(device);
-        SAFE_RELEASE(deviceContext);
+        device = nullptr;
+        deviceContext = nullptr;
     }
 
     virtual void NotifyCreateSource()
@@ -192,23 +195,22 @@ private:
     winrt::Windows::Media::Core::IMediaStreamDescriptor m_streamDescriptor = nullptr;
     HardwareDecoderStatus hardwareDecoderStatus;
 
-    protected:
-        // The FFmpeg context. Because they are complex types
-        // we declare them as internal so they don't get exposed
-        // externally
-        MediaSourceConfig m_config = nullptr;
-        std::shared_ptr<FFmpegReader> m_pReader;
-        AVFormatContext* m_pAvFormatCtx = NULL;
-        AVCodecContext* m_pAvCodecCtx = NULL;
-
-        IStreamInfo streamInfo = nullptr;
-        bool m_isEnabled = false;
-        bool m_isDiscontinuous = false;
-        int m_streamIndex = 0;
-        double timeBaseFactor = 0;
-        DecoderEngine decoder = DecoderEngine::FFmpegSoftwareDecoder;
-        ID3D11Device* device = NULL;
-        ID3D11DeviceContext* deviceContext = NULL;
+protected:
+    // The FFmpeg context. Because they are complex types
+    // we declare them as internal so they don't get exposed
+    // externally
+    MediaSourceConfig m_config = nullptr;
+    std::shared_ptr<FFmpegReader> m_pReader;
+    AVFormatContext* m_pAvFormatCtx = NULL;
+    AVCodecContext* m_pAvCodecCtx = NULL;
+    IStreamInfo streamInfo = nullptr;
+    bool m_isEnabled = false;
+    bool m_isDiscontinuous = false;
+    int m_streamIndex = 0;
+    double timeBaseFactor = 0;
+    DecoderEngine decoder = DecoderEngine::FFmpegSoftwareDecoder;
+    winrt::com_ptr<ID3D11Device> device = NULL;
+    winrt::com_ptr<ID3D11DeviceContext> deviceContext = NULL;
 
 };
 

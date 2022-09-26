@@ -421,7 +421,7 @@ namespace FFmpegInteropX
         Windows.Storage.Streams.IBuffer Buffer{ get; };
         Windows.Storage.Streams.IBuffer Buffer2{ get; };
     }
-
+#ifdef CPPCX
     [bindable]
 #endif
     runtimeclass FFmpegMediaSource : Windows.Foundation.IClosable
