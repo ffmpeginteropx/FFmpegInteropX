@@ -1,4 +1,4 @@
-﻿//*****************************************************************************
+//*****************************************************************************
 //
 //	Copyright 2015 Microsoft Corporation
 //
@@ -26,5 +26,7 @@
 #include <collection.h>
 #include <ppltasks.h>
 #include <pplawait.h>
-
+#include <d2d1.h>
+#include <d2d1_1.h>
+#pragma comment(lib, "D2d1.lib")
 #include "App.xaml.h"

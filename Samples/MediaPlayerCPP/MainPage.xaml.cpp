@@ -53,12 +53,11 @@ MainPage::MainPage()
 {
     Config = ref new MediaSourceConfig();
     InitializeComponent();
-    Config->VideoEffectProcessor = ref new VideoEffectProcessorExample();
+    VideoEffectConfiguration = ref new FFmpegInteropX::VideoEffectConfiguration();
+    Config->VideoEffectProcessor = ref new VideoEffectProcessorExample(VideoEffectConfiguration);
     // Show the control panel on startup so user can start opening media
     Splitter->IsPaneOpen = true;
     AutoDetect->IsOn = true;
-
-    VideoEffectConfiguration = ref new FFmpegInteropX::VideoEffectConfiguration();
 
     mediaPlayer = ref new MediaPlayer();
     mediaPlayer->AudioCategory = Windows::Media::Playback::MediaPlayerAudioCategory::Movie;
