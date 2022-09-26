@@ -515,4 +515,14 @@ namespace winrt::FFmpegInteropX::implementation
     {
         m_DownmixAudioStreamsToStereo = value;
     }
+
+    winrt::FFmpegInteropX::IVideoFrameProcessor MediaSourceConfig::VideoEffectProcessor()
+    {
+        return m_videoEffectsProcessor;
+    }
+
+    void MediaSourceConfig::VideoEffectProcessor(winrt::FFmpegInteropX::IVideoFrameProcessor const& value)
+    {
+        m_videoEffectsProcessor = value;
+    }
 }

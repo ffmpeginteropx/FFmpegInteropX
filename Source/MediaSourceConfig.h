@@ -192,6 +192,9 @@ namespace winrt::FFmpegInteropX::implementation
         bool DownmixAudioStreamsToStereo();
         void DownmixAudioStreamsToStereo(bool value);
 
+        winrt::FFmpegInteropX::IVideoFrameProcessor VideoEffectProcessor();
+        void VideoEffectProcessor(winrt::FFmpegInteropX::IVideoFrameProcessor const& value);
+
     public:
         //internal:
         bool IsFrameGrabber;
@@ -243,6 +246,7 @@ namespace winrt::FFmpegInteropX::implementation
         hstring m_FFmpegAudioFilters{};
         bool m_DownmixAudioStreamsToStereo = false;
         CharacterEncoding m_CharacterEncoding{ nullptr };
+        winrt::FFmpegInteropX::IVideoFrameProcessor m_videoEffectsProcessor = { nullptr };
     };
 }
 namespace winrt::FFmpegInteropX::factory_implementation

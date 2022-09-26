@@ -24,6 +24,7 @@
 #include "pch.h"
 #include "MainPage.xaml.h"
 #include <collection.h>
+#include "VideoEffectProcessorExample.h"
 
 using namespace FFmpegInteropX;
 using namespace MediaPlayerCPP;
@@ -52,7 +53,7 @@ MainPage::MainPage()
 {
     Config = ref new MediaSourceConfig();
     InitializeComponent();
-
+    Config->VideoEffectProcessor = ref new VideoEffectProcessorExample();
     // Show the control panel on startup so user can start opening media
     Splitter->IsPaneOpen = true;
     AutoDetect->IsOn = true;

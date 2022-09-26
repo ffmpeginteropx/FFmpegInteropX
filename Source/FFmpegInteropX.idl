@@ -651,6 +651,9 @@ namespace FFmpegInteropX
 
         ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
         Boolean DownmixAudioStreamsToStereo{ get; set; };
+
+        ///<summary>Allows feeding in DirectX based video frame processors directly into the decoding pipeline. Only works for Software and DirectX decoder. When using passthroughts, this property is ignored.</summary>
+        IVideoFrameProcessor VideoEffectProcessor{ get; set; };
     };
 
     [default_interface]

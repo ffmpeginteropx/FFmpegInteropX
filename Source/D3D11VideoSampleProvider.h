@@ -92,6 +92,11 @@ public:
                 if (SUCCEEDED(hr))
                 {
                     *surface = DirectXInteropHelper::GetSurface(finalSurface);
+
+                    if (m_config.VideoEffectProcessor())
+                    {
+                        m_config.VideoEffectProcessor().ProcessFrame(*surface, *surface);
+                    }
                 }
 
                 if (SUCCEEDED(hr))

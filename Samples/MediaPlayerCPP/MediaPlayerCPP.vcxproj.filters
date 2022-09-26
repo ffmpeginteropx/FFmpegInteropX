@@ -17,6 +17,7 @@
     <ClCompile Include="MainPage.xaml.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="FloatToDoubleConverter.cpp" />
+    <ClCompile Include="VideoEffectProcessorExample.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -24,6 +25,7 @@
     <ClInclude Include="MainPage.xaml.h" />
     <ClInclude Include="FloatToDoubleConverter.h" />
     <ClInclude Include="TimeSpanToDoubleConverter.h" />
+    <ClInclude Include="VideoEffectProcessorExample.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">
