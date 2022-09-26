@@ -694,4 +694,9 @@ namespace FFmpegInteropX
         [default_overload]
         void AddVideoEffect(Windows.Media.Playback.MediaPlayer player, Boolean isOptional);
     };
+
+    interface IVideoFrameProcessor
+    {
+        void ProcessFrame(Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface  inputFrame, Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface  outputFrame);
+    };
 }
