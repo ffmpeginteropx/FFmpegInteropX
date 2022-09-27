@@ -78,7 +78,7 @@ function Build-Platform {
         Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Output\FFmpegInterop\$Platform\*
     }
 		
-	if ($targetArch -eq "x86")
+	if ($targetArch -eq "x86" -And $false)
 	{
 	    MSBuild.exe $SolutionDir\Source\FFmpegInteropX.DotNet.csproj `
 			/restore `
