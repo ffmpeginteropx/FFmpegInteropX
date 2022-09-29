@@ -17,6 +17,8 @@ class UncompressedFrameProvider sealed
     AVFormatContext* m_pAvFormatCtx = NULL;
     AVCodecContext* m_pAvCodecCtx = NULL;
     std::shared_ptr<AbstractEffectFactory> m_effectFactory;
+    bool isEof = false;
+    bool isFlushedAfterEof = false;
     winrt::hstring pendingEffects{};
 
 public:
@@ -89,6 +91,21 @@ public:
         while (SUCCEEDED(hr))
         {
             hr = filter->GetFrame(*avFrame);
+            if (hr == AVERROR_EOF)
+            {
+                if (!isEof)
+                {
+                    isEof = true;
+                }
+                else if (isEof && isFlushedAfterEof)
+                {
+                    // There is no way to flush a filter, but filters return EOF after being drained.
+                    // If we are flushed after EOF, and then new samples are requested,
+                    // set EAGAIN to request a new frame being inserted to filter.
+                    // That way we can "recover" a filter from EOF mode.
+                    hr = AVERROR(EAGAIN);
+                }
+            }
             if (hr == AVERROR(EAGAIN))
             {
                 // filter requires next source frame.
@@ -135,6 +152,12 @@ public:
             }
         }
 
+        if (SUCCEEDED(hr))
+        {
+            isEof = false;
+            isFlushedAfterEof = false;
+        }
+
         return hr;
     }
 
@@ -174,6 +197,15 @@ public:
         }
 
         return hr;
+    }
+
+    void Flush()
+    {
+        // We cannot flush filter, but remember we are flushed after EOF so we can recover
+        if (filter && filter->IsInitialized() && isEof)
+        {
+            isFlushedAfterEof = true;
+        }
     }
 };
 
