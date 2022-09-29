@@ -112,12 +112,19 @@ public:
                 }
                 else if (hr == AVERROR_EOF)
                 {
-                    // feed NULL packet to filter to enter draining mode on EOF
-                    hr = filter->AddFrame(NULL);
-                    if (FAILED(hr))
+                    if (filter->IsInitialized())
                     {
-                        // add frame failed. clear filter to prevent crashes.
-                        filter = nullptr;
+                        // feed NULL packet to filter to enter draining mode on EOF
+                        hr = filter->AddFrame(NULL);
+                        if (FAILED(hr))
+                        {
+                            // add frame failed. clear filter to prevent crashes.
+                            filter = nullptr;
+                        }
+                    }
+                    else
+                    {
+                        // we cannot initialize from NULL frame
                     }
                 }
             }
