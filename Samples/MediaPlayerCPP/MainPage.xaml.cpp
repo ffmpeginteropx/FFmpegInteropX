@@ -240,15 +240,27 @@ task<void> MainPage::ExtractFrame()
         filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
         filePicker->DefaultFileExtension = ".jpg";
         filePicker->FileTypeChoices->Insert("Jpeg file", ref new Platform::Collections::Vector<String^>(1, ".jpg"));
+        filePicker->FileTypeChoices->Insert("Png file", ref new Platform::Collections::Vector<String^>(1, ".png"));
+        filePicker->FileTypeChoices->Insert("Bmp file", ref new Platform::Collections::Vector<String^>(1, ".bmp"));
 
         // Show file picker so user can select a file
         auto file = co_await filePicker->PickSaveFileAsync();
         if (file != nullptr)
         {
-            auto stream = co_await file->OpenAsync(FileAccessMode::ReadWrite);
-            // encode frame as jpeg file
-            co_await frame->EncodeAsJpegAsync(stream);
-            stream = nullptr;
+            auto outputStream = co_await file->OpenAsync(FileAccessMode::ReadWrite);
+            if (file->FileType == ".jpg")
+            {
+                co_await frame->EncodeAsJpegAsync(outputStream);
+            }
+            else if (file->FileType == ".png")
+            {
+                co_await frame->EncodeAsPngAsync(outputStream);
+            }
+            else
+            {
+                co_await frame->EncodeAsBmpAsync(outputStream);
+            }
+            outputStream = nullptr;
 
             // launch file after creation
             auto launched = co_await Windows::System::Launcher::LaunchFileAsync(file);

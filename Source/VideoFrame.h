@@ -54,7 +54,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             encoderValue.SetPixelData(
                 BitmapPixelFormat::Bgra8,
-                BitmapAlphaMode::Ignore,
+                BitmapAlphaMode::Straight,
                 pixelWidth,
                 pixelHeight,
                 72,
