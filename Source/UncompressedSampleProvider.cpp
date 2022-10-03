@@ -203,8 +203,6 @@ void UncompressedSampleProvider::Flush()
 {
     MediaSampleProvider::Flush();
 
-    frameProvider->Flush();
-
     // after seek we need to get first packet pts again
     hasNextFramePts = false;
 }
