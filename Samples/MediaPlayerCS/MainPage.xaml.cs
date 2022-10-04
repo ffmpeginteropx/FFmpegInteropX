@@ -281,6 +281,7 @@ namespace MediaPlayerCS
 
             try
             {
+                using (frameGrabber)
                 using (var frame = await frameGrabber.ExtractVideoFrameAsync(mediaPlayer.PlaybackSession.Position, exactSeek))
                 {
                     var filePicker = new FileSavePicker();
@@ -294,20 +295,22 @@ namespace MediaPlayerCS
                     var file = await filePicker.PickSaveFileAsync();
                     if (file != null)
                     {
-                        var outputStream = await file.OpenAsync(FileAccessMode.ReadWrite);
-                        if (file.FileType == ".jpg")
+                        using (var outputStream = await file.OpenAsync(FileAccessMode.ReadWrite))
                         {
-                        await frame.EncodeAsJpegAsync(outputStream);
+                            if (file.FileType == ".jpg")
+                            {
+                                await frame.EncodeAsJpegAsync(outputStream);
+                            }
+                            else if (file.FileType == ".png")
+                            {
+                                await frame.EncodeAsPngAsync(outputStream);
+                            }
+                            else
+                            {
+                                await frame.EncodeAsBmpAsync(outputStream);
+                            }
                         }
-                        else if(file.FileType == ".png")
-                        {
-                            await frame.EncodeAsPngAsync(outputStream);
-                        }
-                        else
-                        {
-                            await frame.EncodeAsBmpAsync(outputStream);
-                        }
-                        outputStream.Dispose();
+
                         bool launched = await Windows.System.Launcher.LaunchFileAsync(file, new LauncherOptions() { DisplayApplicationPicker = false });
                         if (!launched)
                         {
@@ -315,7 +318,6 @@ namespace MediaPlayerCS
                         }
                     }
                 }
-                frameGrabber?.Dispose();
             }
             catch (Exception ex)
             {
