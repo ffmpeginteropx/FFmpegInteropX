@@ -34,9 +34,15 @@ configureArgs="\
     --enable-libdav1d  \
     --enable-openssl \
     --target-os=win32 \
-    --pkg-config=$DIR/Intermediate/pkg-config.exe \
     --prefix=$outDir \
 "
+
+if [ "$WSL_DISTRO_NAME" == "" ]; then
+    configureArgs="\
+        $configureArgs \
+        --pkg-config=$DIR/Intermediate/pkg-config.exe \
+        "
+fi
 
 cflags="-MD -DLZMA_API_STATIC"
 

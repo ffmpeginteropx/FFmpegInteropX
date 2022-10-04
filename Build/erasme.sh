@@ -15,24 +15,11 @@ echo "Make \$variant \$platform \$sharedOrStatic $intDir $outDir"
 mkdir -p $intDir
 cd $intDir
 
-configureArgs="\
-    --toolchain=msvc \
-    --disable-doc \
-    --arch=\${arch[\$platform]} \
-    --enable-\${sharedOrStatic} \
-    --enable-cross-compile \
-    --enable-debug \
-    --enable-zlib \
-    --enable-bzlib \
-    --enable-lzma \
-    --enable-libxml2 \
-    --enable-iconv \
-    --enable-libdav1d  \
-    --enable-openssl \
-    --target-os=win32 \
-    --prefix=$outDir \
-"
-#    --pkg-config=$DIR/Intermediate/pkg-config.exe \
+if [ "$WSL_DISTRO_NAME" != "" ]; then
+    echo "Using WSL: [$WSL_DISTRO_NAME]"
+else
+    echo "no WSL"
+fi
 
 cflags="-MD -DLZMA_API_STATIC"
 
