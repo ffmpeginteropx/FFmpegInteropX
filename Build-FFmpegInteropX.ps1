@@ -13,7 +13,7 @@ param(
 
         Note. The PlatformToolset will be inferred from this value ('v141', 'v142'...)
     #>
-    [version] $VcVersion = '14.2',
+    [version] $VcVersion = '14.3',
 
     <#
         Example values:
