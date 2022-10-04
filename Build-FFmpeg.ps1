@@ -160,12 +160,14 @@ function Build-Platform {
     if (! $SkipBuildLibs) {
         # Build pkg-config fake
         if (! $SkipBuildPkgConfigFake) {
-            invoke MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
+            Invoke MSBuild.exe $SolutionDir\Libs\PkgConfigFake\PkgConfigFake.csproj `
                 /p:OutputPath="$SolutionDir\Intermediate\" `
                 /p:Configuration=$Configuration `
                 /p:Platform=${Env:\PreferredToolArchitecture}
 
-            if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
+            if ($lastexitcode -ne 0) {
+                throw "Failed to build PkgConfigFake."
+            }
         }
 
         if ($ClearBuildFolders) {
@@ -186,7 +188,7 @@ function Build-Platform {
             @('libiconv', 'libiconv', 'iconv'),
             @('liblzma', 'liblzma', 'lzma'),
             @('libxml2', 'libxml2', 'libxml2')
-            )
+        )
 
         # Build all libraries
         $libdefs | ForEach-Object {
@@ -210,7 +212,7 @@ function Build-Platform {
             $intDir = "$build\int\$project\"
             $outDir = "$build\$project\"
 
-            invoke MSBuild.exe $SolutionDir\Libs\$folder\SMP\$project.vcxproj `
+            Invoke MSBuild.exe $SolutionDir\Libs\$folder\SMP\$project.vcxproj `
                 /p:OutDir=$outDir `
                 /p:IntDir=$intDir `
                 /p:Configuration=$configurationName `
@@ -264,13 +266,13 @@ function Build-Platform {
             $oldPath = $env:Path
             $env:Path += ";$SolutionDir\Tools\perl\perl\bin;C$SolutionDir\Tools\perl\c\bin;$SolutionDir\Tools\nasm"
             $oldDir = get-location
-            set-location "$ssldir"
+            Set-Location "$ssldir"
 
             try {
-                invoke perl $SolutionDir\Libs\openssl\Configure $opensslPlatform --prefix=$build --openssldir=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests no-secure-memory
-                invoke nmake clean
-                invoke nmake
-                invoke nmake install_sw
+                Invoke perl $SolutionDir\Libs\openssl\Configure $opensslPlatform --prefix=$build --openssldir=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests no-secure-memory
+                Invoke nmake clean
+                Invoke nmake
+                Invoke nmake install_sw
             } finally {
                 set-location $oldDir
                 $env:Path = $oldPath
@@ -289,7 +291,7 @@ function Build-Platform {
         Write-Host ""
         Write-Host "Building Library dav1d..."
         Write-Host ""
-        invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
+        Invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
 
         if ($WindowsTarget -eq "Desktop") {
 
@@ -310,7 +312,7 @@ function Build-Platform {
 
             New-Item -ItemType Directory -Force $build\int\x265
 
-            invoke cmd.exe /C $SolutionDir\Libs\build-scripts\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
+            Invoke cmd.exe /C $SolutionDir\Libs\build-scripts\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
 
             Copy-Item $build\int\x265\x265-static.lib $build\lib\x265.lib -Force
             Copy-Item $build\int\x265\include\* $build\include\ -Force
@@ -331,7 +333,7 @@ function Build-Platform {
 
             New-Item -ItemType Directory -Force $build\x264
 
-            invoke $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
+            Invoke $BashExe --login -c "cd \$build\x264 && CC=cl ..\..\..\..\Libs\x264\configure --host=${x264Arch}-mingw64 --prefix=\$build --disable-cli --enable-static && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
 
             #Build libvpx
             Write-Host
@@ -355,7 +357,7 @@ function Build-Platform {
 
             New-Item -ItemType Directory -Force $build\libvpx
 
-            invoke $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
+            Invoke $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
 
             Move-Item $build\lib\$cmakePlatform\vpxmd.lib $build\lib\vpx.lib -Force
             Remove-Item $build\lib\$cmakePlatform -Force -Recurse
@@ -367,19 +369,17 @@ function Build-Platform {
     Write-Host "Building FFmpeg..."
     Write-Host
 
-    if ($SkipConfigureFFmpeg)
-    {
+    if ($SkipConfigureFFmpeg) {
         $ffmpegparam = "-SkipConfigure"
     }
-    else
-    {
+    else {
         $ffmpegparam = ""
     }
 
     if ($WslDistro) {
 
     } else {
-        invoke $BashExe --login -x $SolutionDir\Build\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic $ffmpegparam
+        Invoke $BashExe --login -x $SolutionDir\Build\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic $ffmpegparam
     }
 
     # Copy PDBs to built binaries dir
@@ -435,7 +435,7 @@ if (! (Test-Path $PSScriptRoot\Libs\ffmpeg\configure)) {
 
 # Check build tools
 
-if (!(Test-Path $BashExe)) {
+if (!(Test-Path $BashExe) -and !$WslDistro) {
     $msysFound = $false
     @( 'C:\msys64', 'C:\msys' ) | ForEach-Object {
         if (Test-Path $_) {
@@ -464,12 +464,12 @@ if (!(Test-Path $BashExe)) {
     }
 }
 
-if (! (Test-Path "$PSScriptRoot\Tools\nasm")) {
+if (! (Test-Path "$PSScriptRoot\Tools\nasm") -and !$WslDistro) {
     Write-Warning "NASM not found. Installing..."
     .\Build\InstallTools.ps1 nasm
 }
 
-if (! (Test-Path "$PSScriptRoot\Tools\perl")) {
+if (! (Test-Path "$PSScriptRoot\Tools\perl") -and !$WslDistro) {
     Write-Warning "Perl not found. Installing..."
     .\Build\InstallTools.ps1 perl
 }
@@ -481,7 +481,7 @@ if (! (Test-Path "$PSScriptRoot\Tools\perl")) {
     -products * `
     -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64
 
-if (!$vsLatestPath){
+if (!$vsLatestPath) {
     Write-Error "Visual Studio not found!"
 }
 
@@ -495,14 +495,11 @@ Write-Host "Platform Toolset: [$platformToolSet]"
 $env:MSYS2_PATH_TYPE = 'inherit'
 
 # Check for nuget.exe if package shall be created
-if ($NugetPackageVersion)
-{
-    try
-    {
+if ($NugetPackageVersion) {
+    try {
         nuget > $null
     }
-    catch
-    {
+    catch {
         Write-Error "nuget.exe not found."
     }
 }
@@ -510,23 +507,19 @@ if ($NugetPackageVersion)
 $start = Get-Date
 $success = 1
 
-if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
-{
+if ($AllowParallelBuilds -and $Platforms.Count -gt 1) {
     $processes = @{}
     $clear = ""
-    if ($ClearBuildFolders)
-    {
+    if ($ClearBuildFolders) {
         $clear = "-ClearBuildFolders"
     }
 
     $addparams = ""
-    if ($SkipBuildLibs)
-    {
+    if ($SkipBuildLibs) {
         $addparams += " -SkipBuildLibs"
     }
 
-    if ($SkipConfigureFFmpeg)
-    {
+    if ($SkipConfigureFFmpeg) {
         $addparams += " -SkipConfigureFFmpeg"
     }
 
@@ -539,19 +532,17 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
         $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
         $processes[$platform] = $proc
 
-        # only build PkgConfigFake once
+        # Only build PkgConfigFake once
         $skipPkgConfig = "-SkipBuildPkgConfigFake"
     }
 
     foreach ($platform in $Platforms) {
         $processes[$platform].WaitForExit();
         $result = $processes[$platform].ExitCode;
-        if ($result -eq 0)
-        {
+        if ($result -eq 0) {
             Write-Host "Build for $platform succeeded!"
         }
-        else
-        {
+        else {
             Write-Host "Build for $platform failed with ErrorCode: $result"
             $success = 0
         }
@@ -561,8 +552,7 @@ else
 {
     # Save orignal environment variables
     $oldEnv = @{};
-    foreach ($item in Get-ChildItem env:)
-    {
+    foreach ($item in Get-ChildItem Env:) {
         $oldEnv.Add($item.Name, $item.Value);
     }
 
@@ -572,8 +562,7 @@ else
 
         $logFile = "${PSScriptRoot}\Intermediate\FFmpeg$WindowsTarget\Build_" + $timestamp + "_$platform.log"
 
-        try
-        {
+        try {
             Build-Platform `
                 -SolutionDir "${PSScriptRoot}\" `
                 -Platform $platform `
@@ -588,37 +577,31 @@ else
                 -SkipBuildLibs $SkipBuildLibs `
                 -SkipConfigureFFmpeg $SkipConfigureFFmpeg
         }
-        catch
-        {
+        catch {
             Write-Warning "Error occured: $PSItem"
             $success = 0
             Break
         }
-        finally
-        {
+        finally {
             try { Stop-Transcript } catch { }
 
             # Restore orignal environment variables
-            foreach ($item in $oldEnv.GetEnumerator())
-            {
+            foreach ($item in $oldEnv.GetEnumerator()) {
                 Set-Item -Path env:"$($item.Name)" -Value $item.Value
             }
-            foreach ($item in Get-ChildItem env:)
-            {
-                if (!$oldEnv.ContainsKey($item.Name))
-                {
+            foreach ($item in Get-ChildItem Env:) {
+                if (!$oldEnv.ContainsKey($item.Name)) {
                      Remove-Item -Path env:"$($item.Name)"
                 }
             }
         }
 
-        # only build PkgConfigFake once
+        # Only build PkgConfigFake once
         $BuildPkgConfigFake = $false;
     }
 }
 
-if ($success -and $NugetPackageVersion)
-{
+if ($success -and $NugetPackageVersion) {
     nuget pack .\Build\FFmpegInteropX.FFmpegUWP.nuspec `
         -Properties "id=FFmpegInteropX.FFmpegUWP;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
@@ -631,13 +614,14 @@ Write-Host 'Time elapsed'
 Write-Host ('{0}' -f ((Get-Date) - $start))
 Write-Host
 
-if ($success)
-{
+if ($success) {
     Write-Host 'Build succeeded!'
 
 }
-else
-{
+else {
     Write-Warning 'Build failed!'
     Exit 1
 }
+
+#TODO: delete
+#Invoke 'C:\Windows\system32\wsl.exe' '-d' $WslDistro '--exec' '/bin/bash' '--' 'Build/erasme.sh'

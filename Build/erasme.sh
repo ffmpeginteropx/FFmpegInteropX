@@ -38,8 +38,6 @@ cflags="-MD -DLZMA_API_STATIC"
 
 echo "cflags:"
 echo $cflags
-echo 'configureArgs:'
-echo $configureArgs
 echo 'DIR:'
 echo $DIR
 echo 'intDir:'
