@@ -26,7 +26,7 @@ param(
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
-    
+
     [System.IO.DirectoryInfo] $VSInstallerFolder = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer",
 
     # Set the search criteria for VSWHERE.EXE.
@@ -41,7 +41,7 @@ param(
     [string] $FFmpegInteropXUrl = 'https://github.com/ffmpeginteropx/FFmpegInteropX.git',
 
     [string] $FFmpegInteropXBranch = $(git branch --show-current),
-    
+
     [string] $FFmpegInteropXCommit = $(git --git-dir Libs/ffmpeg/.git rev-parse HEAD)
 )
 
@@ -77,7 +77,7 @@ function Build-Platform {
         Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Intermediate\FFmpegInterop\$Platform\*
         Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Output\FFmpegInterop\$Platform\*
     }
-		
+
 	if ($targetArch -eq "x86")
 	{
 	    MSBuild.exe $SolutionDir\Source\FFmpegInteropX.DotNet.csproj `
@@ -87,7 +87,7 @@ function Build-Platform {
 			/p:Platform=AnyCPU `
 			/p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
 			/p:useenv=true
-			
+
 		if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.DotNet.csproj." }
 	}
 
