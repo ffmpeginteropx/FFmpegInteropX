@@ -586,6 +586,9 @@ else
             try { Stop-Transcript } catch { }
 
             # Restore orignal environment variables
+            #TODO:
+            # $mienv | %{ Set-Item -Path "Env:$($_.Name)" -Value $_.Value }
+            # ls env: | select Name,Value -OutVariable mienv
             foreach ($item in $oldEnv.GetEnumerator()) {
                 Set-Item -Path env:"$($item.Name)" -Value $item.Value
             }
