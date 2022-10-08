@@ -1,3 +1,9 @@
+<#
+NOTES:
+- https://stackoverflow.com/questions/66269200/build-libdav1d-using-microsoft-visual-c
+#>
+
+
 param(
 
     [ValidateSet('x86', 'x64', 'ARM', 'ARM64')]
