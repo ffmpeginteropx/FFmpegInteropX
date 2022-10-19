@@ -15,7 +15,7 @@ Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "MediaPlayerWinUI (Package)"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MediaPlayerWinUI", "Samples\MediaPlayerWinUI\MediaPlayerWinUI.csproj", "{A2090993-F4FF-4C76-BCE1-6EF7905F0EA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FFmpegInteropX.UnitTests", "FFmpegInteropX.UnitTests\FFmpegInteropX.UnitTests.csproj", "{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FFmpegInteropX.UnitTests", "FFmpegInteropX.UnitTests\FFmpegInteropX.UnitTests.csproj", "{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -189,8 +189,8 @@ Global
 		{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}.Debug|ARM.Build.0 = Debug|Any CPU
 		{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}.Debug|ARM64.ActiveCfg = Debug|Any CPU
 		{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}.Debug|ARM64.Build.0 = Debug|Any CPU
-		{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}.Debug|x64.Build.0 = Debug|Any CPU
+		{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}.Debug|x64.ActiveCfg = Debug|x64
+		{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}.Debug|x64.Build.0 = Debug|x64
 		{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}.Debug|x86.Build.0 = Debug|Any CPU
 		{2E97CF92-8A51-4C99-80B7-A675FC26A0B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
