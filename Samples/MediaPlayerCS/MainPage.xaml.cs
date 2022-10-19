@@ -288,13 +288,28 @@ namespace MediaPlayerCS
                     filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
                     filePicker.DefaultFileExtension = ".jpg";
                     filePicker.FileTypeChoices["Jpeg file"] = new[] { ".jpg" }.ToList();
+                    filePicker.FileTypeChoices["Png file"] = new[] { ".png" }.ToList();
+                    filePicker.FileTypeChoices["Bmp file"] = new[] { ".bmp" }.ToList();
 
                     var file = await filePicker.PickSaveFileAsync();
                     if (file != null)
                     {
-                        var outputStream = await file.OpenAsync(FileAccessMode.ReadWrite);
-                        await frame.EncodeAsJpegAsync(outputStream);
-                        outputStream.Dispose();
+                        using (var outputStream = await file.OpenAsync(FileAccessMode.ReadWrite))
+                        {
+                            if (file.FileType == ".jpg")
+                            {
+                                await frame.EncodeAsJpegAsync(outputStream);
+                            }
+                            else if (file.FileType == ".png")
+                            {
+                                await frame.EncodeAsPngAsync(outputStream);
+                            }
+                            else
+                            {
+                                await frame.EncodeAsBmpAsync(outputStream);
+                            }
+                        }
+
                         bool launched = await Windows.System.Launcher.LaunchFileAsync(file, new LauncherOptions() { DisplayApplicationPicker = false });
                         if (!launched)
                         {
@@ -302,7 +317,6 @@ namespace MediaPlayerCS
                         }
                     }
                 }
-                frameGrabber?.Dispose();
             }
             catch (Exception ex)
             {

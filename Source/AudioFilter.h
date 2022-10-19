@@ -219,4 +219,9 @@ public:
 
         return hr;
     }
+
+    bool IsInitialized() override
+    {
+        return isInitialized;
+    }
 };

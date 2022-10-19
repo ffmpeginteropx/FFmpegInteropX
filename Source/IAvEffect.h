@@ -12,4 +12,6 @@ public:
     virtual HRESULT AddFrame(AVFrame* frame) = 0;
 
     virtual HRESULT GetFrame(AVFrame* frame) = 0;
+
+    virtual bool IsInitialized() = 0;
 };
