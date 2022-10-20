@@ -50,14 +50,12 @@ public:
 
         if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
         {
-            if (timedMetadataKind == TimedMetadataKind::ImageSubtitle)
-            {
-                SubtitleTrack.CueEntered(weak_handler(this, &SubtitleProvider::OnCueEntered));
-            }
             SubtitleTrack.TrackFailed(weak_handler(this, &SubtitleProvider::OnTrackFailed));
         }
 
         InitializeStreamInfo();
+
+        m_pAvStream->discard = AVDISCARD_DEFAULT;
 
         return S_OK;
     }
@@ -83,97 +81,94 @@ public:
 
     virtual void QueuePacket(AVPacket* packet) override
     {
-        if (m_isEnabled)
+        try
         {
-            try
+            TimeSpan position = ConvertPosition(packet->pts);
+            TimeSpan duration = ConvertDuration(packet->duration);
+
+            auto cue = CreateCue(packet, &position, &duration);
+            if (cue && position.count() >= 0)
             {
-                TimeSpan position = ConvertPosition(packet->pts);
-                TimeSpan duration = ConvertDuration(packet->duration);
-
-                auto cue = CreateCue(packet, &position, &duration);
-                if (cue && position.count() >= 0)
+                // apply subtitle delay
+                position += SubtitleDelay;
+                if (position.count() < 0)
                 {
-                    // apply subtitle delay
-                    position += SubtitleDelay;
-                    if (position.count() < 0)
-                    {
-                        negativePositionCues.emplace_back(cue, position.count());
-                        position = std::chrono::seconds(0);
-                    }
+                    negativePositionCues.emplace_back(cue, position.count());
+                    position = std::chrono::seconds(0);
+                }
 
-                    // clip previous extended duration cue, if there is one
-                    if (lastExtendedDurationCue && m_config.PreventModifiedSubtitleDurationOverlap() &&
-                        lastExtendedDurationCue.StartTime() + lastExtendedDurationCue.Duration() > position)
+                // clip previous extended duration cue, if there is one
+                if (lastExtendedDurationCue && m_config.PreventModifiedSubtitleDurationOverlap() &&
+                    lastExtendedDurationCue.StartTime() + lastExtendedDurationCue.Duration() > position)
+                {
+                    auto diff = position - (lastExtendedDurationCue.StartTime() + lastExtendedDurationCue.Duration());
+                    auto newDuration = lastExtendedDurationCue.Duration() + diff;
+                    if (newDuration.count() > 0)
                     {
-                        auto diff = position - (lastExtendedDurationCue.StartTime() + lastExtendedDurationCue.Duration());
-                        auto newDuration = lastExtendedDurationCue.Duration() + diff;
-                        if (newDuration.count() > 0)
+                        lastExtendedDurationCue.Duration() = newDuration;
+                        if (!m_config.as<implementation::MediaSourceConfig>().get()->IsExternalSubtitleParser)
                         {
-                            lastExtendedDurationCue.Duration() = newDuration;
-                            if (!m_config.as<implementation::MediaSourceConfig>().get()->IsExternalSubtitleParser)
-                            {
-                                pendingChangedDurationCues.push_back(lastExtendedDurationCue);
-                            }
+                            pendingChangedDurationCues.push_back(lastExtendedDurationCue);
                         }
-                        else
-                        {
-                            // weird subtitle timings, just leave it as is
-                        }
-                    }
-
-                    lastExtendedDurationCue = nullptr;
-
-                    if (duration.count() < 0)
-                    {
-                        duration = TimeSpan(InfiniteDuration);
                     }
                     else
                     {
-                        if (m_config.AdditionalSubtitleDuration().count() != 0)
-                        {
-                            duration += m_config.AdditionalSubtitleDuration();
-                            lastExtendedDurationCue = cue;
-                        }
-                        if (duration < m_config.MinimumSubtitleDuration())
-                        {
-                            duration = m_config.MinimumSubtitleDuration();
-                            lastExtendedDurationCue = cue;
-                        }
+                        // weird subtitle timings, just leave it as is
+                    }
+                }
+
+                lastExtendedDurationCue = nullptr;
+
+                if (duration.count() < 0)
+                {
+                    duration = TimeSpan(InfiniteDuration);
+                }
+                else
+                {
+                    if (m_config.AdditionalSubtitleDuration().count() != 0)
+                    {
+                        duration += m_config.AdditionalSubtitleDuration();
+                        lastExtendedDurationCue = cue;
+                    }
+                    if (duration < m_config.MinimumSubtitleDuration())
+                    {
+                        duration = m_config.MinimumSubtitleDuration();
+                        lastExtendedDurationCue = cue;
+                    }
+                }
+
+                cue.StartTime(position);
+                cue.Duration(duration);
+                AddCue(cue);
+
+                if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
+                {
+                    isPreviousCueInfiniteDuration = duration.count() >= InfiniteDuration;
+                }
+                else
+                {
+                    // fixup infinite duration cues for external subs
+                    if (isPreviousCueInfiniteDuration)
+                    {
+                        infiniteDurationCue.Duration(TimeSpan(cue.StartTime() - infiniteDurationCue.StartTime()));
                     }
 
-                    cue.StartTime(position);
-                    cue.Duration(duration);
-                    AddCue(cue);
-
-                    if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
+                    if (duration.count() >= InfiniteDuration)
                     {
-                        isPreviousCueInfiniteDuration = duration.count() >= InfiniteDuration;
+                        isPreviousCueInfiniteDuration = true;
+                        infiniteDurationCue = cue;
                     }
                     else
                     {
-                        // fixup infinite duration cues for external subs
-                        if (isPreviousCueInfiniteDuration)
-                        {
-                            infiniteDurationCue.Duration(TimeSpan(cue.StartTime() - infiniteDurationCue.StartTime()));
-                        }
-
-                        if (duration.count() >= InfiniteDuration)
-                        {
-                            isPreviousCueInfiniteDuration = true;
-                            infiniteDurationCue = cue;
-                        }
-                        else
-                        {
-                            isPreviousCueInfiniteDuration = false;
-                            infiniteDurationCue = nullptr;
-                        }
+                        isPreviousCueInfiniteDuration = false;
+                        infiniteDurationCue = nullptr;
                     }
                 }
             }
-            catch (...)
-            {
-                OutputDebugString(L"Failed to create subtitle cue.");
-            }
+        }
+        catch (...)
+        {
+            OutputDebugString(L"Failed to create subtitle cue.");
         }
         av_packet_free(&packet);
     }
@@ -239,13 +234,14 @@ private:
 
     void DispatchCueToTrack(IMediaCue const& cue)
     {
-        if (m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
+        if (m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser || !IsEnabled())
         {
             SubtitleTrack.AddCue(cue);
         }
         else if (isPreviousCueInfiniteDuration)
         {
-            pendingRefCues.push_back(ReferenceCue(cue));
+            IMediaCue refCue = winrt::make<ReferenceCue>(cue);
+            pendingRefCues.push_back(refCue);
             TriggerUpdateCues();
         }
         else
@@ -260,14 +256,26 @@ private:
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
         try {
-            //remove all cues from subtitle track
-            while (SubtitleTrack.Cues().Size() > 0)
+            //remove all previous cues from subtitle track
+            std::vector<IMediaCue> remove;
+            auto enteredCue = args.Cue();
+            auto startTime = enteredCue.StartTime();
+            for (auto cue : SubtitleTrack.Cues())
             {
-                SubtitleTrack.RemoveCue(SubtitleTrack.Cues().GetAt(0));
+                if (cue.StartTime() < startTime)
+                {
+                    remove.push_back(cue);
+                }
             }
-            auto refCue = static_cast<ReferenceCue>(args.Cue());
-            SubtitleTrack.AddCue(refCue);
-            referenceTrack.RemoveCue(refCue);
+
+            for (auto& cue : remove)
+            {
+                SubtitleTrack.RemoveCue(cue);
+            }
+
+            auto refCue = winrt::get_self<ReferenceCue>(enteredCue);
+            SubtitleTrack.AddCue(refCue->CueRef());
+            referenceTrack.RemoveCue(enteredCue);
         }
         catch (...)
         {
@@ -281,10 +289,11 @@ private:
         try
         {
             //cleanup old cues to free memory
+            auto startTime = args.Cue().StartTime();
             std::vector<IMediaCue> remove;
             for (auto cue : SubtitleTrack.Cues())
             {
-                if (cue.StartTime() + cue.Duration() < args.Cue().StartTime())
+                if (cue.StartTime() + cue.Duration() < startTime)
                 {
                     remove.push_back(cue);
                 }
@@ -454,8 +463,23 @@ private:
         OutputDebugString(L"Subtitle track error.");
     }
 
+public:
+
+    void EnableStream() override
+    {
+        DebugMessage(L"EnableStream\n");
+        m_isEnabled = true;
+    }
+
+    void DisableStream() override
+    {
+        DebugMessage(L"DisableStream\n");
+        m_isEnabled = false;
+    }
+
     void ClearSubtitles()
     {
+        std::lock_guard lock(mutex);
         try
         {
             pendingCues.clear();
@@ -483,12 +507,12 @@ private:
 
 public:
 
-    void Flush() override
+    void Flush(bool flushBuffers) override
     {
-        if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
+        CompressedSampleProvider::Flush(flushBuffers);
+            
+        if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser && flushBuffers)
         {
-            CompressedSampleProvider::Flush();
-
             std::lock_guard lock(mutex);
 
             if (dispatcher)
@@ -502,9 +526,11 @@ public:
         }
     }
 
+protected:
+    std::recursive_mutex mutex;
+
 private:
 
-    std::recursive_mutex mutex;
     int cueCount = 0;
     std::vector<IMediaCue> pendingCues;
     std::vector<IMediaCue> pendingRefCues;

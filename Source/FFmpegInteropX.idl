@@ -453,6 +453,9 @@ namespace FFmpegInteropX
         ///<param name="stream">The subtitle stream.</param>
         Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<SubtitleStreamInfo> > AddExternalSubtitleAsync(Windows.Storage.Streams.IRandomAccessStream stream);
 
+        ///<summary>Starts filling the read-ahead buffer, if enabled in the configuration.</summary>
+        void StartBuffering();
+
         // Properties
 
         ///<summary>Gets the configuration that has been passed when creating the MSS instance.</summary>
@@ -566,19 +569,37 @@ namespace FFmpegInteropX
         Double MaxSupportedPlaybackRate{ get; set; };
 
         ///<summary>The buffer size in bytes to use for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
+        [deprecated("Deprecated due to irritating name. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
         UInt32 StreamBufferSize{ get; set; };
+
+        ///<summary>The maximum number of bytes to read in one chunk for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
+        UInt32 FileStreamReadSize{ get; set; };
 
         ///<summary>Additional options to use when creating the ffmpeg AVFormatContext.</summary>
         Windows.Foundation.Collections.PropertySet FFmpegOptions{ get; set; };
 
 
         ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
-        ///<remarks>A value of 0 is recommended for local files, to avoid framework bugs and unneccessary memory consumption.</remarks>
+        ///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
+        [deprecated("Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
         Windows.Foundation.TimeSpan DefaultBufferTime{ get; set; };
 
         ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for URI sources.</summary>
-        ///<remarks>Default is 5 seconds. You might want to use higher values, especially for DASH stream sources.</remarks>
+        ///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
+        [deprecated("Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
         Windows.Foundation.TimeSpan DefaultBufferTimeUri{ get; set; };
+
+        ///<summary>Enables or disables the read-ahead buffer.</summary>
+        ///<remarks>This value can be changed any time during playback.</remarks>
+        Boolean ReadAheadBufferEnabled{ get; set; };
+
+        ///<summary>The maximum number of bytes to buffer ahead per stream.</summary>
+        ///<remarks>This value can be changed any time during playback.</remarks>
+        Int64 ReadAheadBufferSize{ get; set; };
+
+        ///<summary>The maximum duration to buffer ahead per stream.</summary>
+        ///<remarks>This value can be changed any time during playback.</remarks>
+        Windows.Foundation.TimeSpan ReadAheadBufferDuration{ get; set; };
 
 
         ///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>
@@ -652,12 +673,6 @@ namespace FFmpegInteropX
         ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
         Boolean DownmixAudioStreamsToStereo{ get; set; };
     };
-
-    [default_interface]
-    runtimeclass ReferenceCue : Windows.Media.Core.IMediaCue
-    {
-        ReferenceCue(Windows.Media.Core.IMediaCue other);
-    }
 
     [default_interface]
 #ifdef CPPCX

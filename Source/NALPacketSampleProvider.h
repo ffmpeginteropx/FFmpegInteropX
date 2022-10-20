@@ -25,7 +25,7 @@ class NALPacketSampleProvider :
 {
 public:
     virtual ~NALPacketSampleProvider();
-    virtual void Flush() override;
+    virtual void Flush(bool flushBuffers) override;
 
     NALPacketSampleProvider(
         std::shared_ptr<FFmpegReader> reader,

@@ -97,10 +97,10 @@ std::vector<T> inline to_vector(IVectorView<T> input)
 template<class T, typename TSender, typename TArgs>
 std::function<void(TSender, TArgs)> inline weak_handler(T* instance, void(T::* instanceMethod)(TSender, TArgs))
 {
-    std::weak_ptr<T> wr = instance->weak_from_this();
+    auto wr = instance->weak_from_this();
     auto handler = [wr, instanceMethod](TSender sender, TArgs args)
     {
-        auto instanceLocked = wr.lock();
+        auto instanceLocked = std::dynamic_pointer_cast<T>(wr.lock());
         if (instanceLocked)
         {
             (instanceLocked.get()->*instanceMethod)(sender, args);

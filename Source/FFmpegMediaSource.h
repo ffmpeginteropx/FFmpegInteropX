@@ -93,6 +93,10 @@ namespace winrt::FFmpegInteropX::implementation
         ///<param name="stream">The subtitle stream.</param>
         IAsyncOperation<IVectorView<FFmpegInteropX::SubtitleStreamInfo>> AddExternalSubtitleAsync(IRandomAccessStream stream);
 
+        ///<summary>Starts filling the read-ahead buffer, if enabled in the configuration.</summary>
+        ///<remarks>Let the stream buffer fill before starting playback.</remarks>
+        void StartBuffering();
+
         ///<summary>Gets the configuration that has been passed when creating the MSS instance.</summary>
         FFmpegInteropX::MediaSourceConfig Configuration();
 
@@ -168,17 +172,6 @@ namespace winrt::FFmpegInteropX::implementation
         void InitializePlaybackItem(MediaPlaybackItem  const& playbackitem);
         bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus const& status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
 
-        void FlushStreams()
-        {
-            // Flush all active streams
-            for (auto &stream : sampleProviders)
-            {
-                if (stream && stream->IsEnabled())
-                {
-                    stream->Flush();
-                }
-            }
-        }
 
     public://internal:
         static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher);
@@ -192,16 +185,15 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         std::shared_ptr<FFmpegReader> m_pReader;
-        AVDictionary* avDict = NULL;
-        AVIOContext* avIOCtx = NULL;
-        AVFormatContext* avFormatCtx = NULL;
+        AVDictionary* avDict = nullptr;
+        AVIOContext* avIOCtx = nullptr;
+        AVFormatContext* avFormatCtx = nullptr;
         winrt::com_ptr<IStream> fileStreamData = { nullptr };
         ByteOrderMark streamByteOrderMark;
         winrt::com_ptr<MediaSourceConfig> config = { nullptr };
 
 
     private:
-
 
         MediaStreamSource mss = { nullptr };
         winrt::event_token startingRequestedToken{};
@@ -214,7 +206,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         std::vector<std::shared_ptr<MediaSampleProvider>> sampleProviders;
         std::vector<std::shared_ptr<MediaSampleProvider>> audioStreams;
-        std::vector< std::shared_ptr<SubtitleProvider>> subtitleStreams;
+        std::vector<std::shared_ptr<SubtitleProvider>> subtitleStreams;
         std::vector<std::shared_ptr<MediaSampleProvider>> videoStreams;
 
         std::shared_ptr<MediaSampleProvider> currentVideoStream;
@@ -241,25 +233,22 @@ namespace winrt::FFmpegInteropX::implementation
         MediaPlaybackSession session = { nullptr };
         winrt::event_token sessionPositionEvent{};
 
-        hstring videoCodecName{};
-        hstring audioCodecName{};
         TimeSpan mediaDuration{};
         TimeSpan subtitleDelay{};
-        bool isFirstSeek;
-        AVBufferRef* avHardwareContext = NULL;
-        AVBufferRef* avHardwareContextDefault = NULL;
+
+        AVBufferRef* avHardwareContext = nullptr;
+        AVBufferRef* avHardwareContextDefault = nullptr;
         com_ptr<ID3D11Device> device;
         com_ptr<ID3D11DeviceContext> deviceContext;
-        HANDLE deviceHandle = NULL;
+        HANDLE deviceHandle = nullptr;
         com_ptr<IMFDXGIDeviceManager> deviceManager;
 
+        bool isFirstSeek;
         bool isFirstSeekAfterStreamSwitch = false;
-        bool isLastSeekForward = false;
-        TimeSpan lastSeekStart{ 0 };
-        TimeSpan lastSeekActual{ 0 };
 
         TimeSpan currentPosition{ 0 };
         TimeSpan lastPosition{ 0 };
+        TimeSpan lastSeek{ 0 };
 
         static DispatcherQueue GetCurrentDispatcher();
         void OnPositionChanged(MediaPlaybackSession const& sender, IInspectable const& args);
