@@ -49,11 +49,11 @@ public:
         ReleaseTrackedSamples();
     }
 
-    virtual void Flush() override
-    {
-        UncompressedVideoSampleProvider::Flush();
-        ReturnTrackedSamples();
-    }
+        virtual void Flush(bool flushBuffers) override
+        {
+            UncompressedVideoSampleProvider::Flush(flushBuffers);
+            ReturnTrackedSamples();
+        }
 
 
     virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override

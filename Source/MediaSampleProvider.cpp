@@ -20,6 +20,7 @@
 #include "MediaSampleProvider.h"
 #include "FFmpegMediaSource.h"
 #include "FFmpegReader.h"
+#include "StreamBuffer.h"
 #include "LanguageTagConverter.h"
 #include "AvCodecContextHelpers.h"
 #include "Mfapi.h"
@@ -44,6 +45,7 @@ MediaSampleProvider::MediaSampleProvider(
     , m_config(config)
     , m_streamIndex(streamIndex)
     , hardwareDecoderStatus(hardwareDecoderStatus)
+    , packetBuffer(new StreamBuffer(streamIndex, config))
 {
     DebugMessage(L"MediaSampleProvider\n");
 
@@ -68,7 +70,7 @@ MediaSampleProvider::~MediaSampleProvider()
 
     avcodec_free_context(&m_pAvCodecCtx);
 
-    Flush();
+    Flush(true);
     device = nullptr;
     deviceContext = nullptr;
 }
@@ -206,7 +208,7 @@ void MediaSampleProvider::InitializeStreamInfo()
 
 MediaStreamSample MediaSampleProvider::GetNextSample()
 {
-    DebugMessage(L"GetNextSample\n");
+    //DebugMessage(L"GetNextSample\n");
 
     HRESULT hr = S_OK;
 
@@ -259,35 +261,11 @@ MediaStreamSample MediaSampleProvider::GetNextSample()
 HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration)
 {
     HRESULT hr = S_OK;
-    unsigned int errorCount = 0;
 
-    // Continue reading until there is an appropriate packet in the stream
-    while (m_packetQueue.empty())
+    if (packetBuffer->ReadUntilNotEmpty(m_pReader))
     {
-        auto result = m_pReader->ReadPacket();
-        if (result < 0)
-        {
-            if (result == AVERROR_EOF || (m_pAvFormatCtx->pb && m_pAvFormatCtx->pb->eof_reached))
-            {
-                DebugMessage(L"GetNextPacket reaching EOF\n");
-                break;
-            }
-            else if (errorCount++ >= m_config.SkipErrors())
-            {
-                DebugMessage(L"Aborting after to too many read errors.\n");
-                break;
-            }
-            else
-            {
-                DebugMessage(L"Read error.\n");
-            }
-        }
-    }
+        auto packet = packetBuffer->PopPacket();
 
-    if (!m_packetQueue.empty())
-    {
-        // read next packet and set pts values
-        auto packet = PopPacket();
         *avPacket = packet;
 
         packetDuration = packet->duration;
@@ -323,20 +301,10 @@ HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpa
 {
     HRESULT hr = S_FALSE;
 
-    // Continue reading until there is an appropriate packet in the stream
-    while (m_packetQueue.empty())
-    {
-        if (m_pReader->ReadPacket() < 0)
-        {
-            DebugMessage(L"GetNextPacketTimestamp reaching EOF\n");
-            break;
-        }
-    }
-
-    if (!m_packetQueue.empty())
+    if (packetBuffer->ReadUntilNotEmpty(m_pReader))
     {
         // peek next packet and set pts value
-        auto packet = m_packetQueue.front();
+        auto packet = packetBuffer->PeekPacket();
         auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
         if (pts != AV_NOPTS_VALUE)
         {
@@ -352,51 +320,10 @@ HRESULT MediaSampleProvider::GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpa
 HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan const& timestamp)
 {
     HRESULT hr = S_OK;
-    bool foundPacket = false;
 
-    while (hr == S_OK && !foundPacket)
+    if (!packetBuffer->SkipUntilTimestamp(m_pReader, ConvertPosition(timestamp)))
     {
-        // Continue reading until there is an appropriate packet in the stream
-        while (m_packetQueue.empty())
-        {
-            if (m_pReader->ReadPacket() < 0)
-            {
-                DebugMessage(L"SkipPacketsUntilTimestamp reaching EOF\n");
-                break;
-            }
-        }
-
-        if (!m_packetQueue.empty())
-        {
-            // peek next packet and check pts value
-            auto packet = m_packetQueue.front();
-
-            auto pts = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
-            if (pts != AV_NOPTS_VALUE && packet->duration != AV_NOPTS_VALUE)
-            {
-                auto packetEnd = ConvertPosition(pts + packet->duration);
-                if (packet->duration > 0 ? packetEnd <= timestamp : packetEnd < timestamp)
-                {
-                    m_packetQueue.pop();
-                    av_packet_free(&packet);
-                }
-                else
-                {
-                    foundPacket = true;
-                    break;
-                }
-            }
-            else
-            {
-                hr = S_FALSE;
-                break;
-            }
-        }
-        else
-        {
-            // no more packet found
-            hr = S_FALSE;
-        }
+        hr = S_FALSE;
     }
 
     return hr;
@@ -404,11 +331,11 @@ HRESULT MediaSampleProvider::SkipPacketsUntilTimestamp(TimeSpan const& timestamp
 
 void MediaSampleProvider::QueuePacket(AVPacket* packet)
 {
-    DebugMessage(L" - QueuePacket\n");
+    //DebugMessage(L" - QueuePacket\n");
 
     if (m_isEnabled)
     {
-        m_packetQueue.push(packet);
+        packetBuffer->QueuePacket(packet);
     }
     else
     {
@@ -416,31 +343,20 @@ void MediaSampleProvider::QueuePacket(AVPacket* packet)
     }
 }
 
-AVPacket* MediaSampleProvider::PopPacket()
+bool MediaSampleProvider::IsBufferFull()
 {
-    DebugMessage(L" - PopPacket\n");
-    AVPacket* result = NULL;
-
-    if (!m_packetQueue.empty())
-    {
-        result = m_packetQueue.front();
-        m_packetQueue.pop();
-    }
-
-    return result;
+    return IsEnabled() && packetBuffer->IsFull(this);
 }
 
-void MediaSampleProvider::Flush()
+void MediaSampleProvider::Flush(bool flushBuffers)
 {
-    DebugMessage(L"Flush\n");
-    while (!m_packetQueue.empty())
-    {
-        AVPacket* avPacket = PopPacket();
-        av_packet_free(&avPacket);
-    }
     if (m_pAvCodecCtx)
     {
         avcodec_flush_buffers(m_pAvCodecCtx);
+    }
+    if (flushBuffers)
+    {
+        packetBuffer->Flush();
     }
     m_isDiscontinuous = true;
     IsCleanSample = false;
@@ -456,7 +372,6 @@ void MediaSampleProvider::EnableStream()
 void MediaSampleProvider::DisableStream()
 {
     DebugMessage(L"DisableStream\n");
-    Flush();
     m_isEnabled = false;
     m_pAvStream->discard = AVDISCARD_ALL;
 }
@@ -520,13 +435,13 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
 
 void MediaSampleProvider::Detach()
 {
-    Flush();
+    Flush(false);
     m_pReader = nullptr;
     avcodec_free_context(&m_pAvCodecCtx);
 }
 
 void free_buffer(void* lpVoid)
 {
-    auto buffer = (AVBufferRef*)lpVoid;
+    auto buffer = (AVBufferRef *)lpVoid;
     av_buffer_unref(&buffer);
 }

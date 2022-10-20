@@ -37,9 +37,9 @@ NALPacketSampleProvider::~NALPacketSampleProvider()
 {
 }
 
-void NALPacketSampleProvider::Flush()
+void NALPacketSampleProvider::Flush(bool flushBuffers)
 {
-    CompressedSampleProvider::Flush();
+    CompressedSampleProvider::Flush(flushBuffers);
     m_bHasSentExtradata = false;
 }
 

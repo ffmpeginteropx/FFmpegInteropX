@@ -1,4 +1,4 @@
-﻿//*****************************************************************************
+//*****************************************************************************
 //
 //	Copyright 2015 Microsoft Corporation
 //
@@ -39,11 +39,15 @@ namespace MediaPlayerCPP
         property FFmpegInteropX::MediaSourceConfig^ Config;
         property FFmpegInteropX::VideoEffectConfiguration^ VideoEffectConfiguration;
 
+        double GetBufferSizeMB();
+        void SetBufferSizeMB(double value);
+
     private:
         void OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
         task<void> OpenLocalFile();
         task<void> OpenLocalFile(Windows::Storage::StorageFile^ file);
         task<void> TryOpenLastFile();
+        task<void> TryOpenLastUri();
         void URIBoxKeyUp(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e);
         task<void> OpenUriStream(Platform::String^ uri);
         void MediaFailed(Platform::Object^ sender, Windows::UI::Xaml::ExceptionRoutedEventArgs^ e);
@@ -81,5 +85,6 @@ namespace MediaPlayerCPP
         void ffmpegAudioFilters_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e);
         void OnMediaOpened(Windows::Media::Playback::MediaPlayer^ sender, Platform::Object^ args);
         void OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args);
+
     };
 }
