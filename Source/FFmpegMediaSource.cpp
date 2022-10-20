@@ -1328,7 +1328,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     bool FFmpegMediaSource::HasThumbnail()
     {
-        return thumbnailStreamIndex;
+        return thumbnailStreamIndex != AVERROR_STREAM_NOT_FOUND;
     }
 
     MediaPlaybackItem FFmpegMediaSource::PlaybackItem()
