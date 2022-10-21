@@ -11,7 +11,7 @@ namespace FFmpegInteropX.UnitTests
 {
     public static class MediaPlayerExtensions
     {
-        public static async Task AwaitForSeek(this MediaPlayer CurrentPlayer, TimeSpan position)
+        public static async Task SeekAsync(this MediaPlayer CurrentPlayer, TimeSpan position)
         {
             TaskCompletionSource<bool> SeekCompletedSignal = new TaskCompletionSource<bool>();
 
@@ -27,7 +27,7 @@ namespace FFmpegInteropX.UnitTests
             CurrentPlayer.PlaybackSession.SeekCompleted -= seekHandler;
         }
 
-        public static async Task<bool> AwaitForMediaOpened(this MediaPlayer CurrentPlayer, IMediaPlaybackSource source)
+        public static async Task<bool> SetMediaAsync(this MediaPlayer CurrentPlayer, IMediaPlaybackSource source)
         {
             TaskCompletionSource<bool> MediaOpenedOrFailedSignal = new TaskCompletionSource<bool>();
 

@@ -22,18 +22,19 @@ namespace FFmpegInteropX.UnitTests
             Assert.IsNotNull(playbackItem);
 
             var player = new MediaPlayer();
-            player.AutoPlay = false;
-            await player.AwaitForMediaOpened(playbackItem);
 
+            player.AutoPlay = true;
+            var mediaSet = await player.SetMediaAsync(playbackItem);
+            Assert.IsTrue(mediaSet);
             player.Play();
-            await Task.Delay(1000);
-            player.Pause();
-            await player.AwaitForSeek(TimeSpan.FromSeconds(0));
-            player.Play();
-            await Task.Delay(1000);
-            player.Pause();
+            await Task.Delay(5000);
+            await player.SeekAsync(TimeSpan.FromSeconds(0));
+            //player.Pause();
+
+            //Assert.IsTrue(player.PlaybackSession.Position.Ticks == 0);
+            //player.Play();
+            //await Task.Delay(5000);
             player.Source = null;
-            Assert.IsTrue(player.Position.Ticks == 0);
         }
     }
 }
