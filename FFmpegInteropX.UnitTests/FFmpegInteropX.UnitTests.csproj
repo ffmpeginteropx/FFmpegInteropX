@@ -15,6 +15,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="TestFiles\envivio-h264.mp4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="TestFiles\envivio-h264.mp4">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
 
     <PackageReference Include="FFmpegInteropX" Version="1.1.0-pre38" />
     <PackageReference Include="FFmpegInteropX.FFmpegUWP" Version="5.1.100" />
