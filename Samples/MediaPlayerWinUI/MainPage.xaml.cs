@@ -253,6 +253,9 @@ namespace MediaPlayerWinUI
                     // Config.FFmpegOptions.Add("rtsp_flags", "prefer_tcp");
                     Config.FFmpegOptions.Add("stimeout", 1000000);
                     Config.FFmpegOptions.Add("timeout", 1000000);
+                    Config.FFmpegOptions.Add("reconnect", 1);
+                    Config.FFmpegOptions.Add("reconnect_streamed", 1);
+                    Config.FFmpegOptions.Add("reconnect_on_network_error", 1);
 
                     // Instantiate FFmpegMediaSource using the URI
                     mediaPlayer.Source = null;

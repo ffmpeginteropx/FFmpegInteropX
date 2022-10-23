@@ -195,9 +195,13 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
     // 
     // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
     
+    // Below are some sample options that you can set to configure RTSP streaming
     //Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
     Config->FFmpegOptions->Insert("stimeout", 1000000);
     Config->FFmpegOptions->Insert("timeout", 1000000);
+    Config->FFmpegOptions->Insert("reconnect", 1);
+    Config->FFmpegOptions->Insert("reconnect_streamed", 1);
+    Config->FFmpegOptions->Insert("reconnect_on_network_error", 1);
 
     // Instantiate FFmpegMediaSource using the URI
     mediaPlayer->Source = nullptr;

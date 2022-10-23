@@ -94,11 +94,51 @@ Using the **FFmpegMediaSource** object is fairly straightforward and can be obse
 
 **Important:** Store the FFmpegMediaSource instance e.g. in a local field, as long as playback is running. If the object is collected by the GC during playback, playback will stop with an error.
 
-Use `FFmpegMediaSource.CreateFromUriAsync()` to create a MediaStreamSource on a streaming source (shoutcast for example).
-
 You can use `FFmpegMediaSource.GetMediaStreamSource()` to get the MediaStreamSource like in the original version of the library. But when using MediaStreamSource, you won't get subtitles. Subtitle support requires using the MediaPlaybackItem!
 
-Call `FrameGrabber.CreateFromStreamAsync()` to grab one or more frames from a video file.
+## Using the FFmpegInteropX for streaming
+
+Use `FFmpegMediaSource.CreateFromUriAsync()` to create a MediaStreamSource on a streaming source (video stream, live stream, shoutcast audio stream, ...).
+
+There are a lot of FFmpeg parameters that can be set, especially for streaming scenarios.
+You most definitely want to enable automatic reconnection on errors:
+
+```
+config.FFmpegOptions = new Windows.Foundation.Collections.PropertySet {
+    { "reconnect", 1 },
+    { "reconnect_streamed", 1 },
+    { "reconnect_on_network_error", 1 },
+}
+```
+
+You should also consider setting timeouts, but be careful since each protocol might have different timeout parameters and meanings.
+
+## Stream Buffering
+
+If you do web streaming, you should try the new read-ahead buffer feature of FFmpegInteropX, available in the latest prerelease packages. It will read ahead and buffer a configurable amount of stream data to allow uninterrupted playback. This even allows fast forward seeking (stepping) without stream reconnection, if the target position is buffered.
+
+```
+config.ReadAheadBufferEnabled = true;
+
+// Optionally, configure buffer size (max duration and byte size)
+config.ReadAheadBufferDuration = TimeSpan.FromSeconds(30);
+config.ReadAheadBufferEnabled = 50*1024*1024;
+```
+
+Check FFmpeg documentation on [Protocols](https://ffmpeg.org/ffmpeg-protocols.html) and [Formats](https://ffmpeg.org/ffmpeg-formats.html).
+
+## Frame Grabber
+
+You can use the **FrameGrabber** class to extract video frames at specific positions of a video file or video stream, optionally using fast seeking to keyframes and optionally downscaling the video resolution. Extracted frames contain raw image data and can be stored to different formats (JPEG, BMP, PNG).
+
+Simplified example calls:
+
+```
+var fileStream = await file.OpenRead();
+var frameGrabber = await FrameGrabber.CreateFromStreamAsync(fileStream);
+var frame = await frameGrabber.ExtractVideoFrameAsync(TimeSpan.FromSeconds(10));
+await frame.EncodeAsJpegAsync(outputStream);
+```
 
 ## Subtitle Support
 
