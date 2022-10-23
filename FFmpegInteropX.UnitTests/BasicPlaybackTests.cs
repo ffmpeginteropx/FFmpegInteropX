@@ -23,6 +23,7 @@ namespace FFmpegInteropX.UnitTests
 
             var player = new MediaPlayer();
 
+            player.Volume = 0;
             player.AutoPlay = true;
             var mediaSet = await player.SetMediaAsync(playbackItem);
             Assert.IsTrue(mediaSet);
