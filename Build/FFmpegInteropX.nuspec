@@ -25,8 +25,8 @@
     <file src="..\Output\FFmpegInteropX\x64\Release\FFmpegInteropX.winmd"   target="lib\uap10.0" />
     <file src="..\Output\FFmpegInteropX\x64\Release\FFmpegInteropX.xml"     target="lib\uap10.0" />
 
-    <file src="..\Output\FFmpegInteropX.DotNet\Release\FFmpegInteropX.DotNet.dll"  target="lib\net6.0-windows10.0.17763.0" />
-    <file src="..\Output\FFmpegInteropX.DotNet\Release\FFmpegInteropX.xml"         target="lib\net6.0-windows10.0.17763.0" />
+    <file src="..\Output\FFmpegInteropX.DotNet\Release_WinUI\FFmpegInteropX.DotNet.dll"  target="lib\net6.0-windows10.0.17763.0" />
+    <file src="..\Output\FFmpegInteropX.DotNet\Release_WinUI\FFmpegInteropX.xml"         target="lib\net6.0-windows10.0.17763.0" />
     
     <file src="..\Output\FFmpegInteropX\x86\Release\FFmpegInteropX.dll"     target="runtimes\win10-x86\native" />
     <file src="..\Output\FFmpegInteropX\x86\Release\FFmpegInteropX.pdb"     target="runtimes\win10-x86\native" />
