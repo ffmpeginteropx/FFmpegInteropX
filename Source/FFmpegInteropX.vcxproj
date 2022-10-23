@@ -256,9 +256,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.editorconfig" />
+    <None Include="..\AppVeyor_Build.bat" />
     <None Include="..\Build-FFmpeg.ps1" />
     <None Include="..\Build-FFmpegInteropX.ps1" />
-    <None Include="..\Build\AppVeyor_Build.bat" />
     <None Include="..\Build\FFmpegConfig.sh" />
     <None Include="..\Build\FFmpegInteropX.FFmpegUWP.nuspec" />
     <None Include="..\Build\FFmpegInteropX.FFmpegUWP.targets" />
