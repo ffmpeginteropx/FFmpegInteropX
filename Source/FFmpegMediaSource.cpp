@@ -148,7 +148,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             // Setup FFmpeg custom IO to access file as stream. This is necessary when accessing any file outside of app installation directory and appdata folder.
             // Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
-            fileStreamBuffer = (unsigned char*)av_malloc(config->StreamBufferSize());
+            fileStreamBuffer = (unsigned char*)av_malloc(config->FileStreamReadSize());
             if (fileStreamBuffer == nullptr)
             {
                 hr = E_OUTOFMEMORY;
@@ -447,7 +447,7 @@ namespace winrt::FFmpegInteropX::implementation
         if (SUCCEEDED(hr))
         {
             //----------------------------------------------------------------------
-            m_pReader = std::shared_ptr<FFmpegReader>(new FFmpegReader(avFormatCtx, &sampleProviders));
+            m_pReader = std::shared_ptr<FFmpegReader>(new FFmpegReader(avFormatCtx, &sampleProviders, config.as<FFmpegInteropX::MediaSourceConfig>()));
             m_pReader->eventCallback = [this](AvSubtitleEventArgs* s) {
                 this->RaiseSubtitleCueEntered(s);
             };
@@ -755,7 +755,7 @@ namespace winrt::FFmpegInteropX::implementation
                 mediaDuration = TimeSpan(LONGLONG(avFormatCtx->duration * 10000000 / double(AV_TIME_BASE)));
 
                 // Assign initial BufferTime to MediaStreamSource
-                mss.BufferTime(fileStreamData ? config->DefaultBufferTime() : config->DefaultBufferTimeUri());
+                mss.BufferTime(TimeSpan{ 0 });
                 mss.MaxSupportedPlaybackRate(config->MaxSupportedPlaybackRate());
 
                 if (mediaDuration.count() > 0)
@@ -912,7 +912,7 @@ namespace winrt::FFmpegInteropX::implementation
                     unsigned threads = std::thread::hardware_concurrency();
                     if (threads > 0)
                     {
-                        avAudioCodecCtx->thread_count = config->MaxAudioThreads() == 0 ? threads : min(threads, config->MaxAudioThreads());
+                        avAudioCodecCtx->thread_count = config->MaxAudioThreads() == 0 ? threads : min((int)threads, config->MaxAudioThreads());
                         avAudioCodecCtx->thread_type = FF_THREAD_FRAME | FF_THREAD_SLICE;
                     }
 
@@ -1064,7 +1064,7 @@ namespace winrt::FFmpegInteropX::implementation
                 if (!avVideoCodecCtx->hw_device_ctx)
                 {
                     unsigned threads = std::thread::hardware_concurrency();
-                    avVideoCodecCtx->thread_count = config->MaxVideoThreads() == 0 ? threads : min(threads, config->MaxVideoThreads());
+                    avVideoCodecCtx->thread_count = config->MaxVideoThreads() == 0 ? threads : min((int)threads, config->MaxVideoThreads());
                     avVideoCodecCtx->thread_type = config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
                 }
 
@@ -1361,6 +1361,12 @@ namespace winrt::FFmpegInteropX::implementation
         return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName());
     }
 
+    void FFmpegMediaSource::StartBuffering()
+    {
+        std::lock_guard lock(mutex);
+        m_pReader->Start();
+    }
+
     FFmpegInteropX::MediaSourceConfig FFmpegMediaSource::Configuration()
     {
         return config.as<winrt::FFmpegInteropX::MediaSourceConfig>();
@@ -1523,6 +1529,8 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (m_pReader != nullptr)
         {
+            m_pReader->Stop();
+            m_pReader->Flush();
             m_pReader.reset();;
         }
 
@@ -1803,59 +1811,66 @@ namespace winrt::FFmpegInteropX::implementation
     {
         std::lock_guard lock(mutex);
         MediaStreamSourceStartingRequest request = args.Request();
-
-        if (isFirstSeek && avHardwareContext)
+        
+        try
         {
-            HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, deviceManager);
-            if (SUCCEEDED(hr))
-                hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, device, deviceContext, deviceManager, &deviceHandle);
-
-            if (SUCCEEDED(hr))
+            if (isFirstSeek && avHardwareContext)
             {
-                // assign device and context
-                for (auto &stream : videoStreams)
-                {
-                    // set device pointers to stream
-                    hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+                HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, deviceManager);
+                if (SUCCEEDED(hr))
+                    hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, device, deviceContext, deviceManager, &deviceHandle);
 
-                    if (!SUCCEEDED(hr))
+                if (SUCCEEDED(hr))
+                {
+                    // assign device and context
+                    for (auto& stream : videoStreams)
                     {
-                        break;
+                        // set device pointers to stream
+                        hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+
+                        if (!SUCCEEDED(hr))
+                        {
+                            break;
+                        }
                     }
                 }
-            }
-            else
-            {
-                // unref all hw device contexts
-                for (auto &stream : videoStreams)
+                else
                 {
-                    stream->FreeHardwareDevice();
+                    // unref all hw device contexts
+                    for (auto& stream : videoStreams)
+                    {
+                        stream->FreeHardwareDevice();
+                    }
+                    av_buffer_unref(&avHardwareContext);
+                    device = nullptr;
+                    deviceContext = nullptr;
                 }
-                av_buffer_unref(&avHardwareContext);
-                device = nullptr;
-                deviceContext = nullptr;
+            }
+
+            // Perform seek operation when MediaStreamSource received seek event from MediaElement
+            if (request.StartPosition() && request.StartPosition().Value().count() <= mediaDuration.count() && (!isFirstSeek || request.StartPosition().Value().count() > 0))
+            {
+                if (currentVideoStream && !currentVideoStream->IsEnabled())
+                {
+                    currentVideoStream->EnableStream();
+                }
+
+                if (currentAudioStream && !currentAudioStream->IsEnabled())
+                {
+                    currentAudioStream->EnableStream();
+                }
+
+                TimeSpan actualPosition = request.StartPosition().Value();
+                auto hr = Seek(request.StartPosition().Value(), actualPosition, true);
+                if (SUCCEEDED(hr))
+                {
+                    request.SetActualStartPosition(actualPosition);
+                }
             }
         }
-
-        // Perform seek operation when MediaStreamSource received seek event from MediaElement
-        if (request.StartPosition() && request.StartPosition().Value().count() <= mediaDuration.count() && (!isFirstSeek || request.StartPosition().Value().count() > 0))
+        catch (...)
         {
-            if (currentVideoStream && !currentVideoStream->IsEnabled())
-            {
-                currentVideoStream->EnableStream();
-            }
-
-            if (currentAudioStream && !currentAudioStream->IsEnabled())
-            {
-                currentAudioStream->EnableStream();
-            }
-
-            TimeSpan actualPosition = request.StartPosition().Value();
-            auto hr = Seek(request.StartPosition().Value(), actualPosition, true);
-            if (SUCCEEDED(hr))
-            {
-                request.SetActualStartPosition(actualPosition);
-            }
+            DebugMessage(L"Exception in OnStarting()!");
         }
 
         isFirstSeek = false;
@@ -1866,23 +1881,35 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
-        if (mss != nullptr)
+
+        try
         {
-            if (currentAudioStream && args.Request().StreamDescriptor() == currentAudioStream->StreamDescriptor())
+            if (mss != nullptr)
             {
-                auto sample = currentAudioStream->GetNextSample();
-                args.Request().Sample(sample);
+                if (config->ReadAheadBufferEnabled())
+                {
+                    m_pReader->Start();
+                }
+                if (currentAudioStream && args.Request().StreamDescriptor() == currentAudioStream->StreamDescriptor())
+                {
+                    auto sample = currentAudioStream->GetNextSample();
+                    args.Request().Sample(sample);
+                }
+                else if (currentVideoStream && args.Request().StreamDescriptor() == currentVideoStream->StreamDescriptor())
+                {
+                    CheckVideoDeviceChanged();
+                    auto sample = currentVideoStream->GetNextSample();
+                    args.Request().Sample(sample);
+                }
+                else
+                {
+                    args.Request().Sample(nullptr);
+                }
             }
-            else if (currentVideoStream && args.Request().StreamDescriptor() == currentVideoStream->StreamDescriptor())
-            {
-                CheckVideoDeviceChanged();
-                auto sample = currentVideoStream->GetNextSample();
-                args.Request().Sample(sample);
-            }
-            else
-            {
-                args.Request().Sample(nullptr);
-            }
+        }
+        catch (...)
+        {
+            DebugMessage(L"Exception in OnSampleRequested()!");
         }
     }
 
@@ -1976,223 +2003,78 @@ namespace winrt::FFmpegInteropX::implementation
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
 
-        if (currentAudioStream && args.Request().OldStreamDescriptor() == currentAudioStream->StreamDescriptor())
+        try
         {
-            if (!currentAudioEffects.empty())
-            {
-                currentAudioStream->DisableFilters();
-            }
-            currentAudioStream->DisableStream();
-            currentAudioStream = nullptr;
-        }
-        if (currentVideoStream && args.Request().OldStreamDescriptor() == currentVideoStream->StreamDescriptor())
-        {
-            currentVideoStream->DisableStream();
-            currentVideoStream = nullptr;
-        }
+            m_pReader->Stop();
+            m_pReader->Flush();
 
-        for (auto &stream : audioStreams)
-        {
-            if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
+            if (currentAudioStream && args.Request().OldStreamDescriptor() == currentAudioStream->StreamDescriptor())
             {
-                currentAudioStream = stream;
-                currentAudioStream->EnableStream();
                 if (!currentAudioEffects.empty())
                 {
-                    currentAudioStream->SetFilters(currentAudioEffects);
+                    currentAudioStream->DisableFilters();
+                }
+                currentAudioStream->DisableStream();
+                currentAudioStream = nullptr;
+            }
+            if (currentVideoStream && args.Request().OldStreamDescriptor() == currentVideoStream->StreamDescriptor())
+            {
+                currentVideoStream->DisableStream();
+                currentVideoStream = nullptr;
+            }
+
+            for (auto& stream : audioStreams)
+            {
+                if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
+                {
+                    currentAudioStream = stream;
+                    currentAudioStream->EnableStream();
+                    if (!currentAudioEffects.empty())
+                    {
+                        currentAudioStream->SetFilters(currentAudioEffects);
+                    }
                 }
             }
-        }
-        for (auto &stream : videoStreams)
-        {
-            if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
+            for (auto& stream : videoStreams)
             {
-                currentVideoStream = stream;
-                currentVideoStream->EnableStream();
+                if (stream->StreamDescriptor() == args.Request().NewStreamDescriptor())
+                {
+                    currentVideoStream = stream;
+                    currentVideoStream->EnableStream();
+                }
             }
-        }
 
-        isFirstSeekAfterStreamSwitch = config->FastSeekSmartStreamSwitching();
+            isFirstSeekAfterStreamSwitch = config->FastSeekSmartStreamSwitching();
+        }
+        catch (...)
+        {
+            DebugMessage(L"Exception in OnSwitchStreamsRequested()!");
+        }
     }
 
-    HRESULT FFmpegMediaSource::Seek(TimeSpan const& position, TimeSpan& actualPosition, bool allowFastSeek)
+    HRESULT FFmpegMediaSource::Seek(const TimeSpan& position, TimeSpan& actualPosition, bool allowFastSeek)
     {
-        auto hr = S_OK;
+        DebugMessage(L"Seek\n");
 
-        // Select the first valid stream either from video or audio
-        auto stream = currentVideoStream ? currentVideoStream : currentAudioStream;
+        auto diffCurrent = position - currentPosition;
+        auto diffLast = position - lastPosition;
+        bool isSeekBeforeStreamSwitch = allowFastSeek && config->FastSeekSmartStreamSwitching() && !isFirstSeekAfterStreamSwitch && diffCurrent.count() > 0 && diffCurrent.count() < 5000000 && diffLast.count() > 0 && diffLast.count() < 10000000;
 
-        if (stream)
+        bool fastSeek = allowFastSeek && config->FastSeek() && currentVideoStream && PlaybackSession() && !isFirstSeekAfterStreamSwitch;
+        if (isSeekBeforeStreamSwitch)
         {
-            int64_t seekTarget = stream->ConvertPosition(position);
-            auto diffActual = position - currentPosition;
-            auto diffLast = position - lastPosition;
-            bool isSeekBeforeStreamSwitch = PlaybackSession() && config->FastSeekSmartStreamSwitching() && diffActual.count() > 0 && diffActual.count() < 5000000 && diffLast.count() > 0 && diffLast.count() < 10000000;
-
-            if (currentVideoStream && config->FastSeek() && allowFastSeek && PlaybackSession() && !isSeekBeforeStreamSwitch && !isFirstSeekAfterStreamSwitch)
-            {
-                // fast seek
-                auto playbackPosition = PlaybackSession() ? lastPosition : currentVideoStream->LastSampleTimestamp;
-                bool seekForward;
-                TimeSpan referenceTime;
-
-                // decide seek direction
-                if (isLastSeekForward && position > lastSeekStart && position <= lastSeekActual)
-                {
-                    seekForward = true;
-                    referenceTime = lastSeekStart + ((position - lastSeekStart) * 0.2);
-                    DebugMessage(L" - ### Forward seeking continue\n");
-                }
-                else if (!isLastSeekForward && position < lastSeekStart && position >= lastSeekActual)
-                {
-                    seekForward = false;
-                    referenceTime = lastSeekStart + ((position - lastSeekStart) * 0.2);
-                    DebugMessage(L" - ### Backward seeking continue\n");
-                }
-                else if (position >= playbackPosition)
-                {
-                    seekForward = true;
-                    referenceTime = playbackPosition + ((position - playbackPosition) * 0.2);
-                    DebugMessage(L" - ### Forward seeking\n");
-                }
-                else
-                {
-                    seekForward = false;
-                    referenceTime = playbackPosition + ((position - playbackPosition) * 0.2);
-                    DebugMessage(L" - ### Backward seeking\n");
-                }
-
-                int64_t min = INT64_MIN;
-                int64_t max = INT64_MAX;
-                if (seekForward)
-                {
-                    min = stream->ConvertPosition(referenceTime);
-                }
-                else
-                {
-                    max = stream->ConvertPosition(referenceTime);
-                }
-
-                if (avformat_seek_file(avFormatCtx, stream->StreamIndex(), min, seekTarget, max, 0) < 0)
-                {
-                    hr = E_FAIL;
-                    DebugMessage(L" - ### Error while seeking\n");
-                }
-                else
-                {
-                    // Flush all active streams
-                    FlushStreams();
-
-                    // get and apply keyframe position for fast seeking
-                    TimeSpan timestampVideo;
-                    TimeSpan timestampVideoDuration;
-                    hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo, timestampVideoDuration);
-
-                    while (hr == S_OK && seekForward && timestampVideo < referenceTime)
-                    {
-                        // our min position was not respected. try again with higher min and target.
-                        min += stream->ConvertDuration(TimeSpan{ 50000000 });
-                        seekTarget += stream->ConvertDuration(TimeSpan{ 50000000 });
-
-                        if (avformat_seek_file(avFormatCtx, stream->StreamIndex(), min, seekTarget, max, 0) < 0)
-                        {
-                            hr = E_FAIL;
-                            DebugMessage(L" - ### Error while seeking\n");
-                        }
-                        else
-                        {
-                            // Flush all active streams
-                            FlushStreams();
-
-                            // get updated timestamp
-                            hr = currentVideoStream->GetNextPacketTimestamp(timestampVideo, timestampVideoDuration);
-                        }
-                    }
-
-                    if (hr == S_OK)
-                    {
-                        actualPosition = timestampVideo;
-
-                        // remember last seek direction
-                        isLastSeekForward = seekForward;
-                        lastSeekStart = position;
-                        lastSeekActual = actualPosition;
-
-                        if (currentAudioStream)
-                        {
-                            // if we have audio, we need to seek back a bit more to get 100% clean audio
-                            TimeSpan timestampAudio;
-                            TimeSpan timestampAudioDuration;
-                            hr = currentAudioStream->GetNextPacketTimestamp(timestampAudio, timestampAudioDuration);
-                            if (hr == S_OK)
-                            {
-                                // audio stream should start one sample before video
-                                auto audioTarget = timestampVideo - timestampAudioDuration;
-                                auto audioPreroll = timestampAudio - timestampVideo;
-                                if (audioPreroll.count() > 0 && config->FastSeekCleanAudio())
-                                {
-                                    seekTarget = stream->ConvertPosition(audioTarget - audioPreroll);
-                                    if (av_seek_frame(avFormatCtx, stream->StreamIndex(), seekTarget, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_ANY) < 0)
-                                    {
-                                        hr = E_FAIL;
-                                        DebugMessage(L" - ### Error while seeking\n");
-                                    }
-                                    else
-                                    {
-                                        FlushStreams();
-
-                                        // Now drop all packets until desired keyframe position
-                                        currentVideoStream->SkipPacketsUntilTimestamp(timestampVideo);
-                                        currentAudioStream->SkipPacketsUntilTimestamp(audioTarget);
-
-                                        auto sample = currentAudioStream->GetNextSample();
-                                        if (sample)
-                                        {
-                                            actualPosition = sample.Timestamp() + sample.Duration();
-                                        }
-                                    }
-                                }
-                                else if (audioPreroll.count() <= 0)
-                                {
-                                    // Negative audio preroll. Just drop all packets until target position.
-                                    currentAudioStream->SkipPacketsUntilTimestamp(audioTarget);
-
-                                    hr = currentAudioStream->GetNextPacketTimestamp(timestampAudio, timestampAudioDuration);
-                                    if (hr == S_OK && (config->FastSeekCleanAudio() || (timestampAudio + timestampAudioDuration) <= timestampVideo))
-                                    {
-                                        // decode one audio sample to get clean output
-                                        auto sample = currentAudioStream->GetNextSample();
-                                        if (sample)
-                                        {
-                                            actualPosition = sample.Timestamp() + sample.Duration();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (av_seek_frame(avFormatCtx, stream->StreamIndex(), seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
-                {
-                    hr = E_FAIL;
-                    DebugMessage(L" - ### Error while seeking\n");
-                }
-                else
-                {
-                    // Flush all active streams
-                    FlushStreams();
-                }
-            }
+            return S_OK;
+        }
+        else if (position == currentPosition && position == lastPosition && position == lastSeek && !isFirstSeekAfterStreamSwitch && position.count() > 0)
+        {
+            DebugMessage(L"Skipping double seek request.\n");
+            return S_OK;
         }
         else
         {
-            hr = E_FAIL;
+            lastSeek = position;
+            return m_pReader->Seek(position, actualPosition, lastPosition, fastSeek, currentVideoStream, currentAudioStream);
         }
-
-        return hr;
     }
 
     void FFmpegMediaSource::OnPositionChanged(MediaPlaybackSession const& sender, IInspectable const& args)

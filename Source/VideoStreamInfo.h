@@ -50,10 +50,9 @@ namespace winrt::FFmpegInteropX::implementation
         FFmpegInteropX::HardwareDecoderStatus hardwareDecoderStatus;
         FFmpegInteropX::DecoderEngine decoderEngine;
 
-        bool SetDefault()
+        void SetDefault()
         {
             isDefault = true;
-            return isDefault;
         }
     };
 }

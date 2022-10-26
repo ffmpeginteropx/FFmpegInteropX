@@ -97,6 +97,20 @@ task<void> MainPage::TryOpenLastFile()
     }
 }
 
+task<void> MainPage::TryOpenLastUri()
+{
+    try
+    {
+        //Try open last uri
+        auto uri = (String^)ApplicationData::Current->LocalSettings->Values->Lookup("LastUri");
+        co_await OpenUriStream(uri);
+    }
+    catch (Exception^ ex)
+    {
+        DisplayErrorMessage(ex->Message);
+    }
+}
+
 void MainPage::OpenLocalFile(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
     OpenLocalFile();
@@ -133,15 +147,14 @@ task<void> MainPage::OpenLocalFile(StorageFile^ file)
     // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
     try
     {
+        StorageApplicationPermissions::FutureAccessList->Clear();
+        StorageApplicationPermissions::FutureAccessList->Add(file);
+
         auto stream = co_await file->OpenAsync(FileAccessMode::Read);
         // Instantiate FFmpegMediaSource using the opened local file stream
         FFmpegMSS = co_await FFmpegMediaSource::CreateFromStreamAsync(stream, Config);
 
-        StorageApplicationPermissions::FutureAccessList->Clear();
-        StorageApplicationPermissions::FutureAccessList->Add(file);
-
         playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
-
 
         // Pass MediaPlaybackItem to Media Element
         mediaPlayer->Source = playbackItem;
@@ -181,16 +194,21 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
     // https://www.ffmpeg.org/ffmpeg-formats.html
     // 
     // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
-
+    
     // Below are some sample options that you can set to configure RTSP streaming
     //Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
     Config->FFmpegOptions->Insert("stimeout", 1000000);
     Config->FFmpegOptions->Insert("timeout", 1000000);
+    Config->FFmpegOptions->Insert("reconnect", 1);
+    Config->FFmpegOptions->Insert("reconnect_streamed", 1);
+    Config->FFmpegOptions->Insert("reconnect_on_network_error", 1);
 
     // Instantiate FFmpegMediaSource using the URI
     mediaPlayer->Source = nullptr;
     try
     {
+        ApplicationData::Current->LocalSettings->Values->Insert("LastUri", uri);
+
         FFmpegMSS = co_await FFmpegMediaSource::CreateFromUriAsync(uri, Config);
         playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
@@ -512,13 +530,37 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
         TryOpenLastFile();
     }
 
+    if (args->VirtualKey == Windows::System::VirtualKey::Enter && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Shift) & Windows::UI::Core::CoreVirtualKeyStates::Down)
+        == Windows::UI::Core::CoreVirtualKeyStates::Down && ApplicationData::Current->LocalSettings->Values->HasKey("LastUri"))
+    {
+        TryOpenLastUri();
+    }
+
+    if (args->Handled)
+    {
+        return;
+    }
+
     if (args->VirtualKey == Windows::System::VirtualKey::V)
     {
         if (playbackItem && playbackItem->VideoTracks->Size > 1)
         {
-            playbackItem->VideoTracks->SelectedIndex =
+            bool reverse = (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Shift) & Windows::UI::Core::CoreVirtualKeyStates::Down) == Windows::UI::Core::CoreVirtualKeyStates::Down;
+            int index = reverse ?
+                (playbackItem->VideoTracks->SelectedIndex - 1) % playbackItem->VideoTracks->Size :
                 (playbackItem->VideoTracks->SelectedIndex + 1) % playbackItem->VideoTracks->Size;
+            playbackItem->VideoTracks->SelectedIndex = index;
         }
+    }
+
+    if (args->VirtualKey == Windows::System::VirtualKey::Right && FFmpegMSS && mediaPlayer->PlaybackSession->CanSeek)
+    {
+        mediaPlayer->PlaybackSession->Position = TimeSpan{ mediaPlayer->PlaybackSession->Position.Duration + 50000000 };
+    }
+
+    if (args->VirtualKey == Windows::System::VirtualKey::Left && FFmpegMSS && mediaPlayer->PlaybackSession->CanSeek)
+    {
+        mediaPlayer->PlaybackSession->Position = TimeSpan{ mediaPlayer->PlaybackSession->Position.Duration - 50000000 };
     }
 }
 
@@ -571,4 +613,14 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
             FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text);
         }
     }
+}
+
+double MediaPlayerCPP::MainPage::GetBufferSizeMB()
+{
+    return (double)Config->ReadAheadBufferSize / (1024*1024);
+}
+
+void MediaPlayerCPP::MainPage::SetBufferSizeMB(double value)
+{
+    Config->ReadAheadBufferSize = (long long)(value * (1024 * 1024));
 }

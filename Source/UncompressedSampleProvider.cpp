@@ -199,9 +199,9 @@ HRESULT UncompressedSampleProvider::FeedPacketToDecoder(int64_t& firstPacketPos)
     return hr;
 }
 
-void UncompressedSampleProvider::Flush()
+void UncompressedSampleProvider::Flush(bool flushBuffers)
 {
-    MediaSampleProvider::Flush();
+    MediaSampleProvider::Flush(flushBuffers);
 
     // after seek we need to get first packet pts again
     hasNextFramePts = false;

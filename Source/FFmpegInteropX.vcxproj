@@ -98,6 +98,7 @@
       <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
       <DisableSpecificWarnings>28204;4635;4634</DisableSpecificWarnings>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -162,6 +163,7 @@
     <ClInclude Include="NativeBufferFactory.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ReferenceCue.h" />
+    <ClInclude Include="StreamBuffer.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="SubtitleProvider.h" />
     <ClInclude Include="SubtitleProviderBitmap.h" />

@@ -93,6 +93,7 @@
     <ClInclude Include="FrameGrabber.h" />
     <ClInclude Include="MediaSourceConfig.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="StreamBuffer.h" />
     <ClInclude Include="VideoFrame.h" />
     <ClInclude Include="AttachedFile.h">
       <Filter>Helpers</Filter>

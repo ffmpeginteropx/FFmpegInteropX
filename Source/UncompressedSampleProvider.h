@@ -59,7 +59,7 @@ public:
 
 
 public:
-    virtual void Flush() override;
+    virtual void Flush(bool flushBuffers) override;
 
 private:
     INT64 nextFramePts = 0;

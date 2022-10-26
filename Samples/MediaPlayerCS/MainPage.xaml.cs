@@ -93,13 +93,37 @@ namespace MediaPlayerCS
             {
                 await TryOpenLastFile();
             }
+            if (args.VirtualKey == VirtualKey.Enter && (Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift) & CoreVirtualKeyStates.Down)
+               == CoreVirtualKeyStates.Down && ApplicationData.Current.LocalSettings.Values.ContainsKey("LastUri"))
+            {
+                await TryOpenLastUri();
+            }
+
+            if (args.Handled)
+            {
+                return;
+            }
+
             if (args.VirtualKey == VirtualKey.V)
             {
                 if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
                 {
-                    playbackItem.VideoTracks.SelectedIndex =
+                    bool reverse = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
+                    int index = reverse ?
+                        (playbackItem.VideoTracks.SelectedIndex - 1) % playbackItem.VideoTracks.Count :
                         (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
+                    playbackItem.VideoTracks.SelectedIndex = index;
                 }
+            }
+
+            if (args.VirtualKey == VirtualKey.Right && FFmpegMSS != null && mediaPlayer.PlaybackSession.CanSeek)
+            {
+                mediaPlayer.PlaybackSession.Position += TimeSpan.FromSeconds(5);
+            }
+
+            if (args.VirtualKey == VirtualKey.Left && FFmpegMSS != null && mediaPlayer.PlaybackSession.CanSeek)
+            {
+                mediaPlayer.PlaybackSession.Position -= TimeSpan.FromSeconds(5);
             }
         }
 
@@ -147,6 +171,18 @@ namespace MediaPlayerCS
                     StorageApplicationPermissions.FutureAccessList.Entries[0].Token);
 
                 await OpenLocalFile(file);
+            }
+            catch (Exception)
+            {
+            }
+        }
+        private async Task TryOpenLastUri()
+        {
+            try
+            {
+                //Try open last uri
+                var uri = (string)ApplicationData.Current.LocalSettings.Values["LastUri"];
+                await OpenStreamUri(uri);
             }
             catch (Exception)
             {
@@ -227,35 +263,46 @@ namespace MediaPlayerCS
                 // Mark event as handled to prevent duplicate event to re-triggered
                 e.Handled = true;
 
-                try
+                await OpenStreamUri(uri);
+            }
+        }
+
+        private async Task OpenStreamUri(string uri)
+        {
+            try
+            {
+                ApplicationData.Current.LocalSettings.Values["LastUri"] = uri;
+
+                // Set FFmpeg specific options:
+                // https://www.ffmpeg.org/ffmpeg-protocols.html
+                // https://www.ffmpeg.org/ffmpeg-formats.html
+
+                // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
+
+                // Below are some sample options that you can set to configure RTSP streaming
+                // Config.FFmpegOptions.Add("rtsp_flags", "prefer_tcp");
+                Config.FFmpegOptions.Add("stimeout", 1000000);
+                Config.FFmpegOptions.Add("timeout", 1000000);
+                Config.FFmpegOptions.Add("reconnect", 1);
+                Config.FFmpegOptions.Add("reconnect_streamed", 1);
+                Config.FFmpegOptions.Add("reconnect_on_network_error", 1);
+
+                // Instantiate FFmpegMediaSource using the URI
+                mediaPlayer.Source = null;
+                FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
+
+                if (AutoCreatePlaybackItem)
                 {
-                    // Set FFmpeg specific options:
-                    // https://www.ffmpeg.org/ffmpeg-protocols.html
-                    // https://www.ffmpeg.org/ffmpeg-formats.html
-
-                    // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
-
-                    // Below are some sample options that you can set to configure RTSP streaming
-                    // Config.FFmpegOptions.Add("rtsp_flags", "prefer_tcp");
-                    Config.FFmpegOptions.Add("stimeout", 1000000);
-                    Config.FFmpegOptions.Add("timeout", 1000000);
-
-                    // Instantiate FFmpegMediaSource using the URI
-                    mediaPlayer.Source = null;
-                    FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
-
-                    var source = FFmpegMSS.CreateMediaPlaybackItem();
-
-                    // Pass MediaStreamSource to Media Element
-                    mediaPlayer.Source = source;
-
-                    // Close control panel after opening media
-                    Splitter.IsPaneOpen = false;
+                    CreatePlaybackItemAndStartPlaybackInternal();
                 }
-                catch (Exception ex)
+                else
                 {
-                    await DisplayErrorMessage(ex.Message);
+                    playbackItem = null;
                 }
+            }
+            catch (Exception ex)
+            {
+                await DisplayErrorMessage(ex.Message);
             }
         }
 
@@ -598,6 +645,16 @@ namespace MediaPlayerCS
         {
             Config.FFmpegAudioFilters = ffmpegAudioFilters.Text;
             FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
+        }
+
+        private double GetBufferSizeMB()
+        {
+            return Config.ReadAheadBufferSize / (1024 * 1024);
+        }
+
+        private long SetBufferSizeMB(double value)
+        {
+            return Config.ReadAheadBufferSize = (long)(value * (1024 * 1024));
         }
     }
 }

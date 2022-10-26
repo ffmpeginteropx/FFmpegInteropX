@@ -28,19 +28,20 @@ using namespace std;
 using namespace winrt::FFmpegInteropX;
 
 class FFmpegReader;
+class StreamBuffer;
 
-    class MediaSampleProvider
-    {
-    public:
-        //----------------------------------------------------------------------
-        AVStream* m_pAvStream = NULL;
-        INT64 m_startOffset = 0;
-        std::vector<winrt::hstring> _properties = std::vector<winrt::hstring>();
-        //----------------------------------------------------------------------
+class MediaSampleProvider
+{
+public:
+    //----------------------------------------------------------------------
+    AVStream* m_pAvStream = NULL;
+    INT64 m_startOffset = 0;
+    std::vector<winrt::hstring> _properties = std::vector<winrt::hstring>();
+    //----------------------------------------------------------------------
 
-        virtual ~MediaSampleProvider();
-        virtual winrt::Windows::Media::Core::MediaStreamSample GetNextSample();
-        virtual void Flush();
+    virtual ~MediaSampleProvider();
+    virtual winrt::Windows::Media::Core::MediaStreamSample GetNextSample();
+    virtual void Flush(bool flushBuffers);
 
     winrt::Windows::Media::Core::IMediaStreamDescriptor StreamDescriptor()
     {
@@ -108,15 +109,15 @@ class FFmpegReader;
     void InitializeNameLanguageCodec();
     virtual void InitializeStreamInfo();
     virtual void QueuePacket(AVPacket* packet);
-    AVPacket* PopPacket();
     HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
+    bool IsBufferFull();
     virtual HRESULT CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface) = 0;
     HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
     HRESULT SkipPacketsUntilTimestamp(TimeSpan const& timestamp);
     virtual winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() = 0;
     virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample const& sample) { UNREFERENCED_PARAMETER(sample); return S_OK; }; // can be overridded for setting extended properties
-    void EnableStream();
-    void DisableStream();
+    virtual void EnableStream();
+    virtual void DisableStream();
     virtual void SetFilters(winrt::hstring filterDefinition) { };// override for setting effects in sample providers
     virtual void DisableFilters() {};//override for disabling filters in sample providers;
     virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& videoEncodingProperties, bool isCompressedFormat);
@@ -190,10 +191,13 @@ protected:
         HardwareDecoderStatus hardwareDecoderStatus);
 
 private:
-    std::queue<AVPacket*> m_packetQueue;
     INT64 m_nextPacketPts = 0;
     winrt::Windows::Media::Core::IMediaStreamDescriptor m_streamDescriptor = nullptr;
     HardwareDecoderStatus hardwareDecoderStatus;
+
+public:
+    std::shared_ptr<StreamBuffer> packetBuffer;
+
 
 protected:
     // The FFmpeg context. Because they are complex types
