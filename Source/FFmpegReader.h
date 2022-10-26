@@ -44,7 +44,9 @@ public:
     void Stop();
     void Flush();
     HRESULT Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool allowFastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
-
+    std::function<void(AvSubtitleEventArgs*)> eventCallback;
+    std::function<void(int)> readCallback;
+    std::shared_ptr<std::vector<AvSubtitleContextTrack*>> avSubtitleContextTracks_ptr;
 private:
 
     bool TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, bool isForwardSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream);
@@ -57,9 +59,6 @@ private:
 
     AVFormatContext* avFormatCtx;
     std::vector<std::shared_ptr<MediaSampleProvider>>* sampleProviders{ nullptr };
-    std::function<void(AvSubtitleEventArgs*)> eventCallback;
-    std::function<void(int)> readCallback;
-    std::shared_ptr<std::vector<AvSubtitleContextTrack*>> avSubtitleContextTracks_ptr;
     MediaSourceConfig config;
     std::shared_ptr<MediaSampleProvider> lastStream{ nullptr };
     std::shared_ptr<MediaSampleProvider> fullStream{ nullptr };

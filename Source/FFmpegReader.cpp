@@ -20,7 +20,12 @@
 #include "FFmpegReader.h"
 #include "StreamBuffer.h"
 #include "UncompressedSampleProvider.h"
+#include "AvSubtitleContextTrack.h"
 
+extern "C"
+{
+#include "libavformat/avformat.h"
+}
 using namespace Concurrency;
 
 FFmpegReader::FFmpegReader(AVFormatContext* avFormatCtx, std::vector<shared_ptr<MediaSampleProvider>>* initProviders, MediaSourceConfig config)
@@ -549,6 +554,27 @@ int FFmpegReader::ReadPacket()
     }
     else
     {
+        this->readCallback(avPacket->size);
+
+        AvSubtitleContextTrack* tempTrack = nullptr;
+        if (avPacket->stream_index != 1 && avPacket->stream_index != 0)
+        {
+            tempTrack = nullptr;
+        }
+        //----------------------------------------------------------------------
+        if (avSubtitleContextTracks_ptr != nullptr && avSubtitleContextTracks_ptr && avSubtitleContextTracks_ptr->size() > 0)
+        {
+            for (size_t i = 0; i < avSubtitleContextTracks_ptr->size(); i++)
+            {
+                auto track = avSubtitleContextTracks_ptr->at(i);
+                if (track->index == avPacket->stream_index)
+                {
+                    tempTrack = track;
+                }
+            }
+        }
+        //----------------------------------------------------------------------
+
         errorCount = 0;
         if (avPacket->stream_index == forceReadStream)
         {
@@ -568,6 +594,48 @@ int FFmpegReader::ReadPacket()
         else
         {
             auto& provider = sampleProviders->at(avPacket->stream_index);
+
+            if (tempTrack && tempTrack != nullptr && provider != nullptr && this->eventCallback != nullptr)
+            {
+                //&& m_pSource != nullptr && m_pSource
+                //&& (m_pSource->PrimarySubtitleIndex() == avPacket->stream_index || m_pSource->SecondarySubtitleIndex() == avPacket->stream_index))
+
+                int got = 0;
+                AVSubtitle avSubtitle;
+                auto result = avcodec_decode_subtitle2(tempTrack->avSubtitleCodecCtx, &avSubtitle, &got, avPacket);
+                auto framePts = avPacket->pts;
+                auto frameDuration = avPacket->duration;
+                if (got != 0)
+                {
+                    TimeSpan position = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->pts) - provider->m_startOffset);
+                    TimeSpan duration = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->duration));
+                    this->RaiseSubtitleCueEntered(avPacket, &avSubtitle, tempTrack, position, duration);
+                    avsubtitle_free(&avSubtitle);
+                }
+                else
+                {
+                    DebugMessage(L"Unable to decode subtitle stream, could be compressed\n");
+                    /* DataWriter dataWriter = DataWriter();
+                     auto aBuffer = winrt::array_view<const uint8_t>(avPacket->data, avPacket->size);
+                     dataWriter.WriteBytes(aBuffer);
+                     auto random = winrt::RuntimeComponentUtils::Zip::GetDecompressed(dataWriter.DetachBuffer());
+                     std::vector<uint8_t> vec(random.begin(), random.end());
+                     uint8_t* newdata = vec.data();
+                     avPacket->data = newdata;
+                     avPacket->buf = nullptr;
+                     avPacket->size = vec.size();
+
+                     auto result2 = avcodec_decode_subtitle2(tempTrack->avSubtitleCodecCtx, &avSubtitle, &got, avPacket);
+                     if (got)
+                     {
+                         TimeSpan position = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->pts) - provider->m_startOffset);
+                         TimeSpan duration = TimeSpan(LONGLONG(av_q2d(provider->m_pAvStream->time_base) * 10000000 * avPacket->duration));
+                         this->RaiseSubtitleCueEntered(avPacket, &avSubtitle, tempTrack, position, duration);
+                     }*/
+                    avsubtitle_free(&avSubtitle);
+                }
+            }
+
             if (provider)
             {
                 provider->QueuePacket(avPacket);
