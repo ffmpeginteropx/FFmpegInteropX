@@ -19,7 +19,7 @@ class SubtitleProvider :
 public:
     TimedMetadataTrack SubtitleTrack = { nullptr };
 
-    MediaPlaybackItem PlaybackItem = { nullptr };
+    winrt::weak_ref<MediaPlaybackItem> PlaybackItemWeak = { nullptr };
 
     TimeSpan SubtitleDelay{};
 
@@ -438,10 +438,14 @@ private:
     {
         if (referenceTrack == nullptr)
         {
-            referenceTrack = TimedMetadataTrack(L"ReferenceTrack_" + Name, L"", TimedMetadataKind::Custom);
-            referenceTrack.CueEntered(weak_handler(this, &SubtitleProvider::OnRefCueEntered));
-            PlaybackItem.TimedMetadataTracksChanged(weak_handler(this, &SubtitleProvider::OnTimedMetadataTracksChanged));
-            PlaybackItem.Source().ExternalTimedMetadataTracks().Append(referenceTrack);
+            auto playbackItem = PlaybackItemWeak.get();
+            if (playbackItem)
+            {
+                referenceTrack = TimedMetadataTrack(L"ReferenceTrack_" + Name, L"", TimedMetadataKind::Custom);
+                referenceTrack.CueEntered(weak_handler(this, &SubtitleProvider::OnRefCueEntered));
+                playbackItem.TimedMetadataTracksChanged(weak_handler(this, &SubtitleProvider::OnTimedMetadataTracksChanged));
+                playbackItem.Source().ExternalTimedMetadataTracks().Append(referenceTrack);
+            }
         }
     }
 
@@ -451,7 +455,7 @@ private:
         if (args.CollectionChange() == CollectionChange::ItemInserted &&
             sender.TimedMetadataTracks().GetAt(args.Index()) == referenceTrack)
         {
-            PlaybackItem.TimedMetadataTracks().SetPresentationMode(
+            sender.TimedMetadataTracks().SetPresentationMode(
                 args.Index(), TimedMetadataTrackPresentationMode::Hidden);
         }
     }

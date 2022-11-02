@@ -193,7 +193,6 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (SUCCEEDED(hr))
         {
-            this->mss = mss;
             hr = InitFFmpegContext();
         }
 
@@ -244,7 +243,6 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (SUCCEEDED(hr))
         {
-            this->mss = nullptr;
             hr = InitFFmpegContext();
         }
 
@@ -296,10 +294,10 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    void FFmpegMediaSource::InitializePlaybackItem(MediaPlaybackItem const& playbackitem)
+    void FFmpegMediaSource::InitializePlaybackItem(MediaPlaybackItem const& playbackItem)
     {
-        audioTracksChangedToken = playbackitem.AudioTracksChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnAudioTracksChanged });
-        subtitlePresentationModeChangedToken = playbackitem.TimedMetadataTracks().PresentationModeChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnPresentationModeChanged });
+        audioTracksChangedToken = playbackItem.AudioTracksChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnAudioTracksChanged });
+        subtitlePresentationModeChangedToken = playbackItem.TimedMetadataTracks().PresentationModeChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnPresentationModeChanged });
 
         if (config->AutoSelectForcedSubtitles())
         {
@@ -308,7 +306,7 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 if (stream.IsForced())
                 {
-                    playbackitem.TimedMetadataTracks().SetPresentationMode(index, TimedMetadataTrackPresentationMode::PlatformPresented);
+                    playbackItem.TimedMetadataTracks().SetPresentationMode(index, TimedMetadataTrackPresentationMode::PlatformPresented);
                     break;
                 }
 
@@ -318,8 +316,10 @@ namespace winrt::FFmpegInteropX::implementation
 
         for (auto &stream : subtitleStreams)
         {
-            stream->PlaybackItem = playbackItem;
+            stream->PlaybackItemWeak = playbackItem;
         }
+
+        playbackItemWeak = playbackItem;
     }
 
 
@@ -577,11 +577,65 @@ namespace winrt::FFmpegInteropX::implementation
             auto encodingProperties = videoDescriptor.EncodingProperties();
             auto pixelAspect = (double)encodingProperties.PixelAspectRatio().Numerator() / encodingProperties.PixelAspectRatio().Denominator();
             auto videoAspect = ((double)encodingProperties.Width() / encodingProperties.Height()) / pixelAspect;
-            for (auto &stream : subtitleStreams)
+            for (auto& stream : subtitleStreams)
             {
                 stream->NotifyVideoFrameSize(encodingProperties.Width(), encodingProperties.Height(), videoAspect);
             }
         }
+
+        if (SUCCEEDED(hr))
+        {
+            // Convert media duration from AV_TIME_BASE to TimeSpan unit
+            mediaDuration = TimeSpan(LONGLONG(avFormatCtx->duration * 10000000 / double(AV_TIME_BASE)));
+
+            auto title = av_dict_get(avFormatCtx->metadata, "title", NULL, 0);
+            auto titleStr = title ? StringUtils::Utf8ToPlatformString(title->value) : L"";
+            auto codecStr = StringUtils::Utf8ToPlatformString(avFormatCtx->iformat->name);
+            formatInfo = winrt::FFmpegInteropX::FormatInfo(titleStr, codecStr, mediaDuration, avFormatCtx->bit_rate);
+
+            auto chapters = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::ChapterInfo>();
+            if (avFormatCtx->chapters && avFormatCtx->nb_chapters > 1)
+            {
+                for (size_t i = 0; i < avFormatCtx->nb_chapters; i++)
+                {
+                    auto chapter = avFormatCtx->chapters[i];
+                    auto entry = av_dict_get(chapter->metadata, "title", NULL, AV_DICT_IGNORE_SUFFIX);
+                    if (entry)
+                    {
+                        auto chapterTitle = StringUtils::Utf8ToPlatformString(entry->value);
+                        TimeSpan start{ (long long)((chapter->start / (double)chapter->time_base.den) * chapter->time_base.num * 10000000) };
+                        TimeSpan duration{ (long long)(((chapter->end - chapter->start) / (double)chapter->time_base.den) * chapter->time_base.num * 10000000) };
+
+                        // compensate for start time offset
+                        if (avFormatCtx->start_time != AV_NOPTS_VALUE)
+                        {
+                            start = TimeSpan(start.count() - (avFormatCtx->start_time * 10));
+                        }
+
+                        // cut off negative start times
+                        if (start.count() < 0)
+                        {
+                            duration = TimeSpan(duration.count() + start.count());
+                            start = TimeSpan(0);
+                        }
+
+                        if (duration.count() > 0)
+                        {
+                            auto chapInfo = winrt::FFmpegInteropX::ChapterInfo(chapterTitle, start, duration);
+                            chapters.Append(chapInfo);
+                        }
+                    }
+                }
+            }
+            chapterInfos = chapters.GetView();
+        }
+
+        return hr;
+    }
+
+    MediaStreamSource FFmpegMediaSource::CreateMediaStreamSource()
+    {
+        MediaStreamSource mss = nullptr;
 
         if (currentVideoStream && currentAudioStream)
         {
@@ -602,93 +656,39 @@ namespace winrt::FFmpegInteropX::implementation
         else if (subtitleStreams.size() == 0 || !config->IsExternalSubtitleParser)
         {
             //only fail if there are no media streams (audio, video, or subtitle)
-            hr = E_FAIL;
+            throw_hresult(E_FAIL);
         }
-        //if the streams are subtitles only, there will be no media stream source
-        if (mss != nullptr) {
-            if (SUCCEEDED(hr))
+
+        for (auto& stream : audioStreams)
+        {
+            if (stream != currentAudioStream)
             {
-                for (auto &stream : audioStreams)
-                {
-                    if (stream != currentAudioStream)
-                    {
-                        mss.AddStreamDescriptor(stream->StreamDescriptor());
-                    }
-                }
-
-                for (auto &stream : videoStreams)
-                {
-                    if (stream != currentVideoStream)
-                    {
-                        mss.AddStreamDescriptor(stream->StreamDescriptor());
-                    }
-                }
-
-                auto chapters = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::ChapterInfo>();
-                if (avFormatCtx->chapters && avFormatCtx->nb_chapters > 1)
-                {
-                    for (size_t i = 0; i < avFormatCtx->nb_chapters; i++)
-                    {
-                        auto chapter = avFormatCtx->chapters[i];
-                        auto entry = av_dict_get(chapter->metadata, "title", NULL, AV_DICT_IGNORE_SUFFIX);
-                        if (entry)
-                        {
-                            auto title = StringUtils::Utf8ToPlatformString(entry->value);
-                            TimeSpan start{ (long long)((chapter->start / (double)chapter->time_base.den) * chapter->time_base.num * 10000000) };
-                            TimeSpan duration{ (long long)(((chapter->end - chapter->start) / (double)chapter->time_base.den) * chapter->time_base.num * 10000000) };
-
-                            // compensate for start time offset
-                            if (avFormatCtx->start_time != AV_NOPTS_VALUE)
-                            {
-                                start = TimeSpan(start.count() - (avFormatCtx->start_time * 10));
-                            }
-
-                            // cut off negative start times
-                            if (start.count() < 0)
-                            {
-                                duration = TimeSpan(duration.count() + start.count());
-                                start = TimeSpan(0);
-                            }
-
-                            if (duration.count() > 0)
-                            {
-                                auto chapInfo = winrt::FFmpegInteropX::ChapterInfo(title, start, duration);
-                                chapters.Append(chapInfo);
-                            }
-                        }
-                    }
-                }
-                chapterInfos = chapters.GetView();
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                // Convert media duration from AV_TIME_BASE to TimeSpan unit
-                mediaDuration = TimeSpan(LONGLONG(avFormatCtx->duration * 10000000 / double(AV_TIME_BASE)));
-
-                // Assign initial BufferTime to MediaStreamSource
-                mss.BufferTime(TimeSpan{ 0 });
-                mss.MaxSupportedPlaybackRate(config->MaxSupportedPlaybackRate());
-
-                if (mediaDuration.count() > 0)
-                {
-                    mss.Duration(mediaDuration);
-                    mss.CanSeek(true);
-                }
-
-                auto title = av_dict_get(avFormatCtx->metadata, "title", NULL, 0);
-                auto titleStr = title ? StringUtils::Utf8ToPlatformString(title->value) : L"";
-                auto codecStr = StringUtils::Utf8ToPlatformString(avFormatCtx->iformat->name);
-                formatInfo = winrt::FFmpegInteropX::FormatInfo(titleStr, codecStr, mediaDuration, avFormatCtx->bit_rate);
-
-                // using strong reference here would create circle references, since we store MSS and MediaPlaybackItem here.
-                startingRequestedToken = mss.Starting({ get_weak(), &FFmpegMediaSource::OnStarting });
-                sampleRequestedToken = mss.SampleRequested({ get_weak(), &FFmpegMediaSource::OnSampleRequested });
-                switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
+                mss.AddStreamDescriptor(stream->StreamDescriptor());
             }
         }
 
-        return hr;
+        for (auto& stream : videoStreams)
+        {
+            if (stream != currentVideoStream)
+            {
+                mss.AddStreamDescriptor(stream->StreamDescriptor());
+            }
+        }
+
+        if (mediaDuration.count() > 0)
+        {
+            mss.Duration(mediaDuration);
+            mss.CanSeek(true);
+        }
+
+        mssWeak = mss;
+
+        // using strong reference here would create circle references, since we store MSS and MediaPlaybackItem here.
+        startingRequestedToken = mss.Starting({ get_strong(), &FFmpegMediaSource::OnStarting });
+        sampleRequestedToken = mss.SampleRequested({ get_strong(), &FFmpegMediaSource::OnSampleRequested });
+        switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_strong(), &FFmpegMediaSource::OnSwitchStreamsRequested });
+
+        return mss;
     }
 
 
@@ -1094,7 +1094,7 @@ namespace winrt::FFmpegInteropX::implementation
     Windows::Media::Core::MediaStreamSource FFmpegMediaSource::GetMediaStreamSource()
     {
         if (this->config->IsFrameGrabber) throw_hresult(E_UNEXPECTED);
-        return mss;
+        return mssWeak.get();
     }
 
     MediaSource FFmpegMediaSource::CreateMediaSource()
@@ -1108,6 +1108,9 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         if (this->config->IsFrameGrabber) throw_hresult(E_UNEXPECTED);
+
+        auto mss = CreateMediaStreamSource();
+
         MediaSource source = MediaSource::CreateFromMediaStreamSource(mss);
         for (auto &stream : subtitleStreams)
         {
@@ -1140,8 +1143,8 @@ namespace winrt::FFmpegInteropX::implementation
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem()
     {
         std::lock_guard lock(mutex);
-        if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
-        playbackItem = MediaPlaybackItem(CreateMediaSource());
+        if (this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
+        auto playbackItem = MediaPlaybackItem(CreateMediaSource());
         InitializePlaybackItem(playbackItem);
         return playbackItem;
     }
@@ -1149,8 +1152,8 @@ namespace winrt::FFmpegInteropX::implementation
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan const& startTime)
     {
         std::lock_guard lock(mutex);
-        if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
-        playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime);
+        if (this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
+        auto playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime);
         InitializePlaybackItem(playbackItem);
         return playbackItem;
     }
@@ -1158,8 +1161,8 @@ namespace winrt::FFmpegInteropX::implementation
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan const& startTime, TimeSpan const& durationLimit)
     {
         std::lock_guard lock(mutex);
-        if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
-        playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime, durationLimit);
+        if (this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
+        auto playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime, durationLimit);
         InitializePlaybackItem(playbackItem);
         return playbackItem;
     }
@@ -1339,7 +1342,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     MediaPlaybackItem FFmpegMediaSource::PlaybackItem()
     {
-        return playbackItem;
+        return playbackItemWeak.get();
     }
 
     TimeSpan FFmpegMediaSource::SubtitleDelay()
@@ -1349,27 +1352,34 @@ namespace winrt::FFmpegInteropX::implementation
 
     TimeSpan FFmpegMediaSource::BufferTime()
     {
-        return mss.BufferTime();
+        if (auto strong = mssWeak.get())
+        {
+            return strong.BufferTime();
+        }
+        return TimeSpan{0};
     }
 
     void FFmpegMediaSource::BufferTime(TimeSpan const& value)
     {
-        mss.BufferTime(value);
+        if (auto strong = mssWeak.get())
+        {
+            strong.BufferTime(value);
+        }
     }
 
     MediaPlaybackSession FFmpegMediaSource::PlaybackSession()
     {
-        return session;
+        return sessionWeak.get();
     }
 
     void FFmpegMediaSource::PlaybackSession(MediaPlaybackSession const& value)
     {
         std::lock_guard lock(mutex);
-        if (session)
+        if (auto strong = sessionWeak.get())
         {
-            session.PositionChanged(sessionPositionEvent);
+            strong.PositionChanged(sessionPositionEvent);
         }
-        session = value;
+        sessionWeak = value;
         if (value)
         {
             sessionPositionEvent = value.PositionChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnPositionChanged });
@@ -1379,19 +1389,19 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::Close()
     {
         std::lock_guard lock(mutex);
-        if (mss)
+        if (auto mss = mssWeak.get())
         {
             mss.Starting(startingRequestedToken);
             mss.SampleRequested(sampleRequestedToken);
             mss.SwitchStreamsRequested(switchStreamRequestedToken);
-            mss = nullptr;
+            mssWeak = nullptr;
         }
 
-        if (playbackItem)
+        if (auto playbackItem = playbackItemWeak.get())
         {
             playbackItem.AudioTracksChanged(audioTracksChangedToken);
             playbackItem.TimedMetadataTracks().PresentationModeChanged(subtitlePresentationModeChangedToken);
-            playbackItem = nullptr;
+            playbackItemWeak = nullptr;
         }
 
         // Clear our data
@@ -1445,11 +1455,7 @@ namespace winrt::FFmpegInteropX::implementation
         deviceContext = nullptr;
         deviceManager = nullptr;
 
-        if (PlaybackSession())
-        {
-            PlaybackSession().PositionChanged(sessionPositionEvent);
-            PlaybackSession(nullptr);
-        }
+        PlaybackSession(nullptr);
     }
 
 
@@ -1750,27 +1756,24 @@ namespace winrt::FFmpegInteropX::implementation
 
         try
         {
-            if (mss != nullptr)
+            if (config->ReadAheadBufferEnabled())
             {
-                if (config->ReadAheadBufferEnabled())
-                {
-                    m_pReader->Start();
-                }
-                if (currentAudioStream && args.Request().StreamDescriptor() == currentAudioStream->StreamDescriptor())
-                {
-                    auto sample = currentAudioStream->GetNextSample();
-                    args.Request().Sample(sample);
-                }
-                else if (currentVideoStream && args.Request().StreamDescriptor() == currentVideoStream->StreamDescriptor())
-                {
-                    CheckVideoDeviceChanged();
-                    auto sample = currentVideoStream->GetNextSample();
-                    args.Request().Sample(sample);
-                }
-                else
-                {
-                    args.Request().Sample(nullptr);
-                }
+                m_pReader->Start();
+            }
+            if (currentAudioStream && args.Request().StreamDescriptor() == currentAudioStream->StreamDescriptor())
+            {
+                auto sample = currentAudioStream->GetNextSample();
+                args.Request().Sample(sample);
+            }
+            else if (currentVideoStream && args.Request().StreamDescriptor() == currentVideoStream->StreamDescriptor())
+            {
+                CheckVideoDeviceChanged(sender);
+                auto sample = currentVideoStream->GetNextSample();
+                args.Request().Sample(sample);
+            }
+            else
+            {
+                args.Request().Sample(nullptr);
             }
         }
         catch (...)
@@ -1780,7 +1783,7 @@ namespace winrt::FFmpegInteropX::implementation
     }
 
 
-    void FFmpegMediaSource::CheckVideoDeviceChanged()
+    void FFmpegMediaSource::CheckVideoDeviceChanged(MediaStreamSource const &mss)
     {
         bool hasDeviceChanged = false;
         HRESULT hr = S_OK;
@@ -1829,7 +1832,8 @@ namespace winrt::FFmpegInteropX::implementation
 
             if (SUCCEEDED(hr))
             {
-                if (mss.CanSeek())
+                // We assume can seek if duration > 0.
+                if (mediaDuration.count() > 0)
                 {
                     // seek to last keyframe position
                     TimeSpan lastVideoTimestamp = currentVideoStream->LastSampleTimestamp;

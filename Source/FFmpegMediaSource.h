@@ -156,6 +156,7 @@ namespace winrt::FFmpegInteropX::implementation
         HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);
         HRESULT CreateMediaStreamSource(hstring const& uri);
         HRESULT InitFFmpegContext();
+        MediaStreamSource CreateMediaStreamSource();
         MediaSource CreateMediaSource();
         std::shared_ptr<MediaSampleProvider> CreateAudioStream(AVStream* avStream, int index);
         std::shared_ptr<MediaSampleProvider> CreateVideoStream(AVStream* avStream, int index);
@@ -165,7 +166,7 @@ namespace winrt::FFmpegInteropX::implementation
         HRESULT ParseOptions(PropertySet const& ffmpegOptions);
         void OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args);
         void OnSampleRequested(MediaStreamSource const& sender, MediaStreamSourceSampleRequestedEventArgs const& args);
-        void CheckVideoDeviceChanged();
+        void CheckVideoDeviceChanged(MediaStreamSource const& mss);
         void OnSwitchStreamsRequested(MediaStreamSource  const& sender, MediaStreamSourceSwitchStreamsRequestedEventArgs  const& args);
         void OnAudioTracksChanged(MediaPlaybackItem  const& sender, IVectorChangedEventArgs  const& args);
         void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList  const& sender, TimedMetadataPresentationModeChangedEventArgs  const& args);
@@ -195,11 +196,11 @@ namespace winrt::FFmpegInteropX::implementation
 
     private:
 
-        MediaStreamSource mss = { nullptr };
+        winrt::weak_ref<MediaStreamSource> mssWeak = { nullptr };
         winrt::event_token startingRequestedToken{};
         winrt::event_token sampleRequestedToken{};
         winrt::event_token switchStreamRequestedToken{};
-        MediaPlaybackItem playbackItem = { nullptr };
+        winrt::weak_ref<MediaPlaybackItem> playbackItemWeak = { nullptr };
         IVector<FFmpegInteropX::AudioStreamInfo> audioStrInfos = { nullptr };
         IVector<FFmpegInteropX::SubtitleStreamInfo> subtitleStrInfos = { nullptr };
         IVector<FFmpegInteropX::VideoStreamInfo> videoStrInfos = { nullptr };
@@ -230,7 +231,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         std::recursive_mutex mutex;
         DispatcherQueue dispatcher = { nullptr };
-        MediaPlaybackSession session = { nullptr };
+        winrt::weak_ref<MediaPlaybackSession> sessionWeak = { nullptr };
         winrt::event_token sessionPositionEvent{};
 
         TimeSpan mediaDuration{};
