@@ -1831,12 +1831,14 @@ namespace winrt::FFmpegInteropX::implementation
             if (currentAudioStream && args.Request().StreamDescriptor() == currentAudioStream->StreamDescriptor())
             {
                 auto sample = currentAudioStream->GetNextSample();
+                CheckExtendDuration(sample);
                 args.Request().Sample(sample);
             }
             else if (currentVideoStream && args.Request().StreamDescriptor() == currentVideoStream->StreamDescriptor())
             {
                 CheckVideoDeviceChanged(sender);
                 auto sample = currentVideoStream->GetNextSample();
+                CheckExtendDuration(sample);
                 args.Request().Sample(sample);
             }
             else
@@ -1850,6 +1852,23 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
+    void FFmpegMediaSource::CheckExtendDuration(MediaStreamSample sample)
+    {
+        if (sample && config->AutoExtendDuration())
+        {
+            auto sampleEnd = sample.Timestamp() + sample.Duration();
+            if (TimeSpan::zero() < mediaDuration && (mediaDuration < sampleEnd ||
+                (lastDurationExtension && (mediaDuration - sampleEnd).count() < 5000000)))
+            {
+                auto extension = min(lastDurationExtension + 1, 5);
+
+                mediaDuration += TimeSpan{ extension * 10000000 };
+                mss.Duration(mediaDuration);
+
+                lastDurationExtension = extension;
+            }
+        }
+    }
 
     void FFmpegMediaSource::CheckVideoDeviceChanged(MediaStreamSource const &mss)
     {
