@@ -183,6 +183,9 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
         PROPERTY(DownmixAudioStreamsToStereo, bool, false);
 
+        ///<summary>Automatically extend the duration of the MediaStreamSource, if the file unexpectedly contains additional data.</summary>
+        PROPERTY(AutoExtendDuration, bool, true);
+
     public:
         //internal:
         bool IsFrameGrabber;
