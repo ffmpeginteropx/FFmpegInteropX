@@ -1257,10 +1257,6 @@ namespace winrt::FFmpegInteropX::implementation
         Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> result;
         {
             std::lock_guard lock(mutex);
-            if (isClosed)
-            {
-                co_return nullptr;
-            }
 
             if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
             {
@@ -1287,10 +1283,13 @@ namespace winrt::FFmpegInteropX::implementation
                     }
 
                     // add stream
-                    subtitleStreams.push_back(externalSubtitle);
-                    if (this->PlaybackItem() != nullptr)
+                    if (!isClosed)
                     {
-                        PlaybackItem().Source().ExternalTimedMetadataTracks().Append(externalSubtitle->SubtitleTrack);
+                        subtitleStreams.push_back(externalSubtitle);
+                    }
+                    if (auto playbackItem = playbackItemWeak.get())
+                    {
+                        playbackItem.Source().ExternalTimedMetadataTracks().Append(externalSubtitle->SubtitleTrack);
                     }
                     subtitleTracksCount++;
                 }
