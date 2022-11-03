@@ -256,10 +256,14 @@ namespace MediaPlayerCS
                 playbackItemChanged.SetResult(false);
             };
             mediaPlayer.MediaOpened += openedEvent;
+            mediaPlayer.MediaFailed += failedEvent;
+
             mediaPlayer.Source = playbackItem;
             await playbackItemChanged.Task;
 
             mediaPlayer.MediaOpened -= openedEvent;
+            mediaPlayer.MediaFailed -= failedEvent;
+
             oldSource?.Source?.Dispose();
             // Close control panel after file open
             Splitter.IsPaneOpen = false;
