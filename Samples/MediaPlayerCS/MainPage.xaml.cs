@@ -38,6 +38,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using System.IO;
+using Windows.Foundation;
 
 namespace MediaPlayerCS
 {
@@ -211,7 +212,7 @@ namespace MediaPlayerCS
         private async Task OpenLocalFile(StorageFile file)
         {
             currentFile = file;
-            mediaPlayer.Source = null;
+            //mediaPlayer.Source = null;
 
             // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
             IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
@@ -239,13 +240,27 @@ namespace MediaPlayerCS
             }
         }
 
-        private void CreatePlaybackItemAndStartPlaybackInternal()
+        private async void CreatePlaybackItemAndStartPlaybackInternal()
         {
             playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
             mediaPlayer.AutoPlay = true;
             // Pass MediaStreamSource to MediaPlayer
+            var oldSource = mediaPlayer.Source as MediaPlaybackItem;
+            TaskCompletionSource<bool> playbackItemChanged = new TaskCompletionSource<bool>();
+            TypedEventHandler<MediaPlayer, object> openedEvent = (s, e) =>
+            {
+                playbackItemChanged.SetResult(true);
+            };
+            TypedEventHandler<MediaPlayer, MediaPlayerFailedEventArgs> failedEvent = (s, e) =>
+            {
+                playbackItemChanged.SetResult(false);
+            };
+            mediaPlayer.MediaOpened += openedEvent;
             mediaPlayer.Source = playbackItem;
+            await playbackItemChanged.Task;
 
+            mediaPlayer.MediaOpened -= openedEvent;
+            oldSource?.Source?.Dispose();
             // Close control panel after file open
             Splitter.IsPaneOpen = false;
         }
@@ -571,7 +586,7 @@ namespace MediaPlayerCS
             }
             if (actualFFmpegMSS != null)
             {
-                actualFFmpegMSS.Dispose();
+                //actualFFmpegMSS.Dispose();
             }
             actualFFmpegMSS = FFmpegMSS;
             await CoreApplication.MainView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(
