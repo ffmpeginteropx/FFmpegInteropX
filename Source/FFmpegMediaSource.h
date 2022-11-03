@@ -84,6 +84,10 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Creates a MediaPlaybackItem for playback which starts at the specified stream offset and ends after the specified duration.</summary>
         MediaPlaybackItem CreateMediaPlaybackItem(TimeSpan const& startTime, TimeSpan const& durationLimit);
 
+        ///<summary>Creates a MediaPlaybackItem, assigns it to MediaPlayer.Source and waits for MediaOpened or MediaFailed (throws in that case).</summary>
+        ///<remarks>This will also automatically cleanup resources, if MediaPlayer switches to a different file, or it's Source property is assigned null.</remarks>
+        IAsyncAction OpenWithMediaPlayerAsync(MediaPlayer mediaPlayer);
+
         ///<summary>Adds an external subtitle from a stream.</summary>
         ///<param name="stream">The subtitle stream.</param>
         ///<param name="streamName">The name to use for the subtitle.</param>

@@ -242,30 +242,32 @@ namespace MediaPlayerCS
 
         private async void CreatePlaybackItemAndStartPlaybackInternal()
         {
-            playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
+            //playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
             mediaPlayer.AutoPlay = true;
             // Pass MediaStreamSource to MediaPlayer
-            var oldSource = mediaPlayer.Source as MediaPlaybackItem;
-            TaskCompletionSource<bool> playbackItemChanged = new TaskCompletionSource<bool>();
-            TypedEventHandler<MediaPlayer, object> openedEvent = (s, e) =>
-            {
-                playbackItemChanged.SetResult(true);
-            };
-            TypedEventHandler<MediaPlayer, MediaPlayerFailedEventArgs> failedEvent = (s, e) =>
-            {
-                playbackItemChanged.SetResult(false);
-            };
-            mediaPlayer.MediaOpened += openedEvent;
-            mediaPlayer.MediaFailed += failedEvent;
+            //var oldSource = mediaPlayer.Source as MediaPlaybackItem;
+            //TaskCompletionSource<bool> playbackItemChanged = new TaskCompletionSource<bool>();
+            //TypedEventHandler<MediaPlayer, object> openedEvent = (s, e) =>
+            //{
+            //    playbackItemChanged.SetResult(true);
+            //};
+            //TypedEventHandler<MediaPlayer, MediaPlayerFailedEventArgs> failedEvent = (s, e) =>
+            //{
+            //    playbackItemChanged.SetResult(false);
+            //};
+            //mediaPlayer.MediaOpened += openedEvent;
+            //mediaPlayer.MediaFailed += failedEvent;
+            //mediaPlayer.Source = playbackItem;
+            //await playbackItemChanged.Task;
 
-            mediaPlayer.Source = playbackItem;
-            await playbackItemChanged.Task;
-
-            mediaPlayer.MediaOpened -= openedEvent;
-            mediaPlayer.MediaFailed -= failedEvent;
-
-            oldSource?.Source?.Dispose();
+            //mediaPlayer.MediaOpened -= openedEvent;
+            //mediaPlayer.MediaFailed -= failedEvent;
+            //oldSource?.Source?.Dispose();
             // Close control panel after file open
+
+
+            await FFmpegMSS.OpenWithMediaPlayerAsync(mediaPlayer);
+
             Splitter.IsPaneOpen = false;
         }
 

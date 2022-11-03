@@ -1200,6 +1200,59 @@ namespace winrt::FFmpegInteropX::implementation
         return playbackItem;
     }
 
+    IAsyncAction FFmpegMediaSource::OpenWithMediaPlayerAsync(MediaPlayer mediaPlayer)
+    {
+        task_completion_event<bool> tce;
+
+        auto openedToken = mediaPlayer.MediaOpened([tce](MediaPlayer const&, IInspectable const&) { tce.set(true); });
+        auto failedToken = mediaPlayer.MediaFailed([tce](MediaPlayer const&, MediaPlayerFailedEventArgs const&) { tce.set(false); });
+
+        mediaPlayer.Source(CreateMediaPlaybackItem());
+        auto playbackItemWeak = this->playbackItemWeak;
+
+        auto result = co_await task<bool>(tce);
+
+        mediaPlayer.MediaOpened(openedToken);
+        mediaPlayer.MediaFailed(failedToken);
+
+        auto source = mediaPlayer.Source();
+        auto playbackItem = playbackItemWeak.get();
+        if (playbackItem)
+        {
+            if (!result || source != playbackItem)
+            {
+                // we were disposed already
+                playbackItem.Source().Close();
+            }
+            else
+            {
+                // register for soruce changed event
+                auto tokenPtr = new event_token[1]();
+                tokenPtr[0] = mediaPlayer.SourceChanged([tokenPtr, playbackItemWeak](MediaPlayer const& mediaPlayer, IInspectable const&)
+                {
+                    auto playbackItem = playbackItemWeak.get();
+                    if (!playbackItem)
+                    {
+                        // we were disposed already
+                        mediaPlayer.SourceChanged(tokenPtr[0]);
+                        delete[] tokenPtr;
+                    }
+                    else
+                    {
+                        auto source = mediaPlayer.Source();
+                        if (source != playbackItem)
+                        {
+                            // source has changed. close now.
+                            playbackItem.Source().Close();
+                            mediaPlayer.SourceChanged(tokenPtr[0]);
+                            delete[] tokenPtr;
+                        }
+                    }
+                });
+            }
+        }
+    }
+
     IAsyncOperation<Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream stream, hstring streamName)
     {
         auto strong = get_strong();
@@ -1733,7 +1786,7 @@ namespace winrt::FFmpegInteropX::implementation
         return hr;
     }
 
-    void FFmpegMediaSource::MediaStreamSourceClosed(MediaStreamSource const& sender, MediaStreamSourceClosedEventArgs const& args)
+    void FFmpegMediaSource::MediaStreamSourceClosed(MediaStreamSource const&, MediaStreamSourceClosedEventArgs const&)
     {
         Close();
     }
@@ -1863,7 +1916,10 @@ namespace winrt::FFmpegInteropX::implementation
                 auto extension = min(lastDurationExtension + 1, 5);
 
                 mediaDuration += TimeSpan{ extension * 10000000 };
-                mss.Duration(mediaDuration);
+                if (auto mss = mssWeak.get())
+                {
+                    mss.Duration(mediaDuration);
+                }
 
                 lastDurationExtension = extension;
             }
