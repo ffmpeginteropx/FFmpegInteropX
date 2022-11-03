@@ -1004,6 +1004,11 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SetSubtitleDelay(TimeSpan const& delay)
     {
         std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+
         try
         {
             for (auto &subtitleStream : subtitleStreams)
@@ -1021,6 +1026,11 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SetFFmpegAudioFilters(hstring const& audioFilters)
     {
         std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+
         if (currentAudioStream)
         {
             currentAudioStream->SetFilters(audioFilters);
@@ -1031,17 +1041,26 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoEffects)
     {
         std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+
         if (currentVideoStream)
         {
             currentVideoStream->SetFilters(videoEffects);
-            //TODO store and apply video effects on video stream change!
-            //currentVideoEffects = videoEffects;
+            currentVideoEffects = videoEffects;
         }
     }
 
     void FFmpegMediaSource::DisableAudioEffects()
     {
         std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+
         if (currentAudioStream)
         {
             currentAudioStream->DisableFilters();
@@ -1052,14 +1071,26 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::DisableVideoEffects()
     {
         std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+
         if (currentVideoStream)
         {
             currentVideoStream->DisableFilters();
+            currentVideoEffects = hstring();
         }
     }
 
     FFmpegInteropX::MediaThumbnailData FFmpegMediaSource::ExtractThumbnail()
     {
+        std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return nullptr;
+        }
+
         if (thumbnailStreamIndex != AVERROR_STREAM_NOT_FOUND)
         {
             // FFmpeg identifies album/cover art from a music file as a video stream
@@ -1093,6 +1124,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     Windows::Media::Core::MediaStreamSource FFmpegMediaSource::GetMediaStreamSource()
     {
+        std::lock_guard lock(mutex);
         if (this->config->IsFrameGrabber) throw_hresult(E_UNEXPECTED);
         return mssWeak.get();
     }
@@ -1143,7 +1175,7 @@ namespace winrt::FFmpegInteropX::implementation
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem()
     {
         std::lock_guard lock(mutex);
-        if (this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
+        if (isClosed || this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
         auto playbackItem = MediaPlaybackItem(CreateMediaSource());
         InitializePlaybackItem(playbackItem);
         return playbackItem;
@@ -1152,7 +1184,7 @@ namespace winrt::FFmpegInteropX::implementation
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan const& startTime)
     {
         std::lock_guard lock(mutex);
-        if (this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
+        if (isClosed || this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
         auto playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime);
         InitializePlaybackItem(playbackItem);
         return playbackItem;
@@ -1161,7 +1193,7 @@ namespace winrt::FFmpegInteropX::implementation
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan const& startTime, TimeSpan const& durationLimit)
     {
         std::lock_guard lock(mutex);
-        if (this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
+        if (isClosed || this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
         auto playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime, durationLimit);
         InitializePlaybackItem(playbackItem);
         return playbackItem;
@@ -1224,6 +1256,11 @@ namespace winrt::FFmpegInteropX::implementation
         Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> result;
         {
             std::lock_guard lock(mutex);
+            if (isClosed)
+            {
+                co_return nullptr;
+            }
+
             if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
             {
                 externalSubsParser->SetSubtitleDelay(SubtitleDelay());
@@ -1279,6 +1316,11 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::StartBuffering()
     {
         std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+
         m_pReader->Start();
     }
 
@@ -1289,6 +1331,12 @@ namespace winrt::FFmpegInteropX::implementation
 
     Collections::IMapView<hstring, Collections::IVectorView<hstring>> FFmpegMediaSource::MetadataTags()
     {
+        std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+
         metadata->LoadMetadataTags(avFormatCtx);
         return metadata->MetadataTags();
     }
@@ -1300,14 +1348,12 @@ namespace winrt::FFmpegInteropX::implementation
 
     FFmpegInteropX::VideoStreamInfo FFmpegMediaSource::CurrentVideoStream()
     {
-        auto stream = currentVideoStream;
-        return stream ? stream->VideoInfo() : nullptr;
+        return currentVideoStreamInfo;
     }
 
     FFmpegInteropX::AudioStreamInfo FFmpegMediaSource::CurrentAudioStream()
     {
-        auto stream = currentAudioStream;
-        return stream ? stream->AudioInfo() : nullptr;
+        return currentAudioStreamInfo;
     }
 
     Collections::IVectorView<FFmpegInteropX::VideoStreamInfo> FFmpegMediaSource::VideoStreams()
@@ -1375,6 +1421,11 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::PlaybackSession(MediaPlaybackSession const& value)
     {
         std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+
         if (auto strong = sessionWeak.get())
         {
             strong.PositionChanged(sessionPositionEvent);
@@ -1389,6 +1440,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::Close()
     {
         std::lock_guard lock(mutex);
+
         if (auto mss = mssWeak.get())
         {
             mss.Starting(startingRequestedToken);
@@ -1405,24 +1457,15 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         // Clear our data
-        currentAudioStream.reset();
-        currentVideoStream.reset();
+        currentAudioStream = nullptr;
+        currentVideoStream = nullptr;
 
         if (m_pReader != nullptr)
         {
             m_pReader->Stop();
             m_pReader->Flush();
-            m_pReader.reset();;
+            m_pReader = nullptr;
         }
-
-        for (auto &x : subtitleStreams)
-            x.reset();
-        for (auto &x : sampleProviders)
-            x.reset();
-        for (auto &x : audioStreams)
-            x.reset();
-        for (auto &x : videoStreams)
-            x.reset();
 
         subtitleStreams.clear();
         sampleProviders.clear();
@@ -1430,14 +1473,20 @@ namespace winrt::FFmpegInteropX::implementation
         videoStreams.clear();
 
         if (avFormatCtx)
+        {
             avformat_close_input(&avFormatCtx);
+        }
+
         if (avIOCtx)
         {
             avIOCtx->opaque = NULL;
             avio_closep(&avIOCtx);
         }
+
         if (avDict)
+        {
             av_dict_free(&avDict);
+        }
 
         if (avHardwareContext)
         {
@@ -1449,13 +1498,17 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         if (deviceHandle && deviceManager)
+        {
             deviceManager->CloseDeviceHandle(deviceHandle);
+        }
 
         device = nullptr;
         deviceContext = nullptr;
         deviceManager = nullptr;
 
         PlaybackSession(nullptr);
+
+        isClosed = true;
     }
 
 
@@ -1682,8 +1735,13 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args)
     {
         std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+
         MediaStreamSourceStartingRequest request = args.Request();
-        
+
         try
         {
             if (isFirstSeek && avHardwareContext)
@@ -1753,6 +1811,10 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
 
         try
         {
@@ -1872,6 +1934,10 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
 
         try
         {
@@ -1889,6 +1955,10 @@ namespace winrt::FFmpegInteropX::implementation
             }
             if (currentVideoStream && args.Request().OldStreamDescriptor() == currentVideoStream->StreamDescriptor())
             {
+                if (!currentVideoEffects.empty())
+                {
+                    currentVideoStream->DisableFilters();
+                }
                 currentVideoStream->DisableStream();
                 currentVideoStream = nullptr;
             }
@@ -1903,6 +1973,7 @@ namespace winrt::FFmpegInteropX::implementation
                     {
                         currentAudioStream->SetFilters(currentAudioEffects);
                     }
+                    currentAudioStreamInfo = currentAudioStream->AudioInfo();
                 }
             }
             for (auto& stream : videoStreams)
@@ -1911,6 +1982,11 @@ namespace winrt::FFmpegInteropX::implementation
                 {
                     currentVideoStream = stream;
                     currentVideoStream->EnableStream();
+                    if (!currentVideoEffects.empty())
+                    {
+                        currentVideoStream->SetFilters(currentVideoEffects);
+                    }
+                    currentVideoStreamInfo = currentVideoStream->VideoInfo();
                 }
             }
 

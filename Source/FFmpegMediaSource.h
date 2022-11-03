@@ -210,9 +210,12 @@ namespace winrt::FFmpegInteropX::implementation
         std::vector<std::shared_ptr<SubtitleProvider>> subtitleStreams;
         std::vector<std::shared_ptr<MediaSampleProvider>> videoStreams;
 
-        std::shared_ptr<MediaSampleProvider> currentVideoStream;
-        std::shared_ptr<MediaSampleProvider> currentAudioStream;
+        std::shared_ptr<MediaSampleProvider> currentVideoStream = { nullptr };
+        std::shared_ptr<MediaSampleProvider> currentAudioStream = { nullptr };
+        FFmpegInteropX::AudioStreamInfo currentAudioStreamInfo = { nullptr };
+        FFmpegInteropX::VideoStreamInfo currentVideoStreamInfo = { nullptr };
         hstring currentAudioEffects{};
+        hstring currentVideoEffects{};
         int thumbnailStreamIndex = 0;
 
         winrt::event_token audioTracksChangedToken{};
@@ -246,6 +249,8 @@ namespace winrt::FFmpegInteropX::implementation
 
         bool isFirstSeek;
         bool isFirstSeekAfterStreamSwitch = false;
+
+        bool isClosed = false;
 
         TimeSpan currentPosition{ 0 };
         TimeSpan lastPosition{ 0 };
