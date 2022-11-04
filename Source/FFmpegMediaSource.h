@@ -69,9 +69,6 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Disables video effects.</summary>
         void DisableVideoEffects();
 
-        ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
-        FFmpegInteropX::MediaThumbnailData ExtractThumbnail();
-
         ///<summary>Gets the MediaStreamSource. Using the MediaStreamSource will prevent subtitles from working. Please use CreateMediaPlaybackItem instead.</summary>
         MediaStreamSource GetMediaStreamSource();
 
@@ -134,6 +131,9 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Gets a boolean indication if a thumbnail is embedded in the file.</summary>
         bool HasThumbnail();
 
+        ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
+        FFmpegInteropX::MediaThumbnailData ExtractThumbnail();
+
         ///<summary>Gets the MediaPlaybackItem that was created before by using CreateMediaPlaybackItem.</summary>
         MediaPlaybackItem PlaybackItem();
 
@@ -178,6 +178,9 @@ namespace winrt::FFmpegInteropX::implementation
         void InitializePlaybackItem(MediaPlaybackItem  const& playbackitem);
         bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus const& status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
         void CheckExtendDuration(MediaStreamSample sample);
+        MediaThumbnailData ExtractThumbnail(AVStream* avStream);
+
+        void Close(bool onMediaSourceClosed);
 
     public://internal:
         static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher);
@@ -222,7 +225,6 @@ namespace winrt::FFmpegInteropX::implementation
         FFmpegInteropX::VideoStreamInfo currentVideoStreamInfo = { nullptr };
         hstring currentAudioEffects{};
         hstring currentVideoEffects{};
-        int thumbnailStreamIndex = 0;
 
         winrt::event_token audioTracksChangedToken{};
         winrt::event_token subtitlePresentationModeChangedToken{};
@@ -236,6 +238,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::shared_ptr<AttachedFileHelper> attachedFileHelper = { nullptr };
 
         std::shared_ptr<MediaMetadata> metadata = { nullptr };
+        MediaThumbnailData thumbnailData = nullptr;
 
         std::recursive_mutex mutex;
         DispatcherQueue dispatcher = { nullptr };

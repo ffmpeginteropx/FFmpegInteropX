@@ -186,6 +186,10 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Automatically extend the duration of the MediaStreamSource, if the file unexpectedly contains additional data.</summary>
         PROPERTY(AutoExtendDuration, bool, true);
 
+        ///<summary>Keep metadata available after MediaSource was closed.</summary>
+        ///<remarks>Set this to false to cleanup more memory automatically, if you are sure you don't need metadata after playback end.</remarks>
+        PROPERTY(KeepMetadataOnMediaSourceClosed, bool, true);
+
     public:
         //internal:
         bool IsFrameGrabber;

@@ -22,6 +22,8 @@
 // This assertion exists to avoid compiling these generated source files directly.
 //static_assert(false, "Do not compile generated C++/WinRT source files directly");
 
+void free_buffer(void* lpVoid);
+
 namespace winrt::FFmpegInteropX::implementation
 {
     using namespace Windows::Foundation;
@@ -39,7 +41,6 @@ namespace winrt::FFmpegInteropX::implementation
     FFmpegMediaSource::FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig,
         DispatcherQueue const& dispatcher)
         : config(interopConfig)
-        , thumbnailStreamIndex(AVERROR_STREAM_NOT_FOUND)
         , isFirstSeek(true)
         , dispatcher(dispatcher)
     {
@@ -497,9 +498,9 @@ namespace winrt::FFmpegInteropX::implementation
                     }
                 }
             }
-            else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && avStream->disposition == AV_DISPOSITION_ATTACHED_PIC && thumbnailStreamIndex == AVERROR_STREAM_NOT_FOUND && !config->IsExternalSubtitleParser)
+            else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && avStream->disposition == AV_DISPOSITION_ATTACHED_PIC && !thumbnailData && !config->IsExternalSubtitleParser)
             {
-                thumbnailStreamIndex = index;
+                thumbnailData = ExtractThumbnail(avStream);
             }
             else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && !config->IsExternalSubtitleParser)
             {
@@ -1087,37 +1088,32 @@ namespace winrt::FFmpegInteropX::implementation
     FFmpegInteropX::MediaThumbnailData FFmpegMediaSource::ExtractThumbnail()
     {
         std::lock_guard lock(mutex);
-        if (isClosed)
+        return thumbnailData;
+    }
+
+    FFmpegInteropX::MediaThumbnailData FFmpegMediaSource::ExtractThumbnail(AVStream* imageStream)
+    {
+        if (isClosed || !imageStream->attached_pic.data || !imageStream->attached_pic.buf || !imageStream->attached_pic.size)
         {
             return nullptr;
         }
 
-        if (thumbnailStreamIndex != AVERROR_STREAM_NOT_FOUND)
+        hstring extension = L".jpg";
+        switch (imageStream->codecpar->codec_id)
         {
-            // FFmpeg identifies album/cover art from a music file as a video stream
-            // Avoid creating unnecessarily video stream from this album/cover art
-            if (avFormatCtx->streams[thumbnailStreamIndex]->disposition == AV_DISPOSITION_ATTACHED_PIC)
-            {
-                auto imageStream = avFormatCtx->streams[thumbnailStreamIndex];
-                //save album art to file.
-                hstring extension = L".jpeg";
-                switch (imageStream->codecpar->codec_id)
-                {
-                case AV_CODEC_ID_MJPEG:
-                case AV_CODEC_ID_MJPEGB:
-                case AV_CODEC_ID_JPEG2000:
-                case AV_CODEC_ID_JPEGLS: extension = L".jpeg"; break;
-                case AV_CODEC_ID_PNG: extension = L".png"; break;
-                case AV_CODEC_ID_BMP: extension = L".bmp"; break;
-                }
+        case AV_CODEC_ID_MJPEG:
+        case AV_CODEC_ID_MJPEGB:
+        case AV_CODEC_ID_JPEG2000:
+        case AV_CODEC_ID_JPEGLS: extension = L".jpg"; break;
+        case AV_CODEC_ID_PNG: extension = L".png"; break;
+        case AV_CODEC_ID_BMP: extension = L".bmp"; break;
+        }
 
-                auto vector = array_view(imageStream->attached_pic.data, imageStream->attached_pic.size);
-                DataWriter writer = DataWriter();
-                writer.WriteBytes(vector);
-
-                auto retValue = MediaThumbnailData(writer.DetachBuffer(), extension);
-                return retValue;
-            }
+        auto bufferRef = av_buffer_ref(imageStream->attached_pic.buf);
+        if (bufferRef)
+        {
+            auto buffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)imageStream->attached_pic.size, free_buffer, bufferRef);
+            return MediaThumbnailData(buffer, extension);
         }
 
         return nullptr;
@@ -1436,7 +1432,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     bool FFmpegMediaSource::HasThumbnail()
     {
-        return thumbnailStreamIndex;
+        return thumbnailData != nullptr;
     }
 
     MediaPlaybackItem FFmpegMediaSource::PlaybackItem()
@@ -1492,7 +1488,30 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::Close()
     {
+        Close(false);
+    }
+
+    void FFmpegMediaSource::Close(bool onMediaSourceClosed)
+    {
         std::lock_guard lock(mutex);
+
+
+        if (onMediaSourceClosed)
+        {
+            if (config->KeepMetadataOnMediaSourceClosed())
+            {
+                // Save metadata before closing
+                if (avFormatCtx)
+                {
+                    metadata->LoadMetadataTags(avFormatCtx);
+                }
+            }
+            else
+            {
+                metadata->Clear();
+                thumbnailData = nullptr;
+            }
+        }
 
         if (auto mss = mssWeak.get())
         {
@@ -1788,7 +1807,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::MediaStreamSourceClosed(MediaStreamSource const&, MediaStreamSourceClosedEventArgs const&)
     {
-        Close();
+        Close(true);
     }
 
     void FFmpegMediaSource::OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args)

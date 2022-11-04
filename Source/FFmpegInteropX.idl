@@ -676,6 +676,11 @@ namespace FFmpegInteropX
 
         ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
         Boolean DownmixAudioStreamsToStereo{ get; set; };
+
+
+        ///<summary>Keep metadata available after MediaSource was closed.</summary>
+        ///<remarks>Set this to false to cleanup more memory automatically, if you are sure you don't need metadata after playback end.</remarks>
+        Boolean KeepMetadataOnMediaSourceClosed{ get; set; };
     };
 
     [default_interface]
