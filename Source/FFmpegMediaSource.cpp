@@ -255,7 +255,7 @@ namespace winrt::FFmpegInteropX::implementation
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
         int index = 0;
-        for (auto &stream : subtitleStreams)
+        for (auto& stream : subtitleStreams)
         {
             if (stream->SubtitleTrack == args.Track())
             {
@@ -315,7 +315,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
 
-        for (auto &stream : subtitleStreams)
+        for (auto& stream : subtitleStreams)
         {
             stream->PlaybackItemWeak = playbackItem;
         }
@@ -1013,7 +1013,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         try
         {
-            for (auto &subtitleStream : subtitleStreams)
+            for (auto& subtitleStream : subtitleStreams)
             {
                 subtitleStream->SetSubtitleDelay(delay);
             }
@@ -1128,7 +1128,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     MediaSource FFmpegMediaSource::CreateMediaSource()
     {
-        for (auto &stream : sampleProviders)
+        for (auto& stream : sampleProviders)
         {
             if (stream)
             {
@@ -1141,7 +1141,7 @@ namespace winrt::FFmpegInteropX::implementation
         auto mss = CreateMediaStreamSource();
 
         MediaSource source = MediaSource::CreateFromMediaStreamSource(mss);
-        for (auto &stream : subtitleStreams)
+        for (auto& stream : subtitleStreams)
         {
             source.ExternalTimedMetadataTracks().Append(stream->SubtitleTrack);
         }
@@ -1205,7 +1205,8 @@ namespace winrt::FFmpegInteropX::implementation
 
         mediaPlayer.Source(CreateMediaPlaybackItem());
         auto playbackItemWeak = this->playbackItemWeak;
-
+        if (mediaPlayer.PlaybackSession())
+            this->PlaybackSession(mediaPlayer.PlaybackSession());
         auto result = co_await task<bool>(tce);
 
         mediaPlayer.MediaOpened(openedToken);
@@ -1225,26 +1226,26 @@ namespace winrt::FFmpegInteropX::implementation
                 // register for soruce changed event
                 auto tokenPtr = new event_token[1]();
                 tokenPtr[0] = mediaPlayer.SourceChanged([tokenPtr, playbackItemWeak](MediaPlayer const& mediaPlayer, IInspectable const&)
-                {
-                    auto playbackItem = playbackItemWeak.get();
-                    if (!playbackItem)
                     {
-                        // we were disposed already
-                        mediaPlayer.SourceChanged(tokenPtr[0]);
-                        delete[] tokenPtr;
-                    }
-                    else
-                    {
-                        auto source = mediaPlayer.Source();
-                        if (source != playbackItem)
+                        auto playbackItem = playbackItemWeak.get();
+                        if (!playbackItem)
                         {
-                            // source has changed. close now.
-                            playbackItem.Source().Close();
+                            // we were disposed already
                             mediaPlayer.SourceChanged(tokenPtr[0]);
                             delete[] tokenPtr;
                         }
-                    }
-                });
+                        else
+                        {
+                            auto source = mediaPlayer.Source();
+                            if (source != playbackItem)
+                            {
+                                // source has changed. close now.
+                                playbackItem.Source().Close();
+                                mediaPlayer.SourceChanged(tokenPtr[0]);
+                                delete[] tokenPtr;
+                            }
+                        }
+                    });
             }
         }
     }
@@ -1289,7 +1290,7 @@ namespace winrt::FFmpegInteropX::implementation
                 auto encodingProperties = videoDescriptor.EncodingProperties();
                 auto pixelAspect = (double)encodingProperties.PixelAspectRatio().Numerator() / encodingProperties.PixelAspectRatio().Denominator();
                 auto videoAspect = ((double)encodingProperties.Width() / encodingProperties.Height()) / pixelAspect;
-                for (auto &subtitleStream : externalSubsParser->subtitleStreams)
+                for (auto& subtitleStream : externalSubsParser->subtitleStreams)
                 {
                     subtitleStream->NotifyVideoFrameSize(encodingProperties.Width(), encodingProperties.Height(), videoAspect);
                 }
@@ -1451,7 +1452,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return strong.BufferTime();
         }
-        return TimeSpan{0};
+        return TimeSpan{ 0 };
     }
 
     void FFmpegMediaSource::BufferTime(TimeSpan const& value)
@@ -1945,7 +1946,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    void FFmpegMediaSource::CheckVideoDeviceChanged(MediaStreamSource const &mss)
+    void FFmpegMediaSource::CheckVideoDeviceChanged(MediaStreamSource const& mss)
     {
         bool hasDeviceChanged = false;
         HRESULT hr = S_OK;
@@ -1980,7 +1981,7 @@ namespace winrt::FFmpegInteropX::implementation
             if (SUCCEEDED(hr))
             {
                 // assign device and context
-                for (auto &stream : videoStreams)
+                for (auto& stream : videoStreams)
                 {
                     // set device pointers to stream
                     hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
