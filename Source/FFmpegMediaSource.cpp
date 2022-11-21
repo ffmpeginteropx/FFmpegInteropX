@@ -31,6 +31,7 @@ namespace winrt::FFmpegInteropX::implementation
     // Static functions passed to FFmpeg
     static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize);
     static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence);
+    static int IsShuttingDown(void* ptr);
 
     // Flag for ffmpeg global setup
     static bool isRegistered = false;
@@ -172,6 +173,13 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (SUCCEEDED(hr))
         {
+            // Register callback for fast dispose
+            avFormatCtx->interrupt_callback.callback = IsShuttingDown;
+            avFormatCtx->interrupt_callback.opaque = this;
+        }
+
+        if (SUCCEEDED(hr))
+        {
             avFormatCtx->pb = avIOCtx;
             avFormatCtx->flags |= AVFMT_FLAG_CUSTOM_IO;
             // Open media file using custom IO setup above instead of using file name. Opening a file using file name will invoke fopen C API call that only have
@@ -221,6 +229,13 @@ namespace winrt::FFmpegInteropX::implementation
         {
             // Populate AVDictionary avDict based on PropertySet ffmpegOptions. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
             hr = ParseOptions(config->FFmpegOptions());
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            // Register callback for fast dispose
+            avFormatCtx->interrupt_callback.callback = IsShuttingDown;
+            avFormatCtx->interrupt_callback.opaque = this;
         }
 
         if (SUCCEEDED(hr))
@@ -1378,6 +1393,8 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::Close()
     {
+        isShuttingDown = true;
+
         std::lock_guard lock(mutex);
         if (mss)
         {
@@ -2040,5 +2057,15 @@ namespace winrt::FFmpegInteropX::implementation
 
             return out.QuadPart; // Return the new position:
         }
+    }
+
+    static int IsShuttingDown(void* ptr)
+    {
+        FFmpegMediaSource* mss = reinterpret_cast<FFmpegMediaSource*>(ptr);
+        if (mss->isShuttingDown)
+        {
+            return 1;
+        }
+        return 0;
     }
 }
