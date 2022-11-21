@@ -44,33 +44,10 @@ namespace MediaPlayerCS
 {
     public sealed partial class MainPage : Page
     {
-        private FFmpegMediaSource CurrentFFmpegMediaSource
-        {
-            get
-            {
-                return CurrentPlaybackItem.GetExtradata().MediaSource;
-            }
-        }
-
+        private FFmpegMediaSource FFmpegMSS;
+        private FFmpegMediaSource actualFFmpegMSS;
         private StorageFile currentFile;
-
-        private MediaPlaybackItem actualPlaybackItem;
-        private MediaPlaybackItem CurrentPlaybackItem
-        {
-            get
-            {
-                if (actualPlaybackItem != null)
-                    return actualPlaybackItem;
-
-                if (playbackList != null && playbackList.CurrentItem != null)
-                    return playbackList.CurrentItem;
-
-                return null;
-            }
-        }
-
-        private MediaPlaybackList playbackList;
-
+        private MediaPlaybackItem playbackItem;
         private MediaPlayer mediaPlayer;
 
         public bool AutoCreatePlaybackItem
@@ -98,7 +75,7 @@ namespace MediaPlayerCS
 
             mediaPlayer = new MediaPlayer();
             mediaPlayer.AudioCategory = MediaPlayerAudioCategory.Movie;
-            mediaPlayer.MediaOpened += SinglePlaybackItem_MediaPlayer_MediaOpened;
+            mediaPlayer.MediaOpened += MediaPlayer_MediaOpened;
             mediaPlayer.MediaFailed += MediaPlayer_MediaFailed;
             mediaPlayerElement.SetMediaPlayer(mediaPlayer);
 
@@ -130,22 +107,22 @@ namespace MediaPlayerCS
 
             if (args.VirtualKey == VirtualKey.V)
             {
-                if (CurrentPlaybackItem != null && CurrentPlaybackItem.VideoTracks.Count > 1)
+                if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
                 {
                     bool reverse = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
                     int index = reverse ?
-                        (CurrentPlaybackItem.VideoTracks.SelectedIndex - 1) % CurrentPlaybackItem.VideoTracks.Count :
-                        (CurrentPlaybackItem.VideoTracks.SelectedIndex + 1) % CurrentPlaybackItem.VideoTracks.Count;
-                    CurrentPlaybackItem.VideoTracks.SelectedIndex = index;
+                        (playbackItem.VideoTracks.SelectedIndex - 1) % playbackItem.VideoTracks.Count :
+                        (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
+                    playbackItem.VideoTracks.SelectedIndex = index;
                 }
             }
 
-            if (args.VirtualKey == VirtualKey.Right && CurrentFFmpegMediaSource != null && mediaPlayer.PlaybackSession.CanSeek)
+            if (args.VirtualKey == VirtualKey.Right && FFmpegMSS != null && mediaPlayer.PlaybackSession.CanSeek)
             {
                 mediaPlayer.PlaybackSession.Position += TimeSpan.FromSeconds(5);
             }
 
-            if (args.VirtualKey == VirtualKey.Left && CurrentFFmpegMediaSource != null && mediaPlayer.PlaybackSession.CanSeek)
+            if (args.VirtualKey == VirtualKey.Left && FFmpegMSS != null && mediaPlayer.PlaybackSession.CanSeek)
             {
                 mediaPlayer.PlaybackSession.Position -= TimeSpan.FromSeconds(5);
             }
@@ -224,25 +201,11 @@ namespace MediaPlayerCS
             filePicker.FileTypeFilter.Add("*");
 
             // Show file picker so user can select a file
-            var files = await filePicker.PickMultipleFilesAsync();
+            StorageFile file = await filePicker.PickSingleFileAsync();
 
-            if (files != null)
+            if (file != null)
             {
-                if (files.Count == 1)
-                    await OpenLocalFile(files[0]);
-                else
-                {
-                    playbackList = new MediaPlaybackList();
-                    foreach (var file in files)
-                    {
-                        var ffmpegMss = await FFmpegMediaSource.CreateFromStreamAsync(await file.OpenReadAsync());
-                        ffmpegMss.PlaybackSession = mediaPlayer.PlaybackSession;
-                        var item = ffmpegMss.CreateMediaPlaybackItem();
-                        item.Source.CustomProperties.Add(MediaPlaybackItemExtradata.MediaSourceKey, new MediaPlaybackItemExtradata(ffmpegMss));
-                        playbackList.Items.Add(item);
-                        mediaPlayer.Source = playbackList;
-                    }
-                }
+                await OpenLocalFile(file);
             }
         }
 
@@ -260,15 +223,15 @@ namespace MediaPlayerCS
                 StorageApplicationPermissions.FutureAccessList.Add(file);
 
                 // Instantiate FFmpegMediaSource using the opened local file stream
-                var mediaSource = await FFmpegMediaSource.CreateFromStreamAsync(readStream, Config);
-                var tags = mediaSource.MetadataTags.ToArray();
+                FFmpegMSS = await FFmpegMediaSource.CreateFromStreamAsync(readStream, Config);
+                var tags = FFmpegMSS.MetadataTags.ToArray();
                 if (AutoCreatePlaybackItem)
                 {
-                    CreatePlaybackItemAndStartPlaybackInternal(mediaSource);
+                    CreatePlaybackItemAndStartPlaybackInternal();
                 }
                 else
                 {
-                    actualPlaybackItem = null;
+                    playbackItem = null;
                 }
             }
             catch (Exception ex)
@@ -277,7 +240,7 @@ namespace MediaPlayerCS
             }
         }
 
-        private async void CreatePlaybackItemAndStartPlaybackInternal(FFmpegMediaSource mediaSource)
+        private async void CreatePlaybackItemAndStartPlaybackInternal()
         {
             //playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
             mediaPlayer.AutoPlay = true;
@@ -303,8 +266,8 @@ namespace MediaPlayerCS
             // Close control panel after file open
 
 
-            await mediaSource.OpenWithMediaPlayerAsync(mediaPlayer);
-            
+            await FFmpegMSS.OpenWithMediaPlayerAsync(mediaPlayer);
+
             Splitter.IsPaneOpen = false;
         }
 
@@ -347,15 +310,15 @@ namespace MediaPlayerCS
 
                 // Instantiate FFmpegMediaSource using the URI
                 mediaPlayer.Source = null;
-                var mediaSource = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
+                FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
 
                 if (AutoCreatePlaybackItem)
                 {
-                    CreatePlaybackItemAndStartPlaybackInternal(mediaSource);
+                    CreatePlaybackItemAndStartPlaybackInternal();
                 }
                 else
                 {
-                    actualPlaybackItem = null;
+                    playbackItem = null;
                 }
             }
             catch (Exception ex)
@@ -433,7 +396,7 @@ namespace MediaPlayerCS
 
         private async void LoadSubtitleFile(object sender, RoutedEventArgs e)
         {
-            if (CurrentPlaybackItem != null)
+            if (playbackItem != null)
             {
                 FileOpenPicker filePicker = new FileOpenPicker();
                 filePicker.SettingsIdentifier = "SubtitleFile";
@@ -447,7 +410,7 @@ namespace MediaPlayerCS
                 if (file != null)
                 {
                     var track = TimedTextSource.CreateFromStream(await file.OpenReadAsync());
-                    CurrentPlaybackItem.Source.ExternalTimedTextSources.Add(track);
+                    playbackItem.Source.ExternalTimedTextSources.Add(track);
                     track.Resolved += Track_Resolved;
                 }
             }
@@ -464,16 +427,23 @@ namespace MediaPlayerCS
             if (first != null)
             {
                 first.Label = "External";
-                var index = CurrentPlaybackItem.TimedMetadataTracks.ToList().IndexOf(first);
+                var index = playbackItem.TimedMetadataTracks.ToList().IndexOf(first);
                 if (index >= 0)
                 {
-                    CurrentPlaybackItem.TimedMetadataTracks.SetPresentationMode((uint)index, TimedMetadataTrackPresentationMode.PlatformPresented);
+                    playbackItem.TimedMetadataTracks.SetPresentationMode((uint)index, TimedMetadataTrackPresentationMode.PlatformPresented);
                 }
             }
         }
 
         private async void MediaPlayer_MediaFailed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
         {
+            if (actualFFmpegMSS != null)
+            {
+                actualFFmpegMSS.Dispose();
+                actualFFmpegMSS = null;
+                FFmpegMSS = null;
+                playbackItem = null;
+            }
             await CoreApplication.MainView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(
             async () =>
             {
@@ -506,7 +476,7 @@ namespace MediaPlayerCS
 
         private async void LoadSubtitleFileFFmpeg(object sender, RoutedEventArgs e)
         {
-            if (CurrentFFmpegMediaSource != null)
+            if (FFmpegMSS != null)
             {
                 try
                 {
@@ -519,14 +489,14 @@ namespace MediaPlayerCS
                     // Show file picker so user can select a file
                     StorageFile file = await filePicker.PickSingleFileAsync();
 
-                    if (CurrentPlaybackItem != null)
+                    if (playbackItem != null)
                     {
-                        CurrentPlaybackItem.TimedMetadataTracksChanged += PlaybackItem_TimedMetadataTracksChanged;
+                        playbackItem.TimedMetadataTracksChanged += PlaybackItem_TimedMetadataTracksChanged;
                     }
                     if (file != null)
                     {
                         var stream = await file.OpenReadAsync();
-                        await CurrentFFmpegMediaSource.AddExternalSubtitleAsync(stream, file.Name);
+                        await FFmpegMSS.AddExternalSubtitleAsync(stream, file.Name);
                     }
                 }
                 catch (Exception ex)
@@ -557,6 +527,19 @@ namespace MediaPlayerCS
             }
         }
 
+        private async void CreatePlaybackItemAndStartPlayback(object sender, RoutedEventArgs e)
+        {
+            if (playbackItem == null)
+            {
+                CreatePlaybackItemAndStartPlaybackInternal();
+                var tracks = playbackItem.TimedMetadataTracks.Count;
+            }
+            else
+            {
+                await DisplayErrorMessage("Playback item already created.");
+            }
+        }
+
         private void PassthroughVideo_Toggled(object sender, RoutedEventArgs e)
         {
             Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
@@ -564,27 +547,27 @@ namespace MediaPlayerCS
 
         private void AddTestFilter(object sender, RoutedEventArgs e)
         {
-            if (CurrentFFmpegMediaSource != null)
+            if (FFmpegMSS != null)
             {
-                CurrentFFmpegMediaSource.SetFFmpegAudioFilters("aecho=0.8:0.9:1000|1800:0.3|0.25");
+                FFmpegMSS.SetFFmpegAudioFilters("aecho=0.8:0.9:1000|1800:0.3|0.25");
             }
 
         }
 
         private void RemoveTestFilter(object sender, RoutedEventArgs e)
         {
-            if (CurrentFFmpegMediaSource != null)
+            if (FFmpegMSS != null)
             {
-                CurrentFFmpegMediaSource.DisableAudioEffects();
+                FFmpegMSS.DisableAudioEffects();
             }
         }
 
         private void QuickenSubtitles(object sender, RoutedEventArgs e)
         {
-            if (CurrentFFmpegMediaSource != null)
+            if (FFmpegMSS != null)
             {
-                var newOffset = CurrentFFmpegMediaSource.SubtitleDelay.Subtract(TimeSpan.FromSeconds(1));
-                CurrentFFmpegMediaSource.SetSubtitleDelay(newOffset);
+                var newOffset = FFmpegMSS.SubtitleDelay.Subtract(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleDelay(newOffset);
                 tbSubtitleDelay.Text = "Subtitle delay: " + newOffset.TotalSeconds.ToString() + "s";
 
             }
@@ -592,26 +575,26 @@ namespace MediaPlayerCS
 
         private void DelaySubtitles(object sender, RoutedEventArgs e)
         {
-            if (CurrentFFmpegMediaSource != null)
+            if (FFmpegMSS != null)
             {
-                var newOffset = CurrentFFmpegMediaSource.SubtitleDelay.Add(TimeSpan.FromSeconds(1));
-                CurrentFFmpegMediaSource.SetSubtitleDelay(newOffset);
+                var newOffset = FFmpegMSS.SubtitleDelay.Add(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleDelay(newOffset);
                 tbSubtitleDelay.Text = "Subtitle delay: " + newOffset.TotalSeconds.ToString() + "s";
             }
         }
 
-        private async void SinglePlaybackItem_MediaPlayer_MediaOpened(MediaPlayer sender, object args)
+        private async void MediaPlayer_MediaOpened(MediaPlayer sender, object args)
         {
-            //var session = sender.PlaybackSession;
-            //if (session != null && FFmpegMSS != null)
-            //{
-            //    FFmpegMSS.PlaybackSession = session;
-            //}
-            //if (actualFFmpegMSS != null)
-            //{
-            //    //actualFFmpegMSS.Dispose();
-            //}
-            //actualFFmpegMSS = CurrentFFmpegMediaSource;
+            var session = sender.PlaybackSession;
+            if (session != null && FFmpegMSS != null)
+            {
+                FFmpegMSS.PlaybackSession = session;
+            }
+            if (actualFFmpegMSS != null)
+            {
+                //actualFFmpegMSS.Dispose();
+            }
+            actualFFmpegMSS = FFmpegMSS;
             await CoreApplication.MainView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(
                 () =>
                 {
@@ -669,7 +652,7 @@ namespace MediaPlayerCS
         private void ffmpegVideoFilters_LostFocus(object sender, RoutedEventArgs e)
         {
             Config.FFmpegVideoFilters = ffmpegVideoFilters.Text;
-            CurrentFFmpegMediaSource?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
+            FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
         }
 
         private void ffmpegAudioFilters_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -683,7 +666,7 @@ namespace MediaPlayerCS
         private void ffmpegAudioFilters_LostFocus(object sender, RoutedEventArgs e)
         {
             Config.FFmpegAudioFilters = ffmpegAudioFilters.Text;
-            CurrentFFmpegMediaSource?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
+            FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
         }
 
         private double GetBufferSizeMB()
@@ -694,6 +677,11 @@ namespace MediaPlayerCS
         private long SetBufferSizeMB(double value)
         {
             return Config.ReadAheadBufferSize = (long)(value * (1024 * 1024));
+        }
+
+        private void GoToMediaPlaybackListSample(object sender, RoutedEventArgs e)
+        {
+            this.Frame.Navigate(typeof(MediaPlaybackListPage));
         }
     }
 }
