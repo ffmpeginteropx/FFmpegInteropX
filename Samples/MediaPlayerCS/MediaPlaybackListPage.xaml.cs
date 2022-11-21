@@ -44,6 +44,7 @@ namespace MediaPlayerCS
 
                 if (playbackList != null)
                 {
+                    playbackList.MaxPlayedItemsToKeepOpen = 1;
                     playbackList.CurrentItemChanged += PlaybackList_CurrentItemChanged;
                     playbackList.ItemFailed += PlaybackList_ItemFailed;
                     playbackList.ItemOpened += PlaybackList_ItemOpened;
