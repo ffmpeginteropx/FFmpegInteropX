@@ -250,12 +250,12 @@ namespace MediaPlayerWinUI
                     // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
 
                     // Below are some sample options that you can set to configure RTSP streaming
-                    // Config.FFmpegOptions.Add("rtsp_flags", "prefer_tcp");
-                    Config.FFmpegOptions.Add("stimeout", 1000000);
-                    Config.FFmpegOptions.Add("timeout", 1000000);
-                    Config.FFmpegOptions.Add("reconnect", 1);
-                    Config.FFmpegOptions.Add("reconnect_streamed", 1);
-                    Config.FFmpegOptions.Add("reconnect_on_network_error", 1);
+                    // Config.FFmpegOptions["rtsp_flags"] = "prefer_tcp";
+                    Config.FFmpegOptions["stimeout"] = 1000000;
+                    Config.FFmpegOptions["timeout"] = 1000000;
+                    Config.FFmpegOptions["reconnect"] = 1;
+                    Config.FFmpegOptions["reconnect_streamed"] = 1;
+                    Config.FFmpegOptions["reconnect_on_network_error"] = 1;
 
                     // Instantiate FFmpegMediaSource using the URI
                     mediaPlayer.Source = null;
