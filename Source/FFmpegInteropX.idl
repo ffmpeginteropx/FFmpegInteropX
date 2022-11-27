@@ -505,6 +505,14 @@ namespace FFmpegInteropX
         ///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
         ///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this .</remarks>
         Windows.Media.Playback.MediaPlaybackSession PlaybackSession{ get; set; };
+
+        ///<summary>Gets the current audio filters</summary>
+        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
+        String GetCurrentAudioFilters();
+
+        ///<summary>Gets the current audio filters</summary>
+        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
+        String GetCurrentVideoFilters();
     };
 
     [default_interface]

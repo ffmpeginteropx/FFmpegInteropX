@@ -147,6 +147,14 @@ namespace winrt::FFmpegInteropX::implementation
         MediaPlaybackSession PlaybackSession();
         void PlaybackSession(MediaPlaybackSession const& value);
 
+        ///<summary>Gets the current audio filters</summary>
+        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
+        hstring GetCurrentAudioFilters();
+
+        ///<summary>Gets the current video filters</summary>
+        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
+        hstring GetCurrentVideoFilters();
+
         void Close();
 
         FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, DispatcherQueue const& dispatcher);
