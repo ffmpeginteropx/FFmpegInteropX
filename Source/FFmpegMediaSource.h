@@ -200,6 +200,7 @@ namespace winrt::FFmpegInteropX::implementation
         winrt::com_ptr<IStream> fileStreamData = { nullptr };
         ByteOrderMark streamByteOrderMark;
         winrt::com_ptr<MediaSourceConfig> config = { nullptr };
+        bool isShuttingDown = false;
 
     private:
 
