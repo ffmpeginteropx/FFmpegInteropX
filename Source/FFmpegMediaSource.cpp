@@ -1501,6 +1501,21 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
+    hstring FFmpegMediaSource::GetCurrentAudioFilters()
+    {
+        std::lock_guard lock(mutex);
+
+        return currentAudioEffects;
+    }
+
+    hstring FFmpegMediaSource::GetCurrentVideoFilters()
+    {
+        std::lock_guard lock(mutex);
+
+        return currentVideoEffects;
+    }
+
+
     void FFmpegMediaSource::Close()
     {
         isShuttingDown = true;
