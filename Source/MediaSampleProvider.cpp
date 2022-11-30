@@ -25,6 +25,11 @@
 #include "AvCodecContextHelpers.h"
 #include "Mfapi.h"
 
+extern "C"
+{
+#include "libavutil/display.h"
+}
+
 using namespace winrt::Windows::Media::MediaProperties;
 using namespace winrt::Windows::Globalization;
 using namespace winrt::Windows::Media::Core;
@@ -403,19 +408,39 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
     }
 
     // set video rotation
-    bool rotateVideo = false;
     int rotationAngle = 0;
     AVDictionaryEntry* rotate_tag = av_dict_get(m_pAvStream->metadata, "rotate", NULL, 0);
     if (rotate_tag != NULL)
     {
-        rotateVideo = true;
         rotationAngle = atoi(rotate_tag->value);
     }
     else
     {
-        rotateVideo = false;
+        // get rotation from side data
+        auto displaymatrix = av_stream_get_side_data(m_pAvStream, AVPacketSideDataType::AV_PKT_DATA_DISPLAYMATRIX, NULL);
+        if (displaymatrix)
+        {
+            // need to invert and use positive values
+            auto rotation = av_display_rotation_get((int32_t*)displaymatrix);
+            if (rotation == 90)
+            {
+                rotationAngle = 270;
+            }
+            else if (rotation == 180)
+            {
+                rotationAngle = 180;
+            }
+            else if (rotation == -90)
+            {
+                rotationAngle = 90;
+            }
+            else if (rotation == -180)
+            {
+                rotationAngle = 180;
+            }
+        }
     }
-    if (rotateVideo)
+    if (rotationAngle)
     {
         videoProperties.Properties().Insert(MF_MT_VIDEO_ROTATION, winrt::box_value((UINT32)rotationAngle));
     }
