@@ -97,13 +97,13 @@ namespace MediaPlayerWinUI
                 return;
             }
 
-            if (args.Key == VirtualKey.V && !args.Handled)
+            if (args.Key == VirtualKey.V && Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control) == CoreVirtualKeyStates.None)
             {
                 if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
                 {
-                    bool reverse = (Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
+                    bool reverse = (Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
                     int index = reverse ?
-                        (playbackItem.VideoTracks.SelectedIndex - 1) % playbackItem.VideoTracks.Count :
+                        (playbackItem.VideoTracks.SelectedIndex - 1 + playbackItem.VideoTracks.Count) % playbackItem.VideoTracks.Count : // % is not true modulo!
                         (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
                     playbackItem.VideoTracks.SelectedIndex = index;
                 }

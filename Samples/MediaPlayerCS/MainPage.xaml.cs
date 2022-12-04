@@ -104,13 +104,13 @@ namespace MediaPlayerCS
                 return;
             }
 
-            if (args.VirtualKey == VirtualKey.V)
+            if (args.VirtualKey == VirtualKey.V && Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) == CoreVirtualKeyStates.None)
             {
                 if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
                 {
-                    bool reverse = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
+                    bool reverse = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
                     int index = reverse ?
-                        (playbackItem.VideoTracks.SelectedIndex - 1) % playbackItem.VideoTracks.Count :
+                        (playbackItem.VideoTracks.SelectedIndex - 1 + playbackItem.VideoTracks.Count) % playbackItem.VideoTracks.Count : // % is not true modulo!
                         (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
                     playbackItem.VideoTracks.SelectedIndex = index;
                 }
