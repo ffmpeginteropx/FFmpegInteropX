@@ -23,7 +23,7 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 if (level <= av_log_get_level())
                 {
-                    if (s_pLogProvider != nullptr)
+                    if (auto provider = s_pLogProvider)
                     {
                         char pLine[1000];
                         int printPrefix = 1;
@@ -32,7 +32,7 @@ namespace winrt::FFmpegInteropX::implementation
                         wchar_t wLine[sizeof(pLine)];
                         if (MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, pLine, -1, wLine, sizeof(pLine)) != 0)
                         {
-                            s_pLogProvider.Log((LogLevel)level, hstring(wLine));
+                            provider.Log((LogLevel)level, hstring(wLine));
                         }
                     }
                 }
@@ -42,5 +42,6 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegInteropLogging::SetDefaultLogProvider()
     {
         av_log_set_callback(av_log_default_callback);
+        s_pLogProvider = nullptr;
     }
 }

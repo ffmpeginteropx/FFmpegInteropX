@@ -55,7 +55,7 @@ App::App()
 
 void App::Log(FFmpegInteropX::LogLevel level, String^ message)
 {
-    OutputDebugString(message->Data());
+    OutputDebugString((L"FFmpeg (" + level.ToString() + "): " + message)->Data());
 }
 
 /// <summary>
