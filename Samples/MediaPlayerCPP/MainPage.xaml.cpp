@@ -541,13 +541,13 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
         return;
     }
 
-    if (args->VirtualKey == Windows::System::VirtualKey::V)
+    if (args->VirtualKey == Windows::System::VirtualKey::V && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) == Windows::UI::Core::CoreVirtualKeyStates:: None))
     {
         if (playbackItem && playbackItem->VideoTracks->Size > 1)
         {
             bool reverse = (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Shift) & Windows::UI::Core::CoreVirtualKeyStates::Down) == Windows::UI::Core::CoreVirtualKeyStates::Down;
             int index = reverse ?
-                (playbackItem->VideoTracks->SelectedIndex - 1) % playbackItem->VideoTracks->Size :
+                (playbackItem->VideoTracks->SelectedIndex - 1 + playbackItem->VideoTracks->Size) % playbackItem->VideoTracks->Size : // % is not true modulo!
                 (playbackItem->VideoTracks->SelectedIndex + 1) % playbackItem->VideoTracks->Size;
             playbackItem->VideoTracks->SelectedIndex = index;
         }

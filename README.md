@@ -113,6 +113,8 @@ config.FFmpegOptions = new Windows.Foundation.Collections.PropertySet {
 
 You should also consider setting timeouts, but be careful since each protocol might have different timeout parameters and meanings.
 
+Check FFmpeg documentation on [Protocols](https://ffmpeg.org/ffmpeg-protocols.html) and [Formats](https://ffmpeg.org/ffmpeg-formats.html) for more information on the available parameters.
+
 ## Stream Buffering
 
 If you do web streaming, you should try the new read-ahead buffer feature of FFmpegInteropX, available in the latest prerelease packages. It will read ahead and buffer a configurable amount of stream data to allow uninterrupted playback. This even allows fast forward seeking (stepping) without stream reconnection, if the target position is buffered.
@@ -122,10 +124,8 @@ config.ReadAheadBufferEnabled = true;
 
 // Optionally, configure buffer size (max duration and byte size)
 config.ReadAheadBufferDuration = TimeSpan.FromSeconds(30);
-config.ReadAheadBufferEnabled = 50*1024*1024;
+config.ReadAheadBufferSize = 50*1024*1024;
 ```
-
-Check FFmpeg documentation on [Protocols](https://ffmpeg.org/ffmpeg-protocols.html) and [Formats](https://ffmpeg.org/ffmpeg-formats.html).
 
 ## Frame Grabber
 
