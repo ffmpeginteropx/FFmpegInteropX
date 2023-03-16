@@ -394,12 +394,18 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
         }
     }
 
-    if (m_pAvCodecCtx->sample_aspect_ratio.num > 0 &&
-        m_pAvCodecCtx->sample_aspect_ratio.den > 0 &&
-        m_pAvCodecCtx->sample_aspect_ratio.num != m_pAvCodecCtx->sample_aspect_ratio.den)
+    // prefer stream SAR if it has a proper value, otherwise take codec SAR
+    auto sar = m_pAvStream->sample_aspect_ratio;
+    if (sar.num <= 0 || sar.den <= 0)
     {
-        videoProperties.PixelAspectRatio().Numerator(m_pAvCodecCtx->sample_aspect_ratio.num);
-        videoProperties.PixelAspectRatio().Denominator(m_pAvCodecCtx->sample_aspect_ratio.den);
+        sar = m_pAvCodecCtx->sample_aspect_ratio;
+    }
+    if (sar.num > 0 &&
+        sar.den > 0 &&
+        sar.num != sar.den)
+    {
+        videoProperties.PixelAspectRatio().Numerator(sar.num);
+        videoProperties.PixelAspectRatio().Denominator(sar.den);
     }
     else
     {
