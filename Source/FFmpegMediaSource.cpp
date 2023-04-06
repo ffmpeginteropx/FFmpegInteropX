@@ -98,18 +98,6 @@ namespace winrt::FFmpegInteropX::implementation
         return interopMSS;
     }
 
-    winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(hstring const& uri, winrt::com_ptr<MediaSourceConfig> const& config)
-    {
-        auto dispatcher = GetCurrentDispatcher();
-        auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher);
-        auto hr = interopMSS->CreateMediaStreamSource(uri);
-        if (!SUCCEEDED(hr))
-        {
-            throw_hresult(hr);
-        }
-        return interopMSS;
-    }
-
     HRESULT FFmpegMediaSource::CreateMediaStreamSource(IRandomAccessStream const& stream)
     {
         HRESULT hr = S_OK;
@@ -356,8 +344,10 @@ namespace winrt::FFmpegInteropX::implementation
     {
         winrt::apartment_context caller; // Capture calling context.
         auto dispatcher = GetCurrentDispatcher();
+        auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
+        CheckUseHdr(configImpl);
         co_await winrt::resume_background();
-        auto result = CreateFromStream(stream, config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>(), dispatcher);
+        auto result = CreateFromStream(stream, configImpl, dispatcher);
         co_await caller;
         co_return result.as<FFmpegInteropX::FFmpegMediaSource>();;
     }
@@ -371,8 +361,10 @@ namespace winrt::FFmpegInteropX::implementation
     {
         winrt::apartment_context caller; // Capture calling context.
         auto dispatcher = GetCurrentDispatcher();
+        auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
+        CheckUseHdr(configImpl);
         co_await winrt::resume_background();
-        auto result = CreateFromUri(uri, config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>(), dispatcher);
+        auto result = CreateFromUri(uri, configImpl, dispatcher);
         co_await caller;
         co_return result.as<FFmpegInteropX::FFmpegMediaSource>();
     }
@@ -1542,6 +1534,37 @@ namespace winrt::FFmpegInteropX::implementation
         return result;
     }
 
+    void FFmpegMediaSource::CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config)
+    {
+        bool useHdr = false;
+        switch (config->HdrSupport())
+        {
+        case HdrSupport::Enabled:
+            useHdr = true;
+            break;
+        case HdrSupport::Automatic:
+            try
+            {
+                auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
+                if (displayInfo)
+                {
+                    auto colorInfo = displayInfo.GetAdvancedColorInfo();
+                    if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
+                    {
+                        useHdr = true;
+                    }
+                }
+            }
+            catch (...)
+            {
+            }
+            break;
+        default:
+            useHdr = false;
+        }
+        config->ApplyHdrColorInfo = useHdr;
+    }
+
     std::shared_ptr<MediaSampleProvider> FFmpegMediaSource::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index)
     {
         UNREFERENCED_PARAMETER(avStream);
@@ -1637,7 +1660,7 @@ namespace winrt::FFmpegInteropX::implementation
         else if (avVideoCodecCtx->hw_device_ctx)
         {
             hardwareDecoderStatus = HardwareDecoderStatus::Available;
-            videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new D3D11VideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, hardwareDecoderStatus));
+            videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new D3D11VideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, hardwareDecoderStatus, config->ApplyHdrColorInfo));
         }
         else
         {
@@ -1645,7 +1668,7 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 hardwareDecoderStatus = HardwareDecoderStatus::NotAvailable;
             }
-            videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new UncompressedVideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, hardwareDecoderStatus));
+            videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new UncompressedVideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, hardwareDecoderStatus, config->ApplyHdrColorInfo));
         }
 
 #pragma warning (default: 4973)
