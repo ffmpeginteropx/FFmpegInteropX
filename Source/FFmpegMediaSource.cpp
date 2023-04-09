@@ -1178,7 +1178,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::lock_guard lock(mutex);
         if (mss == nullptr)
         {
-            throw_hresult(E_UNEXPECTED);
+            return nullptr;
         }
         if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
         playbackItem = MediaPlaybackItem(CreateMediaSource());
@@ -1191,7 +1191,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::lock_guard lock(mutex);
         if (mss == nullptr)
         {
-            throw_hresult(E_UNEXPECTED);
+            return nullptr;
         }
         if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
         playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime);
@@ -1204,7 +1204,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::lock_guard lock(mutex);
         if (mss == nullptr)
         {
-            throw_hresult(E_UNEXPECTED);
+            return nullptr;
         }
         if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
         playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime, durationLimit);
@@ -1269,6 +1269,10 @@ namespace winrt::FFmpegInteropX::implementation
         Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> result;
         {
             std::lock_guard lock(mutex);
+            if (mss == nullptr)
+            {
+                co_return nullptr;
+            }
             if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
             {
                 externalSubsParser->SetSubtitleDelay(SubtitleDelay());
@@ -1338,6 +1342,11 @@ namespace winrt::FFmpegInteropX::implementation
 
     Collections::IMapView<hstring, Collections::IVectorView<hstring>> FFmpegMediaSource::MetadataTags()
     {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return nullptr;
+        }
         metadata->LoadMetadataTags(avFormatCtx);
         return metadata->MetadataTags();
     }
@@ -1401,11 +1410,21 @@ namespace winrt::FFmpegInteropX::implementation
 
     TimeSpan FFmpegMediaSource::BufferTime()
     {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return TimeSpan(0);
+        }
         return mss.BufferTime();
     }
 
     void FFmpegMediaSource::BufferTime(TimeSpan const& value)
     {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return;
+        }
         mss.BufferTime(value);
     }
 
