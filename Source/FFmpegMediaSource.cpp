@@ -1178,7 +1178,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::lock_guard lock(mutex);
         if (mss == nullptr)
         {
-            return nullptr;
+            throw_hresult(RO_E_CLOSED);
         }
         if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
         playbackItem = MediaPlaybackItem(CreateMediaSource());
@@ -1191,7 +1191,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::lock_guard lock(mutex);
         if (mss == nullptr)
         {
-            return nullptr;
+            throw_hresult(RO_E_CLOSED);
         }
         if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
         playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime);
@@ -1204,7 +1204,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::lock_guard lock(mutex);
         if (mss == nullptr)
         {
-            return nullptr;
+            throw_hresult(RO_E_CLOSED);
         }
         if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
         playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime, durationLimit);
@@ -1271,7 +1271,7 @@ namespace winrt::FFmpegInteropX::implementation
             std::lock_guard lock(mutex);
             if (mss == nullptr)
             {
-                co_return nullptr;
+                throw_hresult(RO_E_CLOSED);
             }
             if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
             {
@@ -1345,7 +1345,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::lock_guard lock(mutex);
         if (mss == nullptr)
         {
-            return nullptr;
+            throw_hresult(RO_E_CLOSED);
         }
         metadata->LoadMetadataTags(avFormatCtx);
         return metadata->MetadataTags();
@@ -1413,7 +1413,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::lock_guard lock(mutex);
         if (mss == nullptr)
         {
-            return TimeSpan(0);
+            throw_hresult(RO_E_CLOSED);
         }
         return mss.BufferTime();
     }
