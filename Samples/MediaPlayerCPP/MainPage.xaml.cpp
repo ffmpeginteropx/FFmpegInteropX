@@ -195,9 +195,13 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
     // 
     // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
     
+    // Below are some sample options that you can set to configure RTSP streaming
     //Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
     Config->FFmpegOptions->Insert("stimeout", 1000000);
     Config->FFmpegOptions->Insert("timeout", 1000000);
+    Config->FFmpegOptions->Insert("reconnect", 1);
+    Config->FFmpegOptions->Insert("reconnect_streamed", 1);
+    Config->FFmpegOptions->Insert("reconnect_on_network_error", 1);
 
     // Instantiate FFmpegMediaSource using the URI
     mediaPlayer->Source = nullptr;
@@ -537,13 +541,13 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
         return;
     }
 
-    if (args->VirtualKey == Windows::System::VirtualKey::V)
+    if (args->VirtualKey == Windows::System::VirtualKey::V && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) == Windows::UI::Core::CoreVirtualKeyStates:: None))
     {
         if (playbackItem && playbackItem->VideoTracks->Size > 1)
         {
             bool reverse = (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Shift) & Windows::UI::Core::CoreVirtualKeyStates::Down) == Windows::UI::Core::CoreVirtualKeyStates::Down;
             int index = reverse ?
-                (playbackItem->VideoTracks->SelectedIndex - 1) % playbackItem->VideoTracks->Size :
+                (playbackItem->VideoTracks->SelectedIndex - 1 + playbackItem->VideoTracks->Size) % playbackItem->VideoTracks->Size : // % is not true modulo!
                 (playbackItem->VideoTracks->SelectedIndex + 1) % playbackItem->VideoTracks->Size;
             playbackItem->VideoTracks->SelectedIndex = index;
         }

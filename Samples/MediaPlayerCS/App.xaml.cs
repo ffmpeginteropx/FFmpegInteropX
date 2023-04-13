@@ -55,7 +55,7 @@ namespace MediaPlayerCS
 
         public void Log(LogLevel level, string message)
         {
-            System.Diagnostics.Debug.WriteLine("FFmpeg ({0}): {1}", level, message);
+            System.Diagnostics.Debug.Write($"FFmpeg ({level}): {message}");
         }
 
         /// <summary>

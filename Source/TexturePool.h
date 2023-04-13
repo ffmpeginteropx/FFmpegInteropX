@@ -23,10 +23,6 @@ public:
 
     void Clear()
     {
-        for (auto& texture : pool)
-        {
-            texture->Release();
-        }
         pool.clear();
         ZeroMemory(&desc_shared, sizeof(desc_shared));
     }
