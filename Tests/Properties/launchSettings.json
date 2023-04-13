@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "FFmpegInteropX.UnitTests": {
+    "UnitTests": {
       "commandName": "Project",
       "nativeDebugging": true
     }

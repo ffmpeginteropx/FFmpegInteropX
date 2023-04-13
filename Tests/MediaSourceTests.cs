@@ -5,6 +5,7 @@ using Windows.Storage.Streams;
 using Windows.Storage;
 using System.Runtime.InteropServices;
 using System.Linq;
+using System.Reflection;
 
 namespace FFmpegInteropX.UnitTests
 {
@@ -83,7 +84,7 @@ namespace FFmpegInteropX.UnitTests
         [TestMethod]
         public async Task CreateFromInvalidFile()
         {
-            var file = await StorageFile.GetFileFromPathAsync(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "FFmpegInteropX.UnitTests.dll"));
+            var file = await StorageFile.GetFileFromPathAsync(Assembly.GetExecutingAssembly().Location);
             fileStream = await file.OpenReadAsync();
             source = await FFmpegMediaSource.CreateFromStreamAsync(fileStream, config);
             Assert.IsNotNull(source);
