@@ -26,8 +26,9 @@ public:
         AVCodecContext* avCodecCtx,
         winrt::FFmpegInteropX::MediaSourceConfig const& config,
         int streamIndex,
-        HardwareDecoderStatus hardwareDecoderStatus)
-        : UncompressedVideoSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
+        HardwareDecoderStatus hardwareDecoderStatus,
+        bool applyHdrColorInfo)
+        : UncompressedVideoSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus, applyHdrColorInfo)
     {
         decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
         hwCodec = avCodecCtx->codec;
