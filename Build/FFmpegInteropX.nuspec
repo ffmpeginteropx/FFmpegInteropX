@@ -15,7 +15,7 @@
       </group>
       <group targetFramework="net6.0-windows10.0.19041.0">
         <dependency id="FFmpegInteropX.FFmpegUWP" version="5.1.100" />
-        <dependency id="Win2D.uwp" version="1.26.0" />
+        <dependency id="Microsoft.Graphics.Win2D" version="1.0.4"  />
       </group>
     </dependencies>
     <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />

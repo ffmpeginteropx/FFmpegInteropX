@@ -26,8 +26,9 @@ public:
         AVCodecContext* avCodecCtx,
         winrt::FFmpegInteropX::MediaSourceConfig const& config,
         int streamIndex,
-        HardwareDecoderStatus hardwareDecoderStatus)
-        : UncompressedVideoSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
+        HardwareDecoderStatus hardwareDecoderStatus,
+        bool applyHdrColorInfo)
+        : UncompressedVideoSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus, applyHdrColorInfo)
     {
         decoder = DecoderEngine::FFmpegD3D11HardwareDecoder;
         hwCodec = avCodecCtx->codec;
@@ -65,6 +66,7 @@ public:
             if (!texturePool)
             {
                 // init texture pool, fail if we did not get a device ptr
+                std::lock_guard lock(samplesMutex);
                 if (device && deviceContext)
                 {
                     texturePool = std::unique_ptr<TexturePool>(new TexturePool(device, 5));
@@ -81,7 +83,10 @@ public:
                 auto decodedTexture = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
                 winrt::com_ptr<ID3D11Texture2D> renderTexture;
                 //happy path:decoding and rendering on same GPU
-                hr = texturePool->GetCopyTexture(decodedTexture, renderTexture);
+                {
+                    std::lock_guard lock(samplesMutex);
+                    hr = texturePool->GetCopyTexture(decodedTexture, renderTexture);
+                }
                 deviceContext->CopySubresourceRegion(renderTexture.get(), 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
                 deviceContext->Flush();
 
@@ -252,8 +257,11 @@ public:
             }
         }
 
-        texturePool.reset();
-        texturePool = nullptr;
+        {
+            std::lock_guard lock(samplesMutex);
+            texturePool.reset();
+            texturePool = nullptr;
+        }
 
         ReleaseTrackedSamples();
 

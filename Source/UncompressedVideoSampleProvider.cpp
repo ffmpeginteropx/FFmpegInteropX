@@ -39,10 +39,12 @@ UncompressedVideoSampleProvider::UncompressedVideoSampleProvider(
     AVCodecContext* avCodecCtx,
     MediaSourceConfig const& config,
     int streamIndex,
-    HardwareDecoderStatus hardwareDecoderStatus)
+    HardwareDecoderStatus hardwareDecoderStatus,
+    bool applyHdrColorInfo)
     : UncompressedSampleProvider(reader, avFormatCtx, avCodecCtx, config, streamIndex, hardwareDecoderStatus)
 {
     m_pSwsCtx = NULL;
+    this->applyHdrColorInfo = applyHdrColorInfo;
 }
 
 void UncompressedVideoSampleProvider::SelectOutputFormat()
@@ -126,7 +128,9 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
     area.OffsetY.value = 0;
     properties.Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, PropertyValue::CreateUInt8Array(winrt::array_view((uint8_t*)&area, sizeof(MFVideoArea))));
 
-    if (codecPar->color_primaries != AVCOL_PRI_UNSPECIFIED)
+    using namespace winrt::Windows::Graphics::Display;
+
+    if (codecPar->color_primaries != AVCOL_PRI_UNSPECIFIED && (codecPar->color_primaries < MFVideoPrimaries_BT2020 || applyHdrColorInfo))
     {
         MFVideoPrimaries videoPrimaries{ MFVideoPrimaries_Unknown };
         switch (codecPar->color_primaries)
@@ -171,7 +175,7 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
         properties.Insert(MF_MT_VIDEO_PRIMARIES, PropertyValue::CreateUInt32(videoPrimaries));
     }
 
-    if (codecPar->color_trc != AVCOL_TRC_UNSPECIFIED)
+    if (codecPar->color_trc != AVCOL_TRC_UNSPECIFIED && (codecPar->color_trc < MFVideoTransFunc_2020_const || applyHdrColorInfo))
     {
         MFVideoTransferFunction videoTransferFunc{ MFVideoTransFunc_Unknown };
         switch (codecPar->color_trc)
@@ -233,14 +237,14 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
     }
 
     AVContentLightMetadata* contentLightMetadata{ reinterpret_cast<AVContentLightMetadata*>(av_stream_get_side_data(m_pAvStream, AV_PKT_DATA_CONTENT_LIGHT_LEVEL, nullptr)) };
-    if (contentLightMetadata != nullptr)
+    if (contentLightMetadata != nullptr && applyHdrColorInfo)
     {
         properties.Insert(MF_MT_MAX_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxCLL));
         properties.Insert(MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxFALL));
     }
 
     AVMasteringDisplayMetadata* masteringDisplayMetadata{ reinterpret_cast<AVMasteringDisplayMetadata*>(av_stream_get_side_data(m_pAvStream, AV_PKT_DATA_MASTERING_DISPLAY_METADATA, nullptr)) };
-    if (masteringDisplayMetadata != nullptr)
+    if (masteringDisplayMetadata != nullptr && applyHdrColorInfo)
     {
         if (masteringDisplayMetadata->has_luminance)
         {

@@ -59,7 +59,8 @@ public:
         AVCodecContext* avCodecCtx,
         MediaSourceConfig const& config,
         int streamIndex,
-        HardwareDecoderStatus hardwareDecoderStatus);
+        HardwareDecoderStatus hardwareDecoderStatus,
+        bool applyHdrColorInfo);
     winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
     virtual HRESULT CreateBufferFromFrame(winrt::Windows::Storage::Streams::IBuffer* pBuffer, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
     virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample  const& sample) override;
@@ -93,6 +94,7 @@ private:
     int outputFrameHeight = 0;
     int outputFrameWidth = 0;
     bool outputDirectBuffer = 0;
+    bool applyHdrColorInfo = false;
 
     AVBufferPool* sourceBufferPool = NULL;
     int sourceBufferPoolSize = 0;

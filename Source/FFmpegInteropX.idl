@@ -49,6 +49,13 @@ namespace FFmpegInteropX
         ForceFFmpegSoftwareDecoder
     };
 
+    enum HdrSupport
+    {
+        Automatic,
+        Enabled,
+        Disabled
+    };
+
     [flags]
     ///<summary>This flags enumeration describes the content or intention of a stream.</summary>
     enum StreamDisposition
@@ -535,8 +542,11 @@ namespace FFmpegInteropX
         ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
         Boolean PassthroughAudioAAC{ get; set; };
 
-        ///<summary>Sets the video decoder mode. Default is AutoDetection.</summary>
+        ///<summary>The video decoder mode. Default is Automatic.</summary>
         VideoDecoderMode VideoDecoderMode{ get; set; };
+
+        ///<summary>The HDR color support mode. Default is Automatic.</summary>
+        HdrSupport HdrSupport{ get; set; };
 
         ///<summary>Max profile allowed for H264 system decoder. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
         Int32 SystemDecoderH264MaxProfile{ get; set; };
