@@ -577,11 +577,13 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (currentVideoStream)
         {
+            currentVideoStream->EnableStream();
             currentVideoStreamInfo = currentVideoStream->VideoInfo();
         }
 
         if (currentAudioStream)
         {
+            currentAudioStream->EnableStream();
             currentAudioStreamInfo = currentAudioStream->AudioInfo();
         }
 
@@ -668,18 +670,14 @@ namespace winrt::FFmpegInteropX::implementation
         if (currentVideoStream && currentAudioStream)
         {
             mss = MediaStreamSource(currentVideoStream->StreamDescriptor(), currentAudioStream->StreamDescriptor());
-            currentVideoStream->EnableStream();
-            currentAudioStream->EnableStream();
         }
         else if (currentAudioStream)
         {
             mss = MediaStreamSource(currentAudioStream->StreamDescriptor());
-            currentAudioStream->EnableStream();
         }
         else if (currentVideoStream)
         {
             mss = MediaStreamSource(currentVideoStream->StreamDescriptor());
-            currentVideoStream->EnableStream();
         }
         else if (subtitleStreams.size() == 0 || !config->IsExternalSubtitleParser)
         {
