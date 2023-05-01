@@ -99,18 +99,6 @@ namespace winrt::FFmpegInteropX::implementation
         return interopMSS;
     }
 
-    winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(hstring const& uri, winrt::com_ptr<MediaSourceConfig> const& config)
-    {
-        auto dispatcher = GetCurrentDispatcher();
-        auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher);
-        auto hr = interopMSS->CreateMediaStreamSource(uri);
-        if (!SUCCEEDED(hr))
-        {
-            throw_hresult(hr);
-        }
-        return interopMSS;
-    }
-
     winrt::event_token FFmpegMediaSource::SubtitleCueEntered(Windows::Foundation::EventHandler<FFmpegInteropX::AvSubtitleEventArgs> const& handler)
     {
         return m_subtitleCueEnteredEvent.add(handler);
