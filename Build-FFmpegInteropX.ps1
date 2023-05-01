@@ -74,8 +74,8 @@ function Build-Platform {
 
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
-        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Intermediate\FFmpegInterop\$Platform\*
-        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Output\FFmpegInterop\$Platform\*
+        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Intermediate\FFmpegInteropX\$Platform\*
+        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Output\FFmpegInteropX\$Platform\*
     }
 		
 	if ($targetArch -eq "x86" -And $false)

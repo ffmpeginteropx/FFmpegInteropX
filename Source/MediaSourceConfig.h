@@ -36,8 +36,11 @@ namespace winrt::FFmpegInteropX::implementation
         ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
         PROPERTY(PassthroughAudioAAC, bool, false);
 
-        ///<summary>Sets the video decoder mode. Default is AutoDetection.</summary>
+        ///<summary>Sets the video decoder mode. Default is Automatic.</summary>
         PROPERTY(VideoDecoderMode, FFmpegInteropX::VideoDecoderMode, VideoDecoderMode::Automatic);
+
+        ///<summary>Sets the HDR color support mode. Default is Automatic.</summary>
+        PROPERTY(HdrSupport, FFmpegInteropX::HdrSupport, HdrSupport::Automatic);
 
         ///<summary>Max profile allowed for H264 system decoder. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
         PROPERTY(SystemDecoderH264MaxProfile, int32_t, FF_PROFILE_H264_HIGH);
@@ -191,6 +194,8 @@ namespace winrt::FFmpegInteropX::implementation
         bool IsFrameGrabber;
         /*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
         bool IsExternalSubtitleParser;
+        //Apply hdr color info, if available in the file
+        bool ApplyHdrColorInfo;
 
         /*Used to pass additional, specific options to external sub parsers*/
         PropertySet AdditionalFFmpegSubtitleOptions = {nullptr};

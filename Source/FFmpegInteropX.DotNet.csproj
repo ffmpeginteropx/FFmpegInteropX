@@ -23,6 +23,7 @@
   
   <PropertyGroup>
     <DefaultItemExcludes>**\*;*.*</DefaultItemExcludes>
+	<WindowsSdkPackageVersion>10.0.17763.27</WindowsSdkPackageVersion>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
