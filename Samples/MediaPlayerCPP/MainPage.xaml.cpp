@@ -142,7 +142,6 @@ task<void> MainPage::OpenLocalFile()
 task<void> MainPage::OpenLocalFile(StorageFile^ file)
 {
     currentFile = file;
-    mediaPlayer->Source = nullptr;
 
     // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
     try
@@ -154,10 +153,8 @@ task<void> MainPage::OpenLocalFile(StorageFile^ file)
         // Instantiate FFmpegMediaSource using the opened local file stream
         FFmpegMSS = co_await FFmpegMediaSource::CreateFromStreamAsync(stream, Config);
 
-        playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
-
-        // Pass MediaPlaybackItem to Media Element
-        mediaPlayer->Source = playbackItem;
+        // Open with MediaPlayer
+        co_await FFmpegMSS->OpenWithMediaPlayerAsync(mediaPlayer);
 
         // Close control panel after file open
         Splitter->IsPaneOpen = false;
@@ -204,16 +201,14 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
     Config->FFmpegOptions->Insert("reconnect_on_network_error", 1);
 
     // Instantiate FFmpegMediaSource using the URI
-    mediaPlayer->Source = nullptr;
     try
     {
         ApplicationData::Current->LocalSettings->Values->Insert("LastUri", uri);
 
         FFmpegMSS = co_await FFmpegMediaSource::CreateFromUriAsync(uri, Config);
-        playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
-        // Pass MediaPlaybackItem to Media Element
-        mediaPlayer->Source = playbackItem;
+        // Open with MediaPlayer
+        co_await FFmpegMSS->OpenWithMediaPlayerAsync(mediaPlayer);
 
         // Close control panel after opening media
         Splitter->IsPaneOpen = false;
@@ -302,6 +297,7 @@ void MediaPlayerCPP::MainPage::LoadSubtitleFile(Platform::Object^ sender, Window
 
 task<void> MediaPlayerCPP::MainPage::LoadSubtitleFile()
 {
+    auto playbackItem = FFmpegMSS ? FFmpegMSS->PlaybackItem : nullptr;
     if (playbackItem == nullptr)
     {
         DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
@@ -341,7 +337,8 @@ void MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg(Platform::Object^ sender, 
 
 task<void> MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg()
 {
-    if (FFmpegMSS == nullptr)
+    auto playbackItem = FFmpegMSS ? FFmpegMSS->PlaybackItem : nullptr;
+    if (playbackItem == nullptr)
     {
         DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
     }
@@ -361,10 +358,7 @@ task<void> MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg()
             {
                 // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
                 auto stream = co_await file->OpenAsync(FileAccessMode::Read);
-                if (playbackItem != nullptr)
-                {
-                    timedMetadataTracksChangedToken = playbackItem->TimedMetadataTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem^, Windows::Foundation::Collections::IVectorChangedEventArgs^>(this, &MediaPlayerCPP::MainPage::OnTimedMetadataTracksChanged);
-                }
+                timedMetadataTracksChangedToken = playbackItem->TimedMetadataTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem^, Windows::Foundation::Collections::IVectorChangedEventArgs^>(this, &MediaPlayerCPP::MainPage::OnTimedMetadataTracksChanged);
 
                 co_await this->FFmpegMSS->AddExternalSubtitleAsync(stream, file->Name);
             }
@@ -401,7 +395,8 @@ void MediaPlayerCPP::MainPage::OnResolved(TimedTextSource^ sender, TimedTextSour
         auto first = args->Tracks->GetAt(0);
         first->Label = "External";
         unsigned int index;
-        if (playbackItem->TimedMetadataTracks->IndexOf(first, &index))
+        auto playbackItem = FFmpegMSS ? FFmpegMSS->PlaybackItem : nullptr;
+        if (playbackItem && playbackItem->TimedMetadataTracks->IndexOf(first, &index))
         {
             playbackItem->TimedMetadataTracks->SetPresentationMode(index, Windows::Media::Playback::TimedMetadataTrackPresentationMode::PlatformPresented);
         }
@@ -410,7 +405,6 @@ void MediaPlayerCPP::MainPage::OnResolved(TimedTextSource^ sender, TimedTextSour
 
 void MediaPlayerCPP::MainPage::OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args)
 {
-    actualFFmpegMSS = nullptr;
     Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
         ref new Windows::UI::Core::DispatchedHandler([this, args]
             {
@@ -498,7 +492,6 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
     {
         FFmpegMSS->PlaybackSession = session;
     }
-    actualFFmpegMSS = FFmpegMSS;
 
     Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
         ref new Windows::UI::Core::DispatchedHandler([this]
@@ -543,6 +536,7 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
 
     if (args->VirtualKey == Windows::System::VirtualKey::V && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) == Windows::UI::Core::CoreVirtualKeyStates:: None))
     {
+        auto playbackItem = FFmpegMSS ? FFmpegMSS->PlaybackItem : nullptr;
         if (playbackItem && playbackItem->VideoTracks->Size > 1)
         {
             bool reverse = (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Shift) & Windows::UI::Core::CoreVirtualKeyStates::Down) == Windows::UI::Core::CoreVirtualKeyStates::Down;
