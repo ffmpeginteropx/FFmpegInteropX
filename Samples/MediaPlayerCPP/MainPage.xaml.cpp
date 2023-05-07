@@ -410,7 +410,7 @@ void MediaPlayerCPP::MainPage::OnResolved(TimedTextSource^ sender, TimedTextSour
 
 void MediaPlayerCPP::MainPage::OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args)
 {
-    actualFFmpegMSS = nullptr;
+    //actualFFmpegMSS = nullptr;
     Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
         ref new Windows::UI::Core::DispatchedHandler([this, args]
             {
@@ -498,7 +498,7 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
     {
         FFmpegMSS->PlaybackSession = session;
     }
-    actualFFmpegMSS = FFmpegMSS;
+    //actualFFmpegMSS = FFmpegMSS;
 
     Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
         ref new Windows::UI::Core::DispatchedHandler([this]

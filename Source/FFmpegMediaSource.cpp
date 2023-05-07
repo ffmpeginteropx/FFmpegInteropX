@@ -320,6 +320,8 @@ namespace winrt::FFmpegInteropX::implementation
         {
             stream->PlaybackItem = playbackItem;
         }
+
+        playbackItem.Source().CustomProperties().Insert(L"FFmpegInteropXStrongRef", get_strong().as<IInspectable>());
     }
 
 
@@ -1391,6 +1393,8 @@ namespace winrt::FFmpegInteropX::implementation
         {
             playbackItem.AudioTracksChanged(audioTracksChangedToken);
             playbackItem.TimedMetadataTracks().PresentationModeChanged(subtitlePresentationModeChangedToken);
+            playbackItem.Source().CustomProperties().Remove(L"FFmpegInteropXStrongRef");
+
             playbackItem = nullptr;
         }
 
