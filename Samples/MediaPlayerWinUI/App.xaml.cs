@@ -1,3 +1,4 @@
+using FFmpegInteropX;
 using Microsoft.UI.Xaml;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -8,7 +9,7 @@ namespace MediaPlayerWinUI
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.
     /// </summary>
-    public partial class App : Application
+    public partial class App : Application, ILogProvider
     {
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -17,6 +18,13 @@ namespace MediaPlayerWinUI
         public App()
         {
             this.InitializeComponent();
+            FFmpegInteropLogging.SetLogLevel(LogLevel.Info);
+            FFmpegInteropLogging.SetLogProvider(this);
+        }
+
+        public void Log(LogLevel level, string message)
+        {
+            System.Diagnostics.Debug.Write($"FFmpeg ({level}): {message}");
         }
 
         /// <summary>

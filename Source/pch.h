@@ -10,6 +10,8 @@
 #undef TRY
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Windows.Graphics.Display.h>
+#include <winrt/Windows.Graphics.Display.Core.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
 #include <winrt/Windows.Graphics.DirectX.h>
 #include <winrt/Windows.Graphics.Imaging.h>

@@ -105,13 +105,13 @@ namespace MediaPlayerCS
                 return;
             }
 
-            if (args.VirtualKey == VirtualKey.V)
+            if (args.VirtualKey == VirtualKey.V && Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) == CoreVirtualKeyStates.None)
             {
                 if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
                 {
-                    bool reverse = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Control) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
+                    bool reverse = (Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
                     int index = reverse ?
-                        (playbackItem.VideoTracks.SelectedIndex - 1) % playbackItem.VideoTracks.Count :
+                        (playbackItem.VideoTracks.SelectedIndex - 1 + playbackItem.VideoTracks.Count) % playbackItem.VideoTracks.Count : // % is not true modulo!
                         (playbackItem.VideoTracks.SelectedIndex + 1) % playbackItem.VideoTracks.Count;
                     playbackItem.VideoTracks.SelectedIndex = index;
                 }
@@ -301,12 +301,12 @@ namespace MediaPlayerCS
                 // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
 
                 // Below are some sample options that you can set to configure RTSP streaming
-                // Config.FFmpegOptions.Add("rtsp_flags", "prefer_tcp");
-                Config.FFmpegOptions.Add("stimeout", 1000000);
-                Config.FFmpegOptions.Add("timeout", 1000000);
-                Config.FFmpegOptions.Add("reconnect", 1);
-                Config.FFmpegOptions.Add("reconnect_streamed", 1);
-                Config.FFmpegOptions.Add("reconnect_on_network_error", 1);
+                // Config.FFmpegOptions["rtsp_flags"] = "prefer_tcp";
+                Config.FFmpegOptions["stimeout"] = 1000000;
+                Config.FFmpegOptions["timeout"] = 1000000;
+                Config.FFmpegOptions["reconnect"] = 1;
+                Config.FFmpegOptions["reconnect_streamed"] = 1;
+                Config.FFmpegOptions["reconnect_on_network_error"] = 1;
 
                 // Instantiate FFmpegMediaSource using the URI
                 mediaPlayer.Source = null;

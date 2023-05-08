@@ -171,12 +171,12 @@ namespace winrt::FFmpegInteropX::implementation
         void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList  const& sender, TimedMetadataPresentationModeChangedEventArgs  const& args);
         void InitializePlaybackItem(MediaPlaybackItem  const& playbackitem);
         bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus const& status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
-
+        static void CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config);
+        void CheckExtendDuration(MediaStreamSample sample);
 
     public://internal:
         static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher);
         static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, DispatcherQueue  const& dispatcher);
-        static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config);
         HRESULT Seek(TimeSpan const& position, TimeSpan& actualPosition, bool allowFastSeek);
 
         std::shared_ptr<MediaSampleProvider> VideoSampleProvider()
@@ -191,6 +191,7 @@ namespace winrt::FFmpegInteropX::implementation
         winrt::com_ptr<IStream> fileStreamData = { nullptr };
         ByteOrderMark streamByteOrderMark;
         winrt::com_ptr<MediaSourceConfig> config = { nullptr };
+        bool isShuttingDown = false;
 
 
     private:
@@ -245,6 +246,8 @@ namespace winrt::FFmpegInteropX::implementation
 
         bool isFirstSeek;
         bool isFirstSeekAfterStreamSwitch = false;
+
+        int lastDurationExtension = 0;
 
         TimeSpan currentPosition{ 0 };
         TimeSpan lastPosition{ 0 };

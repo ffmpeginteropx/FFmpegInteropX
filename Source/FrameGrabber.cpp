@@ -40,7 +40,7 @@ namespace winrt::FFmpegInteropX::implementation
         config->IsFrameGrabber = true;
         config->VideoDecoderMode(VideoDecoderMode::ForceFFmpegSoftwareDecoder);
 
-        auto result = FFmpegMediaSource::CreateFromUri(uri, config);
+        auto result = FFmpegMediaSource::CreateFromUri(uri, config, nullptr);
         if (result == nullptr)
         {
             throw_hresult(E_FAIL);

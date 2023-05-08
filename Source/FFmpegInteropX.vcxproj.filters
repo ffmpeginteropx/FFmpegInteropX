@@ -33,9 +33,6 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="FFmpegInteropX.def" />
-    <None Include="..\Build\AppVeyor_Build.bat">
-      <Filter>Build</Filter>
-    </None>
     <None Include="..\Build\FFmpegConfig.sh">
       <Filter>Build</Filter>
     </None>
@@ -82,6 +79,9 @@
       <Filter>Build</Filter>
     </None>
     <None Include="cpp.hint" />
+    <None Include="..\AppVeyor_Build.bat">
+      <Filter>Build</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CodecChecker.h" />
