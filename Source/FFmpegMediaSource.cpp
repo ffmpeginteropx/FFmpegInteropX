@@ -701,6 +701,8 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
 
+        mss.BufferTime(TimeSpan{ 0 });
+
         if (mediaDuration.count() > 0)
         {
             mss.Duration(mediaDuration);
