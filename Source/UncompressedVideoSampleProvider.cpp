@@ -429,7 +429,7 @@ void UncompressedVideoSampleProvider::ReadFrameProperties(AVFrame* avFrame, int6
     }
 
     // metadata for jpeg and png is only loaded on frame decode. check for orientation now and apply.
-    if (avFrame->metadata && m_pAvCodecCtx->frame_number == 1)
+    if (avFrame->metadata && m_pAvCodecCtx->frame_num == 1)
     {
         auto entry = av_dict_get(avFrame->metadata, "Orientation", NULL, 0);
         if (entry)

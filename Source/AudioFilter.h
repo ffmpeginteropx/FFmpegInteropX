@@ -106,11 +106,10 @@ class AudioFilter : public IAvEffect
     {
         int hr;
 
-        auto layout = frame->channel_layout ? frame->channel_layout : inputCodecCtx->channel_layout;
-        if (!layout)
-            layout = AvCodecContextHelpers::GetDefaultChannelLayout(frame->channels);
+        auto layout = frame->ch_layout.order == AV_CHANNEL_ORDER_NATIVE && frame->ch_layout.u.mask ?
+            frame->ch_layout : inputCodecCtx->ch_layout;
 
-        av_get_channel_layout_string(channel_layout_name, sizeof(channel_layout_name), frame->channels, layout);
+        av_channel_layout_describe(&layout, channel_layout_name, sizeof(channel_layout_name));
 
         /* Create the abuffer filter;
         * it will be used for feeding the data into the graph. */
@@ -132,8 +131,7 @@ class AudioFilter : public IAvEffect
         hr = av_opt_set_q(avSource_ctx, "time_base", inputCodecCtx->time_base, AV_OPT_SEARCH_CHILDREN);
         hr = av_opt_set_int(avSource_ctx, "sample_rate", frame->sample_rate, AV_OPT_SEARCH_CHILDREN);
         hr = av_opt_set(avSource_ctx, "sample_fmt", av_get_sample_fmt_name((AVSampleFormat)frame->format), AV_OPT_SEARCH_CHILDREN);
-        hr = av_opt_set(avSource_ctx, "channel_layout", channel_layout_name, AV_OPT_SEARCH_CHILDREN);
-        hr = av_opt_set_int(avSource_ctx, "channels", frame->channels, AV_OPT_SEARCH_CHILDREN);
+        hr = av_opt_set(avSource_ctx, "ch_layout", channel_layout_name, AV_OPT_SEARCH_CHILDREN);
 
         /* Now initialize the filter; we pass NULL options, since we have already
         * set all the options above. */
