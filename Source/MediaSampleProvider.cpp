@@ -185,8 +185,7 @@ void MediaSampleProvider::InitializeStreamInfo()
         char* channelLayoutName = new char[256];
         if (channelLayoutName)
         {
-            auto layout = m_pAvCodecCtx->channel_layout ? m_pAvCodecCtx->channel_layout : AvCodecContextHelpers::GetDefaultChannelLayout(channels);
-            av_get_channel_layout_string(channelLayoutName, 256, channels, layout);
+            av_channel_layout_describe(&m_pAvCodecCtx->ch_layout, channelLayoutName, 256);
             channelLayout = StringUtils::Utf8ToPlatformString(channelLayoutName);
             delete[] channelLayoutName;
         }

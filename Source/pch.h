@@ -76,6 +76,7 @@ extern "C"
 #include "AudioStreamInfo.h"
 #include "VideoStreamInfo.h"
 #include "SubtitleStreamInfo.h"
+#include "AVCodecContextHelpers.h"
 
 // Disable debug string output on non-debug build
 #if !_DEBUG
