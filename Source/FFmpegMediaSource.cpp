@@ -1240,12 +1240,24 @@ namespace winrt::FFmpegInteropX::implementation
 
     IAsyncAction FFmpegMediaSource::OpenWithMediaPlayerAsync(MediaPlayer mediaPlayer)
     {
+        auto playbackItem = playbackItemWeak.get();
+        if (!playbackItem)
+        {
+            playbackItem = CreateMediaPlaybackItem();
+        }
+
+        auto mediaSource = playbackItem.Source();
+        if (!mediaSource.IsOpen())
+        {
+            co_await mediaSource.OpenAsync();
+        }
+
         task_completion_event<bool> tce;
 
         auto openedToken = mediaPlayer.MediaOpened([tce](MediaPlayer const&, IInspectable const&) { tce.set(true); });
         auto failedToken = mediaPlayer.MediaFailed([tce](MediaPlayer const&, MediaPlayerFailedEventArgs const&) { tce.set(false); });
 
-        mediaPlayer.Source(CreateMediaPlaybackItem());
+        mediaPlayer.Source(playbackItem);
         auto playbackItemWeak = this->playbackItemWeak;
 
         auto result = co_await task<bool>(tce);
@@ -1254,40 +1266,36 @@ namespace winrt::FFmpegInteropX::implementation
         mediaPlayer.MediaFailed(failedToken);
 
         auto source = mediaPlayer.Source();
-        auto playbackItem = playbackItemWeak.get();
-        if (playbackItem)
+        if (!result || source != playbackItem)
         {
-            if (!result || source != playbackItem)
+            // we were disposed already
+            playbackItem.Source().Close();
+        }
+        else
+        {
+            // register for soruce changed event
+            auto tokenPtr = new event_token[1]();
+            tokenPtr[0] = mediaPlayer.SourceChanged([tokenPtr, playbackItemWeak](MediaPlayer const& mediaPlayer, IInspectable const&)
             {
-                // we were disposed already
-                playbackItem.Source().Close();
-            }
-            else
-            {
-                // register for soruce changed event
-                auto tokenPtr = new event_token[1]();
-                tokenPtr[0] = mediaPlayer.SourceChanged([tokenPtr, playbackItemWeak](MediaPlayer const& mediaPlayer, IInspectable const&)
+                auto playbackItem = playbackItemWeak.get();
+                if (!playbackItem)
                 {
-                    auto playbackItem = playbackItemWeak.get();
-                    if (!playbackItem)
+                    // we were disposed already
+                    mediaPlayer.SourceChanged(tokenPtr[0]);
+                    delete[] tokenPtr;
+                }
+                else
+                {
+                    auto source = mediaPlayer.Source();
+                    if (source != playbackItem)
                     {
-                        // we were disposed already
+                        // source has changed. close now.
+                        playbackItem.Source().Close();
                         mediaPlayer.SourceChanged(tokenPtr[0]);
                         delete[] tokenPtr;
                     }
-                    else
-                    {
-                        auto source = mediaPlayer.Source();
-                        if (source != playbackItem)
-                        {
-                            // source has changed. close now.
-                            playbackItem.Source().Close();
-                            mediaPlayer.SourceChanged(tokenPtr[0]);
-                            delete[] tokenPtr;
-                        }
-                    }
-                });
-            }
+                }
+            });
         }
     }
 
