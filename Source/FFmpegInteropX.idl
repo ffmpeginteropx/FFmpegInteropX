@@ -719,4 +719,16 @@ namespace FFmpegInteropX
         [default_overload]
         void AddVideoEffect(Windows.Media.Playback.MediaPlayer player, Boolean isOptional);
     };
+
+    runtimeclass FFmpegInteropXTranscoder
+    {
+        FFmpegInteropXTranscoder(Windows.Storage.Streams.IRandomAccessStream inputStream, String transcodeFilter, Windows.Storage.Streams.IRandomAccessStream outputStream);
+
+        Windows.Foundation.IAsyncActionWithProgress<FFmpegInteropXTranscoderProgress> StartTranscodingAsync();
+    };
+
+    runtimeclass FFmpegInteropXTranscoderProgress
+    {
+        Int32 PercentComplete {get;};
+    };
 }

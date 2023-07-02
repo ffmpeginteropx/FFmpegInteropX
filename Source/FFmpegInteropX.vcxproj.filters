@@ -215,6 +215,8 @@
     <ClInclude Include="LanguageTagConverter.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="FFmpegInteropXTranscoder.h" />
+    <ClInclude Include="FFmpegInteropXTranscoderProgress.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -306,6 +308,8 @@
     <ClCompile Include="LanguageTagConverter.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="FFmpegInteropXTranscoder.cpp" />
+    <ClCompile Include="FFmpegInteropXTranscoderProgress.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />
