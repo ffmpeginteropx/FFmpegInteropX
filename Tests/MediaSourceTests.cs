@@ -71,14 +71,13 @@ namespace FFmpegInteropX.UnitTests
             source = await FFmpegMediaSource.CreateFromUriAsync("https://samples.mplayerhq.hu/Matroska/subtitles/", config);
         }
 
-        //[TestMethod]
-        //public async Task CreateFromFile()
-        //{
-        //    var file = await StorageFile.CreateStreamedFileFromUriAsync("video.mp4", new Uri(DownloadUriSource), null);
-        //    fileStream = await file.OpenReadAsync();
-        //    source = await FFmpegMediaSource.CreateFromStreamAsync(fileStream, config);
-        //    Assert.IsNotNull(source);
-        //}
+        [TestMethod]
+        public async Task CreateFromFile()
+        {
+            fileStream = Utilities.GetEmbededResourceStream("FFmpegInteropX.UnitTests.TestFiles.envivio-h264.mp4");
+            source = await FFmpegMediaSource.CreateFromStreamAsync(fileStream, config);
+            Assert.IsNotNull(source);
+        }
 
         [ExpectedException(typeof(COMException))]
         [TestMethod]
@@ -90,5 +89,85 @@ namespace FFmpegInteropX.UnitTests
             Assert.IsNotNull(source);
         }
 
+        [TestMethod]
+        public async Task SetFiltersPerStream()
+        {
+            fileStream = Utilities.GetEmbededResourceStream("FFmpegInteropX.UnitTests.TestFiles.envivio-h264.mp4");
+
+            source = await FFmpegMediaSource.CreateFromStreamAsync(fileStream, config);
+
+            var audioFilter = "equalizer=f=1000:t=h:width=200:g=-10";
+            var videoFilter = "blend=all_expr='A*(X/W)+B*(1-X/W)'";
+
+            var audioStreams = source.AudioStreams;
+            var videoStreams = source.VideoStreams;
+
+            //set per stream
+            source.SetFFmpegAudioFilters(audioFilter, audioStreams.First().StreamIndex);
+            source.SetFFmpegVideoFilters(videoFilter, videoStreams.First().StreamIndex);
+
+            //get per stream
+            Assert.AreEqual(audioFilter, source.GetAudioEffects(audioStreams.First().StreamIndex));
+            Assert.AreEqual(videoFilter, source.GetVideoEffects(videoStreams.First().StreamIndex));
+
+            //disable per stream
+            source.DisableAudioEffects(audioStreams.First().StreamIndex);
+            source.DisableVideoEffects(videoStreams.First().StreamIndex);
+
+            //get disabled
+            Assert.AreEqual(string.Empty, source.GetAudioEffects(audioStreams.First().StreamIndex));
+            Assert.AreEqual(string.Empty, source.GetVideoEffects(videoStreams.First().StreamIndex));
+        }
+
+        [TestMethod]
+        public async Task SetFiltersGlobally()
+        {
+            fileStream = Utilities.GetEmbededResourceStream("FFmpegInteropX.UnitTests.TestFiles.envivio-h264.mp4");
+
+            source = await FFmpegMediaSource.CreateFromStreamAsync(fileStream, config);
+
+            var audioFilter = "equalizer=f=1000:t=h:width=200:g=-10";
+            var videoFilter = "blend=all_expr='A*(X/W)+B*(1-X/W)'";
+
+            var audioStreams = source.AudioStreams;
+            var videoStreams = source.VideoStreams;
+
+            //set globally
+            source.SetFFmpegAudioFilters(audioFilter);
+            source.SetFFmpegVideoFilters(videoFilter);
+
+            //get per stream
+            Assert.AreEqual(audioFilter, source.GetAudioEffects(audioStreams.First().StreamIndex));
+            Assert.AreEqual(videoFilter, source.GetVideoEffects(videoStreams.First().StreamIndex));
+
+            //disable globally
+            source.DisableAudioEffects();
+            source.DisableVideoEffects();
+
+            //get disabled
+            Assert.AreEqual(string.Empty, source.GetAudioEffects(audioStreams.First().StreamIndex));
+            Assert.AreEqual(string.Empty, source.GetVideoEffects(videoStreams.First().StreamIndex));
+        }
+
+        [TestMethod]
+        public async Task SetFiltersFromConfig()
+        {
+            var audioFilter = "equalizer=f=1000:t=h:width=200:g=-10";
+            var videoFilter = "blend=all_expr='A*(X/W)+B*(1-X/W)'";
+
+            config.FFmpegAudioFilters = audioFilter;
+            config.FFmpegVideoFilters = videoFilter;
+
+            fileStream = Utilities.GetEmbededResourceStream("FFmpegInteropX.UnitTests.TestFiles.envivio-h264.mp4");
+
+            source = await FFmpegMediaSource.CreateFromStreamAsync(fileStream, config);
+
+            var audioStreams = source.AudioStreams;
+            var videoStreams = source.VideoStreams;
+
+            //get per stream
+            Assert.AreEqual(audioFilter, source.GetAudioEffects(audioStreams.First().StreamIndex));
+            Assert.AreEqual(videoFilter, source.GetVideoEffects(videoStreams.First().StreamIndex));
+        }
     }
 }

@@ -577,15 +577,7 @@ namespace winrt::FFmpegInteropX::implementation
         subtitleStreamInfos = subtitleStrInfos.GetView();
         videoStreamInfos = videoStrInfos.GetView();
 
-        if (!config->FFmpegVideoFilters().empty())
-        {
-            SetFFmpegVideoFilters(config->FFmpegVideoFilters());
-        }
 
-        if (!config->FFmpegAudioFilters().empty())
-        {
-            SetFFmpegAudioFilters(config->FFmpegAudioFilters());
-        }
 
         if (currentVideoStream)
         {
@@ -701,6 +693,16 @@ namespace winrt::FFmpegInteropX::implementation
                 startingRequestedToken = mss.Starting({ get_weak(), &FFmpegMediaSource::OnStarting });
                 sampleRequestedToken = mss.SampleRequested({ get_weak(), &FFmpegMediaSource::OnSampleRequested });
                 switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
+            }
+
+            if (!config->FFmpegVideoFilters().empty())
+            {
+                SetFFmpegVideoFilters(config->FFmpegVideoFilters());
+            }
+
+            if (!config->FFmpegAudioFilters().empty())
+            {
+                SetFFmpegAudioFilters(config->FFmpegAudioFilters());
             }
         }
 
@@ -1099,9 +1101,10 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
-        currentAudioEffects.insert_or_assign(videoStreamIndex, videoEffects);
 
-        for (int i = 0; i < audioStreams.size(); i++)
+        currentVideoEffects.insert_or_assign(videoStreamIndex, videoEffects);
+
+        for (int i = 0; i < videoStreams.size(); i++)
         {
             if (videoStreams.at(i)->StreamIndex() == videoStreamIndex)
             {
