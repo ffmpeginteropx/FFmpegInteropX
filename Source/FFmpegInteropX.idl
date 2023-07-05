@@ -110,6 +110,7 @@ namespace FFmpegInteropX
         StreamDisposition Disposition{ get; };
         Int64 Bitrate{ get; };
         Boolean IsDefault{ get; };
+        Int32 StreamIndex {get; };
     };
 
 #ifdef CPPCX
@@ -128,7 +129,8 @@ namespace FFmpegInteropX
             String  channelLayout,
             Int32 sampleRate,
             Int32 bitsPerSample,
-            DecoderEngine decoderEngine);
+            DecoderEngine decoderEngine,
+            Int32 streamIndex);
 
 
         Int32 Channels{ get; };
@@ -157,7 +159,8 @@ namespace FFmpegInteropX
             Int32 bitsPerSample,
             Double framesPerSecond,
             HardwareDecoderStatus hwAccel,
-            DecoderEngine decoderEngine);
+            DecoderEngine decoderEngine,
+            Int32 streamIndex);
 
 
         Int32 PixelWidth{ get; };
@@ -426,9 +429,16 @@ namespace FFmpegInteropX
         ///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
         void SetFFmpegAudioFilters(String audioFilters);
 
+        ///<summary>Sets FFmpeg audio effects for audio stream specified by audioStreamIndex. This replaces any effects which were already set.</summary>
+        void SetFFmpegAudioFilters(String audioFilters, Int32 audioStreamIndex);
+
         ///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
         void SetFFmpegVideoFilters(String videoEffects);
+
+        ///<summary>Sets FFmpeg video filters for the video stream specified by videoStreamIndex. This replaces any filters which were already set.</summary>
+        ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+        void SetFFmpegVideoFilters(String videoEffects, Int32 videoStreamIndex);
 
         ///<summary>Disables audio effects.</summary>
         void DisableAudioEffects();

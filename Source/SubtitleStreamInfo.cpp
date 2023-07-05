@@ -64,4 +64,9 @@ namespace winrt::FFmpegInteropX::implementation
     {
         return isDefault;
     }
+
+    int32_t SubtitleStreamInfo::StreamIndex()
+    {
+        return streamIndex;
+    }
 }

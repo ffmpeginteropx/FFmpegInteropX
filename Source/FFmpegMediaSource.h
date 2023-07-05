@@ -59,9 +59,16 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
         void SetFFmpegAudioFilters(hstring const& audioFilters);
 
+        ///<summary>Sets FFmpeg audio effects for audio stream specified by audioStreamIndex. This replaces any effects which were already set.</summary>
+        void SetFFmpegAudioFilters(hstring const& audioFilters, int32_t audioStreamIndex);
+
         ///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
         void SetFFmpegVideoFilters(hstring const& videoEffects);
+
+        ///<summary>Sets FFmpeg video filters for the video stream specified by videoStreamIndex. This replaces any filters which were already set.</summary>
+        ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+        void SetFFmpegVideoFilters(hstring const& videoEffects, int32_t videoStreamIndex);
 
         ///<summary>Disables audio effects.</summary>
         void DisableAudioEffects();
@@ -212,7 +219,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         std::shared_ptr<MediaSampleProvider> currentVideoStream;
         std::shared_ptr<MediaSampleProvider> currentAudioStream;
-        hstring currentAudioEffects{};
+        std::map<int, hstring> currentAudioEffects{};
         int thumbnailStreamIndex = 0;
 
         winrt::event_token audioTracksChangedToken{};
