@@ -443,8 +443,20 @@ namespace FFmpegInteropX
         ///<summary>Disables audio effects.</summary>
         void DisableAudioEffects();
 
+        ///<summary>Disables audio effects for the specified audio stream.</summary>
+        void DisableAudioEffects(Int32 audioStreamIndex);
+
         ///<summary>Disables video effects.</summary>
         void DisableVideoEffects();
+
+        ///<summary>Disables audio effects for the specified video stream.</summary>
+        void DisableVideoEffects(Int32 videoStreamIndex);
+
+        ///<summary>Gets audio effects for the specified audio stream.</summary>
+        String GetAudioEffects(Int32 audioStreamIndex);
+
+        ///<summary>Gets video effects for the specified video stream.</summary>
+        String GetVideoEffects(Int32 videoStreamIndex);
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
         MediaThumbnailData ExtractThumbnail();

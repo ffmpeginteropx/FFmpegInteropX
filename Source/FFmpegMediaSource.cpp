@@ -1081,11 +1081,14 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
+        currentVideoEffects.clear();
+        for (int i = 0; i < videoStreams.size(); i++)
+        {
+            currentVideoEffects.insert_or_assign(videoStreams.at(i)->StreamIndex(), videoEffects);
+        }
         if (currentVideoStream)
         {
             currentVideoStream->SetFilters(videoEffects);
-            //TODO store and apply video effects on video stream change!
-            //currentVideoEffects = videoEffects;
         }
     }
 
@@ -1096,6 +1099,8 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
+        currentAudioEffects.insert_or_assign(videoStreamIndex, videoEffects);
+
         for (int i = 0; i < audioStreams.size(); i++)
         {
             if (videoStreams.at(i)->StreamIndex() == videoStreamIndex)
@@ -1120,6 +1125,22 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
+    void FFmpegMediaSource::DisableAudioEffects(int32_t audioStreamIndex)
+    {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return;
+        }
+
+        currentAudioEffects.extract(audioStreamIndex);
+
+        if (currentAudioStream && currentAudioStream->StreamIndex() == audioStreamIndex)
+        {
+            currentAudioStream->DisableFilters();
+        }
+    }
+
     void FFmpegMediaSource::DisableVideoEffects()
     {
         std::lock_guard lock(mutex);
@@ -1127,10 +1148,55 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
+        currentVideoEffects.clear();
         if (currentVideoStream)
         {
             currentVideoStream->DisableFilters();
         }
+    }
+
+    void FFmpegMediaSource::DisableVideoEffects(int32_t videoStreamIndex)
+    {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return;
+        }
+
+        currentVideoEffects.extract(videoStreamIndex);
+
+        if (currentVideoStream && currentVideoStream->StreamIndex() == videoStreamIndex)
+        {
+            currentVideoStream->DisableFilters();
+        }
+    }
+
+    hstring FFmpegMediaSource::GetAudioEffects(int32_t audioStreamIndex)
+    {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return hstring{};
+        }
+        if (auto search = currentAudioEffects.find(audioStreamIndex); search != currentAudioEffects.end()) {
+            return search->second;
+        }
+
+        return hstring{};
+    }
+
+    hstring FFmpegMediaSource::GetVideoEffects(int32_t videoStreamIndex)
+    {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return hstring{};
+        }
+        if (auto search = currentVideoEffects.find(videoStreamIndex); search != currentVideoEffects.end()) {
+            return search->second;
+        }
+
+        return hstring{};
     }
 
     FFmpegInteropX::MediaThumbnailData FFmpegMediaSource::ExtractThumbnail()
@@ -2080,6 +2146,12 @@ namespace winrt::FFmpegInteropX::implementation
                 {
                     currentVideoStream = stream;
                     currentVideoStream->EnableStream();
+                    if (!currentVideoEffects.empty())
+                    {
+                        if (auto search = currentVideoEffects.find(currentVideoStream->StreamIndex()); search != currentVideoEffects.end()) {
+                            currentVideoStream->SetFilters(search->second);
+                        }
+                    }
                 }
             }
 

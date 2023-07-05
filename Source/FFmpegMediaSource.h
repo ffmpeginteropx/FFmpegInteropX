@@ -73,8 +73,20 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Disables audio effects.</summary>
         void DisableAudioEffects();
 
+        ///<summary>Disables audio effects for the specified audio stream.</summary>
+        void DisableAudioEffects(int32_t audioStreamIndex);
+
         ///<summary>Disables video effects.</summary>
         void DisableVideoEffects();
+
+        ///<summary>Disables audio effects for the specified video stream.</summary>
+        void DisableVideoEffects(int32_t videoStreamIndex);
+
+        ///<summary>Gets audio effects for the specified audio stream.</summary>
+        hstring GetAudioEffects(int32_t audioStreamIndex);
+
+        ///<summary>Gets video effects for the specified video stream.</summary>
+        hstring GetVideoEffects(int32_t videoStreamIndex);
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
         FFmpegInteropX::MediaThumbnailData ExtractThumbnail();
@@ -220,6 +232,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::shared_ptr<MediaSampleProvider> currentVideoStream;
         std::shared_ptr<MediaSampleProvider> currentAudioStream;
         std::map<int, hstring> currentAudioEffects{};
+        std::map<int, hstring> currentVideoEffects{};
         int thumbnailStreamIndex = 0;
 
         winrt::event_token audioTracksChangedToken{};
