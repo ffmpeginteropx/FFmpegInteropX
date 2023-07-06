@@ -654,7 +654,7 @@ namespace MediaPlayerCS
             Config.FFmpegAudioFilters = ffmpegAudioFilters.Text;
             if (cmbAudioStreamEffectSelector.SelectedItem == null)
                 FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
-            else FFmpegMSS?.SetFFmpegAudioFilters(ffmpegVideoFilters.Text, (int)cmbAudioStreamEffectSelector.SelectedItem);
+            else FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text, (int)cmbAudioStreamEffectSelector.SelectedItem);
         }
 
         private double GetBufferSizeMB()

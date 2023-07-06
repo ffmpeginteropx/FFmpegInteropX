@@ -504,6 +504,20 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
         ref new Windows::UI::Core::DispatchedHandler([this]
             {
                 tbSubtitleDelay->Text = "Subtitle delay: 0s";
+                auto audioIndices = ref new Vector<int>();
+                auto videoIndices = ref new Vector<int>();
+
+                for (auto s : actualFFmpegMSS->AudioStreams)
+                {
+                    audioIndices->Append(s->StreamIndex);
+                }
+                for (auto s : actualFFmpegMSS->VideoStreams)
+                {
+                    videoIndices->Append(s->StreamIndex);
+                }
+
+                cmbAudioStreamEffectSelector->ItemsSource = audioIndices;
+                cmbVideoStreamEffectSelector->ItemsSource = videoIndices;
             }));
 }
 
@@ -597,7 +611,9 @@ void MediaPlayerCPP::MainPage::ffmpegVideoFilters_KeyDown(Platform::Object^ send
         Config->FFmpegVideoFilters = ffmpegVideoFilters->Text;
         if (FFmpegMSS)
         {
-            FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text);
+            if (!cmbVideoStreamEffectSelector->SelectedItem)
+                FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text);
+            else FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text, (int)cmbVideoStreamEffectSelector->SelectedItem);
         }
     }
 }
@@ -610,7 +626,9 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
         Config->FFmpegAudioFilters = ffmpegAudioFilters->Text;
         if (FFmpegMSS)
         {
-            FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text);
+            if (!cmbAudioStreamEffectSelector->SelectedItem)
+                FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text);
+            else FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text, (int)cmbAudioStreamEffectSelector->SelectedItem);
         }
     }
 }
