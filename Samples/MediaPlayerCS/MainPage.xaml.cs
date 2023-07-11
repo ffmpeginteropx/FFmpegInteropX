@@ -125,6 +125,18 @@ namespace MediaPlayerCS
             {
                 mediaPlayer.PlaybackSession.Position -= TimeSpan.FromSeconds(5);
             }
+
+            if (args.VirtualKey == VirtualKey.Space && FFmpegMSS != null)
+            {
+                if (mediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Paused)
+                {
+                    mediaPlayer.Play();
+                }
+                else
+                {
+                    mediaPlayer.Pause();
+                }
+            }
         }
 
         private async void CodecChecker_CodecRequired(object sender, CodecRequiredEventArgs args)
@@ -211,7 +223,6 @@ namespace MediaPlayerCS
         private async Task OpenLocalFile(StorageFile file)
         {
             currentFile = file;
-            mediaPlayer.Source = null;
 
             // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
             IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
@@ -288,7 +299,6 @@ namespace MediaPlayerCS
                 Config.FFmpegOptions["reconnect_on_network_error"] = 1;
 
                 // Instantiate FFmpegMediaSource using the URI
-                mediaPlayer.Source = null;
                 FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
 
                 if (AutoCreatePlaybackItem)
