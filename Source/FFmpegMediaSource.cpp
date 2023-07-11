@@ -1246,11 +1246,12 @@ namespace winrt::FFmpegInteropX::implementation
             playbackItem = CreateMediaPlaybackItem();
         }
 
-        auto mediaSource = playbackItem.Source();
-        if (!mediaSource.IsOpen())
-        {
-            co_await mediaSource.OpenAsync();
-        }
+        // Does not seem to work on Windows 10?!
+        //auto mediaSource = playbackItem.Source();
+        //if (!mediaSource.IsOpen())
+        //{
+        //    co_await mediaSource.OpenAsync();
+        //}
 
         task_completion_event<bool> tce;
 
