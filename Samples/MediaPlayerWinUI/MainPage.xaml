@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
+    AllowDrop="True" DragEnter="Page_DragEnter" Drop="Page_Drop"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
@@ -91,9 +92,9 @@
                 </ScrollViewer>
             </SplitView.Pane>
 
-            <!-- Main content -->
-            <MediaPlayerElement x:Name="mediaPlayerElement"
-                        AreTransportControlsEnabled="True"
+                <!-- Main content -->
+                <MediaPlayerElement x:Name="mediaPlayerElement"
+                        AreTransportControlsEnabled="True"    
                         AutoPlay="True"                        
             />
 
