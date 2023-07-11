@@ -102,7 +102,13 @@
                                 <ColumnDefinition></ColumnDefinition>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="ffmpegAudioFilters" Header="FFmpeg audio filters (hit 'return' to apply). Per stream or file" KeyDown="ffmpegAudioFilters_KeyDown" Margin="0,10,0,0" Text="aecho=0.8:0.9:1000|1800:0.3|0.25" />
-                            <ComboBox  VerticalAlignment="Bottom"  PlaceholderText="All" ToolTipService.ToolTip="Stream to apply effects to. " x:Name="cmbAudioStreamEffectSelector" Grid.Column="1"></ComboBox>
+                            <ComboBox  VerticalAlignment="Bottom"  PlaceholderText="All" ToolTipService.ToolTip="Stream to apply effects to. " x:Name="cmbAudioStreamEffectSelector" Grid.Column="1">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </Grid>
 
                         <Grid>
@@ -111,7 +117,13 @@
                                 <ColumnDefinition></ColumnDefinition>
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="ffmpegVideoFilters" Header="FFmpeg video filters (hit 'return' to apply)" KeyDown="ffmpegVideoFilters_KeyDown" Margin="0,10,0,0" Text="colorchannelmixer=.3:.4:.3:0:.3:.4:.3:0:.3:.4:.3" />
-                            <ComboBox  VerticalAlignment="Bottom"  PlaceholderText="All" ToolTipService.ToolTip="Stream to apply effects to. " x:Name="cmbVideoStreamEffectSelector" Grid.Column="1"></ComboBox>
+                            <ComboBox  VerticalAlignment="Bottom"  PlaceholderText="All" ToolTipService.ToolTip="Stream to apply effects to. " x:Name="cmbVideoStreamEffectSelector" Grid.Column="1">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </Grid>
 
                         <TextBlock Text="GPU Video Postprocessing:" Margin="0,20,0,5"/>

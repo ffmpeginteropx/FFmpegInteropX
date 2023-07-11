@@ -103,20 +103,20 @@ namespace FFmpegInteropX.UnitTests
             var videoStreams = source.VideoStreams;
 
             //set per stream
-            source.SetFFmpegAudioFilters(audioFilter, audioStreams.First().StreamIndex);
-            source.SetFFmpegVideoFilters(videoFilter, videoStreams.First().StreamIndex);
+            source.SetFFmpegAudioFilters(audioFilter, audioStreams.First());
+            source.SetFFmpegVideoFilters(videoFilter, videoStreams.First());
 
             //get per stream
-            Assert.AreEqual(audioFilter, source.GetAudioEffects(audioStreams.First().StreamIndex));
-            Assert.AreEqual(videoFilter, source.GetVideoEffects(videoStreams.First().StreamIndex));
+            Assert.AreEqual(audioFilter, source.GetAudioEffects(audioStreams.First()));
+            Assert.AreEqual(videoFilter, source.GetVideoEffects(videoStreams.First()));
 
             //disable per stream
-            source.DisableAudioEffects(audioStreams.First().StreamIndex);
-            source.DisableVideoEffects(videoStreams.First().StreamIndex);
+            source.DisableAudioEffects(audioStreams.First());
+            source.DisableVideoEffects(videoStreams.First());
 
             //get disabled
-            Assert.AreEqual(string.Empty, source.GetAudioEffects(audioStreams.First().StreamIndex));
-            Assert.AreEqual(string.Empty, source.GetVideoEffects(videoStreams.First().StreamIndex));
+            Assert.AreEqual(string.Empty, source.GetAudioEffects(audioStreams.First()));
+            Assert.AreEqual(string.Empty, source.GetVideoEffects(videoStreams.First()));
         }
 
         [TestMethod]
@@ -137,16 +137,16 @@ namespace FFmpegInteropX.UnitTests
             source.SetFFmpegVideoFilters(videoFilter);
 
             //get per stream
-            Assert.AreEqual(audioFilter, source.GetAudioEffects(audioStreams.First().StreamIndex));
-            Assert.AreEqual(videoFilter, source.GetVideoEffects(videoStreams.First().StreamIndex));
+            Assert.AreEqual(audioFilter, source.GetAudioEffects(audioStreams.First()));
+            Assert.AreEqual(videoFilter, source.GetVideoEffects(videoStreams.First()));
 
             //disable globally
             source.DisableAudioEffects();
             source.DisableVideoEffects();
 
             //get disabled
-            Assert.AreEqual(string.Empty, source.GetAudioEffects(audioStreams.First().StreamIndex));
-            Assert.AreEqual(string.Empty, source.GetVideoEffects(videoStreams.First().StreamIndex));
+            Assert.AreEqual(string.Empty, source.GetAudioEffects(audioStreams.First()));
+            Assert.AreEqual(string.Empty, source.GetVideoEffects(videoStreams.First()));
         }
 
         [TestMethod]
@@ -166,8 +166,8 @@ namespace FFmpegInteropX.UnitTests
             var videoStreams = source.VideoStreams;
 
             //get per stream
-            Assert.AreEqual(audioFilter, source.GetAudioEffects(audioStreams.First().StreamIndex));
-            Assert.AreEqual(videoFilter, source.GetVideoEffects(videoStreams.First().StreamIndex));
+            Assert.AreEqual(audioFilter, source.GetAudioEffects(audioStreams.First()));
+            Assert.AreEqual(videoFilter, source.GetVideoEffects(videoStreams.First()));
         }
     }
 }

@@ -55,6 +55,11 @@ public:
         frameProvider->DisableFilter();
     }
 
+    winrt::hstring GetFilters() override
+    {
+        return frameProvider->GetCurrentFilters();
+    }
+
     std::shared_ptr<UncompressedFrameProvider> frameProvider;
 
 

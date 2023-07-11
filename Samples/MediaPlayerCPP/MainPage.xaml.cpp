@@ -504,20 +504,8 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
         ref new Windows::UI::Core::DispatchedHandler([this]
             {
                 tbSubtitleDelay->Text = "Subtitle delay: 0s";
-                auto audioIndices = ref new Vector<int>();
-                auto videoIndices = ref new Vector<int>();
-
-                for (auto s : actualFFmpegMSS->AudioStreams)
-                {
-                    audioIndices->Append(s->StreamIndex);
-                }
-                for (auto s : actualFFmpegMSS->VideoStreams)
-                {
-                    videoIndices->Append(s->StreamIndex);
-                }
-
-                cmbAudioStreamEffectSelector->ItemsSource = audioIndices;
-                cmbVideoStreamEffectSelector->ItemsSource = videoIndices;
+                cmbAudioStreamEffectSelector->ItemsSource = actualFFmpegMSS->AudioStreams;
+                cmbVideoStreamEffectSelector->ItemsSource = actualFFmpegMSS->VideoStreams;
             }));
 }
 
@@ -613,7 +601,7 @@ void MediaPlayerCPP::MainPage::ffmpegVideoFilters_KeyDown(Platform::Object^ send
         {
             if (!cmbVideoStreamEffectSelector->SelectedItem)
                 FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text);
-            else FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text, (int)cmbVideoStreamEffectSelector->SelectedItem);
+            else FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text, (VideoStreamInfo^)cmbVideoStreamEffectSelector->SelectedItem);
         }
     }
 }
@@ -628,7 +616,7 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
         {
             if (!cmbAudioStreamEffectSelector->SelectedItem)
                 FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text);
-            else FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text, (int)cmbAudioStreamEffectSelector->SelectedItem);
+            else FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text, (AudioStreamInfo^)cmbAudioStreamEffectSelector->SelectedItem);
         }
     }
 }

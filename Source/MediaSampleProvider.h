@@ -114,6 +114,7 @@ public:
     virtual void DisableStream();
     virtual void SetFilters(winrt::hstring filterDefinition) { };// override for setting effects in sample providers
     virtual void DisableFilters() {};//override for disabling filters in sample providers;
+    virtual winrt::hstring GetFilters() { return winrt::hstring{}; }//override to get the current ffmpeg filters
     virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& videoEncodingProperties, bool isCompressedFormat);
     virtual void Detach();
 

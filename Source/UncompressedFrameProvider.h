@@ -18,6 +18,8 @@ class UncompressedFrameProvider sealed
     AVCodecContext* m_pAvCodecCtx = NULL;
     std::shared_ptr<AbstractEffectFactory> m_effectFactory;
     winrt::hstring pendingEffects{};
+    winrt::hstring currentEffects{};
+
 
 public:
     UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, std::shared_ptr<AbstractEffectFactory> p_effectFactory)
@@ -36,19 +38,24 @@ public:
     {
         if (!effects.empty())
         {
-            pendingEffects = effects;
+            currentEffects = pendingEffects = effects;
         }
         else
         {
-            pendingEffects.clear();
-            filter = nullptr;
+            DisableFilter();
         }
     }
 
     void DisableFilter()
     {
+        currentEffects = winrt::hstring{};
         pendingEffects.clear();
         filter = nullptr;
+    }
+
+    winrt::hstring GetCurrentFilters()
+    {
+        return currentEffects;
     }
 
     HRESULT GetFrame(AVFrame** avFrame)

@@ -430,7 +430,7 @@ namespace FFmpegInteropX
         void SetFFmpegAudioFilters(String audioFilters);
 
         ///<summary>Sets FFmpeg audio effects for audio stream specified by audioStreamIndex. This replaces any effects which were already set.</summary>
-        void SetFFmpegAudioFilters(String audioFilters, Int32 audioStreamIndex);
+        void SetFFmpegAudioFilters(String audioFilters, AudioStreamInfo audioStream);
 
         ///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
@@ -438,25 +438,25 @@ namespace FFmpegInteropX
 
         ///<summary>Sets FFmpeg video filters for the video stream specified by videoStreamIndex. This replaces any filters which were already set.</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-        void SetFFmpegVideoFilters(String videoEffects, Int32 videoStreamIndex);
+        void SetFFmpegVideoFilters(String videoEffects, VideoStreamInfo videoStream);
 
         ///<summary>Disables audio effects.</summary>
         void DisableAudioEffects();
 
         ///<summary>Disables audio effects for the specified audio stream.</summary>
-        void DisableAudioEffects(Int32 audioStreamIndex);
+        void DisableAudioEffects(AudioStreamInfo audioStream);
 
         ///<summary>Disables video effects.</summary>
         void DisableVideoEffects();
 
         ///<summary>Disables audio effects for the specified video stream.</summary>
-        void DisableVideoEffects(Int32 videoStreamIndex);
+        void DisableVideoEffects(VideoStreamInfo videoStream);
 
         ///<summary>Gets audio effects for the specified audio stream.</summary>
-        String GetAudioEffects(Int32 audioStreamIndex);
+        String GetAudioEffects(AudioStreamInfo audioStream);
 
         ///<summary>Gets video effects for the specified video stream.</summary>
-        String GetVideoEffects(Int32 videoStreamIndex);
+        String GetVideoEffects(VideoStreamInfo videoStream);
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
         MediaThumbnailData ExtractThumbnail();
