@@ -73,20 +73,26 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Disables audio effects.</summary>
         void DisableAudioEffects();
 
+        ///<summary>Disables audio effects.</summary>
+        void ClearFFmpegAudioFilters();
+
         ///<summary>Disables audio effects for the specified audio stream.</summary>
-        void DisableAudioEffects(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
+        void ClearFFmpegAudioFilters(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
 
         ///<summary>Disables video effects.</summary>
         void DisableVideoEffects();
 
+        ///<summary>Clears video effects.</summary>
+        void ClearFFmpegVideoFilters();
+
         ///<summary>Disables audio effects for the specified video stream.</summary>
-        void DisableVideoEffects(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
+        void ClearFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
 
         ///<summary>Gets audio effects for the specified audio stream.</summary>
-        hstring GetAudioEffects(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
+        hstring GetFFmpegAudioFilters(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
 
         ///<summary>Gets video effects for the specified video stream.</summary>
-        hstring GetVideoEffects(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
+        hstring GetFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
         FFmpegInteropX::MediaThumbnailData ExtractThumbnail();

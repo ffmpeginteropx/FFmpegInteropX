@@ -17,8 +17,8 @@ class UncompressedFrameProvider sealed
     AVFormatContext* m_pAvFormatCtx = NULL;
     AVCodecContext* m_pAvCodecCtx = NULL;
     std::shared_ptr<AbstractEffectFactory> m_effectFactory;
-    winrt::hstring pendingEffects{};
-    winrt::hstring currentEffects{};
+    winrt::hstring pendingFFmpegFilters{};
+    winrt::hstring currentFFmpegFilters{};
 
 
 public:
@@ -34,11 +34,11 @@ public:
         m_pAvCodecCtx = avCodecCtx;
     }
 
-    void UpdateFilter(winrt::hstring effects)
+    void UpdateFilter(winrt::hstring ffmpegFilters)
     {
-        if (!effects.empty())
+        if (!ffmpegFilters.empty())
         {
-            currentEffects = pendingEffects = effects;
+            currentFFmpegFilters = pendingFFmpegFilters = ffmpegFilters;
         }
         else
         {
@@ -48,32 +48,32 @@ public:
 
     void DisableFilter()
     {
-        currentEffects = winrt::hstring{};
-        pendingEffects.clear();
+        currentFFmpegFilters = winrt::hstring{};
+        pendingFFmpegFilters.clear();
         filter = nullptr;
     }
 
     winrt::hstring GetCurrentFilters()
     {
-        return currentEffects;
+        return currentFFmpegFilters;
     }
 
     HRESULT GetFrame(AVFrame** avFrame)
     {
         HRESULT hr = S_OK;
 
-        if (!pendingEffects.empty())
+        if (!pendingFFmpegFilters.empty())
         {
-            if (pendingEffects.size() > 0)
+            if (pendingFFmpegFilters.size() > 0)
             {
-                filter = m_effectFactory->CreateEffect(pendingEffects);
+                filter = m_effectFactory->CreateEffect(pendingFFmpegFilters);
             }
             else
             {
                 filter = nullptr;
             }
 
-            pendingEffects.clear();
+            pendingFFmpegFilters.clear();
         }
 
         if (filter)

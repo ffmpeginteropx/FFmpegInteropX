@@ -440,23 +440,31 @@ namespace FFmpegInteropX
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
         void SetFFmpegVideoFilters(String videoEffects, VideoStreamInfo videoStream);
 
+        [deprecated("Use ClearFFmpegAudioFilters instead.", deprecate, 1)]
         ///<summary>Disables audio effects.</summary>
         void DisableAudioEffects();
 
-        ///<summary>Disables audio effects for the specified audio stream.</summary>
-        void DisableAudioEffects(AudioStreamInfo audioStream);
+        ///<summary>Clears audio effects.</summary>
+        void ClearFFmpegAudioFilters();
 
+        ///<summary>Disables audio effects for the specified audio stream.</summary>
+        void ClearFFmpegAudioFilters(AudioStreamInfo audioStream);
+
+        [deprecated("Use ClearFFmpegVideoFilters instead.", deprecate, 1)]
         ///<summary>Disables video effects.</summary>
         void DisableVideoEffects();
 
+        ///<summary>Clear video effects.</summary>
+        void ClearFFmpegVideoFilters();
+
         ///<summary>Disables audio effects for the specified video stream.</summary>
-        void DisableVideoEffects(VideoStreamInfo videoStream);
+        void ClearFFmpegVideoFilters(VideoStreamInfo videoStream);
 
         ///<summary>Gets audio effects for the specified audio stream.</summary>
-        String GetAudioEffects(AudioStreamInfo audioStream);
+        String GetFFmpegAudioFilters(AudioStreamInfo audioStream);
 
         ///<summary>Gets video effects for the specified video stream.</summary>
-        String GetVideoEffects(VideoStreamInfo videoStream);
+        String GetFFmpegVideoFilters(VideoStreamInfo videoStream);
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
         MediaThumbnailData ExtractThumbnail();

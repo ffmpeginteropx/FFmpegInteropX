@@ -45,17 +45,17 @@ public:
     virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos);
     virtual HRESULT FeedPacketToDecoder(int64_t& firstPacketPos);
 
-    void SetFilters(winrt::hstring effects) override
+    void SetFFmpegFilters(winrt::hstring ffmpegFilters) override
     {
-        frameProvider->UpdateFilter(effects);
+        frameProvider->UpdateFilter(ffmpegFilters);
     }
 
-    void DisableFilters() override
+    void ClearFFmpegFilters() override
     {
         frameProvider->DisableFilter();
     }
 
-    winrt::hstring GetFilters() override
+    winrt::hstring GetFFmpegFilters() override
     {
         return frameProvider->GetCurrentFilters();
     }
