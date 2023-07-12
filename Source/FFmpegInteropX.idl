@@ -426,44 +426,44 @@ namespace FFmpegInteropX
         ///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
         void SetSubtitleDelay(Windows.Foundation.TimeSpan delay);
 
-        ///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
+        ///<summary>Sets FFmpeg audio filters. This replaces any filters which were already set.</summary>
         void SetFFmpegAudioFilters(String audioFilters);
 
-        ///<summary>Sets FFmpeg audio effects for audio stream specified by audioStreamIndex. This replaces any effects which were already set.</summary>
+        ///<summary>Sets FFmpeg audio filters for audio stream specified by audioStreamIndex. This replaces any filters which were already set.</summary>
         void SetFFmpegAudioFilters(String audioFilters, AudioStreamInfo audioStream);
 
         ///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-        void SetFFmpegVideoFilters(String videoEffects);
+        void SetFFmpegVideoFilters(String videoFilters);
 
         ///<summary>Sets FFmpeg video filters for the video stream specified by videoStreamIndex. This replaces any filters which were already set.</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-        void SetFFmpegVideoFilters(String videoEffects, VideoStreamInfo videoStream);
+        void SetFFmpegVideoFilters(String videoFilters, VideoStreamInfo videoStream);
 
         [deprecated("Use ClearFFmpegAudioFilters instead.", deprecate, 1)]
-        ///<summary>Disables audio effects.</summary>
+        ///<summary>Disables audio filters.</summary>
         void DisableAudioEffects();
 
-        ///<summary>Clears audio effects.</summary>
+        ///<summary>Clears audio filters.</summary>
         void ClearFFmpegAudioFilters();
 
-        ///<summary>Disables audio effects for the specified audio stream.</summary>
+        ///<summary>Disables audio filters for the specified audio stream.</summary>
         void ClearFFmpegAudioFilters(AudioStreamInfo audioStream);
 
         [deprecated("Use ClearFFmpegVideoFilters instead.", deprecate, 1)]
-        ///<summary>Disables video effects.</summary>
+        ///<summary>Disables video filters.</summary>
         void DisableVideoEffects();
 
-        ///<summary>Clear video effects.</summary>
+        ///<summary>Clear video filters.</summary>
         void ClearFFmpegVideoFilters();
 
-        ///<summary>Disables audio effects for the specified video stream.</summary>
+        ///<summary>Disables audio filters for the specified video stream.</summary>
         void ClearFFmpegVideoFilters(VideoStreamInfo videoStream);
 
-        ///<summary>Gets audio effects for the specified audio stream.</summary>
+        ///<summary>Gets audio filters for the specified audio stream.</summary>
         String GetFFmpegAudioFilters(AudioStreamInfo audioStream);
 
-        ///<summary>Gets video effects for the specified video stream.</summary>
+        ///<summary>Gets video filters for the specified video stream.</summary>
         String GetFFmpegVideoFilters(VideoStreamInfo videoStream);
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>

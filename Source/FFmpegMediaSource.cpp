@@ -1070,7 +1070,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoEffects)
+    void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoFilters)
     {
         std::lock_guard lock(mutex);
         if (mss == nullptr)
@@ -1080,11 +1080,11 @@ namespace winrt::FFmpegInteropX::implementation
     
         if (currentVideoStream)
         {
-            currentVideoStream->SetFFmpegFilters(videoEffects);
+            currentVideoStream->SetFFmpegFilters(videoFilters);
         }
     }
 
-    void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoEffects, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
+    void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoFilters, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
     {
         std::lock_guard lock(mutex);
         if (mss == nullptr)
@@ -1096,7 +1096,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             if (videoStreams.at(i)->VideoInfo() == videoStream)
             {
-                videoStreams.at(i)->SetFFmpegFilters(videoEffects);
+                videoStreams.at(i)->SetFFmpegFilters(videoFilters);
                 break;
             }
         }
