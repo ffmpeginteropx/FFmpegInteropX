@@ -142,7 +142,6 @@ task<void> MainPage::OpenLocalFile()
 task<void> MainPage::OpenLocalFile(StorageFile^ file)
 {
     currentFile = file;
-    mediaPlayer->Source = nullptr;
 
     // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
     try
@@ -204,7 +203,6 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
     Config->FFmpegOptions->Insert("reconnect_on_network_error", 1);
 
     // Instantiate FFmpegMediaSource using the URI
-    mediaPlayer->Source = nullptr;
     try
     {
         ApplicationData::Current->LocalSettings->Values->Insert("LastUri", uri);
@@ -561,6 +559,18 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
     if (args->VirtualKey == Windows::System::VirtualKey::Left && FFmpegMSS && mediaPlayer->PlaybackSession->CanSeek)
     {
         mediaPlayer->PlaybackSession->Position = TimeSpan{ mediaPlayer->PlaybackSession->Position.Duration - 50000000 };
+    }
+
+    if (args->VirtualKey == Windows::System::VirtualKey::Space && FFmpegMSS)
+    {
+        if (mediaPlayer->PlaybackSession->PlaybackState == MediaPlaybackState::Paused)
+        {
+            mediaPlayer->Play();
+        }
+        else
+        {
+            mediaPlayer->Pause();
+        }
     }
 }
 
