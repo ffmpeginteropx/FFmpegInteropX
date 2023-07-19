@@ -4,7 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "IAvEffect.h"
+#include "IAvFilter.h"
 #include <sstream>
 #include "StringUtils.h"
 

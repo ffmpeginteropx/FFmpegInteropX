@@ -20,7 +20,7 @@
 #include "UncompressedVideoSampleProvider.h"
 #include "NativeBufferFactory.h"
 #include <mfapi.h>
-#include "VideoEffectFactory.h"
+#include "VideoFilterFactory.h"
 
 extern "C"
 {
@@ -111,7 +111,7 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
 {
     SelectOutputFormat();
 
-    frameProvider = std::shared_ptr<UncompressedFrameProvider>(new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, std::shared_ptr< VideoEffectFactory>(new VideoEffectFactory(m_pAvCodecCtx, m_pAvStream))));
+    frameProvider = std::shared_ptr<UncompressedFrameProvider>(new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, std::shared_ptr< VideoFilterFactory>(new VideoFilterFactory(m_pAvCodecCtx, m_pAvStream))));
 
     auto videoProperties = VideoEncodingProperties::CreateUncompressed(outputMediaSubtype, outputFrameWidth, outputFrameHeight);
     auto properties = videoProperties.Properties();

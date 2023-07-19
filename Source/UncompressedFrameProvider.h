@@ -1,6 +1,6 @@
 #pragma once
-#include "IAvEffect.h"
-#include "AbstractEffectFactory.h"
+#include "IAvFilter.h"
+#include "AvFilterFactoryBase.h"
 #include <mutex>
 
 extern "C"
@@ -16,13 +16,13 @@ class UncompressedFrameProvider sealed
     std::shared_ptr<IAvFilter> filter;
     AVFormatContext* m_pAvFormatCtx = NULL;
     AVCodecContext* m_pAvCodecCtx = NULL;
-    std::shared_ptr<AbstractEffectFactory> m_effectFactory;
+    std::shared_ptr<AvFilterFactoryBase> m_effectFactory;
     winrt::hstring pendingFFmpegFilters{};
     winrt::hstring currentFFmpegFilters{};
 
 
 public:
-    UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, std::shared_ptr<AbstractEffectFactory> p_effectFactory)
+    UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, std::shared_ptr<AvFilterFactoryBase> p_effectFactory)
     {
         m_pAvCodecCtx = p_pAvCodecCtx;
         m_pAvFormatCtx = p_pAvFormatCtx;

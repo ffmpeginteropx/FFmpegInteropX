@@ -22,7 +22,7 @@
 
 #include "UncompressedAudioSampleProvider.h"
 #include "NativeBufferFactory.h"
-#include "AudioEffectFactory.h"
+#include "AudioFilterFactory.h"
 #include "AvCodecContextHelpers.h"
 
 extern "C"
@@ -43,7 +43,7 @@ UncompressedAudioSampleProvider::UncompressedAudioSampleProvider(
 
 winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvider::CreateStreamDescriptor()
 {
-    frameProvider = std::shared_ptr<UncompressedFrameProvider>(new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, std::shared_ptr<AudioEffectFactory>(new AudioEffectFactory(m_pAvCodecCtx))));
+    frameProvider = std::shared_ptr<UncompressedFrameProvider>(new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, std::shared_ptr<AudioFilterFactory>(new AudioFilterFactory(m_pAvCodecCtx))));
 
     auto format = m_pAvCodecCtx->sample_fmt != AV_SAMPLE_FMT_NONE ? m_pAvCodecCtx->sample_fmt : AV_SAMPLE_FMT_S16;
     auto channels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);

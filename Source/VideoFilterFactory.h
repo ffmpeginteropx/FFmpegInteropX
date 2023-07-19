@@ -1,17 +1,17 @@
 #pragma once
 #include "pch.h"
-#include "AbstractEffectFactory.h"
+#include "AvFilterFactoryBase.h"
 #include "VideoFilter.h"
 
 
-class VideoEffectFactory : public AbstractEffectFactory
+class VideoFilterFactory : public AvFilterFactoryBase
 {
     AVCodecContext* inputContext = NULL;
     AVStream* inputStream = NULL;
 
 public:
 
-    VideoEffectFactory(AVCodecContext* input_ctx, AVStream* inputStream)
+    VideoFilterFactory(AVCodecContext* input_ctx, AVStream* inputStream)
     {
         this->inputContext = input_ctx;
         this->inputStream = inputStream;

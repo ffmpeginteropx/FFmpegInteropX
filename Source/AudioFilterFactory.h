@@ -1,16 +1,16 @@
 #pragma once
-#include "AbstractEffectFactory.h"
+#include "AvFilterFactoryBase.h"
 #include "AudioFilter.h"
 #include "AvCodecContextHelpers.h"
 
 
-class AudioEffectFactory : public AbstractEffectFactory
+class AudioFilterFactory : public AvFilterFactoryBase
 {
     AVCodecContext* InputContext;
 
 public:
 
-    AudioEffectFactory(AVCodecContext* input_ctx)
+    AudioFilterFactory(AVCodecContext* input_ctx)
     {
         InputContext = input_ctx;
     }
