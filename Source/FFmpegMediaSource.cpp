@@ -1047,9 +1047,9 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
-        if (currentAudioStream)
+        for(auto audioStream: audioStreams)
         {
-            currentAudioStream->SetFFmpegFilters(audioFilters);
+            audioStream->SetFFmpegFilters(audioFilters);
         }
     }
 
@@ -1060,11 +1060,11 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
-        for (int i = 0; i < audioStreams.size(); i++)
+        for (auto internalAudioStream : audioStreams)
         {
-            if (audioStreams.at(i)->AudioInfo() == audioStream)
+            if (internalAudioStream->AudioInfo() == audioStream)
             {
-                audioStreams.at(i)->SetFFmpegFilters(audioFilters);
+                internalAudioStream->SetFFmpegFilters(audioFilters);
                 break;
             }
         }
@@ -1077,10 +1077,10 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
-    
-        if (currentVideoStream)
+
+        for (auto videoStream : videoStreams)
         {
-            currentVideoStream->SetFFmpegFilters(videoFilters);
+            videoStream->SetFFmpegFilters(videoFilters);
         }
     }
 
@@ -1092,11 +1092,11 @@ namespace winrt::FFmpegInteropX::implementation
             return;
         }
 
-        for (int i = 0; i < videoStreams.size(); i++)
+        for (auto internalvideoStream : videoStreams)
         {
-            if (videoStreams.at(i)->VideoInfo() == videoStream)
+            if (internalvideoStream->VideoInfo() == videoStream)
             {
-                videoStreams.at(i)->SetFFmpegFilters(videoFilters);
+                internalvideoStream->SetFFmpegFilters(videoFilters);
                 break;
             }
         }
@@ -1114,9 +1114,9 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
-        if (currentAudioStream)
+        for (auto audioStream : audioStreams)
         {
-            currentAudioStream->ClearFFmpegFilters();
+            audioStream->ClearFFmpegFilters();
         }
     }
 
@@ -1128,9 +1128,13 @@ namespace winrt::FFmpegInteropX::implementation
             return;
         }
 
-        if (currentAudioStream && currentAudioStream->AudioInfo() == audioStream)
+        for (auto internaAudioStream : audioStreams)
         {
-            currentAudioStream->ClearFFmpegFilters();
+            if (internaAudioStream->AudioInfo() == audioStream)
+            {
+                internaAudioStream->ClearFFmpegFilters();
+                break;
+            }
         }
     }
 
@@ -1146,9 +1150,9 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
-        if (currentVideoStream)
+        for (auto videoStream : videoStreams)
         {
-            currentVideoStream->ClearFFmpegFilters();
+            videoStream->ClearFFmpegFilters();
         }
     }
 
@@ -1160,9 +1164,13 @@ namespace winrt::FFmpegInteropX::implementation
             return;
         }
 
-        if (currentVideoStream && currentVideoStream->StreamInfo() == videoStream)
+        for (auto internaVideoStream : videoStreams)
         {
-            currentVideoStream->ClearFFmpegFilters();
+            if (internaVideoStream->VideoInfo() == videoStream)
+            {
+                internaVideoStream->ClearFFmpegFilters();
+                break;
+            }
         }
     }
 

@@ -17,7 +17,7 @@ public:
         this->inputStream = inputStream;
     }
 
-    std::shared_ptr<IAvEffect> CreateEffect(winrt::hstring const& filterDefinition) override
+    std::shared_ptr<IAvFilter> CreateEffect(winrt::hstring const& filterDefinition) override
     {
         /*Since video often requires HW acceleration for acceptable framerates,
         we used IBasicVodeoEffect to implement video filters,

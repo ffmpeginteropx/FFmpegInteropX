@@ -13,7 +13,7 @@ using namespace winrt::Windows::Foundation::Collections;
 
 class UncompressedFrameProvider sealed
 {
-    std::shared_ptr<IAvEffect> filter;
+    std::shared_ptr<IAvFilter> filter;
     AVFormatContext* m_pAvFormatCtx = NULL;
     AVCodecContext* m_pAvCodecCtx = NULL;
     std::shared_ptr<AbstractEffectFactory> m_effectFactory;

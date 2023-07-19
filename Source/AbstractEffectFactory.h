@@ -5,7 +5,7 @@
 class AbstractEffectFactory
 {
 public:
-    virtual std::shared_ptr<IAvEffect> CreateEffect(winrt::hstring const& definitions) = 0;
+    virtual std::shared_ptr<IAvFilter> CreateEffect(winrt::hstring const& definitions) = 0;
 };
 
 

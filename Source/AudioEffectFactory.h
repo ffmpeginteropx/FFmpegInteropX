@@ -15,7 +15,7 @@ public:
         InputContext = input_ctx;
     }
 
-    std::shared_ptr<IAvEffect> CreateEffect(winrt::hstring const& filterDefinition) override
+    std::shared_ptr<IAvFilter> CreateEffect(winrt::hstring const& filterDefinition) override
     {
         return std::shared_ptr<AudioFilter>(new AudioFilter(InputContext, filterDefinition));
     }

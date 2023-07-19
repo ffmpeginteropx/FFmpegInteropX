@@ -27,7 +27,7 @@ using namespace winrt::Windows::Foundation;
 
 using namespace winrt::Windows::Storage;
 
-class AudioFilter : public IAvEffect
+class AudioFilter : public IAvFilter
 {
     const AVFilter* AVSource = NULL;
     const AVFilter* AVSink = NULL;
