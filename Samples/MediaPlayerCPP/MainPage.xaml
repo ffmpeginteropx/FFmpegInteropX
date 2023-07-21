@@ -38,7 +38,7 @@
             <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
         <SplitView Grid.Row="1" x:Name="Splitter">
-       
+
             <!-- Control panel -->
             <SplitView.Pane>
                 <ScrollViewer>
@@ -52,7 +52,7 @@
 
                         <ToggleSwitch Header="Allow Hardware Accelection" OffContent="OFF" OnContent="ON" x:Name="AutoDetect" Toggled="AutoDetect_Toggled" />
                         <ToggleSwitch Header="Force System Video Decoder" OffContent="OFF" OnContent="ON" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
-                    
+
                         <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.VideoOutputAllowIyuv}"/>
 
                         <ToggleSwitch Header="Use System MP3 Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioMP3}"/>
@@ -103,7 +103,11 @@
                             <ComboBox  VerticalAlignment="Bottom"  PlaceholderText="All" ToolTipService.ToolTip="Stream to apply effects to. " x:Name="cmbAudioStreamEffectSelector" Grid.Column="1">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Name}"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}"/>
+                                            <TextBlock Text="{Binding StreamIndex}" Margin="10, 0, 10, 0"/>
+                                            <TextBlock Text="{Binding Language}"/>
+                                        </StackPanel>
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
@@ -118,7 +122,11 @@
                             <ComboBox  VerticalAlignment="Bottom"  PlaceholderText="All" ToolTipService.ToolTip="Stream to apply effects to. " x:Name="cmbVideoStreamEffectSelector" Grid.Column="1">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Name}"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}"/>
+                                            <TextBlock Text="{Binding StreamIndex}" Margin="10, 0, 10, 0"/>
+                                            <TextBlock Text="{Binding Language}"/>
+                                        </StackPanel>
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
