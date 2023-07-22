@@ -104,13 +104,13 @@
     <ClInclude Include="BasicVideoEffect.h">
       <Filter>Effects</Filter>
     </ClInclude>
-    <ClInclude Include="VideoEffectFactory.h">
+    <ClInclude Include="VideoFilterFactory.h">
       <Filter>Effects</Filter>
     </ClInclude>
-    <ClInclude Include="AbstractEffectFactory.h">
+    <ClInclude Include="AvFilterFactoryBase.h">
       <Filter>Effects</Filter>
     </ClInclude>
-    <ClInclude Include="AudioEffectFactory.h">
+    <ClInclude Include="AudioFilterFactory.h">
       <Filter>Effects</Filter>
     </ClInclude>
     <ClInclude Include="AudioFilter.h">
@@ -176,7 +176,7 @@
     <ClInclude Include="SubtitleStreamInfo.h">
       <Filter>StreamInfos</Filter>
     </ClInclude>
-    <ClInclude Include="IAvEffect.h">
+    <ClInclude Include="IAvFilter.h">
       <Filter>Effects</Filter>
     </ClInclude>
     <ClInclude Include="AvCodecContextHelpers.h">

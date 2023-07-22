@@ -588,6 +588,9 @@ namespace MediaPlayerCS
                 () =>
                 {
                     tbSubtitleDelay.Text = "Subtitle delay: 0s";
+                    cmbAudioStreamEffectSelector.ItemsSource = actualFFmpegMSS.AudioStreams;
+
+                    cmbVideoStreamEffectSelector.ItemsSource = actualFFmpegMSS.VideoStreams;
                 }));
         }
 
@@ -641,7 +644,9 @@ namespace MediaPlayerCS
         private void ffmpegVideoFilters_LostFocus(object sender, RoutedEventArgs e)
         {
             Config.FFmpegVideoFilters = ffmpegVideoFilters.Text;
-            FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
+            if (cmbVideoStreamEffectSelector.SelectedItem == null)
+                FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
+            else FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text, (VideoStreamInfo)cmbVideoStreamEffectSelector.SelectedItem);
         }
 
         private void ffmpegAudioFilters_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -655,7 +660,9 @@ namespace MediaPlayerCS
         private void ffmpegAudioFilters_LostFocus(object sender, RoutedEventArgs e)
         {
             Config.FFmpegAudioFilters = ffmpegAudioFilters.Text;
-            FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
+            if (cmbAudioStreamEffectSelector.SelectedItem == null)
+                FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
+            else FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text, (AudioStreamInfo)cmbAudioStreamEffectSelector.SelectedItem);
         }
 
         private double GetBufferSizeMB()
