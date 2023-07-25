@@ -1047,7 +1047,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
-        for(auto audioStream: audioStreams)
+        for (auto audioStream : audioStreams)
         {
             audioStream->SetFFmpegFilters(audioFilters);
         }
@@ -1550,7 +1550,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             if (provider->StreamInfo() == stream)
             {
-                provider->SetStreamDelay(delay.count());
+                provider->SetStreamDelay(delay);
                 return;
             }
         }
@@ -1562,7 +1562,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             if (provider->StreamInfo() == stream)
             {
-                return TimeSpan{ provider->GetStreamDelay() };
+                return provider->GetStreamDelay();
             }
         }
 
