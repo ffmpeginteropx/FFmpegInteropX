@@ -172,6 +172,12 @@ namespace winrt::FFmpegInteropX::implementation
         MediaPlaybackSession PlaybackSession();
         void PlaybackSession(MediaPlaybackSession const& value);
 
+        ///<summary>Sets a presentation timestamp delay for the given stream. Audio and video synchronisation can be achieved this way.</summary>
+        void SetStreamDelay(winrt::FFmpegInteropX::IStreamInfo const& stream, winrt::Windows::Foundation::TimeSpan const& delay);
+
+        ///<summary>Gets the presentation timestamp delay for the given stream. </summary>
+        winrt::Windows::Foundation::TimeSpan GetStreamDelay(winrt::FFmpegInteropX::IStreamInfo const& stream);
+
         void Close();
 
         FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, DispatcherQueue const& dispatcher);

@@ -1544,6 +1544,31 @@ namespace winrt::FFmpegInteropX::implementation
         mss.BufferTime(value);
     }
 
+    void FFmpegMediaSource::SetStreamDelay(FFmpegInteropX::IStreamInfo const& stream, TimeSpan const& delay)
+    {
+        for (auto provider : sampleProviders)
+        {
+            if (provider->StreamInfo() == stream)
+            {
+                provider->SetStreamDelay(delay.count());
+                return;
+            }
+        }
+    }
+
+    TimeSpan FFmpegMediaSource::GetStreamDelay(FFmpegInteropX::IStreamInfo const& stream)
+    {
+        for (auto provider : sampleProviders)
+        {
+            if (provider->StreamInfo() == stream)
+            {
+                return TimeSpan{ provider->GetStreamDelay() };
+            }
+        }
+
+        return TimeSpan{ 0L };
+    }
+
     MediaPlaybackSession FFmpegMediaSource::PlaybackSession()
     {
         return session;
