@@ -609,9 +609,9 @@ namespace MediaPlayerCS
                         streams.Add(a);
                     }
 
-                    foreach(var  b in actualFFmpegMSS.VideoStreams)
+                    foreach(var  vs in actualFFmpegMSS.VideoStreams)
                     {
-                        streams.Add(b);
+                        streams.Add(vs);
                     }
 
                     cmbAudioVideoStreamDelays.ItemsSource = streams;

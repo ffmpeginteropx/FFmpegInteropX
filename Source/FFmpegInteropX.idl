@@ -102,6 +102,9 @@ namespace FFmpegInteropX
         StillImage = 1 << 20
     };
 
+#ifdef CPPCX
+    [bindable]
+#endif
     interface IStreamInfo
     {
         String Name{ get; };
