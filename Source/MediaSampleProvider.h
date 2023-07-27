@@ -183,6 +183,7 @@ public:
 
     void SetStreamDelay(TimeSpan newDelay)
     {
+        m_isDiscontinuous = true;
         streamDelay = newDelay;
     }
 
