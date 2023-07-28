@@ -176,12 +176,12 @@ public:
         return LONGLONG(duration.count() / timeBaseFactor);
     }
 
-    TimeSpan GetStreamDelay()
+    virtual TimeSpan GetStreamDelay()
     {
         return streamDelay;
     }
 
-    void SetStreamDelay(TimeSpan newDelay)
+    virtual void SetStreamDelay(TimeSpan const& newDelay)
     {
         m_isDiscontinuous = true;
         streamDelay = newDelay;

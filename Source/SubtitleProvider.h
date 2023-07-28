@@ -21,8 +21,6 @@ public:
 
     MediaPlaybackItem PlaybackItem = { nullptr };
 
-    TimeSpan SubtitleDelay{};
-
     SubtitleProvider(std::shared_ptr<FFmpegReader> reader,
         AVFormatContext* avFormatCtx,
         AVCodecContext* avCodecCtx,
@@ -90,7 +88,7 @@ public:
             if (cue && position.count() >= 0)
             {
                 // apply subtitle delay
-                position += SubtitleDelay;
+                position += streamDelay;
                 if (position.count() < 0)
                 {
                     negativePositionCues.emplace_back(cue, position.count());
@@ -173,17 +171,9 @@ public:
         av_packet_free(&packet);
     }
 
-    void SetSubtitleDelay(TimeSpan const& delay)
+    void SetStreamDelay(TimeSpan const& newDelay) override
     {
-        std::lock_guard lock(mutex);
-        newDelay = delay;
-        try
-        {
-            TriggerUpdateCues();
-        }
-        catch (...)
-        {
-        }
+        SetSubtitleDelay(newDelay);
     }
 
     int parseInt(std::wstring const& str)
@@ -218,6 +208,19 @@ public:
     }
 
 private:
+
+    void SetSubtitleDelay(TimeSpan const& delay)
+    {
+        std::lock_guard lock(mutex);
+        newDelay = delay;
+        try
+        {
+            TriggerUpdateCues();
+        }
+        catch (...)
+        {
+        }
+    }
 
     void AddCue(IMediaCue const& cue)
     {
@@ -371,7 +374,7 @@ private:
         pendingRefCues.clear();
         pendingChangedDurationCues.clear();
 
-        if (SubtitleDelay != newDelay)
+        if (streamDelay != newDelay)
         {
             try
             {
@@ -380,7 +383,7 @@ private:
             catch (...)
             {
             }
-            SubtitleDelay = newDelay;
+            streamDelay = newDelay;
         }
 
         if (timer != nullptr)
@@ -418,7 +421,7 @@ private:
                 }
             }
 
-            TimeSpan originalStartPosition = TimeSpan(cStartTime.count() - SubtitleDelay.count());
+            TimeSpan originalStartPosition = TimeSpan(cStartTime.count() - streamDelay.count());
             TimeSpan newStartPosition = TimeSpan(originalStartPosition.count() + newDelay.count());
             //start time cannot be negative.
             if (newStartPosition.count() < 0)
@@ -510,7 +513,7 @@ public:
     void Flush(bool flushBuffers) override
     {
         CompressedSampleProvider::Flush(flushBuffers);
-            
+
         if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser && flushBuffers)
         {
             std::lock_guard lock(mutex);

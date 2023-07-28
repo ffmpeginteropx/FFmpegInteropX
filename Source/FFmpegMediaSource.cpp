@@ -776,7 +776,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             if (SUCCEEDED(hr))
             {
-                avSubsStream->SubtitleDelay = SubtitleDelay();
+                avSubsStream->SetStreamDelay(config->DefaultSubtitleDelay());
                 hr = avSubsStream->Initialize();
             }
 
@@ -1030,7 +1030,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             for (auto& subtitleStream : subtitleStreams)
             {
-                subtitleStream->SetSubtitleDelay(delay);
+                subtitleStream->SetStreamDelay(delay);
             }
 
             subtitleDelay = delay;
@@ -1339,7 +1339,7 @@ namespace winrt::FFmpegInteropX::implementation
         auto subConfig(winrt::make_self<MediaSourceConfig>());
         subConfig->IsExternalSubtitleParser = true;
         subConfig->DefaultSubtitleStreamName(streamName);
-        subConfig->DefaultSubtitleDelay(this->SubtitleDelay());
+        subConfig->DefaultSubtitleDelay(config->DefaultSubtitleDelay());
         subConfig->AutoCorrectAnsiSubtitles(this->config->AutoCorrectAnsiSubtitles());
         subConfig->AnsiSubtitleEncoding(this->config->AnsiSubtitleEncoding());
         subConfig->OverrideSubtitleStyles(this->config->OverrideSubtitleStyles());
@@ -1389,9 +1389,10 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 throw_hresult(RO_E_CLOSED);
             }
-            if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
+            if (config->DefaultSubtitleDelay().count() != externalSubsParser->config->DefaultSubtitleDelay().count())
             {
-                externalSubsParser->SetSubtitleDelay(SubtitleDelay());
+                //this should never happen?
+                externalSubsParser->SetSubtitleDelay(config->DefaultSubtitleDelay());
             }
 
             int subtitleTracksCount = 0;
@@ -1546,6 +1547,11 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::SetStreamDelay(FFmpegInteropX::IStreamInfo const& stream, TimeSpan const& delay)
     {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return;
+        }
         for (auto provider : sampleProviders)
         {
             if (provider->StreamInfo() == stream)
@@ -1558,6 +1564,11 @@ namespace winrt::FFmpegInteropX::implementation
 
     TimeSpan FFmpegMediaSource::GetStreamDelay(FFmpegInteropX::IStreamInfo const& stream)
     {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return TimeSpan{ 0L };
+        }
         for (auto provider : sampleProviders)
         {
             if (provider->StreamInfo() == stream)
