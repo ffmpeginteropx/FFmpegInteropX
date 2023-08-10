@@ -212,7 +212,7 @@ private:
     void SetSubtitleDelay(TimeSpan const& delay)
     {
         std::lock_guard lock(mutex);
-        newDelay = delay;
+        streamDelay = pendingSubtitleDelay = delay;
         try
         {
             TriggerUpdateCues();
@@ -374,7 +374,7 @@ private:
         pendingRefCues.clear();
         pendingChangedDurationCues.clear();
 
-        if (streamDelay != newDelay)
+        if (actualSubtitleDelay != pendingSubtitleDelay)
         {
             try
             {
@@ -383,7 +383,7 @@ private:
             catch (...)
             {
             }
-            streamDelay = newDelay;
+            actualSubtitleDelay = pendingSubtitleDelay;
         }
 
         if (timer != nullptr)
@@ -422,7 +422,7 @@ private:
             }
 
             TimeSpan originalStartPosition = TimeSpan(cStartTime.count() - streamDelay.count());
-            TimeSpan newStartPosition = TimeSpan(originalStartPosition.count() + newDelay.count());
+            TimeSpan newStartPosition = TimeSpan(originalStartPosition.count() + pendingSubtitleDelay.count());
             //start time cannot be negative.
             if (newStartPosition.count() < 0)
             {
@@ -541,7 +541,8 @@ private:
     TimedMetadataKind timedMetadataKind;
     winrt::Windows::System::DispatcherQueue dispatcher = { nullptr };
     winrt::Windows::System::DispatcherQueueTimer timer = { nullptr };
-    TimeSpan newDelay{};
+    TimeSpan pendingSubtitleDelay{};
+    TimeSpan actualSubtitleDelay{};
     std::vector<std::pair<IMediaCue, long long>> negativePositionCues;
     bool isPreviousCueInfiniteDuration = false;
     IMediaCue infiniteDurationCue = { nullptr };
