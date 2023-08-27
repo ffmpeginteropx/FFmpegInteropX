@@ -9,29 +9,29 @@ namespace winrt::FFmpegInteropX::implementation
 {
     struct VideoStreamInfo : VideoStreamInfoT<VideoStreamInfo>
     {
-        VideoStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropX::StreamDisposition const& disposition, int64_t bitrate, bool isDefault, int32_t pixelWidth, int32_t pixelHeight, double displayAspectRatio, int32_t bitsPerSample, double framesPerSecond, FFmpegInteropX::HardwareDecoderStatus const& hwAccel, FFmpegInteropX::DecoderEngine const& decoderEngine);
+        VideoStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, winrt::FFmpegInteropX::StreamDisposition const& disposition, int64_t bitrate, bool isDefault, int32_t pixelWidth, int32_t pixelHeight, double displayAspectRatio, int32_t bitsPerSample, double framesPerSecond, winrt::FFmpegInteropX::HardwareDecoderStatus const& hwAccel, winrt::FFmpegInteropX::DecoderEngine const& decoderEngine, int32_t streamIndex);
         int32_t PixelWidth();
         int32_t PixelHeight();
         double DisplayAspectRatio();
         int32_t BitsPerSample();
         double FramesPerSecond();
-
         ///<summary>Override the frame rate of the video stream.</summary>
         ///<remarks>
         /// This must be set before calling CreatePlaybackItem().
         /// Setting this can cause A/V desync, since it will only affect this stream.
         /// </remarks>
-        double FramesPerSecondOverride();
         void FramesPerSecondOverride(double value);
-        FFmpegInteropX::HardwareDecoderStatus HardwareDecoderStatus();
-        FFmpegInteropX::DecoderEngine DecoderEngine();
+        double FramesPerSecondOverride();
+
+        winrt::FFmpegInteropX::HardwareDecoderStatus HardwareDecoderStatus();
+        winrt::FFmpegInteropX::DecoderEngine DecoderEngine();
         hstring Name();
         hstring Language();
         hstring CodecName();
-        FFmpegInteropX::StreamDisposition Disposition();
+        winrt::FFmpegInteropX::StreamDisposition Disposition();
         int64_t Bitrate();
         bool IsDefault();
-        FFmpegInteropX::DecoderEngine _DecoderEngine;
+        int32_t StreamIndex();
 
     public:
         hstring name{};
@@ -49,7 +49,7 @@ namespace winrt::FFmpegInteropX::implementation
         double framesPerSecondOverride = 0;
         FFmpegInteropX::HardwareDecoderStatus hardwareDecoderStatus;
         FFmpegInteropX::DecoderEngine decoderEngine;
-
+        int streamIndex = -1;
         void SetDefault()
         {
             isDefault = true;

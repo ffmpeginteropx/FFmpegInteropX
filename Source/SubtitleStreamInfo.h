@@ -19,6 +19,7 @@ namespace winrt::FFmpegInteropX::implementation
         FFmpegInteropX::StreamDisposition Disposition();
         int64_t Bitrate();
         bool IsDefault();
+        int32_t StreamIndex();
 
         hstring name{};
         hstring language{};
@@ -33,6 +34,7 @@ namespace winrt::FFmpegInteropX::implementation
             isDefault = true;
             return isDefault;
         }
+        int streamIndex = -1;
     };
 }
 namespace winrt::FFmpegInteropX::factory_implementation

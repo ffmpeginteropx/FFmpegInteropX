@@ -118,6 +118,18 @@ namespace MediaPlayerWinUI
             {
                 mediaPlayer.PlaybackSession.Position -= TimeSpan.FromSeconds(5);
             }
+
+            if (args.Key == VirtualKey.Space && FFmpegMSS != null)
+            {
+                if (mediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Paused)
+                {
+                    mediaPlayer.Play();
+                }
+                else
+                {
+                    mediaPlayer.Pause();
+                }
+            }
         }
 
         private void CodecChecker_CodecRequired(object sender, CodecRequiredEventArgs args)
@@ -191,7 +203,6 @@ namespace MediaPlayerWinUI
         private async Task OpenLocalFile(StorageFile file)
         {
             currentFile = file;
-            mediaPlayer.Source = null;
 
             // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
             IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
@@ -258,7 +269,6 @@ namespace MediaPlayerWinUI
                     Config.FFmpegOptions["reconnect_on_network_error"] = 1;
 
                     // Instantiate FFmpegMediaSource using the URI
-                    mediaPlayer.Source = null;
                     FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
 
                     var source = FFmpegMSS.CreateMediaPlaybackItem();
@@ -547,6 +557,11 @@ namespace MediaPlayerWinUI
             DispatcherQueue.TryEnqueue(() =>
             {
                 tbSubtitleDelay.Text = "Subtitle delay: 0s";
+
+                cmbAudioStreamEffectSelector.ItemsSource = actualFFmpegMSS.AudioStreams;
+
+                cmbVideoStreamEffectSelector.ItemsSource = actualFFmpegMSS.VideoStreams;
+
             });
 
         }
@@ -609,7 +624,9 @@ namespace MediaPlayerWinUI
         private void ffmpegVideoFilters_LostFocus(object sender, RoutedEventArgs e)
         {
             Config.FFmpegVideoFilters = ffmpegVideoFilters.Text;
-            FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
+            if (cmbVideoStreamEffectSelector.SelectedItem == null)
+                FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
+            else FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text, (VideoStreamInfo)cmbVideoStreamEffectSelector.SelectedItem);
         }
 
         private void ffmpegAudioFilters_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -623,7 +640,9 @@ namespace MediaPlayerWinUI
         private void ffmpegAudioFilters_LostFocus(object sender, RoutedEventArgs e)
         {
             Config.FFmpegAudioFilters = ffmpegAudioFilters.Text;
-            FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
+            if (cmbAudioStreamEffectSelector.SelectedItem == null)
+                FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
+            else FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text, (AudioStreamInfo)cmbAudioStreamEffectSelector.SelectedItem);
         }
     }
 }

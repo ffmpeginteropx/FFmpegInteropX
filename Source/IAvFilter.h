@@ -4,10 +4,10 @@ extern "C"
 #include <libavformat/avformat.h>
 }
 
-class IAvEffect
+class IAvFilter
 {
 public:
-    virtual	~IAvEffect() {}
+    virtual	~IAvFilter() {}
 
     virtual HRESULT AddFrame(AVFrame* frame) = 0;
 

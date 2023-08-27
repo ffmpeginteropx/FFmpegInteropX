@@ -158,10 +158,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AbstractEffectFactory.h" />
+    <ClInclude Include="AvFilterFactoryBase.h" />
     <ClInclude Include="AttachedFile.h" />
     <ClInclude Include="AttachedFileHelper.h" />
-    <ClInclude Include="AudioEffectFactory.h" />
+    <ClInclude Include="AudioFilterFactory.h" />
     <ClInclude Include="AudioFilter.h" />
     <ClInclude Include="AudioStreamInfo.h" />
     <ClInclude Include="AvCodecContextHelpers.h" />
@@ -183,7 +183,7 @@
     <ClInclude Include="FrameGrabber.h" />
     <ClInclude Include="H264AVCSampleProvider.h" />
     <ClInclude Include="HEVCSampleProvider.h" />
-    <ClInclude Include="IAvEffect.h" />
+    <ClInclude Include="IAvFilter.h" />
     <ClInclude Include="LanguageTagConverter.h" />
     <ClInclude Include="MediaMetadata.h" />
     <ClInclude Include="MediaSampleProvider.h" />
@@ -208,7 +208,7 @@
     <ClInclude Include="UncompressedSampleProvider.h" />
     <ClInclude Include="UncompressedVideoSampleProvider.h" />
     <ClInclude Include="VideoEffectConfiguration.h" />
-    <ClInclude Include="VideoEffectFactory.h" />
+    <ClInclude Include="VideoFilterFactory.h" />
     <ClInclude Include="VideoFilter.h" />
     <ClInclude Include="VideoFrame.h" />
     <ClInclude Include="VideoStreamInfo.h" />

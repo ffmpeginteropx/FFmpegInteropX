@@ -142,7 +142,6 @@ task<void> MainPage::OpenLocalFile()
 task<void> MainPage::OpenLocalFile(StorageFile^ file)
 {
     currentFile = file;
-    mediaPlayer->Source = nullptr;
 
     // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
     try
@@ -204,7 +203,6 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
     Config->FFmpegOptions->Insert("reconnect_on_network_error", 1);
 
     // Instantiate FFmpegMediaSource using the URI
-    mediaPlayer->Source = nullptr;
     try
     {
         ApplicationData::Current->LocalSettings->Values->Insert("LastUri", uri);
@@ -504,6 +502,8 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
         ref new Windows::UI::Core::DispatchedHandler([this]
             {
                 tbSubtitleDelay->Text = "Subtitle delay: 0s";
+                cmbAudioStreamEffectSelector->ItemsSource = actualFFmpegMSS->AudioStreams;
+                cmbVideoStreamEffectSelector->ItemsSource = actualFFmpegMSS->VideoStreams;
             }));
 }
 
@@ -562,6 +562,18 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
     {
         mediaPlayer->PlaybackSession->Position = TimeSpan{ mediaPlayer->PlaybackSession->Position.Duration - 50000000 };
     }
+
+    if (args->VirtualKey == Windows::System::VirtualKey::Space && FFmpegMSS)
+    {
+        if (mediaPlayer->PlaybackSession->PlaybackState == MediaPlaybackState::Paused)
+        {
+            mediaPlayer->Play();
+        }
+        else
+        {
+            mediaPlayer->Pause();
+        }
+    }
 }
 
 
@@ -597,7 +609,9 @@ void MediaPlayerCPP::MainPage::ffmpegVideoFilters_KeyDown(Platform::Object^ send
         Config->FFmpegVideoFilters = ffmpegVideoFilters->Text;
         if (FFmpegMSS)
         {
-            FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text);
+            if (!cmbVideoStreamEffectSelector->SelectedItem)
+                FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text);
+            else FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text, (VideoStreamInfo^)cmbVideoStreamEffectSelector->SelectedItem);
         }
     }
 }
@@ -610,7 +624,9 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
         Config->FFmpegAudioFilters = ffmpegAudioFilters->Text;
         if (FFmpegMSS)
         {
-            FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text);
+            if (!cmbAudioStreamEffectSelector->SelectedItem)
+                FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text);
+            else FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text, (AudioStreamInfo^)cmbAudioStreamEffectSelector->SelectedItem);
         }
     }
 }

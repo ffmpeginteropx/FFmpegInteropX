@@ -1,6 +1,6 @@
 #pragma once
-#include "IAvEffect.h"
-#include "AbstractEffectFactory.h"
+#include "IAvFilter.h"
+#include "AvFilterFactoryBase.h"
 #include <mutex>
 
 extern "C"
@@ -13,14 +13,16 @@ using namespace winrt::Windows::Foundation::Collections;
 
 class UncompressedFrameProvider sealed
 {
-    std::shared_ptr<IAvEffect> filter;
+    std::shared_ptr<IAvFilter> filter;
     AVFormatContext* m_pAvFormatCtx = NULL;
     AVCodecContext* m_pAvCodecCtx = NULL;
-    std::shared_ptr<AbstractEffectFactory> m_effectFactory;
-    winrt::hstring pendingEffects{};
+    std::shared_ptr<AvFilterFactoryBase> m_effectFactory;
+    winrt::hstring pendingFFmpegFilters{};
+    winrt::hstring currentFFmpegFilters{};
+
 
 public:
-    UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, std::shared_ptr<AbstractEffectFactory> p_effectFactory)
+    UncompressedFrameProvider(AVFormatContext* p_pAvFormatCtx, AVCodecContext* p_pAvCodecCtx, std::shared_ptr<AvFilterFactoryBase> p_effectFactory)
     {
         m_pAvCodecCtx = p_pAvCodecCtx;
         m_pAvFormatCtx = p_pAvFormatCtx;
@@ -32,41 +34,46 @@ public:
         m_pAvCodecCtx = avCodecCtx;
     }
 
-    void UpdateFilter(winrt::hstring effects)
+    void UpdateFilter(winrt::hstring ffmpegFilters)
     {
-        if (!effects.empty())
+        if (!ffmpegFilters.empty())
         {
-            pendingEffects = effects;
+            currentFFmpegFilters = pendingFFmpegFilters = ffmpegFilters;
         }
         else
         {
-            pendingEffects.clear();
-            filter = nullptr;
+            DisableFilter();
         }
     }
 
     void DisableFilter()
     {
-        pendingEffects.clear();
+        currentFFmpegFilters = winrt::hstring{};
+        pendingFFmpegFilters.clear();
         filter = nullptr;
+    }
+
+    winrt::hstring GetCurrentFilters()
+    {
+        return currentFFmpegFilters;
     }
 
     HRESULT GetFrame(AVFrame** avFrame)
     {
         HRESULT hr = S_OK;
 
-        if (!pendingEffects.empty())
+        if (!pendingFFmpegFilters.empty())
         {
-            if (pendingEffects.size() > 0)
+            if (pendingFFmpegFilters.size() > 0)
             {
-                filter = m_effectFactory->CreateEffect(pendingEffects);
+                filter = m_effectFactory->CreateEffect(pendingFFmpegFilters);
             }
             else
             {
                 filter = nullptr;
             }
 
-            pendingEffects.clear();
+            pendingFFmpegFilters.clear();
         }
 
         if (filter)
