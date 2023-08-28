@@ -72,6 +72,27 @@
                         <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Additional subtitle duration (s)" Value="{x:Bind Path=Config.AdditionalSubtitleDuration, Mode=TwoWay, Converter={StaticResource TimeSpanToDoubleConverter}}" />
                         <ToggleSwitch Header="Prevent subtitle overlap" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PreventModifiedSubtitleDurationOverlap}"/>
 
+                        <TextBlock Text="Stream delays for audio and video synchronisation." TextWrapping="WrapWholeWords"/>
+                        <Grid>
+                            <ComboBox HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" VerticalAlignment="Bottom"  PlaceholderText="None" ToolTipService.ToolTip="Audio and video stream delay " x:Name="cmbAudioVideoStreamDelays" Grid.Column="1">
+                                <ComboBox.Header>
+                                    <Slider Margin="2, 0, 2, 0" x:Name="StreamDelays" Minimum="-5" Maximum="5" Value="0">
+                                        <Slider.Header>
+                                            <TextBlock Text="{Binding ElementName=StreamDelays, Path=Value}"/>
+                                        </Slider.Header>
+                                    </Slider>
+                                </ComboBox.Header>
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding StreamIndex}"/>
+                                            <TextBlock Text="{Binding CodecName}" Margin="10, 0, 10, 0"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+
                         <TextBlock Text="FFmpeg Effects (software):" Margin="0,20,0,5"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
