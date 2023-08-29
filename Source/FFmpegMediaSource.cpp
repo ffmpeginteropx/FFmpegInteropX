@@ -591,15 +591,7 @@ namespace winrt::FFmpegInteropX::implementation
         subtitleStreamInfos = subtitleStrInfos.GetView();
         videoStreamInfos = videoStrInfos.GetView();
 
-        if (!config->FFmpegVideoFilters().empty())
-        {
-            SetFFmpegVideoFilters(config->FFmpegVideoFilters());
-        }
 
-        if (!config->FFmpegAudioFilters().empty())
-        {
-            SetFFmpegAudioFilters(config->FFmpegAudioFilters());
-        }
 
         if (currentVideoStream)
         {
@@ -711,13 +703,24 @@ namespace winrt::FFmpegInteropX::implementation
 
         mssWeak = mss;
 
-        // using strong reference here would create circle references, since we store MSS and MediaPlaybackItem here.
-        startingRequestedToken = mss.Starting({ get_strong(), &FFmpegMediaSource::OnStarting });
-        sampleRequestedToken = mss.SampleRequested({ get_strong(), &FFmpegMediaSource::OnSampleRequested });
-        switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_strong(), &FFmpegMediaSource::OnSwitchStreamsRequested });
-        closeToken = mss.Closed({ get_strong(), &FFmpegMediaSource::MediaStreamSourceClosed });
+                // using strong reference here would create circle references, since we store MSS and MediaPlaybackItem here.
+                startingRequestedToken = mss.Starting({ get_weak(), &FFmpegMediaSource::OnStarting });
+                sampleRequestedToken = mss.SampleRequested({ get_weak(), &FFmpegMediaSource::OnSampleRequested });
+                switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
+            }
 
-        return mss;
+            if (!config->FFmpegVideoFilters().empty())
+            {
+                SetFFmpegVideoFilters(config->FFmpegVideoFilters());
+            }
+
+            if (!config->FFmpegAudioFilters().empty())
+            {
+                SetFFmpegAudioFilters(config->FFmpegAudioFilters());
+            }
+        }
+
+        return hr;
     }
 
 
@@ -787,7 +790,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             if (SUCCEEDED(hr))
             {
-                avSubsStream->SubtitleDelay = SubtitleDelay();
+                avSubsStream->SetStreamDelay(config->DefaultSubtitleDelay());
                 hr = avSubsStream->Initialize();
             }
 
@@ -1042,7 +1045,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             for (auto& subtitleStream : subtitleStreams)
             {
-                subtitleStream->SetSubtitleDelay(delay);
+                subtitleStream->SetStreamDelay(delay);
             }
 
             subtitleDelay = delay;
@@ -1059,15 +1062,44 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
-
-        if (currentAudioStream)
+        for (auto audioStream : audioStreams)
         {
-            currentAudioStream->SetFilters(audioFilters);
-            currentAudioEffects = audioFilters;
+            audioStream->SetFFmpegFilters(audioFilters);
         }
     }
 
-    void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoEffects)
+    void FFmpegMediaSource::SetFFmpegAudioFilters(hstring const& audioFilters, winrt::FFmpegInteropX::AudioStreamInfo const& audioStream)
+    {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return;
+        }
+        for (auto internalAudioStream : audioStreams)
+        {
+            if (internalAudioStream->AudioInfo() == audioStream)
+            {
+                internalAudioStream->SetFFmpegFilters(audioFilters);
+                break;
+            }
+        }
+    }
+
+    void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoFilters)
+    {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return;
+        }
+
+        for (auto videoStream : videoStreams)
+        {
+            videoStream->SetFFmpegFilters(videoFilters);
+        }
+    }
+
+    void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoFilters, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
     {
         std::lock_guard lock(mutex);
         if (isClosed)
@@ -1075,29 +1107,35 @@ namespace winrt::FFmpegInteropX::implementation
             return;
         }
 
-        if (currentVideoStream)
+        for (auto internalvideoStream : videoStreams)
         {
-            currentVideoStream->SetFilters(videoEffects);
-            currentVideoEffects = videoEffects;
+            if (internalvideoStream->VideoInfo() == videoStream)
+            {
+                internalvideoStream->SetFFmpegFilters(videoFilters);
+                break;
+            }
         }
     }
 
     void FFmpegMediaSource::DisableAudioEffects()
     {
+        ClearFFmpegAudioFilters();
+    }
+
+    void FFmpegMediaSource::ClearFFmpegAudioFilters()
+    {
         std::lock_guard lock(mutex);
-        if (isClosed)
+        if (mss == nullptr)
         {
             return;
         }
-
-        if (currentAudioStream)
+        for (auto audioStream : audioStreams)
         {
-            currentAudioStream->DisableFilters();
-            currentAudioEffects = hstring();
+            audioStream->ClearFFmpegFilters();
         }
     }
 
-    void FFmpegMediaSource::DisableVideoEffects()
+    void FFmpegMediaSource::ClearFFmpegAudioFilters(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream)
     {
         std::lock_guard lock(mutex);
         if (isClosed)
@@ -1105,11 +1143,86 @@ namespace winrt::FFmpegInteropX::implementation
             return;
         }
 
-        if (currentVideoStream)
+        for (auto internaAudioStream : audioStreams)
         {
-            currentVideoStream->DisableFilters();
-            currentVideoEffects = hstring();
+            if (internaAudioStream->AudioInfo() == audioStream)
+            {
+                internaAudioStream->ClearFFmpegFilters();
+                break;
+            }
         }
+    }
+
+    void FFmpegMediaSource::DisableVideoEffects()
+    {
+        ClearFFmpegVideoFilters();
+    }
+
+    void FFmpegMediaSource::ClearFFmpegVideoFilters()
+    {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return;
+        }
+        for (auto videoStream : videoStreams)
+        {
+            videoStream->ClearFFmpegFilters();
+        }
+    }
+
+    void FFmpegMediaSource::ClearFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
+    {
+        std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+
+        for (auto internaVideoStream : videoStreams)
+        {
+            if (internaVideoStream->VideoInfo() == videoStream)
+            {
+                internaVideoStream->ClearFFmpegFilters();
+                break;
+            }
+        }
+    }
+
+    hstring FFmpegMediaSource::GetFFmpegAudioFilters(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream)
+    {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return hstring{};
+        }
+
+        for (int i = 0; i < audioStreams.size(); i++)
+        {
+            if (audioStreams.at(i)->AudioInfo() == audioStream)
+            {
+                return audioStreams.at(i)->GetFFmpegFilters();
+            }
+        }
+        return hstring{};
+    }
+
+    hstring FFmpegMediaSource::GetFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
+    {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return hstring{};
+        }
+        for (int i = 0; i < videoStreams.size(); i++)
+        {
+            if (videoStreams.at(i)->VideoInfo() == videoStream)
+            {
+                return videoStreams.at(i)->GetFFmpegFilters();
+            }
+        }
+
+        return hstring{};
     }
 
     FFmpegInteropX::MediaThumbnailData FFmpegMediaSource::ExtractThumbnail()
@@ -1311,7 +1424,7 @@ namespace winrt::FFmpegInteropX::implementation
         auto subConfig(winrt::make_self<MediaSourceConfig>());
         subConfig->IsExternalSubtitleParser = true;
         subConfig->DefaultSubtitleStreamName(streamName);
-        subConfig->DefaultSubtitleDelay(this->SubtitleDelay());
+        subConfig->DefaultSubtitleDelay(config->DefaultSubtitleDelay());
         subConfig->AutoCorrectAnsiSubtitles(this->config->AutoCorrectAnsiSubtitles());
         subConfig->AnsiSubtitleEncoding(this->config->AnsiSubtitleEncoding());
         subConfig->OverrideSubtitleStyles(this->config->OverrideSubtitleStyles());
@@ -1361,10 +1474,10 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 throw_hresult(RO_E_CLOSED);
             }
-
-            if (SubtitleDelay().count() != externalSubsParser->SubtitleDelay().count())
+            if (config->DefaultSubtitleDelay().count() != externalSubsParser->config->DefaultSubtitleDelay().count())
             {
-                externalSubsParser->SetSubtitleDelay(SubtitleDelay());
+                //this should never happen?
+                externalSubsParser->SetSubtitleDelay(config->DefaultSubtitleDelay());
             }
 
             int subtitleTracksCount = 0;
@@ -1517,6 +1630,41 @@ namespace winrt::FFmpegInteropX::implementation
         {
             strong.BufferTime(value);
         }
+    }
+
+    void FFmpegMediaSource::SetStreamDelay(FFmpegInteropX::IStreamInfo const& stream, TimeSpan const& delay)
+    {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return;
+        }
+        for (auto provider : sampleProviders)
+        {
+            if (provider->StreamInfo() == stream)
+            {
+                provider->SetStreamDelay(delay);
+                return;
+            }
+        }
+    }
+
+    TimeSpan FFmpegMediaSource::GetStreamDelay(FFmpegInteropX::IStreamInfo const& stream)
+    {
+        std::lock_guard lock(mutex);
+        if (mss == nullptr)
+        {
+            return TimeSpan{ 0L };
+        }
+        for (auto provider : sampleProviders)
+        {
+            if (provider->StreamInfo() == stream)
+            {
+                return provider->GetStreamDelay();
+            }
+        }
+
+        return TimeSpan{ 0L };
     }
 
     MediaPlaybackSession FFmpegMediaSource::PlaybackSession()
@@ -2151,10 +2299,6 @@ namespace winrt::FFmpegInteropX::implementation
 
             if (currentAudioStream && args.Request().OldStreamDescriptor() == currentAudioStream->StreamDescriptor())
             {
-                if (!currentAudioEffects.empty())
-                {
-                    currentAudioStream->DisableFilters();
-                }
                 currentAudioStream->DisableStream();
                 currentAudioStream = nullptr;
                 currentAudioStreamInfo = nullptr;
@@ -2176,11 +2320,6 @@ namespace winrt::FFmpegInteropX::implementation
                 {
                     currentAudioStream = stream;
                     currentAudioStream->EnableStream();
-                    if (!currentAudioEffects.empty())
-                    {
-                        currentAudioStream->SetFilters(currentAudioEffects);
-                    }
-                    currentAudioStreamInfo = currentAudioStream->AudioInfo();
                 }
             }
             for (auto& stream : videoStreams)

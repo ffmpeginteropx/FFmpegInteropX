@@ -70,6 +70,18 @@ MainPage::MainPage()
     cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
 
     Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);
+    
+    StreamDelays->AddHandler(UIElement::PointerReleasedEvent, ref new PointerEventHandler(this, &MainPage::StreamDelayManipulation), true);
+}
+
+void MediaPlayerCPP::MainPage::StreamDelayManipulation(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e)
+{
+    auto streamToDelay = (IStreamInfo^)cmbAudioVideoStreamDelays->SelectedItem;
+    if (streamToDelay != nullptr && actualFFmpegMSS != nullptr)
+    {
+        auto delay = TimeSpan{ (long long)(StreamDelays->Value * 10000000L) };
+        actualFFmpegMSS->SetStreamDelay(streamToDelay, delay);
+    }
 }
 
 void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -417,6 +429,8 @@ void MediaPlayerCPP::MainPage::OnMediaFailed(Windows::Media::Playback::MediaPlay
             }));
 }
 
+
+
 void MainPage::DisplayErrorMessage(Platform::String^ message)
 {
     Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal, ref new Windows::UI::Core::DispatchedHandler([this, message]()
@@ -497,6 +511,21 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
         ref new Windows::UI::Core::DispatchedHandler([this]
             {
                 tbSubtitleDelay->Text = "Subtitle delay: 0s";
+                cmbAudioStreamEffectSelector->ItemsSource = actualFFmpegMSS->AudioStreams;
+                cmbVideoStreamEffectSelector->ItemsSource = actualFFmpegMSS->VideoStreams;
+
+                Vector<IStreamInfo^>^ streams = ref new Vector<IStreamInfo^>();
+                for (auto a : actualFFmpegMSS->AudioStreams)
+                {
+                    streams->Append(a);
+                }
+
+                for (auto vs : actualFFmpegMSS->VideoStreams)
+                {
+                    streams->Append(vs);
+                }
+
+                cmbAudioVideoStreamDelays->ItemsSource = streams;
             }));
 }
 
@@ -556,6 +585,18 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
     {
         mediaPlayer->PlaybackSession->Position = TimeSpan{ mediaPlayer->PlaybackSession->Position.Duration - 50000000 };
     }
+
+    if (args->VirtualKey == Windows::System::VirtualKey::Space && FFmpegMSS)
+    {
+        if (mediaPlayer->PlaybackSession->PlaybackState == MediaPlaybackState::Paused)
+        {
+            mediaPlayer->Play();
+        }
+        else
+        {
+            mediaPlayer->Pause();
+        }
+    }
 }
 
 
@@ -591,7 +632,9 @@ void MediaPlayerCPP::MainPage::ffmpegVideoFilters_KeyDown(Platform::Object^ send
         Config->FFmpegVideoFilters = ffmpegVideoFilters->Text;
         if (FFmpegMSS)
         {
-            FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text);
+            if (!cmbVideoStreamEffectSelector->SelectedItem)
+                FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text);
+            else FFmpegMSS->SetFFmpegVideoFilters(ffmpegVideoFilters->Text, (VideoStreamInfo^)cmbVideoStreamEffectSelector->SelectedItem);
         }
     }
 }
@@ -604,7 +647,9 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
         Config->FFmpegAudioFilters = ffmpegAudioFilters->Text;
         if (FFmpegMSS)
         {
-            FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text);
+            if (!cmbAudioStreamEffectSelector->SelectedItem)
+                FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text);
+            else FFmpegMSS->SetFFmpegAudioFilters(ffmpegAudioFilters->Text, (AudioStreamInfo^)cmbAudioStreamEffectSelector->SelectedItem);
         }
     }
 }

@@ -112,8 +112,9 @@ public:
     virtual HRESULT SetSampleProperties(winrt::Windows::Media::Core::MediaStreamSample const& sample) { UNREFERENCED_PARAMETER(sample); return S_OK; }; // can be overridded for setting extended properties
     virtual void EnableStream();
     virtual void DisableStream();
-    virtual void SetFilters(winrt::hstring filterDefinition) { };// override for setting effects in sample providers
-    virtual void DisableFilters() {};//override for disabling filters in sample providers;
+    virtual void SetFFmpegFilters(winrt::hstring ffmpegFilters) { };// override for setting effects in sample providers
+    virtual void ClearFFmpegFilters() {};//override for disabling filters in sample providers;
+    virtual winrt::hstring GetFFmpegFilters() { return winrt::hstring{}; }//override to get the current ffmpeg filters
     virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& videoEncodingProperties, bool isCompressedFormat);
     virtual void Detach();
 
@@ -157,12 +158,12 @@ public:
 
     TimeSpan ConvertPosition(LONGLONG pts)
     {
-        return TimeSpan{ LONGLONG(timeBaseFactor * pts) - m_startOffset };
+        return TimeSpan{ LONGLONG(timeBaseFactor * pts) - m_startOffset } + streamDelay;
     }
 
     LONGLONG ConvertPosition(TimeSpan position)
     {
-        return LONGLONG((position.count() + m_startOffset) / timeBaseFactor);
+        return LONGLONG(((position + streamDelay).count() + m_startOffset) / timeBaseFactor);
     }
 
     TimeSpan ConvertDuration(LONGLONG duration)
@@ -173,6 +174,17 @@ public:
     LONGLONG ConvertDuration(TimeSpan duration)
     {
         return LONGLONG(duration.count() / timeBaseFactor);
+    }
+
+    virtual TimeSpan GetStreamDelay()
+    {
+        return streamDelay;
+    }
+
+    virtual void SetStreamDelay(TimeSpan const& newDelay)
+    {
+        m_isDiscontinuous = true;
+        streamDelay = newDelay;
     }
 
 protected:
@@ -207,6 +219,7 @@ protected:
     bool m_isDiscontinuous = false;
     int m_streamIndex = 0;
     INT64 m_startOffset = 0;
+    TimeSpan streamDelay = TimeSpan{ 0 };
     double timeBaseFactor = 0;
     DecoderEngine decoder = DecoderEngine::FFmpegSoftwareDecoder;
     winrt::com_ptr<ID3D11Device> device = NULL;

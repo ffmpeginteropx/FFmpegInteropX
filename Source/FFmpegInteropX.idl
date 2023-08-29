@@ -102,6 +102,9 @@ namespace FFmpegInteropX
         StillImage = 1 << 20
     };
 
+#ifdef CPPCX
+    [bindable]
+#endif
     interface IStreamInfo
     {
         String Name{ get; };
@@ -110,6 +113,7 @@ namespace FFmpegInteropX
         StreamDisposition Disposition{ get; };
         Int64 Bitrate{ get; };
         Boolean IsDefault{ get; };
+        Int32 StreamIndex {get; };
     };
 
 #ifdef CPPCX
@@ -128,7 +132,8 @@ namespace FFmpegInteropX
             String  channelLayout,
             Int32 sampleRate,
             Int32 bitsPerSample,
-            DecoderEngine decoderEngine);
+            DecoderEngine decoderEngine,
+            Int32 streamIndex);
 
 
         Int32 Channels{ get; };
@@ -157,7 +162,8 @@ namespace FFmpegInteropX
             Int32 bitsPerSample,
             Double framesPerSecond,
             HardwareDecoderStatus hwAccel,
-            DecoderEngine decoderEngine);
+            DecoderEngine decoderEngine,
+            Int32 streamIndex);
 
 
         Int32 PixelWidth{ get; };
@@ -420,21 +426,48 @@ namespace FFmpegInteropX
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromUriAsync(String uri);
 
-        ///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
+        ///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them. This is equivalent to calling SetStreamDelay on each subtitle stream</summary>
         void SetSubtitleDelay(Windows.Foundation.TimeSpan delay);
 
-        ///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
+        ///<summary>Sets FFmpeg audio filters. This replaces any filters which were already set.</summary>
         void SetFFmpegAudioFilters(String audioFilters);
+
+        ///<summary>Sets FFmpeg audio filters for audio stream specified by audioStreamIndex. This replaces any filters which were already set.</summary>
+        void SetFFmpegAudioFilters(String audioFilters, AudioStreamInfo audioStream);
 
         ///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-        void SetFFmpegVideoFilters(String videoEffects);
+        void SetFFmpegVideoFilters(String videoFilters);
 
-        ///<summary>Disables audio effects.</summary>
+        ///<summary>Sets FFmpeg video filters for the video stream specified by videoStreamIndex. This replaces any filters which were already set.</summary>
+        ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+        void SetFFmpegVideoFilters(String videoFilters, VideoStreamInfo videoStream);
+
+        [deprecated("Use ClearFFmpegAudioFilters instead.", deprecate, 1)]
+        ///<summary>Disables audio filters.</summary>
         void DisableAudioEffects();
 
-        ///<summary>Disables video effects.</summary>
+        ///<summary>Clears audio filters.</summary>
+        void ClearFFmpegAudioFilters();
+
+        ///<summary>Disables audio filters for the specified audio stream.</summary>
+        void ClearFFmpegAudioFilters(AudioStreamInfo audioStream);
+
+        [deprecated("Use ClearFFmpegVideoFilters instead.", deprecate, 1)]
+        ///<summary>Disables video filters.</summary>
         void DisableVideoEffects();
+
+        ///<summary>Clear video filters.</summary>
+        void ClearFFmpegVideoFilters();
+
+        ///<summary>Disables audio filters for the specified video stream.</summary>
+        void ClearFFmpegVideoFilters(VideoStreamInfo videoStream);
+
+        ///<summary>Gets audio filters for the specified audio stream.</summary>
+        String GetFFmpegAudioFilters(AudioStreamInfo audioStream);
+
+        ///<summary>Gets video filters for the specified video stream.</summary>
+        String GetFFmpegVideoFilters(VideoStreamInfo videoStream);
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
         MediaThumbnailData ExtractThumbnail();
@@ -466,8 +499,6 @@ namespace FFmpegInteropX
 
         ///<summary>Starts filling the read-ahead buffer, if enabled in the configuration.</summary>
         void StartBuffering();
-
-        // Properties
 
         ///<summary>Gets the configuration that has been passed when creating the MSS instance.</summary>
         MediaSourceConfig Configuration{ get; };
@@ -505,7 +536,7 @@ namespace FFmpegInteropX
         ///<summary>Gets the MediaPlaybackItem that was created before by using CreateMediaPlaybackItem.</summary>
         Windows.Media.Playback.MediaPlaybackItem PlaybackItem{ get; };
 
-
+        [deprecated("Use GetStreamDelay with the desired subtitle stream info instead. Accessing this property when using the SetStreamDelay API is dangerous, as it may return inaccurate results", deprecate, 1)]
         ///<summary>The current subtitle delay used by this instance.</summary>
         Windows.Foundation.TimeSpan SubtitleDelay{ get; };
 
@@ -524,6 +555,12 @@ namespace FFmpegInteropX
         ///<summary>Gets the current audio filters</summary>
         ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
         String GetCurrentVideoFilters();
+
+        ///<summary>Sets a presentation timestamp delay for the given stream. Audio, video and subtitle synchronisation can be achieved this way. A positive value will cause samples (or subtitles) to be rendered at a later time. A negative value will make rendering come sooner</summary>
+        void SetStreamDelay(IStreamInfo stream, Windows.Foundation.TimeSpan delay);
+
+        ///<summary>Gets the presentation timestamp delay for the given stream. </summary>
+        Windows.Foundation.TimeSpan GetStreamDelay(IStreamInfo stream);
     };
 
     [default_interface]
@@ -683,7 +720,6 @@ namespace FFmpegInteropX
 
         ///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
         Boolean PreventModifiedSubtitleDurationOverlap{ get; set; };
-
 
         ///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>

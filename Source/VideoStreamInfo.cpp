@@ -8,7 +8,7 @@
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    VideoStreamInfo::VideoStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropX::StreamDisposition const& disposition, int64_t bitrate, bool isDefault, int32_t pixelWidth, int32_t pixelHeight, double displayAspectRatio, int32_t bitsPerSample, double framesPerSecond, FFmpegInteropX::HardwareDecoderStatus const& hwAccel, FFmpegInteropX::DecoderEngine const& decoderEngine)
+    VideoStreamInfo::VideoStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, winrt::FFmpegInteropX::StreamDisposition const& disposition, int64_t bitrate, bool isDefault, int32_t pixelWidth, int32_t pixelHeight, double displayAspectRatio, int32_t bitsPerSample, double framesPerSecond, winrt::FFmpegInteropX::HardwareDecoderStatus const& hwAccel, winrt::FFmpegInteropX::DecoderEngine const& decoderEngine, int32_t streamIndex)
     {
         this->name = name;
         this->language = language;
@@ -24,6 +24,7 @@ namespace winrt::FFmpegInteropX::implementation
         this->framesPerSecond = framesPerSecond;
         this->hardwareDecoderStatus = hwAccel;
         this->decoderEngine = decoderEngine;
+        this->streamIndex = streamIndex;
     }
     int32_t VideoStreamInfo::PixelWidth()
     {
@@ -84,5 +85,9 @@ namespace winrt::FFmpegInteropX::implementation
     bool VideoStreamInfo::IsDefault()
     {
         return isDefault;
+    }
+    int32_t VideoStreamInfo::StreamIndex()
+    {
+        return streamIndex;
     }
 }

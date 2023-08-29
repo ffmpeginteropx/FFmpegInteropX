@@ -190,7 +190,7 @@ void MediaSampleProvider::InitializeStreamInfo()
 
         streamInfo = AudioStreamInfo(
             Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
-            channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder());
+            channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder(), StreamIndex());
 
         break;
     }
@@ -204,7 +204,7 @@ void MediaSampleProvider::InitializeStreamInfo()
 
         streamInfo = VideoStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
             m_pAvStream->codecpar->width, m_pAvStream->codecpar->height, videoAspect,
-            bitsPerSample, framesPerSecond, HardwareAccelerationStatus(), Decoder());
+            bitsPerSample, framesPerSecond, HardwareAccelerationStatus(), Decoder(), StreamIndex());
 
         break;
     }

@@ -56,18 +56,46 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
         void SetSubtitleDelay(TimeSpan const& delay);
 
-        ///<summary>Sets FFmpeg audio effects. This replaces any effects which were already set.</summary>
+        ///<summary>Sets FFmpeg audio filters. This replaces any filters which were already set.</summary>
         void SetFFmpegAudioFilters(hstring const& audioFilters);
+
+        ///<summary>Sets FFmpeg audio filters for audio stream specified by audioStreamIndex. This replaces any filters which were already set.</summary>
+        void SetFFmpegAudioFilters(hstring const& audioFilters, winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
 
         ///<summary>Sets FFmpeg video filters. This replaces any filters which were already set.</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-        void SetFFmpegVideoFilters(hstring const& videoEffects);
+        void SetFFmpegVideoFilters(hstring const& videoFilters);
 
-        ///<summary>Disables audio effects.</summary>
+        ///<summary>Sets FFmpeg video filters for the video stream specified by videoStreamIndex. This replaces any filters which were already set.</summary>
+        ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+        void SetFFmpegVideoFilters(hstring const& videoFilters, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
+
+        ///<summary>Disables audio filters.</summary>
         void DisableAudioEffects();
 
-        ///<summary>Disables video effects.</summary>
+        ///<summary>Disables audio filters.</summary>
+        void ClearFFmpegAudioFilters();
+
+        ///<summary>Disables audio filters for the specified audio stream.</summary>
+        void ClearFFmpegAudioFilters(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
+
+        ///<summary>Disables video filters.</summary>
         void DisableVideoEffects();
+
+        ///<summary>Clears video filters.</summary>
+        void ClearFFmpegVideoFilters();
+
+        ///<summary>Disables audio filters for the specified video stream.</summary>
+        void ClearFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
+
+        ///<summary>Gets audio filters for the specified audio stream.</summary>
+        hstring GetFFmpegAudioFilters(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
+
+        ///<summary>Gets video filters for the specified video stream.</summary>
+        hstring GetFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
+
+        ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
+        FFmpegInteropX::MediaThumbnailData ExtractThumbnail();
 
         ///<summary>Gets the MediaStreamSource. Using the MediaStreamSource will prevent subtitles from working. Please use CreateMediaPlaybackItem instead.</summary>
         MediaStreamSource GetMediaStreamSource();
@@ -159,6 +187,12 @@ namespace winrt::FFmpegInteropX::implementation
         ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
         hstring GetCurrentVideoFilters();
 
+        ///<summary>Sets a presentation timestamp delay for the given stream. Audio, video and subtitle synchronisation can be achieved this way. A positive value will cause samples (or subtitles) to be rendered at a later time. A negative value will make rendering come sooner</summary>
+        void SetStreamDelay(winrt::FFmpegInteropX::IStreamInfo const& stream, winrt::Windows::Foundation::TimeSpan const& delay);
+
+        ///<summary>Gets the presentation timestamp delay for the given stream. </summary>
+        winrt::Windows::Foundation::TimeSpan GetStreamDelay(winrt::FFmpegInteropX::IStreamInfo const& stream);
+
         void Close();
 
         FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, DispatcherQueue const& dispatcher);
@@ -234,6 +268,9 @@ namespace winrt::FFmpegInteropX::implementation
         FFmpegInteropX::VideoStreamInfo currentVideoStreamInfo = { nullptr };
         hstring currentAudioEffects{};
         hstring currentVideoEffects{};
+        std::shared_ptr<MediaSampleProvider> currentVideoStream;
+        std::shared_ptr<MediaSampleProvider> currentAudioStream;
+        int thumbnailStreamIndex = 0;
 
         winrt::event_token audioTracksChangedToken{};
         winrt::event_token subtitlePresentationModeChangedToken{};

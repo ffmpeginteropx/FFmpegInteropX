@@ -38,7 +38,7 @@
             <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
         <SplitView Grid.Row="1" x:Name="Splitter">
-       
+
             <!-- Control panel -->
             <SplitView.Pane>
                 <ScrollViewer>
@@ -52,7 +52,7 @@
 
                         <ToggleSwitch Header="Allow Hardware Accelection" OffContent="OFF" OnContent="ON" x:Name="AutoDetect" Toggled="AutoDetect_Toggled" />
                         <ToggleSwitch Header="Force System Video Decoder" OffContent="OFF" OnContent="ON" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
-                    
+
                         <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.VideoOutputAllowIyuv}"/>
 
                         <ToggleSwitch Header="Use System MP3 Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioMP3}"/>
@@ -92,11 +92,66 @@
                         <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Additional subtitle duration (s)" Value="{x:Bind Path=Config.AdditionalSubtitleDuration, Mode=TwoWay, Converter={StaticResource TimeSpanToDoubleConverter}}" />
                         <ToggleSwitch Header="Prevent subtitle overlap" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PreventModifiedSubtitleDurationOverlap}"/>
 
-                        <TextBlock Text="FFmpeg Effects (software):" Margin="0,20,0,5"/>
-                       
-                        <TextBox x:Name="ffmpegAudioFilters" Header="FFmpeg audio filters (hit 'return' to apply)" KeyDown="ffmpegAudioFilters_KeyDown" Margin="0,10,0,0" Text="aecho=0.8:0.9:1000|1800:0.3|0.25" />
-                        <TextBox x:Name="ffmpegVideoFilters" Header="FFmpeg video filters (hit 'return' to apply)" KeyDown="ffmpegVideoFilters_KeyDown" Margin="0,10,0,0" Text="colorchannelmixer=.3:.4:.3:0:.3:.4:.3:0:.3:.4:.3" />
+                        <TextBlock Text="Stream delays for audio and video synchronisation." TextWrapping="WrapWholeWords"/>
+                        <Grid>
+                            <ComboBox HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" VerticalAlignment="Bottom"  PlaceholderText="None" ToolTipService.ToolTip="Audio and video stream delay " x:Name="cmbAudioVideoStreamDelays" Grid.Column="1">
+                                <ComboBox.Header>
+                                    <Slider Margin="2, 0, 2, 0" x:Name="StreamDelays" Minimum="-5" Maximum="5" Value="0">
+                                        <Slider.Header>
+                                            <TextBlock Text="{Binding ElementName=StreamDelays, Path=Value}"/>
+                                        </Slider.Header>
+                                    </Slider>
+                                </ComboBox.Header>
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding StreamIndex}"/>
+                                            <TextBlock Text="{Binding CodecName}" Margin="10, 0, 10, 0"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
 
+                        <TextBlock Text="FFmpeg Effects (software):" Margin="0,20,0,5"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="4*"></ColumnDefinition>
+                                <ColumnDefinition></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="ffmpegAudioFilters" Header="FFmpeg audio filters (hit 'return' to apply). Per stream or file" KeyDown="ffmpegAudioFilters_KeyDown" Margin="0,10,0,0" Text="aecho=0.8:0.9:1000|1800:0.3|0.25" />
+                            <ComboBox  VerticalAlignment="Bottom"  PlaceholderText="All" ToolTipService.ToolTip="Stream to apply effects to. " x:Name="cmbAudioStreamEffectSelector" Grid.Column="1">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}"/>
+                                            <TextBlock Text="{Binding StreamIndex}" Margin="10, 0, 10, 0"/>
+                                            <TextBlock Text="{Binding Language}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="4*"></ColumnDefinition>
+                                <ColumnDefinition></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="ffmpegVideoFilters" Header="FFmpeg video filters (hit 'return' to apply)" KeyDown="ffmpegVideoFilters_KeyDown" Margin="0,10,0,0" Text="colorchannelmixer=.3:.4:.3:0:.3:.4:.3:0:.3:.4:.3" />
+                            <ComboBox  VerticalAlignment="Bottom"  PlaceholderText="All" ToolTipService.ToolTip="Stream to apply effects to. " x:Name="cmbVideoStreamEffectSelector" Grid.Column="1">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}"/>
+                                            <TextBlock Text="{Binding StreamIndex}" Margin="10, 0, 10, 0"/>
+                                            <TextBlock Text="{Binding Language}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
                         <TextBlock Text="GPU Video Postprocessing:" Margin="0,20,0,5"/>
 
                         <ToggleSwitch x:Name="enableVideoEffects" Header="Enable GPU video postprocessing (applied on next file)" OffContent="OFF" OnContent="ON" Toggled="EnableVideoEffects_Toggled" Margin="0,10,0,0" />

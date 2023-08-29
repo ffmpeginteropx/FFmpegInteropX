@@ -9,19 +9,22 @@ namespace winrt::FFmpegInteropX::implementation
 {
     struct AudioStreamInfo : AudioStreamInfoT<AudioStreamInfo>
     {
-        AudioStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropX::StreamDisposition const& disposition, int64_t bitrate, bool isDefault, int32_t channels, hstring const& channelLayout, int32_t sampleRate, int32_t bitsPerSample, FFmpegInteropX::DecoderEngine const& decoderEngine);
+        AudioStreamInfo() = default;
+
+        AudioStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, winrt::FFmpegInteropX::StreamDisposition const& disposition, int64_t bitrate, bool isDefault, int32_t channels, hstring const& channelLayout, int32_t sampleRate, int32_t bitsPerSample, winrt::FFmpegInteropX::DecoderEngine const& decoderEngine, int32_t streamIndex);
         int32_t Channels();
         hstring ChannelLayout();
         int32_t SampleRate();
         int32_t BitsPerSample();
-        FFmpegInteropX::DecoderEngine DecoderEngine();
+        winrt::FFmpegInteropX::DecoderEngine DecoderEngine();
         hstring Name();
         hstring Language();
         hstring CodecName();
-        FFmpegInteropX::StreamDisposition Disposition();
+        winrt::FFmpegInteropX::StreamDisposition Disposition();
         int64_t Bitrate();
-    public:
         bool IsDefault();
+        int32_t StreamIndex();
+    public:
         bool SetDefault()
         {
             isDefault = true;
@@ -42,6 +45,7 @@ namespace winrt::FFmpegInteropX::implementation
         int bitsPerSample = 0;
 
         FFmpegInteropX::DecoderEngine decoderEngine;
+        int streamIndex = -1;
     };
 }
 namespace winrt::FFmpegInteropX::factory_implementation
