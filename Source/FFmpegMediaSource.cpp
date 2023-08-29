@@ -652,6 +652,16 @@ namespace winrt::FFmpegInteropX::implementation
             chapterInfos = chapters.GetView();
         }
 
+        if (!config->FFmpegVideoFilters().empty())
+        {
+            SetFFmpegVideoFilters(config->FFmpegVideoFilters());
+        }
+
+        if (!config->FFmpegAudioFilters().empty())
+        {
+            SetFFmpegAudioFilters(config->FFmpegAudioFilters());
+        }
+
         return hr;
     }
 
@@ -709,15 +719,7 @@ namespace winrt::FFmpegInteropX::implementation
         switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
 
 
-        if (!config->FFmpegVideoFilters().empty())
-        {
-            SetFFmpegVideoFilters(config->FFmpegVideoFilters());
-        }
 
-        if (!config->FFmpegAudioFilters().empty())
-        {
-            SetFFmpegAudioFilters(config->FFmpegAudioFilters());
-        }
 
         return mss;
     }
@@ -1059,6 +1061,7 @@ namespace winrt::FFmpegInteropX::implementation
         std::lock_guard lock(mutex);
         if (isClosed)
         {
+            OutputDebugString(L"\n SetFFmpegAudioFilters failed");
             return;
         }
         for (auto audioStream : audioStreams)
