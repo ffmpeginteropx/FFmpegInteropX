@@ -703,24 +703,23 @@ namespace winrt::FFmpegInteropX::implementation
 
         mssWeak = mss;
 
-                // using strong reference here would create circle references, since we store MSS and MediaPlaybackItem here.
-                startingRequestedToken = mss.Starting({ get_weak(), &FFmpegMediaSource::OnStarting });
-                sampleRequestedToken = mss.SampleRequested({ get_weak(), &FFmpegMediaSource::OnSampleRequested });
-                switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
-            }
+        // using strong reference here would create circle references, since we store MSS and MediaPlaybackItem here.
+        startingRequestedToken = mss.Starting({ get_weak(), &FFmpegMediaSource::OnStarting });
+        sampleRequestedToken = mss.SampleRequested({ get_weak(), &FFmpegMediaSource::OnSampleRequested });
+        switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
 
-            if (!config->FFmpegVideoFilters().empty())
-            {
-                SetFFmpegVideoFilters(config->FFmpegVideoFilters());
-            }
 
-            if (!config->FFmpegAudioFilters().empty())
-            {
-                SetFFmpegAudioFilters(config->FFmpegAudioFilters());
-            }
+        if (!config->FFmpegVideoFilters().empty())
+        {
+            SetFFmpegVideoFilters(config->FFmpegVideoFilters());
         }
 
-        return hr;
+        if (!config->FFmpegAudioFilters().empty())
+        {
+            SetFFmpegAudioFilters(config->FFmpegAudioFilters());
+        }
+
+        return mss;
     }
 
 
@@ -1071,7 +1070,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SetFFmpegAudioFilters(hstring const& audioFilters, winrt::FFmpegInteropX::AudioStreamInfo const& audioStream)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1088,7 +1087,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoFilters)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1125,7 +1124,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::ClearFFmpegAudioFilters()
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1161,7 +1160,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::ClearFFmpegVideoFilters()
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1192,7 +1191,7 @@ namespace winrt::FFmpegInteropX::implementation
     hstring FFmpegMediaSource::GetFFmpegAudioFilters(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return hstring{};
         }
@@ -1210,7 +1209,7 @@ namespace winrt::FFmpegInteropX::implementation
     hstring FFmpegMediaSource::GetFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return hstring{};
         }
@@ -1390,26 +1389,26 @@ namespace winrt::FFmpegInteropX::implementation
             // register for soruce changed event
             auto tokenPtr = new event_token[1]();
             tokenPtr[0] = mediaPlayer.SourceChanged([tokenPtr, playbackItemWeak](MediaPlayer const& mediaPlayer, IInspectable const&)
-            {
-                auto playbackItem = playbackItemWeak.get();
-                if (!playbackItem)
                 {
-                    // we were disposed already
-                    mediaPlayer.SourceChanged(tokenPtr[0]);
-                    delete[] tokenPtr;
-                }
-                else
-                {
-                    auto source = mediaPlayer.Source();
-                    if (source != playbackItem)
+                    auto playbackItem = playbackItemWeak.get();
+                    if (!playbackItem)
                     {
-                        // source has changed. close now.
-                        playbackItem.Source().Close();
+                        // we were disposed already
                         mediaPlayer.SourceChanged(tokenPtr[0]);
                         delete[] tokenPtr;
                     }
-                }
-            });
+                    else
+                    {
+                        auto source = mediaPlayer.Source();
+                        if (source != playbackItem)
+                        {
+                            // source has changed. close now.
+                            playbackItem.Source().Close();
+                            mediaPlayer.SourceChanged(tokenPtr[0]);
+                            delete[] tokenPtr;
+                        }
+                    }
+                });
         }
     }
 
@@ -1621,7 +1620,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return strong.BufferTime();
         }
-        return TimeSpan{0};
+        return TimeSpan{ 0 };
     }
 
     void FFmpegMediaSource::BufferTime(TimeSpan const& value)
@@ -1635,7 +1634,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SetStreamDelay(FFmpegInteropX::IStreamInfo const& stream, TimeSpan const& delay)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1652,7 +1651,7 @@ namespace winrt::FFmpegInteropX::implementation
     TimeSpan FFmpegMediaSource::GetStreamDelay(FFmpegInteropX::IStreamInfo const& stream)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return TimeSpan{ 0L };
         }
@@ -2198,7 +2197,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    void FFmpegMediaSource::CheckVideoDeviceChanged(MediaStreamSource const &mss)
+    void FFmpegMediaSource::CheckVideoDeviceChanged(MediaStreamSource const& mss)
     {
         bool hasDeviceChanged = false;
         HRESULT hr = S_OK;
@@ -2307,7 +2306,7 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 if (!currentVideoEffects.empty())
                 {
-                    currentVideoStream->DisableFilters();
+                    currentVideoStream->ClearFFmpegFilters();
                 }
                 currentVideoStream->DisableStream();
                 currentVideoStream = nullptr;
@@ -2330,7 +2329,7 @@ namespace winrt::FFmpegInteropX::implementation
                     currentVideoStream->EnableStream();
                     if (!currentVideoEffects.empty())
                     {
-                        currentVideoStream->SetFilters(currentVideoEffects);
+                        currentVideoStream->SetFFmpegFilters(currentVideoEffects);
                     }
                     currentVideoStreamInfo = currentVideoStream->VideoInfo();
                 }

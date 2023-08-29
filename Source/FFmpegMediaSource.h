@@ -159,9 +159,6 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Gets a boolean indication if a thumbnail is embedded in the file.</summary>
         bool HasThumbnail();
 
-        ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
-        FFmpegInteropX::MediaThumbnailData ExtractThumbnail();
-
         ///<summary>Gets the MediaPlaybackItem that was created before by using CreateMediaPlaybackItem.</summary>
         MediaPlaybackItem PlaybackItem();
 
@@ -268,8 +265,6 @@ namespace winrt::FFmpegInteropX::implementation
         FFmpegInteropX::VideoStreamInfo currentVideoStreamInfo = { nullptr };
         hstring currentAudioEffects{};
         hstring currentVideoEffects{};
-        std::shared_ptr<MediaSampleProvider> currentVideoStream;
-        std::shared_ptr<MediaSampleProvider> currentAudioStream;
         int thumbnailStreamIndex = 0;
 
         winrt::event_token audioTracksChangedToken{};

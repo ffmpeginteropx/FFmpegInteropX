@@ -81,9 +81,9 @@ namespace MediaPlayerWinUI
         private void StreamDelayManipulation(object sender, PointerRoutedEventArgs e)
         {
             var streamToDelay = cmbAudioVideoStreamDelays.SelectedItem as IStreamInfo;
-            if (streamToDelay != null && actualFFmpegMSS != null)
+            if (streamToDelay != null && FFmpegMSS != null)
             {
-                actualFFmpegMSS.SetStreamDelay(streamToDelay, TimeSpan.FromSeconds(StreamDelays.Value));
+                FFmpegMSS.SetStreamDelay(streamToDelay, TimeSpan.FromSeconds(StreamDelays.Value));
             }
         }
 
@@ -560,17 +560,17 @@ namespace MediaPlayerWinUI
             {
                 tbSubtitleDelay.Text = "Subtitle delay: 0s";
 
-                cmbAudioStreamEffectSelector.ItemsSource = actualFFmpegMSS.AudioStreams;
+                cmbAudioStreamEffectSelector.ItemsSource = FFmpegMSS.AudioStreams;
 
-                cmbVideoStreamEffectSelector.ItemsSource = actualFFmpegMSS.VideoStreams;
+                cmbVideoStreamEffectSelector.ItemsSource = FFmpegMSS.VideoStreams;
 
                 List<IStreamInfo> streams = new List<IStreamInfo>();
-                foreach (var a in actualFFmpegMSS.AudioStreams)
+                foreach (var a in FFmpegMSS.AudioStreams)
                 {
                     streams.Add(a);
                 }
 
-                foreach (var vs in actualFFmpegMSS.VideoStreams)
+                foreach (var vs in FFmpegMSS.VideoStreams)
                 {
                     streams.Add(vs);
                 }

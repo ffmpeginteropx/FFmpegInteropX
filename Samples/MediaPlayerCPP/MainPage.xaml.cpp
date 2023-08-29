@@ -77,10 +77,10 @@ MainPage::MainPage()
 void MediaPlayerCPP::MainPage::StreamDelayManipulation(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e)
 {
     auto streamToDelay = (IStreamInfo^)cmbAudioVideoStreamDelays->SelectedItem;
-    if (streamToDelay != nullptr && actualFFmpegMSS != nullptr)
+    if (streamToDelay != nullptr && FFmpegMSS != nullptr)
     {
         auto delay = TimeSpan{ (long long)(StreamDelays->Value * 10000000L) };
-        actualFFmpegMSS->SetStreamDelay(streamToDelay, delay);
+        FFmpegMSS->SetStreamDelay(streamToDelay, delay);
     }
 }
 
@@ -511,16 +511,16 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
         ref new Windows::UI::Core::DispatchedHandler([this]
             {
                 tbSubtitleDelay->Text = "Subtitle delay: 0s";
-                cmbAudioStreamEffectSelector->ItemsSource = actualFFmpegMSS->AudioStreams;
-                cmbVideoStreamEffectSelector->ItemsSource = actualFFmpegMSS->VideoStreams;
+                cmbAudioStreamEffectSelector->ItemsSource = FFmpegMSS->AudioStreams;
+                cmbVideoStreamEffectSelector->ItemsSource = FFmpegMSS->VideoStreams;
 
                 Vector<IStreamInfo^>^ streams = ref new Vector<IStreamInfo^>();
-                for (auto a : actualFFmpegMSS->AudioStreams)
+                for (auto a : FFmpegMSS->AudioStreams)
                 {
                     streams->Append(a);
                 }
 
-                for (auto vs : actualFFmpegMSS->VideoStreams)
+                for (auto vs : FFmpegMSS->VideoStreams)
                 {
                     streams->Append(vs);
                 }
