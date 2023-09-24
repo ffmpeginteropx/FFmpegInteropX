@@ -1,6 +1,8 @@
 #!/bin/bash
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )
 
+export TERM=dumb
+
 declare -A arch
 arch['x86']='x86'
 arch['x64']='x86_64'
