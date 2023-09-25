@@ -24,8 +24,8 @@ param(
     #>
     [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
 
-    [ValidateSet('Debug', 'Release')]
-    [string] $Configuration = 'Release',
+    [ValidateSet('Debug', 'Release', 'Debug_WinUI', 'Release_WinUI')]
+    [string] $Configuration = 'Release_WinUI',
     
     [System.IO.DirectoryInfo] $VSInstallerFolder = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer",
 
@@ -82,8 +82,7 @@ function Build-Platform {
 	{
 	    MSBuild.exe $SolutionDir\Source\FFmpegInteropX.DotNet.csproj `
 			/restore `
-			/p:Configuration=$Configuration `
-			/p:WINUI=1 `
+			/p:Configuration=Release `
 			/p:Platform=AnyCPU `
 			/p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
 			/p:useenv=true
