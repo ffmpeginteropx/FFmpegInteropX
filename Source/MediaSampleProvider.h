@@ -223,7 +223,6 @@ protected:
     bool m_isEnabled = false;
     bool m_isDiscontinuous = false;
     int m_streamIndex = 0;
-    INT64 m_startOffset = 0;
     TimeSpan streamDelay = TimeSpan{ 0 };
     double timeBaseFactor = 0;
     DecoderEngine decoder = DecoderEngine::FFmpegSoftwareDecoder;
