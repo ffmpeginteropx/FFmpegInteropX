@@ -1,4 +1,5 @@
 #pragma once
+#ifdef UWP
 #include "BasicVideoEffect.g.h"
 #include <winrt/Microsoft.Graphics.Canvas.h>
 #include <winrt/Microsoft.Graphics.Canvas.Effects.h>
@@ -88,3 +89,4 @@ namespace winrt::FFmpegInteropX::factory_implementation
     {
     };
 }
+#endif // UWP

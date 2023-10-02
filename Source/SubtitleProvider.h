@@ -13,6 +13,12 @@ using namespace winrt::Windows::Media::Playback;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Foundation;
 
+#ifdef WinUI
+using namespace winrt::Microsoft::UI::Dispatching;
+#else
+using namespace winrt::Windows::System;
+#endif
+
 class SubtitleProvider :
     public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
 {
@@ -27,7 +33,7 @@ public:
         MediaSourceConfig const& config,
         int index,
         TimedMetadataKind const& ptimedMetadataKind,
-        winrt::Windows::System::DispatcherQueue const& pdispatcher)
+        DispatcherQueue const& pdispatcher)
         : CompressedSampleProvider(reader,
             avFormatCtx,
             avCodecCtx,
@@ -539,8 +545,8 @@ private:
     std::vector<IMediaCue> pendingRefCues;
     std::vector<IMediaCue> pendingChangedDurationCues;
     TimedMetadataKind timedMetadataKind;
-    winrt::Windows::System::DispatcherQueue dispatcher = { nullptr };
-    winrt::Windows::System::DispatcherQueueTimer timer = { nullptr };
+    DispatcherQueue dispatcher = { nullptr };
+    DispatcherQueueTimer timer = { nullptr };
     TimeSpan pendingSubtitleDelay{};
     TimeSpan actualSubtitleDelay{};
     std::vector<std::pair<IMediaCue, long long>> negativePositionCues;

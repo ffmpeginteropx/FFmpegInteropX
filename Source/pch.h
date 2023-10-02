@@ -21,14 +21,18 @@
 #include <winrt/Windows.Media.Core.h>
 #include <winrt/Windows.Media.MediaProperties.h>
 #include <winrt/Windows.Media.Playback.h>
-#include <winrt/Windows.UI.Xaml.h>
+
 #include <winrt/Windows.UI.h>
-#include <winrt/Windows.UI.Core.h>
-#include <winrt/Windows.UI.Core.Preview.h>
+#include <winrt/Windows.System.h>
 #include <winrt/Windows.Storage.h>
 #include <winrt/Windows.Storage.FileProperties.h>
 #include <winrt/Windows.Storage.Streams.h>
-#include <winrt/Windows.System.h>
+
+#ifdef WinUI
+#include <winrt/Microsoft.UI.Dispatching.h>
+#else
+#endif
+
 #pragma pop_macro("TRY")
 #pragma pop_macro("GetCurrentTime")
 

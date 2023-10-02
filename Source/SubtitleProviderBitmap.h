@@ -6,6 +6,12 @@
 using namespace winrt::Windows::Graphics::Imaging;
 using namespace winrt::Windows::Media::Core;
 
+#ifdef WinUI
+using namespace winrt::Microsoft::UI::Dispatching;
+#else
+using namespace winrt::Windows::System;
+#endif
+
 class SubtitleProviderBitmap : public SubtitleProvider
 {
 
@@ -15,7 +21,7 @@ public:
         AVCodecContext* avCodecCtx,
         MediaSourceConfig const& config,
         int index,
-        winrt::Windows::System::DispatcherQueue  const& dispatcher)
+        DispatcherQueue const& dispatcher)
         : SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::ImageSubtitle, dispatcher)
     {
     }

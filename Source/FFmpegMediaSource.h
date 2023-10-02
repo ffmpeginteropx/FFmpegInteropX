@@ -24,11 +24,13 @@ namespace winrt::FFmpegInteropX::implementation
     using namespace winrt::Windows::Foundation::Collections;
     using namespace winrt::Windows::Media::Core;
     using namespace winrt::Windows::Media::Playback;
-    using namespace winrt::Windows::UI::Core;
-    using namespace winrt::Windows::UI::Xaml;
-    namespace WFM = winrt::Windows::Foundation::Metadata;
     using namespace winrt::Windows::Storage::Streams;
+
+#ifdef WinUI
+    using namespace winrt::Microsoft::UI::Dispatching;
+#else
     using namespace winrt::Windows::System;
+#endif
 
     enum ByteOrderMark
     {
@@ -52,6 +54,20 @@ namespace winrt::FFmpegInteropX::implementation
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri);
+
+#ifdef WinUI
+        ///<summary>Creates a FFmpegMediaSource from a file.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName, FFmpegInteropX::MediaSourceConfig config)
+        {
+            return CreateFromUriAsync(fileName, config);
+        }
+
+        ///<summary>Creates a FFmpegMediaSource from a file.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName)
+        {
+            return CreateFromUriAsync(fileName);
+        }
+#endif
 
         ///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
         void SetSubtitleDelay(TimeSpan const& delay);
@@ -202,8 +218,9 @@ namespace winrt::FFmpegInteropX::implementation
         void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList  const& sender, TimedMetadataPresentationModeChangedEventArgs  const& args);
         void InitializePlaybackItem(MediaPlaybackItem  const& playbackitem);
         bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus const& status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
-        static void CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config);
+        static void CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation);
         void CheckExtendDuration(MediaStreamSample sample);
+        DispatcherQueue GetCurrentDispatcherQueue();
 
     public://internal:
         static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher);
@@ -282,7 +299,6 @@ namespace winrt::FFmpegInteropX::implementation
         TimeSpan lastPosition{ 0 };
         TimeSpan lastSeek{ 0 };
 
-        static DispatcherQueue GetCurrentDispatcher();
         void OnPositionChanged(MediaPlaybackSession const& sender, IInspectable const& args);
     };
 }

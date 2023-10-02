@@ -215,6 +215,12 @@
     <ClInclude Include="LanguageTagConverter.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="DispatcherQueueAdapter.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="PlatformHelper.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -304,6 +310,12 @@
       <Filter>Metadata</Filter>
     </ClCompile>
     <ClCompile Include="LanguageTagConverter.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="PlatformHelper.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="DispatcherQueueAdapter.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>

@@ -18,6 +18,17 @@
 #include "ChapterInfo.h"
 #include "FFmpegReader.h"
 
+#ifdef WinUI
+#include <winrt/Microsoft.Graphics.Display.h>
+#include <winrt/Microsoft.UI.Xaml.h>
+#include <winrt/Microsoft.UI.Windowing.h>
+#include <winrt/Microsoft.UI.Interop.h>
+#include <winuser.h>
+#include "WinUIChecker.h"
+#else
+#endif
+
+
 // Note: Remove this static_assert after copying these generated source files to your project.
 // This assertion exists to avoid compiling these generated source files directly.
 //static_assert(false, "Do not compile generated C++/WinRT source files directly");
@@ -334,27 +345,12 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-
-    DispatcherQueue FFmpegMediaSource::GetCurrentDispatcher()
-    {
-        try
-        {
-            DispatcherQueue dispatcherQueue = DispatcherQueue::GetForCurrentThread();
-            //try get the current view      
-            return dispatcherQueue;
-        }
-        catch (...)
-        {
-            return nullptr;
-        }
-    }
-
     IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config)
     {
         winrt::apartment_context caller; // Capture calling context.
-        auto dispatcher = GetCurrentDispatcher();
+        auto dispatcher = DispatcherQueue::GetForCurrentThread();
         auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
-        CheckUseHdr(configImpl);
+        CheckUseHdr(configImpl, dispatcher != nullptr);
         co_await winrt::resume_background();
         auto result = CreateFromStream(stream, configImpl, dispatcher);
         co_await caller;
@@ -369,9 +365,9 @@ namespace winrt::FFmpegInteropX::implementation
     IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config)
     {
         winrt::apartment_context caller; // Capture calling context.
-        auto dispatcher = GetCurrentDispatcher();
+        auto dispatcher = DispatcherQueue::GetForCurrentThread();
         auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
-        CheckUseHdr(configImpl);
+        CheckUseHdr(configImpl, dispatcher != nullptr);
         co_await winrt::resume_background();
         auto result = CreateFromUri(uri, configImpl, dispatcher);
         co_await caller;
@@ -381,6 +377,19 @@ namespace winrt::FFmpegInteropX::implementation
     IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
     {
         return CreateFromUriAsync(uri, FFmpegInteropX::MediaSourceConfig());
+    }
+
+    DispatcherQueue FFmpegMediaSource::GetCurrentDispatcherQueue()
+    {
+#ifdef WinUI
+        if (WinUIChecker::HasWinUI())
+        {
+            return DispatcherQueue::GetForCurrentThread();
+        }
+        return nullptr;
+#else
+        return DispatcherQueue::GetForCurrentThread();
+#endif
     }
 
     static int is_hwaccel_pix_fmt(enum AVPixelFormat pix_fmt)
@@ -1750,7 +1759,7 @@ namespace winrt::FFmpegInteropX::implementation
         return result;
     }
 
-    void FFmpegMediaSource::CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config)
+    void FFmpegMediaSource::CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation)
     {
         bool useHdr = false;
         switch (config->HdrSupport())
@@ -1759,24 +1768,55 @@ namespace winrt::FFmpegInteropX::implementation
             useHdr = true;
             break;
         case HdrSupport::Automatic:
-            try
+            if (checkDisplayInformation)
             {
-                auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
-                if (displayInfo)
+                try
                 {
-                    auto colorInfo = displayInfo.GetAdvancedColorInfo();
-                    if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
+#ifdef  WinUI
+                    HWND handle = NULL;
+                    HWND* pHandle = &handle;
+                    static auto callback = [](HWND hwnd, LPARAM param)
+                        {
+                            if (GetParent(hwnd) == NULL)
+                            {
+                                *((HWND*)param) = hwnd;
+                                return FALSE;
+                            }
+                            return TRUE;
+                        };
+                    EnumThreadWindows(GetCurrentThreadId(), callback, (LPARAM)pHandle);
+                    if (handle)
                     {
-                        useHdr = true;
+                        auto id = Microsoft::UI::GetWindowIdFromWindow(handle);
+                        auto displayInfo = Microsoft::Graphics::Display::DisplayInformation::CreateForWindowId(id);
+                        if (displayInfo)
+                        {
+                            auto colorInfo = displayInfo.GetAdvancedColorInfo();
+                            if (colorInfo.CurrentAdvancedColorKind() == Microsoft::Graphics::Display::DisplayAdvancedColorKind::HighDynamicRange)
+                            {
+                                useHdr = true;
+                            }
+                        }
                     }
+#else // UWP
+                    auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
+                    if (displayInfo)
+                    {
+                        auto colorInfo = displayInfo.GetAdvancedColorInfo();
+                        if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
+                        {
+                            useHdr = true;
+                        }
+                    }
+#endif // WinUI
                 }
-            }
-            catch (...)
-            {
+                catch (...)
+                {
+                }
             }
             break;
         default:
-            useHdr = false;
+            break;
         }
         config->ApplyHdrColorInfo = useHdr;
     }

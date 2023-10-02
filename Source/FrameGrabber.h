@@ -26,6 +26,11 @@ namespace winrt::FFmpegInteropX::implementation
         /// <summary>Creates a new FrameGrabber from the specified uri.</summary>
         static IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromUriAsync(hstring uri);
 
+#ifdef WinUI
+        /// <summary>Creates a new FrameGrabber from the specified file.</summary>
+        static IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromFileAsync(hstring fileName) { return CreateFromUriAsync(fileName); }
+#endif
+
         /// <summary>The duration of the video stream.</summary>
         TimeSpan Duration();
 

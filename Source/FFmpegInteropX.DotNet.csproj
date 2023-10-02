@@ -29,11 +29,13 @@
 
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="FFmpegInteropX.vcxproj" />
+    <ProjectReference Include="FFmpegInteropX.vcxproj">
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

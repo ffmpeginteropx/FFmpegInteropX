@@ -47,11 +47,11 @@ namespace MediaPlayerWinUI
             set;
         } = true;
 
-        public VideoEffectConfiguration VideoEffectConfiguration
-        {
-            get;
-            set;
-        }
+        //public VideoEffectConfiguration VideoEffectConfiguration
+        //{
+        //    get;
+        //    set;
+        //}
 
         public MainPage()
         {
@@ -62,7 +62,7 @@ namespace MediaPlayerWinUI
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
             AutoDetect.IsOn = true;
-            VideoEffectConfiguration = new VideoEffectConfiguration();
+            //VideoEffectConfiguration = new VideoEffectConfiguration();
 
             mediaPlayer = new MediaPlayer();
             mediaPlayer.AudioCategory = MediaPlayerAudioCategory.Movie;
@@ -215,16 +215,14 @@ namespace MediaPlayerWinUI
         {
             currentFile = file;
 
-            // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
-            IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
-
             try
             {
                 StorageApplicationPermissions.FutureAccessList.Clear();
                 StorageApplicationPermissions.FutureAccessList.Add(file);
 
                 // Instantiate FFmpegMediaSource using the opened local file stream
-                FFmpegMSS = await FFmpegMediaSource.CreateFromStreamAsync(readStream, Config);
+                FFmpegMSS = await FFmpegMediaSource.CreateFromFileAsync(file.Path, Config);
+
                 var tags = FFmpegMSS.MetadataTags.ToArray();
                 if (AutoCreatePlaybackItem)
                 {
@@ -595,14 +593,14 @@ namespace MediaPlayerWinUI
             Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
         }
 
-        private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
-        {
-            mediaPlayer.RemoveAllEffects();
-            if (enableVideoEffects.IsOn)
-            {
-                VideoEffectConfiguration.AddVideoEffect(mediaPlayer);
-            }
-        }
+        //private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
+        //{
+        //    mediaPlayer.RemoveAllEffects();
+        //    if (enableVideoEffects.IsOn)
+        //    {
+        //        VideoEffectConfiguration.AddVideoEffect(mediaPlayer);
+        //    }
+        //}
 
         private void Page_DragEnter(object sender, DragEventArgs e)
         {
