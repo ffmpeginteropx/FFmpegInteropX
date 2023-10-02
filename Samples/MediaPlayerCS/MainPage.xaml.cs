@@ -84,6 +84,17 @@ namespace MediaPlayerCS
             cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
 
             CoreWindow.GetForCurrentThread().KeyDown += MainPage_KeyDown;
+
+            StreamDelays.AddHandler(Slider.PointerReleasedEvent, new PointerEventHandler(StreamDelayManipulation), true);
+        }
+
+        private void StreamDelayManipulation(object sender, PointerRoutedEventArgs e)
+        {
+            var streamToDelay = cmbAudioVideoStreamDelays.SelectedItem as IStreamInfo;
+            if (streamToDelay != null && actualFFmpegMSS != null)
+            {
+                actualFFmpegMSS.SetStreamDelay(streamToDelay, TimeSpan.FromSeconds(StreamDelays.Value));
+            }
         }
 
         private async void MainPage_KeyDown(CoreWindow sender, KeyEventArgs args)
@@ -590,6 +601,19 @@ namespace MediaPlayerCS
                     cmbAudioStreamEffectSelector.ItemsSource = actualFFmpegMSS.AudioStreams;
 
                     cmbVideoStreamEffectSelector.ItemsSource = actualFFmpegMSS.VideoStreams;
+
+                    List<IStreamInfo> streams = new List<IStreamInfo>();
+                    foreach(var a in actualFFmpegMSS.AudioStreams)
+                    {
+                        streams.Add(a);
+                    }
+
+                    foreach(var  vs in actualFFmpegMSS.VideoStreams)
+                    {
+                        streams.Add(vs);
+                    }
+
+                    cmbAudioVideoStreamDelays.ItemsSource = streams;
                 }));
         }
 

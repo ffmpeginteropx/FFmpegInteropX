@@ -164,12 +164,12 @@ public:
 
     TimeSpan ConvertPosition(LONGLONG pts)
     {
-        return TimeSpan{ LONGLONG(timeBaseFactor * pts) - m_startOffset };
+        return TimeSpan{ LONGLONG(timeBaseFactor * pts) - m_startOffset } + streamDelay;
     }
 
     LONGLONG ConvertPosition(TimeSpan position)
     {
-        return LONGLONG((position.count() + m_startOffset) / timeBaseFactor);
+        return LONGLONG(((position + streamDelay).count() + m_startOffset) / timeBaseFactor);
     }
 
     TimeSpan ConvertDuration(LONGLONG duration)
@@ -180,6 +180,17 @@ public:
     LONGLONG ConvertDuration(TimeSpan duration)
     {
         return LONGLONG(duration.count() / timeBaseFactor);
+    }
+
+    virtual TimeSpan GetStreamDelay()
+    {
+        return streamDelay;
+    }
+
+    virtual void SetStreamDelay(TimeSpan const& newDelay)
+    {
+        m_isDiscontinuous = true;
+        streamDelay = newDelay;
     }
 
 protected:
@@ -212,6 +223,8 @@ protected:
     bool m_isEnabled = false;
     bool m_isDiscontinuous = false;
     int m_streamIndex = 0;
+    INT64 m_startOffset = 0;
+    TimeSpan streamDelay = TimeSpan{ 0 };
     double timeBaseFactor = 0;
     DecoderEngine decoder = DecoderEngine::FFmpegSoftwareDecoder;
     winrt::com_ptr<ID3D11Device> device = NULL;

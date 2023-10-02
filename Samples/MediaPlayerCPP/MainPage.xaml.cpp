@@ -70,6 +70,18 @@ MainPage::MainPage()
     cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
 
     Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);
+    
+    StreamDelays->AddHandler(UIElement::PointerReleasedEvent, ref new PointerEventHandler(this, &MainPage::StreamDelayManipulation), true);
+}
+
+void MediaPlayerCPP::MainPage::StreamDelayManipulation(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e)
+{
+    auto streamToDelay = (IStreamInfo^)cmbAudioVideoStreamDelays->SelectedItem;
+    if (streamToDelay != nullptr && actualFFmpegMSS != nullptr)
+    {
+        auto delay = TimeSpan{ (long long)(StreamDelays->Value * 10000000L) };
+        actualFFmpegMSS->SetStreamDelay(streamToDelay, delay);
+    }
 }
 
 void MediaPlayerCPP::MainPage::Page_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -421,6 +433,8 @@ void MediaPlayerCPP::MainPage::OnMediaFailed(Windows::Media::Playback::MediaPlay
             }));
 }
 
+
+
 void MainPage::DisplayErrorMessage(Platform::String^ message)
 {
     Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal, ref new Windows::UI::Core::DispatchedHandler([this, message]()
@@ -504,6 +518,19 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
                 tbSubtitleDelay->Text = "Subtitle delay: 0s";
                 cmbAudioStreamEffectSelector->ItemsSource = actualFFmpegMSS->AudioStreams;
                 cmbVideoStreamEffectSelector->ItemsSource = actualFFmpegMSS->VideoStreams;
+
+                Vector<IStreamInfo^>^ streams = ref new Vector<IStreamInfo^>();
+                for (auto a : actualFFmpegMSS->AudioStreams)
+                {
+                    streams->Append(a);
+                }
+
+                for (auto vs : actualFFmpegMSS->VideoStreams)
+                {
+                    streams->Append(vs);
+                }
+
+                cmbAudioVideoStreamDelays->ItemsSource = streams;
             }));
 }
 
