@@ -542,6 +542,7 @@ namespace FFmpegInteropX
 
         ///<summary>Gets or sets the BufferTime of the MediaStreamSource.</summary>
         ///<remarks>A value of 0 is recommended for local files, streaming sources should use higher values.</remarks>
+        [deprecated("Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration on the config class instead.", deprecate, 1)]
         Windows.Foundation.TimeSpan BufferTime{ get; set; };
 
         ///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
