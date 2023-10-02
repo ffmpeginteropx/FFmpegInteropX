@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FFmpegInteropX.FFmpegUWP" Version="5.1.0" />
+    <PackageReference Include="FFmpegInteropX.FFmpegUWP" Version="5.1.100" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
     <PackageReference Include="Microsoft.VCRTForwarders.140" Version="1.0.7" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.3" />
