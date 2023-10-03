@@ -220,7 +220,7 @@ namespace winrt::FFmpegInteropX::implementation
         bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus const& status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
         static void CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation);
         void CheckExtendDuration(MediaStreamSample sample);
-        DispatcherQueue GetCurrentDispatcherQueue();
+        static DispatcherQueue GetCurrentDispatcherQueue();
 
     public://internal:
         static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher);

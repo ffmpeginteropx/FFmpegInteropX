@@ -348,7 +348,7 @@ namespace winrt::FFmpegInteropX::implementation
     IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config)
     {
         winrt::apartment_context caller; // Capture calling context.
-        auto dispatcher = DispatcherQueue::GetForCurrentThread();
+        auto dispatcher = GetCurrentDispatcherQueue();
         auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
         CheckUseHdr(configImpl, dispatcher != nullptr);
         co_await winrt::resume_background();
@@ -365,7 +365,7 @@ namespace winrt::FFmpegInteropX::implementation
     IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config)
     {
         winrt::apartment_context caller; // Capture calling context.
-        auto dispatcher = DispatcherQueue::GetForCurrentThread();
+        auto dispatcher = GetCurrentDispatcherQueue();
         auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
         CheckUseHdr(configImpl, dispatcher != nullptr);
         co_await winrt::resume_background();
