@@ -3,7 +3,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
-    <Platforms>x64;x86;ARM64;ARM</Platforms>
+    <Platforms>x64;x86;ARM64</Platforms>
     <UseWinUI>true</UseWinUI>
   </PropertyGroup>
 
@@ -14,25 +14,11 @@
   <PropertyGroup>
     <IntDir>..\..\Intermediate\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>..\..\Output\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDirFFmpegInteropX>..\..\Output\FFmpegInteropX\$(PlatformTarget)\$(Configuration)_WinUI\</OutDirFFmpegInteropX>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="MainPage.xaml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="FFmpegInteropX.FFmpegUWP" Version="5.1.100" />
-    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230913002" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.756" />
-    <Manifest Include="$(ApplicationManifest)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\Source\FFmpegInteropX.DotNet.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,7 +27,30 @@
     </Page>
   </ItemGroup>
   
-  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems">
+  <ItemGroup>
+    <PackageReference Include="FFmpegInteropX.FFmpegUWP" Version="5.1.100" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.3" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230913002" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.756" />
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)'=='Debug'">
+    <ProjectReference Include="..\..\Source\FFmpegInteropX.vcxproj" />
+	<None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" Link="FFmpegInteropX.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" Link="FFmpegInteropX.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
+    <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
+  </PropertyGroup>
+  
+  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="'$(Configuration)'=='Debug'">
     <ItemGroup>
       <AllItemsFullPathWithTargetPath Include="$(OutDir)FFmpegInteropX.dll">
         <TargetPath>runtimes\win10-$(Platform)\native\FFmpegInteropX.dll</TargetPath>
@@ -54,4 +63,8 @@
     </ItemGroup>
   </Target>
 
+  <ItemGroup Condition="'$(Configuration)'=='Release'">
+    <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-beta3" />
+  </ItemGroup>
+  
 </Project>

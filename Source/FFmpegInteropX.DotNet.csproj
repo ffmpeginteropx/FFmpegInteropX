@@ -8,13 +8,13 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
-    <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <IntDir>..\Intermediate\$(MSBuildProjectName)\$(Configuration)\</IntDir>
     <OutDir>..\Output\$(MSBuildProjectName)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
+    <!-- <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir> -->
   </PropertyGroup>
   
   <PropertyGroup>

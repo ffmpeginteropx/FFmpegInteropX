@@ -17,7 +17,9 @@
   <PropertyGroup>
     <IntDir>..\Intermediate\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>..\Output\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDirFFmpegInteropX>..\Output\FFmpegInteropX\$(PlatformTarget)\$(Configuration)_WinUI\</OutDirFFmpegInteropX>
   </PropertyGroup>
+   
   
   <ItemGroup>
     <None Remove="TestFiles\envivio-h264.mp4" />
@@ -30,6 +32,10 @@
   </ItemGroup>
 
   <ItemGroup>
+
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FFmpegInteropX.FFmpegUWP" Version="5.1.100" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
     <PackageReference Include="Microsoft.VCRTForwarders.140" Version="1.0.7" />
@@ -39,13 +45,30 @@
     <PackageReference Include="coverlet.collector" Version="3.1.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Source\FFmpegInteropX.DotNet.csproj" />
+  <ItemGroup Condition="'$(Configuration)'=='Debug'">
+    <ProjectReference Include="..\Source\FFmpegInteropX.vcxproj">
+      <Private>True</Private>
+    </ProjectReference>
+	<None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" Link="FFmpegInteropX.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" Link="FFmpegInteropX.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
+  
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
+    <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
+  </PropertyGroup>
 
-  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems">
-    <Copy SourceFiles="$(OutDir)FFmpegInteropX.dll" DestinationFolder="$(OutDir)runtimes\win10-$(Platform)\native" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(OutDir)FFmpegInteropX.pdb" DestinationFolder="$(OutDir)runtimes\win10-$(Platform)\native" SkipUnchangedFiles="true" />
+  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="'$(Configuration)'=='Debug'">
+    <Copy SourceFiles="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" DestinationFolder="$(OutDir)runtimes\win10-$(Platform)\native" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" DestinationFolder="$(OutDir)runtimes\win10-$(Platform)\native" SkipUnchangedFiles="true" />
   </Target>
 
+  <ItemGroup Condition="'$(Configuration)'=='Release'">
+    <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-beta3" />
+  </ItemGroup>
+  
 </Project>
