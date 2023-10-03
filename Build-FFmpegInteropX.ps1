@@ -24,6 +24,9 @@ param(
     #>
     [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
 
+    [ValidateSet('UWP', 'WinUI', 'Desktop')]
+    [string] $WindowsTarget = 'UWP',
+
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
     
@@ -49,8 +52,6 @@ function Build-Platform {
     param (
         [System.IO.DirectoryInfo] $SolutionDir,
         [string] $Platform,
-        [version] $WindowsTargetPlatformVersion,
-        [version] $VcVersion,
         [string] $PlatformToolset,
         [string] $VsLatestPath
     )
@@ -74,26 +75,13 @@ function Build-Platform {
 
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
-        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Intermediate\FFmpegInteropX\$Platform\*
-        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Output\FFmpegInteropX\$Platform\*
+        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Intermediate\FFmpegInteropX_$WindowsTarget\$Platform\*
+        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Output\FFmpegInteropX_$WindowsTarget\$Platform\*
     }
-		
-	if ($targetArch -eq "x86")
-	{
-	    MSBuild.exe $SolutionDir\Source\FFmpegInteropX.DotNet.csproj `
-			/restore `
-			/p:Configuration=$Configuration `
-			/p:WINUI=1 `
-			/p:Platform=AnyCPU `
-			/p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-			/p:useenv=true
-			
-		if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.DotNet.csproj." }
-	}
 
     MSBuild.exe $SolutionDir\Source\FFmpegInteropX.vcxproj `
         /restore `
-        /p:Configuration=$Configuration `
+        /p:Configuration=${Configuration}_${WindowsTarget} `
         /p:Platform=$Platform `
         /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
         /p:PlatformToolset=$PlatformToolset `
@@ -140,13 +128,17 @@ nuget.exe restore ${PSScriptRoot}\FFmpegInteropX.sln
 
 foreach ($platform in $Platforms) {
 
+    # WinUI does not support ARM
+    if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
+    {
+        continue;
+    }
+
     try
     {
         Build-Platform `
             -SolutionDir "${PSScriptRoot}\" `
             -Platform $platform `
-            -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
-            -VcVersion $VcVersion `
             -PlatformToolset $platformToolSet `
             -VsLatestPath $vsLatestPath
     }
@@ -175,8 +167,8 @@ foreach ($platform in $Platforms) {
 
 if ($success -and $NugetPackageVersion)
 {
-    nuget pack .\Build\FFmpegInteropX.nuspec `
-        -Properties "id=FFmpegInteropX;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;NoWarn=NU5128" `
+    nuget pack .\Build\FFmpegInteropX.$WindowsTarget.nuspec `
+        -Properties "id=FFmpegInteropX.$WindowsTarget;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat symbols.nupkg `
         -OutputDirectory "Output\NuGet"

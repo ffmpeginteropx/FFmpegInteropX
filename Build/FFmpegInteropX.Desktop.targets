@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Reference Include="$(MSBuildThisFileDirectory)..\..\lib\net6.0-windows10.0.17763.\FFmpegInteropX.dll" />
+    <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)..\..\runtimes\win10-$(PlatformTarget)\native\*.dll" />
+  </ItemGroup>
+</Project>

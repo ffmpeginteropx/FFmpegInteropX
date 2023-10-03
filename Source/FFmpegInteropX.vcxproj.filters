@@ -54,12 +54,6 @@
     <None Include="..\Build\FFmpegInteropX.FFmpegUWP.targets">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\Build\FFmpegInteropX.nuspec">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\Build\FFmpegInteropX.targets">
-      <Filter>NuGet</Filter>
-    </None>
     <None Include="..\.editorconfig">
       <Filter>Build</Filter>
     </None>
@@ -81,6 +75,24 @@
     <None Include="cpp.hint" />
     <None Include="..\AppVeyor_Build.bat">
       <Filter>Build</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.Desktop.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.Desktop.targets">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.UWP.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.UWP.targets">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.WinUI.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.WinUI.targets">
+      <Filter>NuGet</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -215,12 +227,7 @@
     <ClInclude Include="LanguageTagConverter.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="DispatcherQueueAdapter.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="PlatformHelper.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
+    <ClInclude Include="WinUIChecker.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -312,12 +319,7 @@
     <ClCompile Include="LanguageTagConverter.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="PlatformHelper.cpp">
-      <Filter>Helpers</Filter>
-    </ClCompile>
-    <ClCompile Include="DispatcherQueueAdapter.cpp">
-      <Filter>Helpers</Filter>
-    </ClCompile>
+    <ClCompile Include="WinUIChecker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />

@@ -55,7 +55,7 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri);
 
-#ifdef WinUI
+#ifndef UWP
         ///<summary>Creates a FFmpegMediaSource from a file.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName, FFmpegInteropX::MediaSourceConfig config)
         {

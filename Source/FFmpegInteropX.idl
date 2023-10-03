@@ -390,7 +390,7 @@ namespace FFmpegInteropX
         /// <summary>Creates a new FrameGrabber from the specified uri.</summary>
         static Windows.Foundation.IAsyncOperation<FrameGrabber> CreateFromUriAsync(String uri);
 
-#ifdef WinUI
+#ifndef UWP
         ///<summary>Creates a new FrameGrabber from the specified file.</summary>
         static Windows.Foundation.IAsyncOperation<FrameGrabber> CreateFromFileAsync(String fileName);
 #endif
@@ -464,7 +464,7 @@ namespace FFmpegInteropX
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromUriAsync(String uri);
 
-#ifdef WinUI
+#ifndef UWP
         ///<summary>Creates a FFmpegMediaSource from a file.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromFileAsync(String fileName, MediaSourceConfig config);
 
