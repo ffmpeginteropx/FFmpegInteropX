@@ -495,7 +495,7 @@ namespace MediaPlayerWinUI
             }
         }
 
-        private async void CreatePlaybackItemAndStartPlayback(object sender, RoutedEventArgs e)
+        private void CreatePlaybackItemAndStartPlayback(object sender, RoutedEventArgs e)
         {
             if (playbackItem == null)
             {

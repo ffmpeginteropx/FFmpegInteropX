@@ -15,6 +15,9 @@
   <PropertyGroup>
     <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
     <!-- <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir> -->
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+        None
+    </ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
   </PropertyGroup>
   
   <PropertyGroup>
