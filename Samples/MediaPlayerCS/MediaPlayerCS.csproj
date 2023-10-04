@@ -156,18 +156,15 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
-  
   <ItemGroup Condition="'$(Configuration)'=='Debug'">
     <ProjectReference Include="..\..\Source\FFmpegInteropX.vcxproj">
       <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
       <Name>FFmpegInteropX</Name>
     </ProjectReference>
   </ItemGroup>
-  
   <ItemGroup Condition="'$(Configuration)'=='Release'">
-    <PackageReference Include="FFmpegInteropX.UWP" Version="2.0.0-beta1" />
+    <PackageReference Include="FFmpegInteropX.UWP" Version="2.0.0-pre1" />
   </ItemGroup>
-  
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

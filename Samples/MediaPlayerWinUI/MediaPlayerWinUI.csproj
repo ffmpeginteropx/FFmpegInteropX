@@ -64,7 +64,7 @@
   </Target>
 
   <ItemGroup Condition="'$(Configuration)'=='Release'">
-    <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-beta3" />
+    <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-pre1" />
   </ItemGroup>
   
 </Project>

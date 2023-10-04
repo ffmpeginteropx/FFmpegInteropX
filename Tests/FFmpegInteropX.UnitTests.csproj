@@ -1,16 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
-
     <IsPackable>false</IsPackable>
-
     <PlatformTarget>x64</PlatformTarget>
-
     <OutputType>Library</OutputType>
-
     <Platforms>x64;x86</Platforms>
-
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
   </PropertyGroup>
   
@@ -19,18 +13,16 @@
     <OutDir>..\Output\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
     <OutDirFFmpegInteropX>..\Output\FFmpegInteropX\$(PlatformTarget)\$(Configuration)_WinUI\</OutDirFFmpegInteropX>
   </PropertyGroup>
-   
   
   <ItemGroup>
     <None Remove="TestFiles\envivio-h264.mp4" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <EmbeddedResource Include="TestFiles\envivio-h264.mp4">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
-
   <ItemGroup>
 
   </ItemGroup>
@@ -49,7 +41,7 @@
     <ProjectReference Include="..\Source\FFmpegInteropX.vcxproj">
       <Private>True</Private>
     </ProjectReference>
-	<None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" Link="FFmpegInteropX.dll">
+  <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" Link="FFmpegInteropX.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" Link="FFmpegInteropX.pdb">
@@ -68,7 +60,7 @@
   </Target>
 
   <ItemGroup Condition="'$(Configuration)'=='Release'">
-    <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-beta3" />
+    <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-pre1" />
   </ItemGroup>
   
 </Project>
