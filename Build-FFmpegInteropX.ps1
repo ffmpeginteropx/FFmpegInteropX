@@ -37,6 +37,8 @@ param(
 
     [switch] $ClearBuildFolders,
 
+    [switch] $AllowParallelBuilds,
+
     # If a version string is specified, a NuGet package will be created.
     [string] $NugetPackageVersion = $null,
 
@@ -75,8 +77,8 @@ function Build-Platform {
 
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
-        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Intermediate\FFmpegInteropX_$WindowsTarget\$Platform\*
-        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Output\FFmpegInteropX_$WindowsTarget\$Platform\*
+        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Intermediate\FFmpegInteropX\$Platform\${Configuration}_${WindowsTarget}
+        Remove-Item -Force -Recurse -ErrorAction Ignore $SolutionDir\Output\FFmpegInteropX\$Platform\${Configuration}_${WindowsTarget}
     }
 
     MSBuild.exe $SolutionDir\Source\FFmpegInteropX.vcxproj `
@@ -126,40 +128,73 @@ $success = 1
 # Restore nuget packets for solution
 nuget.exe restore ${PSScriptRoot}\FFmpegInteropX.sln
 
-foreach ($platform in $Platforms) {
 
-    # WinUI does not support ARM
-    if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
+if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
+{
+    $processes = @{}
+
+    $addparams = ""
+    if ($ClearBuildFolders)
     {
-        continue;
+        $addparams += " -ClearBuildFolders"
     }
 
-    try
-    {
-        Build-Platform `
-            -SolutionDir "${PSScriptRoot}\" `
-            -Platform $platform `
-            -PlatformToolset $platformToolSet `
-            -VsLatestPath $vsLatestPath
+    foreach ($platform in $Platforms) {
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" $addparams"
+        $processes[$platform] = $proc
     }
-    catch
-    {
-        Write-Warning "Error occured: $PSItem"
-        $success = 0
-        Break
-    }
-    finally
-    {
-        # Restore orignal environment variables
-        foreach ($item in $oldEnv.GetEnumerator())
+
+    foreach ($platform in $Platforms) {
+        $processes[$platform].WaitForExit();
+        $result = $processes[$platform].ExitCode;
+        if ($result -eq 0)
         {
-            Set-Item -Path env:"$($item.Name)" -Value $item.Value
+            Write-Host "Build for $platform succeeded!"
         }
-        foreach ($item in Get-ChildItem env:)
+        else
         {
-            if (!$oldEnv.ContainsKey($item.Name))
+            Write-Host "Build for $platform failed with ErrorCode: $result"
+            $success = 0
+        }
+    }
+}
+else
+{
+    foreach ($platform in $Platforms) {
+
+        # WinUI does not support ARM
+        if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
+        {
+            continue;
+        }
+
+        try
+        {
+            Build-Platform `
+                -SolutionDir "${PSScriptRoot}\" `
+                -Platform $platform `
+                -PlatformToolset $platformToolSet `
+                -VsLatestPath $vsLatestPath
+        }
+        catch
+        {
+            Write-Warning "Error occured: $PSItem"
+            $success = 0
+            Break
+        }
+        finally
+        {
+            # Restore orignal environment variables
+            foreach ($item in $oldEnv.GetEnumerator())
             {
-                 Remove-Item -Path env:"$($item.Name)"
+                Set-Item -Path env:"$($item.Name)" -Value $item.Value
+            }
+            foreach ($item in Get-ChildItem env:)
+            {
+                if (!$oldEnv.ContainsKey($item.Name))
+                {
+                     Remove-Item -Path env:"$($item.Name)"
+                }
             }
         }
     }
