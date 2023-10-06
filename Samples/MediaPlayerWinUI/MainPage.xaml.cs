@@ -221,7 +221,7 @@ namespace MediaPlayerWinUI
                 StorageApplicationPermissions.FutureAccessList.Add(file);
 
                 // Instantiate FFmpegMediaSource using the opened local file stream
-                FFmpegMSS = await FFmpegMediaSource.CreateFromFileAsync(file.Path, Config);
+                FFmpegMSS = await FFmpegMediaSource.CreateFromFileAsync(file.Path, Config, CurrentMainWindow.AppWindow.Id);
 
                 var tags = FFmpegMSS.MetadataTags.ToArray();
                 if (AutoCreatePlaybackItem)
@@ -278,7 +278,7 @@ namespace MediaPlayerWinUI
                     Config.FFmpegOptions["reconnect_on_network_error"] = 1;
 
                     // Instantiate FFmpegMediaSource using the URI
-                    FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
+                    FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config, CurrentMainWindow.AppWindow.Id);
 
                     var source = FFmpegMSS.CreateMediaPlaybackItem();
 

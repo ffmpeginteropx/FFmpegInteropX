@@ -11,8 +11,12 @@
     <dependencies>
       <group targetFramework="net6.0-windows10.0.17763.0">
         <dependency id="FFmpegInteropX.FFmpegUWP" version="5.1.100" />
+        <dependency id="Microsoft.WindowsAppSDK" version="1.4.230913002" />
       </group>
-      <group targetFramework="native" />
+      <group targetFramework="native">
+        <dependency id="FFmpegInteropX.FFmpegUWP" version="5.1.100" />
+        <dependency id="Microsoft.WindowsAppSDK" version="1.4.230913002" />
+      </group>
     </dependencies>
     <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
   </metadata>

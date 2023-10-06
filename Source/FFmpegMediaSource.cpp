@@ -49,11 +49,13 @@ namespace winrt::FFmpegInteropX::implementation
     std::mutex isRegisteredMutex;
 
     FFmpegMediaSource::FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig,
-        DispatcherQueue const& dispatcher)
+        DispatcherQueue const& dispatcher, uint64_t windowId, bool useHdr)
         : config(interopConfig)
         , thumbnailStreamIndex(AVERROR_STREAM_NOT_FOUND)
         , isFirstSeek(true)
         , dispatcher(dispatcher)
+        , windowId(windowId)
+        , useHdr(useHdr)
     {
         avDict = NULL;
         avHardwareContext = NULL;
@@ -87,9 +89,14 @@ namespace winrt::FFmpegInteropX::implementation
         Close();
     }
 
-    winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue const& dispatcher)
+    winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromStream(
+        IRandomAccessStream const& stream,
+        winrt::com_ptr<MediaSourceConfig> const& config,
+        DispatcherQueue const& dispatcher,
+        uint64_t windowId,
+        bool useHdr)
     {
-        auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher);
+        auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher, windowId, useHdr);
         auto hr = interopMSS->CreateMediaStreamSource(stream);
         if (!SUCCEEDED(hr))
         {
@@ -98,9 +105,14 @@ namespace winrt::FFmpegInteropX::implementation
         return interopMSS;
     }
 
-    winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(hstring const& uri, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue const& dispatcher)
+    winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(
+        hstring const& uri,
+        winrt::com_ptr<MediaSourceConfig> const& config,
+        DispatcherQueue const& dispatcher,
+        uint64_t windowId,
+        bool useHdr)
     {
-        auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher);
+        auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher, windowId, useHdr);
         auto hr = interopMSS->CreateMediaStreamSource(uri);
         if (!SUCCEEDED(hr))
         {
@@ -345,38 +357,32 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config)
+    IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(
+        IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
     {
         winrt::apartment_context caller; // Capture calling context.
         auto dispatcher = GetCurrentDispatcherQueue();
         auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
-        CheckUseHdr(configImpl, dispatcher != nullptr);
+        bool useHdr = false;
+        CheckUseHdr(configImpl, dispatcher != nullptr, useHdr, windowId);
         co_await winrt::resume_background();
-        auto result = CreateFromStream(stream, configImpl, dispatcher);
-        co_await caller;
-        co_return result.as<FFmpegInteropX::FFmpegMediaSource>();;
-    }
-
-    IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(IRandomAccessStream stream)
-    {
-        return CreateFromStreamAsync(stream, FFmpegInteropX::MediaSourceConfig());
-    }
-
-    IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config)
-    {
-        winrt::apartment_context caller; // Capture calling context.
-        auto dispatcher = GetCurrentDispatcherQueue();
-        auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
-        CheckUseHdr(configImpl, dispatcher != nullptr);
-        co_await winrt::resume_background();
-        auto result = CreateFromUri(uri, configImpl, dispatcher);
+        auto result = CreateFromStream(stream, configImpl, dispatcher, windowId, useHdr);
         co_await caller;
         co_return result.as<FFmpegInteropX::FFmpegMediaSource>();
     }
 
-    IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
+    IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(
+        hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
     {
-        return CreateFromUriAsync(uri, FFmpegInteropX::MediaSourceConfig());
+        winrt::apartment_context caller; // Capture calling context.
+        auto dispatcher = GetCurrentDispatcherQueue();
+        auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
+        bool useHdr = false;
+        CheckUseHdr(configImpl, dispatcher != nullptr, useHdr, windowId);
+        co_await winrt::resume_background();
+        auto result = CreateFromUri(uri, configImpl, dispatcher, windowId, useHdr);
+        co_await caller;
+        co_return result.as<FFmpegInteropX::FFmpegMediaSource>();
     }
 
     DispatcherQueue FFmpegMediaSource::GetCurrentDispatcherQueue()
@@ -1368,7 +1374,7 @@ namespace winrt::FFmpegInteropX::implementation
             subConfig->AdditionalFFmpegSubtitleOptions.Insert(L"subfps",
                 winrt::box_value(winrt::to_hstring(videoDescriptor.EncodingProperties().FrameRate().Numerator()) + L"/" + winrt::to_hstring(videoDescriptor.EncodingProperties().FrameRate().Denominator())));
         }
-        auto externalSubsParser = FFmpegMediaSource::CreateFromStream(stream, subConfig, nullptr);
+        auto externalSubsParser = FFmpegMediaSource::CreateFromStream(stream, subConfig, dispatcher, windowId, useHdr);
 
         if (externalSubsParser->SubtitleStreams().Size() > 0)
         {
@@ -1759,9 +1765,8 @@ namespace winrt::FFmpegInteropX::implementation
         return result;
     }
 
-    void FFmpegMediaSource::CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation)
+    void FFmpegMediaSource::CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation, bool& useHdr, uint64_t& windowId)
     {
-        bool useHdr = false;
         switch (config->HdrSupport())
         {
         case HdrSupport::Enabled:
@@ -1772,22 +1777,30 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 try
                 {
-#ifdef  WinUI
-                    HWND handle = NULL;
-                    HWND* pHandle = &handle;
-                    static auto callback = [](HWND hwnd, LPARAM param)
-                        {
-                            if (GetParent(hwnd) == NULL)
-                            {
-                                *((HWND*)param) = hwnd;
-                                return FALSE;
-                            }
-                            return TRUE;
-                        };
-                    EnumThreadWindows(GetCurrentThreadId(), callback, (LPARAM)pHandle);
-                    if (handle)
+#ifdef WinUI
+                    if (windowId == 0)
                     {
-                        auto id = Microsoft::UI::GetWindowIdFromWindow(handle);
+                        HWND handle = NULL;
+                        HWND* pHandle = &handle;
+                        static auto callback = [](HWND hwnd, LPARAM param)
+                            {
+                                if (GetParent(hwnd) == NULL)
+                                {
+                                    *((HWND*)param) = hwnd;
+                                    return FALSE;
+                                }
+                                return TRUE;
+                            };
+                        EnumThreadWindows(GetCurrentThreadId(), callback, (LPARAM)pHandle);
+                        if (handle)
+                        {
+                            windowId = Microsoft::UI::GetWindowIdFromWindow(handle).Value;
+                        }
+                    }
+
+                    if (windowId)
+                    {
+                        Microsoft::UI::WindowId id{ windowId };
                         auto displayInfo = Microsoft::Graphics::Display::DisplayInformation::CreateForWindowId(id);
                         if (displayInfo)
                         {
@@ -1818,7 +1831,6 @@ namespace winrt::FFmpegInteropX::implementation
         default:
             break;
         }
-        config->ApplyHdrColorInfo = useHdr;
     }
 
     std::shared_ptr<MediaSampleProvider> FFmpegMediaSource::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index)
@@ -1916,7 +1928,7 @@ namespace winrt::FFmpegInteropX::implementation
         else if (avVideoCodecCtx->hw_device_ctx)
         {
             hardwareDecoderStatus = HardwareDecoderStatus::Available;
-            videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new D3D11VideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, hardwareDecoderStatus, config->ApplyHdrColorInfo));
+            videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new D3D11VideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, hardwareDecoderStatus, useHdr));
         }
         else
         {
@@ -1924,7 +1936,7 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 hardwareDecoderStatus = HardwareDecoderStatus::NotAvailable;
             }
-            videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new UncompressedVideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, hardwareDecoderStatus, config->ApplyHdrColorInfo));
+            videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new UncompressedVideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, hardwareDecoderStatus, useHdr));
         }
 
 #pragma warning (default: 4973)

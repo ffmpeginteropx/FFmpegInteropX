@@ -194,8 +194,6 @@ namespace winrt::FFmpegInteropX::implementation
         bool IsFrameGrabber;
         /*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
         bool IsExternalSubtitleParser;
-        //Apply hdr color info, if available in the file
-        bool ApplyHdrColorInfo;
 
         /*Used to pass additional, specific options to external sub parsers*/
         PropertySet AdditionalFFmpegSubtitleOptions = {nullptr};

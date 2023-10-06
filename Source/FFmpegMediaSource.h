@@ -43,29 +43,62 @@ namespace winrt::FFmpegInteropX::implementation
     {
         virtual ~FFmpegMediaSource();
 
+#ifdef WinUI
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config);
-
-        ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, Microsoft::UI::WindowId windowId)
+        {
+            return CreateFromStreamAsync(stream, config, windowId.Value);
+        }
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, Microsoft::UI::WindowId windowId)
+        {
+            return CreateFromUriAsync(uri, config, windowId.Value);
+        }
+
+        ///<summary>Creates a FFmpegMediaSource from a file.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName, FFmpegInteropX::MediaSourceConfig config, Microsoft::UI::WindowId windowId)
+        {
+            return CreateFromUriAsync(fileName, config, windowId.Value);
+        }
+#endif
+
+
+        ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config)
+        {
+            return CreateFromStreamAsync(stream, config, 0);
+        }
+
+        ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream)
+        {
+            return CreateFromStreamAsync(stream, FFmpegInteropX::MediaSourceConfig(), 0);
+        }
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config)
+        {
+            return CreateFromUriAsync(uri, config, 0);
+        }
+
+        ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
+        {
+            return CreateFromUriAsync(uri, FFmpegInteropX::MediaSourceConfig(), 0);
+        }
 
 #ifndef UWP
         ///<summary>Creates a FFmpegMediaSource from a file.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName, FFmpegInteropX::MediaSourceConfig config)
         {
-            return CreateFromUriAsync(fileName, config);
+            return CreateFromUriAsync(fileName, config, 0);
         }
 
         ///<summary>Creates a FFmpegMediaSource from a file.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName)
         {
-            return CreateFromUriAsync(fileName);
+            return CreateFromUriAsync(fileName, FFmpegInteropX::MediaSourceConfig(), 0);
         }
 #endif
 
@@ -196,7 +229,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         void Close();
 
-        FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, DispatcherQueue const& dispatcher);
+        FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, DispatcherQueue const& dispatcher, uint64_t windowId, bool useHdr);
 
     private:
 
@@ -218,13 +251,15 @@ namespace winrt::FFmpegInteropX::implementation
         void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList  const& sender, TimedMetadataPresentationModeChangedEventArgs  const& args);
         void InitializePlaybackItem(MediaPlaybackItem  const& playbackitem);
         bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus const& status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
-        static void CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation);
+        static void CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation, bool& useHdr, uint64_t& windowId);
         void CheckExtendDuration(MediaStreamSample sample);
         static DispatcherQueue GetCurrentDispatcherQueue();
 
     public://internal:
-        static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher);
-        static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, DispatcherQueue  const& dispatcher);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher, uint64_t windowId, bool useHdr);
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, DispatcherQueue  const& dispatcher, uint64_t windowId, bool useHdr);
         HRESULT Seek(TimeSpan const& position, TimeSpan& actualPosition, bool allowFastSeek);
 
         std::shared_ptr<MediaSampleProvider> VideoSampleProvider()
@@ -289,6 +324,9 @@ namespace winrt::FFmpegInteropX::implementation
         com_ptr<ID3D11DeviceContext> deviceContext;
         HANDLE deviceHandle = nullptr;
         com_ptr<IMFDXGIDeviceManager> deviceManager;
+
+        uint64_t windowId;
+        bool useHdr;
 
         bool isFirstSeek;
         bool isFirstSeekAfterStreamSwitch = false;
