@@ -4,14 +4,15 @@
     <IsPackable>false</IsPackable>
     <PlatformTarget>x64</PlatformTarget>
     <OutputType>Library</OutputType>
-    <Platforms>x64;x86</Platforms>
+    <Platforms>x64;x86;ARM64</Platforms>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Configurations>Debug_WinUI;Release_WinUI;Debug_Desktop;Release_Desktop</Configurations>
   </PropertyGroup>
   
   <PropertyGroup>
     <IntDir>..\Intermediate\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>..\Output\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <OutDirFFmpegInteropX>..\Output\FFmpegInteropX\$(PlatformTarget)\$(Configuration)_WinUI\</OutDirFFmpegInteropX>
+    <OutDirFFmpegInteropX>..\Output\FFmpegInteropX\$(PlatformTarget)\$(Configuration)\</OutDirFFmpegInteropX>
   </PropertyGroup>
   
   <ItemGroup>
@@ -37,7 +38,7 @@
     <PackageReference Include="coverlet.collector" Version="3.1.2" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)'=='Debug'">
+  <ItemGroup Condition="'$(Configuration)'=='Debug_WinUI' Or '$(Configuration)'=='Debug_Desktop'">
     <ProjectReference Include="..\Source\FFmpegInteropX.vcxproj">
       <Private>True</Private>
     </ProjectReference>
@@ -49,7 +50,7 @@
     </None>
   </ItemGroup>
   
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+  <PropertyGroup Condition="'$(Configuration)'=='Debug_WinUI' Or '$(Configuration)'=='Debug_Desktop'">
     <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
     <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
@@ -57,12 +58,16 @@
     </ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
   </PropertyGroup>
 
-  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="'$(Configuration)'=='Debug'">
+  <ItemGroup Condition="'$(Configuration)'=='Release_WinUI' Or '$(Configuration)'=='Debug_WinUI'">
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230913002" />
+  </ItemGroup>
+  
+  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="'$(Configuration)'=='Debug_WinUI'">
     <Copy SourceFiles="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" DestinationFolder="$(OutDir)runtimes\win10-$(Platform)\native" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" DestinationFolder="$(OutDir)runtimes\win10-$(Platform)\native" SkipUnchangedFiles="true" />
   </Target>
 
-  <ItemGroup Condition="'$(Configuration)'=='Release'">
+  <ItemGroup Condition="'$(Configuration)'=='Release_WinUI' Or '$(Configuration)'=='Release_Desktop'">
     <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-pre1" />
   </ItemGroup>
   
