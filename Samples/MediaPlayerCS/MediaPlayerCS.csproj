@@ -147,7 +147,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX.FFmpegUWP">
-      <Version>5.1.100</Version>
+      <Version>5.*</Version>
+	  <ExcludeAssets>all</ExcludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.9</Version>
@@ -163,7 +164,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup Condition="'$(Configuration)'=='Release'">
-    <PackageReference Include="FFmpegInteropX.UWP" Version="2.0.0-pre1" />
+    <PackageReference Include="FFmpegInteropX.UWP" Version="2.0.0-pre1">
+    </PackageReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

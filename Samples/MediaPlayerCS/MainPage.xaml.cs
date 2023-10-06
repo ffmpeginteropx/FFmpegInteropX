@@ -95,6 +95,7 @@ namespace MediaPlayerCS
             {
                 actualFFmpegMSS.SetStreamDelay(streamToDelay, TimeSpan.FromSeconds(StreamDelays.Value));
             }
+
         }
 
         private async void MainPage_KeyDown(CoreWindow sender, KeyEventArgs args)
