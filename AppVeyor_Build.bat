@@ -6,7 +6,7 @@ REM msbuild FFmpegInteropX.sln /m /t:build /p:Configuration=Debug;Platform=x64;A
 
 msbuild FFmpegInteropX.sln /m /restore /t:build /p:Configuration=Debug_WinUI /p:Platform=x64 /p:AppxBundle=Never /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" || exit
 
-vstest.console /logger:Appveyor Output\FFmpegInteropX.UnitTests\x64\Debug\FFmpegInteropX.UnitTests.dll || exit
+vstest.console /logger:Appveyor Output\FFmpegInteropX.UnitTests\x64\Debug_WinUI\FFmpegInteropX.UnitTests.dll || exit
 
 REM msbuild Source\FFmpegInteropX.DotNet.csproj /restore /t:build /p:Configuration=Release;Platform=AnyCPU;AppxBundle=Never;WINUI=1 /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" || exit
 
