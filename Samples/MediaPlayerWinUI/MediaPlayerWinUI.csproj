@@ -35,24 +35,37 @@
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)'=='Debug'">
-    <ProjectReference Include="..\..\Source\FFmpegInteropX.vcxproj" />
-	<None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" Link="FFmpegInteropX.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" Link="FFmpegInteropX.pdb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
-    <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
-    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-        None
-    </ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-  </PropertyGroup>
-  
+  <Choose>
+    <When Condition="'$(Configuration)'=='Debug'">
+
+      <ItemGroup>
+        <ProjectReference Include="..\..\Source\FFmpegInteropX.vcxproj">
+          <Private>True</Private>
+        </ProjectReference>
+        <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" Link="FFmpegInteropX.dll">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" Link="FFmpegInteropX.pdb">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+      </ItemGroup>
+
+      <PropertyGroup>
+        <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
+        <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
+        <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+            None
+        </ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+      </PropertyGroup>
+
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-pre2" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+
   <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="'$(Configuration)'=='Debug'">
     <ItemGroup>
       <AllItemsFullPathWithTargetPath Include="$(OutDir)FFmpegInteropX.dll">
@@ -64,10 +77,6 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </AllItemsFullPathWithTargetPath>
     </ItemGroup>
-  </Target>
+  </Target>  
 
-  <ItemGroup Condition="'$(Configuration)'=='Release'">
-    <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-pre1" />
-  </ItemGroup>
-  
 </Project>

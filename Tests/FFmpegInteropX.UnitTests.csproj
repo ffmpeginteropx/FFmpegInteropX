@@ -4,7 +4,7 @@
     <IsPackable>false</IsPackable>
     <PlatformTarget>x64</PlatformTarget>
     <OutputType>Library</OutputType>
-    <Platforms>x64;x86;ARM64</Platforms>
+    <Platforms>x64;x86;ARM64;ARM32</Platforms>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <Configurations>Debug_WinUI;Release_WinUI;Debug_Desktop;Release_Desktop</Configurations>
   </PropertyGroup>
@@ -24,9 +24,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX.FFmpegUWP" Version="5.1.100" />
@@ -38,37 +35,51 @@
     <PackageReference Include="coverlet.collector" Version="3.1.2" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)'=='Debug_WinUI' Or '$(Configuration)'=='Debug_Desktop'">
-    <ProjectReference Include="..\Source\FFmpegInteropX.vcxproj">
-      <Private>True</Private>
-    </ProjectReference>
-  <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" Link="FFmpegInteropX.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" Link="FFmpegInteropX.pdb">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  
-  <PropertyGroup Condition="'$(Configuration)'=='Debug_WinUI' Or '$(Configuration)'=='Debug_Desktop'">
-    <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
-    <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
-    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-        None
-    </ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
-  </PropertyGroup>
+  <Choose>
+    <When Condition="'$(Configuration)'=='Debug_Desktop' Or '$(Configuration)'=='Debug_WinUI'">
 
-  <ItemGroup Condition="'$(Configuration)'=='Release_WinUI' Or '$(Configuration)'=='Debug_WinUI'">
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230913002" />
-  </ItemGroup>
-  
-  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="'$(Configuration)'=='Debug_WinUI'">
+      <ItemGroup>
+        <ProjectReference Include="..\Source\FFmpegInteropX.vcxproj">
+          <Private>True</Private>
+        </ProjectReference>
+        <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" Link="FFmpegInteropX.dll">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" Link="FFmpegInteropX.pdb">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+      </ItemGroup>
+
+      <PropertyGroup>
+        <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
+        <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
+        <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+            None
+        </ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+      </PropertyGroup>
+
+
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-pre2" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+
+  <Choose>
+    <When Condition="'$(Configuration)'=='Release_WinUI' Or '$(Configuration)'=='Debug_WinUI'">
+      <ItemGroup>
+        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230913002" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+    </Otherwise>
+  </Choose>
+
+  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="'$(Configuration)'=='Debug_Desktop' Or '$(Configuration)'=='Debug_WinUI'">
     <Copy SourceFiles="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" DestinationFolder="$(OutDir)runtimes\win10-$(Platform)\native" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" DestinationFolder="$(OutDir)runtimes\win10-$(Platform)\native" SkipUnchangedFiles="true" />
   </Target>
-
-  <ItemGroup Condition="'$(Configuration)'=='Release_WinUI' Or '$(Configuration)'=='Release_Desktop'">
-    <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-pre1" />
-  </ItemGroup>
   
 </Project>

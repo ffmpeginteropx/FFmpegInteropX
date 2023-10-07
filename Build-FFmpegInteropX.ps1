@@ -90,6 +90,20 @@ function Build-Platform {
         /p:useenv=true
 
     if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.vcxproj." }
+
+    if ($Platform -eq "x64" -and $WindowsTarget -ne "UWP")
+    {
+        MSBuild.exe $SolutionDir\FFmpegInteropX.sln `
+            /restore `
+            /t:FFmpegInteropX_DotNet `
+            /p:Configuration=${Configuration}_${WindowsTarget} `
+            /p:Platform=$Platform `
+            /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+            /p:useenv=true
+
+        if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.DotNet.csproj." }
+    }
+
 }
 
 Write-Host
@@ -140,11 +154,19 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
     }
 
     foreach ($platform in $Platforms) {
+        # WinUI does not support ARM
+        if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
+            continue;
+
         $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" $addparams"
         $processes[$platform] = $proc
     }
 
     foreach ($platform in $Platforms) {
+        # WinUI does not support ARM
+        if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
+            continue;
+
         $processes[$platform].WaitForExit();
         $result = $processes[$platform].ExitCode;
         if ($result -eq 0)
@@ -164,9 +186,7 @@ else
 
         # WinUI does not support ARM
         if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
-        {
             continue;
-        }
 
         try
         {
