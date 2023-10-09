@@ -447,7 +447,7 @@ namespace MediaPlayerWinUI
                 try
                 {
                     FileOpenPicker filePicker = new FileOpenPicker();
-                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(CurrentMainWindow);
+                    InitializeWithWindow.Initialize(filePicker, WindowNative.GetWindowHandle(CurrentMainWindow));
 
                     filePicker.SettingsIdentifier = "SubtitleFile";
                     filePicker.ViewMode = PickerViewMode.Thumbnail;
