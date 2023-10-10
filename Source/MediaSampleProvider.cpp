@@ -211,7 +211,7 @@ void MediaSampleProvider::InitializeStreamInfo()
     }
 }
 
-MediaStreamSample MediaSampleProvider::GetNextSample()
+IAsyncOperation<MediaStreamSample> MediaSampleProvider::GetNextSample()
 {
     //DebugMessage(L"GetNextSample\n");
 
@@ -259,8 +259,8 @@ MediaStreamSample MediaSampleProvider::GetNextSample()
             DisableStream();
         }
     }
-
-    return sample;
+  
+    co_return sample;
 }
 
 HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration)
@@ -473,6 +473,6 @@ void MediaSampleProvider::Detach()
 
 void free_buffer(void* lpVoid)
 {
-    auto buffer = (AVBufferRef *)lpVoid;
+    auto buffer = (AVBufferRef*)lpVoid;
     av_buffer_unref(&buffer);
 }

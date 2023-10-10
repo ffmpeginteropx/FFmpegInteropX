@@ -100,7 +100,7 @@ namespace winrt::FFmpegInteropX::implementation
         if (interopMSS->Duration().count() >= position.count())
         {
             TimeSpan actualPosition = position;
-            seekSucceeded = SUCCEEDED(interopMSS->Seek(position, actualPosition, false));
+            seekSucceeded = SUCCEEDED(co_await interopMSS->Seek(position, actualPosition, false));
         }
 
         int framesSkipped = 0;
@@ -115,7 +115,7 @@ namespace winrt::FFmpegInteropX::implementation
                 co_return nullptr;
             }
 
-            auto sample = interopMSS->VideoSampleProvider()->GetNextSample();
+            auto sample = co_await interopMSS->VideoSampleProvider()->GetNextSample();
             if (sample == nullptr)
             {
                 // if we hit end of stream, use last decoded sample (if any), otherwise fail
@@ -170,7 +170,7 @@ namespace winrt::FFmpegInteropX::implementation
         co_await winrt::resume_background();
 
         VideoFrame result{ nullptr };
-        auto sample = interopMSS->VideoSampleProvider()->GetNextSample();
+        auto sample = co_await interopMSS->VideoSampleProvider()->GetNextSample();
         if (sample)
         {
             result = VideoFrame(

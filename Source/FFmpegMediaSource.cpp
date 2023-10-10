@@ -1981,7 +1981,7 @@ namespace winrt::FFmpegInteropX::implementation
         return hr;
     }
 
-    void FFmpegMediaSource::OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args)
+    task<void> FFmpegMediaSource::OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args)
     {
         std::lock_guard lock(mutex);
         if (mss == nullptr)
@@ -1989,6 +1989,8 @@ namespace winrt::FFmpegInteropX::implementation
             return;
         }
         MediaStreamSourceStartingRequest request = args.Request();
+        auto deferal = args.Request().GetDeferral();
+        auto lifetime = get_strong();
 
         try
         {
@@ -2039,11 +2041,12 @@ namespace winrt::FFmpegInteropX::implementation
                 }
 
                 TimeSpan actualPosition = request.StartPosition().Value();
-                auto hr = Seek(request.StartPosition().Value(), actualPosition, true);
+                auto hr = co_await Seek(request.StartPosition().Value(), actualPosition, true);
                 if (SUCCEEDED(hr))
                 {
                     request.SetActualStartPosition(actualPosition);
                 }
+
             }
         }
         catch (...)
@@ -2053,17 +2056,21 @@ namespace winrt::FFmpegInteropX::implementation
 
         isFirstSeek = false;
         isFirstSeekAfterStreamSwitch = false;
+        deferal.Complete();
     }
 
-    void FFmpegMediaSource::OnSampleRequested(winrt::Windows::Media::Core::MediaStreamSource const& sender, winrt::Windows::Media::Core::MediaStreamSourceSampleRequestedEventArgs const& args)
+    task<void> FFmpegMediaSource::OnSampleRequested(winrt::Windows::Media::Core::MediaStreamSource const& sender, winrt::Windows::Media::Core::MediaStreamSourceSampleRequestedEventArgs const& args)
     {
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
+
         if (mss == nullptr)
         {
             return;
         }
 
+        auto deferal = args.Request().GetDeferral();
+        auto lifetime = get_strong();
         try
         {
             if (config->ReadAheadBufferEnabled())
@@ -2072,14 +2079,14 @@ namespace winrt::FFmpegInteropX::implementation
             }
             if (currentAudioStream && args.Request().StreamDescriptor() == currentAudioStream->StreamDescriptor())
             {
-                auto sample = currentAudioStream->GetNextSample();
+                auto sample = co_await currentAudioStream->GetNextSample();
                 CheckExtendDuration(sample);
                 args.Request().Sample(sample);
             }
             else if (currentVideoStream && args.Request().StreamDescriptor() == currentVideoStream->StreamDescriptor())
             {
-                CheckVideoDeviceChanged();
-                auto sample = currentVideoStream->GetNextSample();
+                co_await CheckVideoDeviceChanged();
+                auto sample = co_await currentVideoStream->GetNextSample();
                 CheckExtendDuration(sample);
                 args.Request().Sample(sample);
             }
@@ -2092,6 +2099,8 @@ namespace winrt::FFmpegInteropX::implementation
         {
             DebugMessage(L"Exception in OnSampleRequested()!");
         }
+
+        deferal.Complete();
     }
 
     void FFmpegMediaSource::CheckExtendDuration(MediaStreamSample sample)
@@ -2112,7 +2121,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    void FFmpegMediaSource::CheckVideoDeviceChanged()
+    concurrency::task<void> FFmpegMediaSource::CheckVideoDeviceChanged()
     {
         bool hasDeviceChanged = false;
         HRESULT hr = S_OK;
@@ -2171,7 +2180,7 @@ namespace winrt::FFmpegInteropX::implementation
                     // decode video until we are at target position
                     while (true)
                     {
-                        auto sample = currentVideoStream->GetNextSample();
+                        auto sample = co_await currentVideoStream->GetNextSample();
                         if (!sample || sample.Timestamp() >= lastVideoTimestamp)
                         {
                             break;
@@ -2184,7 +2193,7 @@ namespace winrt::FFmpegInteropX::implementation
                         TimeSpan lastAudioTimestamp = currentAudioStream->LastSampleTimestamp;
                         while (true)
                         {
-                            auto sample = currentAudioStream->GetNextSample();
+                            auto sample = co_await currentAudioStream->GetNextSample();
                             if (!sample || sample.Timestamp() >= lastAudioTimestamp)
                             {
                                 break;
@@ -2246,7 +2255,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    HRESULT FFmpegMediaSource::Seek(const TimeSpan& position, TimeSpan& actualPosition, bool allowFastSeek)
+    task<HRESULT> FFmpegMediaSource::Seek(const TimeSpan& position, TimeSpan& actualPosition, bool allowFastSeek)
     {
         DebugMessage(L"Seek\n");
 
@@ -2257,17 +2266,17 @@ namespace winrt::FFmpegInteropX::implementation
         bool fastSeek = allowFastSeek && config->FastSeek() && currentVideoStream && PlaybackSession() && !isFirstSeekAfterStreamSwitch;
         if (isSeekBeforeStreamSwitch)
         {
-            return S_OK;
+            co_return S_OK;
         }
         else if (position == currentPosition && position == lastPosition && position == lastSeek && !isFirstSeekAfterStreamSwitch && position.count() > 0)
         {
             DebugMessage(L"Skipping double seek request.\n");
-            return S_OK;
+            co_return S_OK;
         }
         else
         {
             lastSeek = position;
-            return m_pReader->Seek(position, actualPosition, lastPosition, fastSeek, currentVideoStream, currentAudioStream);
+            co_return co_await m_pReader->Seek(position, actualPosition, lastPosition, fastSeek, currentVideoStream, currentAudioStream);
         }
     }
 

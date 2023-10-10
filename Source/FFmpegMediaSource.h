@@ -243,9 +243,9 @@ namespace winrt::FFmpegInteropX::implementation
         std::shared_ptr<MediaSampleProvider> CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
         std::shared_ptr<MediaSampleProvider> CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
         HRESULT ParseOptions(PropertySet const& ffmpegOptions);
-        void OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args);
-        void OnSampleRequested(MediaStreamSource const& sender, MediaStreamSourceSampleRequestedEventArgs const& args);
-        void CheckVideoDeviceChanged();
+        task<void> OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args);
+        task<void> OnSampleRequested(MediaStreamSource const& sender, MediaStreamSourceSampleRequestedEventArgs const& args);
+        task<void> CheckVideoDeviceChanged();
         void OnSwitchStreamsRequested(MediaStreamSource  const& sender, MediaStreamSourceSwitchStreamsRequestedEventArgs  const& args);
         void OnAudioTracksChanged(MediaPlaybackItem  const& sender, IVectorChangedEventArgs  const& args);
         void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList  const& sender, TimedMetadataPresentationModeChangedEventArgs  const& args);
@@ -260,7 +260,7 @@ namespace winrt::FFmpegInteropX::implementation
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
         static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher, uint64_t windowId, bool useHdr);
         static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, DispatcherQueue  const& dispatcher, uint64_t windowId, bool useHdr);
-        HRESULT Seek(TimeSpan const& position, TimeSpan& actualPosition, bool allowFastSeek);
+        task<HRESULT> Seek(TimeSpan const& position, TimeSpan& actualPosition, bool allowFastSeek);
 
         std::shared_ptr<MediaSampleProvider> VideoSampleProvider()
         {

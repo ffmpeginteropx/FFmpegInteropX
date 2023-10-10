@@ -24,7 +24,7 @@ using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::Windows::Media::MediaProperties;
 using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
 using namespace std;
-
+using namespace concurrency;
 using namespace winrt::FFmpegInteropX;
 
 class FFmpegReader;
@@ -34,7 +34,7 @@ class MediaSampleProvider
 {
 public:
     virtual ~MediaSampleProvider();
-    virtual winrt::Windows::Media::Core::MediaStreamSample GetNextSample();
+    virtual IAsyncOperation<winrt::Windows::Media::Core::MediaStreamSample> GetNextSample();
     virtual void Flush(bool flushBuffers);
 
     winrt::Windows::Media::Core::IMediaStreamDescriptor StreamDescriptor()

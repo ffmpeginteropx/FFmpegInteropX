@@ -127,12 +127,12 @@ void FFmpegReader::FlushCodecsAndBuffers()
     isEof = false;
 }
 
-HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
+task<HRESULT> FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
 {
     Stop();
 
     std::lock_guard lock(mutex);
-
+    
     auto hr = S_OK;
     if (readResult != 0)
     {
@@ -142,14 +142,14 @@ HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan
 
     auto isForwardSeek = position > currentPosition;
 
-    if (isForwardSeek && TrySeekBuffered(position, actualPosition, fastSeek, isForwardSeek, videoStream, audioStream))
+    if (isForwardSeek && co_await TrySeekBuffered(position, actualPosition, fastSeek, isForwardSeek, videoStream, audioStream))
     {
         // all good
         DebugMessage(L"BufferedSeek!\n");
     }
     else if (fastSeek)
     {
-        hr = SeekFast(position, actualPosition, currentPosition, videoStream, audioStream);
+        hr = co_await SeekFast(position, actualPosition, currentPosition, videoStream, audioStream);
     }
     else
     {
@@ -169,10 +169,10 @@ HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan
         }
     }
 
-    return hr;
+    co_return hr;
 }
 
-HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
+task<HRESULT> FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
 {
     DebugMessage(L"SeekFast\n");
 
@@ -243,7 +243,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
             if (std::dynamic_pointer_cast<UncompressedSampleProvider>(videoStream))
             {
                 // If we do not use passthrough, we can decode (and drop) then next sample to get the correct time.
-                auto sample = videoStream->GetNextSample();
+                auto sample = co_await videoStream->GetNextSample();
                 if (sample)
                 {
                     timestampVideo = sample.Timestamp();
@@ -318,7 +318,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                             videoStream->SkipPacketsUntilTimestamp(timestampVideo);
                             audioStream->SkipPacketsUntilTimestamp(audioTarget);
 
-                            auto sample = audioStream->GetNextSample();
+                            auto sample = co_await audioStream->GetNextSample();
                             if (sample)
                             {
                                 actualPosition = sample.Timestamp() + sample.Duration();
@@ -334,7 +334,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                         if (hr == S_OK && (config.FastSeekCleanAudio() || (timestampAudio + timestampAudioDuration) <= timestampVideo))
                         {
                             // decode one audio sample to get clean output
-                            auto sample = audioStream->GetNextSample();
+                            auto sample = co_await audioStream->GetNextSample();
                             if (sample)
                             {
                                 actualPosition = sample.Timestamp() + sample.Duration();
@@ -346,10 +346,10 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
         }
     }
 
-    return hr;
+    co_return hr;
 }
 
-bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, bool isForwardSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
+task<bool> FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, bool fastSeek, bool isForwardSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
 {
     bool result = true;
     int vIndex = -1;
@@ -401,7 +401,7 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
                 audioStream->packetBuffer->DropPackets(aIndex);
 
                 // decode one audio sample to get clean output
-                auto sample = audioStream->GetNextSample();
+                auto sample = co_await audioStream->GetNextSample();
                 if (sample)
                 {
                     // TODO check if this is a good idea
@@ -417,7 +417,7 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
         actualPosition = targetPosition;
     }
 
-    return result;
+    co_return result;
 }
 
 void FFmpegReader::ReadDataLoop()
