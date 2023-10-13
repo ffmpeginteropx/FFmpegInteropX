@@ -768,6 +768,9 @@ namespace FFmpegInteropX
         ///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
         Boolean PreventModifiedSubtitleDurationOverlap{ get; set; };
 
+        ///<summary>Optional gap to keep between cues when extending durations.</summary>
+        Windows.Foundation.TimeSpan ModifiedSubtitleDurationGap{ get; set; };
+
         ///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
         String FFmpegVideoFilters{ get; set; };

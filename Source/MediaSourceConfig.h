@@ -176,6 +176,9 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
         PROPERTY(PreventModifiedSubtitleDurationOverlap, bool, true);
 
+        ///<summary>Optional gap to keep between cues when extending durations.</summary>
+        PROPERTY(ModifiedSubtitleDurationGap, TimeSpan, TimeSpan{ 2500000 });
+
         ///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
         PROPERTY_CONST(FFmpegVideoFilters, hstring, {});
