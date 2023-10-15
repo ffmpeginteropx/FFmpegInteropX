@@ -42,8 +42,11 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Allow video output in NV12 format.</summary>
         PROPERTY(VideoOutputAllowNv12, bool, true);
 
-        ///<summary>The maximum number of video decoding threads. Setting to means using the number of logical CPU cores.</summary>
-        PROPERTY(MaxVideoThreads, int32_t, 0);
+        ///<summary>The maximum number of video decoding threads. Setting to 0 means using the number of logical CPU cores.</summary>
+        PROPERTY(MaxDecoderThreads, int32_t, 0);
+
+        ///<summary>The default name to use for video streams.</summary>
+        PROPERTY_CONST(DefaultStreamName, hstring, L"Video Stream");
 
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
         PROPERTY_CONST(FFmpegVideoFilters, hstring, {});

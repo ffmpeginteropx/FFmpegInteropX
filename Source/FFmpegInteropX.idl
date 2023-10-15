@@ -502,19 +502,11 @@ namespace FFmpegInteropX
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
         void SetFFmpegVideoFilters(String videoFilters, VideoStreamInfo videoStream);
 
-        [deprecated("Use ClearFFmpegAudioFilters instead.", deprecate, 1)]
-        ///<summary>Disables audio filters.</summary>
-        void DisableAudioEffects();
-
         ///<summary>Clears audio filters.</summary>
         void ClearFFmpegAudioFilters();
 
         ///<summary>Disables audio filters for the specified audio stream.</summary>
         void ClearFFmpegAudioFilters(AudioStreamInfo audioStream);
-
-        [deprecated("Use ClearFFmpegVideoFilters instead.", deprecate, 1)]
-        ///<summary>Disables video filters.</summary>
-        void DisableVideoEffects();
 
         ///<summary>Clear video filters.</summary>
         void ClearFFmpegVideoFilters();
@@ -595,15 +587,6 @@ namespace FFmpegInteropX
         ///<summary>Gets the MediaPlaybackItem that was created before by using CreateMediaPlaybackItem.</summary>
         Windows.Media.Playback.MediaPlaybackItem PlaybackItem{ get; };
 
-        [deprecated("Use GetStreamDelay with the desired subtitle stream info instead. Accessing this property when using the SetStreamDelay API is dangerous, as it may return inaccurate results", deprecate, 1)]
-        ///<summary>The current subtitle delay used by this instance.</summary>
-        Windows.Foundation.TimeSpan SubtitleDelay{ get; };
-
-        ///<summary>Gets or sets the BufferTime of the MediaStreamSource.</summary>
-        ///<remarks>A value of 0 is recommended for local files, streaming sources should use higher values.</remarks>
-        [deprecated("Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration on the config class instead.", deprecate, 1)]
-        Windows.Foundation.TimeSpan BufferTime{ get; set; };
-
         ///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
         ///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this .</remarks>
         Windows.Media.Playback.MediaPlaybackSession PlaybackSession{ get; set; };
@@ -643,19 +626,19 @@ namespace FFmpegInteropX
 
  runtimeclass AudioConfig
     {
-        ///<summary>Enable passthrough for MP3 audio to system decoder.</summary>
-        ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
-        Boolean PassthroughAudioMP3{ get; set; };
+         ///<summary>Use system decoder for MP3 decoding.</summary>
+         ///<remarks>This could allow hardware decoding on some platforms (e.g. Hololens). Not recommended for PC.</remarks>
+         Boolean SystemDecoderMP3{ get; set; };
 
-        ///<summary>Enable passthrough for AAC audio to system decoder.</summary>
-        ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
-        Boolean PassthroughAudioAAC{ get; set; };
+         ///<summary>Use system decoder for AAC decoding.</summary>
+         ///<remarks>This could allow hardware decoding on some platforms (e.g. Hololens). Not recommended for PC.</remarks>
+         Boolean SystemDecoderAAC{ get; set; };
 
-        ///<summary>The maximum number of audio decoding threads.</summary>
-        UInt32 MaxAudioThreads{ get; set; };
+         ///<summary>The maximum number of audio decoding threads. Setting to 0 means using the number of logical CPU cores.</summary>
+         UInt32 MaxDecoderThreads{ get; set; };
 
         ///<summary>The default name to use for audio streams.</summary>
-        String DefaultAudioStreamName{ get; set; };
+        String DefaultStreamName{ get; set; };
 
         ///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegMediaSource.SetFFmpegAudioFilters().</summary>
         String FFmpegAudioFilters{ get; set; };
@@ -699,8 +682,11 @@ namespace FFmpegInteropX
         ///<summary>Allow video output in NV12 format.</summary>
         Boolean VideoOutputAllowNv12{ get; set; };
 
-        ///<summary>The maximum number of video decoding threads.</summary>
-        UInt32 MaxVideoThreads{ get; set; };
+        ///<summary>The maximum number of video decoding threads. Setting to 0 means using the number of logical CPU cores.</summary>
+        UInt32 MaxDecoderThreads{ get; set; };
+
+        ///<summary>The default name to use for video streams.</summary>
+        String DefaultStreamName{ get; set; };
 
         ///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
         ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
@@ -727,12 +713,12 @@ namespace FFmpegInteropX
         ///<summary>The character encoding used to decode ANSI encoded subtitles. By default, the active windows codepage is used.</summary>
         CharacterEncoding AnsiSubtitleEncoding{ get; set; };
 
-       ///<summary>The subtitle delay will be initially applied to all subtitle tracks.
+        ///<summary>The subtitle delay will be initially applied to all subtitle tracks.
         ///Use SetSubtitleDelay() on the FFmpegMediaSource instance if you want to change the delay during playback.</summary>
         Windows.Foundation.TimeSpan DefaultSubtitleDelay{ get; set; };
 
         ///<summary>The default name to use for subtitle streams.</summary>
-        String DefaultSubtitleStreamName{ get; set; };
+        String DefaultStreamName{ get; set; };
 
         ///<summary>The default name to use for external subtitle streams.</summary>
         String DefaultExternalSubtitleStreamName{ get; set; };
@@ -762,10 +748,6 @@ namespace FFmpegInteropX
 
         ///<summary>The maximum number of bytes to read in one chunk for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
         UInt32 FileStreamReadSize{ get; set; };
-
-        ///<summary>The buffer size in bytes to use for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
-        [deprecated("Deprecated due to irritating name. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
-        UInt32 StreamBufferSize{ get; set; };
 
         ///<summary>Enables or disables the read-ahead buffer.</summary>
         ///<remarks>This value can be changed any time during playback.</remarks>

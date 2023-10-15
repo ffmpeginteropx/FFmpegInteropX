@@ -120,16 +120,10 @@ namespace winrt::FFmpegInteropX::implementation
         void SetFFmpegVideoFilters(hstring const& videoFilters, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
 
         ///<summary>Disables audio filters.</summary>
-        void DisableAudioEffects();
-
-        ///<summary>Disables audio filters.</summary>
         void ClearFFmpegAudioFilters();
 
         ///<summary>Disables audio filters for the specified audio stream.</summary>
         void ClearFFmpegAudioFilters(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
-
-        ///<summary>Disables video filters.</summary>
-        void DisableVideoEffects();
 
         ///<summary>Clears video filters.</summary>
         void ClearFFmpegVideoFilters();
@@ -211,27 +205,10 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Gets the MediaPlaybackItem that was created before by using CreateMediaPlaybackItem.</summary>
         MediaPlaybackItem PlaybackItem();
 
-
-        ///<summary>The current subtitle delay used by this instance.</summary>
-        TimeSpan SubtitleDelay();
-
-        ///<summary>Gets or sets the BufferTime of the MediaStreamSource.</summary>
-        ///<remarks>A value of 0 is recommended for local files, streaming sources should use higher values.</remarks>
-        TimeSpan BufferTime();
-        void BufferTime(TimeSpan const& value);
-
         ///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
         ///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this .</remarks>
         MediaPlaybackSession PlaybackSession();
         void PlaybackSession(MediaPlaybackSession const& value);
-
-        ///<summary>Gets the current audio filters</summary>
-        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
-        hstring GetCurrentAudioFilters();
-
-        ///<summary>Gets the current video filters</summary>
-        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
-        hstring GetCurrentVideoFilters();
 
         ///<summary>Sets a presentation timestamp delay for the given stream. Audio, video and subtitle synchronisation can be achieved this way. A positive value will cause samples (or subtitles) to be rendered at a later time. A negative value will make rendering come sooner</summary>
         void SetStreamDelay(winrt::FFmpegInteropX::IStreamInfo const& stream, winrt::Windows::Foundation::TimeSpan const& delay);
@@ -337,7 +314,6 @@ namespace winrt::FFmpegInteropX::implementation
         winrt::event_token sessionPositionEvent{};
 
         TimeSpan mediaDuration{};
-        TimeSpan subtitleDelay{};
 
         AVBufferRef* avHardwareContext = nullptr;
         AVBufferRef* avHardwareContextDefault = nullptr;

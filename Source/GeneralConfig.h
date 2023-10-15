@@ -20,10 +20,6 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>The maximum number of bytes to read in one chunk for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
         PROPERTY(FileStreamReadSize, int32_t, 16384);
 
-        ///<summary>The buffer size in bytes to use for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
-        //[deprecated("Deprecated due to irritating name. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
-        PROPERTY(StreamBufferSize, int32_t, 16384);
-
         ///<summary>Enables or disables the read-ahead buffer.</summary>
         ///<remarks>This value can be changed any time during playback.</remarks>
         PROPERTY(ReadAheadBufferEnabled, bool, false);

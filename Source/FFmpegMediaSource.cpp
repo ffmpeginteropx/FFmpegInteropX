@@ -75,7 +75,7 @@ namespace winrt::FFmpegInteropX::implementation
                 isRegistered = true;
             }
         }
-        subtitleDelay = config->Subtitles().DefaultSubtitleDelay();
+
         audioStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::AudioStreamInfo>();
         subtitleStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::SubtitleStreamInfo>();
         videoStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::VideoStreamInfo>();
@@ -153,7 +153,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (SUCCEEDED(hr))
         {
-            avIOCtx = avio_alloc_context(fileStreamBuffer, config->General().StreamBufferSize(), 0, (void*)winrt::get_abi(this), FileStreamRead, 0, FileStreamSeek);
+            avIOCtx = avio_alloc_context(fileStreamBuffer, config->General().FileStreamReadSize(), 0, (void*)winrt::get_abi(this), FileStreamRead, 0, FileStreamSeek);
             if (avIOCtx == nullptr)
             {
                 av_free(fileStreamBuffer);
@@ -872,7 +872,7 @@ namespace winrt::FFmpegInteropX::implementation
                     unsigned threads = std::thread::hardware_concurrency();
                     if (threads > 0)
                     {
-                        avAudioCodecCtx->thread_count = config->Audio().MaxAudioThreads() == 0 ? threads : min((int)threads, config->Audio().MaxAudioThreads());
+                        avAudioCodecCtx->thread_count = config->Audio().MaxDecoderThreads() == 0 ? threads : min((int)threads, config->Audio().MaxDecoderThreads());
                         avAudioCodecCtx->thread_type = FF_THREAD_FRAME | FF_THREAD_SLICE;
                     }
 
@@ -1024,7 +1024,7 @@ namespace winrt::FFmpegInteropX::implementation
                 if (!avVideoCodecCtx->hw_device_ctx)
                 {
                     unsigned threads = std::thread::hardware_concurrency();
-                    avVideoCodecCtx->thread_count = config->Video().MaxVideoThreads() == 0 ? threads : min((int)threads, config->Video().MaxVideoThreads());
+                    avVideoCodecCtx->thread_count = config->Video().MaxDecoderThreads() == 0 ? threads : min((int)threads, config->Video().MaxDecoderThreads());
                     avVideoCodecCtx->thread_type = config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
                 }
 
@@ -1063,8 +1063,6 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 subtitleStream->SetStreamDelay(delay);
             }
-
-            subtitleDelay = delay;
         }
         catch (...)
         {
@@ -1134,11 +1132,6 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    void FFmpegMediaSource::DisableAudioEffects()
-    {
-        ClearFFmpegAudioFilters();
-    }
-
     void FFmpegMediaSource::ClearFFmpegAudioFilters()
     {
         std::lock_guard lock(mutex);
@@ -1168,11 +1161,6 @@ namespace winrt::FFmpegInteropX::implementation
                 break;
             }
         }
-    }
-
-    void FFmpegMediaSource::DisableVideoEffects()
-    {
-        ClearFFmpegVideoFilters();
     }
 
     void FFmpegMediaSource::ClearFFmpegVideoFilters()
@@ -1440,7 +1428,7 @@ namespace winrt::FFmpegInteropX::implementation
         auto cancellation = co_await get_cancellation_token();
         auto subConfig(winrt::make_self<MediaSourceConfig>());
         subConfig->IsExternalSubtitleParser = true;
-        subConfig->Subtitles().DefaultSubtitleStreamName(streamName);
+        subConfig->Subtitles().DefaultStreamName(streamName);
         subConfig->Subtitles().DefaultSubtitleDelay(config->Subtitles().DefaultSubtitleDelay());
         subConfig->Subtitles().AutoCorrectAnsiSubtitles(this->config->Subtitles().AutoCorrectAnsiSubtitles());
         subConfig->Subtitles().AnsiSubtitleEncoding(this->config->Subtitles().AnsiSubtitleEncoding());
@@ -1627,28 +1615,6 @@ namespace winrt::FFmpegInteropX::implementation
         return playbackItemWeak.get();
     }
 
-    TimeSpan FFmpegMediaSource::SubtitleDelay()
-    {
-        return subtitleDelay;
-    }
-
-    TimeSpan FFmpegMediaSource::BufferTime()
-    {
-        if (auto strong = mssWeak.get())
-        {
-            return strong.BufferTime();
-        }
-        return TimeSpan{ 0 };
-    }
-
-    void FFmpegMediaSource::BufferTime(TimeSpan const& value)
-    {
-        if (auto strong = mssWeak.get())
-        {
-            strong.BufferTime(value);
-        }
-    }
-
     void FFmpegMediaSource::SetStreamDelay(FFmpegInteropX::IStreamInfo const& stream, TimeSpan const& delay)
     {
         std::lock_guard lock(mutex);
@@ -1813,7 +1779,7 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(avStream);
         std::shared_ptr<MediaSampleProvider> audioSampleProvider = nullptr;
-        if (avAudioCodecCtx->codec_id == AV_CODEC_ID_AAC && config->Audio().PassthroughAudioAAC())
+        if (avAudioCodecCtx->codec_id == AV_CODEC_ID_AAC && config->Audio().SystemDecoderAAC())
         {
             AudioEncodingProperties encodingProperties;
             if (avAudioCodecCtx->extradata_size == 0)
@@ -1826,7 +1792,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
             audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, encodingProperties, HardwareDecoderStatus::Unknown));
         }
-        else if (avAudioCodecCtx->codec_id == AV_CODEC_ID_MP3 && config->Audio().PassthroughAudioMP3())
+        else if (avAudioCodecCtx->codec_id == AV_CODEC_ID_MP3 && config->Audio().SystemDecoderMP3())
         {
             AudioEncodingProperties encodingProperties = AudioEncodingProperties::CreateMp3(avAudioCodecCtx->sample_rate, avAudioCodecCtx->channels, (unsigned int)avAudioCodecCtx->bit_rate);
             audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, encodingProperties, HardwareDecoderStatus::Unknown));

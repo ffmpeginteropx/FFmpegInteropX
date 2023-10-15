@@ -36,7 +36,7 @@ namespace winrt::FFmpegInteropX::implementation
         PROPERTY_CONST(DefaultSubtitleDelay, TimeSpan, TimeSpan{ 0 });
 
         ///<summary>The default name to use for subtitle streams.</summary>
-        PROPERTY_CONST(DefaultSubtitleStreamName, hstring, L"Subtitle");
+        PROPERTY_CONST(DefaultStreamName, hstring, L"Subtitle");
 
         ///<summary>The default name to use for external subtitle streams.</summary>
         PROPERTY_CONST(DefaultExternalSubtitleStreamName, hstring, L"External Subtitle");

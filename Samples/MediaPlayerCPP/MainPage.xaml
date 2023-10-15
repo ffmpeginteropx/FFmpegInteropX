@@ -55,8 +55,8 @@
 
                         <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.Video.VideoOutputAllowIyuv}"/>
 
-                        <ToggleSwitch Header="Use System MP3 Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.Audio.PassthroughAudioMP3}"/>
-                        <ToggleSwitch Header="Use System AAC Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.Audio.PassthroughAudioAAC}" Margin="0,0,0,20" />
+                        <ToggleSwitch Header="Use System MP3 Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.Audio.SystemDecoderMP3}"/>
+                        <ToggleSwitch Header="Use System AAC Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.Audio.SystemDecoderAAC}" Margin="0,0,0,20" />
 
                         <ToggleSwitch Header="Fast Seeking (keyframe seeking requires PlaybackSession property to be assigned)" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.General.FastSeek}" Margin="0,20,0,0" />
 

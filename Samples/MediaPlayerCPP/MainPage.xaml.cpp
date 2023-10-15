@@ -477,11 +477,9 @@ void MediaPlayerCPP::MainPage::DelaySubtitles(Platform::Object^ sender, Windows:
 {
     if (FFmpegMSS != nullptr)
     {
-        auto delay = FFmpegMSS->SubtitleDelay.Duration;
-        TimeSpan newDelay;
-        newDelay.Duration = delay + 10000000;
-        FFmpegMSS->SetSubtitleDelay(newDelay);
-        tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
+        subtitleDelay.Duration += 10000000;
+        FFmpegMSS->SetSubtitleDelay(subtitleDelay);
+        tbSubtitleDelay->Text = "Subtitle delay: " + (subtitleDelay.Duration / 10000000).ToString() + "s";
 
     }
 }
@@ -491,11 +489,9 @@ void MediaPlayerCPP::MainPage::QuickenSubtitles(Platform::Object^ sender, Window
 {
     if (FFmpegMSS != nullptr)
     {
-        auto delay = FFmpegMSS->SubtitleDelay.Duration;
-        TimeSpan newDelay;
-        newDelay.Duration = delay - 10000000;
-        FFmpegMSS->SetSubtitleDelay(newDelay);
-        tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
+        subtitleDelay.Duration -= 10000000;
+        FFmpegMSS->SetSubtitleDelay(subtitleDelay);
+        tbSubtitleDelay->Text = "Subtitle delay: " + (subtitleDelay.Duration / 10000000).ToString() + "s";
     }
 }
 

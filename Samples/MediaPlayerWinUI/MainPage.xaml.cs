@@ -36,6 +36,7 @@ namespace MediaPlayerWinUI
         private FFmpegMediaSource FFmpegMSS;
         private StorageFile currentFile;
         private MediaPlayer mediaPlayer;
+        private TimeSpan subtitleDelay;
 
         public MainWindow CurrentMainWindow { get; set; }
 
@@ -522,7 +523,7 @@ namespace MediaPlayerWinUI
         {
             if (FFmpegMSS != null)
             {
-                FFmpegMSS.DisableAudioEffects();
+                FFmpegMSS.ClearFFmpegAudioFilters();
             }
         }
 
@@ -530,9 +531,9 @@ namespace MediaPlayerWinUI
         {
             if (FFmpegMSS != null)
             {
-                var newOffset = FFmpegMSS.SubtitleDelay.Subtract(TimeSpan.FromSeconds(1));
-                FFmpegMSS.SetSubtitleDelay(newOffset);
-                tbSubtitleDelay.Text = "Subtitle delay: " + newOffset.TotalSeconds.ToString() + "s";
+                subtitleDelay = subtitleDelay.Subtract(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleDelay(subtitleDelay);
+                tbSubtitleDelay.Text = "Subtitle delay: " + subtitleDelay.TotalSeconds.ToString() + "s";
 
             }
         }
@@ -541,9 +542,9 @@ namespace MediaPlayerWinUI
         {
             if (FFmpegMSS != null)
             {
-                var newOffset = FFmpegMSS.SubtitleDelay.Add(TimeSpan.FromSeconds(1));
-                FFmpegMSS.SetSubtitleDelay(newOffset);
-                tbSubtitleDelay.Text = "Subtitle delay: " + newOffset.TotalSeconds.ToString() + "s";
+                subtitleDelay = subtitleDelay.Add(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleDelay(subtitleDelay);
+                tbSubtitleDelay.Text = "Subtitle delay: " + subtitleDelay.TotalSeconds.ToString() + "s";
             }
         }
 
