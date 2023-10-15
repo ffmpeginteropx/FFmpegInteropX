@@ -315,8 +315,6 @@ namespace winrt::FFmpegInteropX::implementation
         std::shared_ptr<MediaSampleProvider> currentAudioStream = { nullptr };
         FFmpegInteropX::AudioStreamInfo currentAudioStreamInfo = { nullptr };
         FFmpegInteropX::VideoStreamInfo currentVideoStreamInfo = { nullptr };
-        hstring currentAudioEffects{};
-        hstring currentVideoEffects{};
         int thumbnailStreamIndex = 0;
 
         winrt::event_token audioTracksChangedToken{};

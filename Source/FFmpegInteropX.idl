@@ -608,14 +608,6 @@ namespace FFmpegInteropX
         ///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this .</remarks>
         Windows.Media.Playback.MediaPlaybackSession PlaybackSession{ get; set; };
 
-        ///<summary>Gets the current audio filters</summary>
-        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
-        String GetCurrentAudioFilters();
-
-        ///<summary>Gets the current audio filters</summary>
-        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
-        String GetCurrentVideoFilters();
-
         ///<summary>Sets a presentation timestamp delay for the given stream. Audio, video and subtitle synchronisation can be achieved this way. A positive value will cause samples (or subtitles) to be rendered at a later time. A negative value will make rendering come sooner</summary>
         void SetStreamDelay(IStreamInfo stream, Windows.Foundation.TimeSpan delay);
 

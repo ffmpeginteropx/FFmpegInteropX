@@ -1708,21 +1708,6 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    hstring FFmpegMediaSource::GetCurrentAudioFilters()
-    {
-        std::lock_guard lock(mutex);
-
-        return currentAudioEffects;
-    }
-
-    hstring FFmpegMediaSource::GetCurrentVideoFilters()
-    {
-        std::lock_guard lock(mutex);
-
-        return currentVideoEffects;
-    }
-
-
     void FFmpegMediaSource::Close()
     {
         isShuttingDown = true;
@@ -2358,11 +2343,7 @@ namespace winrt::FFmpegInteropX::implementation
                 currentAudioStreamInfo = nullptr;
             }
             if (currentVideoStream && args.Request().OldStreamDescriptor() == currentVideoStream->StreamDescriptor())
-            {
-                if (!currentVideoEffects.empty())
-                {
-                    currentVideoStream->ClearFFmpegFilters();
-                }
+            {              
                 currentVideoStream->DisableStream();
                 currentVideoStream = nullptr;
                 currentAudioStreamInfo = nullptr;
@@ -2382,10 +2363,7 @@ namespace winrt::FFmpegInteropX::implementation
                 {
                     currentVideoStream = stream;
                     currentVideoStream->EnableStream();
-                    if (!currentVideoEffects.empty())
-                    {
-                        currentVideoStream->SetFFmpegFilters(currentVideoEffects);
-                    }
+                    
                     currentVideoStreamInfo = currentVideoStream->VideoInfo();
                 }
             }
