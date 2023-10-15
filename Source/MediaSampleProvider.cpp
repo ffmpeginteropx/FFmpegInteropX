@@ -154,7 +154,7 @@ void MediaSampleProvider::InitializeNameLanguageCodec()
             }
         }
 
-        winrt::hstring name = m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ? m_config.DefaultAudioStreamName() : m_config.DefaultSubtitleStreamName();
+        winrt::hstring name = m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ? m_config.Audio().DefaultAudioStreamName() : m_config.Subtitles().DefaultSubtitleStreamName();
         if (count > 1)
         {
             name = name + L" " + to_wstring(number);

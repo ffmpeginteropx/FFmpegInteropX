@@ -449,13 +449,13 @@ void MediaPlayerCPP::MainPage::CbEncodings_SelectionChanged(Platform::Object^ se
 {
     if (cbEncodings->SelectedItem)
     {
-        Config->AnsiSubtitleEncoding = static_cast<CharacterEncoding^>(cbEncodings->SelectedItem);
+        Config->Subtitles->AnsiSubtitleEncoding = static_cast<CharacterEncoding^>(cbEncodings->SelectedItem);
     }
 }
 
 void MediaPlayerCPP::MainPage::PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-    Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
+    Config->Video->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 
@@ -537,7 +537,7 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
 void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
     PassthroughVideo->IsEnabled = !AutoDetect->IsOn;
-    Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
+    Config->Video->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -633,7 +633,7 @@ void MediaPlayerCPP::MainPage::ffmpegVideoFilters_KeyDown(Platform::Object^ send
 {
     if (e->Key == Windows::System::VirtualKey::Enter)
     {
-        Config->FFmpegVideoFilters = ffmpegVideoFilters->Text;
+        Config->Video->FFmpegVideoFilters = ffmpegVideoFilters->Text;
         if (FFmpegMSS)
         {
             if (!cmbVideoStreamEffectSelector->SelectedItem)
@@ -648,7 +648,7 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
 {
     if (e->Key == Windows::System::VirtualKey::Enter)
     {
-        Config->FFmpegAudioFilters = ffmpegAudioFilters->Text;
+        Config->Audio->FFmpegAudioFilters = ffmpegAudioFilters->Text;
         if (FFmpegMSS)
         {
             if (!cmbAudioStreamEffectSelector->SelectedItem)
@@ -660,10 +660,10 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
 
 double MediaPlayerCPP::MainPage::GetBufferSizeMB()
 {
-    return (double)Config->ReadAheadBufferSize / (1024*1024);
+    return (double)Config->General->ReadAheadBufferSize / (1024*1024);
 }
 
 void MediaPlayerCPP::MainPage::SetBufferSizeMB(double value)
 {
-    Config->ReadAheadBufferSize = (long long)(value * (1024 * 1024));
+    Config->General->ReadAheadBufferSize = (long long)(value * (1024 * 1024));
 }

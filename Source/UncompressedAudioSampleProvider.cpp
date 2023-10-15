@@ -66,7 +66,7 @@ winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvi
     outChannels = inChannels;
     outChannelLayout = inChannelLayout;
 
-    if (m_config.DownmixAudioStreamsToStereo() && outChannelLayout > AV_CH_LAYOUT_STEREO)
+    if (m_config.Audio().DownmixAudioStreamsToStereo() && outChannelLayout > AV_CH_LAYOUT_STEREO)
     {
         // use existing downmix channels, if available, otherwise perform manual downmix using resampler
         if (outChannelLayout & AV_CH_LAYOUT_STEREO_DOWNMIX)

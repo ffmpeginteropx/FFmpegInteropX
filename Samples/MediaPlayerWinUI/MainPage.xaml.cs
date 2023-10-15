@@ -436,7 +436,7 @@ namespace MediaPlayerWinUI
         {
             if (cbEncodings.SelectedItem != null)
             {
-                Config.AnsiSubtitleEncoding = (CharacterEncoding)cbEncodings.SelectedItem;
+                Config.Subtitles.AnsiSubtitleEncoding = (CharacterEncoding)cbEncodings.SelectedItem;
             }
         }
 
@@ -510,7 +510,7 @@ namespace MediaPlayerWinUI
 
         private void PassthroughVideo_Toggled(object sender, RoutedEventArgs e)
         {
-            Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
+            Config.Video.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
         }
 
         private void AddTestFilter(object sender, RoutedEventArgs e)
@@ -590,7 +590,7 @@ namespace MediaPlayerWinUI
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
         {
             PassthroughVideo.IsEnabled = !AutoDetect.IsOn;
-            Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
+            Config.Video.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
         }
 
         //private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
@@ -644,7 +644,7 @@ namespace MediaPlayerWinUI
 
         private void ffmpegVideoFilters_LostFocus(object sender, RoutedEventArgs e)
         {
-            Config.FFmpegVideoFilters = ffmpegVideoFilters.Text;
+            Config.Video.FFmpegVideoFilters = ffmpegVideoFilters.Text;
             if (cmbVideoStreamEffectSelector.SelectedItem == null)
                 FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
             else FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text, (VideoStreamInfo)cmbVideoStreamEffectSelector.SelectedItem);
@@ -660,7 +660,7 @@ namespace MediaPlayerWinUI
 
         private void ffmpegAudioFilters_LostFocus(object sender, RoutedEventArgs e)
         {
-            Config.FFmpegAudioFilters = ffmpegAudioFilters.Text;
+            Config.Audio.FFmpegAudioFilters = ffmpegAudioFilters.Text;
             if (cmbAudioStreamEffectSelector.SelectedItem == null)
                 FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
             else FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text, (AudioStreamInfo)cmbAudioStreamEffectSelector.SelectedItem);

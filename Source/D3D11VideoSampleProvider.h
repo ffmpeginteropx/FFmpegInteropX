@@ -286,7 +286,7 @@ public:
             if (!avHardwareContext)
             {
                 unsigned threads = std::thread::hardware_concurrency();
-                m_pAvCodecCtx->thread_count = m_config.MaxVideoThreads() == 0 ? threads : min(threads, m_config.MaxVideoThreads());
+                m_pAvCodecCtx->thread_count = m_config.Video().MaxVideoThreads() == 0 ? threads : min(threads, m_config.Video().MaxVideoThreads());
                 m_pAvCodecCtx->thread_type = m_config.as<implementation::MediaSourceConfig>()->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
             }
 

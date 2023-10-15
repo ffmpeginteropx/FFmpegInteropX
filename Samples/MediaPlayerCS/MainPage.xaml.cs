@@ -471,7 +471,7 @@ namespace MediaPlayerCS
         {
             if (cbEncodings.SelectedItem != null)
             {
-                Config.AnsiSubtitleEncoding = (CharacterEncoding)cbEncodings.SelectedItem;
+                Config.Subtitles.AnsiSubtitleEncoding = (CharacterEncoding)cbEncodings.SelectedItem;
             }
         }
 
@@ -543,7 +543,7 @@ namespace MediaPlayerCS
 
         private void PassthroughVideo_Toggled(object sender, RoutedEventArgs e)
         {
-            Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
+            Config.Video.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
         }
 
         private void AddTestFilter(object sender, RoutedEventArgs e)
@@ -622,7 +622,7 @@ namespace MediaPlayerCS
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
         {
             PassthroughVideo.IsEnabled = !AutoDetect.IsOn;
-            Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
+            Config.Video.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
         }
 
         private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
@@ -668,7 +668,7 @@ namespace MediaPlayerCS
 
         private void ffmpegVideoFilters_LostFocus(object sender, RoutedEventArgs e)
         {
-            Config.FFmpegVideoFilters = ffmpegVideoFilters.Text;
+            Config.Video.FFmpegVideoFilters = ffmpegVideoFilters.Text;
             if (cmbVideoStreamEffectSelector.SelectedItem == null)
                 FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
             else FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text, (VideoStreamInfo)cmbVideoStreamEffectSelector.SelectedItem);
@@ -684,7 +684,7 @@ namespace MediaPlayerCS
 
         private void ffmpegAudioFilters_LostFocus(object sender, RoutedEventArgs e)
         {
-            Config.FFmpegAudioFilters = ffmpegAudioFilters.Text;
+            Config.Audio.FFmpegAudioFilters = ffmpegAudioFilters.Text;
             if (cmbAudioStreamEffectSelector.SelectedItem == null)
                 FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
             else FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text, (AudioStreamInfo)cmbAudioStreamEffectSelector.SelectedItem);
@@ -692,12 +692,12 @@ namespace MediaPlayerCS
 
         private double GetBufferSizeMB()
         {
-            return Config.ReadAheadBufferSize / (1024 * 1024);
+            return Config.General.ReadAheadBufferSize / (1024 * 1024);
         }
 
         private long SetBufferSizeMB(double value)
         {
-            return Config.ReadAheadBufferSize = (long)(value * (1024 * 1024));
+            return Config.General.ReadAheadBufferSize = (long)(value * (1024 * 1024));
         }
     }
 }

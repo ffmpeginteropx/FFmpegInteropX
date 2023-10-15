@@ -608,7 +608,7 @@ namespace FFmpegInteropX
 
         ///<summary>Gets the presentation timestamp delay for the given stream. </summary>
         Windows.Foundation.TimeSpan GetStreamDelay(IStreamInfo stream);
-    };
+    };   
 
     [default_interface]
 #ifdef UWP
@@ -618,6 +618,26 @@ namespace FFmpegInteropX
     {
         MediaSourceConfig();
 
+        ///<summary>Additional options to use when creating the ffmpeg AVFormatContext.</summary>
+        Windows.Foundation.Collections.PropertySet FFmpegOptions{ get; set; };
+
+        ///<summary> Audio settings: decoder settings,stereo downmix, outputs, maximum decoder threads.</summary>
+        AudioConfig Audio{ get; set; };
+
+        ///<summary> General settings: fast seek, stream buffering, max supported playback rate.</summary>
+        GeneralConfig General{ get; set; };
+
+        ///<summary> Subtitles settings: encoding, style overrides, delays, minimum duration, default delay, localisation.</summary>
+        SubtitlesConfig Subtitles{ get; set; };
+
+        ///<summary> Video settings: decoder settings, hardware acceleration, outputs, maximum decoder threads, HDR.</summary>
+        VideoConfig Video{ get; set; };
+        
+    };
+
+
+ runtimeclass AudioConfig
+    {
         ///<summary>Enable passthrough for MP3 audio to system decoder.</summary>
         ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
         Boolean PassthroughAudioMP3{ get; set; };
@@ -626,6 +646,21 @@ namespace FFmpegInteropX
         ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
         Boolean PassthroughAudioAAC{ get; set; };
 
+        ///<summary>The maximum number of audio decoding threads.</summary>
+        UInt32 MaxAudioThreads{ get; set; };
+
+        ///<summary>The default name to use for audio streams.</summary>
+        String DefaultAudioStreamName{ get; set; };
+
+        ///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegMediaSource.SetFFmpegAudioFilters().</summary>
+        String FFmpegAudioFilters{ get; set; };
+
+        ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
+        Boolean DownmixAudioStreamsToStereo{ get; set; };
+    };
+
+    runtimeclass VideoConfig
+    {
         ///<summary>The video decoder mode. Default is Automatic.</summary>
         VideoDecoderMode VideoDecoderMode{ get; set; };
 
@@ -638,7 +673,6 @@ namespace FFmpegInteropX
         ///<summary>Max level allowed for H264 system decoder. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
         ///<remarks>Most H264 HW decoders only support Level 4.1, so this is the default.</remarks>
         Int32 SystemDecoderH264MaxLevel{ get; set; };
-
 
         ///<summary>Max profile allowed for HEVC system decoder. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
         Int32 SystemDecoderHEVCMaxProfile{ get; set; };
@@ -660,54 +694,16 @@ namespace FFmpegInteropX
         ///<summary>Allow video output in NV12 format.</summary>
         Boolean VideoOutputAllowNv12{ get; set; };
 
-
-        ///<summary>The maximum number of broken frames to skipp in a stream before stopping decoding.</summary>
-        UInt32 SkipErrors{ get; set; };
-
         ///<summary>The maximum number of video decoding threads.</summary>
         UInt32 MaxVideoThreads{ get; set; };
 
-        ///<summary>The maximum number of audio decoding threads.</summary>
-        UInt32 MaxAudioThreads{ get; set; };
+        ///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
+        ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
+        String FFmpegVideoFilters{ get; set; };
+    };
 
-        ///<summary>The maximum supported playback rate. This is set on the media stream source itself. 
-        /// This does not modify what the transport control default UI shows as available playback speeds. Custom UI is necessary!</summary>
-        Double MaxSupportedPlaybackRate{ get; set; };
-
-        ///<summary>The buffer size in bytes to use for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
-        [deprecated("Deprecated due to irritating name. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
-        UInt32 StreamBufferSize{ get; set; };
-
-        ///<summary>The maximum number of bytes to read in one chunk for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
-        UInt32 FileStreamReadSize{ get; set; };
-
-        ///<summary>Additional options to use when creating the ffmpeg AVFormatContext.</summary>
-        Windows.Foundation.Collections.PropertySet FFmpegOptions{ get; set; };
-
-
-        ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
-        ///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
-        [deprecated("Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
-        Windows.Foundation.TimeSpan DefaultBufferTime{ get; set; };
-
-        ///<summary>The default BufferTime that gets assigned to the MediaStreamSource for URI sources.</summary>
-        ///<remarks>Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.</remarks>
-        [deprecated("Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
-        Windows.Foundation.TimeSpan DefaultBufferTimeUri{ get; set; };
-
-        ///<summary>Enables or disables the read-ahead buffer.</summary>
-        ///<remarks>This value can be changed any time during playback.</remarks>
-        Boolean ReadAheadBufferEnabled{ get; set; };
-
-        ///<summary>The maximum number of bytes to buffer ahead per stream.</summary>
-        ///<remarks>This value can be changed any time during playback.</remarks>
-        Int64 ReadAheadBufferSize{ get; set; };
-
-        ///<summary>The maximum duration to buffer ahead per stream.</summary>
-        ///<remarks>This value can be changed any time during playback.</remarks>
-        Windows.Foundation.TimeSpan ReadAheadBufferDuration{ get; set; };
-
-
+    runtimeclass SubtitlesConfig
+    {
         ///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>
         Boolean AutoSelectForcedSubtitles{ get; set; };
 
@@ -726,9 +722,57 @@ namespace FFmpegInteropX
         ///<summary>The character encoding used to decode ANSI encoded subtitles. By default, the active windows codepage is used.</summary>
         CharacterEncoding AnsiSubtitleEncoding{ get; set; };
 
-        ///<summary>The subtitle delay will be initially applied to all subtitle tracks.
+       ///<summary>The subtitle delay will be initially applied to all subtitle tracks.
         ///Use SetSubtitleDelay() on the FFmpegMediaSource instance if you want to change the delay during playback.</summary>
         Windows.Foundation.TimeSpan DefaultSubtitleDelay{ get; set; };
+
+        ///<summary>The default name to use for subtitle streams.</summary>
+        String DefaultSubtitleStreamName{ get; set; };
+
+        ///<summary>The default name to use for external subtitle streams.</summary>
+        String DefaultExternalSubtitleStreamName{ get; set; };
+
+        ///<summary>Use subtitle font files that are embedded in the media file.</summary>
+        Boolean UseEmbeddedSubtitleFonts{ get; set; };
+
+        ///<summary>The minimum amount of time a subtitle should be shown. Default is 0.</summary>
+        Windows.Foundation.TimeSpan MinimumSubtitleDuration{ get; set; };
+
+        ///<summary>Each subtitle's duration is extended by this amount. Default is 0.</summary>
+        Windows.Foundation.TimeSpan AdditionalSubtitleDuration{ get; set; };
+
+        ///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
+        Boolean PreventModifiedSubtitleDurationOverlap{ get; set; };
+
+    };
+
+    runtimeclass GeneralConfig
+    {
+        ///<summary>The maximum number of broken frames to skipp in a stream before stopping decoding.</summary>
+        UInt32 SkipErrors{ get; set; };
+
+        ///<summary>The maximum supported playback rate. This is set on the media stream source itself. 
+        /// This does not modify what the transport control default UI shows as available playback speeds. Custom UI is necessary!</summary>
+        Double MaxSupportedPlaybackRate{ get; set; };
+
+        ///<summary>The maximum number of bytes to read in one chunk for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
+        UInt32 FileStreamReadSize{ get; set; };
+
+        ///<summary>The buffer size in bytes to use for Windows.Storage.Streams.IRandomAccessStream sources.</summary>
+        [deprecated("Deprecated due to irritating name. Use ReadAheadBufferSize and ReadAheadBufferDuration instead.", deprecate, 1)]
+        UInt32 StreamBufferSize{ get; set; };
+
+        ///<summary>Enables or disables the read-ahead buffer.</summary>
+        ///<remarks>This value can be changed any time during playback.</remarks>
+        Boolean ReadAheadBufferEnabled{ get; set; };
+
+        ///<summary>The maximum number of bytes to buffer ahead per stream.</summary>
+        ///<remarks>This value can be changed any time during playback.</remarks>
+        Int64 ReadAheadBufferSize{ get; set; };
+
+        ///<summary>The maximum duration to buffer ahead per stream.</summary>
+        ///<remarks>This value can be changed any time during playback.</remarks>
+        Windows.Foundation.TimeSpan ReadAheadBufferDuration{ get; set; };
 
         /// <summary>FFmpegMediaSource will seek to the closest video keyframe, if set to true.</summary>
         /// <remarks>
@@ -744,39 +788,7 @@ namespace FFmpegInteropX
         ///<summary>Try to improve stream switching times when FastSeek is enabled.</summary>
         Boolean FastSeekSmartStreamSwitching{ get; set; };
 
-        ///<summary>The default name to use for audio streams.</summary>
-        String DefaultAudioStreamName{ get; set; };
-
-        ///<summary>The default name to use for subtitle streams.</summary>
-        String DefaultSubtitleStreamName{ get; set; };
-
-        ///<summary>The default name to use for external subtitle streams.</summary>
-        String DefaultExternalSubtitleStreamName{ get; set; };
-
-        ///<summary>Use subtitle font files that are embedded in the media file.</summary>
-        Boolean UseEmbeddedSubtitleFonts{ get; set; };
-
         ///<summary>The folder where attachments such as fonts are stored (inside the app's temp folder).</summary>
         String AttachmentCacheFolderName{ get; set; };
-
-        ///<summary>The minimum amount of time a subtitle should be shown. Default is 0.</summary>
-        Windows.Foundation.TimeSpan MinimumSubtitleDuration{ get; set; };
-
-        ///<summary>Each subtitle's duration is extended by this amount. Default is 0.</summary>
-        Windows.Foundation.TimeSpan AdditionalSubtitleDuration{ get; set; };
-
-        ///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
-        Boolean PreventModifiedSubtitleDurationOverlap{ get; set; };
-
-        ///<summary>Initial FFmpeg video filters. Might be changed later through FFmpegMediaSource.SetFFmpegVideoFilters().</summary>
-        ///<remarks>Using FFmpeg video filters will degrade playback performance, since they run on the CPU and not on the GPU.</remarks>
-        String FFmpegVideoFilters{ get; set; };
-
-        ///<summary>Initial FFmpeg audio filters. Might be changed later through FFmpegMediaSource.SetFFmpegAudioFilters().</summary>
-        String FFmpegAudioFilters{ get; set; };
-
-        ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
-        Boolean DownmixAudioStreamsToStereo{ get; set; };
     };
-
 }

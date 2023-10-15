@@ -202,8 +202,8 @@ public:
                 }
             }
 
-            auto cueStyle = !m_config.OverrideSubtitleStyles() && style.get() != nullptr ? style->Style : m_config.SubtitleStyle();
-            auto cueRegion = !m_config.OverrideSubtitleStyles() && style.get() != nullptr ? style->Region : m_config.SubtitleRegion();
+            auto cueStyle = !m_config.Subtitles().OverrideSubtitleStyles() && style.get() != nullptr ? style->Style : m_config.Subtitles().SubtitleStyle();
+            auto cueRegion = !m_config.Subtitles().OverrideSubtitleStyles() && style.get() != nullptr ? style->Region : m_config.Subtitles().SubtitleRegion();
             TimedTextRegion subRegion = nullptr;
 
             if ((marginL > 0 || marginR > 0 || marginV > 0) && width > 0 && height > 0)
@@ -938,7 +938,7 @@ public:
 
         winrt::hstring result;
 
-        if (m_config.UseEmbeddedSubtitleFonts())
+        if (m_config.Subtitles().UseEmbeddedSubtitleFonts())
         {
             try
             {
@@ -957,7 +957,7 @@ public:
                             auto fontFamily = std::wstring(title);
                             if (fontFamily.find(str) == 0)
                             {
-                                result = L"ms-appdata:///temp/" + m_config.AttachmentCacheFolderName() + L"/" + attachedFileHelper->InstanceId() + L"/" + attachment->Name() + L"#" + StringUtils::WStringToPlatformString(str);
+                                result = L"ms-appdata:///temp/" + m_config.General().AttachmentCacheFolderName() + L"/" + attachedFileHelper->InstanceId() + L"/" + attachment->Name() + L"#" + StringUtils::WStringToPlatformString(str);
                                 break;
                             }
                         }

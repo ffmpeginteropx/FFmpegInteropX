@@ -102,7 +102,7 @@ public:
                 }
 
                 // clip previous extended duration cue, if there is one
-                if (lastExtendedDurationCue && m_config.PreventModifiedSubtitleDurationOverlap() &&
+                if (lastExtendedDurationCue && m_config.Subtitles().PreventModifiedSubtitleDurationOverlap() &&
                     lastExtendedDurationCue.StartTime() + lastExtendedDurationCue.Duration() > position)
                 {
                     auto diff = position - (lastExtendedDurationCue.StartTime() + lastExtendedDurationCue.Duration());
@@ -129,14 +129,14 @@ public:
                 }
                 else
                 {
-                    if (m_config.AdditionalSubtitleDuration().count() != 0)
+                    if (m_config.Subtitles().AdditionalSubtitleDuration().count() != 0)
                     {
-                        duration += m_config.AdditionalSubtitleDuration();
+                        duration += m_config.Subtitles().AdditionalSubtitleDuration();
                         lastExtendedDurationCue = cue;
                     }
-                    if (duration < m_config.MinimumSubtitleDuration())
+                    if (duration < m_config.Subtitles().MinimumSubtitleDuration())
                     {
-                        duration = m_config.MinimumSubtitleDuration();
+                        duration = m_config.Subtitles().MinimumSubtitleDuration();
                         lastExtendedDurationCue = cue;
                     }
                 }
