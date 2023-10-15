@@ -53,5 +53,8 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>The folder where attachments such as fonts are stored (inside the app's temp folder).</summary>
         PROPERTY_CONST(AttachmentCacheFolderName, hstring, L"FFmpegAttachmentCache");
 
+        ///<summary>Keep metadata available after MediaSource was closed.</summary>
+        ///<remarks>Set this to false to cleanup more memory automatically, if you are sure you don't need metadata after playback end.</remarks>
+        PROPERTY(KeepMetadataOnMediaSourceClosed, bool, true);
     };
 }

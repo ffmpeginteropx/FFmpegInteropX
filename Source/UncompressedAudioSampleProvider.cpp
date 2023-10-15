@@ -109,12 +109,12 @@ winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvi
 
     // set encoding properties
     auto encodingProperties = winrt::Windows::Media::MediaProperties::AudioEncodingProperties();
-    encodingProperties.Subtype(outSampleFormat == AV_SAMPLE_FMT_FLT ? MediaEncodingSubtypes::Float() : MediaEncodingSubtypes::Pcm());
     encodingProperties.BitsPerSample(bitsPerSample);
     encodingProperties.SampleRate(outSampleRate);
     encodingProperties.ChannelCount(outChannels);
     encodingProperties.Bitrate(bitsPerSample * outSampleRate * outChannels);
     encodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value(reportedChannelLayout));
+    encodingProperties.Subtype(outSampleFormat == AV_SAMPLE_FMT_FLT ? MediaEncodingSubtypes::Float() : MediaEncodingSubtypes::Pcm());
 
     return winrt::Windows::Media::Core::AudioStreamDescriptor(encodingProperties);
 }
