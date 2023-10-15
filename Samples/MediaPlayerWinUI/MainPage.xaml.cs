@@ -34,9 +34,7 @@ namespace MediaPlayerWinUI
     public sealed partial class MainPage : Page
     {
         private FFmpegMediaSource FFmpegMSS;
-        private FFmpegMediaSource actualFFmpegMSS;
         private StorageFile currentFile;
-        private MediaPlaybackItem playbackItem;
         private MediaPlayer mediaPlayer;
 
         public MainWindow CurrentMainWindow { get; set; }
@@ -83,9 +81,9 @@ namespace MediaPlayerWinUI
         private void StreamDelayManipulation(object sender, PointerRoutedEventArgs e)
         {
             var streamToDelay = cmbAudioVideoStreamDelays.SelectedItem as IStreamInfo;
-            if (streamToDelay != null && actualFFmpegMSS != null)
+            if (streamToDelay != null && FFmpegMSS != null)
             {
-                actualFFmpegMSS.SetStreamDelay(streamToDelay, TimeSpan.FromSeconds(StreamDelays.Value));
+                FFmpegMSS.SetStreamDelay(streamToDelay, TimeSpan.FromSeconds(StreamDelays.Value));
             }
         }
 
@@ -110,6 +108,7 @@ namespace MediaPlayerWinUI
 
             if (args.Key == VirtualKey.V && Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control) == CoreVirtualKeyStates.None)
             {
+                var playbackItem = FFmpegMSS?.PlaybackItem;
                 if (playbackItem != null && playbackItem.VideoTracks.Count > 1)
                 {
                     bool reverse = (Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift) & CoreVirtualKeyStates.Down) == CoreVirtualKeyStates.Down;
@@ -226,11 +225,7 @@ namespace MediaPlayerWinUI
                 var tags = FFmpegMSS.MetadataTags.ToArray();
                 if (AutoCreatePlaybackItem)
                 {
-                    CreatePlaybackItemAndStartPlaybackInternal();
-                }
-                else
-                {
-                    playbackItem = null;
+                    await CreatePlaybackItemAndStartPlaybackInternal();
                 }
             }
             catch (Exception ex)
@@ -239,12 +234,12 @@ namespace MediaPlayerWinUI
             }
         }
 
-        private void CreatePlaybackItemAndStartPlaybackInternal()
+        private async Task CreatePlaybackItemAndStartPlaybackInternal()
         {
-            playbackItem = FFmpegMSS.CreateMediaPlaybackItem();
             mediaPlayer.AutoPlay = true;
-            // Pass MediaStreamSource to MediaPlayer
-            mediaPlayer.Source = playbackItem;
+
+            // Open with MediaPlayer
+            await FFmpegMSS.OpenWithMediaPlayerAsync(mediaPlayer);
 
             // Close control panel after file open
             Splitter.IsPaneOpen = false;
@@ -278,15 +273,11 @@ namespace MediaPlayerWinUI
                     Config.FFmpegOptions["reconnect_on_network_error"] = 1;
 
                     // Instantiate FFmpegMediaSource using the URI
-                    FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config, CurrentMainWindow.AppWindow.Id);
-
-                    var source = FFmpegMSS.CreateMediaPlaybackItem();
-
-                    // Pass MediaStreamSource to Media Element
-                    mediaPlayer.Source = source;
-
-                    // Close control panel after opening media
-                    Splitter.IsPaneOpen = false;
+                    FFmpegMSS = await FFmpegMediaSource.CreateFromUriAsync(uri, Config);
+                    if (AutoCreatePlaybackItem)
+                    {
+                        await CreatePlaybackItemAndStartPlaybackInternal();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -365,6 +356,7 @@ namespace MediaPlayerWinUI
 
         private async void LoadSubtitleFile(object sender, RoutedEventArgs e)
         {
+            var playbackItem = FFmpegMSS?.PlaybackItem;
             if (playbackItem != null)
             {
                 FileOpenPicker filePicker = new FileOpenPicker();
@@ -398,22 +390,24 @@ namespace MediaPlayerWinUI
             if (first != null)
             {
                 first.Label = "External";
-                var index = playbackItem.TimedMetadataTracks.ToList().IndexOf(first);
-                if (index >= 0)
+                var playbackItem = FFmpegMSS?.PlaybackItem;
+                if (playbackItem != null)
                 {
-                    playbackItem.TimedMetadataTracks.SetPresentationMode((uint)index, TimedMetadataTrackPresentationMode.PlatformPresented);
+                    var index = playbackItem.TimedMetadataTracks.ToList().IndexOf(first);
+                    if (index >= 0)
+                    {
+                        playbackItem.TimedMetadataTracks.SetPresentationMode((uint)index, TimedMetadataTrackPresentationMode.PlatformPresented);
+                    }
                 }
             }
         }
 
         private void MediaPlayer_MediaFailed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
         {
-            if (actualFFmpegMSS != null)
+            if (FFmpegMSS != null)
             {
-                actualFFmpegMSS.Dispose();
-                actualFFmpegMSS = null;
+                FFmpegMSS.Dispose();
                 FFmpegMSS = null;
-                playbackItem = null;
             }
             var message = args.ErrorMessage;
             if (String.IsNullOrEmpty(message) && args.ExtendedErrorCode != null)
@@ -457,6 +451,7 @@ namespace MediaPlayerWinUI
                     // Show file picker so user can select a file
                     StorageFile file = await filePicker.PickSingleFileAsync();
 
+                    var playbackItem = FFmpegMSS?.PlaybackItem;
                     if (playbackItem != null)
                     {
                         playbackItem.TimedMetadataTracksChanged += PlaybackItem_TimedMetadataTracksChanged;
@@ -497,6 +492,7 @@ namespace MediaPlayerWinUI
 
         private void CreatePlaybackItemAndStartPlayback(object sender, RoutedEventArgs e)
         {
+            var playbackItem = FFmpegMSS?.PlaybackItem;
             if (playbackItem == null)
             {
                 CreatePlaybackItemAndStartPlaybackInternal();
@@ -558,26 +554,21 @@ namespace MediaPlayerWinUI
             {
                 FFmpegMSS.PlaybackSession = session;
             }
-            if (actualFFmpegMSS != null)
-            {
-                actualFFmpegMSS.Dispose();
-            }
-            actualFFmpegMSS = FFmpegMSS;
             DispatcherQueue.TryEnqueue(() =>
             {
                 tbSubtitleDelay.Text = "Subtitle delay: 0s";
 
-                cmbAudioStreamEffectSelector.ItemsSource = actualFFmpegMSS.AudioStreams;
+                cmbAudioStreamEffectSelector.ItemsSource = FFmpegMSS.AudioStreams;
 
-                cmbVideoStreamEffectSelector.ItemsSource = actualFFmpegMSS.VideoStreams;
+                cmbVideoStreamEffectSelector.ItemsSource = FFmpegMSS.VideoStreams;
 
                 List<IStreamInfo> streams = new List<IStreamInfo>();
-                foreach (var a in actualFFmpegMSS.AudioStreams)
+                foreach (var a in FFmpegMSS.AudioStreams)
                 {
                     streams.Add(a);
                 }
 
-                foreach (var vs in actualFFmpegMSS.VideoStreams)
+                foreach (var vs in FFmpegMSS.VideoStreams)
                 {
                     streams.Add(vs);
                 }

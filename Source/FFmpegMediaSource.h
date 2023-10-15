@@ -158,6 +158,10 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Creates a MediaPlaybackItem for playback which starts at the specified stream offset and ends after the specified duration.</summary>
         MediaPlaybackItem CreateMediaPlaybackItem(TimeSpan const& startTime, TimeSpan const& durationLimit);
 
+        ///<summary>Creates a MediaPlaybackItem, assigns it to MediaPlayer.Source and waits for MediaOpened or MediaFailed (throws in that case).</summary>
+        ///<remarks>This will also automatically cleanup resources, if MediaPlayer switches to a different file, or it's Source property is assigned null.</remarks>
+        IAsyncAction OpenWithMediaPlayerAsync(MediaPlayer mediaPlayer);
+
         ///<summary>Adds an external subtitle from a stream.</summary>
         ///<param name="stream">The subtitle stream.</param>
         ///<param name="streamName">The name to use for the subtitle.</param>
@@ -221,6 +225,14 @@ namespace winrt::FFmpegInteropX::implementation
         MediaPlaybackSession PlaybackSession();
         void PlaybackSession(MediaPlaybackSession const& value);
 
+        ///<summary>Gets the current audio filters</summary>
+        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
+        hstring GetCurrentAudioFilters();
+
+        ///<summary>Gets the current video filters</summary>
+        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
+        hstring GetCurrentVideoFilters();
+
         ///<summary>Sets a presentation timestamp delay for the given stream. Audio, video and subtitle synchronisation can be achieved this way. A positive value will cause samples (or subtitles) to be rendered at a later time. A negative value will make rendering come sooner</summary>
         void SetStreamDelay(winrt::FFmpegInteropX::IStreamInfo const& stream, winrt::Windows::Foundation::TimeSpan const& delay);
 
@@ -236,6 +248,7 @@ namespace winrt::FFmpegInteropX::implementation
         HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);
         HRESULT CreateMediaStreamSource(hstring const& uri);
         HRESULT InitFFmpegContext();
+        MediaStreamSource CreateMediaStreamSource();
         MediaSource CreateMediaSource();
         std::shared_ptr<MediaSampleProvider> CreateAudioStream(AVStream* avStream, int index);
         std::shared_ptr<MediaSampleProvider> CreateVideoStream(AVStream* avStream, int index);
@@ -243,9 +256,10 @@ namespace winrt::FFmpegInteropX::implementation
         std::shared_ptr<MediaSampleProvider> CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
         std::shared_ptr<MediaSampleProvider> CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
         HRESULT ParseOptions(PropertySet const& ffmpegOptions);
+        void MediaStreamSourceClosed(MediaStreamSource const& sender, MediaStreamSourceClosedEventArgs const& args);
         void OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args);
         void OnSampleRequested(MediaStreamSource const& sender, MediaStreamSourceSampleRequestedEventArgs const& args);
-        void CheckVideoDeviceChanged();
+        void CheckVideoDeviceChanged(MediaStreamSource const& mss);
         void OnSwitchStreamsRequested(MediaStreamSource  const& sender, MediaStreamSourceSwitchStreamsRequestedEventArgs  const& args);
         void OnAudioTracksChanged(MediaPlaybackItem  const& sender, IVectorChangedEventArgs  const& args);
         void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList  const& sender, TimedMetadataPresentationModeChangedEventArgs  const& args);
@@ -253,6 +267,9 @@ namespace winrt::FFmpegInteropX::implementation
         bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus const& status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
         static void CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation, bool& useHdr, uint64_t& windowId);
         void CheckExtendDuration(MediaStreamSample sample);
+        MediaThumbnailData ExtractThumbnail(AVStream* avStream);
+
+        void Close(bool onMediaSourceClosed);
         static DispatcherQueue GetCurrentDispatcherQueue();
 
     public://internal:
@@ -276,14 +293,15 @@ namespace winrt::FFmpegInteropX::implementation
         winrt::com_ptr<MediaSourceConfig> config = { nullptr };
         bool isShuttingDown = false;
 
-
     private:
 
-        MediaStreamSource mss = { nullptr };
+        winrt::weak_ref<MediaStreamSource> mssWeak = { nullptr };
         winrt::event_token startingRequestedToken{};
         winrt::event_token sampleRequestedToken{};
         winrt::event_token switchStreamRequestedToken{};
-        MediaPlaybackItem playbackItem = { nullptr };
+        winrt::event_token closeToken{};
+
+        winrt::weak_ref<MediaPlaybackItem> playbackItemWeak = { nullptr };
         IVector<FFmpegInteropX::AudioStreamInfo> audioStrInfos = { nullptr };
         IVector<FFmpegInteropX::SubtitleStreamInfo> subtitleStrInfos = { nullptr };
         IVector<FFmpegInteropX::VideoStreamInfo> videoStrInfos = { nullptr };
@@ -293,8 +311,12 @@ namespace winrt::FFmpegInteropX::implementation
         std::vector<std::shared_ptr<SubtitleProvider>> subtitleStreams;
         std::vector<std::shared_ptr<MediaSampleProvider>> videoStreams;
 
-        std::shared_ptr<MediaSampleProvider> currentVideoStream;
-        std::shared_ptr<MediaSampleProvider> currentAudioStream;
+        std::shared_ptr<MediaSampleProvider> currentVideoStream = { nullptr };
+        std::shared_ptr<MediaSampleProvider> currentAudioStream = { nullptr };
+        FFmpegInteropX::AudioStreamInfo currentAudioStreamInfo = { nullptr };
+        FFmpegInteropX::VideoStreamInfo currentVideoStreamInfo = { nullptr };
+        hstring currentAudioEffects{};
+        hstring currentVideoEffects{};
         int thumbnailStreamIndex = 0;
 
         winrt::event_token audioTracksChangedToken{};
@@ -309,10 +331,11 @@ namespace winrt::FFmpegInteropX::implementation
         std::shared_ptr<AttachedFileHelper> attachedFileHelper = { nullptr };
 
         std::shared_ptr<MediaMetadata> metadata = { nullptr };
+        MediaThumbnailData thumbnailData = nullptr;
 
         std::recursive_mutex mutex;
         DispatcherQueue dispatcher = { nullptr };
-        MediaPlaybackSession session = { nullptr };
+        winrt::weak_ref<MediaPlaybackSession> sessionWeak = { nullptr };
         winrt::event_token sessionPositionEvent{};
 
         TimeSpan mediaDuration{};
@@ -332,6 +355,8 @@ namespace winrt::FFmpegInteropX::implementation
         bool isFirstSeekAfterStreamSwitch = false;
 
         int lastDurationExtension = 0;
+
+        bool isClosed = false;
 
         TimeSpan currentPosition{ 0 };
         TimeSpan lastPosition{ 0 };
