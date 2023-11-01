@@ -215,6 +215,9 @@
     <ClInclude Include="LanguageTagConverter.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="text_encoding_detect.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -304,6 +307,9 @@
       <Filter>Metadata</Filter>
     </ClCompile>
     <ClCompile Include="LanguageTagConverter.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="text_encoding_detect.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>

@@ -741,11 +741,27 @@ namespace winrt::FFmpegInteropX::implementation
             }
 
             //inject custom properties
-            if (config->AutoCorrectAnsiSubtitles() && config->IsExternalSubtitleParser && streamByteOrderMark != ByteOrderMark::UTF8)
+            if (config->AutoCorrectAnsiSubtitles() && config->IsExternalSubtitleParser &&
+                (streamEncoding != TextEncodingDetect::UTF8_BOM && streamEncoding != TextEncodingDetect::UTF8_NOBOM && streamEncoding != TextEncodingDetect::None))
             {
                 hstring key = config->AnsiSubtitleEncoding().Name();
                 std::string keyA = StringUtils::PlatformStringToUtf8String(key);
-                const char* keyChar = keyA.c_str();
+                const char* keyChar;
+
+                switch (streamEncoding)
+                {
+                case TextEncodingDetect::UTF16_LE_BOM:
+                case TextEncodingDetect::UTF16_LE_NOBOM:
+                    keyChar = "CP1200";
+                    break;
+                case TextEncodingDetect::UTF16_BE_BOM:
+                case TextEncodingDetect::UTF16_BE_NOBOM:
+                    keyChar = "CP1201";
+                    break;
+                default:
+                    keyChar = keyA.c_str(); // ANSI or ASCII detected. Use selected encoding from settings.
+                    break;
+                }
 
                 if (av_opt_set(avSubsCodecCtx, "sub_charenc", keyChar, AV_OPT_SEARCH_CHILDREN) < 0)
                 {
@@ -2397,31 +2413,69 @@ namespace winrt::FFmpegInteropX::implementation
             return -1;
         }
 
-        // Check beginning of file for BOM on first read
-        if (mss->streamByteOrderMark == ByteOrderMark::Unchecked)
-        {
-            if (bytesRead >= 4)
-            {
-                auto bom = ((uint32_t*)buf)[0];
-                if ((bom & 0x00FFFFFF) == 0x00BFBBEF)
-                {
-                    mss->streamByteOrderMark = ByteOrderMark::UTF8;
-                }
-                else
-                {
-                    mss->streamByteOrderMark = ByteOrderMark::Unknown;
-                }
-            }
-            else
-            {
-                mss->streamByteOrderMark = ByteOrderMark::Unknown;
-            }
-        }
-
         // If we succeed but don't have any bytes, assume end of file
         if (bytesRead == 0)
         {
             return AVERROR_EOF;  // Let FFmpeg know that we have reached eof
+        }
+
+        // Check encoding in case of external subtitle parser
+        if (!mss->streamEncodingChecked && mss->config->IsExternalSubtitleParser)
+        {
+            // read at least 1kb for first probing
+            bool isEof = false;
+            while (bytesRead < min(bufSize,1024))
+            {
+                ULONG read = 0;
+                hr = mss->fileStreamData->Read(buf + bytesRead, bufSize - bytesRead, &read);
+                if (FAILED(hr))
+                {
+                    return -1;
+                }
+                else if (read == 0)
+                {
+                    isEof = true;
+                    break;
+                }
+
+                bytesRead += read;
+            }
+
+            // first check BOM
+            auto encoding = TextEncodingDetect::CheckBOM(buf, bytesRead);
+            if (encoding == TextEncodingDetect::None)
+            {
+                // now do first probe
+                TextEncodingDetect detect;
+                encoding = detect.DetectEncoding(buf, bytesRead);
+
+                // if encoding seems to be some kind of UTF, be sure to read the full chunk, then probe again
+                if (encoding != TextEncodingDetect::None && encoding != TextEncodingDetect::ANSI && !isEof && bytesRead < bufSize)
+                {
+                    while (bytesRead < bufSize)
+                    {
+                        ULONG read = 0;
+                        hr = mss->fileStreamData->Read(buf + bytesRead, bufSize - bytesRead, &read);
+                        if (FAILED(hr))
+                        {
+                            return -1;
+                        }
+                        else if (read == 0)
+                        {
+                            isEof = true;
+                            break;
+                        }
+
+                        bytesRead += read;
+                    }
+
+                    encoding = detect.DetectEncoding(buf, bytesRead);
+                }
+
+                mss->streamEncoding = encoding;
+            }
+
+            mss->streamEncodingChecked = true;
         }
 
         return bytesRead;
