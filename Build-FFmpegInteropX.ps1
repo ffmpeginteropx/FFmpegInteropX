@@ -156,7 +156,9 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
     foreach ($platform in $Platforms) {
         # WinUI does not support ARM
         if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
+        {
             continue;
+        }
 
         $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" $addparams"
         $processes[$platform] = $proc
@@ -165,7 +167,9 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
     foreach ($platform in $Platforms) {
         # WinUI does not support ARM
         if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
+        {
             continue;
+        }
 
         $processes[$platform].WaitForExit();
         $result = $processes[$platform].ExitCode;
@@ -186,7 +190,9 @@ else
 
         # WinUI does not support ARM
         if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
+        {
             continue;
+        }
 
         try
         {
