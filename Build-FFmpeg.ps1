@@ -27,7 +27,7 @@ param(
         10.0.17763.0
         10.0.18362.0
     #>
-    [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
+    [version] $WindowsTargetPlatformVersion = '10.0.19041.0',
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
@@ -506,11 +506,21 @@ else
 
 if ($success -and $NugetPackageVersion)
 {
-    nuget pack .\Build\FFmpegInteropX.FFmpegUWP.nuspec `
-        -Properties "id=FFmpegInteropX.FFmpegUWP;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;NoWarn=NU5128" `
-        -Version $NugetPackageVersion `
-        -Symbols -SymbolPackageFormat symbols.nupkg `
-        -OutputDirectory "${PSScriptRoot}\Output\NuGet"
+    if ($WindowsTarget -eq "UWP") { 
+        Build\nuget pack .\Build\FFmpegInteropX.FFmpegUWP.nuspec `
+            -Properties "id=FFmpegInteropX.FFmpegUWP;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;NoWarn=NU5128" `
+            -Version $NugetPackageVersion `
+            -Symbols -SymbolPackageFormat symbols.nupkg `
+            -OutputDirectory "${PSScriptRoot}\Output\NuGet"
+    }
+    else
+    {
+        Build\nuget pack .\Build\FFmpegInteropX.FFmpeg.nuspec `
+            -Properties "id=FFmpegInteropX.FFmpeg;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;NoWarn=NU5128" `
+            -Version $NugetPackageVersion `
+            -Symbols -SymbolPackageFormat symbols.nupkg `
+            -OutputDirectory "${PSScriptRoot}\Output\NuGet"
+    }
 }
 
 Write-Host

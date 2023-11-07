@@ -78,24 +78,33 @@ fi
 if [ "$variant" == "Desktop" ]; then
     configureArgs="\
         $configureArgs \
-        --enable-libx264 \
-        --enable-libx265 \
-        --enable-libvpx \
-        --enable-gpl \
-        --enable-static \
-        --extra-ldflags='-APPCONTAINER:NO -MACHINE:$platform'
+        --disable-encoders \
+        --disable-devices \
+        --enable-hwaccels \
+        --enable-d3d11va \
+        --disable-dxva2 \
+        --disable-programs \
+        --extra-ldflags='-APPCONTAINER:NO -MACHINE:$platform Ws2_32.lib Advapi32.lib User32.lib '
     "
 
-    if [ "$sharedOrStatic" = "shared" ]; then
+    cflags="\
+        $cflags \
+        -D_WIN32 \
+        -D_WIN32_WINNT=0x0A00
+    "
+
+    if [ "$platform" = "x64" ] || [ "$platform" = "x86" ]; then
         configureArgs="\
             $configureArgs \
-            --extra-cflags='$cflags -D_WINDLL' \
-        "
-    else
+            --extra-cflags='$cflags'
+"
+    fi
+
+    if [ "$platform" = "ARM" ] || [ "$platform" = "ARM64" ]; then
         configureArgs="\
             $configureArgs \
-            --extra-cflags='$cflags' \
-        "
+            --extra-cflags='$cflags -D__ARM_PCS_VFP'
+            "
     fi
 fi
 
