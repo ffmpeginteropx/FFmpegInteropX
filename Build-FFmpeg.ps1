@@ -3,6 +3,8 @@ param(
     [ValidateSet('x86', 'x64', 'ARM', 'ARM64')]
     [string[]] $Platforms = ('x86', 'x64', 'ARM', 'ARM64'),
 
+    [switch] $SkipBuild,
+    
     <#
         Example values:
         14.1
@@ -60,6 +62,10 @@ param(
     [switch] $SkipConfigureFFmpeg
 
 )
+
+if ($SkipBuild) {
+    $Platforms = @()
+}
 
 function Build-Platform {
     param (
