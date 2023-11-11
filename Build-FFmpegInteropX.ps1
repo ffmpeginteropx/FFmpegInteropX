@@ -51,9 +51,6 @@ function Build-Platform {
 
     $PSBoundParameters | Out-String
 
-    $hostArch = ( 'x86', 'x64' )[ [System.Environment]::Is64BitOperatingSystem ]
-    $targetArch = $Platform.ToLower()
-
     Write-Host
     Write-Host "Building FFmpegInteropX for Windows 10 ${Platform}..."
     Write-Host
@@ -63,8 +60,7 @@ function Build-Platform {
 
     Enter-VsDevShell `
         -VsInstallPath $VsLatestPath `
-        -StartInPath "$PWD" `
-        -DevCmdArguments "-arch=$targetArch -host_arch=$hostArch -vcvars_ver=$VcVersion -app_platform=UWP"
+        -StartInPath "$PWD"
 
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
@@ -76,8 +72,7 @@ function Build-Platform {
         /restore `
         /p:Configuration=${Configuration}_${WindowsTarget} `
         /p:Platform=$Platform `
-        /p:PlatformToolset=$PlatformToolset `
-        /p:useenv=true
+        /p:PlatformToolset=$PlatformToolset
 
     if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.vcxproj." }
 
@@ -87,8 +82,7 @@ function Build-Platform {
             /restore `
             /t:FFmpegInteropX_DotNet `
             /p:Configuration=${Configuration}_${WindowsTarget} `
-            /p:Platform=$Platform `
-            /p:useenv=true
+            /p:Platform=$Platform
 
         if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.DotNet.csproj." }
     }
