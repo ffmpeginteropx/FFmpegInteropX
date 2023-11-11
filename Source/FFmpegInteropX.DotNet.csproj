@@ -2,10 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
     <Platform>AnyCPU</Platform>
     <Configurations>Debug_WinUI;Release_WinUI;Debug_Desktop;Release_Desktop</Configurations>
+    <LangVersion>10.0</LangVersion>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <TargetPlatformVersion>10.0.22000.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -14,8 +18,16 @@
   </PropertyGroup>
   
   <PropertyGroup>
+    <!-- Enable trimming -->
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+  
+  <PropertyGroup>
     <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
-    <!-- <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir> -->
+    <CSWinRTWindowsMetadata>10.0.22000.0</CSWinRTWindowsMetadata>
+    <CsWinRTGenerateProjection>true</CsWinRTGenerateProjection>
+
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
         None
     </ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
@@ -27,25 +39,23 @@
   
   <PropertyGroup>
     <DefaultItemExcludes>**\*;*.*</DefaultItemExcludes>
-    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
   </PropertyGroup>
+   
+  <ItemGroup>
+    <ProjectReference Include="FFmpegInteropX.vcxproj" PrivateAssets="All" />
+  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.3" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.4" />
   </ItemGroup>
 
   <Choose>
     <When Condition="'$(Configuration)'=='Release_WinUI' Or '$(Configuration)'=='Debug_WinUI'">
       <ItemGroup>
-        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230913002" />
+        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.231008000" />
+        <PackageReference Include="Microsoft.Windows.SDK.BuildTools" version="10.0.22621.756" />
       </ItemGroup>
     </When>
   </Choose>
-  
-  <ItemGroup>
-    <ProjectReference Include="FFmpegInteropX.vcxproj">
-      <Private>True</Private>
-    </ProjectReference>
-  </ItemGroup>
 
 </Project>
