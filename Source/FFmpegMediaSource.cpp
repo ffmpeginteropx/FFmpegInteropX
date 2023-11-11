@@ -1860,25 +1860,10 @@ namespace winrt::FFmpegInteropX::implementation
                 try
                 {
 #ifdef WinUI
-                    if (windowId == 0)
-                    {
-                        HWND handle = NULL;
-                        HWND* pHandle = &handle;
-                        static auto callback = [](HWND hwnd, LPARAM param)
-                            {
-                                if (GetParent(hwnd) == NULL)
-                                {
-                                    *((HWND*)param) = hwnd;
-                                    return FALSE;
-                                }
-                                return TRUE;
-                            };
-                        EnumThreadWindows(GetCurrentThreadId(), callback, (LPARAM)pHandle);
-                        if (handle)
-                        {
-                            windowId = Microsoft::UI::GetWindowIdFromWindow(handle).Value;
-                        }
-                    }
+                    ////if (windowId == 0)
+                    ////{
+                    ////    windowId = Microsoft::UI::Xaml::Window::Current().AppWindow().Id().Value;
+                    ////}
 
                     if (windowId)
                     {
