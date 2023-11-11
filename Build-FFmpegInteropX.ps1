@@ -15,15 +15,6 @@ param(
     #>
     [version] $VcVersion = '14.3',
 
-    <#
-        Example values:
-        8.1
-        10.0.15063.0
-        10.0.17763.0
-        10.0.18362.0
-    #>
-    [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
-
     [ValidateSet('UWP', 'WinUI', 'Desktop')]
     [string] $WindowsTarget = 'UWP',
 
@@ -73,7 +64,7 @@ function Build-Platform {
     Enter-VsDevShell `
         -VsInstallPath $VsLatestPath `
         -StartInPath "$PWD" `
-        -DevCmdArguments "-arch=$targetArch -host_arch=$hostArch -winsdk=$WindowsTargetPlatformVersion -vcvars_ver=$VcVersion -app_platform=UWP"
+        -DevCmdArguments "-arch=$targetArch -host_arch=$hostArch -vcvars_ver=$VcVersion -app_platform=UWP"
 
     if ($ClearBuildFolders) {
         # Clean platform-specific build and output dirs.
@@ -85,7 +76,6 @@ function Build-Platform {
         /restore `
         /p:Configuration=${Configuration}_${WindowsTarget} `
         /p:Platform=$Platform `
-        /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
         /p:PlatformToolset=$PlatformToolset `
         /p:useenv=true
 
@@ -98,7 +88,6 @@ function Build-Platform {
             /t:FFmpegInteropX_DotNet `
             /p:Configuration=${Configuration}_${WindowsTarget} `
             /p:Platform=$Platform `
-            /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
             /p:useenv=true
 
         if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.DotNet.csproj." }
@@ -160,7 +149,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
             continue;
         }
 
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" $addparams"
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" $addparams"
         $processes[$platform] = $proc
     }
 
