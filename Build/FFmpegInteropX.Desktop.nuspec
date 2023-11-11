@@ -9,7 +9,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">Apache-2.0</license>
     <dependencies>
-      <group targetFramework="net6.0-windows10.0.17763.0">
+      <group targetFramework="net6.0-windows10.0.22000.0">
         <dependency id="FFmpegInteropX.FFmpegUWP" version="5.1.100" />
       </group>
       <group targetFramework="native" />
@@ -18,8 +18,8 @@
   </metadata>
   <files>
 
-    <file src="..\Output\FFmpegInteropX.DotNet\Release_Desktop\FFmpegInteropX.DotNet.dll"  target="lib\net6.0-windows10.0.17763.0" />
-    <file src="..\Output\FFmpegInteropX.DotNet\Release_Desktop\FFmpegInteropX.xml"         target="lib\net6.0-windows10.0.17763.0" />
+    <file src="..\Output\FFmpegInteropX.DotNet\Release_Desktop\FFmpegInteropX.DotNet.dll"  target="lib\net6.0-windows10.0.22000.0" />
+    <file src="..\Output\FFmpegInteropX.DotNet\Release_Desktop\FFmpegInteropX.xml"         target="lib\net6.0-windows10.0.22000.0" />
     
     <file src="..\Output\FFmpegInteropX\x86\Release_Desktop\FFmpegInteropX.dll"     target="runtimes\win10-x86\native" />
     <file src="..\Output\FFmpegInteropX\x86\Release_Desktop\FFmpegInteropX.pdb"     target="runtimes\win10-x86\native" />
