@@ -2409,7 +2409,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             // Make sure we have at least 4 bytes for BOM check
             bool isEof = false;
-            while (bytesRead < min(bufSize,4))
+            while (bytesRead < min(bufSize,4) && !isEof)
             {
                 ULONG read = 0;
                 hr = mss->fileStreamData->Read(buf + bytesRead, bufSize - bytesRead, &read);
@@ -2420,7 +2420,6 @@ namespace winrt::FFmpegInteropX::implementation
                 else if (read == 0)
                 {
                     isEof = true;
-                    break;
                 }
 
                 bytesRead += read;
@@ -2442,7 +2441,6 @@ namespace winrt::FFmpegInteropX::implementation
                     else if (read == 0)
                     {
                         isEof = true;
-                        break;
                     }
 
                     bytesRead += read;
