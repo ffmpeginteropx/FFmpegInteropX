@@ -158,7 +158,6 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="FFmpegInteropLibs.props" />
   </ImportGroup>
   <PropertyGroup Label="NuGet">
     <ResolveNuGetPackages>false</ResolveNuGetPackages>
@@ -168,6 +167,18 @@
     <IntDir>..\Intermediate\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>..\Output\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Output\FFmpegUWP\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Output\FFmpegUWP\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+	    <AdditionalLibraryDirectories>$(ProjectDir)..\Output\FFmpegUWP\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
