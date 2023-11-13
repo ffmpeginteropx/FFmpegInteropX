@@ -40,7 +40,6 @@
     <DesktopCompatible Condition="'$(AppType)'!='UWP'">true</DesktopCompatible>
     <UseWinUI Condition="'$(AppType)'!='UWP'">true</UseWinUI>
     <CppWinRTModernIDL>true</CppWinRTModernIDL>
-    <FFmpegInteropXBuild>true</FFmpegInteropXBuild>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <ItemGroup Label="ProjectConfigurations">
@@ -176,6 +175,9 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)..\Output\FFmpegUWP\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Output\FFmpegUWP\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
     <Link>
       <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)..\Output\FFmpegUWP\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -188,6 +190,9 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(ProjectDir)..\Output\FFmpegDesktop\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Output\FFmpegDesktop\$(PlatformTarget)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
     <Link>
       <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)..\Output\FFmpegDesktop\$(PlatformTarget)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
