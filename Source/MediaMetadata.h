@@ -58,6 +58,10 @@ public:
         }
     }
 
+    void Clear()
+    {
+        entries.Clear();
+    }
 
     IMapView<winrt::hstring, IVectorView<winrt::hstring>> MetadataTags()
     {

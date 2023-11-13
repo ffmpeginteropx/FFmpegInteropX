@@ -77,10 +77,10 @@ MainPage::MainPage()
 void MediaPlayerCPP::MainPage::StreamDelayManipulation(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e)
 {
     auto streamToDelay = (IStreamInfo^)cmbAudioVideoStreamDelays->SelectedItem;
-    if (streamToDelay != nullptr && actualFFmpegMSS != nullptr)
+    if (streamToDelay != nullptr && FFmpegMSS != nullptr)
     {
         auto delay = TimeSpan{ (long long)(StreamDelays->Value * 10000000L) };
-        actualFFmpegMSS->SetStreamDelay(streamToDelay, delay);
+        FFmpegMSS->SetStreamDelay(streamToDelay, delay);
     }
 }
 
@@ -165,10 +165,8 @@ task<void> MainPage::OpenLocalFile(StorageFile^ file)
         // Instantiate FFmpegMediaSource using the opened local file stream
         FFmpegMSS = co_await FFmpegMediaSource::CreateFromStreamAsync(stream, Config);
 
-        playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
-
-        // Pass MediaPlaybackItem to Media Element
-        mediaPlayer->Source = playbackItem;
+        // Open with MediaPlayer
+        co_await FFmpegMSS->OpenWithMediaPlayerAsync(mediaPlayer);
 
         // Close control panel after file open
         Splitter->IsPaneOpen = false;
@@ -220,10 +218,9 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
         ApplicationData::Current->LocalSettings->Values->Insert("LastUri", uri);
 
         FFmpegMSS = co_await FFmpegMediaSource::CreateFromUriAsync(uri, Config);
-        playbackItem = FFmpegMSS->CreateMediaPlaybackItem();
 
-        // Pass MediaPlaybackItem to Media Element
-        mediaPlayer->Source = playbackItem;
+        // Open with MediaPlayer
+        co_await FFmpegMSS->OpenWithMediaPlayerAsync(mediaPlayer);
 
         // Close control panel after opening media
         Splitter->IsPaneOpen = false;
@@ -312,6 +309,7 @@ void MediaPlayerCPP::MainPage::LoadSubtitleFile(Platform::Object^ sender, Window
 
 task<void> MediaPlayerCPP::MainPage::LoadSubtitleFile()
 {
+    auto playbackItem = FFmpegMSS ? FFmpegMSS->PlaybackItem : nullptr;
     if (playbackItem == nullptr)
     {
         DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
@@ -351,7 +349,8 @@ void MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg(Platform::Object^ sender, 
 
 task<void> MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg()
 {
-    if (FFmpegMSS == nullptr)
+    auto playbackItem = FFmpegMSS ? FFmpegMSS->PlaybackItem : nullptr;
+    if (playbackItem == nullptr)
     {
         DisplayErrorMessage("Please open a media file before loading an external subtitle for it.");
     }
@@ -371,10 +370,7 @@ task<void> MediaPlayerCPP::MainPage::LoadSubtitleFileFFmpeg()
             {
                 // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
                 auto stream = co_await file->OpenAsync(FileAccessMode::Read);
-                if (playbackItem != nullptr)
-                {
-                    timedMetadataTracksChangedToken = playbackItem->TimedMetadataTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem^, Windows::Foundation::Collections::IVectorChangedEventArgs^>(this, &MediaPlayerCPP::MainPage::OnTimedMetadataTracksChanged);
-                }
+                timedMetadataTracksChangedToken = playbackItem->TimedMetadataTracksChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackItem^, Windows::Foundation::Collections::IVectorChangedEventArgs^>(this, &MediaPlayerCPP::MainPage::OnTimedMetadataTracksChanged);
 
                 co_await this->FFmpegMSS->AddExternalSubtitleAsync(stream, file->Name);
             }
@@ -411,7 +407,8 @@ void MediaPlayerCPP::MainPage::OnResolved(TimedTextSource^ sender, TimedTextSour
         auto first = args->Tracks->GetAt(0);
         first->Label = "External";
         unsigned int index;
-        if (playbackItem->TimedMetadataTracks->IndexOf(first, &index))
+        auto playbackItem = FFmpegMSS ? FFmpegMSS->PlaybackItem : nullptr;
+        if (playbackItem && playbackItem->TimedMetadataTracks->IndexOf(first, &index))
         {
             playbackItem->TimedMetadataTracks->SetPresentationMode(index, Windows::Media::Playback::TimedMetadataTrackPresentationMode::PlatformPresented);
         }
@@ -420,7 +417,6 @@ void MediaPlayerCPP::MainPage::OnResolved(TimedTextSource^ sender, TimedTextSour
 
 void MediaPlayerCPP::MainPage::OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args)
 {
-    actualFFmpegMSS = nullptr;
     Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
         ref new Windows::UI::Core::DispatchedHandler([this, args]
             {
@@ -449,13 +445,13 @@ void MediaPlayerCPP::MainPage::CbEncodings_SelectionChanged(Platform::Object^ se
 {
     if (cbEncodings->SelectedItem)
     {
-        Config->AnsiSubtitleEncoding = static_cast<CharacterEncoding^>(cbEncodings->SelectedItem);
+        Config->Subtitles->AnsiSubtitleEncoding = static_cast<CharacterEncoding^>(cbEncodings->SelectedItem);
     }
 }
 
 void MediaPlayerCPP::MainPage::PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-    Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
+    Config->Video->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 
@@ -481,11 +477,9 @@ void MediaPlayerCPP::MainPage::DelaySubtitles(Platform::Object^ sender, Windows:
 {
     if (FFmpegMSS != nullptr)
     {
-        auto delay = FFmpegMSS->SubtitleDelay.Duration;
-        TimeSpan newDelay;
-        newDelay.Duration = delay + 10000000;
-        FFmpegMSS->SetSubtitleDelay(newDelay);
-        tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
+        subtitleDelay.Duration += 10000000;
+        FFmpegMSS->SetSubtitleDelay(subtitleDelay);
+        tbSubtitleDelay->Text = "Subtitle delay: " + (subtitleDelay.Duration / 10000000).ToString() + "s";
 
     }
 }
@@ -495,11 +489,9 @@ void MediaPlayerCPP::MainPage::QuickenSubtitles(Platform::Object^ sender, Window
 {
     if (FFmpegMSS != nullptr)
     {
-        auto delay = FFmpegMSS->SubtitleDelay.Duration;
-        TimeSpan newDelay;
-        newDelay.Duration = delay - 10000000;
-        FFmpegMSS->SetSubtitleDelay(newDelay);
-        tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
+        subtitleDelay.Duration -= 10000000;
+        FFmpegMSS->SetSubtitleDelay(subtitleDelay);
+        tbSubtitleDelay->Text = "Subtitle delay: " + (subtitleDelay.Duration / 10000000).ToString() + "s";
     }
 }
 
@@ -510,22 +502,21 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
     {
         FFmpegMSS->PlaybackSession = session;
     }
-    actualFFmpegMSS = FFmpegMSS;
 
     Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
         ref new Windows::UI::Core::DispatchedHandler([this]
             {
                 tbSubtitleDelay->Text = "Subtitle delay: 0s";
-                cmbAudioStreamEffectSelector->ItemsSource = actualFFmpegMSS->AudioStreams;
-                cmbVideoStreamEffectSelector->ItemsSource = actualFFmpegMSS->VideoStreams;
+                cmbAudioStreamEffectSelector->ItemsSource = FFmpegMSS->AudioStreams;
+                cmbVideoStreamEffectSelector->ItemsSource = FFmpegMSS->VideoStreams;
 
                 Vector<IStreamInfo^>^ streams = ref new Vector<IStreamInfo^>();
-                for (auto a : actualFFmpegMSS->AudioStreams)
+                for (auto a : FFmpegMSS->AudioStreams)
                 {
                     streams->Append(a);
                 }
 
-                for (auto vs : actualFFmpegMSS->VideoStreams)
+                for (auto vs : FFmpegMSS->VideoStreams)
                 {
                     streams->Append(vs);
                 }
@@ -537,7 +528,7 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
 void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
     PassthroughVideo->IsEnabled = !AutoDetect->IsOn;
-    Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
+    Config->Video->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -570,6 +561,7 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
 
     if (args->VirtualKey == Windows::System::VirtualKey::V && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) == Windows::UI::Core::CoreVirtualKeyStates:: None))
     {
+        auto playbackItem = FFmpegMSS ? FFmpegMSS->PlaybackItem : nullptr;
         if (playbackItem && playbackItem->VideoTracks->Size > 1)
         {
             bool reverse = (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Shift) & Windows::UI::Core::CoreVirtualKeyStates::Down) == Windows::UI::Core::CoreVirtualKeyStates::Down;
@@ -633,7 +625,7 @@ void MediaPlayerCPP::MainPage::ffmpegVideoFilters_KeyDown(Platform::Object^ send
 {
     if (e->Key == Windows::System::VirtualKey::Enter)
     {
-        Config->FFmpegVideoFilters = ffmpegVideoFilters->Text;
+        Config->Video->FFmpegVideoFilters = ffmpegVideoFilters->Text;
         if (FFmpegMSS)
         {
             if (!cmbVideoStreamEffectSelector->SelectedItem)
@@ -648,7 +640,7 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
 {
     if (e->Key == Windows::System::VirtualKey::Enter)
     {
-        Config->FFmpegAudioFilters = ffmpegAudioFilters->Text;
+        Config->Audio->FFmpegAudioFilters = ffmpegAudioFilters->Text;
         if (FFmpegMSS)
         {
             if (!cmbAudioStreamEffectSelector->SelectedItem)
@@ -660,10 +652,10 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
 
 double MediaPlayerCPP::MainPage::GetBufferSizeMB()
 {
-    return (double)Config->ReadAheadBufferSize / (1024*1024);
+    return (double)Config->General->ReadAheadBufferSize / (1024*1024);
 }
 
 void MediaPlayerCPP::MainPage::SetBufferSizeMB(double value)
 {
-    Config->ReadAheadBufferSize = (long long)(value * (1024 * 1024));
+    Config->General->ReadAheadBufferSize = (long long)(value * (1024 * 1024));
 }

@@ -66,10 +66,10 @@ namespace MediaPlayerCPP
 
         Windows::Media::Playback::MediaPlayer^ mediaPlayer;
         Windows::Storage::StorageFile^ currentFile;
-        FFmpegInteropX::FFmpegMediaSource^ actualFFmpegMSS;
         FFmpegInteropX::FFmpegMediaSource^ FFmpegMSS;
-        Windows::Media::Playback::MediaPlaybackItem^ playbackItem;
         Windows::Foundation::EventRegistrationToken timedMetadataTracksChangedToken;
+        TimeSpan subtitleDelay{ 0 };
+
         void CbEncodings_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e);
         void AddTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
         void RemoveTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);

@@ -54,30 +54,30 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
         m_OutputPixelFormat = AV_PIX_FMT_BGRA;
         outputMediaSubtype = MediaEncodingSubtypes::Bgra8();
     }
-    else if (m_config.VideoOutputAllowIyuv() && (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P || m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P)
+    else if (m_config.Video().VideoOutputAllowIyuv() && (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P || m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P)
         && m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1 && decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
     {
         // if format is yuv and yuv is allowed and codec supports direct buffer decoding, use yuv
         m_OutputPixelFormat = m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P ? AV_PIX_FMT_YUVJ420P : AV_PIX_FMT_YUV420P;
         outputMediaSubtype = MediaEncodingSubtypes::Iyuv();
     }
-    else if (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P10LE && m_config.VideoOutputAllow10bit())
+    else if (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P10LE && m_config.Video().VideoOutputAllow10bit())
     {
         m_OutputPixelFormat = AV_PIX_FMT_P010LE;
         outputMediaSubtype = winrt::to_hstring(MFVideoFormat_P010);
     }
-    else if (m_config.VideoOutputAllowNv12())
+    else if (m_config.Video().VideoOutputAllowNv12())
     {
         // NV12 is generally the preferred format
         m_OutputPixelFormat = AV_PIX_FMT_NV12;
         outputMediaSubtype = MediaEncodingSubtypes::Nv12();
     }
-    else if (m_config.VideoOutputAllowIyuv())
+    else if (m_config.Video().VideoOutputAllowIyuv())
     {
         m_OutputPixelFormat = m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P ? AV_PIX_FMT_YUVJ420P : AV_PIX_FMT_YUV420P;
         outputMediaSubtype = MediaEncodingSubtypes::Iyuv();
     }
-    else if (m_config.VideoOutputAllowBgra8())
+    else if (m_config.Video().VideoOutputAllowBgra8())
     {
         m_OutputPixelFormat = AV_PIX_FMT_BGRA;
         outputMediaSubtype = MediaEncodingSubtypes::Bgra8();

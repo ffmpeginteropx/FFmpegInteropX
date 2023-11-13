@@ -71,7 +71,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int
             }
         }
 
-        if (!SUCCEEDED(hr) && errorCount++ < m_config.SkipErrors())
+        if (!SUCCEEDED(hr) && errorCount++ < m_config.General().SkipErrors())
         {
             DebugMessage(L"Decode error.\n");
 

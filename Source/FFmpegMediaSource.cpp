@@ -33,6 +33,8 @@
 // This assertion exists to avoid compiling these generated source files directly.
 //static_assert(false, "Do not compile generated C++/WinRT source files directly");
 
+void free_buffer(void* lpVoid);
+
 namespace winrt::FFmpegInteropX::implementation
 {
     using namespace Windows::Foundation;
@@ -51,7 +53,6 @@ namespace winrt::FFmpegInteropX::implementation
     FFmpegMediaSource::FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig,
         DispatcherQueue const& dispatcher, uint64_t windowId, bool useHdr)
         : config(interopConfig)
-        , thumbnailStreamIndex(AVERROR_STREAM_NOT_FOUND)
         , isFirstSeek(true)
         , dispatcher(dispatcher)
         , windowId(windowId)
@@ -74,7 +75,7 @@ namespace winrt::FFmpegInteropX::implementation
                 isRegistered = true;
             }
         }
-        subtitleDelay = config->DefaultSubtitleDelay();
+
         audioStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::AudioStreamInfo>();
         subtitleStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::SubtitleStreamInfo>();
         videoStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::VideoStreamInfo>();
@@ -143,7 +144,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             // Setup FFmpeg custom IO to access file as stream. This is necessary when accessing any file outside of app installation directory and appdata folder.
             // Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
-            fileStreamBuffer = (unsigned char*)av_malloc(config->FileStreamReadSize());
+            fileStreamBuffer = (unsigned char*)av_malloc(config->General().FileStreamReadSize());
             if (fileStreamBuffer == nullptr)
             {
                 hr = E_OUTOFMEMORY;
@@ -152,7 +153,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (SUCCEEDED(hr))
         {
-            avIOCtx = avio_alloc_context(fileStreamBuffer, config->StreamBufferSize(), 0, (void*)winrt::get_abi(this), FileStreamRead, 0, FileStreamSeek);
+            avIOCtx = avio_alloc_context(fileStreamBuffer, config->General().FileStreamReadSize(), 0, (void*)winrt::get_abi(this), FileStreamRead, 0, FileStreamSeek);
             if (avIOCtx == nullptr)
             {
                 av_free(fileStreamBuffer);
@@ -212,7 +213,6 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (SUCCEEDED(hr))
         {
-            this->mss = mss;
             hr = InitFFmpegContext();
         }
 
@@ -270,7 +270,6 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (SUCCEEDED(hr))
         {
-            this->mss = nullptr;
             hr = InitFFmpegContext();
         }
 
@@ -281,7 +280,7 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -309,10 +308,11 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(args);
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
+
         if (sender.AudioTracks().Size() == AudioStreams().Size())
         {
             for (unsigned int i = 0; i < AudioStreams().Size(); i++)
@@ -331,19 +331,19 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    void FFmpegMediaSource::InitializePlaybackItem(MediaPlaybackItem const& playbackitem)
+    void FFmpegMediaSource::InitializePlaybackItem(MediaPlaybackItem const& playbackItem)
     {
-        audioTracksChangedToken = playbackitem.AudioTracksChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnAudioTracksChanged });
-        subtitlePresentationModeChangedToken = playbackitem.TimedMetadataTracks().PresentationModeChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnPresentationModeChanged });
+        audioTracksChangedToken = playbackItem.AudioTracksChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnAudioTracksChanged });
+        subtitlePresentationModeChangedToken = playbackItem.TimedMetadataTracks().PresentationModeChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnPresentationModeChanged });
 
-        if (config->AutoSelectForcedSubtitles())
+        if (config->Subtitles().AutoSelectForcedSubtitles())
         {
             int index = 0;
             for (auto stream : subtitleStreamInfos)
             {
                 if (stream.IsForced())
                 {
-                    playbackitem.TimedMetadataTracks().SetPresentationMode(index, TimedMetadataTrackPresentationMode::PlatformPresented);
+                    playbackItem.TimedMetadataTracks().SetPresentationMode(index, TimedMetadataTrackPresentationMode::PlatformPresented);
                     break;
                 }
 
@@ -355,6 +355,8 @@ namespace winrt::FFmpegInteropX::implementation
         {
             stream->PlaybackItem = playbackItem;
         }
+
+        playbackItemWeak = playbackItem;
     }
 
     IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromStreamAsync(
@@ -481,7 +483,7 @@ namespace winrt::FFmpegInteropX::implementation
         attachedFileHelper = shared_ptr<AttachedFileHelper>(new AttachedFileHelper(config.as<winrt::FFmpegInteropX::MediaSourceConfig>()));
 
         // first parse attached files, so they are available for subtitle streams during initialize
-        if (config->UseEmbeddedSubtitleFonts())
+        if (config->Subtitles().UseEmbeddedSubtitleFonts())
         {
             for (unsigned int index = 0; index < avFormatCtx->nb_streams; index++)
             {
@@ -528,9 +530,9 @@ namespace winrt::FFmpegInteropX::implementation
                     }
                 }
             }
-            else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && avStream->disposition == AV_DISPOSITION_ATTACHED_PIC && thumbnailStreamIndex == AVERROR_STREAM_NOT_FOUND && !config->IsExternalSubtitleParser)
+            else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && avStream->disposition == AV_DISPOSITION_ATTACHED_PIC && !thumbnailData && !config->IsExternalSubtitleParser)
             {
-                thumbnailStreamIndex = index;
+                thumbnailData = ExtractThumbnail(avStream);
             }
             else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && !config->IsExternalSubtitleParser)
             {
@@ -588,6 +590,18 @@ namespace winrt::FFmpegInteropX::implementation
             currentVideoStream = videoStreams[0];
         }
 
+        if (currentVideoStream)
+        {
+            currentVideoStream->EnableStream();
+            currentVideoStreamInfo = currentVideoStream->VideoInfo();
+        }
+
+        if (currentAudioStream)
+        {
+            currentAudioStream->EnableStream();
+            currentAudioStreamInfo = currentAudioStream->AudioInfo();
+        }
+
         audioStreamInfos = audioStrInfos.GetView();
         subtitleStreamInfos = subtitleStrInfos.GetView();
         videoStreamInfos = videoStrInfos.GetView();
@@ -606,122 +620,123 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
 
+        if (SUCCEEDED(hr))
+        {
+            // Convert media duration from AV_TIME_BASE to TimeSpan unit
+            mediaDuration = TimeSpan(LONGLONG(avFormatCtx->duration * 10000000 / double(AV_TIME_BASE)));
+
+            auto title = av_dict_get(avFormatCtx->metadata, "title", NULL, 0);
+            auto titleStr = title ? StringUtils::Utf8ToPlatformString(title->value) : L"";
+            auto codecStr = StringUtils::Utf8ToPlatformString(avFormatCtx->iformat->name);
+            formatInfo = winrt::FFmpegInteropX::FormatInfo(titleStr, codecStr, mediaDuration, avFormatCtx->bit_rate);
+
+            auto chapters = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::ChapterInfo>();
+            if (avFormatCtx->chapters && avFormatCtx->nb_chapters > 1)
+            {
+                for (size_t i = 0; i < avFormatCtx->nb_chapters; i++)
+                {
+                    auto chapter = avFormatCtx->chapters[i];
+                    auto entry = av_dict_get(chapter->metadata, "title", NULL, AV_DICT_IGNORE_SUFFIX);
+                    if (entry)
+                    {
+                        auto chapterTitle = StringUtils::Utf8ToPlatformString(entry->value);
+                        TimeSpan start{ (long long)((chapter->start / (double)chapter->time_base.den) * chapter->time_base.num * 10000000) };
+                        TimeSpan duration{ (long long)(((chapter->end - chapter->start) / (double)chapter->time_base.den) * chapter->time_base.num * 10000000) };
+
+                        // compensate for start time offset
+                        if (avFormatCtx->start_time != AV_NOPTS_VALUE)
+                        {
+                            start = TimeSpan(start.count() - (avFormatCtx->start_time * 10));
+                        }
+
+                        // cut off negative start times
+                        if (start.count() < 0)
+                        {
+                            duration = TimeSpan(duration.count() + start.count());
+                            start = TimeSpan(0);
+                        }
+
+                        if (duration.count() > 0)
+                        {
+                            auto chapInfo = winrt::FFmpegInteropX::ChapterInfo(chapterTitle, start, duration);
+                            chapters.Append(chapInfo);
+                        }
+                    }
+                }
+            }
+            chapterInfos = chapters.GetView();
+        }
+
+        if (!config->Video().FFmpegVideoFilters().empty())
+        {
+            SetFFmpegVideoFilters(config->Video().FFmpegVideoFilters());
+        }
+
+        if (!config->Audio().FFmpegAudioFilters().empty())
+        {
+            SetFFmpegAudioFilters(config->Audio().FFmpegAudioFilters());
+        }
+
+        return hr;
+    }
+
+    MediaStreamSource FFmpegMediaSource::CreateMediaStreamSource()
+    {
+        MediaStreamSource mss = nullptr;
+
         if (currentVideoStream && currentAudioStream)
         {
             mss = MediaStreamSource(currentVideoStream->StreamDescriptor(), currentAudioStream->StreamDescriptor());
-            currentVideoStream->EnableStream();
-            currentAudioStream->EnableStream();
         }
         else if (currentAudioStream)
         {
             mss = MediaStreamSource(currentAudioStream->StreamDescriptor());
-            currentAudioStream->EnableStream();
         }
         else if (currentVideoStream)
         {
             mss = MediaStreamSource(currentVideoStream->StreamDescriptor());
-            currentVideoStream->EnableStream();
         }
         else if (subtitleStreams.size() == 0 || !config->IsExternalSubtitleParser)
         {
             //only fail if there are no media streams (audio, video, or subtitle)
-            hr = E_FAIL;
+            throw_hresult(E_FAIL);
         }
-        //if the streams are subtitles only, there will be no media stream source
-        if (mss != nullptr) {
-            if (SUCCEEDED(hr))
+
+        for (auto& stream : audioStreams)
+        {
+            if (stream != currentAudioStream)
             {
-                for (auto& stream : audioStreams)
-                {
-                    if (stream != currentAudioStream)
-                    {
-                        mss.AddStreamDescriptor(stream->StreamDescriptor());
-                    }
-                }
-
-                for (auto& stream : videoStreams)
-                {
-                    if (stream != currentVideoStream)
-                    {
-                        mss.AddStreamDescriptor(stream->StreamDescriptor());
-                    }
-                }
-
-                auto chapters = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::ChapterInfo>();
-                if (avFormatCtx->chapters && avFormatCtx->nb_chapters > 1)
-                {
-                    for (size_t i = 0; i < avFormatCtx->nb_chapters; i++)
-                    {
-                        auto chapter = avFormatCtx->chapters[i];
-                        auto entry = av_dict_get(chapter->metadata, "title", NULL, AV_DICT_IGNORE_SUFFIX);
-                        if (entry)
-                        {
-                            auto title = StringUtils::Utf8ToPlatformString(entry->value);
-                            TimeSpan start{ (long long)((chapter->start / (double)chapter->time_base.den) * chapter->time_base.num * 10000000) };
-                            TimeSpan duration{ (long long)(((chapter->end - chapter->start) / (double)chapter->time_base.den) * chapter->time_base.num * 10000000) };
-
-                            // compensate for start time offset
-                            if (avFormatCtx->start_time != AV_NOPTS_VALUE)
-                            {
-                                start = TimeSpan(start.count() - (avFormatCtx->start_time * 10));
-                            }
-
-                            // cut off negative start times
-                            if (start.count() < 0)
-                            {
-                                duration = TimeSpan(duration.count() + start.count());
-                                start = TimeSpan(0);
-                            }
-
-                            if (duration.count() > 0)
-                            {
-                                auto chapInfo = winrt::FFmpegInteropX::ChapterInfo(title, start, duration);
-                                chapters.Append(chapInfo);
-                            }
-                        }
-                    }
-                }
-                chapterInfos = chapters.GetView();
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                // Convert media duration from AV_TIME_BASE to TimeSpan unit
-                mediaDuration = TimeSpan(LONGLONG(avFormatCtx->duration * 10000000 / double(AV_TIME_BASE)));
-
-                // Assign initial BufferTime to MediaStreamSource
-                mss.BufferTime(TimeSpan{ 0 });
-                mss.MaxSupportedPlaybackRate(config->MaxSupportedPlaybackRate());
-
-                if (mediaDuration.count() > 0)
-                {
-                    mss.Duration(mediaDuration);
-                    mss.CanSeek(true);
-                }
-
-                auto title = av_dict_get(avFormatCtx->metadata, "title", NULL, 0);
-                auto titleStr = title ? StringUtils::Utf8ToPlatformString(title->value) : L"";
-                auto codecStr = StringUtils::Utf8ToPlatformString(avFormatCtx->iformat->name);
-                formatInfo = winrt::FFmpegInteropX::FormatInfo(titleStr, codecStr, mediaDuration, avFormatCtx->bit_rate);
-
-                // using strong reference here would create circle references, since we store MSS and MediaPlaybackItem here.
-                startingRequestedToken = mss.Starting({ get_weak(), &FFmpegMediaSource::OnStarting });
-                sampleRequestedToken = mss.SampleRequested({ get_weak(), &FFmpegMediaSource::OnSampleRequested });
-                switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
-            }
-
-            if (!config->FFmpegVideoFilters().empty())
-            {
-                SetFFmpegVideoFilters(config->FFmpegVideoFilters());
-            }
-
-            if (!config->FFmpegAudioFilters().empty())
-            {
-                SetFFmpegAudioFilters(config->FFmpegAudioFilters());
+                mss.AddStreamDescriptor(stream->StreamDescriptor());
             }
         }
 
-        return hr;
+        for (auto& stream : videoStreams)
+        {
+            if (stream != currentVideoStream)
+            {
+                mss.AddStreamDescriptor(stream->StreamDescriptor());
+            }
+        }
+
+        mss.BufferTime(TimeSpan{ 0 });
+
+        if (mediaDuration.count() > 0)
+        {
+            mss.Duration(mediaDuration);
+            mss.CanSeek(true);
+        }
+
+        mssWeak = mss;
+
+        // using strong reference here would create circle references, since we store MSS and MediaPlaybackItem here.
+        startingRequestedToken = mss.Starting({ get_weak(), &FFmpegMediaSource::OnStarting });
+        sampleRequestedToken = mss.SampleRequested({ get_weak(), &FFmpegMediaSource::OnSampleRequested });
+        switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
+
+
+
+
+        return mss;
     }
 
 
@@ -741,9 +756,9 @@ namespace winrt::FFmpegInteropX::implementation
             }
 
             //inject custom properties
-            if (config->AutoCorrectAnsiSubtitles() && config->IsExternalSubtitleParser && streamByteOrderMark != ByteOrderMark::UTF8)
+            if (config->Subtitles().AutoCorrectAnsiSubtitles() && config->IsExternalSubtitleParser && streamByteOrderMark != ByteOrderMark::UTF8)
             {
-                hstring key = config->AnsiSubtitleEncoding().Name();
+                hstring key = config->Subtitles().AnsiSubtitleEncoding().Name();
                 std::string keyA = StringUtils::PlatformStringToUtf8String(key);
                 const char* keyChar = keyA.c_str();
 
@@ -791,7 +806,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             if (SUCCEEDED(hr))
             {
-                avSubsStream->SetStreamDelay(config->DefaultSubtitleDelay());
+                avSubsStream->SetStreamDelay(config->Subtitles().DefaultSubtitleDelay());
                 hr = avSubsStream->Initialize();
             }
 
@@ -857,7 +872,7 @@ namespace winrt::FFmpegInteropX::implementation
                     unsigned threads = std::thread::hardware_concurrency();
                     if (threads > 0)
                     {
-                        avAudioCodecCtx->thread_count = config->MaxAudioThreads() == 0 ? threads : min((int)threads, config->MaxAudioThreads());
+                        avAudioCodecCtx->thread_count = config->Audio().MaxDecoderThreads() == 0 ? threads : min((int)threads, config->Audio().MaxDecoderThreads());
                         avAudioCodecCtx->thread_type = FF_THREAD_FRAME | FF_THREAD_SLICE;
                     }
 
@@ -902,7 +917,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (avVideoCodec)
         {
-            auto tryAv1hw = avVideoCodec->id == AVCodecID::AV_CODEC_ID_AV1 && std::string(avVideoCodec->name) != "av1" && config->VideoDecoderMode() == VideoDecoderMode::Automatic;
+            auto tryAv1hw = avVideoCodec->id == AVCodecID::AV_CODEC_ID_AV1 && std::string(avVideoCodec->name) != "av1" && config->Video().VideoDecoderMode() == VideoDecoderMode::Automatic;
             auto libdav1d = tryAv1hw ? avVideoCodec : NULL;
             if (tryAv1hw)
             {
@@ -922,7 +937,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
 
             // create and assign HW device context, if supported and requested
-            if (SUCCEEDED(hr) && config->VideoDecoderMode() == VideoDecoderMode::Automatic)
+            if (SUCCEEDED(hr) && config->Video().VideoDecoderMode() == VideoDecoderMode::Automatic)
             {
                 int i = 0;
                 while (SUCCEEDED(hr))
@@ -1009,7 +1024,7 @@ namespace winrt::FFmpegInteropX::implementation
                 if (!avVideoCodecCtx->hw_device_ctx)
                 {
                     unsigned threads = std::thread::hardware_concurrency();
-                    avVideoCodecCtx->thread_count = config->MaxVideoThreads() == 0 ? threads : min((int)threads, config->MaxVideoThreads());
+                    avVideoCodecCtx->thread_count = config->Video().MaxDecoderThreads() == 0 ? threads : min((int)threads, config->Video().MaxDecoderThreads());
                     avVideoCodecCtx->thread_type = config->IsFrameGrabber ? FF_THREAD_SLICE : FF_THREAD_FRAME | FF_THREAD_SLICE;
                 }
 
@@ -1037,18 +1052,17 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SetSubtitleDelay(TimeSpan const& delay)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
+
         try
         {
             for (auto& subtitleStream : subtitleStreams)
             {
                 subtitleStream->SetStreamDelay(delay);
             }
-
-            subtitleDelay = delay;
         }
         catch (...)
         {
@@ -1058,8 +1072,9 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SetFFmpegAudioFilters(hstring const& audioFilters)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
+            OutputDebugString(L"\n SetFFmpegAudioFilters failed");
             return;
         }
         for (auto audioStream : audioStreams)
@@ -1071,7 +1086,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SetFFmpegAudioFilters(hstring const& audioFilters, winrt::FFmpegInteropX::AudioStreamInfo const& audioStream)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1088,7 +1103,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoFilters)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1102,7 +1117,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::SetFFmpegVideoFilters(hstring const& videoFilters, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1117,15 +1132,10 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    void FFmpegMediaSource::DisableAudioEffects()
-    {
-        ClearFFmpegAudioFilters();
-    }
-
     void FFmpegMediaSource::ClearFFmpegAudioFilters()
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1138,7 +1148,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::ClearFFmpegAudioFilters(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1153,15 +1163,10 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    void FFmpegMediaSource::DisableVideoEffects()
-    {
-        ClearFFmpegVideoFilters();
-    }
-
     void FFmpegMediaSource::ClearFFmpegVideoFilters()
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1174,7 +1179,7 @@ namespace winrt::FFmpegInteropX::implementation
     void FFmpegMediaSource::ClearFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1192,7 +1197,7 @@ namespace winrt::FFmpegInteropX::implementation
     hstring FFmpegMediaSource::GetFFmpegAudioFilters(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return hstring{};
         }
@@ -1210,7 +1215,7 @@ namespace winrt::FFmpegInteropX::implementation
     hstring FFmpegMediaSource::GetFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return hstring{};
         }
@@ -1227,32 +1232,33 @@ namespace winrt::FFmpegInteropX::implementation
 
     FFmpegInteropX::MediaThumbnailData FFmpegMediaSource::ExtractThumbnail()
     {
-        if (thumbnailStreamIndex != AVERROR_STREAM_NOT_FOUND)
+        std::lock_guard lock(mutex);
+        return thumbnailData;
+    }
+
+    FFmpegInteropX::MediaThumbnailData FFmpegMediaSource::ExtractThumbnail(AVStream* imageStream)
+    {
+        if (isClosed || !imageStream->attached_pic.data || !imageStream->attached_pic.buf || !imageStream->attached_pic.size)
         {
-            // FFmpeg identifies album/cover art from a music file as a video stream
-            // Avoid creating unnecessarily video stream from this album/cover art
-            if (avFormatCtx->streams[thumbnailStreamIndex]->disposition == AV_DISPOSITION_ATTACHED_PIC)
-            {
-                auto imageStream = avFormatCtx->streams[thumbnailStreamIndex];
-                //save album art to file.
-                hstring extension = L".jpeg";
-                switch (imageStream->codecpar->codec_id)
-                {
-                case AV_CODEC_ID_MJPEG:
-                case AV_CODEC_ID_MJPEGB:
-                case AV_CODEC_ID_JPEG2000:
-                case AV_CODEC_ID_JPEGLS: extension = L".jpeg"; break;
-                case AV_CODEC_ID_PNG: extension = L".png"; break;
-                case AV_CODEC_ID_BMP: extension = L".bmp"; break;
-                }
+            return nullptr;
+        }
 
-                auto vector = array_view(imageStream->attached_pic.data, imageStream->attached_pic.size);
-                DataWriter writer = DataWriter();
-                writer.WriteBytes(vector);
+        hstring extension = L".jpg";
+        switch (imageStream->codecpar->codec_id)
+        {
+        case AV_CODEC_ID_MJPEG:
+        case AV_CODEC_ID_MJPEGB:
+        case AV_CODEC_ID_JPEG2000:
+        case AV_CODEC_ID_JPEGLS: extension = L".jpg"; break;
+        case AV_CODEC_ID_PNG: extension = L".png"; break;
+        case AV_CODEC_ID_BMP: extension = L".bmp"; break;
+        }
 
-                auto retValue = MediaThumbnailData(writer.DetachBuffer(), extension);
-                return retValue;
-            }
+        auto bufferRef = av_buffer_ref(imageStream->attached_pic.buf);
+        if (bufferRef)
+        {
+            auto buffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)imageStream->attached_pic.size, free_buffer, bufferRef);
+            return MediaThumbnailData(buffer, extension);
         }
 
         return nullptr;
@@ -1260,8 +1266,9 @@ namespace winrt::FFmpegInteropX::implementation
 
     Windows::Media::Core::MediaStreamSource FFmpegMediaSource::GetMediaStreamSource()
     {
+        std::lock_guard lock(mutex);
         if (this->config->IsFrameGrabber) throw_hresult(E_UNEXPECTED);
-        return mss;
+        return mssWeak.get();
     }
 
     MediaSource FFmpegMediaSource::CreateMediaSource()
@@ -1275,6 +1282,9 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         if (this->config->IsFrameGrabber) throw_hresult(E_UNEXPECTED);
+
+        auto mss = CreateMediaStreamSource();
+
         MediaSource source = MediaSource::CreateFromMediaStreamSource(mss);
         for (auto& stream : subtitleStreams)
         {
@@ -1307,12 +1317,13 @@ namespace winrt::FFmpegInteropX::implementation
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem()
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             throw_hresult(RO_E_CLOSED);
         }
-        if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
-        playbackItem = MediaPlaybackItem(CreateMediaSource());
+
+        if (this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
+        auto playbackItem = MediaPlaybackItem(CreateMediaSource());
         InitializePlaybackItem(playbackItem);
         return playbackItem;
     }
@@ -1320,12 +1331,13 @@ namespace winrt::FFmpegInteropX::implementation
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan const& startTime)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             throw_hresult(RO_E_CLOSED);
         }
-        if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
-        playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime);
+
+        if (this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
+        auto playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime);
         InitializePlaybackItem(playbackItem);
         return playbackItem;
     }
@@ -1333,14 +1345,77 @@ namespace winrt::FFmpegInteropX::implementation
     MediaPlaybackItem FFmpegMediaSource::CreateMediaPlaybackItem(TimeSpan const& startTime, TimeSpan const& durationLimit)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             throw_hresult(RO_E_CLOSED);
         }
-        if (this->config->IsFrameGrabber || playbackItem != nullptr) throw_hresult(E_UNEXPECTED);
-        playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime, durationLimit);
+
+        if (this->config->IsFrameGrabber || playbackItemWeak.get() != nullptr) throw_hresult(E_UNEXPECTED);
+        auto playbackItem = MediaPlaybackItem(CreateMediaSource(), startTime, durationLimit);
         InitializePlaybackItem(playbackItem);
         return playbackItem;
+    }
+
+    IAsyncAction FFmpegMediaSource::OpenWithMediaPlayerAsync(MediaPlayer mediaPlayer)
+    {
+        auto playbackItem = playbackItemWeak.get();
+        if (!playbackItem)
+        {
+            playbackItem = CreateMediaPlaybackItem();
+        }
+
+        // Does not seem to work on Windows 10?!
+        //auto mediaSource = playbackItem.Source();
+        //if (!mediaSource.IsOpen())
+        //{
+        //    co_await mediaSource.OpenAsync();
+        //}
+
+        task_completion_event<bool> tce;
+
+        auto openedToken = mediaPlayer.MediaOpened([tce](MediaPlayer const&, IInspectable const&) { tce.set(true); });
+        auto failedToken = mediaPlayer.MediaFailed([tce](MediaPlayer const&, MediaPlayerFailedEventArgs const&) { tce.set(false); });
+
+        mediaPlayer.Source(playbackItem);
+        auto playbackItemWeak = this->playbackItemWeak;
+
+        auto result = co_await task<bool>(tce);
+
+        mediaPlayer.MediaOpened(openedToken);
+        mediaPlayer.MediaFailed(failedToken);
+
+        auto source = mediaPlayer.Source();
+        if (!result || source != playbackItem)
+        {
+            // we were disposed already
+            playbackItem.Source().Close();
+        }
+        else
+        {
+            // register for soruce changed event
+            auto tokenPtr = new event_token[1]();
+            tokenPtr[0] = mediaPlayer.SourceChanged([tokenPtr, playbackItemWeak](MediaPlayer const& mediaPlayer, IInspectable const&)
+                {
+                    auto playbackItem = playbackItemWeak.get();
+                    if (!playbackItem)
+                    {
+                        // we were disposed already
+                        mediaPlayer.SourceChanged(tokenPtr[0]);
+                        delete[] tokenPtr;
+                    }
+                    else
+                    {
+                        auto source = mediaPlayer.Source();
+                        if (source != playbackItem)
+                        {
+                            // source has changed. close now.
+                            playbackItem.Source().Close();
+                            mediaPlayer.SourceChanged(tokenPtr[0]);
+                            delete[] tokenPtr;
+                        }
+                    }
+                });
+        }
     }
 
     IAsyncOperation<Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream stream, hstring streamName)
@@ -1353,18 +1428,18 @@ namespace winrt::FFmpegInteropX::implementation
         auto cancellation = co_await get_cancellation_token();
         auto subConfig(winrt::make_self<MediaSourceConfig>());
         subConfig->IsExternalSubtitleParser = true;
-        subConfig->DefaultSubtitleStreamName(streamName);
-        subConfig->DefaultSubtitleDelay(config->DefaultSubtitleDelay());
-        subConfig->AutoCorrectAnsiSubtitles(this->config->AutoCorrectAnsiSubtitles());
-        subConfig->AnsiSubtitleEncoding(this->config->AnsiSubtitleEncoding());
-        subConfig->OverrideSubtitleStyles(this->config->OverrideSubtitleStyles());
-        subConfig->SubtitleRegion(this->config->SubtitleRegion());
-        subConfig->SubtitleStyle(this->config->SubtitleStyle());
-        subConfig->AutoCorrectAnsiSubtitles(this->config->AutoCorrectAnsiSubtitles());
-        subConfig->AutoSelectForcedSubtitles(false);
-        subConfig->MinimumSubtitleDuration(this->config->MinimumSubtitleDuration());
-        subConfig->AdditionalSubtitleDuration(this->config->AdditionalSubtitleDuration());
-        subConfig->PreventModifiedSubtitleDurationOverlap(this->config->PreventModifiedSubtitleDurationOverlap());
+        subConfig->Subtitles().DefaultStreamName(streamName);
+        subConfig->Subtitles().DefaultSubtitleDelay(config->Subtitles().DefaultSubtitleDelay());
+        subConfig->Subtitles().AutoCorrectAnsiSubtitles(this->config->Subtitles().AutoCorrectAnsiSubtitles());
+        subConfig->Subtitles().AnsiSubtitleEncoding(this->config->Subtitles().AnsiSubtitleEncoding());
+        subConfig->Subtitles().OverrideSubtitleStyles(this->config->Subtitles().OverrideSubtitleStyles());
+        subConfig->Subtitles().SubtitleRegion(this->config->Subtitles().SubtitleRegion());
+        subConfig->Subtitles().SubtitleStyle(this->config->Subtitles().SubtitleStyle());
+        subConfig->Subtitles().AutoCorrectAnsiSubtitles(this->config->Subtitles().AutoCorrectAnsiSubtitles());
+        subConfig->Subtitles().AutoSelectForcedSubtitles(false);
+        subConfig->Subtitles().MinimumSubtitleDuration(this->config->Subtitles().MinimumSubtitleDuration());
+        subConfig->Subtitles().AdditionalSubtitleDuration(this->config->Subtitles().AdditionalSubtitleDuration());
+        subConfig->Subtitles().PreventModifiedSubtitleDurationOverlap(this->config->Subtitles().PreventModifiedSubtitleDurationOverlap());
 
         auto videoDescriptor = currentVideoStream ? (currentVideoStream->StreamDescriptor()).as<VideoStreamDescriptor>() : nullptr;
         if (videoDescriptor)
@@ -1400,14 +1475,14 @@ namespace winrt::FFmpegInteropX::implementation
         Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> result;
         {
             std::lock_guard lock(mutex);
-            if (mss == nullptr)
+            if (isClosed)
             {
                 throw_hresult(RO_E_CLOSED);
             }
-            if (config->DefaultSubtitleDelay().count() != externalSubsParser->config->DefaultSubtitleDelay().count())
+            if (config->Subtitles().DefaultSubtitleDelay().count() != externalSubsParser->config->Subtitles().DefaultSubtitleDelay().count())
             {
                 //this should never happen?
-                externalSubsParser->SetSubtitleDelay(config->DefaultSubtitleDelay());
+                externalSubsParser->SetSubtitleDelay(config->Subtitles().DefaultSubtitleDelay());
             }
 
             int subtitleTracksCount = 0;
@@ -1430,10 +1505,13 @@ namespace winrt::FFmpegInteropX::implementation
                     }
 
                     // add stream
-                    subtitleStreams.push_back(externalSubtitle);
-                    if (this->PlaybackItem() != nullptr)
+                    if (!isClosed)
                     {
-                        PlaybackItem().Source().ExternalTimedMetadataTracks().Append(externalSubtitle->SubtitleTrack);
+                        subtitleStreams.push_back(externalSubtitle);
+                    }
+                    if (auto playbackItem = playbackItemWeak.get())
+                    {
+                        playbackItem.Source().ExternalTimedMetadataTracks().Append(externalSubtitle->SubtitleTrack);
                     }
                     subtitleTracksCount++;
                 }
@@ -1454,16 +1532,17 @@ namespace winrt::FFmpegInteropX::implementation
 
     IAsyncOperation<Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream stream)
     {
-        return AddExternalSubtitleAsync(stream, config->DefaultExternalSubtitleStreamName());
+        return AddExternalSubtitleAsync(stream, config->Subtitles().DefaultExternalSubtitleStreamName());
     }
 
     void FFmpegMediaSource::StartBuffering()
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
+
         m_pReader->Start();
     }
 
@@ -1475,10 +1554,11 @@ namespace winrt::FFmpegInteropX::implementation
     Collections::IMapView<hstring, Collections::IVectorView<hstring>> FFmpegMediaSource::MetadataTags()
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
-            throw_hresult(RO_E_CLOSED);
+            return metadata->MetadataTags();
         }
+
         metadata->LoadMetadataTags(avFormatCtx);
         return metadata->MetadataTags();
     }
@@ -1490,14 +1570,14 @@ namespace winrt::FFmpegInteropX::implementation
 
     FFmpegInteropX::VideoStreamInfo FFmpegMediaSource::CurrentVideoStream()
     {
-        auto stream = currentVideoStream;
-        return stream ? stream->VideoInfo() : nullptr;
+        std::lock_guard lock(mutex);
+        return currentVideoStreamInfo;
     }
 
     FFmpegInteropX::AudioStreamInfo FFmpegMediaSource::CurrentAudioStream()
     {
-        auto stream = currentAudioStream;
-        return stream ? stream->AudioInfo() : nullptr;
+        std::lock_guard lock(mutex);
+        return currentAudioStreamInfo;
     }
 
     Collections::IVectorView<FFmpegInteropX::VideoStreamInfo> FFmpegMediaSource::VideoStreams()
@@ -1527,43 +1607,18 @@ namespace winrt::FFmpegInteropX::implementation
 
     bool FFmpegMediaSource::HasThumbnail()
     {
-        return thumbnailStreamIndex != AVERROR_STREAM_NOT_FOUND;
+        return thumbnailData != nullptr;
     }
 
     MediaPlaybackItem FFmpegMediaSource::PlaybackItem()
     {
-        return playbackItem;
-    }
-
-    TimeSpan FFmpegMediaSource::SubtitleDelay()
-    {
-        return subtitleDelay;
-    }
-
-    TimeSpan FFmpegMediaSource::BufferTime()
-    {
-        std::lock_guard lock(mutex);
-        if (mss == nullptr)
-        {
-            throw_hresult(RO_E_CLOSED);
-        }
-        return mss.BufferTime();
-    }
-
-    void FFmpegMediaSource::BufferTime(TimeSpan const& value)
-    {
-        std::lock_guard lock(mutex);
-        if (mss == nullptr)
-        {
-            return;
-        }
-        mss.BufferTime(value);
+        return playbackItemWeak.get();
     }
 
     void FFmpegMediaSource::SetStreamDelay(FFmpegInteropX::IStreamInfo const& stream, TimeSpan const& delay)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -1580,7 +1635,7 @@ namespace winrt::FFmpegInteropX::implementation
     TimeSpan FFmpegMediaSource::GetStreamDelay(FFmpegInteropX::IStreamInfo const& stream)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return TimeSpan{ 0L };
         }
@@ -1597,17 +1652,22 @@ namespace winrt::FFmpegInteropX::implementation
 
     MediaPlaybackSession FFmpegMediaSource::PlaybackSession()
     {
-        return session;
+        return sessionWeak.get();
     }
 
     void FFmpegMediaSource::PlaybackSession(MediaPlaybackSession const& value)
     {
         std::lock_guard lock(mutex);
-        if (session)
+        if (isClosed)
         {
-            session.PositionChanged(sessionPositionEvent);
+            return;
         }
-        session = value;
+
+        if (auto strong = sessionWeak.get())
+        {
+            strong.PositionChanged(sessionPositionEvent);
+        }
+        sessionWeak = value;
         if (value)
         {
             sessionPositionEvent = value.PositionChanged({ get_weak(), &FFmpegInteropX::implementation::FFmpegMediaSource::OnPositionChanged });
@@ -1618,41 +1678,57 @@ namespace winrt::FFmpegInteropX::implementation
     {
         isShuttingDown = true;
 
+        Close(false);
+    }
+
+    void FFmpegMediaSource::Close(bool onMediaSourceClosed)
+    {
         std::lock_guard lock(mutex);
-        if (mss)
+
+
+        if (onMediaSourceClosed)
+        {
+            if (config->General().KeepMetadataOnMediaSourceClosed())
+            {
+                // Save metadata before closing
+                if (avFormatCtx)
+                {
+                    metadata->LoadMetadataTags(avFormatCtx);
+                }
+            }
+            else
+            {
+                metadata->Clear();
+                thumbnailData = nullptr;
+            }
+        }
+
+        if (auto mss = mssWeak.get())
         {
             mss.Starting(startingRequestedToken);
             mss.SampleRequested(sampleRequestedToken);
             mss.SwitchStreamsRequested(switchStreamRequestedToken);
-            mss = nullptr;
+            mss.Closed(closeToken);
+            mssWeak = nullptr;
         }
 
-        if (playbackItem)
+        if (auto playbackItem = playbackItemWeak.get())
         {
             playbackItem.AudioTracksChanged(audioTracksChangedToken);
             playbackItem.TimedMetadataTracks().PresentationModeChanged(subtitlePresentationModeChangedToken);
-            playbackItem = nullptr;
+            playbackItemWeak = nullptr;
         }
 
         // Clear our data
-        currentAudioStream.reset();
-        currentVideoStream.reset();
+        currentAudioStream = nullptr;
+        currentVideoStream = nullptr;
 
         if (m_pReader != nullptr)
         {
             m_pReader->Stop();
             m_pReader->Flush();
-            m_pReader.reset();;
+            m_pReader = nullptr;
         }
-
-        for (auto& x : subtitleStreams)
-            x.reset();
-        for (auto& x : sampleProviders)
-            x.reset();
-        for (auto& x : audioStreams)
-            x.reset();
-        for (auto& x : videoStreams)
-            x.reset();
 
         subtitleStreams.clear();
         sampleProviders.clear();
@@ -1660,14 +1736,20 @@ namespace winrt::FFmpegInteropX::implementation
         videoStreams.clear();
 
         if (avFormatCtx)
+        {
             avformat_close_input(&avFormatCtx);
+        }
+
         if (avIOCtx)
         {
             avIOCtx->opaque = NULL;
             avio_closep(&avIOCtx);
         }
+
         if (avDict)
+        {
             av_dict_free(&avDict);
+        }
 
         if (avHardwareContext)
         {
@@ -1679,17 +1761,17 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         if (deviceHandle && deviceManager)
+        {
             deviceManager->CloseDeviceHandle(deviceHandle);
+        }
 
         device = nullptr;
         deviceContext = nullptr;
         deviceManager = nullptr;
 
-        if (PlaybackSession())
-        {
-            PlaybackSession().PositionChanged(sessionPositionEvent);
-            PlaybackSession(nullptr);
-        }
+        PlaybackSession(nullptr);
+
+        isClosed = true;
     }
 
 
@@ -1697,7 +1779,7 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(avStream);
         std::shared_ptr<MediaSampleProvider> audioSampleProvider = nullptr;
-        if (avAudioCodecCtx->codec_id == AV_CODEC_ID_AAC && config->PassthroughAudioAAC())
+        if (avAudioCodecCtx->codec_id == AV_CODEC_ID_AAC && config->Audio().SystemDecoderAAC())
         {
             AudioEncodingProperties encodingProperties;
             if (avAudioCodecCtx->extradata_size == 0)
@@ -1710,7 +1792,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
             audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, encodingProperties, HardwareDecoderStatus::Unknown));
         }
-        else if (avAudioCodecCtx->codec_id == AV_CODEC_ID_MP3 && config->PassthroughAudioMP3())
+        else if (avAudioCodecCtx->codec_id == AV_CODEC_ID_MP3 && config->Audio().SystemDecoderMP3())
         {
             AudioEncodingProperties encodingProperties = AudioEncodingProperties::CreateMp3(avAudioCodecCtx->sample_rate, avAudioCodecCtx->channels, (unsigned int)avAudioCodecCtx->bit_rate);
             audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, encodingProperties, HardwareDecoderStatus::Unknown));
@@ -1737,7 +1819,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
 #pragma warning (disable: 4973)
 
-            if (config->VideoDecoderMode() == VideoDecoderMode::AutomaticSystemDecoder)
+            if (config->Video().VideoDecoderMode() == VideoDecoderMode::AutomaticSystemDecoder)
             {
                 result = CodecChecker::CheckUseHardwareAcceleration(status,
                     avCodecCtx->codec_id, avCodecCtx->profile, avCodecCtx->width, avCodecCtx->height);
@@ -1750,7 +1832,7 @@ namespace winrt::FFmpegInteropX::implementation
 
                 hardwareDecoderStatus = result ? HardwareDecoderStatus::Available : HardwareDecoderStatus::NotAvailable;
             }
-            else if (config->VideoDecoderMode() == VideoDecoderMode::ForceSystemDecoder)
+            else if (config->Video().VideoDecoderMode() == VideoDecoderMode::ForceSystemDecoder)
             {
                 result = true;
             }
@@ -1767,7 +1849,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation, bool& useHdr, uint64_t& windowId)
     {
-        switch (config->HdrSupport())
+        switch (config->Video().HdrSupport())
         {
         case HdrSupport::Enabled:
             useHdr = true;
@@ -1842,13 +1924,13 @@ namespace winrt::FFmpegInteropX::implementation
 
 #pragma warning (disable: 4973)
 
-        if (config->VideoDecoderMode() == VideoDecoderMode::AutomaticSystemDecoder)
+        if (config->Video().VideoDecoderMode() == VideoDecoderMode::AutomaticSystemDecoder)
         {
             CodecChecker::Initialize();
         }
 
         if (avVideoCodecCtx->codec_id == AV_CODEC_ID_H264 &&
-            (CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationH264(), hardwareDecoderStatus, config->SystemDecoderH264MaxProfile(), config->SystemDecoderH264MaxLevel())))
+            (CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationH264(), hardwareDecoderStatus, config->Video().SystemDecoderH264MaxProfile(), config->Video().SystemDecoderH264MaxLevel())))
         {
             auto videoProperties = VideoEncodingProperties::CreateH264();
 
@@ -1863,7 +1945,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
         else if (avVideoCodecCtx->codec_id == AV_CODEC_ID_HEVC &&
-            CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC(), hardwareDecoderStatus, config->SystemDecoderHEVCMaxProfile(), config->SystemDecoderHEVCMaxLevel()))
+            CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC(), hardwareDecoderStatus, config->Video().SystemDecoderHEVCMaxProfile(), config->Video().SystemDecoderHEVCMaxLevel()))
         {
             auto videoProperties = VideoEncodingProperties::CreateHevc();
 
@@ -1932,7 +2014,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
         else
         {
-            if (config->VideoDecoderMode() == VideoDecoderMode::AutomaticSystemDecoder)
+            if (config->Video().VideoDecoderMode() == VideoDecoderMode::AutomaticSystemDecoder)
             {
                 hardwareDecoderStatus = HardwareDecoderStatus::NotAvailable;
             }
@@ -1981,13 +2063,19 @@ namespace winrt::FFmpegInteropX::implementation
         return hr;
     }
 
+    void FFmpegMediaSource::MediaStreamSourceClosed(MediaStreamSource const&, MediaStreamSourceClosedEventArgs const&)
+    {
+        Close(true);
+    }
+
     void FFmpegMediaSource::OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args)
     {
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
+
         MediaStreamSourceStartingRequest request = args.Request();
 
         try
@@ -2059,14 +2147,14 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
 
         try
         {
-            if (config->ReadAheadBufferEnabled())
+            if (config->General().ReadAheadBufferEnabled())
             {
                 m_pReader->Start();
             }
@@ -2078,7 +2166,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
             else if (currentVideoStream && args.Request().StreamDescriptor() == currentVideoStream->StreamDescriptor())
             {
-                CheckVideoDeviceChanged();
+                CheckVideoDeviceChanged(sender);
                 auto sample = currentVideoStream->GetNextSample();
                 CheckExtendDuration(sample);
                 args.Request().Sample(sample);
@@ -2096,7 +2184,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::CheckExtendDuration(MediaStreamSample sample)
     {
-        if (sample && config->AutoExtendDuration())
+        if (sample && config->General().AutoExtendDuration())
         {
             auto sampleEnd = sample.Timestamp() + sample.Duration();
             if (TimeSpan::zero() < mediaDuration && (mediaDuration < sampleEnd ||
@@ -2105,14 +2193,17 @@ namespace winrt::FFmpegInteropX::implementation
                 auto extension = min(lastDurationExtension + 1, 5);
 
                 mediaDuration += TimeSpan{ extension * 10000000 };
-                mss.Duration(mediaDuration);
+                if (auto mss = mssWeak.get())
+                {
+                    mss.Duration(mediaDuration);
+                }
 
                 lastDurationExtension = extension;
             }
         }
     }
 
-    void FFmpegMediaSource::CheckVideoDeviceChanged()
+    void FFmpegMediaSource::CheckVideoDeviceChanged(MediaStreamSource const& mss)
     {
         bool hasDeviceChanged = false;
         HRESULT hr = S_OK;
@@ -2161,7 +2252,8 @@ namespace winrt::FFmpegInteropX::implementation
 
             if (SUCCEEDED(hr))
             {
-                if (mss.CanSeek())
+                // We assume can seek if duration > 0.
+                if (mediaDuration.count() > 0)
                 {
                     // seek to last keyframe position
                     TimeSpan lastVideoTimestamp = currentVideoStream->LastSampleTimestamp;
@@ -2200,7 +2292,7 @@ namespace winrt::FFmpegInteropX::implementation
     {
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
@@ -2214,11 +2306,13 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 currentAudioStream->DisableStream();
                 currentAudioStream = nullptr;
+                currentAudioStreamInfo = nullptr;
             }
             if (currentVideoStream && args.Request().OldStreamDescriptor() == currentVideoStream->StreamDescriptor())
-            {
+            {              
                 currentVideoStream->DisableStream();
                 currentVideoStream = nullptr;
+                currentAudioStreamInfo = nullptr;
             }
 
             for (auto& stream : audioStreams)
@@ -2235,10 +2329,12 @@ namespace winrt::FFmpegInteropX::implementation
                 {
                     currentVideoStream = stream;
                     currentVideoStream->EnableStream();
+                    
+                    currentVideoStreamInfo = currentVideoStream->VideoInfo();
                 }
             }
 
-            isFirstSeekAfterStreamSwitch = config->FastSeekSmartStreamSwitching();
+            isFirstSeekAfterStreamSwitch = config->General().FastSeekSmartStreamSwitching();
         }
         catch (...)
         {
@@ -2252,9 +2348,9 @@ namespace winrt::FFmpegInteropX::implementation
 
         auto diffCurrent = position - currentPosition;
         auto diffLast = position - lastPosition;
-        bool isSeekBeforeStreamSwitch = allowFastSeek && config->FastSeekSmartStreamSwitching() && !isFirstSeekAfterStreamSwitch && diffCurrent.count() > 0 && diffCurrent.count() < 5000000 && diffLast.count() > 0 && diffLast.count() < 10000000;
+        bool isSeekBeforeStreamSwitch = allowFastSeek && config->General().FastSeekSmartStreamSwitching() && !isFirstSeekAfterStreamSwitch && diffCurrent.count() > 0 && diffCurrent.count() < 5000000 && diffLast.count() > 0 && diffLast.count() < 10000000;
 
-        bool fastSeek = allowFastSeek && config->FastSeek() && currentVideoStream && PlaybackSession() && !isFirstSeekAfterStreamSwitch;
+        bool fastSeek = allowFastSeek && config->General().FastSeek() && currentVideoStream && PlaybackSession() && !isFirstSeekAfterStreamSwitch;
         if (isSeekBeforeStreamSwitch)
         {
             return S_OK;
@@ -2276,10 +2372,11 @@ namespace winrt::FFmpegInteropX::implementation
         UNREFERENCED_PARAMETER(sender);
         UNREFERENCED_PARAMETER(args);
         std::lock_guard lock(mutex);
-        if (mss == nullptr)
+        if (isClosed)
         {
             return;
         }
+
         lastPosition = currentPosition;
         currentPosition = sender.Position();
     }

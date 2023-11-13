@@ -21,7 +21,8 @@ namespace FFmpegInteropX.UnitTests
         [TestInitialize]
         public void Initialize()
         {
-            config = new MediaSourceConfig { VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder };
+            config = new MediaSourceConfig();
+            config.Video.VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder;
         }
 
         [TestCleanup]
@@ -155,8 +156,8 @@ namespace FFmpegInteropX.UnitTests
             var audioFilter = "equalizer=f=1000:t=h:width=200:g=-10";
             var videoFilter = "blend=all_expr='A*(X/W)+B*(1-X/W)'";
 
-            config.FFmpegAudioFilters = audioFilter;
-            config.FFmpegVideoFilters = videoFilter;
+            config.Audio.FFmpegAudioFilters = audioFilter;
+            config.Video.FFmpegVideoFilters = videoFilter;
 
             fileStream = Utilities.GetEmbededResourceStream("FFmpegInteropX.UnitTests.TestFiles.envivio-h264.mp4");
 

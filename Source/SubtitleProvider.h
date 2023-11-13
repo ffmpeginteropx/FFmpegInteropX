@@ -113,13 +113,13 @@ public:
                     auto lastStartTime = lastExtendedDurationCue.StartTime();
                     auto lastDuration = lastExtendedDurationCue.Duration();
                     auto lastEndTime = lastStartTime + lastDuration;
-                    bool isNewOverlap = m_config.PreventModifiedSubtitleDurationOverlap() &&
+                    bool isNewOverlap = m_config.Subtitles().PreventModifiedSubtitleDurationOverlap() &&
                         lastExtendedDurationCueOriginalEndTime <= position &&
                         lastEndTime > position;
-                    bool isGapTooSmall = lastEndTime - position < m_config.ModifiedSubtitleDurationGap();
+                    bool isGapTooSmall = lastEndTime - position < m_config.Subtitles().ModifiedSubtitleDurationGap();
                     if (isNewOverlap || isGapTooSmall)
                     {
-                        auto diff = position - (lastExtendedDurationCue.StartTime() + lastExtendedDurationCue.Duration() + m_config.ModifiedSubtitleDurationGap());
+                        auto diff = position - (lastExtendedDurationCue.StartTime() + lastExtendedDurationCue.Duration() + m_config.Subtitles().ModifiedSubtitleDurationGap());
                         auto newDuration = lastExtendedDurationCue.Duration() + diff;
                         auto originalDuration = lastExtendedDurationCueOriginalEndTime - lastStartTime;
                         if (newDuration < originalDuration)
@@ -151,20 +151,20 @@ public:
                 }
                 else if (duration.count() < InfiniteDuration)
                 {
-                    if (m_config.AdditionalSubtitleDuration().count() != 0)
+                    if (m_config.Subtitles().AdditionalSubtitleDuration().count() != 0)
                     {
                         lastExtendedDurationCue = cue;
                         lastExtendedDurationCueOriginalEndTime = position + duration;
-                        duration += m_config.AdditionalSubtitleDuration();
+                        duration += m_config.Subtitles().AdditionalSubtitleDuration();
                     }
-                    if (duration < m_config.MinimumSubtitleDuration())
+                    if (duration < m_config.Subtitles().MinimumSubtitleDuration())
                     {
                         if (lastExtendedDurationCue != cue)
                         {
                             lastExtendedDurationCue = cue;
                             lastExtendedDurationCueOriginalEndTime = position + duration;
                         }
-                        duration = m_config.MinimumSubtitleDuration();
+                        duration = m_config.Subtitles().MinimumSubtitleDuration();
                     }
                 }
 

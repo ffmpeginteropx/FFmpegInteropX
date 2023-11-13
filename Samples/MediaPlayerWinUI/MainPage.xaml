@@ -37,12 +37,12 @@
                         <ToggleSwitch Header="Allow Hardware Accelection" OffContent="OFF" OnContent="ON" x:Name="AutoDetect" Toggled="AutoDetect_Toggled" />
                         <ToggleSwitch Header="Force System Video Decoder" OffContent="OFF" OnContent="ON" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
 
-                        <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.VideoOutputAllowIyuv}"/>
+                        <ToggleSwitch Header="Allow Iyuv Video Output" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.Video.VideoOutputAllowIyuv}"/>
 
-                        <ToggleSwitch Header="Use System MP3 Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioMP3}"/>
-                        <ToggleSwitch Header="Use System AAC Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PassthroughAudioAAC}" Margin="0,0,0,20" />
+                        <ToggleSwitch Header="Use System MP3 Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.Audio.SystemDecoderMP3}"/>
+                        <ToggleSwitch Header="Use System AAC Decoder" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.Audio.SystemDecoderAAC}" Margin="0,0,0,20" />
 
-                        <ToggleSwitch Header="Fast Seeking (keyframe seeking requires PlaybackSession property to be assigned)" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.FastSeek}" Margin="0,20,0,0" />
+                        <ToggleSwitch Header="Fast Seeking (keyframe seeking requires PlaybackSession property to be assigned)" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.General.FastSeek}" Margin="0,20,0,0" />
 
                         <Button Content="Extract Frame" Click="ExtractFrame"  Margin="0,20,10,10" />
                         <ToggleSwitch x:Name="grabFrameExactSeek" Header="Exact Seek for Extract Frame" OffContent="OFF" OnContent="ON" IsOn="True"/>
@@ -68,9 +68,9 @@
                             <AppBarButton Icon="Add" Label="Delay subtitles" Click="DelaySubtitles"></AppBarButton>
                         </StackPanel>
 
-                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Minimum subtitle duration (s)" Value="{x:Bind Path=Config.MinimumSubtitleDuration, Mode=TwoWay, Converter={StaticResource TimeSpanToDoubleConverter}}" />
-                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Additional subtitle duration (s)" Value="{x:Bind Path=Config.AdditionalSubtitleDuration, Mode=TwoWay, Converter={StaticResource TimeSpanToDoubleConverter}}" />
-                        <ToggleSwitch Header="Prevent subtitle overlap" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.PreventModifiedSubtitleDurationOverlap}"/>
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Minimum subtitle duration (s)" Value="{x:Bind Path=Config.Subtitles.MinimumSubtitleDuration, Mode=TwoWay, Converter={StaticResource TimeSpanToDoubleConverter}}" />
+                        <Slider Minimum="0" Maximum="10" SnapsTo="StepValues" TickFrequency="0.1" StepFrequency="0.01" Header="Additional subtitle duration (s)" Value="{x:Bind Path=Config.Subtitles.AdditionalSubtitleDuration, Mode=TwoWay, Converter={StaticResource TimeSpanToDoubleConverter}}" />
+                        <ToggleSwitch Header="Prevent subtitle overlap" OffContent="OFF" OnContent="ON" IsOn="{x:Bind Mode=TwoWay, Path=Config.Subtitles.PreventModifiedSubtitleDurationOverlap}"/>
 
                         <TextBlock Text="Stream delays for audio and video synchronisation." TextWrapping="WrapWholeWords"/>
                         <Grid>
