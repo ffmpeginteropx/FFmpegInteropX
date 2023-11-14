@@ -53,6 +53,9 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
         PROPERTY(PreventModifiedSubtitleDurationOverlap, bool, true);
 
+        ///<summary>Optional gap to keep between cues when extending durations.</summary>
+        PROPERTY(ModifiedSubtitleDurationGap, TimeSpan, TimeSpan{ 0 });
+
     private:
 
         TimedTextRegion CreateDefaultSubtitleRegion()

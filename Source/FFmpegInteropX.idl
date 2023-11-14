@@ -735,10 +735,15 @@ namespace FFmpegInteropX
         ///<summary>Try to prevent overlapping subtitles when extending durations.</summary>
         Boolean PreventModifiedSubtitleDurationOverlap{ get; set; };
 
+        ///<summary>Optional gap to keep between cues when extending durations.</summary>
+        Windows.Foundation.TimeSpan ModifiedSubtitleDurationGap{ get; set; };
     };
 
     runtimeclass GeneralConfig
     {
+        ///<summary>The maximum number of broken frames to skipp in a stream before stopping decoding.</summary>
+        Boolean AutoExtendDuration{ get; set; };
+
         ///<summary>The maximum number of broken frames to skipp in a stream before stopping decoding.</summary>
         UInt32 SkipErrors{ get; set; };
 

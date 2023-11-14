@@ -10,6 +10,9 @@ namespace winrt::FFmpegInteropX::implementation
     {
         GeneralConfig() = default;
 
+        ///<summary>Automatically extend the duration of the MediaStreamSource, if the file unexpectedly contains additional data.</summary>
+        PROPERTY(AutoExtendDuration, bool, true);
+
         ///<summary>The maximum number of broken frames or packets to skip in a stream before stopping decoding.</summary>
         PROPERTY(SkipErrors, int32_t, 50);
 

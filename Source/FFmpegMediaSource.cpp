@@ -1855,6 +1855,7 @@ namespace winrt::FFmpegInteropX::implementation
             useHdr = true;
             break;
         case HdrSupport::Automatic:
+            
             if (checkDisplayInformation)
             {
                 try
@@ -2169,7 +2170,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::CheckExtendDuration(MediaStreamSample sample)
     {
-        if (sample && config->AutoExtendDuration())
+        if (sample && config->General().AutoExtendDuration())
         {
             auto sampleEnd = sample.Timestamp() + sample.Duration();
             if (TimeSpan::zero() < mediaDuration && (mediaDuration < sampleEnd ||

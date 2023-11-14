@@ -23,9 +23,6 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Additional options to use when creating the ffmpeg AVFormatContext.</summary>
         PROPERTY_CONST(FFmpegOptions, PropertySet, PropertySet());
 
-        ///<summary>Automatically extend the duration of the MediaStreamSource, if the file unexpectedly contains additional data.</summary>
-        PROPERTY(AutoExtendDuration, bool, true);
-
         ///<summary> Audio settings: decoder settings,stereo downmix, outputs, maximum decoder threads.</summary>
         PROPERTY_CONST(Audio, winrt::FFmpegInteropX::AudioConfig, winrt::make<AudioConfig>());
 
