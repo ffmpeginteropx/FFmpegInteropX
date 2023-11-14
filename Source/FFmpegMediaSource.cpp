@@ -353,7 +353,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         for (auto& stream : subtitleStreams)
         {
-            stream->PlaybackItem = playbackItem;
+            stream->PlaybackItemWeak = playbackItem;
         }
 
         playbackItemWeak = playbackItem;
@@ -1855,6 +1855,7 @@ namespace winrt::FFmpegInteropX::implementation
             useHdr = true;
             break;
         case HdrSupport::Automatic:
+            
             if (checkDisplayInformation)
             {
                 try

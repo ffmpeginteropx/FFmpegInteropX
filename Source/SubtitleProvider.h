@@ -25,7 +25,7 @@ class SubtitleProvider :
 public:
     TimedMetadataTrack SubtitleTrack = { nullptr };
 
-    MediaPlaybackItem PlaybackItem = { nullptr };
+    winrt::weak_ref<MediaPlaybackItem> PlaybackItemWeak = { nullptr };
 
     SubtitleProvider(std::shared_ptr<FFmpegReader> reader,
         AVFormatContext* avFormatCtx,
@@ -371,22 +371,26 @@ private:
 
     void EnsureRefTrackInitialized()
     {
+        auto playbackItem = PlaybackItemWeak.get();
+        if (!playbackItem) return;
         if (referenceTrack == nullptr)
         {
             referenceTrack = TimedMetadataTrack(L"ReferenceTrack_" + Name, L"", TimedMetadataKind::Custom);
             referenceTrack.CueEntered(weak_handler(this, &SubtitleProvider::OnRefCueEntered));
-            PlaybackItem.TimedMetadataTracksChanged(weak_handler(this, &SubtitleProvider::OnTimedMetadataTracksChanged));
-            PlaybackItem.Source().ExternalTimedMetadataTracks().Append(referenceTrack);
+            playbackItem.TimedMetadataTracksChanged(weak_handler(this, &SubtitleProvider::OnTimedMetadataTracksChanged));
+            playbackItem.Source().ExternalTimedMetadataTracks().Append(referenceTrack);
         }
     }
 
     void OnTimedMetadataTracksChanged(MediaPlaybackItem const& sender, IVectorChangedEventArgs const& args)
     {
         // enable ref track
+        auto playbackItem = PlaybackItemWeak.get();
+        if (!playbackItem) return;
         if (args.CollectionChange() == CollectionChange::ItemInserted &&
             sender.TimedMetadataTracks().GetAt(args.Index()) == referenceTrack)
         {
-            PlaybackItem.TimedMetadataTracks().SetPresentationMode(
+            PlaybackItemWeak.get().TimedMetadataTracks().SetPresentationMode(
                 args.Index(), TimedMetadataTrackPresentationMode::Hidden);
         }
     }
