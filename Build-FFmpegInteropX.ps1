@@ -99,6 +99,7 @@ function Build-Platform {
             /p:Configuration=${Configuration}_${WindowsTarget} `
             /p:Platform=$Platform `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+            /p:TargetFramework="net6.0-windows$WindowsTargetPlatformVersion" `
             /p:useenv=true
 
         if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.DotNet.csproj." }
@@ -229,7 +230,7 @@ else
 if ($success -and $NugetPackageVersion)
 {
     nuget pack .\Build\FFmpegInteropX.$WindowsTarget.nuspec `
-        -Properties "id=FFmpegInteropX.$WindowsTarget;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;NoWarn=NU5128" `
+        -Properties "id=FFmpegInteropX.$WindowsTarget;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformVersion;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat symbols.nupkg `
         -OutputDirectory "Output\NuGet"
