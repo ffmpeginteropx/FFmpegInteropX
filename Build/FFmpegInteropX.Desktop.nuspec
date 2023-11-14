@@ -18,6 +18,9 @@
     <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
   </metadata>
   <files>
+    
+    <file src="..\Output\FFmpegInteropX\x64\Release_Desktop\FFmpegInteropX.winmd"   target="lib\uap10.0" />
+    <file src="..\Output\FFmpegInteropX\x64\Release_Desktop\FFmpegInteropX.xml"     target="lib\uap10.0" />
 
     <file src="..\Output\FFmpegInteropX.DotNet\Release_Desktop\FFmpegInteropX.DotNet.dll"  target="lib\net6.0-windows$winsdk$" />
     <file src="..\Output\FFmpegInteropX.DotNet\Release_Desktop\FFmpegInteropX.xml"         target="lib\net6.0-windows$winsdk$" />

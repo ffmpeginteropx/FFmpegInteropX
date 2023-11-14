@@ -23,6 +23,9 @@
   </metadata>
   <files>
 
+    <file src="..\Output\FFmpegInteropX\x64\Release_WinUI\FFmpegInteropX.winmd"   target="lib\uap10.0" />
+    <file src="..\Output\FFmpegInteropX\x64\Release_WinUI\FFmpegInteropX.xml"     target="lib\uap10.0" />
+
     <file src="..\Output\FFmpegInteropX.DotNet\Release_WinUI\FFmpegInteropX.DotNet.dll"  target="lib\net6.0-windows$winsdk$" />
     <file src="..\Output\FFmpegInteropX.DotNet\Release_WinUI\FFmpegInteropX.xml"         target="lib\net6.0-windows$winsdk$" />
     
