@@ -128,11 +128,18 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Default style to use for subtitles.</summary>
         PROPERTY_CONST(SubtitleStyle, TimedTextStyle, CreateDefaultSubtitleStyle());
 
-        ///<summary>Enable conversion of ANSI encoded subtitles to UTF-8.</summary>
-        PROPERTY(AutoCorrectAnsiSubtitles, bool, true);
+        /// <summary>
+        /// The character encoding used for external subtitle files.
+        ///
+        /// When null, auto detection is used.
+        /// If ANSI encoding is auto detected, will use ExternalSubtitleAnsiEncoding.
+        /// </summary>
+        PROPERTY_CONST(ExternalSubtitleEncoding, FFmpegInteropX::CharacterEncoding, nullptr);
 
-        ///<summary>The character encoding used to decode ANSI encoded subtitles. By default, the active windows codepage is used.</summary>
-        PROPERTY_CONST(AnsiSubtitleEncoding, FFmpegInteropX::CharacterEncoding, CharacterEncoding::GetSystemDefault());
+        /// <summary>
+        /// The character encoding to use if ANSI encoding is detected for external subtitle files.
+        /// </summary>
+        PROPERTY_CONST(ExternalSubtitleAnsiEncoding, FFmpegInteropX::CharacterEncoding, CharacterEncoding::GetSystemDefault());
 
         ///<summary>The subtitle delay will be initially applied to all subtitle tracks.
         ///Use SetSubtitleDelay() on the FFmpegMediaSource instance if you want to change the delay during playback.</summary>
