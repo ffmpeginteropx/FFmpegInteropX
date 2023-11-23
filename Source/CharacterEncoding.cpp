@@ -8,7 +8,7 @@
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    Windows::Foundation::Collections::IVectorView<FFmpegInteropX::CharacterEncoding> CharacterEncoding::GetCharacterEncodings()
+    Windows::Foundation::Collections::IVectorView<FFmpegInteropX::CharacterEncoding> CharacterEncoding::AllEncodings()
     {
         if (internalView == nullptr)
         {
@@ -203,9 +203,35 @@ namespace winrt::FFmpegInteropX::implementation
     {
     }
 
-    FFmpegInteropX::CharacterEncoding CharacterEncoding::GetSystemDefault()
+    FFmpegInteropX::CharacterEncoding CharacterEncoding::SystemLocale()
     {
-        return GetCharacterEncodings().GetAt(0);
+        return AllEncodings().GetAt(0);
+    }
+
+    FFmpegInteropX::CharacterEncoding CharacterEncoding::ASCII()
+    {
+        auto encodings = AllEncodings();
+        for (auto encoding : encodings)
+        {
+            if (encoding.WindowsCodePage() == 20127)
+            {
+                return encoding;
+            }
+        }
+        throw_hresult(E_FAIL);
+    }
+
+    FFmpegInteropX::CharacterEncoding CharacterEncoding::UTF8()
+    {
+        auto encodings = AllEncodings();
+        for (auto encoding : encodings)
+        {
+            if (encoding.WindowsCodePage() == 65001)
+            {
+                return encoding;
+            }
+        }
+        throw_hresult(E_FAIL);
     }
 
     hstring CharacterEncoding::Name()

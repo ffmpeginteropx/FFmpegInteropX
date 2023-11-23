@@ -253,8 +253,10 @@ namespace FFmpegInteropX
         String Name {get; };
         String Description{ get; };
         Int32 WindowsCodePage{ get; };
-        static Windows.Foundation.Collections.IVectorView<CharacterEncoding> GetCharacterEncodings();
-        static CharacterEncoding GetSystemDefault();
+        static Windows.Foundation.Collections.IVectorView<CharacterEncoding> AllEncodings{ get; };
+        static CharacterEncoding SystemLocale{ get; };
+        static CharacterEncoding ASCII{ get; };
+        static CharacterEncoding UTF8{ get; };
     };
 
     runtimeclass CodecRequiredEventArgs
@@ -677,7 +679,7 @@ namespace FFmpegInteropX
         /// <summary>
         /// The character encoding used for external subtitle files.
         ///
-        /// When null, auto detection is used.
+        /// When null, auto detection is used. This is the default and recommended.
         /// If ANSI encoding is auto detected, will use ExternalSubtitleAnsiEncoding.
         /// </summary>
         CharacterEncoding ExternalSubtitleEncoding{ get; set; };
