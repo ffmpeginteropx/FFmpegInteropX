@@ -18,12 +18,6 @@ devices=$6
 programs=$7
 folderName=$8
 
-if [ "$encoders" == "enable" ] && [ "$gpl" == "enable" ]; then
-    gplEncoders="enable"
-else
-    gplEncoders="disable"
-fi
-
 intDir="$DIR/Intermediate/$folderName/$platform/int/ffmpeg"
 outDir="$DIR/Output/$folderName/$platform"
 
@@ -49,18 +43,30 @@ configureArgs="\
     --enable-hwaccels \
     --enable-d3d11va \
     --disable-dxva2 \
-    --${encoders}-encoders \
-    --${gplEncoders}-libx264 \
-    --${gplEncoders}-libx265 \
-    --${encoders}-libvpx \
-    --${devices}-devices \
     --${gpl}-gpl \
     --${gpl}-version3 \
-    --${programs}-programs \
     --target-os=win32 \
     --pkg-config=$DIR/Intermediate/pkg-config.exe \
     --prefix=$outDir \
 "
+
+if [ "$encoders" == "enable" ]; then
+    if [ "$gpl" == "enable" ]; then
+        configureArgs="$configureArgs --enable-libvpx --enable-libx264 --enable-libx265"
+    else
+        configureArgs="$configureArgs --enable-libvpx"
+    fi
+else
+    configureArgs="$configureArgs --disable-encoders"
+fi
+
+if [ "$programs" == "disable" ]; then
+    configureArgs="$configureArgs --disable-programs"
+fi
+
+if [ "$devices" == "disable" ]; then
+    configureArgs="$configureArgs --disable-devices"
+fi
 
 cflags="-MD -DLZMA_API_STATIC"
 ldflags=""
