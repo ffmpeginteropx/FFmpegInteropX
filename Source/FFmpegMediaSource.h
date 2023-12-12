@@ -13,6 +13,7 @@
 #include "SubtitleStreamInfo.h"
 #include "ChapterInfo.h"
 #include "FormatInfo.h"
+#include "text_encoding_detect.h"
 
 // Note: Remove this static_assert after copying these generated source files to your project.
 // This assertion exists to avoid compiling these generated source files directly.
@@ -29,13 +30,7 @@ namespace winrt::FFmpegInteropX::implementation
     namespace WFM = winrt::Windows::Foundation::Metadata;
     using namespace winrt::Windows::Storage::Streams;
     using namespace winrt::Windows::System;
-
-    enum ByteOrderMark
-    {
-        Unchecked,
-        Unknown,
-        UTF8
-    };
+    using namespace TextEncoding;
 
     struct FFmpegMediaSource : FFmpegMediaSourceT<FFmpegMediaSource>
     {
@@ -237,7 +232,8 @@ namespace winrt::FFmpegInteropX::implementation
         AVIOContext* avIOCtx = nullptr;
         AVFormatContext* avFormatCtx = nullptr;
         winrt::com_ptr<IStream> fileStreamData = { nullptr };
-        ByteOrderMark streamByteOrderMark;
+        TextEncodingDetect::Encoding streamEncoding = TextEncodingDetect::None;
+        bool streamEncodingChecked = false;
         winrt::com_ptr<MediaSourceConfig> config = { nullptr };
         bool isShuttingDown = false;
 

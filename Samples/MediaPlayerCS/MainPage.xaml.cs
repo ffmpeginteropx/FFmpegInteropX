@@ -78,7 +78,7 @@ namespace MediaPlayerCS
             CodecChecker.CodecRequired += CodecChecker_CodecRequired;
 
             // populate character encodings
-            cbEncodings.ItemsSource = CharacterEncoding.GetCharacterEncodings();
+            cbEncodings.ItemsSource = CharacterEncoding.AllEncodings;
 
             CoreWindow.GetForCurrentThread().KeyDown += MainPage_KeyDown;
 
@@ -459,7 +459,7 @@ namespace MediaPlayerCS
         {
             if (cbEncodings.SelectedItem != null)
             {
-                Config.AnsiSubtitleEncoding = (CharacterEncoding)cbEncodings.SelectedItem;
+                Config.ExternalSubtitleAnsiEncoding = (CharacterEncoding)cbEncodings.SelectedItem;
             }
         }
 

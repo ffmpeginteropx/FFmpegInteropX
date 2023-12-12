@@ -740,20 +740,49 @@ namespace winrt::FFmpegInteropX::implementation
                 hr = E_OUTOFMEMORY;
             }
 
-            //inject custom properties
-            if (config->AutoCorrectAnsiSubtitles() && config->IsExternalSubtitleParser && streamByteOrderMark != ByteOrderMark::UTF8)
+            // Apply subtitle characte encoding for external subs
+            if (config->IsExternalSubtitleParser)
             {
-                hstring key = config->AnsiSubtitleEncoding().Name();
-                std::string keyA = StringUtils::PlatformStringToUtf8String(key);
-                const char* keyChar = keyA.c_str();
-
-                if (av_opt_set(avSubsCodecCtx, "sub_charenc", keyChar, AV_OPT_SEARCH_CHILDREN) < 0)
+                auto subtitleEncoding = config->ExternalSubtitleEncoding();
+                if (!subtitleEncoding && (streamEncoding == TextEncodingDetect::ANSI || streamEncoding == TextEncodingDetect::ASCII))
                 {
-                    DebugMessage(L"Could not set sub_charenc on subtitle provider\n");
+                    subtitleEncoding = config->ExternalSubtitleAnsiEncoding();
                 }
-                if (av_opt_set_int(avSubsCodecCtx, "sub_charenc_mode", FF_SUB_CHARENC_MODE_AUTOMATIC, AV_OPT_SEARCH_CHILDREN) < 0)
+
+                auto useUtf8 =
+                    (!subtitleEncoding && (streamEncoding == TextEncodingDetect::UTF8_BOM || streamEncoding == TextEncodingDetect::UTF8_NOBOM)) ||
+                    (subtitleEncoding && subtitleEncoding.WindowsCodePage() == 65001);
+                if (useUtf8)
                 {
-                    DebugMessage(L"Could not set sub_charenc_mode on subtitle provider\n");
+                    // special case for utf8
+                    if (av_opt_set(avSubsCodecCtx, "sub_charenc", "utf8", AV_OPT_SEARCH_CHILDREN) < 0)
+                    {
+                        DebugMessage(L"Could not set sub_charenc on subtitle provider\n");
+                    }
+                    if (av_opt_set_int(avSubsCodecCtx, "sub_charenc_mode", FF_SUB_CHARENC_MODE_IGNORE, AV_OPT_SEARCH_CHILDREN) < 0)
+                    {
+                        DebugMessage(L"Could not set sub_charenc_mode on subtitle provider\n");
+                    }
+                }
+                else if (subtitleEncoding)
+                {
+                    // other encodings need conversion
+                    hstring key = subtitleEncoding.Name();
+                    std::string keyA = StringUtils::PlatformStringToUtf8String(key);
+                    const char* keyChar = keyA.c_str();
+
+                    if (av_opt_set(avSubsCodecCtx, "sub_charenc", keyChar, AV_OPT_SEARCH_CHILDREN) < 0)
+                    {
+                        DebugMessage(L"Could not set sub_charenc on subtitle provider\n");
+                    }
+                    if (av_opt_set_int(avSubsCodecCtx, "sub_charenc_mode", FF_SUB_CHARENC_MODE_AUTOMATIC, AV_OPT_SEARCH_CHILDREN) < 0)
+                    {
+                        DebugMessage(L"Could not set sub_charenc_mode on subtitle provider\n");
+                    }
+                }
+                else
+                {
+                    // no encoding detected or set: leave ffmpeg default behavior.
                 }
             }
 
@@ -1427,12 +1456,11 @@ namespace winrt::FFmpegInteropX::implementation
         subConfig->IsExternalSubtitleParser = true;
         subConfig->DefaultSubtitleStreamName(streamName);
         subConfig->DefaultSubtitleDelay(config->DefaultSubtitleDelay());
-        subConfig->AutoCorrectAnsiSubtitles(this->config->AutoCorrectAnsiSubtitles());
-        subConfig->AnsiSubtitleEncoding(this->config->AnsiSubtitleEncoding());
+        subConfig->ExternalSubtitleEncoding(this->config->ExternalSubtitleEncoding());
+        subConfig->ExternalSubtitleAnsiEncoding(this->config->ExternalSubtitleAnsiEncoding());
         subConfig->OverrideSubtitleStyles(this->config->OverrideSubtitleStyles());
         subConfig->SubtitleRegion(this->config->SubtitleRegion());
         subConfig->SubtitleStyle(this->config->SubtitleStyle());
-        subConfig->AutoCorrectAnsiSubtitles(this->config->AutoCorrectAnsiSubtitles());
         subConfig->AutoSelectForcedSubtitles(false);
         subConfig->MinimumSubtitleDuration(this->config->MinimumSubtitleDuration());
         subConfig->AdditionalSubtitleDuration(this->config->AdditionalSubtitleDuration());
@@ -2397,31 +2425,60 @@ namespace winrt::FFmpegInteropX::implementation
             return -1;
         }
 
-        // Check beginning of file for BOM on first read
-        if (mss->streamByteOrderMark == ByteOrderMark::Unchecked)
-        {
-            if (bytesRead >= 4)
-            {
-                auto bom = ((uint32_t*)buf)[0];
-                if ((bom & 0x00FFFFFF) == 0x00BFBBEF)
-                {
-                    mss->streamByteOrderMark = ByteOrderMark::UTF8;
-                }
-                else
-                {
-                    mss->streamByteOrderMark = ByteOrderMark::Unknown;
-                }
-            }
-            else
-            {
-                mss->streamByteOrderMark = ByteOrderMark::Unknown;
-            }
-        }
-
         // If we succeed but don't have any bytes, assume end of file
         if (bytesRead == 0)
         {
             return AVERROR_EOF;  // Let FFmpeg know that we have reached eof
+        }
+
+        // Check encoding in case of external subtitle parser
+        if (!mss->streamEncodingChecked && mss->config->IsExternalSubtitleParser && !mss->config->ExternalSubtitleEncoding())
+        {
+            // Make sure we have at least 4 bytes for BOM check
+            bool isEof = false;
+            while (bytesRead < min(bufSize,4) && !isEof)
+            {
+                ULONG read = 0;
+                hr = mss->fileStreamData->Read(buf + bytesRead, bufSize - bytesRead, &read);
+                if (FAILED(hr))
+                {
+                    return -1;
+                }
+                else if (read == 0)
+                {
+                    isEof = true;
+                }
+
+                bytesRead += read;
+            }
+
+            // first check BOM
+            auto encoding = TextEncodingDetect::CheckBOM(buf, bytesRead);
+            if (encoding == TextEncodingDetect::None)
+            {
+                // if no BOM is present, make sure we read the first chunk for full probing
+                while (bytesRead < bufSize && !isEof)
+                {
+                    ULONG read = 0;
+                    hr = mss->fileStreamData->Read(buf + bytesRead, bufSize - bytesRead, &read);
+                    if (FAILED(hr))
+                    {
+                        return -1;
+                    }
+                    else if (read == 0)
+                    {
+                        isEof = true;
+                    }
+
+                    bytesRead += read;
+                }
+
+                TextEncodingDetect detect;
+                encoding = detect.DetectEncoding(buf, bytesRead);
+            }
+
+            mss->streamEncoding = encoding;
+            mss->streamEncodingChecked = true;
         }
 
         return bytesRead;
