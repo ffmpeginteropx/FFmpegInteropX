@@ -321,7 +321,7 @@ function Build-Platform {
 
             New-Item -ItemType Directory -Force $build\libvpx
             
-            invoke $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
+            invoke $BashExe --login -c "unset tmp && unset temp && cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs17 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
 
             Move-Item $build\lib\$cmakePlatform\vpxmd.lib $build\lib\vpx.lib -Force
             Remove-Item $build\lib\$cmakePlatform -Force -Recurse
