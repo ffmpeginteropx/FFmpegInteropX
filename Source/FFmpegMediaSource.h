@@ -31,8 +31,9 @@ namespace winrt::FFmpegInteropX::implementation
     using namespace winrt::Microsoft::UI::Dispatching;
 #else
     using namespace winrt::Windows::System;
-    using namespace TextEncoding;
 #endif
+
+    using namespace TextEncoding;
 
     struct FFmpegMediaSource : FFmpegMediaSourceT<FFmpegMediaSource>
     {
