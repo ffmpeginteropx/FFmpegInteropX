@@ -12,8 +12,10 @@ namespace winrt::FFmpegInteropX::implementation
     {
         CharacterEncoding(int p_codePage, hstring const& p_name, hstring const& p_description);
 
-        static Windows::Foundation::Collections::IVectorView<FFmpegInteropX::CharacterEncoding> GetCharacterEncodings();
-        static FFmpegInteropX::CharacterEncoding GetSystemDefault();
+        static Windows::Foundation::Collections::IVectorView<FFmpegInteropX::CharacterEncoding> AllEncodings();
+        static FFmpegInteropX::CharacterEncoding SystemLocale();
+        static FFmpegInteropX::CharacterEncoding ASCII();
+        static FFmpegInteropX::CharacterEncoding UTF8();
         hstring Name();
         hstring Description();
         int32_t WindowsCodePage();

@@ -233,6 +233,9 @@
     <ClInclude Include="VideoConfig.h" />
     <ClInclude Include="AudioConfig.h" />
     <ClInclude Include="ConfigurationCommon.h" />
+    <ClInclude Include="text_encoding_detect.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -329,6 +332,9 @@
     <ClCompile Include="SubtitlesConfig.cpp" />
     <ClCompile Include="VideoConfig.cpp" />
     <ClCompile Include="AudioConfig.cpp" />
+    <ClCompile Include="text_encoding_detect.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />

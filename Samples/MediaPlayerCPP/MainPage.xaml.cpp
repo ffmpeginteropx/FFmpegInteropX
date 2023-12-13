@@ -67,7 +67,7 @@ MainPage::MainPage()
     mediaPlayerElement->SetMediaPlayer(mediaPlayer);
 
     // populate character encodings
-    cbEncodings->ItemsSource = CharacterEncoding::GetCharacterEncodings();
+    cbEncodings->ItemsSource = CharacterEncoding::AllEncodings;
 
     Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);
     
@@ -445,7 +445,7 @@ void MediaPlayerCPP::MainPage::CbEncodings_SelectionChanged(Platform::Object^ se
 {
     if (cbEncodings->SelectedItem)
     {
-        Config->Subtitles->AnsiSubtitleEncoding = static_cast<CharacterEncoding^>(cbEncodings->SelectedItem);
+        Config->Subtitles->ExternalSubtitleAnsiEncoding = static_cast<CharacterEncoding^>(cbEncodings->SelectedItem);
     }
 }
 
