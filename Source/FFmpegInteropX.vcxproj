@@ -169,8 +169,8 @@
   </PropertyGroup>
   <PropertyGroup>
     <LibraryVersionNumber Condition="'$(LibraryVersionNumber)'==''">1.0.0.0</LibraryVersionNumber>
-    <LibVersionNum>$(LibVersionNumber.Replace('.', ','))</LibVersionNum>
-    <LibVersionStr>\"$(LibVersionNumber)\"</LibVersionStr>
+    <LibVersionNum>$(LibraryVersionNumber.Replace('.', ','))</LibVersionNum>
+    <LibVersionStr>\"$(LibraryVersionNumber)\"</LibVersionStr>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
