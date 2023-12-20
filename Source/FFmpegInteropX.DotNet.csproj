@@ -28,6 +28,9 @@
   <PropertyGroup>
     <DefaultItemExcludes>**\*;*.*</DefaultItemExcludes>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Authors>FFmpegInteropX</Authors>
+    <Company>FFmpegInteropX</Company>
+    <Description>FFmpeg decoding library for Windows - DotNet adapter dll</Description>
   </PropertyGroup>
 
   <ItemGroup>

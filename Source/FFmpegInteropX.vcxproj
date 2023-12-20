@@ -34,7 +34,7 @@
     <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
     <UseWinUI>true</UseWinUI>
     <CppWinRTModernIDL>true</CppWinRTModernIDL>
-	<FFmpegInteropXBuild>true</FFmpegInteropXBuild>
+    <FFmpegInteropXBuild>true</FFmpegInteropXBuild>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <ItemGroup Label="ProjectConfigurations">
@@ -167,6 +167,11 @@
     <IntDir>..\Intermediate\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>..\Output\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
+  <PropertyGroup>
+    <LibraryVersionNumber Condition="'$(LibraryVersionNumber)'==''">1.0.0.0</LibraryVersionNumber>
+    <LibVersionNum>$(LibVersionNumber.Replace('.', ','))</LibVersionNum>
+    <LibVersionStr>\"$(LibVersionNumber)\"</LibVersionStr>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -196,6 +201,9 @@
     <Midl>
       <PreprocessorDefinitions>$(AppType);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>LIB_VERSION_NUM=$(LibVersionNum);LIB_VERSION_STR=$(LibVersionStr);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AudioConfig.h" />
@@ -235,6 +243,7 @@
     <ClInclude Include="NativeBufferFactory.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ReferenceCue.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="StreamBuffer.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="SubtitleProvider.h" />
@@ -336,6 +345,9 @@
     <Text Include="readme.txt">
       <DeploymentContent>false</DeploymentContent>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FFmpegInteropX.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

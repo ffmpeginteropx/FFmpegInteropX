@@ -42,6 +42,9 @@ param(
     # If a version string is specified, a NuGet package will be created.
     [string] $NugetPackageVersion = $null,
 
+    # The version number to set in the dll file
+    [version] $LibraryVersionNumber = $null,
+
     # FFmpegInteropX NuGet settings
     [string] $FFmpegInteropXUrl = 'https://github.com/ffmpeginteropx/FFmpegInteropX.git',
 
@@ -55,7 +58,8 @@ function Build-Platform {
         [System.IO.DirectoryInfo] $SolutionDir,
         [string] $Platform,
         [string] $PlatformToolset,
-        [string] $VsLatestPath
+        [string] $VsLatestPath,
+        [version] $LibraryVersionNumber
     )
 
     $PSBoundParameters | Out-String
@@ -82,7 +86,8 @@ function Build-Platform {
         /p:Configuration=${Configuration}_${WindowsTarget} `
         /p:Platform=$Platform `
         /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-        /p:PlatformToolset=$PlatformToolset
+        /p:PlatformToolset=$PlatformToolset,
+        /p:LibraryVersionNumber=$LibraryVersionNumber
 
     if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.vcxproj." }
 
@@ -94,7 +99,9 @@ function Build-Platform {
             /p:Configuration=${Configuration}_${WindowsTarget} `
             /p:Platform=$Platform `
             /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
-            /p:TargetFramework="net6.0-windows$WindowsTargetPlatformVersion"
+            /p:TargetFramework="net6.0-windows$WindowsTargetPlatformVersion" `
+            /p:AssemblyVersion=$LibraryVersionNumber `
+            /p:FileVersion=$LibraryVersionNumber
 
         if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.DotNet.csproj." }
     }
@@ -137,6 +144,17 @@ $success = 1
 # Restore nuget packets for solution
 nuget.exe restore ${PSScriptRoot}\FFmpegInteropX.sln
 
+if ($NugetPackageVersion -and !$LibraryVersionNumber) {
+    $versionPart = ($NugetPackageVersion -Split '-')[0];
+    $LibraryVersionNumber = [Version]($versionPart + ".0");
+}
+
+if (!$LibraryVersionNumber)
+{
+    $LibraryVersionNumber = "1.0.0.0";
+}
+
+Write-Host "LibraryVersionNumber: $LibraryVersionNumber"
 
 if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
 {
@@ -155,7 +173,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
             continue;
         }
 
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" $addparams"
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" -LibraryVersionNumber $LibraryVersionNumber $addparams"
         $processes[$platform] = $proc
     }
 
@@ -195,7 +213,8 @@ else
                 -SolutionDir "${PSScriptRoot}\" `
                 -Platform $platform `
                 -PlatformToolset $platformToolSet `
-                -VsLatestPath $vsLatestPath
+                -VsLatestPath $vsLatestPath `
+                -LibraryVersionNumber $LibraryVersionNumber
         }
         catch
         {
