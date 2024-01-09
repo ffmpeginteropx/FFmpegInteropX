@@ -213,6 +213,42 @@ public:
         SetSubtitleDelay(newDelay);
     }
 
+    int parseInt(std::wstring const& str)
+    {
+        return std::stoi(str, nullptr, 10);
+    }
+
+    double parseDouble(std::wstring const& str)
+    {
+        return std::stod(str);
+    }
+
+    int parseHexInt(std::wstring const& str)
+    {
+        return std::stoi(str, nullptr, 16);
+    }
+
+    int parseHexOrDecimalInt(std::wstring const& str, size_t offset)
+    {
+        if (offset > 2 && str[offset - 2] == L'H' && str[offset - 1] == L'&')
+        {
+            // Fix for cases where colors are specified like: 3cH&H2A4F5D&
+            offset++;
+        }
+        if (str.length() > offset + 1 && str[offset] == L'H')
+        {
+            return parseHexInt(str.substr(offset + 1));
+        }
+        return parseInt(str.substr(offset));
+    }
+
+    bool checkTag(std::wstring const& str, std::wstring const& prefix, size_t minParamLenth = 1)
+    {
+        return
+            str.size() >= (prefix.size() + minParamLenth) &&
+            str.compare(0, prefix.size(), prefix) == 0;
+    }
+
 private:
 
     void SetSubtitleDelay(TimeSpan const& delay)
