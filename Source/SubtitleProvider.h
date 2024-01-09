@@ -65,7 +65,7 @@ public:
         auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
 
         streamInfo = SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
-            false, forced, SubtitleTrack, m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser);
+            false, forced, SubtitleTrack, m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser, m_streamIndex);
     }
 
     virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio)

@@ -196,7 +196,8 @@ namespace FFmpegInteropX
             Boolean isDefault,
             Boolean isForced,
             Windows.Media.Core.TimedMetadataTrack  track,
-            Boolean isExternal);
+            Boolean isExternal,
+            Int32 streamIndex);
 
         Boolean IsExternal{ get; };
         Boolean IsForced{ get; };
