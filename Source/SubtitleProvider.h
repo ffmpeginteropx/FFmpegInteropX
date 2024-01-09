@@ -193,6 +193,11 @@ public:
 
     int parseHexOrDecimalInt(std::wstring const& str, size_t offset)
     {
+        if (offset > 2 && str[offset - 2] == L'H' && str[offset - 1] == L'&')
+        {
+            // Fix for cases where colors are specified like: 3cH&H2A4F5D&
+            offset++;
+        }
         if (str.length() > offset + 1 && str[offset] == L'H')
         {
             return parseHexInt(str.substr(offset + 1));
