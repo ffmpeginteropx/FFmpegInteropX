@@ -299,6 +299,14 @@ public:
                                             subStyle.FontFamily(GetFontFamily(fnName));
                                         }
                                     }
+                                    else if (checkTag(tag, L"fsc"))
+                                    {
+                                        // TODO: \fsc<x or y><percent>	<x or y> x scales horizontally, y scales vertically <percent>
+                                    }
+                                    else if (checkTag(tag, L"fsp"))
+                                    {
+                                        // TODO: \fsp<pixels>		    <pixels> changes the distance between letters. (default: 0)
+                                    }
                                     else if (checkTag(tag, L"fs"))
                                     {
                                         auto size = parseDouble(tag.substr(2));
@@ -306,6 +314,11 @@ public:
                                         {
                                             subStyle.FontSize(GetFontSize(size));
                                         }
+                                    }
+                                    else if (checkTag(tag, L"clip"))
+                                    {
+                                        // TODO: \clip(<x1>, <y1>, <x2>, <y2>)    Clips any drawing outside the rectangle defined by the parameters.
+                                        //       \clip([<scale>,] <drawing commands>) Clipping against drawn shapes.  <scale> has the same meaning as in the case of \p<scale>
                                     }
                                     else if (checkTag(tag, L"c", 2))
                                     {
