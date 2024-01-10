@@ -67,6 +67,7 @@ public:
 
                 if (resy != str.npos && sscanf_s((char*)m_pAvCodecCtx->subtitle_header + resy, "\nPlayResY: %i\n", &h) == 1)
                 {
+                    hasPlayResY = true;
                     height = h;
                 }
 
@@ -990,8 +991,17 @@ public:
     TimedTextDouble GetFontSize(double fontSize)
     {
         TimedTextDouble size;
-        size.Unit = TimedTextUnit::Percentage;
-        size.Value = fontSize * 2.7;
+
+        if (hasPlayResY && videoHeight > 0 && height > 0)
+        {
+            size.Unit = TimedTextUnit::Pixels;
+            size.Value = static_cast<double>(videoHeight) / height * fontSize * 0.85;
+        }
+        else
+        {
+            size.Unit = TimedTextUnit::Percentage;
+            size.Value = fontSize * 2.7;
+        }
 
         return size;
     }
@@ -1064,6 +1074,7 @@ private:
     int textIndex = 0;
     int width = 0;
     int height = 0;
+    bool hasPlayResY = false;
     double videoAspectRatio = 0.0;
     int videoWidth = 0;
     int videoHeight = 0;
