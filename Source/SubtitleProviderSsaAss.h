@@ -444,7 +444,8 @@ public:
                                 }
                                 catch (...)
                                 {
-                                    OutputDebugString(L"Failed to parse tag: ");
+                                    std::wstring output = L"Failed to parse tag: " + tag + L"\r\n";
+                                    OutputDebugString(output.c_str());
                                 }
                             }
 
