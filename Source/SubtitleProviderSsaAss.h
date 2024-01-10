@@ -589,7 +589,7 @@ public:
         }
         else if (result <= 0)
         {
-            OutputDebugString(L"Failed to decode subtitle.");
+            OutputDebugString(L"Failed to decode subtitle.\r\n");
         }
 
         return nullptr;
