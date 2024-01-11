@@ -1069,7 +1069,7 @@ public:
 
         winrt::hstring result;
 
-        if (m_config.UseEmbeddedSubtitleFonts())
+        if (m_config.Subtitles().UseEmbeddedSubtitleFonts())
         {
             try
             {
@@ -1088,7 +1088,7 @@ public:
                             auto fontFamily = std::wstring(title);
                             if (fontFamily.find(str) == 0)
                             {
-                                result = L"ms-appdata:///temp/" + m_config.AttachmentCacheFolderName() + L"/" + attachedFileHelper->InstanceId() + L"/" + attachment->Name() + L"#" + StringUtils::WStringToPlatformString(str);
+                                result = L"ms-appdata:///temp/" + m_config.General().AttachmentCacheFolderName() + L"/" + attachedFileHelper->InstanceId() + L"/" + attachment->Name() + L"#" + StringUtils::WStringToPlatformString(str);
                                 break;
                             }
                         }
