@@ -246,7 +246,8 @@ public:
 
                 while (true)
                 {
-                    auto nextEffect = str.find('{');
+                    auto nextEffect = str.find(L"{\\");
+                    ////auto nextEffect = str.find('{');
                     if (nextEffect != str.npos)
                     {
                         auto endEffect = str.find('}', nextEffect);
