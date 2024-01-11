@@ -130,6 +130,7 @@ public:
 
         AVSubtitle subtitle;
         int gotSubtitle = 0;
+        int layer = 0;
         auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
         if (result > 0 && gotSubtitle && subtitle.num_rects > 0)
         {
@@ -197,9 +198,9 @@ public:
                 }
             }
 
-            auto cueStyle = !m_config.OverrideSubtitleStyles() && style.get() != nullptr ? style->Style : m_config.SubtitleStyle();
-            auto cueRegion = !m_config.OverrideSubtitleStyles() && style.get() != nullptr ? style->Region : m_config.SubtitleRegion();
-            TimedTextRegion subRegion = nullptr;
+            auto cueStyle = !m_config.Subtitles().OverrideSubtitleStyles() && style.get() != nullptr ? style->Style : m_config.Subtitles().SubtitleStyle();
+            auto cueRegion = !m_config.Subtitles().OverrideSubtitleStyles() && style.get() != nullptr ? style->Region : m_config.Subtitles().SubtitleRegion();
+            auto subRegion = CopyRegion(cueRegion);
 
             if ((marginL > 0 || marginR > 0 || marginV > 0) && width > 0 && height > 0)
             {
@@ -225,7 +226,6 @@ public:
                 str.erase(str.find_last_not_of(L" \n\r") + 1);
 
                 TimedTextCue cue = TimedTextCue();
-                cue.CueRegion(cueRegion);
                 cue.CueStyle(cueStyle);
 
                 TimedTextLine textLine = TimedTextLine();
@@ -354,7 +354,6 @@ public:
                                         // numpad alignment
                                         auto alignment = parseInt(tag.substr(2));
 
-                                        if (!subRegion) subRegion = CopyRegion(cueRegion);
                                         subRegion.DisplayAlignment(GetVerticalAlignment(alignment, true));
                                         subStyle.LineAlignment(GetHorizontalAlignment(alignment, true));
                                         cue.CueStyle(CopyStyle(cueStyle));
@@ -365,7 +364,6 @@ public:
                                         // legacy alignment
                                         auto alignment = parseInt(tag.substr(1));
 
-                                        if (!subRegion) subRegion = CopyRegion(cueRegion);
                                         subRegion.DisplayAlignment(GetVerticalAlignment(alignment, false));
                                         subStyle.LineAlignment(GetHorizontalAlignment(alignment, false));
                                         cue.CueStyle(CopyStyle(cueStyle));
@@ -378,7 +376,6 @@ public:
                                         if (numDigits > 0 && tag.length() > 5 + numDigits)
                                         {
                                             posY = std::stod(tag.substr(5 + numDigits), nullptr);
-                                            if (!subRegion) subRegion = CopyRegion(cueRegion);
                                             hasPosition = true;
                                         }
                                     }
@@ -575,13 +572,15 @@ public:
                     subFormat.Length((int)str.size() - subFormat.StartIndex());
                     textLine.Subformats().Append(subFormat);
                 }
-                if (subRegion != nullptr)
-                {
-                    cue.CueRegion(subRegion);
-                }
+
                 auto timedText = StringUtils::WStringToPlatformString(str);
                 if (timedText.size() > 0)
                 {
+                    auto cachedRegion = GetOrAddCachedRegion(subRegion, layer);
+                    auto region = cachedRegion->Region;
+
+                    cue.CueRegion(region);
+
                     textLine.Text(timedText);
                     cue.Lines().Append(textLine);
                     return cue;
@@ -1032,6 +1031,96 @@ public:
         }
     }
 
+    class SsaCachedRegion
+    {
+    public:
+        int layer;
+        TimedTextRegion Region = { nullptr };
+    };
+
+
+    std::shared_ptr<SsaCachedRegion> GetOrAddCachedRegion(TimedTextRegion  const& r1, int layer)
+    {
+        for (const auto &cachedRegion : cachedRegions) {
+
+            if (cachedRegion->layer != layer) {
+                continue;
+            }
+
+            auto r2 = cachedRegion->Region;
+
+            if (r1.DisplayAlignment() != r2.DisplayAlignment()) {
+                continue;
+            }
+            if (r1.ZIndex() != r2.ZIndex()) {
+                continue;
+            }
+            if (r1.Background() != r2.Background()) {
+                continue;
+            }
+            if (r1.IsOverflowClipped() != r2.IsOverflowClipped()) {
+                continue;
+            }
+            if (r1.LineHeight() != r2.LineHeight()) {
+                continue;
+            }
+            if (r1.ScrollMode() != r2.ScrollMode()) {
+                continue;
+            }
+            if (r1.WritingMode() != r2.WritingMode()) {
+                continue;
+            }
+            if (!areEqual(r1.Padding(), r2.Padding()))
+            {
+                continue;
+            }
+            if (!areEqual(r1.Extent(), r2.Extent()))
+            {
+                continue;
+            }
+            if (!areEqual(r1.Position(), r2.Position()))
+            {
+                continue;
+            }
+
+            return cachedRegion;
+        }
+
+        const auto newRegion = std::make_shared<SsaCachedRegion>();
+        newRegion->Region = CopyRegion(r1);
+        newRegion->layer = layer;
+        cachedRegions.push_back(newRegion);
+
+        return newRegion;
+    }
+
+    static bool areEqual(const TimedTextPoint& p1, const TimedTextPoint& p2)
+    {
+        return p1.Unit == p2.Unit &&
+               areEqual(p1.X, p2.X) &&
+               areEqual(p1.Y, p2.Y);
+    }
+
+    static bool areEqual(const TimedTextSize& s1, const TimedTextSize& s2)
+    {
+        return s1.Unit == s2.Unit &&
+               areEqual(s1.Height, s2.Height) &&
+               areEqual(s1.Width, s2.Width);
+    }
+
+    static bool areEqual(const TimedTextPadding& p1, const TimedTextPadding& p2)
+    {
+        return areEqual(p1.Before, p2.Before) &&
+               areEqual(p1.After, p2.After) &&
+               areEqual(p1.Start, p2.Start) &&
+               areEqual(p1.End, p2.End);
+    }
+
+    static bool areEqual(double a, double b, double epsilon = 1e-3)
+    {
+        return std::abs(a - b) < epsilon;
+    }
+
     // trim from left
     inline std::wstring& ltrim(std::wstring& s, const wchar_t* t = L" \t\n\r\f\v")
     {
@@ -1066,6 +1155,11 @@ public:
         {
             s.second.reset();
         }
+
+        for (auto& r : cachedRegions)
+        {
+            r.reset();
+        }
     }
 
 private:
@@ -1083,4 +1177,5 @@ private:
     std::map<winrt::hstring, std::shared_ptr<SsaStyleDefinition>> styles;
     std::map<std::wstring, winrt::hstring> fonts;
     std::shared_ptr<AttachedFileHelper> attachedFileHelper;
+    std::vector<std::shared_ptr<SsaCachedRegion>> cachedRegions;
 };
