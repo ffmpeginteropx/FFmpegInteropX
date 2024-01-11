@@ -222,14 +222,37 @@ public:
 
             if ((marginL > 0 || marginR > 0 || marginV > 0) && width > 0 && height > 0)
             {
-                TimedTextPadding padding;
+                // Multiple caveats here:
+                // 1. For TimedTextPadding, the XAML renderer is mixing up the directions.
+                //    Opposed to the alignment enums where Before/After means Top/Bottom
+                //    it considers Start/End as Top/Bottom, so we need to accommodate.
+                // 2. When non-zero margin values occur in a dialogue line, those values
+                //    only override the individual values from the style not all at once,
+                //    so we need individual checks here.
+                // 3. MarginV is a top margin for top-aligned blocks and a bottom margin for
+                //    bottom-aligned blocks - even though the Word doc tells this for style
+                //    defined margins and otherwise for dialog lines, where it talks about
+                //    bottom only - which is incorrect.
+                //    We set both here and clear the non-applicable one(s) later
+                auto padding = subRegion.Padding();
                 padding.Unit = TimedTextUnit::Percentage;
-                padding.Start = (double)marginL * 100 / width;
-                padding.End = (double)marginR * 100 / width;
-                padding.Before = 0;
-                padding.After = (double)marginV * 100 / height;
 
-                subRegion = CopyRegion(cueRegion);
+                if (marginL > 0)
+                {
+                    padding.Before = (double)marginL * 100 / width;
+                }
+
+                if (marginR > 0)
+                {
+                    padding.After = (double)marginR * 100 / width;
+                }
+
+                if (marginV > 0)
+                {
+                    padding.Start = (double)marginV * 100 / height;
+                    padding.End = (double)marginV * 100 / height;
+                }
+
                 subRegion.Padding(padding);
             }
 
@@ -615,6 +638,27 @@ public:
                 auto timedText = StringUtils::WStringToPlatformString(str);
                 if (timedText.size() > 0)
                 {
+                    auto padding = subRegion.Padding();
+
+                    // MarginV is top margin when aligned to the top
+                    // and bottom margin when aligned to the bottom
+                    // it is ignored for vertically centered subtitles
+                    switch (subRegion.DisplayAlignment()) {
+                    case TimedTextDisplayAlignment::Before:
+                        padding.End = 0;
+                        break;
+                    case TimedTextDisplayAlignment::After:
+                        padding.Start = 0;
+                        break;
+                    case TimedTextDisplayAlignment::Center:
+                        padding.Start = 0;
+                        padding.End = 0;
+                        break;
+                    }
+
+                    subRegion.Padding(padding);
+                    subRegion.ZIndex(layer);
+
                     auto cachedRegion = GetOrAddCachedRegion(subRegion, layer);
                     auto region = cachedRegion->Region;
 
@@ -807,10 +851,10 @@ public:
         padding.Unit = TimedTextUnit::Percentage;
         if (width > 0 && height > 0)
         {
-            padding.Start = (double)marginL * 100 / width;
-            padding.End = (double)marginR * 100 / width;
-            padding.Before = 0;
-            padding.After = (double)marginV * 100 / height;
+            padding.Before = (double)marginL * 100 / width;
+            padding.After = (double)marginR * 100 / width;
+            padding.Start = (double)marginV * 100 / height;
+            padding.End = (double)marginV * 100 / height;
         }
         else
         {
