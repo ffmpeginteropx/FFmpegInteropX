@@ -689,7 +689,7 @@ public:
                     auto horizontalAlignment = GetHorizontalAlignment(alignment, true);
 
                     auto platformColor = ColorFromArgb(color << 8 | color >> 24);
-                    auto platformOutlineColor = ColorFromArgb(outlineColor << 8 | color >> 24);
+                    auto platformOutlineColor = ColorFromArgb(outlineColor << 8 | outlineColor >> 24);
 
                     if (platformColor.A == 0)
                     {
