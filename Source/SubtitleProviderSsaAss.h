@@ -371,12 +371,33 @@ public:
                                     else if (checkTag(tag, L"bord"))
                                     {
                                         auto border = std::stod(tag.substr(4));
-                                        auto outline = subStyle.OutlineThickness();
-                                        outline.Value = border;
-                                        subStyle.OutlineThickness(outline);
+                                        auto borderSize = GetScaledValue(border);
+                                        subStyle.OutlineThickness(borderSize);
+
                                         auto outlineRadius = subStyle.OutlineRadius();
-                                        outlineRadius.Value = border;
-                                        subStyle.OutlineRadius(outlineRadius);
+                                        if (outlineRadius.Value > 0)
+                                        {
+                                            subStyle.OutlineRadius(borderSize);
+                                        }
+                                    }
+                                    else if (tag.compare(L"be1") == 0)
+                                    {
+                                        auto outline = subStyle.OutlineThickness();
+                                        if (outline.Value > 0)
+                                        {
+                                            subStyle.OutlineRadius(outline);
+                                        }
+                                        else
+                                        {
+                                            subStyle.OutlineRadius(GetScaledValue(1.0));
+                                        }
+                                    }
+                                    else if (tag.compare(L"be0") == 0)
+                                    {
+                                        TimedTextDouble radius;
+                                        radius.Unit = TimedTextUnit::Percentage;
+                                        radius.Value = 0;
+                                        subStyle.OutlineRadius(radius);
                                     }
                                     else if (tag.compare(L"b0") == 0)
                                     {
@@ -777,14 +798,11 @@ public:
         SubtitleStyle.FontWeight(bold ? TimedTextWeight::Bold : TimedTextWeight::Normal);
         SubtitleStyle.Foreground(color);
         SubtitleStyle.Background(winrt::Windows::UI::Colors::Transparent()); //ColorFromArgb(backColor);
-        TimedTextDouble outlineRadius;
-        outlineRadius.Unit = TimedTextUnit::Percentage;
-        outlineRadius.Value = outline * 1.4;
-        SubtitleStyle.OutlineRadius(outlineRadius);
-        TimedTextDouble outlineThickness;
-        outlineThickness.Unit = TimedTextUnit::Percentage;
-        outlineThickness.Value = outline * 1.4;
-        SubtitleStyle.OutlineThickness(outlineThickness);
+        TimedTextDouble radius;
+        radius.Unit = TimedTextUnit::Percentage;
+        radius.Value = 0;
+        SubtitleStyle.OutlineRadius(radius);
+        SubtitleStyle.OutlineThickness(GetScaledValue(outline));
         SubtitleStyle.FlowDirection(TimedTextFlowDirection::LeftToRight);
         SubtitleStyle.OutlineColor(outlineColor);
         SubtitleStyle.IsUnderlineEnabled(underline);
@@ -979,6 +997,23 @@ public:
         TimedTextDouble size;
         size.Unit = TimedTextUnit::Percentage;
         size.Value = fontSize * 2.7;
+
+        return size;
+    }
+
+    TimedTextDouble GetScaledValue(double value)
+    {
+        TimedTextDouble size;
+        size.Unit = TimedTextUnit::Pixels;
+
+        if (hasPlayResY && videoHeight > 0 && height > 0)
+        {
+            size.Value = static_cast<double>(videoHeight) / height * value;
+        }
+        else
+        {
+            size.Value = value;
+        }
 
         return size;
     }
