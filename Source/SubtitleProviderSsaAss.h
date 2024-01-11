@@ -509,11 +509,6 @@ public:
                                 double x = min(posX / width, 1);
                                 double y = min(posY / height, 1);
 
-                                TimedTextPadding padding
-                                {
-                                    0, 0, 0, 0, TimedTextUnit::Percentage
-                                };
-
                                 TimedTextSize extent
                                 {
                                     0, 0, TimedTextUnit::Percentage
@@ -544,19 +539,69 @@ public:
                                     break;
                                 }
 
+                                // Absolute positioning does not change the width (normally)
+                                // MarginL and MarginR still apply, which we cannot replicate
+                                // in all cases
+                                auto padding1 = subRegion.Padding();
+
                                 switch (subStyle.LineAlignment())
                                 {
                                 case  TimedTextLineAlignment::Start:
                                     pos.X = x * 100;
                                     extent.Width = (1.0 - x) * 100;
+
+                                    // Both margins have an effect, but a left margin here doesn't change
+                                    // the alignment point, so we add the left margin to the right margin
+                                    // and set left to zero.
+                                    padding1.After += padding1.Before;
+                                    padding1.Before = 0;
+
+                                    // Now subtract the reduced width from the padding (which is meant to
+                                    // be applied to a 100% width box)
+                                    padding1.After -= (100 - extent.Width);
+                                    if (padding1.After < 0) {
+                                        // In this case, we cannot replicate proper ass rendering unfortunately
+                                        padding1.After = 0;
+                                    }
                                     break;
                                 case  TimedTextLineAlignment::End:
+                                    pos.X = 0;
                                     extent.Width = x * 100;
+                                    // Both margins have an effect, but a right margin here doesn't change
+                                    // the alignment point, so we add the right margin to the left margin
+                                    // and set it to zero.
+                                    padding1.Before += padding1.After;
+                                    padding1.After = 0;
+
+                                    // Now subtract the reduced width from the padding (which is meant to
+                                    // be applied to a 100% width box)
+                                    padding1.Before -= (100 - extent.Width);
+                                    if (padding1.Before < 0) {
+                                        // In this case, we cannot replicate proper ass rendering unfortunately
+                                        padding1.Before = 0;
+                                    }
                                     break;
                                 case  TimedTextLineAlignment::Center:
                                     size = min(x, 1 - x);
                                     pos.X = (x - size) * 100;
                                     extent.Width = (size * 2) * 100;
+
+                                    // Both margins are effective but differing left and right margins
+                                    // do not change the alignment point (center). So we average both
+                                    // margins and set them to equal values
+                                    {
+                                        auto average = (padding1.Before + padding1.After) / 2;
+
+                                        // Subtract the reduced width from the paddings
+                                        average -= (100 - extent.Width) / 2;
+                                        if (average < 0) {
+                                            // In this case, we cannot replicate proper ass rendering unfortunately
+                                            average = 0;
+                                        }
+
+                                        padding1.Before = average;
+                                        padding1.After = average;
+                                    }
                                     break;
                                 default:
                                     break;
@@ -564,7 +609,10 @@ public:
                                 subRegion.Position(pos);
                                 subRegion.Extent(extent);
 
-                                subRegion.Padding(padding);
+                                // Top and bottom margin are out of the game with absolute positioning
+                                padding1.Start = 0;
+                                padding1.End = 0;
+                                subRegion.Padding(padding1);
                             }
 
                             // strip effect from actual text
@@ -1306,4 +1354,5 @@ private:
     std::map<std::wstring, winrt::hstring> fonts;
     std::shared_ptr<AttachedFileHelper> attachedFileHelper;
     std::vector<std::shared_ptr<SsaCachedRegion>> cachedRegions;
+    TimedTextDouble zeroDouble { 0.0, TimedTextUnit::Percentage };
 };
