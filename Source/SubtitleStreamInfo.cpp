@@ -8,7 +8,7 @@
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    SubtitleStreamInfo::SubtitleStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropX::StreamDisposition const& disposition, bool isDefault, bool isForced, Windows::Media::Core::TimedMetadataTrack const& track, bool isExternal)
+    SubtitleStreamInfo::SubtitleStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropX::StreamDisposition const& disposition, bool isDefault, bool isForced, Windows::Media::Core::TimedMetadataTrack const& track, bool isExternal, int32_t streamIndex)
     {
         this->name = name;
         this->language = language;
@@ -18,6 +18,7 @@ namespace winrt::FFmpegInteropX::implementation
         this->isForced = isForced;
         this->track = track;
         this->isExternal = isExternal;
+        this->streamIndex = streamIndex;
     }
 
     bool SubtitleStreamInfo::IsExternal()
