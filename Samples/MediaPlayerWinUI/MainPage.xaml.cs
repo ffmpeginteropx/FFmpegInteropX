@@ -221,7 +221,7 @@ namespace MediaPlayerWinUI
                 StorageApplicationPermissions.FutureAccessList.Add(file);
 
                 // Instantiate FFmpegMediaSource using the opened local file stream
-                FFmpegMSS = await FFmpegMediaSource.CreateFromFileAsync(file.Path, Config, CurrentMainWindow.AppWindow.Id);
+                FFmpegMSS = await FFmpegMediaSource.CreateFromFileAsync(file.Path, Config, CurrentMainWindow.AppWindow.Id.Value);
 
                 var tags = FFmpegMSS.MetadataTags.ToArray();
                 if (AutoCreatePlaybackItem)

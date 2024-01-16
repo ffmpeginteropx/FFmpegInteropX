@@ -457,13 +457,13 @@ namespace FFmpegInteropX
 #ifdef WinUI
 
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
-        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream, MediaSourceConfig config, Microsoft.UI.WindowId windowId);
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream, MediaSourceConfig config, UInt64 windowId);
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromUriAsync(String uri, MediaSourceConfig config, Microsoft.UI.WindowId windowId);
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromUriAsync(String uri, MediaSourceConfig config, UInt64 windowId);
 
         ///<summary>Creates a FFmpegMediaSource from a file.</summary>
-        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromFileAsync(String fileName, MediaSourceConfig config, Microsoft.UI.WindowId windowId);
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromFileAsync(String fileName, MediaSourceConfig config, UInt64 windowId);
 
 #endif
 

@@ -41,21 +41,21 @@ namespace winrt::FFmpegInteropX::implementation
 
 #ifdef WinUI
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, Microsoft::UI::WindowId windowId)
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
         {
-            return CreateFromStreamAsync(stream, config, windowId.Value);
+            return CreateFromStreamInternalAsync(stream, config, windowId);
         }
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, Microsoft::UI::WindowId windowId)
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
         {
-            return CreateFromUriAsync(uri, config, windowId.Value);
+            return CreateFromUriInternalAsync(uri, config, windowId);
         }
 
         ///<summary>Creates a FFmpegMediaSource from a file.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName, FFmpegInteropX::MediaSourceConfig config, Microsoft::UI::WindowId windowId)
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
         {
-            return CreateFromUriAsync(fileName, config, windowId.Value);
+            return CreateFromUriInternalAsync(fileName, config, windowId);
         }
 #endif
 
@@ -63,38 +63,38 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config)
         {
-            return CreateFromStreamAsync(stream, config, 0);
+            return CreateFromStreamInternalAsync(stream, config, 0);
         }
 
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream)
         {
-            return CreateFromStreamAsync(stream, FFmpegInteropX::MediaSourceConfig(), 0);
+            return CreateFromStreamInternalAsync(stream, FFmpegInteropX::MediaSourceConfig(), 0);
         }
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config)
         {
-            return CreateFromUriAsync(uri, config, 0);
+            return CreateFromUriInternalAsync(uri, config, 0);
         }
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
         {
-            return CreateFromUriAsync(uri, FFmpegInteropX::MediaSourceConfig(), 0);
+            return CreateFromUriInternalAsync(uri, FFmpegInteropX::MediaSourceConfig(), 0);
         }
 
 #ifndef UWP
         ///<summary>Creates a FFmpegMediaSource from a file.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName, FFmpegInteropX::MediaSourceConfig config)
         {
-            return CreateFromUriAsync(fileName, config, 0);
+            return CreateFromUriInternalAsync(fileName, config, 0);
         }
 
         ///<summary>Creates a FFmpegMediaSource from a file.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName)
         {
-            return CreateFromUriAsync(fileName, FFmpegInteropX::MediaSourceConfig(), 0);
+            return CreateFromUriInternalAsync(fileName, FFmpegInteropX::MediaSourceConfig(), 0);
         }
 #endif
 
@@ -246,8 +246,8 @@ namespace winrt::FFmpegInteropX::implementation
         static DispatcherQueue GetCurrentDispatcherQueue();
 
     public://internal:
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamInternalAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriInternalAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
         static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher, uint64_t windowId, bool useHdr);
         static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, DispatcherQueue  const& dispatcher, uint64_t windowId, bool useHdr);
         HRESULT Seek(TimeSpan const& position, TimeSpan& actualPosition, bool allowFastSeek);
