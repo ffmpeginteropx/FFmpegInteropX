@@ -18,7 +18,7 @@
 
 #pragma once
 #include "pch.h"
-
+#include <MediaSampleResult.h>
 
 using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::Windows::Media::MediaProperties;
@@ -34,7 +34,7 @@ class MediaSampleProvider
 {
 public:
     virtual ~MediaSampleProvider();
-    virtual winrt::Windows::Media::Core::MediaStreamSample GetNextSample();
+    virtual MediaSampleResult GetNextSample();
     virtual void Flush(bool flushBuffers);
 
     winrt::Windows::Media::Core::IMediaStreamDescriptor StreamDescriptor()
@@ -105,7 +105,7 @@ public:
     virtual void QueuePacket(AVPacket* packet);
     HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
     bool IsBufferFull();
-    virtual HRESULT CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface) = 0;
+    virtual HRESULT CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface, std::vector< std::pair<GUID, winrt::Windows::Foundation::IInspectable>>& formatChanges) = 0;
     HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
     HRESULT SkipPacketsUntilTimestamp(TimeSpan const& timestamp);
     virtual winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() = 0;

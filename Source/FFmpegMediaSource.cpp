@@ -2186,15 +2186,15 @@ namespace winrt::FFmpegInteropX::implementation
             if (currentAudioStream && args.Request().StreamDescriptor() == currentAudioStream->StreamDescriptor())
             {
                 auto sample = currentAudioStream->GetNextSample();
-                CheckExtendDuration(sample);
-                args.Request().Sample(sample);
+                CheckExtendDuration(sample.sample);
+                args.Request().Sample(sample.sample);
             }
             else if (currentVideoStream && args.Request().StreamDescriptor() == currentVideoStream->StreamDescriptor())
             {
                 CheckVideoDeviceChanged(sender);
                 auto sample = currentVideoStream->GetNextSample();
-                CheckExtendDuration(sample);
-                args.Request().Sample(sample);
+                CheckExtendDuration(sample.sample);
+                args.Request().Sample(sample.sample);
             }
             else
             {
@@ -2288,7 +2288,7 @@ namespace winrt::FFmpegInteropX::implementation
                     // decode video until we are at target position
                     while (true)
                     {
-                        auto sample = currentVideoStream->GetNextSample();
+                        auto sample = currentVideoStream->GetNextSample().sample;
                         if (!sample || sample.Timestamp() >= lastVideoTimestamp)
                         {
                             break;
@@ -2301,7 +2301,7 @@ namespace winrt::FFmpegInteropX::implementation
                         TimeSpan lastAudioTimestamp = currentAudioStream->LastSampleTimestamp;
                         while (true)
                         {
-                            auto sample = currentAudioStream->GetNextSample();
+                            auto sample = currentAudioStream->GetNextSample().sample;
                             if (!sample || sample.Timestamp() >= lastAudioTimestamp)
                             {
                                 break;

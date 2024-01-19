@@ -211,20 +211,22 @@ void MediaSampleProvider::InitializeStreamInfo()
     }
 }
 
-MediaStreamSample MediaSampleProvider::GetNextSample()
+MediaSampleResult MediaSampleProvider::GetNextSample()
 {
     //DebugMessage(L"GetNextSample\n");
 
     HRESULT hr = S_OK;
 
     MediaStreamSample sample = { nullptr };
+    std::vector<std::pair<GUID, winrt::Windows::Foundation::IInspectable>> formatChanges;
+
     if (m_isEnabled)
     {
         IBuffer buffer = nullptr;
         LONGLONG pts = 0;
         LONGLONG dur = 0;
         IDirect3DSurface surface;
-        hr = CreateNextSampleBuffer(&buffer, pts, dur, &surface);
+        hr = CreateNextSampleBuffer(&buffer, pts, dur, &surface, formatChanges);
 
         if (hr == S_OK)
         {
@@ -260,7 +262,7 @@ MediaStreamSample MediaSampleProvider::GetNextSample()
         }
     }
 
-    return sample;
+    return MediaSampleResult(sample, formatChanges);
 }
 
 HRESULT MediaSampleProvider::GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration)

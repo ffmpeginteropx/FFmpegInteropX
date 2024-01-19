@@ -201,6 +201,7 @@
     <ClInclude Include="LanguageTagConverter.h" />
     <ClInclude Include="MediaMetadata.h" />
     <ClInclude Include="MediaSampleProvider.h" />
+    <ClInclude Include="MediaSampleResult.h" />
     <ClInclude Include="MediaSourceConfig.h" />
     <ClInclude Include="MediaThumbnailData.h" />
     <ClInclude Include="NALPacketSampleProvider.h" />

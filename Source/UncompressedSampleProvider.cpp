@@ -36,7 +36,7 @@ UncompressedSampleProvider::UncompressedSampleProvider(
     decoder = DecoderEngine::FFmpegSoftwareDecoder;
 }
 
-HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface)
+HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface, std::vector< std::pair<GUID, winrt::Windows::Foundation::IInspectable>>& formatChanges)
 {
     HRESULT hr = S_OK;
 
@@ -51,7 +51,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int
     int64_t firstPacketPos = 0;
     while (SUCCEEDED(hr))
     {
-        hr = GetFrameFromFFmpegDecoder(&avFrame, samplePts, sampleDuration, firstPacketPos);
+        hr = GetFrameFromFFmpegDecoder(&avFrame, samplePts, sampleDuration, firstPacketPos, formatChanges);
 
         if (hr == S_FALSE)
         {
@@ -92,7 +92,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int
     return hr;
 }
 
-HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos)
+HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos, std::vector< std::pair<GUID, winrt::Windows::Foundation::IInspectable>>& formatChanges)
 {
     HRESULT hr = S_OK;
 

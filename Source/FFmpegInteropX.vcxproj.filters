@@ -218,6 +218,9 @@
     <ClInclude Include="text_encoding_detect.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="MediaSampleResult.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />

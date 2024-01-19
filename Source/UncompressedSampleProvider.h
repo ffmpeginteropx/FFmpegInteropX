@@ -32,7 +32,7 @@ public:
         int streamIndex,
         HardwareDecoderStatus hardwareDecoderStatus
     );
-    virtual HRESULT CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface) override;
+    virtual HRESULT CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface, std::vector< std::pair<GUID, winrt::Windows::Foundation::IInspectable>>& formatChanges) override;
     virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
     {
         UNREFERENCED_PARAMETER(pBuffer);
@@ -42,7 +42,7 @@ public:
         UNREFERENCED_PARAMETER(frameDuration);
         return E_FAIL;
     }; // must be overridden by specific decoders
-    virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos);
+    virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos, std::vector< std::pair<GUID, winrt::Windows::Foundation::IInspectable>> &formatChanges);
     virtual HRESULT FeedPacketToDecoder(int64_t& firstPacketPos);
 
     void SetFFmpegFilters(winrt::hstring ffmpegFilters) override
