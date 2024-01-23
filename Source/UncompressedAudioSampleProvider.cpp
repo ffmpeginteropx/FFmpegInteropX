@@ -132,8 +132,10 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
         inChannelLayout = channelLayout;
         inSampleRate = outSampleRate = sampleRate;
 
-        IMediaEncodingProperties encProp = { sampleStreamDescriptor.as<IAudioStreamDescriptor>().EncodingProperties() };
+        AudioEncodingProperties encProp = { sampleStreamDescriptor.as<IAudioStreamDescriptor>().EncodingProperties() };
         MediaPropertySet encodingProperties{ encProp.Properties() };
+
+        OutputDebugStringW(L"\n\nAudio properties in descriptor: " + encProp.SampleRate());
 
         encodingProperties.Insert(MF_MT_AUDIO_CHANNEL_MASK, PropertyValue::CreateUInt32(static_cast<uint32_t>(inChannelLayout)));
         encodingProperties.Insert(MF_MT_AUDIO_NUM_CHANNELS, PropertyValue::CreateUInt32(inChannels));
