@@ -139,11 +139,11 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
 
         encodingProperties.Insert(MF_MT_AUDIO_CHANNEL_MASK, PropertyValue::CreateUInt32(static_cast<uint32_t>(inChannelLayout)));
         encodingProperties.Insert(MF_MT_AUDIO_NUM_CHANNELS, PropertyValue::CreateUInt32(inChannels));
-        encodingProperties.Insert(MF_MT_AUDIO_BLOCK_ALIGNMENT, PropertyValue::CreateUInt32(inChannels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16)));
-        encodingProperties.Insert(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, PropertyValue::CreateUInt32(inSampleRate * inChannels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16)));
+        encodingProperties.Insert(MF_MT_AUDIO_BLOCK_ALIGNMENT, PropertyValue::CreateUInt32(inChannels * av_get_bytes_per_sample(outSampleFormat)));
+        encodingProperties.Insert(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, PropertyValue::CreateUInt32(inSampleRate * inChannels * av_get_bytes_per_sample(outSampleFormat)));
         encodingProperties.Insert(MF_MT_AUDIO_SAMPLES_PER_SECOND, PropertyValue::CreateUInt32(inSampleRate));
 
-        if (inSampleFormat != AV_SAMPLE_FMT_S16)
+        if (inSampleFormat != outSampleFormat)
         {
             // set flag to update resampler on next frame
             needsUpdateResampler = true;
@@ -157,7 +157,7 @@ HRESULT UncompressedAudioSampleProvider::UpdateResampler()
 {
     HRESULT hr = S_OK;
 
-    useResampler = inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate || inSampleFormat != outSampleFormat;
+    useResampler = inSampleFormat != outSampleFormat;
     if (useResampler)
     {
         // Set up resampler to convert to output format and channel layout.
