@@ -243,7 +243,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
             if (std::dynamic_pointer_cast<UncompressedSampleProvider>(videoStream))
             {
                 // If we do not use passthrough, we can decode (and drop) then next sample to get the correct time.
-                auto sample = videoStream->GetNextSample();
+                auto sample = videoStream->GetNextSample(nullptr);
                 if (sample)
                 {
                     timestampVideo = sample.Timestamp();
@@ -318,7 +318,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                             videoStream->SkipPacketsUntilTimestamp(timestampVideo);
                             audioStream->SkipPacketsUntilTimestamp(audioTarget);
 
-                            auto sample = audioStream->GetNextSample();
+                            auto sample = audioStream->GetNextSample(nullptr);
                             if (sample)
                             {
                                 actualPosition = sample.Timestamp() + sample.Duration();
@@ -334,7 +334,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                         if (hr == S_OK && (config.FastSeekCleanAudio() || (timestampAudio + timestampAudioDuration) <= timestampVideo))
                         {
                             // decode one audio sample to get clean output
-                            auto sample = audioStream->GetNextSample();
+                            auto sample = audioStream->GetNextSample(nullptr);
                             if (sample)
                             {
                                 actualPosition = sample.Timestamp() + sample.Duration();
@@ -401,7 +401,7 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
                 audioStream->packetBuffer->DropPackets(aIndex);
 
                 // decode one audio sample to get clean output
-                auto sample = audioStream->GetNextSample();
+                auto sample = audioStream->GetNextSample(nullptr);
                 if (sample)
                 {
                     // TODO check if this is a good idea

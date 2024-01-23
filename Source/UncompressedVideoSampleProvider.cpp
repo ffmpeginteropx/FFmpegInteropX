@@ -324,13 +324,13 @@ UncompressedVideoSampleProvider::~UncompressedVideoSampleProvider()
     }
 }
 
-HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
+HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration, IMediaStreamDescriptor const& sampleStreamDescriptor)
 {
     UNREFERENCED_PARAMETER(surface);
     UNREFERENCED_PARAMETER(frameDuration);
 
     HRESULT hr = S_OK;
-    CheckFrameSize(avFrame);
+    CheckFrameSize(avFrame, sampleStreamDescriptor);
 
     if (outputDirectBuffer)
     {
@@ -664,7 +664,7 @@ int UncompressedVideoSampleProvider::get_buffer2(AVCodecContext* avCodecContext,
 }
 
 
-void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame)
+void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame, IMediaStreamDescriptor const& sampleStreamDescriptor)
 {
     outputDirectBuffer = true;
     int frameWidth = avFrame->width;
@@ -734,22 +734,31 @@ void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame)
     }
     else if (hasFormatChanged)
     {
-        // dynamic output size switching
-        outputWidth = avFrame->width;
-        outputHeight = avFrame->height;
-        outputFrameWidth = frameWidth;
-        outputFrameHeight = frameHeight;
+        if (sampleStreamDescriptor) {
+            IMediaEncodingProperties encProp = { sampleStreamDescriptor.as<IVideoStreamDescriptor>().EncodingProperties() };
+            MediaPropertySet encodingProperties{ encProp.Properties() };
 
-        VideoDescriptor().EncodingProperties().Width(outputFrameWidth);
-        VideoDescriptor().EncodingProperties().Height(outputFrameHeight);
+            // dynamic output size switching
+            outputWidth = avFrame->width;
+            outputHeight = avFrame->height;
+            outputFrameWidth = frameWidth;
+            outputFrameHeight = frameHeight;
+            
+            //, 
+            //VideoDescriptor().EncodingProperties().Width(outputFrameWidth);
+            //VideoDescriptor().EncodingProperties().Height(outputFrameHeight);
 
-        MFVideoArea area;
-        area.Area.cx = outputWidth;
-        area.Area.cy = outputHeight;
-        area.OffsetX.fract = 0;
-        area.OffsetX.value = 0;
-        area.OffsetY.fract = 0;
-        area.OffsetY.value = 0;
-        VideoDescriptor().EncodingProperties().Properties().Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, PropertyValue::CreateUInt8Array(winrt::array_view((uint8_t*)&area, sizeof(MFVideoArea))));
-    }
+            encodingProperties.Insert(MF_MT_FRAME_SIZE, PropertyValue::CreateUInt64(Pack2UINT32AsUINT64(outputFrameWidth, outputFrameHeight)));
+
+
+            MFVideoArea area;
+            area.Area.cx = outputWidth;
+            area.Area.cy = outputHeight;
+            area.OffsetX.fract = 0;
+            area.OffsetX.value = 0;
+            area.OffsetY.fract = 0;
+            area.OffsetY.value = 0;
+            encodingProperties.Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, PropertyValue::CreateUInt8Array(winrt::array_view((uint8_t*)&area, sizeof(MFVideoArea))));
+        }
+        }
 }

@@ -22,6 +22,7 @@
 
 using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::Windows::Media::MediaProperties;
+using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Graphics::DirectX::Direct3D11;
 using namespace std;
 
@@ -34,7 +35,7 @@ class MediaSampleProvider
 {
 public:
     virtual ~MediaSampleProvider();
-    virtual winrt::Windows::Media::Core::MediaStreamSample GetNextSample();
+    virtual winrt::Windows::Media::Core::MediaStreamSample GetNextSample(IMediaStreamDescriptor const& sampleStreamDescriptor);
     virtual void Flush(bool flushBuffers);
 
     winrt::Windows::Media::Core::IMediaStreamDescriptor StreamDescriptor()
@@ -105,7 +106,7 @@ public:
     virtual void QueuePacket(AVPacket* packet);
     HRESULT GetNextPacket(AVPacket** avPacket, LONGLONG& packetPts, LONGLONG& packetDuration);
     bool IsBufferFull();
-    virtual HRESULT CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface) = 0;
+    virtual HRESULT CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface, IMediaStreamDescriptor const& sampleStreamDescriptor) = 0;
     HRESULT GetNextPacketTimestamp(TimeSpan& timestamp, TimeSpan& packetDuration);
     HRESULT SkipPacketsUntilTimestamp(TimeSpan const& timestamp);
     virtual winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() = 0;

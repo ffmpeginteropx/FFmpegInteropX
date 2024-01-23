@@ -57,7 +57,7 @@ public:
         }
 
 
-    virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override
+    virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration, IMediaStreamDescriptor const& sampleStreamDescriptor) override
     {
         HRESULT hr = S_OK;
 
@@ -101,7 +101,7 @@ public:
 
                 if (SUCCEEDED(hr))
                 {
-                    CheckFrameSize(avFrame);
+                    CheckFrameSize(avFrame, sampleStreamDescriptor);
                     ReadFrameProperties(avFrame, framePts);
                 }
 
@@ -114,7 +114,7 @@ public:
         }
         else
         {
-            hr = UncompressedVideoSampleProvider::CreateBufferFromFrame(pBuffer, surface, avFrame, framePts, frameDuration);
+            hr = UncompressedVideoSampleProvider::CreateBufferFromFrame(pBuffer, surface, avFrame, framePts, frameDuration, sampleStreamDescriptor);
 
             if (decoder != DecoderEngine::FFmpegSoftwareDecoder)
             {

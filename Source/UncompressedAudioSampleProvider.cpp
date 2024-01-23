@@ -119,7 +119,7 @@ winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvi
     return winrt::Windows::Media::Core::AudioStreamDescriptor(encodingProperties);
 }
 
-HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate)
+HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate, IMediaStreamDescriptor const& sampleStreamDescriptor)
 {
     HRESULT hr = S_OK;
 
@@ -132,7 +132,16 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
         inChannelLayout = channelLayout;
         inSampleRate = outSampleRate = sampleRate;
 
-        if (inSampleFormat != outSampleFormat || inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate)
+        IMediaEncodingProperties encProp = { sampleStreamDescriptor.as<IAudioStreamDescriptor>().EncodingProperties() };
+        MediaPropertySet encodingProperties{ encProp.Properties() };
+
+        encodingProperties.Insert(MF_MT_AUDIO_CHANNEL_MASK, PropertyValue::CreateUInt32(static_cast<uint32_t>(inChannelLayout)));
+        encodingProperties.Insert(MF_MT_AUDIO_NUM_CHANNELS, PropertyValue::CreateUInt32(inChannels));
+        encodingProperties.Insert(MF_MT_AUDIO_BLOCK_ALIGNMENT, PropertyValue::CreateUInt32(inChannels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16)));
+        encodingProperties.Insert(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, PropertyValue::CreateUInt32(inSampleRate * inChannels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16)));
+        encodingProperties.Insert(MF_MT_AUDIO_SAMPLES_PER_SECOND, PropertyValue::CreateUInt32(inSampleRate));
+
+        if (inSampleFormat != AV_SAMPLE_FMT_S16)
         {
             // set flag to update resampler on next frame
             needsUpdateResampler = true;
@@ -152,9 +161,9 @@ HRESULT UncompressedAudioSampleProvider::UpdateResampler()
         // Set up resampler to convert to output format and channel layout.
         m_pSwrCtx = swr_alloc_set_opts(
             m_pSwrCtx,
-            outChannelLayout,
+            inChannelLayout,
             outSampleFormat,
-            outSampleRate,
+            inSampleRate,
             inChannelLayout,
             inSampleFormat,
             inSampleRate,
@@ -188,13 +197,13 @@ UncompressedAudioSampleProvider::~UncompressedAudioSampleProvider()
     swr_free(&m_pSwrCtx);
 }
 
-HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
+HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration, IMediaStreamDescriptor const& sampleStreamDescriptor)
 {
     UNREFERENCED_PARAMETER(surface);
 
     HRESULT hr = S_OK;
 
-    hr = CheckFormatChanged((AVSampleFormat)avFrame->format, avFrame->channels, avFrame->channel_layout, avFrame->sample_rate);
+    hr = CheckFormatChanged((AVSampleFormat)avFrame->format, avFrame->channels, avFrame->channel_layout, avFrame->sample_rate, sampleStreamDescriptor);
 
     if (SUCCEEDED(hr) && needsUpdateResampler)
     {
