@@ -744,12 +744,8 @@ void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame, IMediaStr
             outputFrameWidth = frameWidth;
             outputFrameHeight = frameHeight;
             
-            //, 
-            //VideoDescriptor().EncodingProperties().Width(outputFrameWidth);
-            //VideoDescriptor().EncodingProperties().Height(outputFrameHeight);
-
-            encodingProperties.Insert(MF_MT_FRAME_SIZE, PropertyValue::CreateUInt64(Pack2UINT32AsUINT64(outputFrameWidth, outputFrameHeight)));
-
+            VideoDescriptor().EncodingProperties().Width(outputFrameWidth);
+            VideoDescriptor().EncodingProperties().Height(outputFrameHeight);
 
             MFVideoArea area;
             area.Area.cx = outputWidth;

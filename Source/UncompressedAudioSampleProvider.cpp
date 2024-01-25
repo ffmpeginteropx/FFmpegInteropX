@@ -44,12 +44,25 @@ UncompressedAudioSampleProvider::UncompressedAudioSampleProvider(
 winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvider::CreateStreamDescriptor()
 {
     frameProvider = std::shared_ptr<UncompressedFrameProvider>(new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, std::shared_ptr<AudioFilterFactory>(new AudioFilterFactory(m_pAvCodecCtx))));
+    needsUpdateResampler = true;
+    auto encodingProperties = winrt::Windows::Media::MediaProperties::AudioEncodingProperties();
 
     auto format = m_pAvCodecCtx->sample_fmt != AV_SAMPLE_FMT_NONE ? m_pAvCodecCtx->sample_fmt : AV_SAMPLE_FMT_S16;
     auto channels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
     auto channelLayout = m_pAvCodecCtx->channel_layout ? m_pAvCodecCtx->channel_layout : AvCodecContextHelpers::GetDefaultChannelLayout(channels);
     auto sampleRate = m_pAvCodecCtx->sample_rate;
 
+    SetMediaEncodingProperties(format, channels, channelLayout, sampleRate, encodingProperties);
+
+    return winrt::Windows::Media::Core::AudioStreamDescriptor(encodingProperties);
+}
+
+void UncompressedAudioSampleProvider::SetMediaEncodingProperties(AVSampleFormat format,
+    int channels,
+    const uint64_t& channelLayout,
+    int sampleRate,
+    winrt::Windows::Media::MediaProperties::AudioEncodingProperties& encodingProperties)
+{
     inSampleFormat = format;
     inChannels = channels;
     inChannelLayout = channelLayout;
@@ -99,7 +112,6 @@ winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvi
         }
     }
 
-    needsUpdateResampler = true;
     bytesPerSample = av_get_bytes_per_sample(outSampleFormat);
     int bitsPerSample = bytesPerSample * 8;
     UINT32 reportedChannelLayout =
@@ -108,15 +120,12 @@ winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvi
         : (UINT32)outChannelLayout;
 
     // set encoding properties
-    auto encodingProperties = winrt::Windows::Media::MediaProperties::AudioEncodingProperties();
     encodingProperties.Subtype(outSampleFormat == AV_SAMPLE_FMT_FLT ? MediaEncodingSubtypes::Float() : MediaEncodingSubtypes::Pcm());
     encodingProperties.BitsPerSample(bitsPerSample);
     encodingProperties.SampleRate(outSampleRate);
     encodingProperties.ChannelCount(outChannels);
     encodingProperties.Bitrate(bitsPerSample * outSampleRate * outChannels);
     encodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value(reportedChannelLayout));
-
-    return winrt::Windows::Media::Core::AudioStreamDescriptor(encodingProperties);
 }
 
 HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate, IMediaStreamDescriptor const& sampleStreamDescriptor)
@@ -133,15 +142,9 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
         inSampleRate = outSampleRate = sampleRate;
         if (sampleStreamDescriptor) {
             AudioEncodingProperties encProp = { sampleStreamDescriptor.as<IAudioStreamDescriptor>().EncodingProperties() };
-            MediaPropertySet encodingProperties{ encProp.Properties() };
-
             OutputDebugStringW(L"\n\nAudio properties in descriptor: " + encProp.SampleRate());
 
-            encodingProperties.Insert(MF_MT_AUDIO_CHANNEL_MASK, PropertyValue::CreateUInt32(static_cast<uint32_t>(inChannelLayout)));
-            encodingProperties.Insert(MF_MT_AUDIO_NUM_CHANNELS, PropertyValue::CreateUInt32(inChannels));
-            encodingProperties.Insert(MF_MT_AUDIO_BLOCK_ALIGNMENT, PropertyValue::CreateUInt32(inChannels * av_get_bytes_per_sample(outSampleFormat)));
-            encodingProperties.Insert(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, PropertyValue::CreateUInt32(inSampleRate * inChannels * av_get_bytes_per_sample(outSampleFormat)));
-            encodingProperties.Insert(MF_MT_AUDIO_SAMPLES_PER_SECOND, PropertyValue::CreateUInt32(inSampleRate));
+            SetMediaEncodingProperties(inSampleFormat, inChannels, inChannelLayout, inSampleRate, encProp);
 
             if (inSampleFormat != outSampleFormat)
             {
