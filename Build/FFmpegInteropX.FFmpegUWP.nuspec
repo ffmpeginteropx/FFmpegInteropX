@@ -10,6 +10,7 @@
     <license type="expression">LGPL-2.1-or-later AND Zlib AND MIT</license>
     <dependencies>
       <group targetFramework="uap10.0" />
+	  <group targetFramework="netcoreapp8.0" />
     </dependencies>
     <repository type="git" url="$repositoryUrl$" commit="$repositoryCommit$" />
   </metadata>
@@ -34,6 +35,24 @@
     <file src="..\Output\FFmpegUWP\ARM64\bin\*.dll"             target="runtimes\win10-arm64\native" />
     <file src="..\Output\FFmpegUWP\ARM64\bin\*.pdb"             target="runtimes\win10-arm64\native" />
     <file src="..\Output\FFmpegUWP\ARM64\bin\*.lib"             target="runtimes\win10-arm64\native" />
+	
+	
+	
+	<file src="..\Output\FFmpegUWP\x86\bin\*.dll"               target="runtimes\win-x86\native" />
+    <file src="..\Output\FFmpegUWP\x86\bin\*.pdb"               target="runtimes\win-x86\native" />
+    <file src="..\Output\FFmpegUWP\x86\bin\*.lib"               target="runtimes\win-x86\native" />
+
+    <file src="..\Output\FFmpegUWP\x64\bin\*.dll"               target="runtimes\win-x64\native" />
+    <file src="..\Output\FFmpegUWP\x64\bin\*.pdb"               target="runtimes\win-x64\native" />
+    <file src="..\Output\FFmpegUWP\x64\bin\*.lib"               target="runtimes\win-x64\native" />
+
+    <file src="..\Output\FFmpegUWP\ARM\bin\*.dll"               target="runtimes\win-arm\native" />
+    <file src="..\Output\FFmpegUWP\ARM\bin\*.pdb"               target="runtimes\win-arm\native" />
+    <file src="..\Output\FFmpegUWP\ARM\bin\*.lib"               target="runtimes\win-arm\native" />
+
+    <file src="..\Output\FFmpegUWP\ARM64\bin\*.dll"             target="runtimes\win-arm64\native" />
+    <file src="..\Output\FFmpegUWP\ARM64\bin\*.pdb"             target="runtimes\win-arm64\native" />
+    <file src="..\Output\FFmpegUWP\ARM64\bin\*.lib"             target="runtimes\win-arm64\native" />
 
     <file src="FFmpegInteropX.FFmpegUWP.targets"             target="build\native"/>
 

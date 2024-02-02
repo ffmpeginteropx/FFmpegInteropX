@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'UAP' and '$(FFmpegInteropXBuild)' != 'true'">
+  <ItemGroup Condition="''$(FFmpegInteropXBuild)' != 'true'">
     <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)..\..\runtimes\win10-$(PlatformTarget)\native\*.dll" />
+	<ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-$(PlatformTarget)\native\*.dll" />
   </ItemGroup>
   <ItemDefinitionGroup>
     <ClCompile>
