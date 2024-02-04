@@ -575,6 +575,8 @@ namespace FFmpegInteropX
     {
         MediaSourceConfig();
 
+        Boolean AutoExtendDuration {get; set; };
+
         ///<summary>Enable passthrough for MP3 audio to system decoder.</summary>
         ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
         Boolean PassthroughAudioMP3{ get; set; };
