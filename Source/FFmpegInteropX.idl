@@ -751,7 +751,7 @@ namespace FFmpegInteropX
 
     runtimeclass GeneralConfig
     {
-        ///<summary>The maximum number of broken frames to skipp in a stream before stopping decoding.</summary>
+        ///<summary>Auto extend duration of media source when data is available beyond the initial duration calculation.</summary>
         Boolean AutoExtendDuration{ get; set; };
 
         ///<summary>The maximum number of broken frames to skipp in a stream before stopping decoding.</summary>
