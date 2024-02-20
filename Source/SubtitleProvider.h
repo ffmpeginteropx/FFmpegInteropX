@@ -321,11 +321,6 @@ private:
             auto enteredCue = args.Cue();
             auto refCue = enteredCue.as<ReferenceCue>();
 
-            if (clearSubtitlesRequested)
-            {
-                ClearSubtitles();
-            }
-
             referenceTrack.RemoveCue(enteredCue);
 
             auto changedCue = refCue->ChangedCue();
@@ -491,7 +486,6 @@ public:
         catch (...)
         {
         }
-        clearSubtitlesRequested = false;
     }
 
 public:
@@ -502,17 +496,7 @@ public:
 
         if (!IsExternal() && flushBuffers)
         {
-            std::lock_guard lock(mutex);
-
-            if (IsPlayingLive())
-            {
-                clearSubtitlesRequested = true;
-                AddUpdatePoint(TimeSpan{ 0 }, nullptr);
-            }
-            else
-            {
-                ClearSubtitles();
-            }
+            ClearSubtitles();
         }
     }
 
@@ -527,7 +511,6 @@ private:
     DispatcherQueueTimer timer = { nullptr };
     TimeSpan actualSubtitleDelay{};
     std::vector<std::pair<IMediaCue, long long>> negativePositionCues;
-    bool clearSubtitlesRequested;
     IMediaCue infiniteDurationCue = { nullptr };
     IMediaCue lastExtendedDurationCue = { nullptr };
     TimeSpan lastExtendedDurationCueOriginalEndTime{};
