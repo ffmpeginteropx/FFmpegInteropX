@@ -200,11 +200,6 @@ public:
                 }
             }
 
-            if (!hasError && startLayer > 0 && endLayer > 0)
-            {
-                layer = parseInt(str.substr(startLayer, endLayer - startLayer));
-            }
-
             std::shared_ptr<SsaStyleDefinition> style = nullptr;
             if (!hasError && startStyle > 0 && endStyle > 0)
             {
