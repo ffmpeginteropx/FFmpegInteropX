@@ -144,8 +144,6 @@ public:
             // Actual Format:        ReadOrder, Layer, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             auto str = StringUtils::Utf8ToWString(subtitle.rects[0]->ass);
 
-            INT64 startLayer = -1;
-            INT64 endLayer = -1;
             INT64 startStyle = -1;
             INT64 endStyle = -1;
             INT64 lastComma = -1;
@@ -158,11 +156,13 @@ public:
                 {
                     if (i == 1)
                     {
-                        startLayer = (INT64)nextComma + 1;
+                        if (str[nextComma + 1] != ',')
+                        {
+                            layer = parseInt(str.substr(nextComma + 1));
                     }
-                    if (i == 2)
+                    }
+                    else if (i == 2)
                     {
-                        endLayer = (INT64)nextComma;
                         startStyle = (INT64)nextComma + 1;
                     }
                     else if (i == 3)
