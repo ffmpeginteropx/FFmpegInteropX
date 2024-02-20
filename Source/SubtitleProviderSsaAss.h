@@ -159,7 +159,7 @@ public:
                         if (str[nextComma + 1] != ',')
                         {
                             layer = parseInt(str.substr(nextComma + 1));
-                    }
+                        }
                     }
                     else if (i == 2)
                     {
@@ -702,8 +702,7 @@ public:
                     subRegion.Padding(padding);
                     subRegion.ZIndex(layer);
 
-                    auto cachedRegion = GetOrAddCachedRegion(subRegion, layer);
-                    auto region = cachedRegion->Region;
+                    auto region = GetOrAddCachedRegion(subRegion, layer);
 
                     cue.CueRegion(region);
 
@@ -1171,23 +1170,11 @@ public:
         }
     }
 
-    class SsaCachedRegion
-    {
-    public:
-        int layer;
-        TimedTextRegion Region = { nullptr };
-    };
-
-
-    std::shared_ptr<SsaCachedRegion> GetOrAddCachedRegion(TimedTextRegion  const& r1, int layer)
+    TimedTextRegion GetOrAddCachedRegion(TimedTextRegion  const& r1, int layer)
     {
         for (const auto &cachedRegion : cachedRegions) {
 
-            if (cachedRegion->layer != layer) {
-                continue;
-            }
-
-            auto r2 = cachedRegion->Region;
+            auto r2 = cachedRegion;
 
             if (r1.DisplayAlignment() != r2.DisplayAlignment()) {
                 continue;
@@ -1226,9 +1213,7 @@ public:
             return cachedRegion;
         }
 
-        const auto newRegion = std::make_shared<SsaCachedRegion>();
-        newRegion->Region = CopyRegion(r1);
-        newRegion->layer = layer;
+        const auto newRegion = CopyRegion(r1);
         cachedRegions.push_back(newRegion);
 
         return newRegion;
@@ -1326,11 +1311,6 @@ public:
         {
             s.second.reset();
         }
-
-        for (auto& r : cachedRegions)
-        {
-            r.reset();
-        }
     }
 
 private:
@@ -1348,6 +1328,6 @@ private:
     std::map<winrt::hstring, std::shared_ptr<SsaStyleDefinition>> styles;
     std::map<std::wstring, winrt::hstring> fonts;
     std::shared_ptr<AttachedFileHelper> attachedFileHelper;
-    std::vector<std::shared_ptr<SsaCachedRegion>> cachedRegions;
+    std::vector<TimedTextRegion> cachedRegions;
     TimedTextDouble zeroDouble { 0.0, TimedTextUnit::Percentage };
 };
