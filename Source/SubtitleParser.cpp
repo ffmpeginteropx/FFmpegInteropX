@@ -22,8 +22,7 @@ namespace winrt::FFmpegInteropX::implementation
             throw_hresult(E_INVALIDARG); //S "No subtitle stream found in stream.");
         }
         co_await caller;
-        co_return winrt::make<FrameGrabber>(result);
-
+        co_return winrt::make<SubtitleParser>(result);
     }
 
     winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::AddExternalSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream)
