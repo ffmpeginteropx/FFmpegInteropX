@@ -37,9 +37,9 @@ namespace winrt::FFmpegInteropX::implementation
 
     public:
         //internal:
-        bool IsFrameGrabber;
+        bool IsFrameGrabber = false;
         /*Internal use:determines if a FFmpegInteropInstance is in external subtitle parser mode. This mode is used to parse files which contain only subtitle streams*/
-        bool IsExternalSubtitleParser;
+        bool IsExternalSubtitleParser = false;
 
         /*Used to pass additional, specific options to external sub parsers*/
         PropertySet AdditionalFFmpegSubtitleOptions = {nullptr};
