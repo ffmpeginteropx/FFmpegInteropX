@@ -237,6 +237,7 @@
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SubtitleParser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -336,6 +337,7 @@
     <ClCompile Include="text_encoding_detect.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="SubtitleParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />
