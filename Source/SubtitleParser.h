@@ -13,7 +13,7 @@ namespace winrt::FFmpegInteropX::implementation
             this->interopMSS = interopMSS;
         }
 
-        static winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> AddExternalSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream, hstring streamName);
+        static winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> AddExternalSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream, hstring streamName, winrt::FFmpegInteropX::MediaSourceConfig config, winrt::Windows::Media::Core::VideoStreamDescriptor videoDescriptor, uint64_t windowId, bool useHdr);
         static winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> AddExternalSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream);
         winrt::FFmpegInteropX::SubtitleStreamInfo SubtitleTrack();
         winrt::Windows::Foundation::TimeSpan GetStreamDelay();

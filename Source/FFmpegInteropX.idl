@@ -608,7 +608,11 @@ namespace FFmpegInteropX
         ///<summary>Adds an external subtitle from a stream.</summary>
         ///<param name="stream">The subtitle stream.</param>
         ///<param name="streamName">The name to use for the subtitle.</param>
-        static Windows.Foundation.IAsyncOperation<SubtitleParser> AddExternalSubtitleAsync(Windows.Storage.Streams.IRandomAccessStream stream, String streamName);
+        static Windows.Foundation.IAsyncOperation<SubtitleParser> AddExternalSubtitleAsync(Windows.Storage.Streams.IRandomAccessStream stream, String streamName,
+            MediaSourceConfig config,
+            Windows.Media.Core.VideoStreamDescriptor videoDescriptor,
+            UInt64 windowId,
+            Boolean useHdr);
 
         ///<summary>Adds an external subtitle from a stream.</summary>
         ///<param name="stream">The subtitle stream.</param>

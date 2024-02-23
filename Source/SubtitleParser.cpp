@@ -1,25 +1,28 @@
 #include "pch.h"
 #include "SubtitleParser.h"
 #include "SubtitleParser.g.cpp"
+#include "FFmpegMediaSource.h">
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::AddExternalSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream, hstring streamName)
+    winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::AddExternalSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream,
+        hstring streamName,
+        winrt::FFmpegInteropX::MediaSourceConfig config,
+        winrt::Windows::Media::Core::VideoStreamDescriptor videoDescriptor,
+        uint64_t windowId,
+        bool useHdr)
     {
         winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
-        auto config = winrt::make_self<MediaSourceConfig>();
-        config->IsFrameGrabber = true;
-        config->Video().VideoDecoderMode(VideoDecoderMode::ForceFFmpegSoftwareDecoder);
 
-        auto result = FFmpegMediaSource::CreateFromStream(stream, config, nullptr, 0, false);
+        auto result = (winrt::FFmpegInteropX::implementation::FFmpegMediaSource::AddExternalSubtitleAsyncInternal(stream, streamName, config, nullptr, nullptr, 0, false)).as<winrt::FFmpegInteropX::implementation::FFmpegMediaSource>();
         if (result == nullptr)
         {
-            throw_hresult(E_FAIL);// ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
+            throw_hresult(E_FAIL);// ref new Exception(E_FAIL, "Could not parse stream");
         }
         if (result->SubtitleStreams().Size() != 1)
         {
-            throw_hresult(E_INVALIDARG); //S "No subtitle stream found in stream.");
+            throw_hresult(E_INVALIDARG); //S "Nr of Subtitle stream found in stream in different than 1.");
         }
         co_await caller;
         co_return winrt::make<SubtitleParser>(result);
