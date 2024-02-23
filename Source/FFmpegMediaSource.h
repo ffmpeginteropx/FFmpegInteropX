@@ -246,13 +246,7 @@ namespace winrt::FFmpegInteropX::implementation
         static DispatcherQueue GetCurrentDispatcherQueue();
 
     public://internal:
-        static IAsyncOperation<winrt::FFmpegInteropX::FFmpegMediaSource> AddExternalSubtitleAsyncInternal(IRandomAccessStream stream,
-            hstring streamName,
-            winrt::FFmpegInteropX::MediaSourceConfig const& config,
-            VideoStreamDescriptor videoDescriptor,
-            DispatcherQueue dispatcher,
-            uint64_t windowId,
-            bool useHdr);
+        static IAsyncOperation<winrt::FFmpegInteropX::FFmpegMediaSource> ReadExternalSubtitleStreamAsync(IRandomAccessStream stream, hstring streamName, winrt::FFmpegInteropX::MediaSourceConfig const& config, VideoStreamDescriptor videoDescriptor, DispatcherQueue dispatcher, uint64_t windowId, bool useHdr);
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamInternalAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriInternalAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
         static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher, uint64_t windowId, bool useHdr);

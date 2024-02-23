@@ -1447,7 +1447,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    IAsyncOperation<winrt::FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::AddExternalSubtitleAsyncInternal(IRandomAccessStream stream,
+    IAsyncOperation<winrt::FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::ReadExternalSubtitleStreamAsync(IRandomAccessStream stream,
         hstring streamName,
         winrt::FFmpegInteropX::MediaSourceConfig const& config,
         VideoStreamDescriptor videoDescriptor,
@@ -1515,7 +1515,7 @@ namespace winrt::FFmpegInteropX::implementation
         co_await winrt::resume_background();
         auto videoDescriptor = currentVideoStream ? (currentVideoStream->StreamDescriptor()).as<VideoStreamDescriptor>() : nullptr;
 
-        auto externalSubsParser = (co_await AddExternalSubtitleAsyncInternal(stream, streamName, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), videoDescriptor, dispatcher, windowId, useHdr)).as<winrt::FFmpegInteropX::implementation::FFmpegMediaSource>();
+        auto externalSubsParser = (co_await ReadExternalSubtitleStreamAsync(stream, streamName, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), videoDescriptor, dispatcher, windowId, useHdr)).as<winrt::FFmpegInteropX::implementation::FFmpegMediaSource>();
 
         Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> result;
         {

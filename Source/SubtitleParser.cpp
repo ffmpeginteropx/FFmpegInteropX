@@ -1,11 +1,12 @@
 #include "pch.h"
 #include "SubtitleParser.h"
 #include "SubtitleParser.g.cpp"
-#include "FFmpegMediaSource.h">
+#include "FFmpegMediaSource.h"
+#include "MediaSourceConfig.h"
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::AddExternalSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream,
+    winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::ReadSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream,
         hstring streamName,
         winrt::FFmpegInteropX::MediaSourceConfig config,
         winrt::Windows::Media::Core::VideoStreamDescriptor videoDescriptor,
@@ -15,7 +16,8 @@ namespace winrt::FFmpegInteropX::implementation
         winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
 
-        auto result = (winrt::FFmpegInteropX::implementation::FFmpegMediaSource::AddExternalSubtitleAsyncInternal(stream, streamName, config, nullptr, nullptr, 0, false)).as<winrt::FFmpegInteropX::implementation::FFmpegMediaSource>();
+        auto parser = co_await winrt::FFmpegInteropX::implementation::FFmpegMediaSource::ReadExternalSubtitleStreamAsync(stream, streamName, config, nullptr, nullptr, 0, false);
+        auto result = parser.as<winrt::FFmpegInteropX::implementation::FFmpegMediaSource>();
         if (result == nullptr)
         {
             throw_hresult(E_FAIL);// ref new Exception(E_FAIL, "Could not parse stream");
@@ -28,9 +30,10 @@ namespace winrt::FFmpegInteropX::implementation
         co_return winrt::make<SubtitleParser>(result);
     }
 
-    winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::AddExternalSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream)
+    winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::ReadSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream)
     {
-        throw hresult_not_implemented();
+        auto config = winrt::make<MediaSourceConfig>();
+        return ReadSubtitleAsync(stream, L"", config, nullptr, 0, false);
     }
 
     winrt::FFmpegInteropX::SubtitleStreamInfo SubtitleParser::SubtitleTrack()
