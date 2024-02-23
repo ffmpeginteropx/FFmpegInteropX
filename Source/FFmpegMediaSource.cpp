@@ -1972,7 +1972,6 @@ namespace winrt::FFmpegInteropX::implementation
             CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC(), hardwareDecoderStatus, config->Video().SystemDecoderHEVCMaxProfile(), config->Video().SystemDecoderHEVCMaxLevel()))
         {
             auto videoProperties = VideoEncodingProperties::CreateHevc();
-            videoProperties.Subtype(L"");
             // Check for HEVC bitstream flavor.
             if (avVideoCodecCtx->extradata != nullptr && avVideoCodecCtx->extradata_size > 22 &&
                 (avVideoCodecCtx->extradata[0] || avVideoCodecCtx->extradata[1] || avVideoCodecCtx->extradata[2] > 1))
