@@ -1903,6 +1903,17 @@ namespace winrt::FFmpegInteropX::implementation
                         }
                     }
 #else // UWP
+                    // HdmiDisplayInformation is xbox only, DisplayInformation is non-xbox only, each being null in the other case
+                    auto hdmiDisplayInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
+                    if (hdmiDisplayInfo)
+                    {
+                        auto currentDisplayMode = hdmiDisplayInfo.GetCurrentDisplayMode();
+                        if (currentDisplayMode && currentDisplayMode.ColorSpace() == Windows::Graphics::Display::Core::HdmiDisplayColorSpace::BT2020)
+                        {
+                            useHdr = true;
+                        }
+                    }
+
                     auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
                     if (displayInfo)
                     {
