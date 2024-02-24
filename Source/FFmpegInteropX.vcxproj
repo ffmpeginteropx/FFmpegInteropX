@@ -242,6 +242,7 @@
     <ClInclude Include="NativeBuffer.h" />
     <ClInclude Include="NativeBufferFactory.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PlatformInfo.h" />
     <ClInclude Include="ReferenceCue.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="StreamBuffer.h" />
@@ -298,6 +299,7 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="PlatformInfo.cpp" />
     <ClCompile Include="ReferenceCue.cpp" />
     <ClCompile Include="SubtitleProvider.cpp" />
     <ClCompile Include="SubtitleProviderSsaAss.cpp" />

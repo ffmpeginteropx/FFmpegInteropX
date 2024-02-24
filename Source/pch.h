@@ -24,6 +24,7 @@
 
 #include <winrt/Windows.UI.h>
 #include <winrt/Windows.System.h>
+#include <winrt/Windows.System.Profile.h>
 #include <winrt/Windows.Storage.h>
 #include <winrt/Windows.Storage.FileProperties.h>
 #include <winrt/Windows.Storage.Streams.h>

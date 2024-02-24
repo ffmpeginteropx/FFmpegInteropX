@@ -17,6 +17,7 @@
 #include "SubtitleProviderBitmap.h"
 #include "ChapterInfo.h"
 #include "FFmpegReader.h"
+#include "PlatformInfo.h"
 
 #ifdef WinUI
 #include <winrt/Microsoft.Graphics.Display.h>
@@ -1903,24 +1904,29 @@ namespace winrt::FFmpegInteropX::implementation
                         }
                     }
 #else // UWP
-                    // HdmiDisplayInformation is xbox only, DisplayInformation is non-xbox only, each being null in the other case
-                    auto hdmiDisplayInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
-                    if (hdmiDisplayInfo)
+                    if (PlatformInfo::IsXbox())
                     {
-                        auto currentDisplayMode = hdmiDisplayInfo.GetCurrentDisplayMode();
-                        if (currentDisplayMode && currentDisplayMode.ColorSpace() == Windows::Graphics::Display::Core::HdmiDisplayColorSpace::BT2020)
+                        // HdmiDisplayInformation is xbox only, DisplayInformation is non-xbox only, each being null in the other case
+                        auto hdmiDisplayInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
+                        if (hdmiDisplayInfo)
                         {
-                            useHdr = true;
+                            auto currentDisplayMode = hdmiDisplayInfo.GetCurrentDisplayMode();
+                            if (currentDisplayMode && currentDisplayMode.ColorSpace() == Windows::Graphics::Display::Core::HdmiDisplayColorSpace::BT2020)
+                            {
+                                useHdr = true;
+                            }
                         }
                     }
-
-                    auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
-                    if (displayInfo)
+                    else
                     {
-                        auto colorInfo = displayInfo.GetAdvancedColorInfo();
-                        if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
+                        auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
+                        if (displayInfo)
                         {
-                            useHdr = true;
+                            auto colorInfo = displayInfo.GetAdvancedColorInfo();
+                            if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
+                            {
+                                useHdr = true;
+                            }
                         }
                     }
 #endif // WinUI

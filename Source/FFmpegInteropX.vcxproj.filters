@@ -237,6 +237,9 @@
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="PlatformInfo.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -334,6 +337,9 @@
     <ClCompile Include="VideoConfig.cpp" />
     <ClCompile Include="AudioConfig.cpp" />
     <ClCompile Include="text_encoding_detect.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="PlatformInfo.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
