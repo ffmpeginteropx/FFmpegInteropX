@@ -1889,11 +1889,6 @@ namespace winrt::FFmpegInteropX::implementation
                 try
                 {
 #ifdef WinUI
-                    ////if (windowId == 0)
-                    ////{
-                    ////    windowId = Microsoft::UI::Xaml::Window::Current().AppWindow().Id().Value;
-                    ////}
-
                     if (windowId)
                     {
                         Microsoft::UI::WindowId id{ windowId };
