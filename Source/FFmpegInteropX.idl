@@ -604,12 +604,14 @@ namespace FFmpegInteropX
     runtimeclass SubtitleParser : Windows.Foundation.IClosable
     {
         ///<summary>Returns the parsed subtitle track.</summary>
-        SubtitleStreamInfo SubtitleTrack{get;};
+        SubtitleStreamInfo SubtitleTrack {get;};
 
         [default_overload]
         ///<summary>Adds an external subtitle from a stream.</summary>
         ///<param name="stream">The subtitle stream.</param>
         ///<param name="streamName">The name to use for the subtitle.</param>
+        ///<param name="config">Used to configure subtitles</param>
+        ///<param name="videoDescriptor">Descriptor of the video stream that the subtitle will be attached to. Used to compute sizes of image subs.</param>
         static Windows.Foundation.IAsyncOperation<SubtitleParser> ReadSubtitleAsync(Windows.Storage.Streams.IRandomAccessStream stream,
             String streamName,
             MediaSourceConfig config,
@@ -623,6 +625,8 @@ namespace FFmpegInteropX
         ///<summary>Adds an external subtitle from an URI.</summary>
         ///<param name="stream">The subtitle URI.</param>
         ///<param name="streamName">The name to use for the subtitle.</param>
+        ///<param name="config">Used to configure subtitles</param>
+        ///<param name="videoDescriptor">Descriptor of the video stream that the subtitle will be attached to. Used to compute sizes of image subs.</param>
         static Windows.Foundation.IAsyncOperation<SubtitleParser> ReadSubtitleAsync(Windows.Foundation.Uri uri,
             String streamName,
             MediaSourceConfig config,
