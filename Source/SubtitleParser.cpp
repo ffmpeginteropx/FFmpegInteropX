@@ -6,12 +6,10 @@
 
 namespace winrt::FFmpegInteropX::implementation
 {
-    winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::ReadSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream,
+    IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::ReadSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream,
         hstring streamName,
         winrt::FFmpegInteropX::MediaSourceConfig config,
-        winrt::Windows::Media::Core::VideoStreamDescriptor videoDescriptor,
-        uint64_t windowId,
-        bool useHdr)
+        winrt::Windows::Media::Core::VideoStreamDescriptor videoDescriptor)
     {
         winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
@@ -30,10 +28,24 @@ namespace winrt::FFmpegInteropX::implementation
         co_return winrt::make<SubtitleParser>(result);
     }
 
-    winrt::Windows::Foundation::IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::ReadSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream)
+    IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::ReadSubtitleAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream)
     {
         auto config = winrt::make<MediaSourceConfig>();
-        return ReadSubtitleAsync(stream, L"", config, nullptr, 0, false);
+        return ReadSubtitleAsync(stream, L"", config, nullptr);
+    }
+
+    IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::ReadSubtitleAsync(Uri uri, hstring streamName, winrt::FFmpegInteropX::MediaSourceConfig config, winrt::Windows::Media::Core::VideoStreamDescriptor videoDescriptor)
+    {
+        auto stream = co_await (RandomAccessStreamReference::CreateFromUri(uri).OpenReadAsync());
+        auto result = co_await ReadSubtitleAsync(stream, streamName, config, videoDescriptor);
+        co_return result;
+    }
+
+    IAsyncOperation<winrt::FFmpegInteropX::SubtitleParser> SubtitleParser::ReadSubtitleAsync(Uri uri)
+    {
+        auto stream = co_await (RandomAccessStreamReference::CreateFromUri(uri).OpenReadAsync());
+        auto result = co_await ReadSubtitleAsync(stream);
+        co_return result;
     }
 
     winrt::FFmpegInteropX::SubtitleStreamInfo SubtitleParser::SubtitleTrack()
@@ -41,12 +53,12 @@ namespace winrt::FFmpegInteropX::implementation
         return interopMSS->SubtitleStreams().GetAt(0);
     }
 
-    winrt::Windows::Foundation::TimeSpan SubtitleParser::GetStreamDelay()
+    TimeSpan SubtitleParser::GetStreamDelay()
     {
         return interopMSS->GetStreamDelay(SubtitleTrack());
     }
 
-    void SubtitleParser::SetStreamDelay(winrt::Windows::Foundation::TimeSpan const& delay)
+    void SubtitleParser::SetStreamDelay(TimeSpan const& delay)
     {
         return interopMSS->SetStreamDelay(SubtitleTrack(), delay);
     }
