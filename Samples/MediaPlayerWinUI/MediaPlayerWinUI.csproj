@@ -14,7 +14,7 @@
   <PropertyGroup>
     <IntDir>..\..\Intermediate\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>..\..\Output\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <OutDirFFmpegInteropX>..\..\Output\FFmpegInteropX\$(PlatformTarget)\$(Configuration)_WinUI\</OutDirFFmpegInteropX>
+    <OutDirFFmpegInteropX>..\..\Output\FFmpegInteropX\$(PlatformTarget)\$(Configuration)_Desktop\</OutDirFFmpegInteropX>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,7 +28,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="FFmpegInteropX.FFmpegUWP" Version="5.1.100" />
+    <PackageReference Include="FFmpegInteropX.Desktop.FFmpeg" Version="5.1.100" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.3" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230913002" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.756" />
@@ -61,7 +61,7 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="FFmpegInteropX.WinUI" Version="2.0.0-pre2" />
+        <PackageReference Include="FFmpegInteropX.Desktop.Lib" Version="2.0.0-pre2" />
       </ItemGroup>
     </Otherwise>
   </Choose>
@@ -69,11 +69,11 @@
   <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="'$(Configuration)'=='Debug'">
     <ItemGroup>
       <AllItemsFullPathWithTargetPath Include="$(OutDir)FFmpegInteropX.dll">
-        <TargetPath>runtimes\win10-$(Platform)\native\FFmpegInteropX.dll</TargetPath>
+        <TargetPath>runtimes\win-$(Platform)\native\FFmpegInteropX.dll</TargetPath>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </AllItemsFullPathWithTargetPath>
       <AllItemsFullPathWithTargetPath Include="$(OutDir)FFmpegInteropX.pdb">
-        <TargetPath>runtimes\win10-$(Platform)\native\FFmpegInteropX.pdb</TargetPath>
+        <TargetPath>runtimes\win-$(Platform)\native\FFmpegInteropX.pdb</TargetPath>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </AllItemsFullPathWithTargetPath>
     </ItemGroup>

@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#ifdef WinUI
+#ifdef Win32
 
 #include "WinUIChecker.h"
 

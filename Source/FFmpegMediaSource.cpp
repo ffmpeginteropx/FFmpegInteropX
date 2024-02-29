@@ -18,7 +18,7 @@
 #include "ChapterInfo.h"
 #include "FFmpegReader.h"
 
-#ifdef WinUI
+#ifdef Win32
 #include <winrt/Microsoft.Graphics.Display.h>
 #include <winrt/Microsoft.UI.Xaml.h>
 #include <winrt/Microsoft.UI.Windowing.h>
@@ -389,7 +389,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     DispatcherQueue FFmpegMediaSource::GetCurrentDispatcherQueue()
     {
-#ifdef WinUI
+#ifdef Win32
         if (WinUIChecker::HasWinUI())
         {
             return DispatcherQueue::GetForCurrentThread();
@@ -1888,7 +1888,7 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 try
                 {
-#ifdef WinUI
+#ifdef Win32
                     ////if (windowId == 0)
                     ////{
                     ////    windowId = Microsoft::UI::Xaml::Window::Current().AppWindow().Id().Value;

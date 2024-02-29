@@ -27,7 +27,7 @@ namespace winrt::FFmpegInteropX::implementation
     using namespace winrt::Windows::Media::Playback;
     using namespace winrt::Windows::Storage::Streams;
 
-#ifdef WinUI
+#ifdef Win32
     using namespace winrt::Microsoft::UI::Dispatching;
 #else
     using namespace winrt::Windows::System;
@@ -39,7 +39,7 @@ namespace winrt::FFmpegInteropX::implementation
     {
         virtual ~FFmpegMediaSource();
 
-#ifdef WinUI
+#ifdef Win32
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
         {

@@ -24,7 +24,7 @@ param(
     #>
     [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
 
-    [ValidateSet('UWP', 'WinUI', 'Desktop')]
+    [ValidateSet('UWP', 'Desktop')]
     [string] $WindowsTarget = 'UWP',
 
     [ValidateSet('Debug', 'Release')]
@@ -168,7 +168,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
 
     foreach ($platform in $Platforms) {
         # WinUI does not support ARM
-        if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
+        if ($WindowsTarget -eq "Desktop" -and $platform -eq "ARM")
         {
             continue;
         }
@@ -179,7 +179,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
 
     foreach ($platform in $Platforms) {
         # WinUI does not support ARM
-        if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
+        if ($WindowsTarget -eq "Desktop" -and $platform -eq "ARM")
         {
             continue;
         }
@@ -202,7 +202,7 @@ else
     foreach ($platform in $Platforms) {
 
         # WinUI does not support ARM
-        if ($WindowsTarget -eq "WinUI" -and $platform -eq "ARM")
+        if ($WindowsTarget -eq "Desktop" -and $platform -eq "ARM")
         {
             continue;
         }
@@ -242,8 +242,8 @@ else
 
 if ($success -and $NugetPackageVersion)
 {
-    nuget pack .\Build\FFmpegInteropX.$WindowsTarget.nuspec `
-        -Properties "id=FFmpegInteropX.$WindowsTarget;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformVersion;NoWarn=NU5128" `
+    nuget pack .\Build\FFmpegInteropX.$WindowsTarget.Lib.nuspec `
+        -Properties "id=FFmpegInteropX.$WindowsTarget.Lib;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformVersion;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat symbols.nupkg `
         -OutputDirectory "Output\NuGet"

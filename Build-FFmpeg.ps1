@@ -589,8 +589,8 @@ else
 
 if ($success -and $NugetPackageVersion)
 {
-    nuget pack .\Build\FFmpegInteropX.FFmpegUWP.nuspec `
-        -Properties "id=FFmpegInteropX.FFmpegUWP;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;NoWarn=NU5128" `
+    nuget pack .\Build\FFmpegInteropX.$WindowsTarget.FFmpeg.nuspec `
+        -Properties "id=FFmpegInteropX.$WindowsTarget.FFmpeg;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;winsdk=$WindowsTargetPlatformVersion;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat symbols.nupkg `
         -OutputDirectory "${PSScriptRoot}\Output\NuGet"

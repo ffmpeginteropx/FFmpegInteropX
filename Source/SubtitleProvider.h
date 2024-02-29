@@ -13,7 +13,7 @@ using namespace winrt::Windows::Media::Playback;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Foundation;
 
-#ifdef WinUI
+#ifdef Win32
 using namespace winrt::Microsoft::UI::Dispatching;
 #else
 using namespace winrt::Windows::System;

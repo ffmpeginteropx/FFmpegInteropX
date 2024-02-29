@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef WinUI
+#ifdef Win32
 
 #include <mutex>
 #include "winrt/Microsoft.UI.Xaml.h"

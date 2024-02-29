@@ -6,7 +6,7 @@
 using namespace winrt::Windows::Graphics::Imaging;
 using namespace winrt::Windows::Media::Core;
 
-#ifdef WinUI
+#ifdef Win32
 using namespace winrt::Microsoft::UI::Dispatching;
 #else
 using namespace winrt::Windows::System;

@@ -491,12 +491,12 @@ namespace MediaPlayerWinUI
             }
         }
 
-        private void CreatePlaybackItemAndStartPlayback(object sender, RoutedEventArgs e)
+        private async void CreatePlaybackItemAndStartPlayback(object sender, RoutedEventArgs e)
         {
             var playbackItem = FFmpegMSS?.PlaybackItem;
             if (playbackItem == null)
             {
-                CreatePlaybackItemAndStartPlaybackInternal();
+                await CreatePlaybackItemAndStartPlaybackInternal();
                 var tracks = playbackItem.TimedMetadataTracks.Count;
             }
             else
