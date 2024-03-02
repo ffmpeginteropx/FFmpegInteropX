@@ -5,6 +5,7 @@
     <version>$version$</version>
     <description>FFmpeg decoding library for Windows Desktop Apps (WinUI and Non-WinUI)</description>
     <authors>FFmpegInteropX</authors>
+    <readme>docs\README.md</readme>
     <projectUrl>https://github.com/ffmpeginteropx/FFmpegInteropX</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">Apache-2.0</license>
