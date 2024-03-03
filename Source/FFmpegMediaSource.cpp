@@ -25,7 +25,6 @@
 #include <winrt/Microsoft.UI.Windowing.h>
 #include <winrt/Microsoft.UI.Interop.h>
 #include <winuser.h>
-#include "WinUIChecker.h"
 #else
 #endif
 
@@ -391,7 +390,7 @@ namespace winrt::FFmpegInteropX::implementation
     DispatcherQueue FFmpegMediaSource::GetCurrentDispatcherQueue()
     {
 #ifdef WinUI
-        if (WinUIChecker::HasWinUI())
+        if (PlatformInfo::IsWinUI())
         {
             return DispatcherQueue::GetForCurrentThread();
         }

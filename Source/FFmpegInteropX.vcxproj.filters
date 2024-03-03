@@ -227,7 +227,6 @@
     <ClInclude Include="LanguageTagConverter.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="WinUIChecker.h" />
     <ClInclude Include="GeneralConfig.h" />
     <ClInclude Include="SubtitlesConfig.h" />
     <ClInclude Include="VideoConfig.h" />
@@ -331,7 +330,6 @@
     <ClCompile Include="LanguageTagConverter.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="WinUIChecker.cpp" />
     <ClCompile Include="GeneralConfig.cpp" />
     <ClCompile Include="SubtitlesConfig.cpp" />
     <ClCompile Include="VideoConfig.cpp" />

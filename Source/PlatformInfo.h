@@ -2,20 +2,24 @@
 
 #include "pch.h"
 
+#ifdef WinUI
+#include "winrt/Microsoft.UI.Xaml.h"
+#endif
+
 class PlatformInfo
 {
 private:
     static std::mutex guard;
-    static bool hasChecked;
+    static bool hasCheckedXbox;
     static bool isXbox;
 
 public:
     static bool IsXbox()
     {
-        if (!hasChecked)
+        if (!hasCheckedXbox)
         {
             std::lock_guard lock(guard);
-            if (!hasChecked)
+            if (!hasCheckedXbox)
             {
                 try
                 {
@@ -24,9 +28,45 @@ public:
                 catch (...)
                 {
                 }
-                hasChecked = true;
+                hasCheckedXbox = true;
             }
         }
         return isXbox;
     }
+
+#ifdef WinUI
+
+private:
+    static bool hasCheckedWinUI;
+    static bool isWinUI;
+
+public:
+    static bool inline IsWinUI()
+    {
+        if (hasCheckedWinUI)
+        {
+            return isWinUI;
+        }
+        else
+        {
+            std::lock_guard lock(guard);
+            if (!hasCheckedWinUI)
+            {
+                auto factory = winrt::try_get_activation_factory<winrt::Microsoft::UI::Xaml::FrameworkElement>();
+                isWinUI = factory != nullptr;
+                hasCheckedWinUI = true;
+            }
+            return isWinUI;
+        }
+    }
+
+#else // UWP
+
+public:
+    static bool inline IsWinUI()
+    {
+        return false;
+    }
+
+#endif // WinUI
 };

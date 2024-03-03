@@ -265,7 +265,6 @@
     <ClInclude Include="VideoFilter.h" />
     <ClInclude Include="VideoFrame.h" />
     <ClInclude Include="VideoStreamInfo.h" />
-    <ClInclude Include="WinUIChecker.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AttachedFile.cpp" />
@@ -313,7 +312,6 @@
     <ClCompile Include="VideoEffectConfiguration.cpp" />
     <ClCompile Include="VideoFrame.cpp" />
     <ClCompile Include="VideoStreamInfo.cpp" />
-    <ClCompile Include="WinUIChecker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />
