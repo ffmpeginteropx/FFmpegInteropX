@@ -263,7 +263,7 @@ namespace MediaPlayerCS
 
             // Open with MediaPlayer
             await FFmpegMSS.OpenWithMediaPlayerAsync(mediaPlayer);
-            
+
             // Close control panel after file open
             Splitter.IsPaneOpen = false;
         }
@@ -591,12 +591,12 @@ namespace MediaPlayerCS
                     cmbVideoStreamEffectSelector.ItemsSource = FFmpegMSS.VideoStreams;
 
                     List<IStreamInfo> streams = new List<IStreamInfo>();
-                    foreach(var a in FFmpegMSS.AudioStreams)
+                    foreach (var a in FFmpegMSS.AudioStreams)
                     {
                         streams.Add(a);
                     }
 
-                    foreach(var  vs in FFmpegMSS.VideoStreams)
+                    foreach (var vs in FFmpegMSS.VideoStreams)
                     {
                         streams.Add(vs);
                     }
@@ -689,6 +689,32 @@ namespace MediaPlayerCS
         private void GoToMediaPlaybackListSample(object sender, RoutedEventArgs e)
         {
             this.Frame.Navigate(typeof(MediaPlaybackListPage));
+        }
+
+        private async void ReadSubtitleFileFFmpeg(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                FileOpenPicker filePicker = new FileOpenPicker();
+                filePicker.SettingsIdentifier = "SubtitleFile";
+                filePicker.ViewMode = PickerViewMode.Thumbnail;
+                filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+                filePicker.FileTypeFilter.Add("*");
+
+                // Show file picker so user can select a file
+                StorageFile file = await filePicker.PickSingleFileAsync();
+
+                if (file != null)
+                {
+                    var stream = await file.OpenReadAsync();
+                    var subParser = await SubtitleParser.ReadSubtitleAsync(stream);
+                    await DisplayErrorMessage($"Subtitle contains {subParser.SubtitleTrack.SubtitleTrack.Cues.Count} cues");
+                }
+            }
+            catch (Exception ex)
+            {
+                await DisplayErrorMessage(ex.ToString());
+            }
         }
     }
 }

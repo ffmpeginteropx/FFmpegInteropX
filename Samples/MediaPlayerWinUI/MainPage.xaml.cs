@@ -657,5 +657,31 @@ namespace MediaPlayerWinUI
                 FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
             else FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text, (AudioStreamInfo)cmbAudioStreamEffectSelector.SelectedItem);
         }
+
+        private async void ReadSubtitleFileFFmpeg(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                FileOpenPicker filePicker = new FileOpenPicker();
+                filePicker.SettingsIdentifier = "SubtitleFile";
+                filePicker.ViewMode = PickerViewMode.Thumbnail;
+                filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+                filePicker.FileTypeFilter.Add("*");
+
+                // Show file picker so user can select a file
+                StorageFile file = await filePicker.PickSingleFileAsync();
+
+                if (file != null)
+                {
+                    var stream = await file.OpenReadAsync();
+                    var subParser = await SubtitleParser.ReadSubtitleAsync(stream);
+                    DisplayErrorMessage($"Subtitle contains {subParser.SubtitleTrack.SubtitleTrack.Cues.Count} cues");
+                }
+            }
+            catch (Exception ex)
+            {
+                DisplayErrorMessage(ex.ToString());
+            }
+        }
     }
 }
