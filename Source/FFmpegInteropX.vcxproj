@@ -247,6 +247,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="StreamBuffer.h" />
     <ClInclude Include="StringUtils.h" />
+    <ClInclude Include="SubtitleParser.h" />
     <ClInclude Include="SubtitleProvider.h" />
     <ClInclude Include="SubtitleProviderBitmap.h" />
     <ClInclude Include="SubtitleProviderSsaAss.h" />
@@ -300,6 +301,7 @@
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="PlatformInfo.cpp" />
     <ClCompile Include="ReferenceCue.cpp" />
+    <ClCompile Include="SubtitleParser.cpp" />
     <ClCompile Include="SubtitleProvider.cpp" />
     <ClCompile Include="SubtitleProviderSsaAss.cpp" />
     <ClCompile Include="SubtitlesConfig.cpp" />

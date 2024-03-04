@@ -286,7 +286,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         int index = 0;
-        for (auto& stream : subtitleStreams)
+        for (auto& stream : subtitleStreamProviders)
         {
             if (stream->SubtitleTrack == args.Track())
             {
@@ -351,7 +351,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
 
-        for (auto& stream : subtitleStreams)
+        for (auto& stream : subtitleStreamProviders)
         {
             stream->PlaybackItemWeak = playbackItem;
         }
@@ -562,12 +562,12 @@ namespace winrt::FFmpegInteropX::implementation
                     {
                         stream->SubtitleInfo().as<implementation::SubtitleStreamInfo>()->SetDefault();
                         subtitleStrInfos.InsertAt(0, stream->SubtitleInfo());
-                        subtitleStreams.insert(subtitleStreams.begin(), (std::reinterpret_pointer_cast<SubtitleProvider>(stream)));
+                        subtitleStreamProviders.insert(subtitleStreamProviders.begin(), (std::reinterpret_pointer_cast<SubtitleProvider>(stream)));
                     }
                     else
                     {
                         subtitleStrInfos.Append(stream->SubtitleInfo());
-                        subtitleStreams.push_back((std::reinterpret_pointer_cast<SubtitleProvider>(stream)));
+                        subtitleStreamProviders.push_back((std::reinterpret_pointer_cast<SubtitleProvider>(stream)));
                     }
 
                     // enable all subtitle streams for external subtitle parsing
@@ -614,7 +614,7 @@ namespace winrt::FFmpegInteropX::implementation
             auto encodingProperties = videoDescriptor.EncodingProperties();
             auto pixelAspect = (double)encodingProperties.PixelAspectRatio().Numerator() / encodingProperties.PixelAspectRatio().Denominator();
             auto videoAspect = ((double)encodingProperties.Width() / encodingProperties.Height()) / pixelAspect;
-            for (auto& stream : subtitleStreams)
+            for (auto& stream : subtitleStreamProviders)
             {
                 stream->NotifyVideoFrameSize(encodingProperties.Width(), encodingProperties.Height(), videoAspect);
             }
@@ -696,7 +696,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             mss = MediaStreamSource(currentVideoStream->StreamDescriptor());
         }
-        else if (subtitleStreams.size() == 0 || !config->IsExternalSubtitleParser)
+        else if (subtitleStreamProviders.size() == 0 || !config->IsExternalSubtitleParser)
         {
             //only fail if there are no media streams (audio, video, or subtitle)
             throw_hresult(E_FAIL);
@@ -1088,7 +1088,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         try
         {
-            for (auto& subtitleStream : subtitleStreams)
+            for (auto& subtitleStream : subtitleStreamProviders)
             {
                 subtitleStream->SetStreamDelay(delay);
             }
@@ -1315,7 +1315,7 @@ namespace winrt::FFmpegInteropX::implementation
         auto mss = CreateMediaStreamSource();
 
         MediaSource source = MediaSource::CreateFromMediaStreamSource(mss);
-        for (auto& stream : subtitleStreams)
+        for (auto& stream : subtitleStreamProviders)
         {
             source.ExternalTimedMetadataTracks().Append(stream->SubtitleTrack);
         }
@@ -1447,10 +1447,14 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    IAsyncOperation<Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream stream, hstring streamName)
+    IAsyncOperation<winrt::FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::ReadExternalSubtitleStreamAsync(IRandomAccessStream stream,
+        hstring streamName,
+        winrt::FFmpegInteropX::MediaSourceConfig const& config,
+        VideoStreamDescriptor videoDescriptor,
+        DispatcherQueue dispatcher,
+        uint64_t windowId,
+        bool useHdr)
     {
-        auto strong = get_strong();
-
         winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
 
@@ -1458,18 +1462,17 @@ namespace winrt::FFmpegInteropX::implementation
         auto subConfig(winrt::make_self<MediaSourceConfig>());
         subConfig->IsExternalSubtitleParser = true;
         subConfig->Subtitles().DefaultStreamName(streamName);
-        subConfig->Subtitles().DefaultSubtitleDelay(config->Subtitles().DefaultSubtitleDelay());
-        subConfig->Subtitles().ExternalSubtitleEncoding(this->config->Subtitles().ExternalSubtitleEncoding());
-        subConfig->Subtitles().ExternalSubtitleAnsiEncoding(this->config->Subtitles().ExternalSubtitleAnsiEncoding());
-        subConfig->Subtitles().OverrideSubtitleStyles(this->config->Subtitles().OverrideSubtitleStyles());
-        subConfig->Subtitles().SubtitleRegion(this->config->Subtitles().SubtitleRegion());
-        subConfig->Subtitles().SubtitleStyle(this->config->Subtitles().SubtitleStyle());
+        subConfig->Subtitles().DefaultSubtitleDelay(config.Subtitles().DefaultSubtitleDelay());
+        subConfig->Subtitles().ExternalSubtitleEncoding(config.Subtitles().ExternalSubtitleEncoding());
+        subConfig->Subtitles().ExternalSubtitleAnsiEncoding(config.Subtitles().ExternalSubtitleAnsiEncoding());
+        subConfig->Subtitles().OverrideSubtitleStyles(config.Subtitles().OverrideSubtitleStyles());
+        subConfig->Subtitles().SubtitleRegion(config.Subtitles().SubtitleRegion());
+        subConfig->Subtitles().SubtitleStyle(config.Subtitles().SubtitleStyle());
         subConfig->Subtitles().AutoSelectForcedSubtitles(false);
-        subConfig->Subtitles().MinimumSubtitleDuration(this->config->Subtitles().MinimumSubtitleDuration());
-        subConfig->Subtitles().AdditionalSubtitleDuration(this->config->Subtitles().AdditionalSubtitleDuration());
-        subConfig->Subtitles().PreventModifiedSubtitleDurationOverlap(this->config->Subtitles().PreventModifiedSubtitleDurationOverlap());
+        subConfig->Subtitles().MinimumSubtitleDuration(config.Subtitles().MinimumSubtitleDuration());
+        subConfig->Subtitles().AdditionalSubtitleDuration(config.Subtitles().AdditionalSubtitleDuration());
+        subConfig->Subtitles().PreventModifiedSubtitleDurationOverlap(config.Subtitles().PreventModifiedSubtitleDurationOverlap());
 
-        auto videoDescriptor = currentVideoStream ? (currentVideoStream->StreamDescriptor()).as<VideoStreamDescriptor>() : nullptr;
         if (videoDescriptor)
         {
             subConfig->AdditionalFFmpegSubtitleOptions = PropertySet();
@@ -1486,7 +1489,7 @@ namespace winrt::FFmpegInteropX::implementation
                 auto encodingProperties = videoDescriptor.EncodingProperties();
                 auto pixelAspect = (double)encodingProperties.PixelAspectRatio().Numerator() / encodingProperties.PixelAspectRatio().Denominator();
                 auto videoAspect = ((double)encodingProperties.Width() / encodingProperties.Height()) / pixelAspect;
-                for (auto& subtitleStream : externalSubsParser->subtitleStreams)
+                for (auto& subtitleStream : externalSubsParser->subtitleStreamProviders)
                 {
                     subtitleStream->NotifyVideoFrameSize(encodingProperties.Width(), encodingProperties.Height(), videoAspect);
                 }
@@ -1499,6 +1502,20 @@ namespace winrt::FFmpegInteropX::implementation
                 if (cancellation()) co_return nullptr;
             }
         }
+
+        co_await caller;
+        co_return externalSubsParser.as<winrt::FFmpegInteropX::FFmpegMediaSource>();
+    }
+
+    IAsyncOperation<Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo>> FFmpegMediaSource::AddExternalSubtitleAsync(IRandomAccessStream stream, hstring streamName)
+    {
+        auto strong = get_strong();
+
+        winrt::apartment_context caller; // Capture calling context.
+        co_await winrt::resume_background();
+        auto videoDescriptor = currentVideoStream ? (currentVideoStream->StreamDescriptor()).as<VideoStreamDescriptor>() : nullptr;
+
+        auto externalSubsParser = (co_await ReadExternalSubtitleStreamAsync(stream, streamName, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), videoDescriptor, dispatcher, windowId, useHdr)).as<winrt::FFmpegInteropX::implementation::FFmpegMediaSource>();
 
         Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> result;
         {
@@ -1515,7 +1532,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             int subtitleTracksCount = 0;
 
-            for (auto& externalSubtitle : externalSubsParser->subtitleStreams)
+            for (auto& externalSubtitle : externalSubsParser->subtitleStreamProviders)
             {
                 if (externalSubtitle->SubtitleTrack.Cues().Size() > 0)
                 {
@@ -1523,19 +1540,12 @@ namespace winrt::FFmpegInteropX::implementation
                     externalSubtitle->Detach();
 
                     // find and add stream info
-                    for (auto subtitleInfo : externalSubsParser->SubtitleStreams())
-                    {
-                        if (subtitleInfo.SubtitleTrack() == externalSubtitle->SubtitleTrack)
-                        {
-                            subtitleStrInfos.Append(subtitleInfo);
-                            break;
-                        }
-                    }
 
+                    subtitleStrInfos.Append(externalSubtitle->SubtitleInfo());
                     // add stream
                     if (!isClosed)
                     {
-                        subtitleStreams.push_back(externalSubtitle);
+                        subtitleStreamProviders.push_back(externalSubtitle);
                     }
                     if (auto playbackItem = playbackItemWeak.get())
                     {
@@ -1758,7 +1768,7 @@ namespace winrt::FFmpegInteropX::implementation
             m_pReader = nullptr;
         }
 
-        subtitleStreams.clear();
+        subtitleStreamProviders.clear();
         sampleProviders.clear();
         audioStreams.clear();
         videoStreams.clear();
@@ -1883,7 +1893,7 @@ namespace winrt::FFmpegInteropX::implementation
             useHdr = true;
             break;
         case HdrSupport::Automatic:
-            
+
             if (checkDisplayInformation)
             {
                 try
@@ -1927,18 +1937,18 @@ namespace winrt::FFmpegInteropX::implementation
                                 useHdr = true;
                             }
                         }
-                    }
-#endif // WinUI
                 }
+#endif // WinUI
+            }
                 catch (...)
                 {
                 }
-            }
+        }
             break;
         default:
             break;
-        }
     }
+}
 
     std::shared_ptr<MediaSampleProvider> FFmpegMediaSource::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index)
     {
@@ -1973,7 +1983,6 @@ namespace winrt::FFmpegInteropX::implementation
             CheckUseHardwareAcceleration(avVideoCodecCtx, CodecChecker::HardwareAccelerationHEVC(), hardwareDecoderStatus, config->Video().SystemDecoderHEVCMaxProfile(), config->Video().SystemDecoderHEVCMaxLevel()))
         {
             auto videoProperties = VideoEncodingProperties::CreateHevc();
-
             // Check for HEVC bitstream flavor.
             if (avVideoCodecCtx->extradata != nullptr && avVideoCodecCtx->extradata_size > 22 &&
                 (avVideoCodecCtx->extradata[0] || avVideoCodecCtx->extradata[1] || avVideoCodecCtx->extradata[2] > 1))
@@ -2334,7 +2343,7 @@ namespace winrt::FFmpegInteropX::implementation
                 currentAudioStreamInfo = nullptr;
             }
             if (currentVideoStream && args.Request().OldStreamDescriptor() == currentVideoStream->StreamDescriptor())
-            {              
+            {
                 currentVideoStream->DisableStream();
                 currentVideoStream = nullptr;
                 currentAudioStreamInfo = nullptr;
@@ -2354,7 +2363,7 @@ namespace winrt::FFmpegInteropX::implementation
                 {
                     currentVideoStream = stream;
                     currentVideoStream->EnableStream();
-                    
+
                     currentVideoStreamInfo = currentVideoStream->VideoInfo();
                 }
             }
@@ -2429,7 +2438,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             // Make sure we have at least 4 bytes for BOM check
             bool isEof = false;
-            while (bytesRead < min(bufSize,4) && !isEof)
+            while (bytesRead < min(bufSize, 4) && !isEof)
             {
                 ULONG read = 0;
                 hr = mss->fileStreamData->Read(buf + bytesRead, bufSize - bytesRead, &read);

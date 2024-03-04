@@ -236,6 +236,7 @@
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SubtitleParser.h" />
     <ClInclude Include="PlatformInfo.h">
       <Filter>Helpers</Filter>
     </ClInclude>
@@ -337,6 +338,7 @@
     <ClCompile Include="text_encoding_detect.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="SubtitleParser.cpp" />
     <ClCompile Include="PlatformInfo.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
