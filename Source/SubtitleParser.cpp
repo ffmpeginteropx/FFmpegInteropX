@@ -14,7 +14,7 @@ namespace winrt::FFmpegInteropX::implementation
         winrt::apartment_context caller; // Capture calling context.
         co_await winrt::resume_background();
 
-        auto parser = co_await winrt::FFmpegInteropX::implementation::FFmpegMediaSource::ReadExternalSubtitleStreamAsync(stream, streamName, config, nullptr, nullptr, 0, false);
+        auto parser = co_await winrt::FFmpegInteropX::implementation::FFmpegMediaSource::ReadExternalSubtitleStreamAsync(stream, streamName, config, videoDescriptor, nullptr, 0, false);
         auto result = parser.as<winrt::FFmpegInteropX::implementation::FFmpegMediaSource>();
         if (result == nullptr)
         {
