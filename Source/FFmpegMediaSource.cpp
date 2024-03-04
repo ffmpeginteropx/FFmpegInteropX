@@ -17,6 +17,7 @@
 #include "SubtitleProviderBitmap.h"
 #include "ChapterInfo.h"
 #include "FFmpegReader.h"
+#include "PlatformInfo.h"
 
 #ifdef WinUI
 #include <winrt/Microsoft.Graphics.Display.h>
@@ -24,7 +25,6 @@
 #include <winrt/Microsoft.UI.Windowing.h>
 #include <winrt/Microsoft.UI.Interop.h>
 #include <winuser.h>
-#include "WinUIChecker.h"
 #else
 #endif
 
@@ -390,7 +390,7 @@ namespace winrt::FFmpegInteropX::implementation
     DispatcherQueue FFmpegMediaSource::GetCurrentDispatcherQueue()
     {
 #ifdef WinUI
-        if (WinUIChecker::HasWinUI())
+        if (PlatformInfo::IsWinUI())
         {
             return DispatcherQueue::GetForCurrentThread();
         }
@@ -1899,11 +1899,6 @@ namespace winrt::FFmpegInteropX::implementation
                 try
                 {
 #ifdef WinUI
-                    ////if (windowId == 0)
-                    ////{
-                    ////    windowId = Microsoft::UI::Xaml::Window::Current().AppWindow().Id().Value;
-                    ////}
-
                     if (windowId)
                     {
                         Microsoft::UI::WindowId id{ windowId };
@@ -1918,13 +1913,29 @@ namespace winrt::FFmpegInteropX::implementation
                         }
                     }
 #else // UWP
-                    auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
-                    if (displayInfo)
+                    if (PlatformInfo::IsXbox())
                     {
-                        auto colorInfo = displayInfo.GetAdvancedColorInfo();
-                        if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
+                        // HdmiDisplayInformation is xbox only, DisplayInformation is non-xbox only, each being null in the other case
+                        auto hdmiDisplayInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
+                        if (hdmiDisplayInfo)
                         {
-                            useHdr = true;
+                            auto currentDisplayMode = hdmiDisplayInfo.GetCurrentDisplayMode();
+                            if (currentDisplayMode && currentDisplayMode.ColorSpace() == Windows::Graphics::Display::Core::HdmiDisplayColorSpace::BT2020)
+                            {
+                                useHdr = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
+                        if (displayInfo)
+                        {
+                            auto colorInfo = displayInfo.GetAdvancedColorInfo();
+                            if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
+                            {
+                                useHdr = true;
+                            }
                         }
                 }
 #endif // WinUI

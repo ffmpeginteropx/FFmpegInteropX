@@ -227,7 +227,6 @@
     <ClInclude Include="LanguageTagConverter.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="WinUIChecker.h" />
     <ClInclude Include="GeneralConfig.h" />
     <ClInclude Include="SubtitlesConfig.h" />
     <ClInclude Include="VideoConfig.h" />
@@ -238,6 +237,9 @@
     </ClInclude>
     <ClInclude Include="resource.h" />
     <ClInclude Include="SubtitleParser.h" />
+    <ClInclude Include="PlatformInfo.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -329,7 +331,6 @@
     <ClCompile Include="LanguageTagConverter.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
-    <ClCompile Include="WinUIChecker.cpp" />
     <ClCompile Include="GeneralConfig.cpp" />
     <ClCompile Include="SubtitlesConfig.cpp" />
     <ClCompile Include="VideoConfig.cpp" />
@@ -338,6 +339,9 @@
       <Filter>Helpers</Filter>
     </ClCompile>
     <ClCompile Include="SubtitleParser.cpp" />
+    <ClCompile Include="PlatformInfo.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />
