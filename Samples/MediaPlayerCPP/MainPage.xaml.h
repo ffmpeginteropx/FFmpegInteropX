@@ -87,5 +87,7 @@ namespace MediaPlayerCPP
         void OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args);
 
         void StreamDelayManipulation(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e);
+        void ReadSubtitleFileFFmpeg(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+        task<void> ReadSubtitleFileFFmpegImpl();
     };
 }
