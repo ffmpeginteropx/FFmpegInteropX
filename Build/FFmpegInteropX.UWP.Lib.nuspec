@@ -27,9 +27,6 @@
     <file src="..\Output\FFmpegInteropX\x64\Release_UWP\FFmpegInteropX.dll"     target="runtimes\win10-x64\native" />
     <file src="..\Output\FFmpegInteropX\x64\Release_UWP\FFmpegInteropX.pdb"     target="runtimes\win10-x64\native" />
 
-    <file src="..\Output\FFmpegInteropX\ARM\Release_UWP\FFmpegInteropX.dll"     target="runtimes\win10-arm\native" />
-    <file src="..\Output\FFmpegInteropX\ARM\Release_UWP\FFmpegInteropX.pdb"     target="runtimes\win10-arm\native" />
-
     <file src="..\Output\FFmpegInteropX\ARM64\Release_UWP\FFmpegInteropX.dll"   target="runtimes\win10-arm64\native" />
     <file src="..\Output\FFmpegInteropX\ARM64\Release_UWP\FFmpegInteropX.pdb"   target="runtimes\win10-arm64\native" />
 
