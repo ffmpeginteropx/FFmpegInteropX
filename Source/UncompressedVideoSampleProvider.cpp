@@ -734,8 +734,12 @@ void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame)
     }
     else if (hasFormatChanged)
     {
-        if (StreamDescriptor()) {
-            IMediaEncodingProperties encProp = { StreamDescriptor().as<IVideoStreamDescriptor>().EncodingProperties() };
+        OutputDebugStringW(L"Video Frame Size changed!\r\n");
+
+        auto streamDescriptor = VideoDescriptor();
+        if (streamDescriptor) {
+            OutputDebugStringW(L"Perform dynamic format change.\r\n");
+            auto encProp = streamDescriptor.EncodingProperties();
             MediaPropertySet encodingProperties{ encProp.Properties() };
 
             // dynamic output size switching
@@ -744,8 +748,8 @@ void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame)
             outputFrameWidth = frameWidth;
             outputFrameHeight = frameHeight;
             
-            VideoDescriptor().EncodingProperties().Width(outputFrameWidth);
-            VideoDescriptor().EncodingProperties().Height(outputFrameHeight);
+            encProp.Width(outputFrameWidth);
+            encProp.Height(outputFrameHeight);
 
             MFVideoArea area;
             area.Area.cx = outputWidth;
@@ -756,5 +760,5 @@ void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame)
             area.OffsetY.value = 0;
             encodingProperties.Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, PropertyValue::CreateUInt8Array(winrt::array_view((uint8_t*)&area, sizeof(MFVideoArea))));
         }
-        }
+    }
 }
