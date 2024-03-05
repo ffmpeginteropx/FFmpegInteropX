@@ -29,6 +29,7 @@
 #include <winrt/Windows.Storage.FileProperties.h>
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.System.h>
+#include <winrt/Windows.Media.Core.h>
 #pragma pop_macro("TRY")
 #pragma pop_macro("GetCurrentTime")
 

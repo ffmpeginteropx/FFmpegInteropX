@@ -734,22 +734,31 @@ void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame)
     }
     else if (hasFormatChanged)
     {
-        // dynamic output size switching
-        outputWidth = avFrame->width;
-        outputHeight = avFrame->height;
-        outputFrameWidth = frameWidth;
-        outputFrameHeight = frameHeight;
+        OutputDebugStringW(L"Video Frame Size changed!\r\n");
 
-        VideoDescriptor().EncodingProperties().Width(outputFrameWidth);
-        VideoDescriptor().EncodingProperties().Height(outputFrameHeight);
+        auto streamDescriptor = VideoDescriptor();
+        if (streamDescriptor) {
+            OutputDebugStringW(L"Perform dynamic format change.\r\n");
+            auto encProp = streamDescriptor.EncodingProperties();
+            MediaPropertySet encodingProperties{ encProp.Properties() };
 
-        MFVideoArea area;
-        area.Area.cx = outputWidth;
-        area.Area.cy = outputHeight;
-        area.OffsetX.fract = 0;
-        area.OffsetX.value = 0;
-        area.OffsetY.fract = 0;
-        area.OffsetY.value = 0;
-        VideoDescriptor().EncodingProperties().Properties().Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, PropertyValue::CreateUInt8Array(winrt::array_view((uint8_t*)&area, sizeof(MFVideoArea))));
+            // dynamic output size switching
+            outputWidth = avFrame->width;
+            outputHeight = avFrame->height;
+            outputFrameWidth = frameWidth;
+            outputFrameHeight = frameHeight;
+            
+            encProp.Width(outputFrameWidth);
+            encProp.Height(outputFrameHeight);
+
+            MFVideoArea area;
+            area.Area.cx = outputWidth;
+            area.Area.cy = outputHeight;
+            area.OffsetX.fract = 0;
+            area.OffsetX.value = 0;
+            area.OffsetY.fract = 0;
+            area.OffsetY.value = 0;
+            encodingProperties.Insert(MF_MT_MINIMUM_DISPLAY_APERTURE, PropertyValue::CreateUInt8Array(winrt::array_view((uint8_t*)&area, sizeof(MFVideoArea))));
+        }
     }
 }
