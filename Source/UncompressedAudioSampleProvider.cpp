@@ -136,30 +136,20 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
     bool hasFormatChanged = format != inSampleFormat || channels != inChannels || channelLayout != inChannelLayout || sampleRate != inSampleRate;
     if (hasFormatChanged)
     {      
-        if (StreamDescriptor())
+        OutputDebugStringW(L"Audio Format changed!\r\n");
+
+        auto streamDescriptor = AudioDescriptor();
+        if (streamDescriptor)
         {
-            //only update format states when a StreamDescriptor is available from MSS (e.g. during sample events)
-            inSampleFormat = format;
-            inChannels = channels;
-            inChannelLayout = channelLayout;
-            inSampleRate = outSampleRate = sampleRate;
-
-            AudioEncodingProperties encProp = { StreamDescriptor().as<IAudioStreamDescriptor>().EncodingProperties() };
-            OutputDebugStringW(L"\n\nAudio properties in descriptor: " + encProp.SampleRate());
-
-            SetMediaEncodingProperties(inSampleFormat, inChannels, inChannelLayout, inSampleRate, encProp);
-
-            if (inSampleFormat != outSampleFormat || inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate)
-            {
-                // set flag to update resampler on next frame
-                needsUpdateResampler = true;
-            }
+            OutputDebugStringW(L"Trying dynamic format change.\r\n");
+            auto encProp = streamDescriptor.EncodingProperties();
+            SetMediaEncodingProperties(format, channels, channelLayout, sampleRate, encProp);
         }
-        else
-        {
-            //this should happen only during seek, I think this can be removed.
-            //needsUpdateResampler = true;
-        }
+
+        // Not all sample formats are directly supported by MF!
+        // So after a format change, we must always check,
+        // if the resampler needs update
+        needsUpdateResampler = true;
     }
 
     return hr;
@@ -169,9 +159,11 @@ HRESULT UncompressedAudioSampleProvider::UpdateResampler()
 {
     HRESULT hr = S_OK;
 
-    useResampler = inSampleFormat != outSampleFormat;
+    useResampler = inSampleFormat != outSampleFormat || inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate;
     if (useResampler)
     {
+        OutputDebugStringW(L"Using audio resampler.\r\n");
+
         // Set up resampler to convert to output format and channel layout.
         m_pSwrCtx = swr_alloc_set_opts(
             m_pSwrCtx,
@@ -197,6 +189,10 @@ HRESULT UncompressedAudioSampleProvider::UpdateResampler()
                 useResampler = false;
             }
         }
+    }
+    else
+    {
+        OutputDebugStringW(L"Not using audio resampler.\r\n");
     }
 
     // force update next time if there was an error
