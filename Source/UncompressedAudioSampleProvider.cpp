@@ -135,12 +135,15 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
     channelLayout = channelLayout ? channelLayout : AvCodecContextHelpers::GetDefaultChannelLayout(channels);
     bool hasFormatChanged = format != inSampleFormat || channels != inChannels || channelLayout != inChannelLayout || sampleRate != inSampleRate;
     if (hasFormatChanged)
-    {
-        inSampleFormat = format;
-        inChannels = channels;
-        inChannelLayout = channelLayout;
-        inSampleRate = outSampleRate = sampleRate;
-        if (sampleStreamDescriptor) {
+    {      
+        if (sampleStreamDescriptor)
+        {
+            //only update format states when a StreamDescriptor is available from MSS (e.g. during sample events)
+            inSampleFormat = format;
+            inChannels = channels;
+            inChannelLayout = channelLayout;
+            inSampleRate = outSampleRate = sampleRate;
+
             AudioEncodingProperties encProp = { sampleStreamDescriptor.as<IAudioStreamDescriptor>().EncodingProperties() };
             OutputDebugStringW(L"\n\nAudio properties in descriptor: " + encProp.SampleRate());
 
@@ -154,7 +157,8 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
         }
         else
         {
-            needsUpdateResampler = true;
+            //this should happen only during seek, I think this can be removed.
+            //needsUpdateResampler = true;
         }
     }
 
