@@ -146,7 +146,7 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
 
             SetMediaEncodingProperties(inSampleFormat, inChannels, inChannelLayout, inSampleRate, encProp);
 
-            if (inSampleFormat != outSampleFormat)
+            if (inSampleFormat != outSampleFormat || inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate)
             {
                 // set flag to update resampler on next frame
                 needsUpdateResampler = true;
@@ -171,9 +171,9 @@ HRESULT UncompressedAudioSampleProvider::UpdateResampler()
         // Set up resampler to convert to output format and channel layout.
         m_pSwrCtx = swr_alloc_set_opts(
             m_pSwrCtx,
-            inChannelLayout,
+            outChannelLayout,
             outSampleFormat,
-            inSampleRate,
+            outSampleRate,
             inChannelLayout,
             inSampleFormat,
             inSampleRate,

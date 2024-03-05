@@ -2100,7 +2100,6 @@ namespace winrt::FFmpegInteropX::implementation
         {
             return;
         }
-
         MediaStreamSourceStartingRequest request = args.Request();
 
         try
