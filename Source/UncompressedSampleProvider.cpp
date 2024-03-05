@@ -36,7 +36,7 @@ UncompressedSampleProvider::UncompressedSampleProvider(
     decoder = DecoderEngine::FFmpegSoftwareDecoder;
 }
 
-HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface, IMediaStreamDescriptor const& sampleStreamDescriptor)
+HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, IDirect3DSurface* surface)
 {
     HRESULT hr = S_OK;
 
@@ -61,7 +61,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int
 
         if (SUCCEEDED(hr))
         {
-            hr = CreateBufferFromFrame(pBuffer, surface, avFrame, samplePts, sampleDuration, sampleStreamDescriptor);
+            hr = CreateBufferFromFrame(pBuffer, surface, avFrame, samplePts, sampleDuration);
 
             if (SUCCEEDED(hr))
             {

@@ -115,7 +115,7 @@ namespace winrt::FFmpegInteropX::implementation
                 co_return nullptr;
             }
 
-            auto sample = interopMSS->VideoSampleProvider()->GetNextSample(nullptr);
+            auto sample = interopMSS->VideoSampleProvider()->GetNextSample();
             if (sample == nullptr)
             {
                 // if we hit end of stream, use last decoded sample (if any), otherwise fail
@@ -170,7 +170,7 @@ namespace winrt::FFmpegInteropX::implementation
         co_await winrt::resume_background();
 
         VideoFrame result{ nullptr };
-        auto sample = interopMSS->VideoSampleProvider()->GetNextSample(nullptr);
+        auto sample = interopMSS->VideoSampleProvider()->GetNextSample();
         if (sample)
         {
             result = VideoFrame(

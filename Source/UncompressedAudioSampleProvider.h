@@ -32,10 +32,10 @@ public:
         AVCodecContext* avCodecCtx,
         winrt::FFmpegInteropX::MediaSourceConfig const& config,
         int streamIndex);
-    virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration, IMediaStreamDescriptor const& sampleStreamDescriptor) override;
+    virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
     winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
     void SetMediaEncodingProperties(AVSampleFormat format, int channels, const uint64_t& channelLayout, int sampleRate, winrt::Windows::Media::MediaProperties::AudioEncodingProperties& encodingProperties);
-    HRESULT CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate, IMediaStreamDescriptor const& sampleStreamDescriptor);
+    HRESULT CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate);
     HRESULT UpdateResampler();
 
 

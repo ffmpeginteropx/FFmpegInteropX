@@ -324,13 +324,13 @@ UncompressedVideoSampleProvider::~UncompressedVideoSampleProvider()
     }
 }
 
-HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration, IMediaStreamDescriptor const& sampleStreamDescriptor)
+HRESULT UncompressedVideoSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
 {
     UNREFERENCED_PARAMETER(surface);
     UNREFERENCED_PARAMETER(frameDuration);
 
     HRESULT hr = S_OK;
-    CheckFrameSize(avFrame, sampleStreamDescriptor);
+    CheckFrameSize(avFrame);
 
     if (outputDirectBuffer)
     {
@@ -664,7 +664,7 @@ int UncompressedVideoSampleProvider::get_buffer2(AVCodecContext* avCodecContext,
 }
 
 
-void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame, IMediaStreamDescriptor const& sampleStreamDescriptor)
+void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame)
 {
     outputDirectBuffer = true;
     int frameWidth = avFrame->width;
@@ -734,8 +734,8 @@ void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame, IMediaStr
     }
     else if (hasFormatChanged)
     {
-        if (sampleStreamDescriptor) {
-            IMediaEncodingProperties encProp = { sampleStreamDescriptor.as<IVideoStreamDescriptor>().EncodingProperties() };
+        if (StreamDescriptor()) {
+            IMediaEncodingProperties encProp = { StreamDescriptor().as<IVideoStreamDescriptor>().EncodingProperties() };
             MediaPropertySet encodingProperties{ encProp.Properties() };
 
             // dynamic output size switching

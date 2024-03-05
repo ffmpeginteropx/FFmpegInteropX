@@ -211,7 +211,7 @@ void MediaSampleProvider::InitializeStreamInfo()
     }
 }
 
-MediaStreamSample MediaSampleProvider::GetNextSample(IMediaStreamDescriptor const& sampleStreamDescriptor)
+MediaStreamSample MediaSampleProvider::GetNextSample()
 {
     //DebugMessage(L"GetNextSample\n");
 
@@ -224,7 +224,7 @@ MediaStreamSample MediaSampleProvider::GetNextSample(IMediaStreamDescriptor cons
         LONGLONG pts = 0;
         LONGLONG dur = 0;
         IDirect3DSurface surface;
-        hr = CreateNextSampleBuffer(&buffer, pts, dur, &surface, sampleStreamDescriptor);
+        hr = CreateNextSampleBuffer(&buffer, pts, dur, &surface);
 
         if (hr == S_OK)
         {

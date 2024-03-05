@@ -50,7 +50,7 @@ CompressedSampleProvider::~CompressedSampleProvider()
 {
 }
 
-HRESULT CompressedSampleProvider::CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface, IMediaStreamDescriptor const& sampleStreamDescriptor)
+HRESULT CompressedSampleProvider::CreateNextSampleBuffer(winrt::Windows::Storage::Streams::IBuffer* pBuffer, int64_t& samplePts, int64_t& sampleDuration, winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface* surface)
 {
     UNREFERENCED_PARAMETER(surface);
     HRESULT hr = S_OK;

@@ -128,7 +128,7 @@ void UncompressedAudioSampleProvider::SetMediaEncodingProperties(AVSampleFormat 
     encodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value(reportedChannelLayout));
 }
 
-HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate, IMediaStreamDescriptor const& sampleStreamDescriptor)
+HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate)
 {
     HRESULT hr = S_OK;
 
@@ -136,7 +136,7 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
     bool hasFormatChanged = format != inSampleFormat || channels != inChannels || channelLayout != inChannelLayout || sampleRate != inSampleRate;
     if (hasFormatChanged)
     {      
-        if (sampleStreamDescriptor)
+        if (StreamDescriptor())
         {
             //only update format states when a StreamDescriptor is available from MSS (e.g. during sample events)
             inSampleFormat = format;
@@ -144,7 +144,7 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
             inChannelLayout = channelLayout;
             inSampleRate = outSampleRate = sampleRate;
 
-            AudioEncodingProperties encProp = { sampleStreamDescriptor.as<IAudioStreamDescriptor>().EncodingProperties() };
+            AudioEncodingProperties encProp = { StreamDescriptor().as<IAudioStreamDescriptor>().EncodingProperties() };
             OutputDebugStringW(L"\n\nAudio properties in descriptor: " + encProp.SampleRate());
 
             SetMediaEncodingProperties(inSampleFormat, inChannels, inChannelLayout, inSampleRate, encProp);
@@ -211,13 +211,13 @@ UncompressedAudioSampleProvider::~UncompressedAudioSampleProvider()
     swr_free(&m_pSwrCtx);
 }
 
-HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration, IMediaStreamDescriptor const& sampleStreamDescriptor)
+HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration)
 {
     UNREFERENCED_PARAMETER(surface);
 
     HRESULT hr = S_OK;
 
-    hr = CheckFormatChanged((AVSampleFormat)avFrame->format, avFrame->channels, avFrame->channel_layout, avFrame->sample_rate, sampleStreamDescriptor);
+    hr = CheckFormatChanged((AVSampleFormat)avFrame->format, avFrame->channels, avFrame->channel_layout, avFrame->sample_rate);
 
     if (SUCCEEDED(hr) && needsUpdateResampler)
     {
