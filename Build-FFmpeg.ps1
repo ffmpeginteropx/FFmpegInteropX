@@ -1,7 +1,7 @@
 param(
 
     [ValidateSet('x86', 'x64', 'ARM', 'ARM64')]
-    [string[]] $Platforms = ('x86', 'x64', 'ARM', 'ARM64'),
+    [string[]] $Platforms = ('x86', 'x64', 'ARM64'),
 
     <#
         Example values:

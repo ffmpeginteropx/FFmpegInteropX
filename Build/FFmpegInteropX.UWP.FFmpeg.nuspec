@@ -28,10 +28,6 @@
     <file src="..\Output\FFmpegUWP\x64\bin\*.pdb"               target="runtimes\win10-x64\native" />
     <file src="..\Output\FFmpegUWP\x64\bin\*.lib"               target="runtimes\win10-x64\native" />
 
-    <file src="..\Output\FFmpegUWP\ARM\bin\*.dll"               target="runtimes\win10-arm\native" />
-    <file src="..\Output\FFmpegUWP\ARM\bin\*.pdb"               target="runtimes\win10-arm\native" />
-    <file src="..\Output\FFmpegUWP\ARM\bin\*.lib"               target="runtimes\win10-arm\native" />
-
     <file src="..\Output\FFmpegUWP\ARM64\bin\*.dll"             target="runtimes\win10-arm64\native" />
     <file src="..\Output\FFmpegUWP\ARM64\bin\*.pdb"             target="runtimes\win10-arm64\native" />
     <file src="..\Output\FFmpegUWP\ARM64\bin\*.lib"             target="runtimes\win10-arm64\native" />
