@@ -44,12 +44,25 @@ UncompressedAudioSampleProvider::UncompressedAudioSampleProvider(
 winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvider::CreateStreamDescriptor()
 {
     frameProvider = std::shared_ptr<UncompressedFrameProvider>(new UncompressedFrameProvider(m_pAvFormatCtx, m_pAvCodecCtx, std::shared_ptr<AudioFilterFactory>(new AudioFilterFactory(m_pAvCodecCtx))));
+    needsUpdateResampler = true;
+    auto encodingProperties = winrt::Windows::Media::MediaProperties::AudioEncodingProperties();
 
     auto format = m_pAvCodecCtx->sample_fmt != AV_SAMPLE_FMT_NONE ? m_pAvCodecCtx->sample_fmt : AV_SAMPLE_FMT_S16;
     auto channels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
     auto channelLayout = m_pAvCodecCtx->channel_layout ? m_pAvCodecCtx->channel_layout : AvCodecContextHelpers::GetDefaultChannelLayout(channels);
     auto sampleRate = m_pAvCodecCtx->sample_rate;
 
+    SetMediaEncodingProperties(format, channels, channelLayout, sampleRate, encodingProperties);
+
+    return winrt::Windows::Media::Core::AudioStreamDescriptor(encodingProperties);
+}
+
+void UncompressedAudioSampleProvider::SetMediaEncodingProperties(AVSampleFormat format,
+    int channels,
+    const uint64_t& channelLayout,
+    int sampleRate,
+    winrt::Windows::Media::MediaProperties::AudioEncodingProperties& encodingProperties)
+{
     inSampleFormat = format;
     inChannels = channels;
     inChannelLayout = channelLayout;
@@ -99,7 +112,6 @@ winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvi
         }
     }
 
-    needsUpdateResampler = true;
     bytesPerSample = av_get_bytes_per_sample(outSampleFormat);
     int bitsPerSample = bytesPerSample * 8;
     UINT32 reportedChannelLayout =
@@ -108,15 +120,12 @@ winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvi
         : (UINT32)outChannelLayout;
 
     // set encoding properties
-    auto encodingProperties = winrt::Windows::Media::MediaProperties::AudioEncodingProperties();
+    encodingProperties.Subtype(outSampleFormat == AV_SAMPLE_FMT_FLT ? MediaEncodingSubtypes::Float() : MediaEncodingSubtypes::Pcm());
     encodingProperties.BitsPerSample(bitsPerSample);
     encodingProperties.SampleRate(outSampleRate);
     encodingProperties.ChannelCount(outChannels);
     encodingProperties.Bitrate(bitsPerSample * outSampleRate * outChannels);
     encodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value(reportedChannelLayout));
-    encodingProperties.Subtype(outSampleFormat == AV_SAMPLE_FMT_FLT ? MediaEncodingSubtypes::Float() : MediaEncodingSubtypes::Pcm());
-
-    return winrt::Windows::Media::Core::AudioStreamDescriptor(encodingProperties);
 }
 
 HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate)
@@ -126,17 +135,21 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
     channelLayout = channelLayout ? channelLayout : AvCodecContextHelpers::GetDefaultChannelLayout(channels);
     bool hasFormatChanged = format != inSampleFormat || channels != inChannels || channelLayout != inChannelLayout || sampleRate != inSampleRate;
     if (hasFormatChanged)
-    {
-        inSampleFormat = format;
-        inChannels = channels;
-        inChannelLayout = channelLayout;
-        inSampleRate = outSampleRate = sampleRate;
+    {      
+        OutputDebugStringW(L"Audio Format changed!\r\n");
 
-        if (inSampleFormat != outSampleFormat || inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate)
+        auto streamDescriptor = AudioDescriptor();
+        if (streamDescriptor)
         {
-            // set flag to update resampler on next frame
-            needsUpdateResampler = true;
+            OutputDebugStringW(L"Trying dynamic format change.\r\n");
+            auto encProp = streamDescriptor.EncodingProperties();
+            SetMediaEncodingProperties(format, channels, channelLayout, sampleRate, encProp);
         }
+
+        // Not all sample formats are directly supported by MF!
+        // So after a format change, we must always check,
+        // if the resampler needs update
+        needsUpdateResampler = true;
     }
 
     return hr;
@@ -146,9 +159,11 @@ HRESULT UncompressedAudioSampleProvider::UpdateResampler()
 {
     HRESULT hr = S_OK;
 
-    useResampler = inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate || inSampleFormat != outSampleFormat;
+    useResampler = inSampleFormat != outSampleFormat || inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate;
     if (useResampler)
     {
+        OutputDebugStringW(L"Using audio resampler.\r\n");
+
         // Set up resampler to convert to output format and channel layout.
         m_pSwrCtx = swr_alloc_set_opts(
             m_pSwrCtx,
@@ -174,6 +189,10 @@ HRESULT UncompressedAudioSampleProvider::UpdateResampler()
                 useResampler = false;
             }
         }
+    }
+    else
+    {
+        OutputDebugStringW(L"Not using audio resampler.\r\n");
     }
 
     // force update next time if there was an error

@@ -21,6 +21,7 @@
 #include "MediaSampleProvider.h"
 #include "UncompressedFrameProvider.h"
 
+
 class UncompressedSampleProvider abstract : public MediaSampleProvider
 {
 public:
@@ -40,6 +41,7 @@ public:
         UNREFERENCED_PARAMETER(avFrame);
         UNREFERENCED_PARAMETER(framePts);
         UNREFERENCED_PARAMETER(frameDuration);
+
         return E_FAIL;
     }; // must be overridden by specific decoders
     virtual HRESULT GetFrameFromFFmpegDecoder(AVFrame** avFrame, int64_t& framePts, int64_t& frameDuration, int64_t& firstPacketPos);
