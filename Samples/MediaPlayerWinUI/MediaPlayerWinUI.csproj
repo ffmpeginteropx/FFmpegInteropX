@@ -29,7 +29,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="FFmpegInteropX.Desktop.FFmpeg" Version="5.1.100-pre3" />
+    <PackageReference Include="FFmpegInteropX.Desktop.FFmpeg" Version="6.1.100-pre1" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.7" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240227000" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
@@ -62,7 +62,7 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="FFmpegInteropX.Desktop.Lib" Version="2.0.0-pre3" />
+        <PackageReference Include="FFmpegInteropX.Desktop.Lib" Version="2.0.0-pre5" />
       </ItemGroup>
     </Otherwise>
   </Choose>

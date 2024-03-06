@@ -72,7 +72,7 @@ winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvi
     }
 
     auto nativeLayout = AvCodecContextHelpers::GetChannelLayout(m_pAvCodecCtx);
-    if (m_config.Audio().DownmixAudioStreamsToStereo() && outChannelLayout > AV_CH_LAYOUT_STEREO)
+    if (m_config.Audio().DownmixAudioStreamsToStereo() && nativeLayout > AV_CH_LAYOUT_STEREO)
     {
         // use existing downmix channels, if available, otherwise perform manual downmix using resampler
         outChannelLayout.order = AV_CHANNEL_ORDER_NATIVE;
