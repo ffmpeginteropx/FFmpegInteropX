@@ -48,10 +48,10 @@
     <None Include="..\Build\Start-DevShell.ps1">
       <Filter>Build</Filter>
     </None>
-    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.nuspec">
+    <None Include="..\Build\FFmpegInteropX.UWP.FFmpeg.nuspec">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.targets">
+    <None Include="..\Build\FFmpegInteropX.UWP.FFmpeg.targets">
       <Filter>NuGet</Filter>
     </None>
     <None Include="..\.editorconfig">
@@ -76,23 +76,29 @@
     <None Include="..\AppVeyor_Build.bat">
       <Filter>Build</Filter>
     </None>
-    <None Include="..\Build\FFmpegInteropX.Desktop.nuspec">
+    <None Include="..\Build\FFmpegInteropX.Desktop.Lib.nuspec">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\Build\FFmpegInteropX.Desktop.targets">
+    <None Include="..\Build\FFmpegInteropX.Desktop.Lib.targets">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\Build\FFmpegInteropX.UWP.nuspec">
+    <None Include="..\Build\FFmpegInteropX.UWP.Lib.nuspec">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\Build\FFmpegInteropX.UWP.targets">
+    <None Include="..\Build\FFmpegInteropX.UWP.Lib.targets">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\Build\FFmpegInteropX.WinUI.nuspec">
+    <None Include="..\Build\FFmpegInteropX.Desktop.FFmpeg.nuspec">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\Build\FFmpegInteropX.WinUI.targets">
+    <None Include="..\Build\FFmpegInteropX.Desktop.FFmpeg.targets">
       <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build-OverallPackage.ps1">
+      <Filter>Build</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

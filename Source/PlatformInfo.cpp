@@ -5,9 +5,9 @@ std::mutex PlatformInfo::guard;
 bool PlatformInfo::hasCheckedXbox = false;
 bool PlatformInfo::isXbox = false;
 
-#ifdef WinUI
+#ifdef Win32
 
 bool PlatformInfo::hasCheckedWinUI = false;
 bool PlatformInfo::isWinUI = false;
 
-#endif // WinUI
+#endif // Win32

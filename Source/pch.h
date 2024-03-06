@@ -29,7 +29,7 @@
 #include <winrt/Windows.Storage.FileProperties.h>
 #include <winrt/Windows.Storage.Streams.h>
 
-#ifdef WinUI
+#ifdef Win32
 #include <winrt/Microsoft.UI.Dispatching.h>
 #else
 #endif

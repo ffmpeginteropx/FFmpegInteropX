@@ -2,7 +2,7 @@
 
 #include "pch.h"
 
-#ifdef WinUI
+#ifdef Win32
 #include "winrt/Microsoft.UI.Xaml.h"
 #endif
 
@@ -34,7 +34,7 @@ public:
         return isXbox;
     }
 
-#ifdef WinUI
+#ifdef Win32
 
 private:
     static bool hasCheckedWinUI;

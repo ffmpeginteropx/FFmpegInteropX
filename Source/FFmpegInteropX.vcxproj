@@ -1,23 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props')" />
-  <PropertyGroup Condition="'$(Configuration)'=='Release_WinUI' OR '$(Configuration)'=='Debug_WinUI'">
-    <AppType>WinUI</AppType>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release_UWP' OR '$(Configuration)'=='Debug_UWP'">
     <AppType>UWP</AppType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'=='Release_Desktop' OR '$(Configuration)'=='Debug_Desktop'">
     <AppType>Win32</AppType>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Release_WinUI' OR '$(Configuration)'=='Release_UWP' OR '$(Configuration)'=='Release_Desktop'">
+  <PropertyGroup Condition="'$(Configuration)'=='Release_UWP' OR '$(Configuration)'=='Release_Desktop'">
     <ConfigType>Release</ConfigType>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Debug_WinUI' OR '$(Configuration)'=='Debug_UWP' OR '$(Configuration)'=='Debug_Desktop'">
+  <PropertyGroup Condition="'$(Configuration)'=='Debug_UWP' OR '$(Configuration)'=='Debug_Desktop'">
     <ConfigType>Debug</ConfigType>
   </PropertyGroup>
+  <PropertyGroup>
+    <FFmpegPackageVersion Condition="'$(FFmpegPackageVersion)'==''">5.1.100-pre3</FFmpegPackageVersion>
+    <FFmpegPackageIdBase Condition="'$(FFmpegPackageIdBase)'==''">FFmpegInteropX</FFmpegPackageIdBase>
+    <FFmpegPackageIdPlatform Condition="'$(FFmpegPackageIdPlatform)'=='' AND '$(AppType)'=='Win32'">Desktop</FFmpegPackageIdPlatform>
+    <FFmpegPackageIdPlatform Condition="'$(FFmpegPackageIdPlatform)'=='' AND '$(AppType)'=='UWP'">UWP</FFmpegPackageIdPlatform>
+    <FFmpegPackageIdSuffix Condition="'$(FFmpegPackageIdSuffix)'==''">FFmpeg</FFmpegPackageIdSuffix>
+    <FFmpegPackageId Condition="'$(FFmpegPackageId)'==''">$(FFmpegPackageIdBase).$(FFmpegPackageIdPlatform).$(FFmpegPackageIdSuffix)</FFmpegPackageId>
+  </PropertyGroup>
   <Import Project="..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.props" Condition="Exists('..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.props')" />
-  <Import Project="..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.props" Condition="'$(AppType)'=='WinUI' AND Exists('..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.props')" />
+  <Import Project="..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.props" Condition="'$(AppType)'=='Win32' AND Exists('..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.props')" />
   <PropertyGroup Label="Globals">
     <CppWinRTOptimized>true</CppWinRTOptimized>
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
@@ -70,22 +75,6 @@
       <Configuration>Debug_UWP</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug_WinUI|ARM">
-      <Configuration>Debug_WinUI</Configuration>
-      <Platform>ARM</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug_WinUI|ARM64">
-      <Configuration>Debug_WinUI</Configuration>
-      <Platform>ARM64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug_WinUI|Win32">
-      <Configuration>Debug_WinUI</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug_WinUI|x64">
-      <Configuration>Debug_WinUI</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Release_Desktop|ARM">
       <Configuration>Release_Desktop</Configuration>
       <Platform>ARM</Platform>
@@ -116,22 +105,6 @@
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release_UWP|x64">
       <Configuration>Release_UWP</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release_WinUI|ARM">
-      <Configuration>Release_WinUI</Configuration>
-      <Platform>ARM</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release_WinUI|ARM64">
-      <Configuration>Release_WinUI</Configuration>
-      <Platform>ARM64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release_WinUI|Win32">
-      <Configuration>Release_WinUI</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release_WinUI|x64">
-      <Configuration>Release_WinUI</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
@@ -323,16 +296,18 @@
     <None Include="..\AppVeyor_Build.bat" />
     <None Include="..\Build-FFmpeg.ps1" />
     <None Include="..\Build-FFmpegInteropX.ps1" />
+    <None Include="..\Build-OverallPackage.ps1" />
     <None Include="..\Build\FFmpegConfig.sh" />
-    <None Include="..\Build\FFmpegInteropX.Desktop.nuspec" />
-    <None Include="..\Build\FFmpegInteropX.Desktop.targets" />
-    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.nuspec" />
-    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.targets" />
+    <None Include="..\Build\FFmpegInteropX.Desktop.FFmpeg.nuspec" />
+    <None Include="..\Build\FFmpegInteropX.Desktop.FFmpeg.targets" />
+    <None Include="..\Build\FFmpegInteropX.Desktop.Lib.nuspec" />
+    <None Include="..\Build\FFmpegInteropX.Desktop.Lib.targets" />
+    <None Include="..\Build\FFmpegInteropX.nuspec" />
+    <None Include="..\Build\FFmpegInteropX.UWP.FFmpeg.nuspec" />
+    <None Include="..\Build\FFmpegInteropX.UWP.FFmpeg.targets" />
     <None Include="..\Build\FFmpegInteropX.pfx" />
-    <None Include="..\Build\FFmpegInteropX.UWP.nuspec" />
-    <None Include="..\Build\FFmpegInteropX.UWP.targets" />
-    <None Include="..\Build\FFmpegInteropX.WinUI.nuspec" />
-    <None Include="..\Build\FFmpegInteropX.WinUI.targets" />
+    <None Include="..\Build\FFmpegInteropX.UWP.Lib.nuspec" />
+    <None Include="..\Build\FFmpegInteropX.UWP.Lib.targets" />
     <None Include="..\Build\InstallTools.ps1" />
     <None Include="..\Build\Repack-NuGet.ps1" />
     <None Include="..\Build\Start-DevShell.ps1" />
@@ -355,8 +330,8 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.targets" Condition="Exists('..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.targets')" />
     <Import Project="..\packages\Win2D.uwp.1.26.0\build\native\Win2D.uwp.targets" Condition="'$(AppType)'=='UWP' AND Exists('..\packages\Win2D.uwp.1.26.0\build\native\Win2D.uwp.targets')" />
-    <Import Project="..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.targets" Condition="'$(AppType)'=='WinUI' AND Exists('..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.targets')" />
-    <Import Project="..\packages\FFmpegInteropX.FFmpegUWP.5.1.100\build\native\FFmpegInteropX.FFmpegUWP.targets" Condition="Exists('..\packages\FFmpegInteropX.FFmpegUWP.5.1.100\build\native\FFmpegInteropX.FFmpegUWP.targets')" />
+    <Import Project="..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.targets" Condition="'$(AppType)'=='Win32' AND Exists('..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.targets')" />
+    <Import Project="..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets" Condition="Exists('..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets')" />
     <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
@@ -368,7 +343,7 @@
     <Error Condition="!Exists('..\packages\Win2D.uwp.1.26.0\build\native\Win2D.uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Win2D.uwp.1.26.0\build\native\Win2D.uwp.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.targets'))" />
-    <Error Condition="!Exists('..\packages\FFmpegInteropX.FFmpegUWP.5.1.100\build\native\FFmpegInteropX.FFmpegUWP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FFmpegInteropX.FFmpegUWP.5.1.100\build\native\FFmpegInteropX.FFmpegUWP.targets'))" />
+    <Error Condition="!Exists('..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets'))" />
   </Target>

@@ -455,7 +455,7 @@ namespace FFmpegInteropX
 #endif
     runtimeclass FFmpegMediaSource : Windows.Foundation.IClosable
     {
-#ifdef WinUI
+#ifdef Win32
 
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream, MediaSourceConfig config, UInt64 windowId);

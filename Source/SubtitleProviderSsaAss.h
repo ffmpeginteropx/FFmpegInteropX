@@ -8,7 +8,7 @@ using namespace winrt::Windows::Storage::FileProperties;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Foundation::Metadata;
 
-#ifdef WinUI
+#ifdef Win32
 using namespace winrt::Microsoft::UI::Dispatching;
 #else
 using namespace winrt::Windows::System;
