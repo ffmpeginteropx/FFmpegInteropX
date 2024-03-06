@@ -75,7 +75,7 @@ namespace MediaPlayerCS
             mediaPlayer.MediaOpened += MediaPlayer_MediaOpened;
             mediaPlayer.MediaFailed += MediaPlayer_MediaFailed;
             mediaPlayerElement.SetMediaPlayer(mediaPlayer);
-
+            mediaPlayer.PlaybackSession.NaturalVideoSizeChanged += PlaybackSession_NaturalVideoSizeChanged;
             CodecChecker.CodecRequired += CodecChecker_CodecRequired;
 
             // populate character encodings
@@ -84,6 +84,11 @@ namespace MediaPlayerCS
             CoreWindow.GetForCurrentThread().KeyDown += MainPage_KeyDown;
 
             StreamDelays.AddHandler(Slider.PointerReleasedEvent, new PointerEventHandler(StreamDelayManipulation), true);
+        }
+
+        private void PlaybackSession_NaturalVideoSizeChanged(MediaPlaybackSession sender, object args)
+        {
+            System.Diagnostics.Debug.WriteLine($"Natural video size: {sender.NaturalVideoWidth}x{sender.NaturalVideoHeight}");
         }
 
         private void StreamDelayManipulation(object sender, PointerRoutedEventArgs e)

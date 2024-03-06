@@ -34,6 +34,8 @@
 #else
 #endif
 
+#include <winrt/Windows.System.h>
+#include <winrt/Windows.Media.Core.h>
 #pragma pop_macro("TRY")
 #pragma pop_macro("GetCurrentTime")
 

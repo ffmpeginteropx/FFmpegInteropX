@@ -34,7 +34,8 @@ public:
         int streamIndex);
     virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
     winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
-    HRESULT CheckFormatChanged(AVSampleFormat format, AVChannelLayout* channelLayout, int sampleRate);
+    void SetMediaEncodingProperties(AVSampleFormat format, const AVChannelLayout& channelLayout, int sampleRate, winrt::Windows::Media::MediaProperties::AudioEncodingProperties& encodingProperties);
+    HRESULT CheckFormatChanged(AVSampleFormat format, const AVChannelLayout& channelLayout, int sampleRate);
     HRESULT UpdateResampler();
 
 

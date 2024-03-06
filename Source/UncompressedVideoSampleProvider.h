@@ -18,6 +18,7 @@
 
 #pragma once
 #include "UncompressedSampleProvider.h"
+using namespace winrt::Windows::Media::Core;
 
 #pragma region Desktop Family
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
