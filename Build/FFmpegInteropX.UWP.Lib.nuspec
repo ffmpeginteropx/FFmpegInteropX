@@ -10,9 +10,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">Apache-2.0</license>
     <dependencies>
-      <group targetFramework="uap10.0.17763.0">
-        <dependency id="Win2D.uwp" version="1.26.0" />
-      </group>
+      <group targetFramework="uap10.0.17763.0" />
     </dependencies>
     <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
   </metadata>

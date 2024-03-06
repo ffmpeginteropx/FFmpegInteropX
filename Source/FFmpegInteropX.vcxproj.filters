@@ -119,9 +119,6 @@
     <ClInclude Include="AttachedFileHelper.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="BasicVideoEffect.h">
-      <Filter>Effects</Filter>
-    </ClInclude>
     <ClInclude Include="VideoFilterFactory.h">
       <Filter>Effects</Filter>
     </ClInclude>
@@ -175,9 +172,6 @@
     </ClInclude>
     <ClInclude Include="UncompressedVideoSampleProvider.h">
       <Filter>SampleProviders</Filter>
-    </ClInclude>
-    <ClInclude Include="VideoEffectConfiguration.h">
-      <Filter>Effects</Filter>
     </ClInclude>
     <ClInclude Include="AudioStreamInfo.h">
       <Filter>StreamInfos</Filter>
@@ -241,10 +235,12 @@
     <ClInclude Include="text_encoding_detect.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h" />
     <ClInclude Include="SubtitleParser.h" />
     <ClInclude Include="PlatformInfo.h">
       <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -263,9 +259,6 @@
     </ClCompile>
     <ClCompile Include="AttachedFileHelper.cpp">
       <Filter>Helpers</Filter>
-    </ClCompile>
-    <ClCompile Include="BasicVideoEffect.cpp">
-      <Filter>Effects</Filter>
     </ClCompile>
     <ClCompile Include="ReferenceCue.cpp">
       <Filter>Subtitles</Filter>
@@ -302,9 +295,6 @@
     </ClCompile>
     <ClCompile Include="UncompressedVideoSampleProvider.cpp">
       <Filter>SampleProviders</Filter>
-    </ClCompile>
-    <ClCompile Include="VideoEffectConfiguration.cpp">
-      <Filter>Effects</Filter>
     </ClCompile>
     <ClCompile Include="AudioStreamInfo.cpp">
       <Filter>StreamInfos</Filter>

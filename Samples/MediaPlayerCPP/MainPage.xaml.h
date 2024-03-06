@@ -37,7 +37,7 @@ namespace MediaPlayerCPP
         MainPage();
 
         property FFmpegInteropX::MediaSourceConfig^ Config;
-        property FFmpegInteropX::VideoEffectConfiguration^ VideoEffectConfiguration;
+        property FFmpegInteropX::VideoEffects::VideoAdjustmentsConfiguration^ VideoEffectConfiguration;
 
         double GetBufferSizeMB();
         void SetBufferSizeMB(double value);
