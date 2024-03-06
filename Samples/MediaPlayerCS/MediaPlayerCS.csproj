@@ -170,11 +170,16 @@
           <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
           <Name>FFmpegInteropX</Name>
         </ProjectReference>
+		<ProjectReference Include="..\..\VideoEffects\FFmpegInteropX.VideoEffects.vcxproj">
+		  <Project>{6c4bff5e-7037-4ee8-9c9f-5381c35ba066}</Project>
+		  <Name>FFmpegInteropX.VideoEffects</Name>
+		</ProjectReference>
       </ItemGroup>
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="FFmpegInteropX.UWP.Lib" Version="2.0.0-pre3" />
+        <PackageReference Include="FFmpegInteropX.UWP.Lib" Version="2.0.0-pre4" />
+        <PackageReference Include="FFmpegInteropX.UWP.VideoEffects" Version="2.0.0-pre4" />
       </ItemGroup>
     </Otherwise>
   </Choose>

@@ -17,6 +17,7 @@
 //*****************************************************************************
 
 using FFmpegInteropX;
+using FFmpegInteropX.VideoEffects;
 
 using System;
 using System.Collections.Generic;
@@ -53,7 +54,7 @@ namespace MediaPlayerCS
             set;
         } = true;
 
-        public VideoEffectConfiguration VideoEffectConfiguration
+        public VideoAdjustmentsConfiguration VideoEffectConfiguration
         {
             get;
             set;
@@ -68,7 +69,7 @@ namespace MediaPlayerCS
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
             AutoDetect.IsOn = true;
-            VideoEffectConfiguration = new VideoEffectConfiguration();
+            VideoEffectConfiguration = new VideoAdjustmentsConfiguration();
 
             mediaPlayer = new MediaPlayer();
             mediaPlayer.AudioCategory = MediaPlayerAudioCategory.Movie;
