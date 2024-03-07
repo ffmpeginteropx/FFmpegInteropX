@@ -108,9 +108,10 @@ IMediaStreamDescriptor CompressedSampleProvider::CreateStreamDescriptor()
         }
 
         // Set channel layout
-        if (m_pAvCodecCtx->channel_layout > 0 && m_pAvCodecCtx->channel_layout < 0x20000000)
+        auto channelLayout = AvCodecContextHelpers::GetChannelLayout(m_pAvCodecCtx);
+        if (channelLayout > 0 && channelLayout < 0x20000000)
         {
-            audioEncodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value((UINT32)m_pAvCodecCtx->channel_layout));
+            audioEncodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value((UINT32)channelLayout));
         }
 
         mediaStreamDescriptor = audioStreamDescriptor;

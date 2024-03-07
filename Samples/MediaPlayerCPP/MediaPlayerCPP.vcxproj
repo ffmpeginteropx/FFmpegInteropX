@@ -147,12 +147,12 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\packages\FFmpegInteropX.UWP.FFmpeg.5.1.100-pre3\build\native\FFmpegInteropX.UWP.FFmpeg.targets" Condition="Exists('..\..\packages\FFmpegInteropX.UWP.FFmpeg.5.1.100-pre3\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" />
+    <Import Project="..\..\packages\FFmpegInteropX.UWP.FFmpeg.6.1.100-pre1\build\native\FFmpegInteropX.UWP.FFmpeg.targets" Condition="Exists('..\..\packages\FFmpegInteropX.UWP.FFmpeg.6.1.100-pre1\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\FFmpegInteropX.UWP.FFmpeg.5.1.100-pre3\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\FFmpegInteropX.UWP.FFmpeg.5.1.100-pre3\build\native\FFmpegInteropX.UWP.FFmpeg.targets'))" />
+    <Error Condition="!Exists('..\..\packages\FFmpegInteropX.UWP.FFmpeg.6.1.100-pre1\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\FFmpegInteropX.UWP.FFmpeg.6.1.100-pre1\build\native\FFmpegInteropX.UWP.FFmpeg.targets'))" />
   </Target>
 </Project>

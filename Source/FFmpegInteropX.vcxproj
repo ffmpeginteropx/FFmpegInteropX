@@ -14,7 +14,7 @@
     <ConfigType>Debug</ConfigType>
   </PropertyGroup>
   <PropertyGroup>
-    <FFmpegPackageVersion Condition="'$(FFmpegPackageVersion)'==''">5.1.100-pre3</FFmpegPackageVersion>
+    <FFmpegPackageVersion Condition="'$(FFmpegPackageVersion)'==''">6.1.100-pre1</FFmpegPackageVersion>
     <FFmpegPackageIdBase Condition="'$(FFmpegPackageIdBase)'==''">FFmpegInteropX</FFmpegPackageIdBase>
     <FFmpegPackageIdPlatform Condition="'$(FFmpegPackageIdPlatform)'=='' AND '$(AppType)'=='Win32'">Desktop</FFmpegPackageIdPlatform>
     <FFmpegPackageIdPlatform Condition="'$(FFmpegPackageIdPlatform)'=='' AND '$(AppType)'=='UWP'">UWP</FFmpegPackageIdPlatform>

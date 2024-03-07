@@ -13,19 +13,38 @@ extern "C"
 class AvCodecContextHelpers
 {
 public:
-    static int GetNBChannels(AVCodecContext* m_pAvCodecCtx)
+    static int GetNBChannels(AVCodecContext* avCodecCtx)
     {
-        return m_pAvCodecCtx->profile == FF_PROFILE_AAC_HE_V2 && m_pAvCodecCtx->channels == 1 ? 2 : m_pAvCodecCtx->channels;
+        return avCodecCtx->profile == FF_PROFILE_AAC_HE_V2 && avCodecCtx->ch_layout.nb_channels == 1 ? 2 : avCodecCtx->ch_layout.nb_channels;
     }
 
-    static UINT64 GetChannelLayout(AVCodecContext* m_pAvCodecCtx, int inChannels)
+    static UINT64 GetChannelLayout(AVCodecContext* avCodecCtx)
     {
-        return m_pAvCodecCtx->channel_layout && (m_pAvCodecCtx->profile != FF_PROFILE_AAC_HE_V2 || m_pAvCodecCtx->channels > 1) ? m_pAvCodecCtx->channel_layout : GetDefaultChannelLayout(inChannels);
+        if (avCodecCtx->profile == FF_PROFILE_AAC_HE_V2 && avCodecCtx->ch_layout.nb_channels == 1)
+        {
+            return AV_CH_LAYOUT_STEREO;
+        }
+        else
+        {
+            return
+                avCodecCtx->ch_layout.order == AVChannelOrder::AV_CHANNEL_ORDER_NATIVE && avCodecCtx->ch_layout.u.mask ?
+                    avCodecCtx->ch_layout.u.mask :
+                    GetDefaultChannelLayout(avCodecCtx->ch_layout.nb_channels);
+        }
     }
 
     static UINT64 GetDefaultChannelLayout(int channels)
     {
-        return channels == 6 ? AV_CH_LAYOUT_5POINT1 : av_get_default_channel_layout(channels);
+        if (channels == 6)
+        {
+            return AV_CH_LAYOUT_5POINT1;
+        }
+        else
+        {
+            AVChannelLayout layout;
+            av_channel_layout_default(&layout, channels);
+            return layout.u.mask;
+        }
     }
 
 private:

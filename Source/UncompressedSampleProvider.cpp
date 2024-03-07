@@ -132,7 +132,7 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame** avFrame,
                 framePts = nextFramePts;
             }
 
-            frameDuration = (*avFrame)->pkt_duration;
+            frameDuration = (*avFrame)->duration;
             nextFramePts = framePts + frameDuration;
 
             hr = S_OK;
