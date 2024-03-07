@@ -79,19 +79,19 @@ void UncompressedAudioSampleProvider::SetMediaEncodingProperties(AVSampleFormat 
     if (outSampleFormat == AV_SAMPLE_FMT_S64)
         outSampleFormat = AV_SAMPLE_FMT_S32;
 
-    inChannelLayout = channelLayout;
-    outChannelLayout = channelLayout;
+    av_channel_layout_copy(&inChannelLayout, &channelLayout);
+    av_channel_layout_copy(&outChannelLayout, &channelLayout);
 
     if (outChannelLayout.order != AV_CHANNEL_ORDER_NATIVE || !outChannelLayout.u.mask)
     {
-        // TODO if order is custom, we could try to extract channel mask from map
+        // TODO use av_channel_layout_retype once it becomes available in ffmpeg 7.0?!
         av_channel_layout_uninit(&outChannelLayout);
-        outChannelLayout.order = AV_CHANNEL_ORDER_NATIVE;
-        outChannelLayout.u.mask = AvCodecContextHelpers::GetDefaultChannelLayout(inChannelLayout.nb_channels);
+        av_channel_layout_from_mask(&outChannelLayout,
+            AvCodecContextHelpers::GetDefaultChannelLayout(channelLayout.nb_channels));
     }
 
     auto nativeLayout = outChannelLayout.u.mask;
-    if (m_config.Audio().DownmixAudioStreamsToStereo() && nativeLayout > AV_CH_LAYOUT_STEREO)
+    if (m_config.Audio().DownmixAudioStreamsToStereo() && nativeLayout != AV_CH_LAYOUT_STEREO)
     {
         // use existing downmix channels, if available, otherwise perform manual downmix using resampler
         outChannelLayout.order = AV_CHANNEL_ORDER_NATIVE;
@@ -117,7 +117,7 @@ void UncompressedAudioSampleProvider::SetMediaEncodingProperties(AVSampleFormat 
         nativeLayout &= 0x000FFFFF;
         if (!nativeLayout)
         {
-            outChannelLayout.u.mask = AvCodecContextHelpers::GetDefaultChannelLayout(inChannelLayout.nb_channels);
+            outChannelLayout.u.mask = AvCodecContextHelpers::GetDefaultChannelLayout(channelLayout.nb_channels);
         }
         else
         {
