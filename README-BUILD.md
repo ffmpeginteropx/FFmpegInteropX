@@ -9,6 +9,11 @@ Visual Studio 2022 or 2019 is required to manually build FFmpegInteropX and FFmp
   - In VS Installer, check "Installation details" area on the right side, expand "Universal Windows Platform development", check "C++ (v142) Universal Windows Platform tools"
   - Visual C++ Redistributable for Visual Studio 2010 [x64](https://www.microsoft.com/en-us/download/details.aspx?id=14632) or [x86](https://www.microsoft.com/de-de/download/details.aspx?id=5555) (only needed for manual FFmpeg builds)
   - For AV1 HW decoding, you need the Windows 11 SDK 10.0.22000.0. HW decoding will also run on Windows 10, the Windows 11 SDK is just required for building.
+- nuget.exe  
+  Needs to be installed globally. The easiest way to install is:
+  ```
+  winget install Microsoft.NuGet
+  ```
 
 ## Getting the sources
 

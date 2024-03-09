@@ -196,7 +196,8 @@ namespace FFmpegInteropX
             Boolean isDefault,
             Boolean isForced,
             Windows.Media.Core.TimedMetadataTrack  track,
-            Boolean isExternal);
+            Boolean isExternal,
+            Int32 streamIndex);
 
         Boolean IsExternal{ get; };
         Boolean IsForced{ get; };
@@ -263,8 +264,10 @@ namespace FFmpegInteropX
         String Name {get; };
         String Description{ get; };
         Int32 WindowsCodePage{ get; };
-        static Windows.Foundation.Collections.IVectorView<CharacterEncoding> GetCharacterEncodings();
-        static CharacterEncoding GetSystemDefault();
+        static Windows.Foundation.Collections.IVectorView<CharacterEncoding> AllEncodings{ get; };
+        static CharacterEncoding SystemLocale{ get; };
+        static CharacterEncoding ASCII{ get; };
+        static CharacterEncoding UTF8{ get; };
     };
 
     runtimeclass CodecRequiredEventArgs
@@ -519,6 +522,10 @@ namespace FFmpegInteropX
         ///<summary>Creates a MediaPlaybackItem for playback which starts at the specified stream offset and ends after the specified duration.</summary>
         Windows.Media.Playback.MediaPlaybackItem CreateMediaPlaybackItem(Windows.Foundation.TimeSpan startTime, Windows.Foundation.TimeSpan durationLimit);
 
+        ///<summary>Creates a MediaPlaybackItem, assigns it to MediaPlayer.Source and waits for MediaOpened or MediaFailed (throws in that case).</summary>
+        ///<remarks>This will also automatically cleanup resources, if MediaPlayer switches to a different file, or it's Source property is assigned null.</remarks>
+        Windows.Foundation.IAsyncAction OpenWithMediaPlayerAsync(Windows.Media.Playback.MediaPlayer mediaPlayer);
+
         ///<summary>Adds an external subtitle from a stream.</summary>
         ///<param name="stream">The subtitle stream.</param>
         ///<param name="streamName">The name to use for the subtitle.</param>
@@ -576,11 +583,20 @@ namespace FFmpegInteropX
 
         ///<summary>Gets or sets the BufferTime of the MediaStreamSource.</summary>
         ///<remarks>A value of 0 is recommended for local files, streaming sources should use higher values.</remarks>
+        [deprecated("Deprecated due to framework bugs and memory consumption. Use ReadAheadBufferSize and ReadAheadBufferDuration on the config class instead.", deprecate, 1)]
         Windows.Foundation.TimeSpan BufferTime{ get; set; };
 
         ///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
         ///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this .</remarks>
         Windows.Media.Playback.MediaPlaybackSession PlaybackSession{ get; set; };
+
+        ///<summary>Gets the current audio filters</summary>
+        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
+        String GetCurrentAudioFilters();
+
+        ///<summary>Gets the current audio filters</summary>
+        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
+        String GetCurrentVideoFilters();
 
         ///<summary>Sets a presentation timestamp delay for the given stream. Audio, video and subtitle synchronisation can be achieved this way. A positive value will cause samples (or subtitles) to be rendered at a later time. A negative value will make rendering come sooner</summary>
         void SetStreamDelay(IStreamInfo stream, Windows.Foundation.TimeSpan delay);
@@ -596,6 +612,9 @@ namespace FFmpegInteropX
     runtimeclass MediaSourceConfig
     {
         MediaSourceConfig();
+
+        ///<summary>Automatically extend the duration of the MediaStreamSource if the stream unexpectedly contains additional data.</summary>
+        Boolean AutoExtendDuration {get; set; };
 
         ///<summary>Enable passthrough for MP3 audio to system decoder.</summary>
         ///<remarks>This could allow hardware decoding on some platforms (e.g. Windows Phone).</remarks>
@@ -699,11 +718,18 @@ namespace FFmpegInteropX
         ///<summary>Default style to use for subtitles.</summary>
         Windows.Media.Core.TimedTextStyle SubtitleStyle{ get; set; };
 
-        ///<summary>Enable conversion of ANSI encoded subtitles to UTF-8.</summary>
-        Boolean AutoCorrectAnsiSubtitles{ get; set; };
+        /// <summary>
+        /// The character encoding used for external subtitle files.
+        ///
+        /// When null, auto detection is used. This is the default and recommended.
+        /// If ANSI encoding is auto detected, will use ExternalSubtitleAnsiEncoding.
+        /// </summary>
+        CharacterEncoding ExternalSubtitleEncoding{ get; set; };
 
-        ///<summary>The character encoding used to decode ANSI encoded subtitles. By default, the active windows codepage is used.</summary>
-        CharacterEncoding AnsiSubtitleEncoding{ get; set; };
+        /// <summary>
+        /// The character encoding to use if ANSI encoding is detected for external subtitle files.
+        /// </summary>
+        CharacterEncoding ExternalSubtitleAnsiEncoding{ get; set; };
 
         ///<summary>The subtitle delay will be initially applied to all subtitle tracks.
         ///Use SetSubtitleDelay() on the FFmpegMediaSource instance if you want to change the delay during playback.</summary>
@@ -756,6 +782,11 @@ namespace FFmpegInteropX
 
         ///<summary>Downmix multi-channel audio streams to stereo format.</summary>
         Boolean DownmixAudioStreamsToStereo{ get; set; };
+
+
+        ///<summary>Keep metadata available after MediaSource was closed.</summary>
+        ///<remarks>Set this to false to cleanup more memory automatically, if you are sure you don't need metadata after playback end.</remarks>
+        Boolean KeepMetadataOnMediaSourceClosed{ get; set; };
     };
 
     [default_interface]

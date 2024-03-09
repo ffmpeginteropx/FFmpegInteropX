@@ -215,6 +215,9 @@
     <ClInclude Include="LanguageTagConverter.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="text_encoding_detect.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
     <ClInclude Include="AvSubtitleEventArgs.h" />
     <ClInclude Include="AvSubtitleContextTrack.h" />
     <ClInclude Include="AvSubtitleTrack.h" />
@@ -307,6 +310,9 @@
       <Filter>Metadata</Filter>
     </ClCompile>
     <ClCompile Include="LanguageTagConverter.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="text_encoding_detect.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
     <ClCompile Include="AvSubtitleEventArgs.cpp" />
