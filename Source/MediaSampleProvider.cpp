@@ -93,7 +93,6 @@ HRESULT MediaSampleProvider::Initialize()
 
 void MediaSampleProvider::InitializeNameLanguageCodec()
 {
-    // unfortunately, setting Name or Language on MediaStreamDescriptor does not have any effect, they are not shown in track selection list
     auto title = av_dict_get(m_pAvStream->metadata, "title", NULL, 0);
     if (title)
     {
@@ -113,6 +112,8 @@ void MediaSampleProvider::InitializeNameLanguageCodec()
                 {
                     auto winLanguage = winrt::Windows::Globalization::Language(entry->TwoLetterCode());
                     Language = winLanguage.DisplayName();
+                    if (m_streamDescriptor)
+                        m_streamDescriptor.Language(winLanguage.LanguageTag());
                 }
                 catch (...)
                 {
@@ -126,6 +127,8 @@ void MediaSampleProvider::InitializeNameLanguageCodec()
             {
                 auto winLanguage = winrt::Windows::Globalization::Language(Language);
                 Language = winLanguage.DisplayName();
+                if (m_streamDescriptor)
+                    m_streamDescriptor.Language(winLanguage.LanguageTag());
             }
             catch (...)
             {
@@ -161,6 +164,9 @@ void MediaSampleProvider::InitializeNameLanguageCodec()
         }
         Name = name;
     }
+
+    if (m_streamDescriptor)
+        m_streamDescriptor.Name(Name);
 
     auto codec = m_pAvCodecCtx->codec_descriptor->name;
     if (codec)
