@@ -1,12 +1,20 @@
 #include "pch.h"
 #include "ReferenceCue.h"
 
-ReferenceCue::ReferenceCue(winrt::Windows::Media::Core::IMediaCue const& other)
+ReferenceCue::ReferenceCue(winrt::Windows::Media::Core::IMediaCue const& addedCue, winrt::Windows::Media::Core::IMediaCue const& changedCue)
 {
-    this->cueRef = other;
-    this->duration = other.Duration();
-    this->id = other.Id();
-    this->startTime = other.StartTime();
+    this->addedCue = addedCue;
+    this->duration = addedCue.Duration();
+    this->id = addedCue.Id();
+    this->startTime = addedCue.StartTime();
+    this->changedCue = changedCue;
+}
+
+ReferenceCue::ReferenceCue(winrt::Windows::Foundation::TimeSpan const& startTime, winrt::Windows::Foundation::TimeSpan const& duration, winrt::Windows::Media::Core::IMediaCue const& changedCue)
+{
+    this->startTime = startTime;
+    this->duration = duration;
+    this->changedCue = changedCue;
 }
 
 void ReferenceCue::StartTime(winrt::Windows::Foundation::TimeSpan const& value)
@@ -34,7 +42,11 @@ winrt::hstring ReferenceCue::Id()
 {
     return id;
 }
-winrt::Windows::Media::Core::IMediaCue ReferenceCue::CueRef()
+winrt::Windows::Media::Core::IMediaCue ReferenceCue::AddedCue()
 {
-    return cueRef;
+    return addedCue;
+}
+winrt::Windows::Media::Core::IMediaCue ReferenceCue::ChangedCue()
+{
+    return changedCue;
 }

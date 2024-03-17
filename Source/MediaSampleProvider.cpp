@@ -141,7 +141,7 @@ void MediaSampleProvider::InitializeNameLanguageCodec()
         }
     }
 
-    if (Name.empty() && (m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO || m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE))
+    if (Name.empty() && (m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO || m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE || m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO))
     {
         int count = 0;
         int number = 0;
@@ -157,7 +157,10 @@ void MediaSampleProvider::InitializeNameLanguageCodec()
             }
         }
 
-        winrt::hstring name = m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ? m_config.DefaultAudioStreamName() : m_config.DefaultSubtitleStreamName();
+        winrt::hstring name =
+            m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO ? m_config.Audio().DefaultStreamName() :
+            m_pAvStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO ? m_config.Video().DefaultStreamName() :
+            m_config.Subtitles().DefaultStreamName();
         if (count > 1)
         {
             name = name + L" " + to_wstring(number);

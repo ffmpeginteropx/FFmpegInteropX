@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <description>FFmpeg decoding library for Windows Desktop Apps (WinUI and Non-WinUI)</description>
+    <authors>FFmpegInteropX</authors>
+    <readme>docs\README.md</readme>
+    <projectUrl>https://github.com/ffmpeginteropx/FFmpegInteropX</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">Apache-2.0</license>
+    <dependencies>
+      <group targetFramework="net6.0-windows$winsdk$">
+        <dependency id="Microsoft.Windows.CsWinRT" version="2.0" />
+      </group>
+      <group targetFramework="native" />
+    </dependencies>
+    <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
+  </metadata>
+  <files>
+    
+    <file src="..\Output\FFmpegInteropX.DotNet\Release_Desktop\FFmpegInteropX.DotNet.dll"  target="lib\net6.0-windows$winsdk$" />
+    <file src="..\Output\FFmpegInteropX.DotNet\Release_Desktop\FFmpegInteropX.xml"         target="lib\net6.0-windows$winsdk$" />
+    
+    <file src="..\Output\FFmpegInteropX\x86\Release_Desktop\FFmpegInteropX.dll"     target="runtimes\win-x86\native" />
+    <file src="..\Output\FFmpegInteropX\x86\Release_Desktop\FFmpegInteropX.pdb"     target="runtimes\win-x86\native" />
+
+    <file src="..\Output\FFmpegInteropX\x64\Release_Desktop\FFmpegInteropX.dll"     target="runtimes\win-x64\native" />
+    <file src="..\Output\FFmpegInteropX\x64\Release_Desktop\FFmpegInteropX.pdb"     target="runtimes\win-x64\native" />
+
+    <file src="..\Output\FFmpegInteropX\ARM64\Release_Desktop\FFmpegInteropX.dll"   target="runtimes\win-arm64\native" />
+    <file src="..\Output\FFmpegInteropX\ARM64\Release_Desktop\FFmpegInteropX.pdb"   target="runtimes\win-arm64\native" />
+
+    <file src="FFmpegInteropX.Desktop.Lib.targets"                                  target="build\native"/>
+
+    <file src="..\README.md" target="docs\" />
+
+  </files>
+</package>

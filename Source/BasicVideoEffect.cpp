@@ -1,6 +1,8 @@
 #include "pch.h"
+#ifdef UWP
 #include "BasicVideoEffect.h"
 #include "BasicVideoEffect.g.cpp"
+
 using namespace winrt::Windows::Foundation::Collections;
 using namespace winrt::Windows::Media::Effects;
 using namespace winrt::Windows::Foundation::Collections;
@@ -125,3 +127,5 @@ namespace winrt::FFmpegInteropX::implementation
     {
     }
 }
+
+#endif // UWP

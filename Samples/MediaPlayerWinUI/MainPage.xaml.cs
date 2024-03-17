@@ -36,6 +36,7 @@ namespace MediaPlayerWinUI
         private FFmpegMediaSource FFmpegMSS;
         private StorageFile currentFile;
         private MediaPlayer mediaPlayer;
+        private TimeSpan subtitleDelay;
 
         public MainWindow CurrentMainWindow { get; set; }
 
@@ -45,11 +46,11 @@ namespace MediaPlayerWinUI
             set;
         } = true;
 
-        public VideoEffectConfiguration VideoEffectConfiguration
-        {
-            get;
-            set;
-        }
+        //public VideoEffectConfiguration VideoEffectConfiguration
+        //{
+        //    get;
+        //    set;
+        //}
 
         public MainPage()
         {
@@ -60,7 +61,7 @@ namespace MediaPlayerWinUI
             // Show the control panel on startup so user can start opening media
             Splitter.IsPaneOpen = true;
             AutoDetect.IsOn = true;
-            VideoEffectConfiguration = new VideoEffectConfiguration();
+            //VideoEffectConfiguration = new VideoEffectConfiguration();
 
             mediaPlayer = new MediaPlayer();
             mediaPlayer.AudioCategory = MediaPlayerAudioCategory.Movie;
@@ -214,16 +215,14 @@ namespace MediaPlayerWinUI
         {
             currentFile = file;
 
-            // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
-            IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
-
             try
             {
                 StorageApplicationPermissions.FutureAccessList.Clear();
                 StorageApplicationPermissions.FutureAccessList.Add(file);
 
                 // Instantiate FFmpegMediaSource using the opened local file stream
-                FFmpegMSS = await FFmpegMediaSource.CreateFromStreamAsync(readStream, Config);
+                FFmpegMSS = await FFmpegMediaSource.CreateFromFileAsync(file.Path, Config, CurrentMainWindow.AppWindow.Id.Value);
+
                 var tags = FFmpegMSS.MetadataTags.ToArray();
                 if (AutoCreatePlaybackItem)
                 {
@@ -432,7 +431,7 @@ namespace MediaPlayerWinUI
         {
             if (cbEncodings.SelectedItem != null)
             {
-                Config.ExternalSubtitleAnsiEncoding = (CharacterEncoding)cbEncodings.SelectedItem;
+                Config.Subtitles.ExternalSubtitleAnsiEncoding = (CharacterEncoding)cbEncodings.SelectedItem;
             }
         }
 
@@ -443,7 +442,7 @@ namespace MediaPlayerWinUI
                 try
                 {
                     FileOpenPicker filePicker = new FileOpenPicker();
-                    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(CurrentMainWindow);
+                    InitializeWithWindow.Initialize(filePicker, WindowNative.GetWindowHandle(CurrentMainWindow));
 
                     filePicker.SettingsIdentifier = "SubtitleFile";
                     filePicker.ViewMode = PickerViewMode.Thumbnail;
@@ -497,7 +496,7 @@ namespace MediaPlayerWinUI
             var playbackItem = FFmpegMSS?.PlaybackItem;
             if (playbackItem == null)
             {
-                CreatePlaybackItemAndStartPlaybackInternal();
+                await CreatePlaybackItemAndStartPlaybackInternal();
                 var tracks = playbackItem.TimedMetadataTracks.Count;
             }
             else
@@ -508,7 +507,7 @@ namespace MediaPlayerWinUI
 
         private void PassthroughVideo_Toggled(object sender, RoutedEventArgs e)
         {
-            Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
+            Config.Video.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
         }
 
         private void AddTestFilter(object sender, RoutedEventArgs e)
@@ -524,7 +523,7 @@ namespace MediaPlayerWinUI
         {
             if (FFmpegMSS != null)
             {
-                FFmpegMSS.DisableAudioEffects();
+                FFmpegMSS.ClearFFmpegAudioFilters();
             }
         }
 
@@ -532,9 +531,9 @@ namespace MediaPlayerWinUI
         {
             if (FFmpegMSS != null)
             {
-                var newOffset = FFmpegMSS.SubtitleDelay.Subtract(TimeSpan.FromSeconds(1));
-                FFmpegMSS.SetSubtitleDelay(newOffset);
-                tbSubtitleDelay.Text = "Subtitle delay: " + newOffset.TotalSeconds.ToString() + "s";
+                subtitleDelay = subtitleDelay.Subtract(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleDelay(subtitleDelay);
+                tbSubtitleDelay.Text = "Subtitle delay: " + subtitleDelay.TotalSeconds.ToString() + "s";
 
             }
         }
@@ -543,9 +542,9 @@ namespace MediaPlayerWinUI
         {
             if (FFmpegMSS != null)
             {
-                var newOffset = FFmpegMSS.SubtitleDelay.Add(TimeSpan.FromSeconds(1));
-                FFmpegMSS.SetSubtitleDelay(newOffset);
-                tbSubtitleDelay.Text = "Subtitle delay: " + newOffset.TotalSeconds.ToString() + "s";
+                subtitleDelay = subtitleDelay.Add(TimeSpan.FromSeconds(1));
+                FFmpegMSS.SetSubtitleDelay(subtitleDelay);
+                tbSubtitleDelay.Text = "Subtitle delay: " + subtitleDelay.TotalSeconds.ToString() + "s";
             }
         }
 
@@ -583,17 +582,17 @@ namespace MediaPlayerWinUI
         private void AutoDetect_Toggled(object sender, RoutedEventArgs e)
         {
             PassthroughVideo.IsEnabled = !AutoDetect.IsOn;
-            Config.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
+            Config.Video.VideoDecoderMode = AutoDetect.IsOn ? VideoDecoderMode.Automatic : PassthroughVideo.IsOn ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
         }
 
-        private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
-        {
-            mediaPlayer.RemoveAllEffects();
-            if (enableVideoEffects.IsOn)
-            {
-                VideoEffectConfiguration.AddVideoEffect(mediaPlayer);
-            }
-        }
+        //private void EnableVideoEffects_Toggled(object sender, RoutedEventArgs e)
+        //{
+        //    mediaPlayer.RemoveAllEffects();
+        //    if (enableVideoEffects.IsOn)
+        //    {
+        //        VideoEffectConfiguration.AddVideoEffect(mediaPlayer);
+        //    }
+        //}
 
         private void Page_DragEnter(object sender, DragEventArgs e)
         {
@@ -637,7 +636,7 @@ namespace MediaPlayerWinUI
 
         private void ffmpegVideoFilters_LostFocus(object sender, RoutedEventArgs e)
         {
-            Config.FFmpegVideoFilters = ffmpegVideoFilters.Text;
+            Config.Video.FFmpegVideoFilters = ffmpegVideoFilters.Text;
             if (cmbVideoStreamEffectSelector.SelectedItem == null)
                 FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text);
             else FFmpegMSS?.SetFFmpegVideoFilters(ffmpegVideoFilters.Text, (VideoStreamInfo)cmbVideoStreamEffectSelector.SelectedItem);
@@ -653,10 +652,36 @@ namespace MediaPlayerWinUI
 
         private void ffmpegAudioFilters_LostFocus(object sender, RoutedEventArgs e)
         {
-            Config.FFmpegAudioFilters = ffmpegAudioFilters.Text;
+            Config.Audio.FFmpegAudioFilters = ffmpegAudioFilters.Text;
             if (cmbAudioStreamEffectSelector.SelectedItem == null)
                 FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
             else FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text, (AudioStreamInfo)cmbAudioStreamEffectSelector.SelectedItem);
+        }
+
+        private async void ReadSubtitleFileFFmpeg(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                FileOpenPicker filePicker = new FileOpenPicker();
+                filePicker.SettingsIdentifier = "SubtitleFile";
+                filePicker.ViewMode = PickerViewMode.Thumbnail;
+                filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+                filePicker.FileTypeFilter.Add("*");
+
+                // Show file picker so user can select a file
+                StorageFile file = await filePicker.PickSingleFileAsync();
+
+                if (file != null)
+                {
+                    var stream = await file.OpenReadAsync();
+                    var subParser = await SubtitleParser.ReadSubtitleAsync(stream);
+                    DisplayErrorMessage($"Subtitle contains {subParser.SubtitleTrack.SubtitleTrack.Cues.Count} cues");
+                }
+            }
+            catch (Exception ex)
+            {
+                DisplayErrorMessage(ex.ToString());
+            }
         }
     }
 }

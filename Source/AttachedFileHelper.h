@@ -21,7 +21,7 @@ public:
     {
         if (extractedFiles.Size() > 0)
         {
-            CleanupTempFiles(config.AttachmentCacheFolderName(), InstanceId());
+            CleanupTempFiles(config.General().AttachmentCacheFolderName(), InstanceId());
         }
     }
 
@@ -59,7 +59,7 @@ public:
             }
 
             auto folder = co_await ApplicationData::Current().TemporaryFolder().CreateFolderAsync(
-                config.AttachmentCacheFolderName(), CreationCollisionOption::OpenIfExists);
+                config.General().AttachmentCacheFolderName(), CreationCollisionOption::OpenIfExists);
             auto instanceFolder = co_await folder.CreateFolderAsync(instanceId, CreationCollisionOption::OpenIfExists);
             file = (co_await instanceFolder.CreateFileAsync(attachment->Name(), CreationCollisionOption::ReplaceExisting));
             co_await FileIO::WriteBufferAsync(file, attachment->GetBuffer());

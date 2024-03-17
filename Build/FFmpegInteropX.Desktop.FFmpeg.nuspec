@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <description>FFmpeg dlls for Windows Desktop Apps (WinUI and Non-WinUI)</description>
+    <authors>FFmpegInteropX</authors>
+    <readme>docs\README.md</readme>
+    <projectUrl>https://github.com/ffmpeginteropx/FFmpegInteropX</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">LGPL-2.1-or-later AND Zlib AND MIT</license>
+    <dependencies>
+      <group targetFramework="net6.0-windows$winsdk$">
+        <dependency id="Microsoft.Windows.CsWinRT" version="2.0" />
+      </group>
+      <group targetFramework="native" />
+    </dependencies>
+    <repository type="git" url="$repositoryUrl$" commit="$repositoryCommit$" />
+  </metadata>
+  <files>
+
+    <file src="..\Output\FFmpegDesktop\x64\licenses\*.*"            target="licenses" />
+    
+    <file src="..\Output\FFmpegDesktop\x64\include\**\*.h"          target="include" />
+
+    <file src="..\Output\FFmpegDesktop\x86\bin\*.dll"               target="runtimes\win-x86\native" />
+    <file src="..\Output\FFmpegDesktop\x86\bin\*.pdb"               target="runtimes\win-x86\native" />
+    <file src="..\Output\FFmpegDesktop\x86\bin\*.lib"               target="runtimes\win-x86\native" />
+
+    <file src="..\Output\FFmpegDesktop\x64\bin\*.dll"               target="runtimes\win-x64\native" />
+    <file src="..\Output\FFmpegDesktop\x64\bin\*.pdb"               target="runtimes\win-x64\native" />
+    <file src="..\Output\FFmpegDesktop\x64\bin\*.lib"               target="runtimes\win-x64\native" />
+
+    <file src="..\Output\FFmpegDesktop\ARM64\bin\*.dll"             target="runtimes\win-arm64\native" />
+    <file src="..\Output\FFmpegDesktop\ARM64\bin\*.pdb"             target="runtimes\win-arm64\native" />
+    <file src="..\Output\FFmpegDesktop\ARM64\bin\*.lib"             target="runtimes\win-arm64\native" />
+
+    <file src="FFmpegInteropX.Desktop.FFmpeg.targets"               target="build\native"/>
+
+    <file src="..\README.md" target="docs\" />
+
+  </files>
+</package>

@@ -37,7 +37,7 @@ FFmpegReader::~FFmpegReader()
 void FFmpegReader::Start()
 {
     std::lock_guard lock(mutex);
-    if (!isActive && !isEof && config.ReadAheadBufferEnabled() && (config.ReadAheadBufferSize() > 0 || config.ReadAheadBufferDuration().count() > 0) && !config.as<implementation::MediaSourceConfig>()->IsFrameGrabber)
+    if (!isActive && !isEof && config.General().ReadAheadBufferEnabled() && (config.General().ReadAheadBufferSize() > 0 || config.General().ReadAheadBufferDuration().count() > 0) && !config.as<implementation::MediaSourceConfig>()->IsFrameGrabber)
     {
         sleepTimerTarget = new call<int>([this](int value) { OnTimer(value); });
         if (!sleepTimerTarget)
@@ -301,7 +301,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                     // audio stream should start one sample before video
                     auto audioTarget = timestampVideo - timestampAudioDuration;
                     auto audioPreroll = timestampAudio - timestampVideo;
-                    if (audioPreroll.count() > 0 && config.FastSeekCleanAudio() && !isUriSource)
+                    if (audioPreroll.count() > 0 && config.General().FastSeekCleanAudio() && !isUriSource)
                     {
                         seekTarget = videoStream->ConvertPosition(audioTarget - audioPreroll);
                         if (av_seek_frame(avFormatCtx, videoStream->StreamIndex(), seekTarget, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_ANY) < 0)
@@ -331,7 +331,7 @@ HRESULT FFmpegReader::SeekFast(TimeSpan position, TimeSpan& actualPosition, Time
                         audioStream->SkipPacketsUntilTimestamp(audioTarget);
 
                         hr = audioStream->GetNextPacketTimestamp(timestampAudio, timestampAudioDuration);
-                        if (hr == S_OK && (config.FastSeekCleanAudio() || (timestampAudio + timestampAudioDuration) <= timestampVideo))
+                        if (hr == S_OK && (config.General().FastSeekCleanAudio() || (timestampAudio + timestampAudioDuration) <= timestampVideo))
                         {
                             // decode one audio sample to get clean output
                             auto sample = audioStream->GetNextSample();
@@ -395,7 +395,7 @@ bool FFmpegReader::TrySeekBuffered(TimeSpan position, TimeSpan& actualPosition, 
 
         if (audioStream)
         {
-            if (config.FastSeekCleanAudio() && aIndex > 0)
+            if (config.General().FastSeekCleanAudio() && aIndex > 0)
             {
                 aIndex--;
                 audioStream->packetBuffer->DropPackets(aIndex);
@@ -436,7 +436,7 @@ void FFmpegReader::ReadDataLoop()
             // Stopped externally. No need to clean up.
             break;
         }
-        else if (isEof || !config.ReadAheadBufferEnabled())
+        else if (isEof || !config.General().ReadAheadBufferEnabled())
         {
             // Self stop. Cleanup.
             isActive = false;
@@ -536,7 +536,7 @@ int FFmpegReader::ReadPacket()
             DebugMessage(L"End of stream reached. Stop reading packets.\n");
             isEof = true;
         }
-        else if (errorCount++ <= config.SkipErrors())
+        else if (errorCount++ <= config.General().SkipErrors())
         {
             DebugMessage(L"Read packet error. Retrying...\n");
         }

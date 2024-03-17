@@ -1,7 +1,7 @@
 param(
 
     [ValidateSet('x86', 'x64', 'ARM', 'ARM64')]
-    [string[]] $Platforms = ('x86', 'x64', 'ARM', 'ARM64'),
+    [string[]] $Platforms = ('x86', 'x64', 'ARM64'),
 
     <#
         Example values:
@@ -33,6 +33,18 @@ param(
     # shared: create shared dll - static: create lib for static linking
     [ValidateSet('shared', 'static')]
     [string] $SharedOrStatic = 'shared',
+
+    [ValidateSet('enable', 'disable')]
+    [string] $Gpl = 'disable',
+
+    [ValidateSet('enable', 'disable')]
+    [string] $Encoders = 'disable',
+
+    [ValidateSet('enable', 'disable')]
+    [string] $Devices = 'disable',
+
+    [ValidateSet('enable', 'disable')]
+    [string] $Programs = 'disable',
 
     [System.IO.DirectoryInfo] $VSInstallerFolder = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer",
 
@@ -92,7 +104,7 @@ function Build-Platform {
     }
 
     Write-Host
-    Write-Host "Building FFmpeg for Windows 10 ($WindowsTarget) ${Platform}..."
+    Write-Host "Building FFmpeg for Windows 10 ($WindowsTarget) ${Platform} ${Gpl}-gpl ${Encoders}-encoders ${Devices}-devices ${Programs}-programs ..."
     Write-Host
 
     # Load environment from VCVARS.
@@ -245,7 +257,7 @@ function Build-Platform {
         Write-Host ""
         invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
         
-        if ($WindowsTarget -eq "Desktop") { 
+        if ($Encoders -eq "enable") { 
             
             $env:Path += ";$(Split-Path $BashExe)"
 
@@ -309,7 +321,7 @@ function Build-Platform {
 
             New-Item -ItemType Directory -Force $build\libvpx
             
-            invoke $BashExe --login -c "cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs15 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
+            invoke $BashExe --login -c "unset tmp && unset temp && cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs17 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
 
             Move-Item $build\lib\$cmakePlatform\vpxmd.lib $build\lib\vpx.lib -Force
             Remove-Item $build\lib\$cmakePlatform -Force -Recurse
@@ -330,13 +342,21 @@ function Build-Platform {
         $ffmpegparam = ""
     }
 
-    invoke $BashExe --login -x $SolutionDir\Build\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic $ffmpegparam
+    $folderName = "FFmpeg$WindowsTarget"
+
+    invoke $BashExe --login -x $SolutionDir\Build\FFmpegConfig.sh $WindowsTarget $Platform $SharedOrStatic $Gpl $Encoders $Devices $Programs $folderName $ffmpegparam
 
     # Copy PDBs to built binaries dir
     Get-ChildItem -Recurse -Include '*.pdb' $build\int\ffmpeg\ | Copy-Item -Destination $target\bin\ -Force
 
     # Copy license files
-    Copy-Item $SolutionDir\Libs\FFmpeg\COPYING.LGPLv2.1 $target\licenses\ffmpeg.txt -Force
+    if ($Gpl -eq "enable") {
+        # Openssl3 requires GPLv3 when not using LGPL
+        Copy-Item $SolutionDir\Libs\FFmpeg\COPYING.GPLv3 $target\licenses\ffmpeg.txt -Force
+    }
+    else {
+        Copy-Item $SolutionDir\Libs\FFmpeg\COPYING.LGPLv2.1 $target\licenses\ffmpeg.txt -Force
+    }
     Copy-Item $build\licenses\* $target\licenses\ -Force
 }
 
@@ -486,7 +506,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
         {
             $skip
         }
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -Gpl $Gpl -Encoders $Encoders -Devices $Devices -Programs $Programs -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
         $processes[$platform] = $proc
     
         # only build PkgConfigFake once
@@ -569,8 +589,8 @@ else
 
 if ($success -and $NugetPackageVersion)
 {
-    nuget pack .\Build\FFmpegInteropX.FFmpegUWP.nuspec `
-        -Properties "id=FFmpegInteropX.FFmpegUWP;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;NoWarn=NU5128" `
+    nuget pack .\Build\FFmpegInteropX.$WindowsTarget.FFmpeg.nuspec `
+        -Properties "id=FFmpegInteropX.$WindowsTarget.FFmpeg;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;winsdk=$WindowsTargetPlatformVersion;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat symbols.nupkg `
         -OutputDirectory "${PSScriptRoot}\Output\NuGet"

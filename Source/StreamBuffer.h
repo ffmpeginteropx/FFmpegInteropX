@@ -108,8 +108,8 @@ public:
         {
             return false;
         }
-        auto maxSize = config.ReadAheadBufferSize();
-        auto maxDuration = config.ReadAheadBufferDuration();
+        auto maxSize = config.General().ReadAheadBufferSize();
+        auto maxDuration = config.General().ReadAheadBufferDuration();
 
         bool full = maxSize >= 0 && (long long)bufferSize > maxSize;
         if (!full && maxDuration.count() >= 0 && buffer.size() > 1)

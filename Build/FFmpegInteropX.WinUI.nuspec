@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <description>FFmpeg decoding library for Windows 10 WinUI Apps</description>
+    <authors>FFmpegInteropX</authors>
+    <projectUrl>https://github.com/ffmpeginteropx/FFmpegInteropX</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">Apache-2.0</license>
+    <dependencies>
+      <group targetFramework="net6.0-windows$winsdk$">
+        <dependency id="FFmpegInteropX.FFmpegUWP" version="5.1.100" />
+        <dependency id="Microsoft.WindowsAppSDK" version="1.4.230913002" />
+        <dependency id="Microsoft.Windows.CsWinRT" version="2.0" />
+      </group>
+      <group targetFramework="native">
+        <dependency id="FFmpegInteropX.FFmpegUWP" version="5.1.100" />
+        <dependency id="Microsoft.WindowsAppSDK" version="1.4.230913002" />
+      </group>
+    </dependencies>
+    <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
+  </metadata>
+  <files>
+
+    <file src="..\Output\FFmpegInteropX\x64\Release_WinUI\FFmpegInteropX.winmd"   target="lib\uap10.0" />
+    <file src="..\Output\FFmpegInteropX\x64\Release_WinUI\FFmpegInteropX.xml"     target="lib\uap10.0" />
+
+    <file src="..\Output\FFmpegInteropX.DotNet\Release_WinUI\FFmpegInteropX.DotNet.dll"  target="lib\net6.0-windows$winsdk$" />
+    <file src="..\Output\FFmpegInteropX.DotNet\Release_WinUI\FFmpegInteropX.xml"         target="lib\net6.0-windows$winsdk$" />
+    
+    <file src="..\Output\FFmpegInteropX\x86\Release_WinUI\FFmpegInteropX.dll"     target="runtimes\win10-x86\native" />
+    <file src="..\Output\FFmpegInteropX\x86\Release_WinUI\FFmpegInteropX.pdb"     target="runtimes\win10-x86\native" />
+
+    <file src="..\Output\FFmpegInteropX\x64\Release_WinUI\FFmpegInteropX.dll"     target="runtimes\win10-x64\native" />
+    <file src="..\Output\FFmpegInteropX\x64\Release_WinUI\FFmpegInteropX.pdb"     target="runtimes\win10-x64\native" />
+
+    <file src="..\Output\FFmpegInteropX\ARM64\Release_WinUI\FFmpegInteropX.dll"   target="runtimes\win10-arm64\native" />
+    <file src="..\Output\FFmpegInteropX\ARM64\Release_WinUI\FFmpegInteropX.pdb"   target="runtimes\win10-arm64\native" />
+
+    <file src="FFmpegInteropX.WinUI.targets"                          target="build\native"/>
+
+  </files>
+</package>
