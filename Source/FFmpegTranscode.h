@@ -114,7 +114,7 @@ namespace winrt::FFmpegInteropX::implementation
     struct FFmpegTranscode : FFmpegTranscodeT<FFmpegTranscode>
     {
         FFmpegTranscode() { }
-        void Run(FFmpegInteropX::FFmpegTranscodeInput input, FFmpegInteropX::FFmpegTranscodeOutput output);
+        void Run(FFmpegInteropX::FFmpegTranscodeInput const& input, FFmpegInteropX::FFmpegTranscodeOutput const& output);
 
         virtual ~FFmpegTranscode();
         void Close();

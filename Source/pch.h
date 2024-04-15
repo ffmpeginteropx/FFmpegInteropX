@@ -51,8 +51,6 @@
 #include <ppltasks.h>
 #include <pplawait.h>
 
-#include <boost/type_traits.hpp>
-
 #pragma warning(disable : 4244)
 
 extern "C"
@@ -78,58 +76,58 @@ extern "C"
 #include "VideoStreamInfo.h"
 #include "SubtitleStreamInfo.h"
 
-    // Disable debug string output on non-debug build
+// Disable debug string output on non-debug build
 #if !_DEBUG
 #define DebugMessage(x)
 #else
 #define DebugMessage(x) OutputDebugString(x)
 #endif
 
-    template<class T>
-    std::vector<T> inline to_vector(IVector<T> input)
-    {
-        return to_vector(input.GetView());
-    }
+template<class T>
+std::vector<T> inline to_vector(IVector<T> input)
+{
+    return to_vector(input.GetView());
+}
 
-    template<class T>
-    std::vector<T> inline to_vector(IVectorView<T> input)
-    {
-        std::vector<T> output;
-        for (auto i : input)
-            output.emplace_back(i);
-        return output;
-    }
+template<class T>
+std::vector<T> inline to_vector(IVectorView<T> input)
+{
+    std::vector<T> output;
+    for (auto i : input)
+        output.emplace_back(i);
+    return output;
+}
 
-    // Creates a weak handler function proxy to the passed instance function (two arguments, e.g. event handler).
-    // The class T must implement enable_shared_from_this!
-    template<class T, typename TSender, typename TArgs>
-    std::function<void(TSender, TArgs)> inline weak_handler(T* instance, void(T::* instanceMethod)(TSender, TArgs))
-    {
-        auto wr = instance->weak_from_this();
-        auto handler = [wr, instanceMethod](TSender sender, TArgs args)
+// Creates a weak handler function proxy to the passed instance function (two arguments, e.g. event handler).
+// The class T must implement enable_shared_from_this!
+template<class T, typename TSender, typename TArgs>
+std::function<void(TSender, TArgs)> inline weak_handler(T* instance, void(T::* instanceMethod)(TSender, TArgs))
+{
+    auto wr = instance->weak_from_this();
+    auto handler = [wr, instanceMethod](TSender sender, TArgs args)
+        {
+            auto instanceLocked = std::dynamic_pointer_cast<T>(wr.lock());
+            if (instanceLocked)
             {
-                auto instanceLocked = std::dynamic_pointer_cast<T>(wr.lock());
-                if (instanceLocked)
-                {
-                    (instanceLocked.get()->*instanceMethod)(sender, args);
-                }
-            };
-        return handler;
-    }
+                (instanceLocked.get()->*instanceMethod)(sender, args);
+            }
+        };
+    return handler;
+}
 
-    // Creates a weak handler function proxy to the passed instance function (no arguments, e.g. dispatcher handler).
-    // The class T must implement enable_shared_from_this!
-    template<class T>
-    std::function<void()> inline weak_handler(T* instance, void(T::* instanceMethod)())
-    {
-        std::weak_ptr<T> wr = instance->weak_from_this();
-        auto handler = [wr, instanceMethod]()
+// Creates a weak handler function proxy to the passed instance function (no arguments, e.g. dispatcher handler).
+// The class T must implement enable_shared_from_this!
+template<class T>
+std::function<void()> inline weak_handler(T* instance, void(T::* instanceMethod)())
+{
+    std::weak_ptr<T> wr = instance->weak_from_this();
+    auto handler = [wr, instanceMethod]()
+        {
+            auto instanceLocked = wr.lock();
+            if (instanceLocked)
             {
-                auto instanceLocked = wr.lock();
-                if (instanceLocked)
-                {
-                    (instanceLocked.get()->*instanceMethod)();
-                }
-            };
-        return handler;
-    }
+                (instanceLocked.get()->*instanceMethod)();
+            }
+        };
+    return handler;
+}

@@ -50,14 +50,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-    struct FilterContext
-    {
-        AVFilterContext* buffersink_ctx = {};
-        AVFilterContext* buffersrc_ctx = {};
-        AVFilterGraph* filter_graph = {};
-    };
-
-    static int encode_write_frame(AVFrame& filteredFrame,
+    static int encode_write_frame(AVFrame& filteredFrame, AVStream& inputStream,
         AVFormatContext& outputFormatContext, AVCodecContext& outputCodecContext, AVPacket& outputPacket, bool flush)
     {
         av_packet_unref(&outputPacket);
@@ -72,14 +65,14 @@ namespace winrt::FFmpegInteropX::implementation
             }
 
             outputPacket.stream_index = 0;
-            av_packet_rescale_ts(&outputPacket, outputCodecContext.time_base, outputFormatContext.streams[0]->time_base);
+            av_packet_rescale_ts(&outputPacket, inputStream.time_base, outputFormatContext.streams[0]->time_base);
             ret = av_interleaved_write_frame(&outputFormatContext, &outputPacket);
         }
 
         return ret;
     }
 
-    void FFmpegTranscode::Run(FFmpegInteropX::FFmpegTranscodeInput input, FFmpegInteropX::FFmpegTranscodeOutput output)
+    void FFmpegTranscode::Run(FFmpegInteropX::FFmpegTranscodeInput const& input, FFmpegInteropX::FFmpegTranscodeOutput const& output)
     {
         // open input
         AutoReleasePtr<AVFormatContext, avformat_close_input> inputFormatContext;
@@ -92,7 +85,9 @@ namespace winrt::FFmpegInteropX::implementation
         if (avformat_find_stream_info(&*inputFormatContext, nullptr) < 0)
             throw_hresult(E_FAIL);
 
-        auto inputCodecPar = inputFormatContext->streams[input.VideoStreamIndex()]->codecpar;
+        auto inputVideoStream = inputFormatContext->streams[input.VideoStreamIndex()];
+
+        auto inputCodecPar = inputVideoStream->codecpar;
         auto inputCodec = avcodec_find_decoder(inputCodecPar->codec_id);
         if (!inputCodec)
             throw_hresult(E_FAIL);
@@ -100,6 +95,8 @@ namespace winrt::FFmpegInteropX::implementation
         AutoReleasePtr<AVCodecContext, avcodec_free_context> inputCodecContext = avcodec_alloc_context3(inputCodec);
         if (avcodec_parameters_to_context(&*inputCodecContext, inputCodecPar) < 0)
             throw_hresult(E_FAIL);
+
+        inputCodecContext->framerate = av_guess_frame_rate(&*inputFormatContext, inputVideoStream, nullptr);
 
         if (avcodec_open2(&*inputCodecContext, inputCodec, nullptr) < 0)
             throw_hresult(E_FAIL);
@@ -114,6 +111,8 @@ namespace winrt::FFmpegInteropX::implementation
             throw_hresult(E_FAIL);
         }
 
+        outputFormatContext->avoid_negative_ts = AVFMT_AVOID_NEG_TS_MAKE_ZERO;
+
         // build output codec
         auto outputCodec = avcodec_find_encoder(GetCodecId(output.Type()));
         if (!outputCodec)
@@ -126,20 +125,27 @@ namespace winrt::FFmpegInteropX::implementation
         outputCodecContext->bit_rate = output.Bitrate();
         outputCodecContext->width = (int)output.PixelSize().Width;
         outputCodecContext->height = (int)output.PixelSize().Height;
-        outputCodecContext->time_base = { 10000, (int)(output.FrameRate() / 10000) };
+        outputCodecContext->time_base = av_inv_q(av_d2q(output.FrameRate(), 10000000));
         outputCodecContext->gop_size = 10;  // I-frame interval
         outputCodecContext->max_b_frames = 1;
         outputCodecContext->pix_fmt = inputCodecContext->pix_fmt;
 
         //H264:  av_opt_set(c->priv_data, "preset", "slow", 0);
 
-        if (avcodec_open2(&*outputCodecContext, outputCodec, nullptr) < 0)
-            throw_hresult(E_FAIL);
-
         if (outputFormatContext->oformat->flags & AVFMT_GLOBALHEADER)
             outputCodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
+        if (avcodec_open2(&*outputCodecContext, outputCodec, nullptr) < 0)
+            throw_hresult(E_FAIL);
+
         av_dump_format(&*outputFormatContext, 0, StringUtils::PlatformStringToUtf8String(output.FileName()).c_str(), 1);
+
+        auto outputVideoStream = avformat_new_stream(&*outputFormatContext, nullptr);
+        check_pointer(outputVideoStream);
+
+        if (avcodec_parameters_from_context(outputVideoStream->codecpar, &*outputCodecContext) < 0)
+            throw_hresult(E_FAIL);
+        outputVideoStream->time_base = outputCodecContext->time_base;
 
         // open the output file
         if (!(outputFormatContext->oformat->flags & AVFMT_NOFILE))
@@ -190,16 +196,18 @@ namespace winrt::FFmpegInteropX::implementation
 
         // endpoints for the filter graph
         filterInputs->name = av_strdup("out");
-        filterInputs->filter_ctx = buffersrc_ctx;
+        filterInputs->filter_ctx = buffersink_ctx;
         filterInputs->pad_idx = 0;
         filterInputs->next = nullptr;
 
         filterOutputs->name = av_strdup("in");
-        filterOutputs->filter_ctx = buffersink_ctx;
+        filterOutputs->filter_ctx = buffersrc_ctx;
         filterOutputs->pad_idx = 0;
         filterOutputs->next = nullptr;
 
-        if (avfilter_graph_parse_ptr(&*filterGraph, "null", &filterInputs, &filterOutputs, nullptr) < 0)
+        auto filterSpec = std::format("scale={}:{}", outputCodecContext->width, outputCodecContext->height);
+
+        if (avfilter_graph_parse_ptr(&*filterGraph, filterSpec.c_str(), &filterInputs, &filterOutputs, nullptr) < 0)
             throw_hresult(E_FAIL);
         if (avfilter_graph_config(&*filterGraph, nullptr) < 0)
             throw_hresult(E_FAIL);
@@ -217,7 +225,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             if (inputPacket->stream_index == input.VideoStreamIndex())
             {
-                av_packet_rescale_ts(&*inputPacket, inputFormatContext->streams[input.VideoStreamIndex()]->time_base, inputCodecContext->time_base);
+                av_packet_rescale_ts(&*inputPacket, inputVideoStream->time_base, inputCodecContext->time_base);
 
                 int ret;
                 if ((ret = avcodec_send_packet(&*inputCodecContext, &*inputPacket)) < 0)
@@ -252,7 +260,7 @@ namespace winrt::FFmpegInteropX::implementation
                         // write the filtered frame to the output file
                         filteredFrame->pict_type = AV_PICTURE_TYPE_NONE;
 
-                        ret = encode_write_frame(*filteredFrame, *outputFormatContext, *outputCodecContext, *outputPacket, false);
+                        ret = encode_write_frame(*filteredFrame, *inputVideoStream, *outputFormatContext, *outputCodecContext, *outputPacket, false);
 
                         av_frame_unref(&*filteredFrame);
                         if (ret < 0)
@@ -278,12 +286,15 @@ namespace winrt::FFmpegInteropX::implementation
                     break;
 
                 filteredFrame->pict_type = AV_PICTURE_TYPE_NONE;
-                if (encode_write_frame(*filteredFrame, *outputFormatContext, *outputCodecContext, *outputPacket, true) < 0)
+                if (encode_write_frame(*filteredFrame, *inputVideoStream, *outputFormatContext, *outputCodecContext, *outputPacket, true) < 0)
                     break;
             }
         }
 
-        av_write_trailer(&*outputFormatContext);
+        if (av_write_trailer(&*outputFormatContext) < 0)
+            throw_hresult(E_FAIL);
+        if (avio_closep(&outputFormatContext->pb) < 0)
+            throw_hresult(E_FAIL);
     }
 
     FFmpegTranscode::~FFmpegTranscode()
