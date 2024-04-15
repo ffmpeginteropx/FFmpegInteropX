@@ -218,6 +218,7 @@
     <ClInclude Include="text_encoding_detect.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="FFmpegTranscode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -312,6 +313,7 @@
     <ClCompile Include="text_encoding_detect.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="FFmpegTranscode.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />

@@ -133,7 +133,7 @@ private:
         {
             //cleanup old cues to free memory
             std::vector<IMediaCue> remove;
-            for each (auto cue in SubtitleTrack.Cues())
+            for (auto cue : SubtitleTrack.Cues())
             {
                 if (cue.StartTime() + cue.Duration() < args.Cue().StartTime())
                 {
@@ -141,7 +141,7 @@ private:
                 }
             }
 
-            for each (auto cue in remove)
+            for (auto cue : remove)
             {
                 SubtitleTrack.RemoveCue(cue);
             }
@@ -234,7 +234,7 @@ private:
         return dummyBitmap;
     }
 
-    bool CheckSize(AVSubtitle* subtitle, int& width, int& height, int& offsetX, int& offsetY,TimedTextSize& cueSize,TimedTextPoint& cuePosition)
+    bool CheckSize(AVSubtitle* subtitle, int& width, int& height, int& offsetX, int& offsetY, TimedTextSize& cueSize, TimedTextPoint& cuePosition)
     {
         if (!GetInitialSize())
         {
@@ -280,12 +280,12 @@ private:
             }
         }
 
-        cueSize.Unit =TimedTextUnit::Percentage;
+        cueSize.Unit = TimedTextUnit::Percentage;
         cueSize.Width = (double)width * 100 / subtitleWidth;
         cueSize.Height = (double)height * 100 / targetHeight;
 
         // for some reason, all bitmap cues are moved down by 5% by uwp. we need to compensate for that.
-        cuePosition.Unit =TimedTextUnit::Percentage;
+        cuePosition.Unit = TimedTextUnit::Percentage;
         cuePosition.X = (double)offsetX * 100 / subtitleWidth;
         cuePosition.Y = ((double)(offsetY - heightOffset) * 100 / targetHeight) - 5;
 

@@ -131,7 +131,7 @@
       <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
       <DisableSpecificWarnings>28204;4635;4634</DisableSpecificWarnings>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -197,6 +197,7 @@
     <ClInclude Include="FFmpegInteropLogging.h" />
     <ClInclude Include="FFmpegMediaSource.h" />
     <ClInclude Include="FFmpegReader.h" />
+    <ClInclude Include="FFmpegTranscode.h" />
     <ClInclude Include="FFmpegUtils.h" />
     <ClInclude Include="FormatInfo.h" />
     <ClInclude Include="FrameGrabber.h" />
@@ -247,6 +248,7 @@
     <ClCompile Include="FFmpegInteropLogging.cpp" />
     <ClCompile Include="FFmpegMediaSource.cpp" />
     <ClCompile Include="FFmpegReader.cpp" />
+    <ClCompile Include="FFmpegTranscode.cpp" />
     <ClCompile Include="FFmpegUtils.cpp" />
     <ClCompile Include="FormatInfo.cpp" />
     <ClCompile Include="FrameGrabber.cpp" />
