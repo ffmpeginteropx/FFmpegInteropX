@@ -54,6 +54,10 @@ namespace winrt::FFmpegInteropX::implementation
         AVFormatContext& outputFormatContext, AVCodecContext& outputCodecContext, AVPacket& outputPacket, bool flush)
     {
         av_packet_unref(&outputPacket);
+
+        if(filteredFrame.pts != AV_NOPTS_VALUE)
+            filteredFrame.pts = av_rescale_q(filteredFrame.pts, filteredFrame.time_base, outputCodecContext.time_base);
+
         auto ret = avcodec_send_frame(&outputCodecContext, flush ? nullptr : &filteredFrame);
         while (ret >= 0)
         {
@@ -65,7 +69,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
 
             outputPacket.stream_index = 0;
-            av_packet_rescale_ts(&outputPacket, inputStream.time_base, outputFormatContext.streams[0]->time_base);
+            av_packet_rescale_ts(&outputPacket, outputCodecContext.time_base, outputFormatContext.streams[0]->time_base);
             ret = av_interleaved_write_frame(&outputFormatContext, &outputPacket);
         }
 
@@ -97,6 +101,7 @@ namespace winrt::FFmpegInteropX::implementation
             throw_hresult(E_FAIL);
 
         inputCodecContext->framerate = av_guess_frame_rate(&*inputFormatContext, inputVideoStream, nullptr);
+        inputCodecContext->pkt_timebase = inputVideoStream->time_base;
 
         if (avcodec_open2(&*inputCodecContext, inputCodec, nullptr) < 0)
             throw_hresult(E_FAIL);
@@ -111,7 +116,7 @@ namespace winrt::FFmpegInteropX::implementation
             throw_hresult(E_FAIL);
         }
 
-        outputFormatContext->avoid_negative_ts = AVFMT_AVOID_NEG_TS_MAKE_ZERO;
+        outputFormatContext->avoid_negative_ts = AVFMT_AVOID_NEG_TS_MAKE_NON_NEGATIVE;
 
         // build output codec
         auto outputCodec = avcodec_find_encoder(GetCodecId(output.Type()));
@@ -125,7 +130,9 @@ namespace winrt::FFmpegInteropX::implementation
         outputCodecContext->bit_rate = output.Bitrate();
         outputCodecContext->width = (int)output.PixelSize().Width;
         outputCodecContext->height = (int)output.PixelSize().Height;
-        outputCodecContext->time_base = av_inv_q(av_d2q(output.FrameRate(), 10000000));
+        outputCodecContext->time_base = //av_inv_q(av_d2q(output.FrameRate(), 10000000));
+            //inputVideoStream->time_base;
+            av_inv_q(inputCodecContext->framerate);
         outputCodecContext->gop_size = 10;  // I-frame interval
         outputCodecContext->max_b_frames = 1;
         outputCodecContext->pix_fmt = inputCodecContext->pix_fmt;
@@ -138,14 +145,14 @@ namespace winrt::FFmpegInteropX::implementation
         if (avcodec_open2(&*outputCodecContext, outputCodec, nullptr) < 0)
             throw_hresult(E_FAIL);
 
-        av_dump_format(&*outputFormatContext, 0, StringUtils::PlatformStringToUtf8String(output.FileName()).c_str(), 1);
-
         auto outputVideoStream = avformat_new_stream(&*outputFormatContext, nullptr);
         check_pointer(outputVideoStream);
 
         if (avcodec_parameters_from_context(outputVideoStream->codecpar, &*outputCodecContext) < 0)
             throw_hresult(E_FAIL);
         outputVideoStream->time_base = outputCodecContext->time_base;
+
+        av_dump_format(&*outputFormatContext, 0, StringUtils::PlatformStringToUtf8String(output.FileName()).c_str(), 1);
 
         // open the output file
         if (!(outputFormatContext->oformat->flags & AVFMT_NOFILE))
@@ -173,8 +180,8 @@ namespace winrt::FFmpegInteropX::implementation
             throw_hresult(E_FAIL);
 
         auto args = std::format("video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect={}/{}",
-            outputCodecContext->width, outputCodecContext->height, (int)inputCodecContext->pix_fmt,
-            outputCodecContext->time_base.num, outputCodecContext->time_base.den,
+            inputCodecContext->width, inputCodecContext->height, (int)inputCodecContext->pix_fmt,
+            inputCodecContext->pkt_timebase.num, inputCodecContext->pkt_timebase.den,
             inputCodecContext->sample_aspect_ratio.num, inputCodecContext->sample_aspect_ratio.den);
 
         AVFilterContext* buffersrc_ctx = nullptr, * buffersink_ctx = nullptr;
@@ -225,7 +232,7 @@ namespace winrt::FFmpegInteropX::implementation
 
             if (inputPacket->stream_index == input.VideoStreamIndex())
             {
-                av_packet_rescale_ts(&*inputPacket, inputVideoStream->time_base, inputCodecContext->time_base);
+                //av_packet_rescale_ts(&*inputPacket, inputVideoStream->time_base, inputCodecContext->time_base);
 
                 int ret;
                 if ((ret = avcodec_send_packet(&*inputCodecContext, &*inputPacket)) < 0)
@@ -258,7 +265,10 @@ namespace winrt::FFmpegInteropX::implementation
                         }
 
                         // write the filtered frame to the output file
+                        filteredFrame->time_base = av_buffersink_get_time_base(buffersink_ctx);
                         filteredFrame->pict_type = AV_PICTURE_TYPE_NONE;
+                        //filteredFrame->pts = inputFrame->pts;
+                        //filteredFrame->pkt_dts = inputFrame->pkt_dts;
 
                         ret = encode_write_frame(*filteredFrame, *inputVideoStream, *outputFormatContext, *outputCodecContext, *outputPacket, false);
 
