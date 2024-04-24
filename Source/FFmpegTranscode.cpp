@@ -55,7 +55,7 @@ namespace winrt::FFmpegInteropX::implementation
     {
         av_packet_unref(&outputPacket);
 
-        if(filteredFrame.pts != AV_NOPTS_VALUE)
+        if (filteredFrame.pts != AV_NOPTS_VALUE)
             filteredFrame.pts = av_rescale_q(filteredFrame.pts, filteredFrame.time_base, outputCodecContext.time_base);
 
         auto ret = avcodec_send_frame(&outputCodecContext, flush ? nullptr : &filteredFrame);
@@ -74,6 +74,36 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         return ret;
+    }
+
+    static void SetEncodingParameters(AVCodecContext& ctx, FFmpegInteropX::FFmpegTranscodeOutput const& output)
+    {
+        switch (output.Type())
+        {
+        case OutputType::Mp4:
+            // crf, preset
+            if (av_opt_set(&ctx, "crf", std::to_string(output.CRF()).c_str(), 0) < 0)
+                throw_hresult(E_FAIL);
+
+            static const char* presets[] = { "ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow" };
+            if (av_opt_set(&ctx, "preset", presets[(int)output.Preset()], 0) < 0)
+                throw_hresult(E_FAIL);
+            break;
+        case OutputType::Vp8:
+            throw_hresult(E_NOTIMPL);
+            break;
+        case OutputType::Vp9:
+            // crf, bitrate = 0, speed = 1/2 (lower better), row-mt 1
+            if (av_opt_set(&ctx, "crf", std::to_string(output.CRF()).c_str(), 0) < 0)
+                throw_hresult(E_FAIL);
+            if (av_opt_set(&ctx, "b:v", "0", 0) < 0)
+                throw_hresult(E_FAIL);
+            if (av_opt_set(&ctx, "speed", "2", 0) < 0)
+                throw_hresult(E_FAIL);
+            if (av_opt_set(&ctx, "row-mt", "1", 0) < 0)
+                throw_hresult(E_FAIL);
+            break;
+        }
     }
 
     void FFmpegTranscode::Run(FFmpegInteropX::FFmpegTranscodeInput const& input, FFmpegInteropX::FFmpegTranscodeOutput const& output)
@@ -127,13 +157,12 @@ namespace winrt::FFmpegInteropX::implementation
         if (!outputCodecContext)
             throw_hresult(E_FAIL);
 
+        SetEncodingParameters(outputCodecContext, output);
         outputCodecContext->bit_rate = output.Bitrate();
         outputCodecContext->width = (int)output.PixelSize().Width;
         outputCodecContext->height = (int)output.PixelSize().Height;
-        outputCodecContext->time_base = //av_inv_q(av_d2q(output.FrameRate(), 10000000));
-            //inputVideoStream->time_base;
-            av_inv_q(inputCodecContext->framerate);
-        outputCodecContext->gop_size = 10;  // I-frame interval
+        outputCodecContext->time_base = av_inv_q(inputCodecContext->framerate);
+        outputCodecContext->gop_size = 30;  // I-frame interval
         outputCodecContext->max_b_frames = 1;
         outputCodecContext->pix_fmt = inputCodecContext->pix_fmt;
 

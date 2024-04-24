@@ -605,6 +605,20 @@ static runtimeclass FFmpegInteropLogging
         Vp9,
     };
 
+    enum OutputPresetType
+    {
+        UltraFast,
+        SuperFast,
+        VeryFast,
+        Faster,
+        Fast,
+        Medium,
+        Slow,
+        Slower,
+        VerySlow,
+        Placebo
+    };
+
     #ifdef CPPCX
     [bindable]
     #endif
@@ -613,7 +627,8 @@ static runtimeclass FFmpegInteropLogging
         String FileName{ get; set; };
         OutputType Type{ get; set; };
         Windows.Foundation.Size PixelSize{ get; set; };
-        Int64 Bitrate{ get; set; };
+        UInt32 CRF{ get; set; };
+        OutputPresetType Preset{ get; set; };
         Double FrameRate{ get; set; };
 
         FFmpegTranscodeOutput();

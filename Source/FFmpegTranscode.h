@@ -92,8 +92,11 @@ namespace winrt::FFmpegInteropX::implementation
         OutputType Type() const { return type; }
         void Type(OutputType const value) { type = value; }
 
-        uint64_t Bitrate() const { return bitrate; }
-        void Bitrate(uint64_t const value) { bitrate = value; }
+        uint32_t CRF() const { return crf; }
+        void CRF(uint32_t const value) { crf = value; }
+
+        OutputPresetType Preset() const { return preset; }
+        void Preset(OutputPresetType const value) { preset = value; }
 
         Size PixelSize() const { return pixelSize; }
         void PixelSize(Size const value) { pixelSize = value; }
@@ -106,7 +109,8 @@ namespace winrt::FFmpegInteropX::implementation
     private:
         hstring filename;
         OutputType type = {};
-        uint64_t bitrate = {};
+        uint32_t crf = {};
+        OutputPresetType preset = {};
         Size pixelSize = {};
         double frameRate = {};
     };
