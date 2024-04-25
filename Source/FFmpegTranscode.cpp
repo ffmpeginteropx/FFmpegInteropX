@@ -2,7 +2,8 @@
 #include "FFmpegTranscode.h"
 #include "FFmpegTranscode.g.cpp"
 #include "FFmpegTranscodeInputCropRectangle.g.cpp"
-#include "FFmpegTranscodeInputCropEntry.g.cpp"
+#include "FFmpegTranscodeInputCropFrameEntry.g.cpp"
+#include "FFmpegTranscodeInputTrimmingMarkerEntry.g.cpp"
 #include "FFmpegTranscodeInput.g.cpp"
 #include "FFmpegTranscodeOutput.g.cpp"
 
