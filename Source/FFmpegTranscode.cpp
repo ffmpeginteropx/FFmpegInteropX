@@ -81,6 +81,7 @@ namespace winrt::FFmpegInteropX::implementation
         switch (output.Type())
         {
         case OutputType::Mp4:
+        {
             // crf, preset
             if (av_opt_set(&ctx, "crf", std::to_string(output.CRF()).c_str(), 0) < 0)
                 throw_hresult(E_FAIL);
@@ -89,6 +90,7 @@ namespace winrt::FFmpegInteropX::implementation
             if (av_opt_set(&ctx, "preset", presets[(int)output.Preset()], 0) < 0)
                 throw_hresult(E_FAIL);
             break;
+        }
         case OutputType::Vp8:
             throw_hresult(E_NOTIMPL);
             break;
@@ -157,8 +159,7 @@ namespace winrt::FFmpegInteropX::implementation
         if (!outputCodecContext)
             throw_hresult(E_FAIL);
 
-        SetEncodingParameters(outputCodecContext, output);
-        outputCodecContext->bit_rate = output.Bitrate();
+        SetEncodingParameters(*outputCodecContext, output);
         outputCodecContext->width = (int)output.PixelSize().Width;
         outputCodecContext->height = (int)output.PixelSize().Height;
         outputCodecContext->time_base = av_inv_q(inputCodecContext->framerate);
