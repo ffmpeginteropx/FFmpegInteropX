@@ -1,0 +1,11 @@
+{
+    "overlay-ports": [
+        "vcpkg-overlay-ports"
+    ],
+    "default-registry": {
+        "kind": "git",
+        "baseline": "943c5ef1c8f6b5e6ced092b242c8299caae2ff01",
+        "repository": "https://github.com/microsoft/vcpkg",
+        "packages": [ "ffmpeg[x264,vpx,x265,zlib,nonfree,nvcodec,postproc]" ]
+    },
+}

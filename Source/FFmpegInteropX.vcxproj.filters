@@ -317,8 +317,12 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />
+    <Midl Include="FFmpegTranscode.idl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="AutoReleasePtr.natvis" />
   </ItemGroup>
 </Project>

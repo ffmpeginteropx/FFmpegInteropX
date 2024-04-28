@@ -1,0 +1,88 @@
+namespace FFmpegInteropX
+{
+    runtimeclass FFmpegTranscodeInputCropRectangle
+    {
+        Int32 CenterX;
+        Int32 CenterY;
+        Int32 Width;
+        Int32 Height;
+
+        FFmpegTranscodeInputCropRectangle();
+        FFmpegTranscodeInputCropRectangle(Int32 center_x, Int32 center_y, Int32 width, Int32 height);
+    };
+
+    runtimeclass FFmpegTranscodeInputCropFrameEntry
+    {
+        FFmpegTranscodeInputCropRectangle CropRectangle;
+        Int64 FrameNumber;
+
+        FFmpegTranscodeInputCropFrameEntry();
+        FFmpegTranscodeInputCropFrameEntry(Int64 frameNumber, FFmpegTranscodeInputCropRectangle cropRectangle);
+    };
+
+    runtimeclass FFmpegTranscodeInputTrimmingMarkerEntry
+    {
+        Boolean TrimAfter;
+        Int64 FrameNumber;
+
+        FFmpegTranscodeInputTrimmingMarkerEntry();
+        FFmpegTranscodeInputTrimmingMarkerEntry(Int64 frameNumber, Boolean trimAfter);
+    };
+
+    runtimeclass FFmpegTranscodeInput
+    {
+        String FileName;
+        Int32 VideoStreamIndex;
+        IVectorView<FFmpegTranscodeInputCropFrameEntry> CropFrames;
+        IVectorView<FFmpegTranscodeInputTrimmingMarkerEntry> TrimmingMarkers;
+
+        FFmpegTranscodeInput();
+        FFmpegTranscodeInput(String fileName, Int32 videoStreamIndex,
+            IVectorView<FFmpegTranscodeInputCropFrameEntry> cropFrames,
+            IVectorView<FFmpegTranscodeInputTrimmingMarkerEntry> trimmingMarkers);
+    };
+
+    enum OutputType
+    {
+        Mp4,
+        Vp8,
+        Vp9,
+    };
+
+    enum OutputPresetType
+    {
+        UltraFast,
+        SuperFast,
+        VeryFast,
+        Faster,
+        Fast,
+        Medium,
+        Slow,
+        Slower,
+        VerySlow,
+        Placebo
+    };
+
+    [bindable]
+    [default_interface]
+    runtimeclass FFmpegTranscodeOutput : Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        String FileName;
+        OutputType Type;
+        Windows.Foundation.Size PixelSize;
+        UInt32 CRF;
+        OutputPresetType Preset;
+        Double FrameRate;
+
+        FFmpegTranscodeOutput();
+    };
+
+    runtimeclass FFmpegTranscode : Windows.Foundation.IClosable
+    {
+        IVectorView<String> Errors{get; };
+
+        FFmpegTranscode();
+        void Run(FFmpegTranscodeInput input, FFmpegTranscodeOutput output);
+    };
+
+}

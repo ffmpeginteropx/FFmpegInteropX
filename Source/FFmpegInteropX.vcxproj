@@ -122,6 +122,9 @@
     <IntDir>..\Intermediate\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>..\Output\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug_WinUI|x64'">
+    <VcpkgTriplet>x64-windows</VcpkgTriplet>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -130,15 +133,15 @@
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <WarningLevel>Level4</WarningLevel>
       <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
-      <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
+      <AdditionalOptions>%(AdditionalOptions) /bigobj /Zm50</AdditionalOptions>
       <DisableSpecificWarnings>28204;4635;4634</DisableSpecificWarnings>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
-      <CompileAsWinRT>false</CompileAsWinRT>
+      <GenerateWindowsMetadata>true</GenerateWindowsMetadata>
+      <CompileAsWinRT>true</CompileAsWinRT>
       <ModuleDefinitionFile>FFmpegInteropX.def</ModuleDefinitionFile>
       <AdditionalDependencies>shcore.lib;runtimeobject.lib;mfuuid.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -281,6 +284,7 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />
+    <Midl Include="FFmpegTranscode.idl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.editorconfig" />
@@ -299,6 +303,8 @@
     <None Include="..\LICENSE" />
     <None Include="..\README-BUILD.md" />
     <None Include="..\README.md" />
+    <None Include="..\vcpkg-configuration.json" />
+    <None Include="..\vcpkg.json" />
     <None Include="cpp.hint" />
     <None Include="FFmpegInteropX.def" />
     <None Include="packages.config" />
@@ -307,6 +313,11 @@
     <Text Include="readme.txt">
       <DeploymentContent>false</DeploymentContent>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="AutoReleasePtr.natvis">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_WinUI|x64'">true</ExcludedFromBuild>
+    </Natvis>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -17,7 +17,7 @@
     <IntDir>..\Intermediate\$(MSBuildProjectName)\$(Configuration)\</IntDir>
     <OutDir>..\Output\$(MSBuildProjectName)\$(Configuration)\</OutDir>
   </PropertyGroup>
-
+  
   <PropertyGroup>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>

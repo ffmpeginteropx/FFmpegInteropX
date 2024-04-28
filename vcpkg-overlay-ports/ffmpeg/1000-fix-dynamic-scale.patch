@@ -1,0 +1,14 @@
+diff --git a/libavfilter/vf_scale.c b/libavfilter/vf_scale.c
+index 23335ce..8617d45 100644
+--- a/libavfilter/vf_scale.c
++++ b/libavfilter/vf_scale.c
+@@ -724,7 +724,8 @@ static int scale_frame(AVFilterLink *link, AVFrame *in, AVFrame **frame_out)
+     if (in->colorspace == AVCOL_SPC_YCGCO)
+         av_log(link->dst, AV_LOG_WARNING, "Detected unsupported YCgCo colorspace.\n");
+ 
+-    frame_changed = in->width  != link->w ||
++    frame_changed = 1 ||
++                    in->width  != link->w ||
+                     in->height != link->h ||
+                     in->format != link->format ||
+                     in->sample_aspect_ratio.den != link->sample_aspect_ratio.den ||

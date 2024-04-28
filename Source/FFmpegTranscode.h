@@ -148,11 +148,23 @@ namespace winrt::FFmpegInteropX::implementation
 
     struct FFmpegTranscode : FFmpegTranscodeT<FFmpegTranscode>
     {
-        FFmpegTranscode() { }
+        IVectorView<hstring> Errors() const { return errors.GetView(); }
+
+        FFmpegTranscode()
+        {
+            errors = single_threaded_vector<hstring>();
+        }
+
         void Run(FFmpegInteropX::FFmpegTranscodeInput const& input, FFmpegInteropX::FFmpegTranscodeOutput const& output);
 
         virtual ~FFmpegTranscode();
         void Close();
+
+    private:
+        IVector<hstring> errors;
+
+        void throw_av_error(int ret);
+        void SetEncodingParameters(AVCodecContext& ctx, FFmpegInteropX::FFmpegTranscodeOutput const& output);
     };
 };
 
