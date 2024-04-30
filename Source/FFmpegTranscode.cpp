@@ -92,6 +92,11 @@ namespace winrt::FFmpegInteropX::implementation
     {
         int ret;
 
+        SYSTEM_INFO si;
+        GetNativeSystemInfo(&si);
+        ctx.thread_count = si.dwNumberOfProcessors;
+        ctx.slices = 8;
+
         switch (output.Type())
         {
         case OutputType::Mp4:
@@ -109,7 +114,9 @@ namespace winrt::FFmpegInteropX::implementation
         case OutputType::Vp9:
             // crf, bitrate = 0, speed = 1/2 (lower better), row-mt 1
             ctx.bit_rate = 0;
-            ctx.thread_count = 8;
+            ctx.qmin = 10;
+            ctx.qmax = 14;
+            ctx.qcompress = 1;
             //ctx.profile = 2;
 
             check_av_result(av_opt_set_int(ctx.priv_data, "crf", output.CRF(), 0));
@@ -120,7 +127,9 @@ namespace winrt::FFmpegInteropX::implementation
             check_av_result(av_opt_set_int(ctx.priv_data, "auto-alt-ref", 1, 0));
             check_av_result(av_opt_set_int(ctx.priv_data, "arnr-maxframes", 7, 0));
             check_av_result(av_opt_set_int(ctx.priv_data, "arnr-strength", 4, 0));
-            check_av_result(av_opt_set_int(ctx.priv_data, "aq-mode", 2, 0));
+            check_av_result(av_opt_set_int(ctx.priv_data, "aq-mode", 4, 0));
+            check_av_result(av_opt_set_int(ctx.priv_data, "tile-columns", 6, 0));
+            check_av_result(av_opt_set_int(ctx.priv_data, "tile-rows", 2, 0));
             break;
         }
     }
@@ -301,7 +310,6 @@ namespace winrt::FFmpegInteropX::implementation
                     inputFrame->pts = inputFrame->best_effort_timestamp;
 
                     // handle trimming
-                    // auto frameNumber = av_rescale_q(inputFrame->pts, inputCodecContext->pkt_timebase, outputCodecContext->time_base);
                     if (nextTrimmingMarkerIt != trimmingMarkers.end() && inputFrameNumber >= (*nextTrimmingMarkerIt).FrameNumber())
                     {
                         trimmingMarkerIt = nextTrimmingMarkerIt;

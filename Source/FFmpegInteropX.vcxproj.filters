@@ -82,6 +82,8 @@
     <None Include="..\AppVeyor_Build.bat">
       <Filter>Build</Filter>
     </None>
+    <None Include="..\vcpkg-configuration.json" />
+    <None Include="..\vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CodecChecker.h" />

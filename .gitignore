@@ -260,3 +260,4 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+/vcpkg_installed/
