@@ -113,37 +113,24 @@ namespace winrt::FFmpegInteropX::implementation
     struct FFmpegTranscodeOutput : FFmpegTranscodeOutputT<FFmpegTranscodeOutput>
     {
         hstring FileName() const { return filename; }
-        void FileName(hstring const& value) { filename = value; propertyChanged(*this, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs{ L"FileName" }); }
-
         OutputType Type() const { return type; }
-        void Type(OutputType const value) { type = value; propertyChanged(*this, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs{ L"Type" }); }
-
         uint32_t CRF() const { return crf; }
-        void CRF(uint32_t const value) { crf = value; propertyChanged(*this, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs{ L"CRF" }); }
-
         OutputPresetType Preset() const { return preset; }
-        void Preset(OutputPresetType const value) { preset = value; propertyChanged(*this, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs{ L"Preset" }); }
-
         Size PixelSize() const { return pixelSize; }
-        void PixelSize(Size const value) { pixelSize = value; propertyChanged(*this, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs{ L"PixelSize" }); }
+        double FrameRateMultiplier() const { return frameRateMultiplier; }
 
-        double FrameRate() const { return frameRate; }
-        void FrameRate(double const value) { frameRate = value; propertyChanged(*this, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs{ L"FrameRate" }); }
-
-        FFmpegTranscodeOutput() { }
-
-        winrt::event_token PropertyChanged(winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const& value) { return propertyChanged.add(value); }
-        void PropertyChanged(winrt::event_token const& token) { propertyChanged.remove(token); }
+        FFmpegTranscodeOutput(hstring const& FileName, OutputType Type, uint32_t CRF, double FrameRateMultiplier,
+            Size const& PixelSize, OutputPresetType Preset)
+            : filename(FileName), type(Type), crf(CRF), frameRateMultiplier(FrameRateMultiplier), pixelSize(PixelSize), preset(Preset)
+        {}
 
     private:
         hstring filename;
-        OutputType type = OutputType::Vp9;
-        uint32_t crf = 15;
-        OutputPresetType preset = {};
-        Size pixelSize = {};
-        double frameRate = {};
-
-        winrt::event<Microsoft::UI::Xaml::Data::PropertyChangedEventHandler> propertyChanged;
+        OutputType type;
+        uint32_t crf;
+        OutputPresetType preset;
+        Size pixelSize;
+        double frameRateMultiplier;
     };
 
     struct FFmpegTranscode : FFmpegTranscodeT<FFmpegTranscode>
@@ -154,6 +141,9 @@ namespace winrt::FFmpegInteropX::implementation
 
         void Run(FFmpegInteropX::FFmpegTranscodeInput const& input, FFmpegInteropX::FFmpegTranscodeOutput const& output);
 
+        winrt::event_token FrameOutputProgress(EventHandler<std::uint64_t> const& handler) { return frameOutputProgress.add(handler); }
+        void FrameOutputProgress(winrt::event_token const& token) noexcept { frameOutputProgress.remove(token); }
+
         virtual ~FFmpegTranscode();
         void Close();
 
@@ -161,9 +151,10 @@ namespace winrt::FFmpegInteropX::implementation
         void throw_av_error(int ret);
         void SetEncodingParameters(AVCodecContext& ctx, FFmpegInteropX::FFmpegTranscodeOutput const& output);
 
-        std::queue<std::int64_t> skippedPtsQueue;
         int FilterWriteFrame(AVFrame& filteredFrame, int64_t skippedPts,
             AVFormatContext& outputFormatContext, AVCodecContext& outputCodecContext, AVPacket& outputPacket, bool flush);
+
+        winrt::event<EventHandler<std::uint64_t>> frameOutputProgress;
     };
 };
 

@@ -65,22 +65,24 @@ namespace FFmpegInteropX
 
     [bindable]
     [default_interface]
-    runtimeclass FFmpegTranscodeOutput : Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    runtimeclass FFmpegTranscodeOutput
     {
-        String FileName;
-        OutputType Type;
-        Windows.Foundation.Size PixelSize;
-        UInt32 CRF;
-        OutputPresetType Preset;
-        Double FrameRate;
+        String FileName{get;};
+        OutputType Type{get;};
+        Windows.Foundation.Size PixelSize{get;};
+        UInt32 CRF{get;};
+        OutputPresetType Preset{get;};
+        Double FrameRateMultiplier{get;};
 
-        FFmpegTranscodeOutput();
+        FFmpegTranscodeOutput(String FileName, OutputType Type, UInt32 CRF, Double FrameRateMultiplier,
+            Windows.Foundation.Size PixelSize, OutputPresetType Preset);
     };
 
     runtimeclass FFmpegTranscode : Windows.Foundation.IClosable
     {
         FFmpegTranscode();
         void Run(FFmpegTranscodeInput input, FFmpegTranscodeOutput output);
+        event Windows.Foundation.EventHandler<UInt64> FrameOutputProgress;
     };
 
 }

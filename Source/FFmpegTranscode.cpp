@@ -334,6 +334,7 @@ namespace winrt::FFmpegInteropX::implementation
                         filteredFrame->pict_type = AV_PICTURE_TYPE_NONE;
 
                         ret = FilterWriteFrame(*filteredFrame, skippedPts, *outputFormatContext, *outputCodecContext, *outputPacket, false);
+                        frameOutputProgress(*this, outputFrameNumber);
 
                         av_frame_unref(&*filteredFrame);
                         if (ret < 0)
