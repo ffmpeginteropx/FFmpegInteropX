@@ -137,8 +137,8 @@ namespace winrt::FFmpegInteropX::implementation
 
     private:
         hstring filename;
-        OutputType type = {};
-        uint32_t crf = {};
+        OutputType type = OutputType::Vp9;
+        uint32_t crf = 15;
         OutputPresetType preset = {};
         Size pixelSize = {};
         double frameRate = {};
@@ -148,11 +148,8 @@ namespace winrt::FFmpegInteropX::implementation
 
     struct FFmpegTranscode : FFmpegTranscodeT<FFmpegTranscode>
     {
-        IVectorView<hstring> Errors() const { return errors.GetView(); }
-
         FFmpegTranscode()
         {
-            errors = single_threaded_vector<hstring>();
         }
 
         void Run(FFmpegInteropX::FFmpegTranscodeInput const& input, FFmpegInteropX::FFmpegTranscodeOutput const& output);
@@ -161,10 +158,12 @@ namespace winrt::FFmpegInteropX::implementation
         void Close();
 
     private:
-        IVector<hstring> errors;
-
         void throw_av_error(int ret);
         void SetEncodingParameters(AVCodecContext& ctx, FFmpegInteropX::FFmpegTranscodeOutput const& output);
+
+        std::queue<std::int64_t> skippedPtsQueue;
+        int FilterWriteFrame(AVFrame& filteredFrame, int64_t skippedPts,
+            AVFormatContext& outputFormatContext, AVCodecContext& outputCodecContext, AVPacket& outputPacket, bool flush);
     };
 };
 

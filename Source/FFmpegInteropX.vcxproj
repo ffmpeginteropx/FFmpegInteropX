@@ -188,6 +188,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AutoReleasePtr.h" />
     <ClInclude Include="AvFilterFactoryBase.h" />
     <ClInclude Include="AttachedFile.h" />
     <ClInclude Include="AttachedFileHelper.h" />

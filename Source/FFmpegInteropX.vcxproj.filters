@@ -221,6 +221,7 @@
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="FFmpegTranscode.h" />
+    <ClInclude Include="AutoReleasePtr.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />

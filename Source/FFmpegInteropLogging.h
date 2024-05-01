@@ -14,6 +14,10 @@ namespace winrt::FFmpegInteropX::implementation
         static void SetDefaultLogProvider();
 
         static ILogProvider s_pLogProvider;
+
+    private:
+        static std::mutex io_mutex;
+        static std::string line;
     };
 }
 namespace winrt::FFmpegInteropX::factory_implementation

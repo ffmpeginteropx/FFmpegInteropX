@@ -79,8 +79,6 @@ namespace FFmpegInteropX
 
     runtimeclass FFmpegTranscode : Windows.Foundation.IClosable
     {
-        IVectorView<String> Errors{get; };
-
         FFmpegTranscode();
         void Run(FFmpegTranscodeInput input, FFmpegTranscodeOutput output);
     };

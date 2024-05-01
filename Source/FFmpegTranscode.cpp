@@ -11,31 +11,6 @@ namespace winrt::FFmpegInteropX::implementation
 {
     using namespace std;
 
-    template <typename T, auto ReleaseFunc>
-    struct AutoReleasePtr
-    {
-        T* ptr = nullptr;
-
-        AutoReleasePtr() = default;
-        AutoReleasePtr(T* p) : ptr(p) { }
-
-        T** operator&() { return &ptr; }
-        T* operator->() { return ptr; }
-        T& operator*() { return *ptr; }
-        operator bool() const { return ptr; }
-
-        ~AutoReleasePtr()
-        {
-            if (ptr)
-            {
-                if constexpr (is_same_v<decltype(ReleaseFunc), void(*)(T*)>)
-                    ReleaseFunc(ptr);
-                else
-                    ReleaseFunc(&ptr);
-            }
-        }
-    };
-
     static AVCodecID GetCodecId(OutputType type)
     {
         switch (type)
@@ -55,20 +30,21 @@ namespace winrt::FFmpegInteropX::implementation
     {
         char buffer[1024];
         av_strerror(ret, buffer, sizeof(buffer));
-        errors.Append(StringUtils::Utf8ToPlatformString(buffer));
+        av_log(nullptr, AV_LOG_ERROR, "%s\n", buffer);
 
         throw_hresult(E_FAIL);
     }
 #define check_av_result(cmd) do { if((ret = cmd) < 0) throw_av_error(ret); } while(0)
-#define check_av_pointer(ptr) do { if(!(ptr)) { errors.Append(L"Pointer returned as null"); throw_hresult(E_FAIL); } } while(0)
+#define check_av_pointer(ptr) do { if(!(ptr)) { av_log(nullptr, AV_LOG_ERROR, "Pointer returned as null.\n"); throw_hresult(E_FAIL); } } while(0)
 
-    static int encode_write_frame(AVFrame& filteredFrame,
+    int FFmpegTranscode::FilterWriteFrame(AVFrame& filteredFrame, int64_t skippedPts,
         AVFormatContext& outputFormatContext, AVCodecContext& outputCodecContext, AVPacket& outputPacket, bool flush)
     {
         av_packet_unref(&outputPacket);
 
         if (filteredFrame.pts != AV_NOPTS_VALUE)
-            filteredFrame.pts = av_rescale_q(filteredFrame.pts, filteredFrame.time_base, outputCodecContext.time_base);
+            filteredFrame.pts = av_rescale_q(av_rescale_q(filteredFrame.pts, filteredFrame.time_base, outputCodecContext.time_base) - skippedPts,
+                outputFormatContext.streams[0]->time_base, filteredFrame.time_base);
 
         auto ret = avcodec_send_frame(&outputCodecContext, flush ? nullptr : &filteredFrame);
         while (ret >= 0)
@@ -81,7 +57,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
 
             outputPacket.stream_index = 0;
-            av_packet_rescale_ts(&outputPacket, outputCodecContext.time_base, outputFormatContext.streams[0]->time_base);
+            outputPacket.dts = 0;
             ret = av_interleaved_write_frame(&outputFormatContext, &outputPacket);
         }
 
@@ -94,7 +70,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         SYSTEM_INFO si;
         GetNativeSystemInfo(&si);
-        ctx.thread_count = si.dwNumberOfProcessors;
+        ctx.thread_count = min(16, si.dwNumberOfProcessors);
         ctx.slices = 8;
 
         switch (output.Type())
@@ -114,10 +90,9 @@ namespace winrt::FFmpegInteropX::implementation
         case OutputType::Vp9:
             // crf, bitrate = 0, speed = 1/2 (lower better), row-mt 1
             ctx.bit_rate = 0;
-            ctx.qmin = 10;
-            ctx.qmax = 14;
+            ctx.qmin = output.CRF() - 2;
+            ctx.qmax = output.CRF() + 2;
             ctx.qcompress = 1;
-            //ctx.profile = 2;
 
             check_av_result(av_opt_set_int(ctx.priv_data, "crf", output.CRF(), 0));
             check_av_result(av_opt_set_int(ctx.priv_data, "speed", 2, 0));
@@ -199,6 +174,7 @@ namespace winrt::FFmpegInteropX::implementation
         SetEncodingParameters(*outputCodecContext, output);
         outputCodecContext->width = (int)output.PixelSize().Width;
         outputCodecContext->height = (int)output.PixelSize().Height;
+        outputCodecContext->framerate = inputCodecContext->framerate;
         outputCodecContext->time_base = av_inv_q(inputCodecContext->framerate);
         outputCodecContext->gop_size = 240;  // I-frame interval
         outputCodecContext->max_b_frames = 1;
@@ -283,7 +259,8 @@ namespace winrt::FFmpegInteropX::implementation
         auto trimmingMarkerIt = trimmingMarkers.begin();
         auto nextTrimmingMarkerIt = trimmingMarkerIt + 1;
 
-        int inputFrameNumber = 0, outputFrameNumber = 0;
+        int64_t inputFrameNumber = 0, outputFrameNumber = 0;
+        int64_t skippedPts = 0;
 
         // transcode
         while (true)
@@ -317,7 +294,10 @@ namespace winrt::FFmpegInteropX::implementation
                     }
                     ++inputFrameNumber;
                     if ((*trimmingMarkerIt).TrimAfter())
+                    {
+                        skippedPts += 1;
                         continue;
+                    }
 
                     // update the crop rectangle
                     while (nextCropFrameIt != cropFrames.end() && outputFrameNumber >= (*nextCropFrameIt).FrameNumber())
@@ -333,10 +313,6 @@ namespace winrt::FFmpegInteropX::implementation
                     check_av_result(avfilter_graph_send_command(&*filterGraph, "Parsed_crop_0", "y", std::to_string(cropRectangle.CenterY() - cropRectangle.Height() / 2).c_str(), nullptr, 0, 0));
                     check_av_result(avfilter_graph_send_command(&*filterGraph, "Parsed_crop_0", "w", std::to_string(cropRectangle.Width()).c_str(), nullptr, 0, 0));
                     check_av_result(avfilter_graph_send_command(&*filterGraph, "Parsed_crop_0", "h", std::to_string(cropRectangle.Height()).c_str(), nullptr, 0, 0));
-                    //check_av_result(av_opt_set_int(cropFilterContext, "x", cropRectangle.CenterX() - cropRectangle.Width() / 2, 0));
-                    //check_av_result(av_opt_set_int(cropFilterContext, "y", cropRectangle.CenterY() - cropRectangle.Height() / 2, 0));
-                    //check_av_result(av_opt_set_int(cropFilterContext, "w", cropRectangle.Width(), 0));
-                    //check_av_result(av_opt_set_int(cropFilterContext, "h", cropRectangle.Height(), 0));
 
                     // push the decoded frame into the filter graph
                     check_av_result(av_buffersrc_add_frame_flags(buffersrc_ctx, &*inputFrame, 0));
@@ -356,10 +332,8 @@ namespace winrt::FFmpegInteropX::implementation
                         // write the filtered frame to the output file
                         filteredFrame->time_base = av_buffersink_get_time_base(buffersink_ctx);
                         filteredFrame->pict_type = AV_PICTURE_TYPE_NONE;
-                        //filteredFrame->pts = inputFrame->pts;
-                        //filteredFrame->pkt_dts = inputFrame->pkt_dts;
 
-                        ret = encode_write_frame(*filteredFrame, *outputFormatContext, *outputCodecContext, *outputPacket, false);
+                        ret = FilterWriteFrame(*filteredFrame, skippedPts, *outputFormatContext, *outputCodecContext, *outputPacket, false);
 
                         av_frame_unref(&*filteredFrame);
                         if (ret < 0)
@@ -385,7 +359,7 @@ namespace winrt::FFmpegInteropX::implementation
                     break;
 
                 filteredFrame->pict_type = AV_PICTURE_TYPE_NONE;
-                if (encode_write_frame(*filteredFrame, *outputFormatContext, *outputCodecContext, *outputPacket, true) < 0)
+                if (FilterWriteFrame(*filteredFrame, skippedPts, *outputFormatContext, *outputCodecContext, *outputPacket, true) < 0)
                     break;
             }
         }

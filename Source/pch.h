@@ -87,6 +87,7 @@ extern "C"
 #pragma warning(default : 4244)
 
 #include "StringUtils.h"
+#include "autoreleaseptr.h"
 #include "MediaSourceConfig.h"
 #include "TimeSpanHelpers.h"
 #include "AudioStreamInfo.h"

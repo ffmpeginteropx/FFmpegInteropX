@@ -2,13 +2,13 @@
 #include "FFmpegInteropLogging.h"
 #include "FFmpegInteropLogging.g.cpp"
 
-// Note: Remove this static_assert after copying these generated source files to your project.
-// This assertion exists to avoid compiling these generated source files directly.
-//static_assert(false, "Do not compile generated C++/WinRT source files directly");
+using namespace std;
 
 namespace winrt::FFmpegInteropX::implementation
 {
     ILogProvider FFmpegInteropLogging::s_pLogProvider = nullptr;
+    mutex FFmpegInteropLogging::io_mutex;
+    string FFmpegInteropLogging::line;
 
     void FFmpegInteropLogging::SetLogLevel(FFmpegInteropX::LogLevel const& level)
     {
@@ -29,10 +29,18 @@ namespace winrt::FFmpegInteropX::implementation
                         int printPrefix = 1;
                         av_log_format_line(avcl, level, fmt, vl, pLine, sizeof(pLine), &printPrefix);
 
-                        wchar_t wLine[sizeof(pLine)];
-                        if (MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, pLine, -1, wLine, sizeof(pLine)) != 0)
                         {
-                            provider.Log((LogLevel)level, hstring(wLine));
+                            lock_guard<mutex> lk(io_mutex);
+
+                            // concatenate the result
+                            line += pLine;
+
+                            // send if the line ends with a new line
+                            if (!line.empty() && line[line.size() - 1] == '\n')
+                            {
+                                provider.Log((LogLevel)level, StringUtils::Utf8ToPlatformString(line.c_str()));
+                                line.clear();
+                            }
                         }
                     }
                 }
