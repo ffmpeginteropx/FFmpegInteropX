@@ -153,6 +153,24 @@ namespace winrt::FFmpegInteropX::implementation
         inputCodecContext->framerate = av_guess_frame_rate(&*inputFormatContext, inputVideoStream, nullptr);
         inputCodecContext->pkt_timebase = inputVideoStream->time_base;
 
+        // multi-threaded decoding
+        inputCodecContext->thread_count = 0;
+        if (inputCodec->capabilities & AV_CODEC_CAP_FRAME_THREADS)
+        {
+            inputCodecContext->thread_type = FF_THREAD_FRAME;
+            av_log(nullptr, AV_LOG_INFO, "Using frame threads.\n");
+        }
+        else if (inputCodec->capabilities & AV_CODEC_CAP_SLICE_THREADS)
+        {
+            inputCodecContext->thread_type = FF_THREAD_SLICE;
+            av_log(nullptr, AV_LOG_INFO, "Using slice threads.\n");
+        }
+        else
+        {
+            inputCodecContext->thread_count = 1;
+            av_log(nullptr, AV_LOG_WARNING, "Using single thread.\n");
+        }
+
         check_av_result(avcodec_open2(&*inputCodecContext, inputCodec, nullptr));
 
         av_dump_format(&*inputFormatContext, 0, StringUtils::PlatformStringToUtf8String(input.FileName()).c_str(), 0);
