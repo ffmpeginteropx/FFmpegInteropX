@@ -287,13 +287,29 @@ namespace winrt::FFmpegInteropX::implementation
             if (nextTrimmingMarkerIt == trimmingMarkers.end() && (*trimmingMarkerIt).TrimAfter())
                 break;
 
-            if (av_read_frame(&*inputFormatContext, &*inputPacket) < 0)
-                break;
+            // read frames until the queue is full
+            while (1)
+            {
+                if ((ret = av_read_frame(&*inputFormatContext, &*inputPacket)) < 0)
+                    break;
+
+                if (inputPacket->stream_index == input.VideoStreamIndex())
+                {
+                    ret = avcodec_send_packet(&*inputCodecContext, &*inputPacket);
+                    if (ret == AVERROR(EAGAIN))
+                    {
+                        // queue full, proceed with packet decoding, not an error
+                        ret = 0;
+                        break;
+                    }
+                    else if (ret < 0)
+                        break;
+                }
+            }
+            check_av_result(ret);
 
             if (inputPacket->stream_index == input.VideoStreamIndex())
             {
-                check_av_result(avcodec_send_packet(&*inputCodecContext, &*inputPacket));
-
                 while (ret >= 0)
                 {
                     ret = avcodec_receive_frame(&*inputCodecContext, &*inputFrame);
