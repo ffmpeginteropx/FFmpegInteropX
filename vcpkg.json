@@ -1,16 +1,19 @@
 {
   "dependencies": [
     {
-      "name": "ffmpeg",
-      "features": [
-        "x264",
-        "vpx",
-        "x265",
-        "zlib",
-        "nonfree",
-        "nvcodec",
-        "postproc"
-      ]
+        "name": "ffmpeg",
+        "features": [
+            "x264",
+            "vpx",
+            "x265",
+            "zlib",
+            "nonfree",
+            "nvcodec",
+            "postproc"
+        ]
+    },
+    {
+        "name": "boost-lockfree"
     }
   ]
 }

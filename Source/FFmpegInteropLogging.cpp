@@ -38,6 +38,7 @@ namespace winrt::FFmpegInteropX::implementation
                             // send if the line ends with a new line
                             if (!line.empty() && line[line.size() - 1] == '\n')
                             {
+                                line.resize(line.size() - 1);
                                 provider.Log((LogLevel)level, StringUtils::Utf8ToPlatformString(line.c_str()));
                                 line.clear();
                             }

@@ -86,6 +86,8 @@ extern "C"
 
 #pragma warning(default : 4244)
 
+#include "boost/lockfree/spsc_queue.hpp"
+
 #include "StringUtils.h"
 #include "autoreleaseptr.h"
 #include "MediaSourceConfig.h"
