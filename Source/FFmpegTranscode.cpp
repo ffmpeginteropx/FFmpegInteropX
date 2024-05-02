@@ -154,7 +154,7 @@ namespace winrt::FFmpegInteropX::implementation
         inputCodecContext->pkt_timebase = inputVideoStream->time_base;
 
         check_av_result(avcodec_open2(&*inputCodecContext, inputCodec, nullptr));
-        
+
         av_dump_format(&*inputFormatContext, 0, StringUtils::PlatformStringToUtf8String(input.FileName()).c_str(), 0);
 
         // open output
@@ -262,39 +262,6 @@ namespace winrt::FFmpegInteropX::implementation
         int64_t inputFrameNumber = 0, outputFrameNumber = 0;
         int64_t skippedPts = 0;
 
-        jthread filterEncoderThread{ [&](stop_token st) {
-            // pull filtered frames from the filter graph
-            while (1)
-            {
-                ret = av_buffersink_get_frame(buffersink_ctx, &*filteredFrame);
-                if (ret < 0)
-                {
-                    // if no more frames, rewrite the code to 0 to show it as normal completion
-                    if (ret == AVERROR(EAGAIN))
-                        if (st.stop_requested())
-                            return;     // we'll never get more frames
-                        else
-                            continue;
-                    if (ret == AVERROR_EOF)
-                        return;
-                    break;
-                }
-
-                // write the filtered frame to the output file
-                filteredFrame->time_base = av_buffersink_get_time_base(buffersink_ctx);
-                filteredFrame->pict_type = AV_PICTURE_TYPE_NONE;
-
-                ret = FilterWriteFrame(*filteredFrame, skippedPts, *outputFormatContext, *outputCodecContext, *outputPacket, false);
-                frameOutputProgress(*this, outputFrameNumber);
-
-                av_frame_unref(&*filteredFrame);
-                if (ret < 0)
-                    break;
-            }
-            if (ret < 0)
-                check_av_result(ret);
-        } };
-
         // transcode
         while (true)
         {
@@ -377,6 +344,7 @@ namespace winrt::FFmpegInteropX::implementation
                     if (ret < 0)
                         check_av_result(ret);
                 }
+
             }
 
             av_packet_unref(&*inputPacket);
@@ -385,11 +353,17 @@ namespace winrt::FFmpegInteropX::implementation
         // flush stuff
         if (av_buffersrc_add_frame_flags(buffersrc_ctx, nullptr, 0) >= 0)
         {
-            // nothing to do on this thread
-        }
+            while (1)
+            {
+                ret = av_buffersink_get_frame(buffersink_ctx, &*filteredFrame);
+                if (ret < 0)
+                    break;
 
-        filterEncoderThread.request_stop();
-        filterEncoderThread.join();
+                filteredFrame->pict_type = AV_PICTURE_TYPE_NONE;
+                if (FilterWriteFrame(*filteredFrame, skippedPts, *outputFormatContext, *outputCodecContext, *outputPacket, true) < 0)
+                    break;
+            }
+        }
 
         check_av_result(av_write_trailer(&*outputFormatContext));
         check_av_result(avio_closep(&outputFormatContext->pb));
