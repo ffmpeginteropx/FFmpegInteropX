@@ -152,6 +152,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         inputCodecContext->framerate = av_guess_frame_rate(&*inputFormatContext, inputVideoStream, nullptr);
         inputCodecContext->pkt_timebase = inputVideoStream->time_base;
+        inputCodecContext->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
 
         // multi-threaded decoding
         inputCodecContext->thread_count = 0;
@@ -197,6 +198,7 @@ namespace winrt::FFmpegInteropX::implementation
         outputCodecContext->gop_size = 240;  // I-frame interval
         outputCodecContext->max_b_frames = 1;
         outputCodecContext->pix_fmt = inputCodecContext->pix_fmt;
+        outputCodecContext->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
 
         if (outputFormatContext->oformat->flags & AVFMT_GLOBALHEADER)
             outputCodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -288,7 +290,7 @@ namespace winrt::FFmpegInteropX::implementation
                 break;
 
             // read frames until the queue is full
-            while (1)
+            //while (1)
             {
                 if ((ret = av_read_frame(&*inputFormatContext, &*inputPacket)) < 0)
                     break;
@@ -296,13 +298,14 @@ namespace winrt::FFmpegInteropX::implementation
                 if (inputPacket->stream_index == input.VideoStreamIndex())
                 {
                     ret = avcodec_send_packet(&*inputCodecContext, &*inputPacket);
-                    if (ret == AVERROR(EAGAIN))
-                    {
-                        // queue full, proceed with packet decoding, not an error
-                        ret = 0;
-                        break;
-                    }
-                    else if (ret < 0)
+                    //if (ret == AVERROR(EAGAIN))
+                    //{
+                    //    // queue full, proceed with packet decoding, not an error
+                    //    ret = 0;
+                    //    break;
+                    //}
+                    //else
+                    if (ret < 0)
                         break;
                 }
             }
