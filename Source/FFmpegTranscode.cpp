@@ -290,6 +290,7 @@ namespace winrt::FFmpegInteropX::implementation
                 break;
 
             // read frames until the queue is full
+            // for some reason this fails to read correctly, read one frame at a time for now
             //while (1)
             {
                 if ((ret = av_read_frame(&*inputFormatContext, &*inputPacket)) < 0)
