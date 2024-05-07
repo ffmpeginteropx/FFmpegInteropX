@@ -106,6 +106,7 @@
     <Compile Include="MediaPlaybackListPage.xaml.cs">
       <DependentUpon>MediaPlaybackListPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="StreamFilter.cs" />
     <Compile Include="TimeSpanToDoubleConverter.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>

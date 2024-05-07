@@ -55,5 +55,8 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Keep metadata available after MediaSource was closed.</summary>
         ///<remarks>Set this to false to cleanup more memory automatically, if you are sure you don't need metadata after playback end.</remarks>
         PROPERTY(KeepMetadataOnMediaSourceClosed, bool, true);
+
+        ///<summary>Allows applications to apply custom logic to exclude streams from the MediaStreamSource or MediaPlaybackItem.</summary>
+        PROPERTY_CONST(MediaStreamFilter, winrt::FFmpegInteropX::IMediaStreamFilter, nullptr);
     };
 }

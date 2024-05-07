@@ -514,7 +514,7 @@ namespace winrt::FFmpegInteropX::implementation
             if (avStream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && !config->IsFrameGrabber && !config->IsExternalSubtitleParser)
             {
                 stream = CreateAudioStream(avStream, index);
-                if (stream)
+                if (stream && ShouldAddStream(stream->StreamInfo()))
                 {
                     if (index == audioStreamIndex)
                     {
@@ -537,7 +537,7 @@ namespace winrt::FFmpegInteropX::implementation
             else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && !config->IsExternalSubtitleParser)
             {
                 stream = CreateVideoStream(avStream, index);
-                if (stream)
+                if (stream && ShouldAddStream(stream->StreamInfo()))
                 {
                     if (index == videoStreamIndex)
                     {
@@ -556,7 +556,7 @@ namespace winrt::FFmpegInteropX::implementation
             else if (avStream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE)
             {
                 stream = CreateSubtitleSampleProvider(avStream, index);
-                if (stream)
+                if (stream && ShouldAddStream(stream->StreamInfo()))
                 {
                     if (index == subtitleStreamIndex)
                     {

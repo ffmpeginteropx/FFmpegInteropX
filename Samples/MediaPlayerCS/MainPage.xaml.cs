@@ -59,9 +59,12 @@ namespace MediaPlayerCS
             set;
         }
 
+  
+
         public MainPage()
         {
             Config = new MediaSourceConfig();
+            //Config.General.MediaStreamFilter = new StreamFilter();
 
             this.InitializeComponent();
 

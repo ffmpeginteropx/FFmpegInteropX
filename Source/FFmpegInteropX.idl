@@ -838,5 +838,15 @@ namespace FFmpegInteropX
         ///<summary>Keep metadata available after MediaSource was closed.</summary>
         ///<remarks>Set this to false to cleanup more memory automatically, if you are sure you don't need metadata after playback end.</remarks>
         Boolean KeepMetadataOnMediaSourceClosed{ get; set; };
+
+        ///<summary>Allows applications to apply custom logic to exclude streams from the MediaStreamSource or MediaPlaybackItem.</summary>
+        IMediaStreamFilter MediaStreamFilter{get; set;};
     };
+
+    ///<summary>Allows applications to apply custom logic to exclude streams from the MediaStreamSource or MediaPlaybackItem.</summary>
+    interface IMediaStreamFilter
+    {
+        ///<summary>Return true if the media stream descrived by streamInfo should be added to the media stream source</summary>
+        Boolean ShouldAddStream(IStreamInfo streamInfo);
+    }
 }

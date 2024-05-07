@@ -336,6 +336,16 @@ namespace winrt::FFmpegInteropX::implementation
         TimeSpan lastSeek{ 0 };
 
         void OnPositionChanged(MediaPlaybackSession const& sender, IInspectable const& args);
+
+        bool ShouldAddStream(IStreamInfo const& stream)
+        {
+            auto mediaStreamFilter = config->General().MediaStreamFilter();
+            if (mediaStreamFilter)
+            {
+                return mediaStreamFilter.ShouldAddStream(stream);
+            }
+            else return true; //no filter means all streams go in
+        }
     };
 }
 namespace winrt::FFmpegInteropX::factory_implementation
