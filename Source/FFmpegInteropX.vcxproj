@@ -14,7 +14,7 @@
     <ConfigType>Debug</ConfigType>
   </PropertyGroup>
   <PropertyGroup>
-    <FFmpegPackageVersion Condition="'$(FFmpegPackageVersion)'==''">6.1.100-pre1</FFmpegPackageVersion>
+    <FFmpegPackageVersion Condition="'$(FFmpegPackageVersion)'==''">7.0.100-pre2</FFmpegPackageVersion>
     <FFmpegPackageIdBase Condition="'$(FFmpegPackageIdBase)'==''">FFmpegInteropX</FFmpegPackageIdBase>
     <FFmpegPackageIdPlatform Condition="'$(FFmpegPackageIdPlatform)'=='' AND '$(AppType)'=='Win32'">Desktop</FFmpegPackageIdPlatform>
     <FFmpegPackageIdPlatform Condition="'$(FFmpegPackageIdPlatform)'=='' AND '$(AppType)'=='UWP'">UWP</FFmpegPackageIdPlatform>
@@ -349,6 +349,8 @@
     <Import Project="..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.targets" Condition="'$(AppType)'=='Win32' AND Exists('..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.targets')" />
     <Import Project="..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets" Condition="Exists('..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets')" />
     <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets')" />
+    <Import Project="..\packages\FFmpegInteropX.Desktop.FFmpeg.7.0.100-pre2\build\native\FFmpegInteropX.Desktop.FFmpeg.targets" Condition="Exists('..\packages\FFmpegInteropX.Desktop.FFmpeg.7.0.100-pre2\build\native\FFmpegInteropX.Desktop.FFmpeg.targets')" />
+    <Import Project="..\packages\FFmpegInteropX.UWP.FFmpeg.7.0.100-pre2\build\native\FFmpegInteropX.UWP.FFmpeg.targets" Condition="Exists('..\packages\FFmpegInteropX.UWP.FFmpeg.7.0.100-pre2\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -362,6 +364,8 @@
     <Error Condition="!Exists('..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets'))" />
+    <Error Condition="!Exists('..\packages\FFmpegInteropX.Desktop.FFmpeg.7.0.100-pre2\build\native\FFmpegInteropX.Desktop.FFmpeg.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FFmpegInteropX.Desktop.FFmpeg.7.0.100-pre2\build\native\FFmpegInteropX.Desktop.FFmpeg.targets'))" />
+    <Error Condition="!Exists('..\packages\FFmpegInteropX.UWP.FFmpeg.7.0.100-pre2\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FFmpegInteropX.UWP.FFmpeg.7.0.100-pre2\build\native\FFmpegInteropX.UWP.FFmpeg.targets'))" />
   </Target>
   <Target Name="AfterBuild">
     <PropertyGroup>
