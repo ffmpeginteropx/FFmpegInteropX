@@ -1783,8 +1783,6 @@ namespace winrt::FFmpegInteropX::implementation
 
             auto lastStreamContext = ioStreamCollection.at(ioStreamCollection.size() - 1);
 
-            InitFFmpegContext(lastStreamContext);
-
             if (mssWeak)
             {
                 for (auto audioStream : lastStreamContext->audioStreams)
