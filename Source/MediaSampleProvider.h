@@ -188,6 +188,11 @@ public:
         streamDelay = newDelay;
     }
 
+    shared_ptr<FFmpegReader> GetReader()
+    {
+        return m_pReader;
+    }
+
 protected:
     MediaSampleProvider(
         std::shared_ptr<FFmpegReader> reader,

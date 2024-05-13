@@ -721,5 +721,35 @@ namespace MediaPlayerCS
                 await DisplayErrorMessage(ex.ToString());
             }
         }
+
+        private async void AddLocalFile(object sender, RoutedEventArgs e)
+        {
+            if(FFmpegMSS==null)
+            {
+                await DisplayErrorMessage($"Open a file first");
+            }
+            FileOpenPicker filePicker = new FileOpenPicker();
+            filePicker.SettingsIdentifier = "VideoFile";
+            filePicker.ViewMode = PickerViewMode.Thumbnail;
+            filePicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+            filePicker.FileTypeFilter.Add("*");
+
+            // Show file picker so user can select a file
+            StorageFile file = await filePicker.PickSingleFileAsync();
+
+            if (file != null)
+            {
+                IRandomAccessStream readStream = await file.OpenAsync(FileAccessMode.Read);
+
+                try
+                {
+                    await FFmpegMSS.AddStreamsAsync(readStream);
+                }
+                catch (Exception ex)
+                {
+                    await DisplayErrorMessage(ex.Message);
+                }
+            }
+        }
     }
 }

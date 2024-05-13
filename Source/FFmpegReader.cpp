@@ -127,8 +127,11 @@ void FFmpegReader::FlushCodecsAndBuffers()
     isEof = false;
 }
 
-HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> videoStream, std::shared_ptr<MediaSampleProvider> audioStream)
+HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan currentPosition, bool fastSeek, std::shared_ptr<MediaSampleProvider> pvideoStream, std::shared_ptr<MediaSampleProvider> paudioStream)
 {
+    auto videoStream = (pvideoStream && pvideoStream->GetReader().get() == this) ? pvideoStream : nullptr;
+    auto audioStream = (paudioStream && paudioStream->GetReader().get() == this) ? paudioStream : nullptr;;
+
     Stop();
 
     std::lock_guard lock(mutex);
@@ -147,7 +150,7 @@ HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan
         // all good
         DebugMessage(L"BufferedSeek!\n");
     }
-    else if (fastSeek)
+    else if (fastSeek && videoStream)
     {
         hr = SeekFast(position, actualPosition, currentPosition, videoStream, audioStream);
     }
@@ -155,7 +158,11 @@ HRESULT FFmpegReader::Seek(TimeSpan position, TimeSpan& actualPosition, TimeSpan
     {
         DebugMessage(L"NormalSeek\n");
         // Select the first valid stream either from video or audio
-        auto stream = videoStream ? videoStream : audioStream;
+        auto stream = (videoStream ? videoStream : audioStream);
+        stream = stream ? stream : sampleProviders->at(0);
+
+        if (!stream) return E_FAIL;
+
         int64_t seekTarget = stream->ConvertPosition(position);
         if (av_seek_frame(avFormatCtx, stream->StreamIndex(), seekTarget, AVSEEK_FLAG_BACKWARD) < 0)
         {

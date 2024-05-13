@@ -53,6 +53,12 @@
                         <Button Content="Media playback list sample" Click="GoToMediaPlaybackListSample"></Button>
                         <Button Content="Start playback" Click="CreatePlaybackItemAndStartPlayback"  Margin="0,20,10,10" />
 
+                        <TextBlock Text="Add Local File or URI"/>
+                        <StackPanel Orientation="Horizontal">
+                            <AppBarButton Content="Open Local File" Icon="OpenFile" Margin="0, 10, 10, 0" Click="AddLocalFile"/>
+                            <TextBox x:Name="tbUri2" PlaceholderText="Enter URI and press Enter" InputScope="Url" Width="210" Height="30" KeyUp="URIBoxKeyUp"/>
+                        </StackPanel>
+
                         <ToggleSwitch Header="Allow Hardware Accelection" OffContent="OFF" OnContent="ON" x:Name="AutoDetect" Toggled="AutoDetect_Toggled" />
                         <ToggleSwitch Header="Force System Video Decoder" OffContent="OFF" OnContent="ON" x:Name="PassthroughVideo" Toggled="PassthroughVideo_Toggled" Margin="0,0,0,20" />
 
