@@ -144,6 +144,9 @@
     <ProjectReference Include="..\..\Source\FFmpegInteropX.vcxproj">
       <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\VideoEffects\FFmpegInteropX.VideoEffects.vcxproj">
+      <Project>{6c4bff5e-7037-4ee8-9c9f-5381c35ba066}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
