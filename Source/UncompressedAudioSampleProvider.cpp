@@ -85,9 +85,12 @@ void UncompressedAudioSampleProvider::SetMediaEncodingProperties(AVSampleFormat 
     if (outChannelLayout.order != AV_CHANNEL_ORDER_NATIVE || !outChannelLayout.u.mask)
     {
         // TODO use av_channel_layout_retype once it becomes available in ffmpeg 7.0?!
+
         av_channel_layout_uninit(&outChannelLayout);
         av_channel_layout_from_mask(&outChannelLayout,
             AvCodecContextHelpers::GetDefaultChannelLayout(channelLayout.nb_channels));
+
+        av_channel_layout_retype(&outChannelLayout, AV_CHANNEL_ORDER_NATIVE, AV_CHANNEL_LAYOUT_RETYPE_FLAG_CANONICAL);
     }
 
     auto nativeLayout = outChannelLayout.u.mask;
@@ -148,7 +151,7 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
 
     bool hasFormatChanged = format != inSampleFormat || av_channel_layout_compare(&inChannelLayout, &channelLayout) || sampleRate != inSampleRate;
     if (hasFormatChanged)
-    {      
+    {
         OutputDebugStringW(L"Audio Format changed!\r\n");
 
         auto streamDescriptor = AudioDescriptor();
