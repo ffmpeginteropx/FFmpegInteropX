@@ -203,7 +203,6 @@
     <ClInclude Include="AudioFilter.h" />
     <ClInclude Include="AudioStreamInfo.h" />
     <ClInclude Include="AvCodecContextHelpers.h" />
-    <ClInclude Include="BasicVideoEffect.h" />
     <ClInclude Include="ChapterInfo.h" />
     <ClInclude Include="CharacterEncoding.h" />
     <ClInclude Include="CodecChecker.h" />
@@ -250,7 +249,6 @@
     <ClInclude Include="UncompressedSampleProvider.h" />
     <ClInclude Include="UncompressedVideoSampleProvider.h" />
     <ClInclude Include="VideoConfig.h" />
-    <ClInclude Include="VideoEffectConfiguration.h" />
     <ClInclude Include="VideoFilterFactory.h" />
     <ClInclude Include="VideoFilter.h" />
     <ClInclude Include="VideoFrame.h" />
@@ -261,7 +259,6 @@
     <ClCompile Include="AttachedFileHelper.cpp" />
     <ClCompile Include="AudioConfig.cpp" />
     <ClCompile Include="AudioStreamInfo.cpp" />
-    <ClCompile Include="BasicVideoEffect.cpp" />
     <ClCompile Include="ChapterInfo.cpp" />
     <ClCompile Include="CharacterEncoding.cpp" />
     <ClCompile Include="CodecChecker.cpp" />
@@ -300,7 +297,6 @@
     <ClCompile Include="UncompressedSampleProvider.cpp" />
     <ClCompile Include="UncompressedVideoSampleProvider.cpp" />
     <ClCompile Include="VideoConfig.cpp" />
-    <ClCompile Include="VideoEffectConfiguration.cpp" />
     <ClCompile Include="VideoFrame.cpp" />
     <ClCompile Include="VideoStreamInfo.cpp" />
   </ItemGroup>
