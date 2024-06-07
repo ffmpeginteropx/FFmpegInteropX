@@ -35,6 +35,59 @@ namespace winrt::FFmpegInteropX::implementation
 
     using namespace TextEncoding;
 
+    struct AVIOStreamContext
+    {
+        AVDictionary* avDict = nullptr;
+        AVIOContext* avIOCtx = nullptr;
+        AVFormatContext* avFormatCtx = nullptr;
+        winrt::com_ptr<IStream> fileStreamData = { nullptr };
+        TextEncodingDetect::Encoding streamEncoding = TextEncodingDetect::None;
+        bool streamEncodingChecked = false;
+        hstring url;
+
+        winrt::com_ptr<MediaSourceConfig> config = { nullptr };
+
+        std::vector<std::shared_ptr<MediaSampleProvider>> audioStreams;
+        std::vector<std::shared_ptr<MediaSampleProvider>> videoStreams;
+        std::vector<std::shared_ptr<SubtitleProvider>> subtitleStreamProviders;
+        std::vector<std::shared_ptr<MediaSampleProvider>> sampleProviders;
+
+
+        AVIOStreamContext(winrt::com_ptr<MediaSourceConfig> p_config)
+        {
+            config = p_config;
+        }
+
+        ~AVIOStreamContext()
+        {
+            audioStreams.clear();
+            videoStreams.clear();
+
+            if (avFormatCtx)
+            {
+                avformat_close_input(&avFormatCtx);
+            }
+
+            if (avDict)
+            {
+                av_dict_free(&avDict);
+            }
+
+
+            if (avIOCtx)
+            {
+                avIOCtx->opaque = NULL;
+                avio_closep(&avIOCtx);
+            }
+
+            if (avFormatCtx)
+            {
+                avformat_free_context(avFormatCtx);
+            }
+        }
+    };
+
+
     struct FFmpegMediaSource : FFmpegMediaSourceT<FFmpegMediaSource>
     {
         virtual ~FFmpegMediaSource();
@@ -212,23 +265,26 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Gets the presentation timestamp delay for the given stream. </summary>
         winrt::Windows::Foundation::TimeSpan GetStreamDelay(winrt::FFmpegInteropX::IStreamInfo const& stream);
 
+        winrt::Windows::Foundation::IAsyncAction AddStreamsAsync(winrt::Windows::Storage::Streams::IRandomAccessStream stream);
+        winrt::Windows::Foundation::IAsyncAction AddStreamsAsync(hstring uri);
+
         void Close();
 
         FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, DispatcherQueue const& dispatcher, uint64_t windowId, bool useHdr);
 
     private:
 
-        HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);
-        HRESULT CreateMediaStreamSource(hstring const& uri);
-        HRESULT InitFFmpegContext();
+        HRESULT OpenMediaStream(IRandomAccessStream const& stream);
+        HRESULT OpenMediaUri(hstring const& uri);
+        HRESULT InitFFmpegContext(shared_ptr<AVIOStreamContext> streamContext);
         MediaStreamSource CreateMediaStreamSource();
         MediaSource CreateMediaSource();
-        std::shared_ptr<MediaSampleProvider> CreateAudioStream(AVStream* avStream, int index);
-        std::shared_ptr<MediaSampleProvider> CreateVideoStream(AVStream* avStream, int index);
-        std::shared_ptr<SubtitleProvider> CreateSubtitleSampleProvider(AVStream* avStream, int index);
-        std::shared_ptr<MediaSampleProvider> CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
-        std::shared_ptr<MediaSampleProvider> CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index);
-        HRESULT ParseOptions(PropertySet const& ffmpegOptions);
+        std::shared_ptr<MediaSampleProvider> CreateAudioStream(AVStream* avStream, int index, shared_ptr<FFmpegReader> m_pReader, shared_ptr<AVIOStreamContext> streamContext);
+        std::shared_ptr<MediaSampleProvider> CreateVideoStream(AVStream* avStream, int index, shared_ptr<FFmpegReader> m_pReader, shared_ptr<AVIOStreamContext> streamContext);
+        std::shared_ptr<SubtitleProvider> CreateSubtitleSampleProvider(AVStream* avStream, int index, shared_ptr<FFmpegReader> m_pReader, shared_ptr<AVIOStreamContext> streamContext);
+        std::shared_ptr<MediaSampleProvider> CreateAudioSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index, shared_ptr<FFmpegReader> m_pReader, shared_ptr<AVIOStreamContext> streamContext);
+        std::shared_ptr<MediaSampleProvider> CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avCodecCtx, int index, shared_ptr<FFmpegReader> m_pReader, shared_ptr<AVIOStreamContext> streamContext);
+        HRESULT ParseOptions(PropertySet const& ffmpegOptions, shared_ptr<AVIOStreamContext> streamContext);
         void MediaStreamSourceClosed(MediaStreamSource const& sender, MediaStreamSourceClosedEventArgs const& args);
         void OnStarting(MediaStreamSource const& sender, MediaStreamSourceStartingEventArgs const& args);
         void OnSampleRequested(MediaStreamSource const& sender, MediaStreamSourceSampleRequestedEventArgs const& args);
@@ -258,18 +314,20 @@ namespace winrt::FFmpegInteropX::implementation
             return currentVideoStream;
         }
 
-        std::shared_ptr<FFmpegReader> m_pReader;
-        AVDictionary* avDict = nullptr;
-        AVIOContext* avIOCtx = nullptr;
-        AVFormatContext* avFormatCtx = nullptr;
-        winrt::com_ptr<IStream> fileStreamData = { nullptr };
-        TextEncodingDetect::Encoding streamEncoding = TextEncodingDetect::None;
-        bool streamEncodingChecked = false;
+        //std::shared_ptr<FFmpegReader> m_pReader;
+        std::vector<shared_ptr<FFmpegReader>> m_pFfmpegReaders;
+        std::vector<shared_ptr<AVIOStreamContext>> ioStreamCollection;
+
+        //AVDictionary* avDict = nullptr;
+        //AVIOContext* avIOCtx = nullptr;
+        //AVFormatContext* avFormatCtx = nullptr;
+        //winrt::com_ptr<IStream> fileStreamData = { nullptr };
+        //TextEncodingDetect::Encoding streamEncoding = TextEncodingDetect::None;
+        //bool streamEncodingChecked = false;
         winrt::com_ptr<MediaSourceConfig> config = { nullptr };
         bool isShuttingDown = false;
 
-        std::vector<std::shared_ptr<SubtitleProvider>> subtitleStreamProviders;
-
+        std::vector<shared_ptr<AVIOStreamContext>> filestreamDataSources;
     private:
 
         winrt::weak_ref<MediaStreamSource> mssWeak = { nullptr };
@@ -286,6 +344,8 @@ namespace winrt::FFmpegInteropX::implementation
         std::vector<std::shared_ptr<MediaSampleProvider>> sampleProviders;
         std::vector<std::shared_ptr<MediaSampleProvider>> audioStreams;
         std::vector<std::shared_ptr<MediaSampleProvider>> videoStreams;
+        std::vector<std::shared_ptr<SubtitleProvider>> subtitleStreamProviders;
+
 
         std::shared_ptr<MediaSampleProvider> currentVideoStream = { nullptr };
         std::shared_ptr<MediaSampleProvider> currentAudioStream = { nullptr };

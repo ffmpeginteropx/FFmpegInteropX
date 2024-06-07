@@ -557,6 +557,18 @@ namespace FFmpegInteropX
 
         ///<summary>Gets the presentation timestamp delay for the given stream. </summary>
         Windows.Foundation.TimeSpan GetStreamDelay(IStreamInfo stream);
+
+        /// <summary>
+        /// Adds the media streams from the given input stream to the media source.
+        /// </summary>
+        [default_overload]
+        Windows.Foundation.IAsyncAction AddStreamsAsync(Windows.Storage.Streams.IRandomAccessStream stream);
+
+        /// <summary>
+        /// Adds the media streams from the given input URI to the media source.
+        /// </summary>
+        Windows.Foundation.IAsyncAction AddStreamsAsync(String uri);
+
     };
 
     runtimeclass SubtitleParser : Windows.Foundation.IClosable
