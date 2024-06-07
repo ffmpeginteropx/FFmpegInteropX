@@ -425,7 +425,7 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
     else
     {
         // get rotation from side data
-        auto displaymatrix = av_stream_get_side_data(m_pAvStream, AVPacketSideDataType::AV_PKT_DATA_DISPLAYMATRIX, NULL);
+        auto displaymatrix = av_packet_side_data_get(m_pAvStream->codecpar->coded_side_data, m_pAvStream->codecpar->nb_coded_side_data, AVPacketSideDataType::AV_PKT_DATA_DISPLAYMATRIX);
         if (displaymatrix)
         {
             // need to invert and use positive values

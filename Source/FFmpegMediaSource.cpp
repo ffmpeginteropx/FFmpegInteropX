@@ -1406,7 +1406,7 @@ namespace winrt::FFmpegInteropX::implementation
         auto failedToken = mediaPlayer.MediaFailed([tce](MediaPlayer const&, MediaPlayerFailedEventArgs const&) { tce.set(false); });
 
         mediaPlayer.Source(playbackItem);
-        auto playbackItemWeak = this->playbackItemWeak;
+        auto currentPlaybackItemWeak = this->playbackItemWeak;
 
         auto result = co_await task<bool>(tce);
 
@@ -1423,9 +1423,9 @@ namespace winrt::FFmpegInteropX::implementation
         {
             // register for soruce changed event
             auto tokenPtr = new event_token[1]();
-            tokenPtr[0] = mediaPlayer.SourceChanged([tokenPtr, playbackItemWeak](MediaPlayer const& mediaPlayer, IInspectable const&)
+            tokenPtr[0] = mediaPlayer.SourceChanged([tokenPtr, currentPlaybackItemWeak](MediaPlayer const& mediaPlayer, IInspectable const&)
                 {
-                    auto playbackItem = playbackItemWeak.get();
+                    auto playbackItem = currentPlaybackItemWeak.get();
                     if (!playbackItem)
                     {
                         // we were disposed already
@@ -2437,7 +2437,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             // Make sure we have at least 4 bytes for BOM check
             bool isEof = false;
-            while (bytesRead < min(bufSize, 4) && !isEof)
+            while (bytesRead < (ULONG)min(bufSize, 4) && !isEof)
             {
                 ULONG read = 0;
                 hr = mss->fileStreamData->Read(buf + bytesRead, bufSize - bytesRead, &read);
@@ -2458,7 +2458,7 @@ namespace winrt::FFmpegInteropX::implementation
             if (encoding == TextEncodingDetect::None)
             {
                 // if no BOM is present, make sure we read the first chunk for full probing
-                while (bytesRead < bufSize && !isEof)
+                while (bytesRead < (ULONG)bufSize && !isEof)
                 {
                     ULONG read = 0;
                     hr = mss->fileStreamData->Read(buf + bytesRead, bufSize - bytesRead, &read);
