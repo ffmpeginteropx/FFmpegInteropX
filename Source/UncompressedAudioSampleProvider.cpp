@@ -82,15 +82,22 @@ void UncompressedAudioSampleProvider::SetMediaEncodingProperties(AVSampleFormat 
     av_channel_layout_copy(&inChannelLayout, &channelLayout);
     av_channel_layout_copy(&outChannelLayout, &channelLayout);
 
-    if (outChannelLayout.order != AV_CHANNEL_ORDER_NATIVE || !outChannelLayout.u.mask)
+    if (outChannelLayout.order != AV_CHANNEL_ORDER_NATIVE)
     {
-        // TODO use av_channel_layout_retype once it becomes available in ffmpeg 7.0?!
-
+        // try retype layout, otherwise init from default mask
+        if (av_channel_layout_retype(&outChannelLayout, AV_CHANNEL_ORDER_NATIVE, AV_CHANNEL_LAYOUT_RETYPE_FLAG_CANONICAL) < 0)
+        {
+            av_channel_layout_uninit(&outChannelLayout);
+            av_channel_layout_from_mask(&outChannelLayout,
+                AvCodecContextHelpers::GetDefaultChannelLayout(channelLayout.nb_channels));
+        }
+    }
+    else if (!outChannelLayout.u.mask)
+    {
+        // init from default mask
         av_channel_layout_uninit(&outChannelLayout);
         av_channel_layout_from_mask(&outChannelLayout,
             AvCodecContextHelpers::GetDefaultChannelLayout(channelLayout.nb_channels));
-
-        av_channel_layout_retype(&outChannelLayout, AV_CHANNEL_ORDER_NATIVE, AV_CHANNEL_LAYOUT_RETYPE_FLAG_CANONICAL);
     }
 
     auto nativeLayout = outChannelLayout.u.mask;
