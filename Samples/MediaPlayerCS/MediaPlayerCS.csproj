@@ -154,7 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX.UWP.FFmpeg">
-      <Version>7.0.100-pre2</Version>
+      <Version>7.0.100-pre3</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.9</Version>
@@ -178,8 +178,8 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="FFmpegInteropX.UWP.Lib" Version="2.0.0-pre4" />
-        <PackageReference Include="FFmpegInteropX.UWP.VideoEffects" Version="2.0.0-pre4" />
+        <PackageReference Include="FFmpegInteropX.UWP.Lib" Version="2.0.0-pre7" />
+        <PackageReference Include="FFmpegInteropX.UWP.VideoEffects" Version="2.0.0-pre7" />
       </ItemGroup>
     </Otherwise>
   </Choose>

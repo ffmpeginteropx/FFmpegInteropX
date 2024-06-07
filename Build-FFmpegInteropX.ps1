@@ -144,6 +144,8 @@ $success = 1
 # Restore nuget packets for solution
 nuget.exe restore ${PSScriptRoot}\FFmpegInteropX.sln
 
+if ($lastexitcode -ne 0) { throw "Failed to restore NuGet packages." }
+
 if ($NugetPackageVersion -and !$LibraryVersionNumber) {
     $versionPart = ($NugetPackageVersion -Split '-')[0];
     $LibraryVersionNumber = [Version]($versionPart + ".0");
