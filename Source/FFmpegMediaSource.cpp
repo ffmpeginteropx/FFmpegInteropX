@@ -18,6 +18,7 @@
 #include "ChapterInfo.h"
 #include "FFmpegReader.h"
 #include "PlatformInfo.h"
+#include <Windows.h>
 
 #ifdef Win32
 #include <winrt/Microsoft.Graphics.Display.h>
@@ -75,7 +76,6 @@ namespace winrt::FFmpegInteropX::implementation
                 isRegistered = true;
             }
         }
-
         audioStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::AudioStreamInfo>();
         subtitleStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::SubtitleStreamInfo>();
         videoStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::VideoStreamInfo>();
@@ -1913,6 +1913,8 @@ namespace winrt::FFmpegInteropX::implementation
                         }
                     }
 #else // UWP
+                    UNREFERENCED_PARAMETER(windowId);
+
                     if (PlatformInfo::IsXbox())
                     {
                         // HdmiDisplayInformation is xbox only, DisplayInformation is non-xbox only, each being null in the other case
@@ -1937,13 +1939,13 @@ namespace winrt::FFmpegInteropX::implementation
                                 useHdr = true;
                             }
                         }
-                }
+                    }
 #endif // Win32
-            }
+                }
                 catch (...)
                 {
                 }
-        }
+            }
             break;
         default:
             break;
