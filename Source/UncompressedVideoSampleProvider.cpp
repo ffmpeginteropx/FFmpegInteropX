@@ -236,14 +236,14 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
         properties.Insert(MF_MT_VIDEO_NOMINAL_RANGE, PropertyValue::CreateUInt32(nominalRange));
     }
 
-    AVContentLightMetadata* contentLightMetadata{ reinterpret_cast<AVContentLightMetadata*>(av_stream_get_side_data(m_pAvStream, AV_PKT_DATA_CONTENT_LIGHT_LEVEL, nullptr)) };
+    const AVContentLightMetadata* contentLightMetadata{ reinterpret_cast<const AVContentLightMetadata*>(av_packet_side_data_get(m_pAvStream->codecpar->coded_side_data, m_pAvStream->codecpar->nb_coded_side_data, AV_PKT_DATA_CONTENT_LIGHT_LEVEL)) };
     if (contentLightMetadata != nullptr && applyHdrColorInfo)
     {
         properties.Insert(MF_MT_MAX_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxCLL));
         properties.Insert(MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxFALL));
     }
 
-    AVMasteringDisplayMetadata* masteringDisplayMetadata{ reinterpret_cast<AVMasteringDisplayMetadata*>(av_stream_get_side_data(m_pAvStream, AV_PKT_DATA_MASTERING_DISPLAY_METADATA, nullptr)) };
+    const AVMasteringDisplayMetadata* masteringDisplayMetadata{ reinterpret_cast<const AVMasteringDisplayMetadata*>(av_packet_side_data_get(m_pAvStream->codecpar->coded_side_data, m_pAvStream->codecpar->nb_coded_side_data, AV_PKT_DATA_MASTERING_DISPLAY_METADATA)) };
     if (masteringDisplayMetadata != nullptr && applyHdrColorInfo)
     {
         if (masteringDisplayMetadata->has_luminance)
@@ -404,8 +404,8 @@ void UncompressedVideoSampleProvider::ReadFrameProperties(AVFrame* avFrame, int6
     // Try to get the best effort timestamp for the frame.
     if (avFrame->best_effort_timestamp != AV_NOPTS_VALUE)
         framePts = avFrame->best_effort_timestamp;
-    m_interlaced_frame = avFrame->interlaced_frame == 1;
-    m_top_field_first = avFrame->top_field_first == 1;
+    m_interlaced_frame = avFrame->flags & AV_FRAME_FLAG_INTERLACED;
+    m_top_field_first = avFrame->flags & AV_FRAME_FLAG_TOP_FIELD_FIRST;
     m_chroma_location = avFrame->chroma_location;
     if (m_config.as<implementation::MediaSourceConfig>()->IsFrameGrabber && !IsCleanSample)
     {
@@ -424,12 +424,12 @@ void UncompressedVideoSampleProvider::ReadFrameProperties(AVFrame* avFrame, int6
         else
         {
             // for progressive video, we need a key frame or b frame
-            IsCleanSample = avFrame->key_frame || avFrame->pict_type == AV_PICTURE_TYPE_B;
+            IsCleanSample = avFrame->flags & AV_FRAME_FLAG_KEY || avFrame->pict_type == AV_PICTURE_TYPE_B;
         }
     }
 
     // metadata for jpeg and png is only loaded on frame decode. check for orientation now and apply.
-    if (avFrame->metadata && m_pAvCodecCtx->frame_number == 1)
+    if (avFrame->metadata && m_pAvCodecCtx->frame_num == 1)
     {
         auto entry = av_dict_get(avFrame->metadata, "Orientation", NULL, 0);
         if (entry)

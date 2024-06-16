@@ -1172,6 +1172,7 @@ public:
 
     TimedTextRegion GetOrAddCachedRegion(TimedTextRegion  const& r1, int layer)
     {
+        UNREFERENCED_PARAMETER(layer);
         for (const auto &cachedRegion : cachedRegions) {
 
             auto r2 = cachedRegion;

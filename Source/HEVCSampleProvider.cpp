@@ -59,6 +59,7 @@ HRESULT HEVCSampleProvider::GetSPSAndPPSBuffer(DataWriter const& dataWriter, BYT
             /* Decode nal units from hvcC. */
             for (i = 0; i < num_arrays; i++) {
                 int type = buf[pos++] & 0x3f;
+                UNREFERENCED_PARAMETER(type);
                 int cnt = ReadMultiByteValue(buf, pos, 2);
                 pos += 2;
 

@@ -48,24 +48,27 @@ winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvi
     auto encodingProperties = winrt::Windows::Media::MediaProperties::AudioEncodingProperties();
 
     auto format = m_pAvCodecCtx->sample_fmt != AV_SAMPLE_FMT_NONE ? m_pAvCodecCtx->sample_fmt : AV_SAMPLE_FMT_S16;
-    auto channels = AvCodecContextHelpers::GetNBChannels(m_pAvCodecCtx);
-    auto channelLayout = m_pAvCodecCtx->channel_layout ? m_pAvCodecCtx->channel_layout : AvCodecContextHelpers::GetDefaultChannelLayout(channels);
     auto sampleRate = m_pAvCodecCtx->sample_rate;
 
-    SetMediaEncodingProperties(format, channels, channelLayout, sampleRate, encodingProperties);
+    auto channelLayout = m_pAvCodecCtx->ch_layout;
+    if (m_pAvCodecCtx->profile == FF_PROFILE_AAC_HE_V2 && channelLayout.nb_channels == 1)
+    {
+        channelLayout.nb_channels = 2;
+        channelLayout.order = AV_CHANNEL_ORDER_NATIVE;
+        channelLayout.u.mask = AV_CH_LAYOUT_STEREO;
+    }
+
+    SetMediaEncodingProperties(format, channelLayout, sampleRate, encodingProperties);
 
     return winrt::Windows::Media::Core::AudioStreamDescriptor(encodingProperties);
 }
 
 void UncompressedAudioSampleProvider::SetMediaEncodingProperties(AVSampleFormat format,
-    int channels,
-    const uint64_t& channelLayout,
+    const AVChannelLayout& channelLayout,
     int sampleRate,
     winrt::Windows::Media::MediaProperties::AudioEncodingProperties& encodingProperties)
 {
     inSampleFormat = format;
-    inChannels = channels;
-    inChannelLayout = channelLayout;
     inSampleRate = outSampleRate = sampleRate;
 
     outSampleFormat = av_get_packed_sample_fmt(inSampleFormat);
@@ -76,66 +79,86 @@ void UncompressedAudioSampleProvider::SetMediaEncodingProperties(AVSampleFormat 
     if (outSampleFormat == AV_SAMPLE_FMT_S64)
         outSampleFormat = AV_SAMPLE_FMT_S32;
 
-    outChannels = inChannels;
-    outChannelLayout = inChannelLayout;
+    av_channel_layout_copy(&inChannelLayout, &channelLayout);
+    av_channel_layout_copy(&outChannelLayout, &channelLayout);
 
-    if (m_config.Audio().DownmixAudioStreamsToStereo() && outChannelLayout > AV_CH_LAYOUT_STEREO)
+    if (outChannelLayout.order != AV_CHANNEL_ORDER_NATIVE)
+    {
+        // try retype layout, otherwise init from default mask
+        if (av_channel_layout_retype(&outChannelLayout, AV_CHANNEL_ORDER_NATIVE, AV_CHANNEL_LAYOUT_RETYPE_FLAG_CANONICAL) < 0)
+        {
+            av_channel_layout_uninit(&outChannelLayout);
+            av_channel_layout_from_mask(&outChannelLayout,
+                AvCodecContextHelpers::GetDefaultChannelLayout(channelLayout.nb_channels));
+        }
+    }
+    else if (!outChannelLayout.u.mask)
+    {
+        // init from default mask
+        av_channel_layout_uninit(&outChannelLayout);
+        av_channel_layout_from_mask(&outChannelLayout,
+            AvCodecContextHelpers::GetDefaultChannelLayout(channelLayout.nb_channels));
+    }
+
+    auto nativeLayout = outChannelLayout.u.mask;
+    if (m_config.Audio().DownmixAudioStreamsToStereo() && nativeLayout != AV_CH_LAYOUT_STEREO)
     {
         // use existing downmix channels, if available, otherwise perform manual downmix using resampler
-        if (outChannelLayout & AV_CH_LAYOUT_STEREO_DOWNMIX)
+        outChannelLayout.order = AV_CHANNEL_ORDER_NATIVE;
+        if (nativeLayout & AV_CH_LAYOUT_STEREO_DOWNMIX)
         {
-            outChannelLayout = AV_CH_LAYOUT_STEREO_DOWNMIX;
-            outChannels = 2;
+            outChannelLayout.u.mask = AV_CH_LAYOUT_STEREO_DOWNMIX;
+            outChannelLayout.nb_channels = 2;
         }
-        else if (outChannels > 1)
+        else if (outChannelLayout.nb_channels > 1)
         {
-            outChannelLayout = AV_CH_LAYOUT_STEREO;
-            outChannels = 2;
+            outChannelLayout.u.mask = AV_CH_LAYOUT_STEREO;
+            outChannelLayout.nb_channels = 2;
         }
         else
         {
-            outChannelLayout = AV_CH_LAYOUT_MONO;
-            outChannels = 1;
+            outChannelLayout.u.mask = AV_CH_LAYOUT_MONO;
+            outChannelLayout.nb_channels = 1;
         }
     }
-    else
+    else if (nativeLayout > 0x000FFFFF)
     {
         // strip off advanced channels not supported by Windows APIs.
-        if (outChannelLayout > 0x000FFFFF)
+        nativeLayout &= 0x000FFFFF;
+        if (!nativeLayout)
         {
-            outChannelLayout &= 0x000FFFFF;
-            if (!outChannelLayout)
-            {
-                outChannelLayout = AvCodecContextHelpers::GetDefaultChannelLayout(outChannels);
-            }
-            outChannels = av_get_channel_layout_nb_channels(outChannelLayout);
+            outChannelLayout.u.mask = AvCodecContextHelpers::GetDefaultChannelLayout(channelLayout.nb_channels);
+        }
+        else
+        {
+            outChannelLayout.u.mask = nativeLayout;
+            outChannelLayout.nb_channels = std::_Popcount(nativeLayout);
         }
     }
 
     bytesPerSample = av_get_bytes_per_sample(outSampleFormat);
     int bitsPerSample = bytesPerSample * 8;
     UINT32 reportedChannelLayout =
-        outChannelLayout == AV_CH_LAYOUT_STEREO_DOWNMIX
+        nativeLayout == AV_CH_LAYOUT_STEREO_DOWNMIX
         ? AV_CH_LAYOUT_STEREO
-        : (UINT32)outChannelLayout;
+        : (UINT32)nativeLayout;
 
     // set encoding properties
     encodingProperties.Subtype(outSampleFormat == AV_SAMPLE_FMT_FLT ? MediaEncodingSubtypes::Float() : MediaEncodingSubtypes::Pcm());
     encodingProperties.BitsPerSample(bitsPerSample);
     encodingProperties.SampleRate(outSampleRate);
-    encodingProperties.ChannelCount(outChannels);
-    encodingProperties.Bitrate(bitsPerSample * outSampleRate * outChannels);
+    encodingProperties.ChannelCount(outChannelLayout.nb_channels);
+    encodingProperties.Bitrate(bitsPerSample * outSampleRate * outChannelLayout.nb_channels);
     encodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value(reportedChannelLayout));
 }
 
-HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate)
+HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, const AVChannelLayout& channelLayout, int sampleRate)
 {
     HRESULT hr = S_OK;
 
-    channelLayout = channelLayout ? channelLayout : AvCodecContextHelpers::GetDefaultChannelLayout(channels);
-    bool hasFormatChanged = format != inSampleFormat || channels != inChannels || channelLayout != inChannelLayout || sampleRate != inSampleRate;
+    bool hasFormatChanged = format != inSampleFormat || av_channel_layout_compare(&inChannelLayout, &channelLayout) || sampleRate != inSampleRate;
     if (hasFormatChanged)
-    {      
+    {
         OutputDebugStringW(L"Audio Format changed!\r\n");
 
         auto streamDescriptor = AudioDescriptor();
@@ -143,7 +166,7 @@ HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat forma
         {
             OutputDebugStringW(L"Trying dynamic format change.\r\n");
             auto encProp = streamDescriptor.EncodingProperties();
-            SetMediaEncodingProperties(format, channels, channelLayout, sampleRate, encProp);
+            SetMediaEncodingProperties(format, channelLayout, sampleRate, encProp);
         }
 
         // Not all sample formats are directly supported by MF!
@@ -159,18 +182,18 @@ HRESULT UncompressedAudioSampleProvider::UpdateResampler()
 {
     HRESULT hr = S_OK;
 
-    useResampler = inSampleFormat != outSampleFormat || inChannels != outChannels || inChannelLayout != outChannelLayout || inSampleRate != outSampleRate;
+    useResampler = av_channel_layout_compare(&inChannelLayout, &outChannelLayout) || inSampleRate != outSampleRate || inSampleFormat != outSampleFormat;
     if (useResampler)
     {
         OutputDebugStringW(L"Using audio resampler.\r\n");
 
         // Set up resampler to convert to output format and channel layout.
-        m_pSwrCtx = swr_alloc_set_opts(
-            m_pSwrCtx,
-            outChannelLayout,
+        hr = swr_alloc_set_opts2(
+            &m_pSwrCtx,
+            &outChannelLayout,
             outSampleFormat,
             outSampleRate,
-            inChannelLayout,
+            &inChannelLayout,
             inSampleFormat,
             inSampleRate,
             0,
@@ -213,7 +236,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
 
     HRESULT hr = S_OK;
 
-    hr = CheckFormatChanged((AVSampleFormat)avFrame->format, avFrame->channels, avFrame->channel_layout, avFrame->sample_rate);
+    hr = CheckFormatChanged((AVSampleFormat)avFrame->format, avFrame->ch_layout, avFrame->sample_rate);
 
     if (SUCCEEDED(hr) && needsUpdateResampler)
     {
@@ -226,7 +249,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
         {
             // Resample uncompressed frame to output format
             uint8_t** resampledData = nullptr;
-            unsigned int aBufferSize = av_samples_alloc_array_and_samples(&resampledData, NULL, outChannels, avFrame->nb_samples, outSampleFormat, 0);
+            unsigned int aBufferSize = av_samples_alloc_array_and_samples(&resampledData, NULL, outChannelLayout.nb_channels, avFrame->nb_samples, outSampleFormat, 0);
             int resampledDataSize = swr_convert(m_pSwrCtx, resampledData, aBufferSize, (const uint8_t**)avFrame->extended_data, avFrame->nb_samples);
 
             if (resampledDataSize < 0)
@@ -235,7 +258,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
             }
             else
             {
-                auto size = min(aBufferSize, (unsigned int)(resampledDataSize * outChannels * bytesPerSample));
+                auto size = min(aBufferSize, (unsigned int)(resampledDataSize * outChannelLayout.nb_channels * bytesPerSample));
                 *pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(resampledData[0], size, free_resample_buffer, resampledData);
             }
         }
@@ -245,7 +268,7 @@ HRESULT UncompressedAudioSampleProvider::CreateBufferFromFrame(IBuffer* pBuffer,
             auto bufferRef = av_buffer_ref(avFrame->buf[0]);
             if (bufferRef)
             {
-                auto size = min(bufferRef->size, (size_t)avFrame->nb_samples * outChannels * bytesPerSample);
+                auto size = min(bufferRef->size, (size_t)avFrame->nb_samples * outChannelLayout.nb_channels * bytesPerSample);
                 *pBuffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(bufferRef->data, (UINT32)size, free_buffer, bufferRef);
             }
             else

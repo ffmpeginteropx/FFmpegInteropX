@@ -18,6 +18,7 @@
 #include "ChapterInfo.h"
 #include "FFmpegReader.h"
 #include "PlatformInfo.h"
+#include <Windows.h>
 
 #ifdef Win32
 #include <winrt/Microsoft.Graphics.Display.h>
@@ -75,7 +76,6 @@ namespace winrt::FFmpegInteropX::implementation
                 isRegistered = true;
             }
         }
-
         audioStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::AudioStreamInfo>();
         subtitleStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::SubtitleStreamInfo>();
         videoStrInfos = winrt::single_threaded_observable_vector<winrt::FFmpegInteropX::VideoStreamInfo>();
@@ -1406,7 +1406,7 @@ namespace winrt::FFmpegInteropX::implementation
         auto failedToken = mediaPlayer.MediaFailed([tce](MediaPlayer const&, MediaPlayerFailedEventArgs const&) { tce.set(false); });
 
         mediaPlayer.Source(playbackItem);
-        auto playbackItemWeak = this->playbackItemWeak;
+        auto currentPlaybackItemWeak = this->playbackItemWeak;
 
         auto result = co_await task<bool>(tce);
 
@@ -1423,9 +1423,9 @@ namespace winrt::FFmpegInteropX::implementation
         {
             // register for soruce changed event
             auto tokenPtr = new event_token[1]();
-            tokenPtr[0] = mediaPlayer.SourceChanged([tokenPtr, playbackItemWeak](MediaPlayer const& mediaPlayer, IInspectable const&)
+            tokenPtr[0] = mediaPlayer.SourceChanged([tokenPtr, currentPlaybackItemWeak](MediaPlayer const& mediaPlayer, IInspectable const&)
                 {
-                    auto playbackItem = playbackItemWeak.get();
+                    auto playbackItem = currentPlaybackItemWeak.get();
                     if (!playbackItem)
                     {
                         // we were disposed already
@@ -1822,17 +1822,17 @@ namespace winrt::FFmpegInteropX::implementation
             AudioEncodingProperties encodingProperties;
             if (avAudioCodecCtx->extradata_size == 0)
             {
-                encodingProperties = AudioEncodingProperties::CreateAacAdts(avAudioCodecCtx->sample_rate, avAudioCodecCtx->channels, (unsigned int)avAudioCodecCtx->bit_rate);
+                encodingProperties = AudioEncodingProperties::CreateAacAdts(avAudioCodecCtx->sample_rate, avAudioCodecCtx->ch_layout.nb_channels, (unsigned int)avAudioCodecCtx->bit_rate);
             }
             else
             {
-                encodingProperties = AudioEncodingProperties::CreateAac(avAudioCodecCtx->profile == FF_PROFILE_AAC_HE || avAudioCodecCtx->profile == FF_PROFILE_AAC_HE_V2 ? avAudioCodecCtx->sample_rate / 2 : avAudioCodecCtx->sample_rate, avAudioCodecCtx->channels, (unsigned int)avAudioCodecCtx->bit_rate);
+                encodingProperties = AudioEncodingProperties::CreateAac(avAudioCodecCtx->profile == FF_PROFILE_AAC_HE || avAudioCodecCtx->profile == FF_PROFILE_AAC_HE_V2 ? avAudioCodecCtx->sample_rate / 2 : avAudioCodecCtx->sample_rate, avAudioCodecCtx->ch_layout.nb_channels, (unsigned int)avAudioCodecCtx->bit_rate);
             }
             audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, encodingProperties, HardwareDecoderStatus::Unknown));
         }
         else if (avAudioCodecCtx->codec_id == AV_CODEC_ID_MP3 && config->Audio().SystemDecoderMP3())
         {
-            AudioEncodingProperties encodingProperties = AudioEncodingProperties::CreateMp3(avAudioCodecCtx->sample_rate, avAudioCodecCtx->channels, (unsigned int)avAudioCodecCtx->bit_rate);
+            AudioEncodingProperties encodingProperties = AudioEncodingProperties::CreateMp3(avAudioCodecCtx->sample_rate, avAudioCodecCtx->ch_layout.nb_channels, (unsigned int)avAudioCodecCtx->bit_rate);
             audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, encodingProperties, HardwareDecoderStatus::Unknown));
         }
         else
@@ -1913,6 +1913,8 @@ namespace winrt::FFmpegInteropX::implementation
                         }
                     }
 #else // UWP
+                    UNREFERENCED_PARAMETER(windowId);
+
                     if (PlatformInfo::IsXbox())
                     {
                         // HdmiDisplayInformation is xbox only, DisplayInformation is non-xbox only, each being null in the other case
@@ -1937,13 +1939,13 @@ namespace winrt::FFmpegInteropX::implementation
                                 useHdr = true;
                             }
                         }
-                }
+                    }
 #endif // Win32
-            }
+                }
                 catch (...)
                 {
                 }
-        }
+            }
             break;
         default:
             break;
@@ -2437,7 +2439,7 @@ namespace winrt::FFmpegInteropX::implementation
         {
             // Make sure we have at least 4 bytes for BOM check
             bool isEof = false;
-            while (bytesRead < min(bufSize, 4) && !isEof)
+            while (bytesRead < (ULONG)min(bufSize, 4) && !isEof)
             {
                 ULONG read = 0;
                 hr = mss->fileStreamData->Read(buf + bytesRead, bufSize - bytesRead, &read);
@@ -2458,7 +2460,7 @@ namespace winrt::FFmpegInteropX::implementation
             if (encoding == TextEncodingDetect::None)
             {
                 // if no BOM is present, make sure we read the first chunk for full probing
-                while (bytesRead < bufSize && !isEof)
+                while (bytesRead < (ULONG)bufSize && !isEof)
                 {
                     ULONG read = 0;
                     hr = mss->fileStreamData->Read(buf + bytesRead, bufSize - bytesRead, &read);

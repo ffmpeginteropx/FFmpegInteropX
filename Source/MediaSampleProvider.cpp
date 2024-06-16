@@ -185,8 +185,7 @@ void MediaSampleProvider::InitializeStreamInfo()
         char* channelLayoutName = new char[256];
         if (channelLayoutName)
         {
-            auto layout = m_pAvCodecCtx->channel_layout ? m_pAvCodecCtx->channel_layout : AvCodecContextHelpers::GetDefaultChannelLayout(channels);
-            av_get_channel_layout_string(channelLayoutName, 256, channels, layout);
+            av_channel_layout_describe(&m_pAvCodecCtx->ch_layout, channelLayoutName, 256);
             channelLayout = StringUtils::Utf8ToPlatformString(channelLayoutName);
             delete[] channelLayoutName;
         }
@@ -426,7 +425,7 @@ void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperti
     else
     {
         // get rotation from side data
-        auto displaymatrix = av_stream_get_side_data(m_pAvStream, AVPacketSideDataType::AV_PKT_DATA_DISPLAYMATRIX, NULL);
+        auto displaymatrix = av_packet_side_data_get(m_pAvStream->codecpar->coded_side_data, m_pAvStream->codecpar->nb_coded_side_data, AVPacketSideDataType::AV_PKT_DATA_DISPLAYMATRIX);
         if (displaymatrix)
         {
             // need to invert and use positive values
