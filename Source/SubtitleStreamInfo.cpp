@@ -2,10 +2,6 @@
 #include "SubtitleStreamInfo.h"
 #include "SubtitleStreamInfo.g.cpp"
 
-// Note: Remove this static_assert after copying these generated source files to your project.
-// This assertion exists to avoid compiling these generated source files directly.
-//static_assert(false, "Do not compile generated C++/WinRT source files directly");
-
 namespace winrt::FFmpegInteropX::implementation
 {
     SubtitleStreamInfo::SubtitleStreamInfo(hstring const& name, hstring const& language, hstring const& codecName, FFmpegInteropX::StreamDisposition const& disposition, bool isDefault, bool isForced, Windows::Media::Core::TimedMetadataTrack const& track, bool isExternal, int32_t streamIndex)
