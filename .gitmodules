@@ -37,3 +37,7 @@
 [submodule "Libs/openssl"]
 	path = Libs/openssl
 	url = https://github.com/openssl/openssl.git
+[submodule "Libs/vcpkg"]
+	path = Libs/vcpkg
+	url = https://github.com/microsoft/vcpkg.git
+	branch = master
