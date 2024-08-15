@@ -7,7 +7,6 @@
 # User-specific files
 *.suo
 *.user
-*.user.props
 *.userosscache
 *.sln.docstates
 
