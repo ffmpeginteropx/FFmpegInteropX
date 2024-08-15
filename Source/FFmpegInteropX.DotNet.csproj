@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
+    <TargetFramework>net6.0-windows10.0.22621.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platform>AnyCPU</Platform>
@@ -16,11 +16,11 @@
     <IntDir>..\Intermediate\$(MSBuildProjectName)\$(Configuration)\</IntDir>
     <OutDir>..\Output\$(MSBuildProjectName)\$(Configuration)\</OutDir>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <DefaultItemExcludes>**\*;*.*</DefaultItemExcludes>
 	<WindowsSdkPackageVersion>10.0.17763.27</WindowsSdkPackageVersion>
