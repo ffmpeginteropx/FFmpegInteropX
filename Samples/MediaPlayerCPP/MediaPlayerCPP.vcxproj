@@ -145,6 +145,10 @@
       <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'UAP' AND '$(FFmpegInteropXImportFromNuGet)' == 'false'">
+    <ReferenceCopyLocalPaths Condition="'$(Configuration)' == 'Debug'" Include="$(FFmpegInteropXVcpkgDirectory)installed\$(Platform)-uwp\debug\bin\*.dll" />
+    <ReferenceCopyLocalPaths Condition="'$(Configuration)' == 'Release'" Include="$(FFmpegInteropXVcpkgDirectory)installed\$(Platform)-uwp\bin\*.dll" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\..\packages\FFmpegInteropX.FFmpegUWP.5.1.100\build\native\FFmpegInteropX.FFmpegUWP.targets" Condition="'$(FFmpegInteropXImportFromNuGet)' == 'true' AND Exists('..\..\packages\FFmpegInteropX.FFmpegUWP.5.1.100\build\native\FFmpegInteropX.FFmpegUWP.targets')" />

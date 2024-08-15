@@ -298,6 +298,10 @@
       <DeploymentContent>false</DeploymentContent>
     </Text>
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'UAP' AND '$(FFmpegInteropXImportFromNuGet)' == 'false'">
+    <ReferenceCopyLocalPaths Condition="'$(Configuration)' == 'Debug'" Include="$(FFmpegInteropXVcpkgDirectory)installed\$(Platform)-uwp\debug\bin\*.dll" />
+    <ReferenceCopyLocalPaths Condition="'$(Configuration)' == 'Release'" Include="$(FFmpegInteropXVcpkgDirectory)installed\$(Platform)-uwp\bin\*.dll" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.220608.4\build\native\Microsoft.Windows.CppWinRT.targets')" />
