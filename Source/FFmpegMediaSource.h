@@ -239,7 +239,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     private:
 
-        winrt::weak_ref<MediaStreamSource> mssWeak = { nullptr };
+        MediaStreamSource mss{ nullptr };
         winrt::event_token startingRequestedToken{};
         winrt::event_token sampleRequestedToken{};
         winrt::event_token switchStreamRequestedToken{};

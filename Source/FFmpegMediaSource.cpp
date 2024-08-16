@@ -191,6 +191,8 @@ namespace winrt::FFmpegInteropX::implementation
         if (SUCCEEDED(hr))
         {
             hr = InitFFmpegContext();
+
+            CreateMediaStreamSource();
         }
 
         return hr;
@@ -667,8 +669,6 @@ namespace winrt::FFmpegInteropX::implementation
 
     MediaStreamSource FFmpegMediaSource::CreateMediaStreamSource()
     {
-        MediaStreamSource mss = nullptr;
-
         if (currentVideoStream && currentAudioStream)
         {
             mss = MediaStreamSource(currentVideoStream->StreamDescriptor(), currentAudioStream->StreamDescriptor());
@@ -711,15 +711,10 @@ namespace winrt::FFmpegInteropX::implementation
             mss.CanSeek(true);
         }
 
-        mssWeak = mss;
-
         // using strong reference here would create circle references, since we store MSS and MediaPlaybackItem here.
         startingRequestedToken = mss.Starting({ get_weak(), &FFmpegMediaSource::OnStarting });
         sampleRequestedToken = mss.SampleRequested({ get_weak(), &FFmpegMediaSource::OnSampleRequested });
         switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
-
-
-
 
         return mss;
     }
@@ -1293,8 +1288,10 @@ namespace winrt::FFmpegInteropX::implementation
     Windows::Media::Core::MediaStreamSource FFmpegMediaSource::GetMediaStreamSource()
     {
         std::lock_guard lock(mutex);
-        if (this->config->IsFrameGrabber) throw_hresult(E_UNEXPECTED);
-        return mssWeak.get();
+        if (this->config->IsFrameGrabber)
+            throw_hresult(E_UNEXPECTED);
+
+        return mss;
     }
 
     MediaSource FFmpegMediaSource::CreateMediaSource()
@@ -1647,19 +1644,12 @@ namespace winrt::FFmpegInteropX::implementation
 
     TimeSpan FFmpegMediaSource::BufferTime()
     {
-        if (auto strong = mssWeak.get())
-        {
-            return strong.BufferTime();
-        }
-        return TimeSpan{ 0 };
+        return mss.BufferTime();
     }
 
     void FFmpegMediaSource::BufferTime(TimeSpan const& value)
     {
-        if (auto strong = mssWeak.get())
-        {
-            strong.BufferTime(value);
-        }
+        mss.BufferTime(value);
     }
 
     void FFmpegMediaSource::SetStreamDelay(FFmpegInteropX::IStreamInfo const& stream, TimeSpan const& delay)
@@ -1765,14 +1755,10 @@ namespace winrt::FFmpegInteropX::implementation
             }
         }
 
-        if (auto mss = mssWeak.get())
-        {
-            mss.Starting(startingRequestedToken);
-            mss.SampleRequested(sampleRequestedToken);
-            mss.SwitchStreamsRequested(switchStreamRequestedToken);
-            mss.Closed(closeToken);
-            mssWeak = nullptr;
-        }
+        mss.Starting(startingRequestedToken);
+        mss.SampleRequested(sampleRequestedToken);
+        mss.SwitchStreamsRequested(switchStreamRequestedToken);
+        mss.Closed(closeToken);
 
         if (auto playbackItem = playbackItemWeak.get())
         {
@@ -2217,10 +2203,7 @@ namespace winrt::FFmpegInteropX::implementation
                 auto extension = min(lastDurationExtension + 1, 5);
 
                 mediaDuration += TimeSpan{ extension * 10000000 };
-                if (auto mss = mssWeak.get())
-                {
-                    mss.Duration(mediaDuration);
-                }
+                mss.Duration(mediaDuration);
 
                 lastDurationExtension = extension;
             }
