@@ -20,11 +20,11 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(FFmpegInteropXImportFromNuGet)' == 'false'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(FFmpegInteropXVcpkgDirectory)installed\$(Platform)-uwp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(FFmpegInteropXVcpkgDirectory)installed\$(PlatformTarget)-uwp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)' == 'Debug'">$(FFmpegInteropXVcpkgDirectory)installed\$(Platform)-uwp\debug\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)' == 'Release'">$(FFmpegInteropXVcpkgDirectory)installed\$(Platform)-uwp\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)' == 'Debug'">$(FFmpegInteropXVcpkgDirectory)installed\$(PlatformTarget)-uwp\debug\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)' == 'Release'">$(FFmpegInteropXVcpkgDirectory)installed\$(PlatformTarget)-uwp\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
 </Project>
