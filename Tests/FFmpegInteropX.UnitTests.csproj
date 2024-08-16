@@ -67,7 +67,7 @@
     </Otherwise>
   </Choose>
 
-  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="'$(Configuration)'=='Debug_Desktop' Or '$(Configuration)'=='Debug_WinUI'">
+  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="'$(Configuration)'=='Debug'">
     <Copy SourceFiles="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" DestinationFolder="$(OutDir)runtimes\win-$(Platform)\native" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" DestinationFolder="$(OutDir)runtimes\win-$(Platform)\native" SkipUnchangedFiles="true" />
   </Target>
