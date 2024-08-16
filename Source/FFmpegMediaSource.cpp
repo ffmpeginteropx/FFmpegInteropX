@@ -1306,7 +1306,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         if (this->config->IsFrameGrabber) throw_hresult(E_UNEXPECTED);
 
-        auto mss = CreateMediaStreamSource();
+        CreateMediaStreamSource();
 
         MediaSource source = MediaSource::CreateFromMediaStreamSource(mss);
         for (auto& stream : subtitleStreams)
