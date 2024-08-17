@@ -12,7 +12,7 @@
     <IntDir>..\Intermediate\$(MSBuildProjectName)\$(Configuration)\</IntDir>
     <OutDir>..\Output\$(MSBuildProjectName)\$(Configuration)\</OutDir>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
     <!-- <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir> -->
@@ -20,11 +20,11 @@
         None
     </ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <DefaultItemExcludes>**\*;*.*</DefaultItemExcludes>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
@@ -44,7 +44,7 @@
       </ItemGroup>
     </When>
   </Choose>
-  
+
   <ItemGroup>
     <ProjectReference Include="FFmpegInteropX.vcxproj">
       <Private>True</Private>

@@ -8,17 +8,17 @@
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <IntDir>..\Intermediate\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>..\Output\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
     <OutDirFFmpegInteropX>..\Output\FFmpegInteropX\$(PlatformTarget)\$(Configuration)_Desktop\</OutDirFFmpegInteropX>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <None Remove="TestFiles\envivio-h264.mp4" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <EmbeddedResource Include="TestFiles\envivio-h264.mp4">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -71,5 +71,5 @@
     <Copy SourceFiles="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" DestinationFolder="$(OutDir)runtimes\win-$(Platform)\native" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" DestinationFolder="$(OutDir)runtimes\win-$(Platform)\native" SkipUnchangedFiles="true" />
   </Target>
-  
+
 </Project>

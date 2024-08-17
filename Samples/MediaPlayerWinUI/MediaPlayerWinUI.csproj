@@ -11,7 +11,7 @@
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
-  
+
   <PropertyGroup>
     <IntDir>..\..\Intermediate\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>..\..\Output\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
@@ -27,7 +27,7 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX.Desktop.FFmpeg" Version="7.0.100-pre3" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.7" />
@@ -78,6 +78,6 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </AllItemsFullPathWithTargetPath>
     </ItemGroup>
-  </Target>  
+  </Target>
 
 </Project>
