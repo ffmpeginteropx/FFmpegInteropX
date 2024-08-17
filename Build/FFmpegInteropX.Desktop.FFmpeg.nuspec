@@ -20,7 +20,7 @@
   <files>
 
     <file src="..\Output\FFmpegDesktop\x64\licenses\*.*"            target="licenses" />
-    
+
     <file src="..\Output\FFmpegDesktop\x64\include\**\*.h"          target="include" />
 
     <file src="..\Output\FFmpegDesktop\x86\bin\*.dll"               target="runtimes\win-x86\native" />

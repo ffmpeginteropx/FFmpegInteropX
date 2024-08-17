@@ -18,10 +18,10 @@
     <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
   </metadata>
   <files>
-    
+
     <file src="..\Output\FFmpegInteropX.DotNet\Release\FFmpegInteropX.DotNet.dll"   target="lib\net6.0-windows$winsdk$" />
     <file src="..\Output\FFmpegInteropX.DotNet\Release\FFmpegInteropX.xml"          target="lib\net6.0-windows$winsdk$" />
-    
+
     <file src="..\Output\FFmpegInteropX\x86\Release_Desktop\FFmpegInteropX.dll"     target="runtimes\win-x86\native" />
     <file src="..\Output\FFmpegInteropX\x86\Release_Desktop\FFmpegInteropX.pdb"     target="runtimes\win-x86\native" />
 

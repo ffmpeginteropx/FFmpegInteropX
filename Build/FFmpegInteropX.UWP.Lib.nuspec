@@ -31,6 +31,6 @@
     <file src="FFmpegInteropX.UWP.Lib.targets"                                  target="build\native"/>
 
     <file src="..\README.md" target="docs\" />
-    
+
   </files>
 </package>

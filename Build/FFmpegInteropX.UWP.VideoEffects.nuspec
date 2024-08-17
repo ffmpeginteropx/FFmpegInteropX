@@ -33,6 +33,6 @@
     <file src="FFmpegInteropX.UWP.VideoEffects.targets"                                  target="build\native"/>
 
     <file src="..\README.md" target="docs\" />
-    
+
   </files>
 </package>
