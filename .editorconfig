@@ -46,6 +46,9 @@ insert_final_newline = false
 [*.{cmd,bat}]
 end_of_line = crlf
 
+[*.ps1]
+end_of_line = lf
+
 [*.{cs,vb}]
 #### Naming styles ####
 

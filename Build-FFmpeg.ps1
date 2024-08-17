@@ -29,7 +29,7 @@ param(
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
-    
+
     # shared: create shared dll - static: create lib for static linking
     [ValidateSet('shared', 'static')]
     [string] $SharedOrStatic = 'shared',
@@ -66,9 +66,9 @@ param(
     [switch] $AllowParallelBuilds,
 
     [switch] $SkipBuildPkgConfigFake,
-    
+
     [switch] $SkipBuildLibs,
-    
+
     [switch] $SkipConfigureFFmpeg
 
 )
@@ -100,7 +100,7 @@ function Build-Platform {
     # Build x86 and x64 with x86 toolchain
     if (($targetArch -eq 'x86') -or ($targetArch -eq 'x64'))
     {
-        $hostArch = 'x86' 
+        $hostArch = 'x86'
     }
 
     Write-Host
@@ -117,11 +117,11 @@ function Build-Platform {
 
     New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget\$Platform -OutVariable build | Out-Null
     New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable target | Out-Null
-    
+
     $env:LIB += ";$build\lib"
     $env:INCLUDE += ";$build\include"
-    $env:Path += ";$SolutionDir\Libs\gas-preprocessor"	
-        
+    $env:Path += ";$SolutionDir\Libs\gas-preprocessor"
+
     if (! $SkipBuildLibs)
     {
         # Build pkg-config fake
@@ -133,7 +133,7 @@ function Build-Platform {
 
             if ($lastexitcode -ne 0) { throw "Failed to build PkgConfigFake." }
         }
-        
+
         if ($ClearBuildFolders) {
             # Clean platform-specific build and output dirs.
             Remove-Item -Force -Recurse $build\*
@@ -145,7 +145,7 @@ function Build-Platform {
             New-Item -ItemType Directory -Force $target\$_ | Out-Null
         }
 
-        # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
+        # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName>
         $libdefs = @(
             @('zlib', 'libzlib', 'zlib'),
             @('bzip2', 'libbz2', 'bz2'),
@@ -156,7 +156,7 @@ function Build-Platform {
 
         # Build all libraries
         $libdefs | ForEach-Object {
-        
+
             $folder = $_[0]
             $project = $_[1]
 
@@ -165,7 +165,7 @@ function Build-Platform {
             Write-Host
 
             # Decide vcvars target string based on target platform
-            if ($WindowsTarget -eq "UWP") { 
+            if ($WindowsTarget -eq "UWP") {
                 $configurationName = "${Configuration}WinRT"
                 $targetName = "${project}_winrt"
             }
@@ -208,11 +208,11 @@ function Build-Platform {
 
         # Build openssl if not already exists
         if (!(Test-Path("$build\lib\ssl.lib")) -or !(Test-Path("$build\lib\crypto.lib"))) {
-            
+
             Write-Host
             Write-Host "Building Library openssl..."
             Write-Host
-            
+
             $opensslPlatforms = @{
                 'x86'   = 'VC-WIN32'
                 'x64'   = 'VC-WIN64A'
@@ -221,17 +221,17 @@ function Build-Platform {
             }
             $opensslPlatform = $opensslPlatforms[$Platform]
 
-            if ($WindowsTarget -eq "UWP") { 
+            if ($WindowsTarget -eq "UWP") {
                 $opensslPlatform = $opensslPlatform + "-UWP"
             }
 
             New-Item -ItemType Directory -Force $build\int\openssl -OutVariable ssldir | Out-Null
-            
+
             $oldPath = $env:Path
             $env:Path += ";$SolutionDir\Tools\perl\perl\bin;C$SolutionDir\Tools\perl\c\bin;$SolutionDir\Tools\nasm"
             $oldDir = get-location
             set-location "$ssldir"
-            
+
             try {
                 invoke perl $SolutionDir\Libs\openssl\Configure $opensslPlatform --prefix=$build --openssldir=$build --with-zlib-include=$build\include --with-zlib-lib=$build\lib\zlib.lib no-tests no-secure-memory
                 invoke nmake clean
@@ -241,7 +241,7 @@ function Build-Platform {
                 set-location $oldDir
                 $env:Path = $oldPath
             }
-            
+
             Copy-Item -Force $SolutionDir\Libs\openssl\license.txt $build\licenses\openssl.txt
             Copy-Item -Force $ssldir\libssl_static.lib $build\lib\ssl.lib
             Copy-Item -Force $ssldir\libcrypto_static.lib $build\lib\crypto.lib
@@ -256,9 +256,9 @@ function Build-Platform {
         Write-Host "Building Library dav1d..."
         Write-Host ""
         invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-dav1d.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
-        
-        if ($Encoders -eq "enable") { 
-            
+
+        if ($Encoders -eq "enable") {
+
             $env:Path += ";$(Split-Path $BashExe)"
 
             #Build x265
@@ -277,7 +277,7 @@ function Build-Platform {
             New-Item -ItemType Directory -Force $build\int\x265
 
             invoke cmd.exe /C $SolutionDir\Libs\build-scripts\build-x265.bat $SolutionDir\Libs\x265\source $build\int\x265 $cmakePlatform $PlatformToolset
-            
+
             Copy-Item $build\int\x265\x265-static.lib $build\lib\x265.lib -Force
             Copy-Item $build\int\x265\include\* $build\include\ -Force
             Copy-Item $SolutionDir\Libs\x265\COPYING $build\licenses\x265.txt -Force
@@ -286,7 +286,7 @@ function Build-Platform {
             Write-Host ""
             Write-Host "Building Library x264..."
             Write-Host ""
-            
+
             $x264Archs = @{
                 'x86'   = 'x86'
                 'x64'   = 'x86_64'
@@ -320,19 +320,19 @@ function Build-Platform {
             $vpxPlatform = $vpxPlatforms[$Platform]
 
             New-Item -ItemType Directory -Force $build\libvpx
-            
+
             invoke $BashExe --login -c "unset tmp && unset temp && cd \$build\libvpx && ..\..\..\..\Libs\libvpx\configure --target=${vpxArch}-${vpxPlatform}-vs17 --prefix=\$build --enable-static --disable-thumb --disable-debug --disable-examples --disable-tools --disable-docs --disable-unit_tests && make -j8 -e CPPFLAGS=-Oy && make install".Replace("\", "/").Replace(":", "")
 
             Move-Item $build\lib\$cmakePlatform\vpxmd.lib $build\lib\vpx.lib -Force
             Remove-Item $build\lib\$cmakePlatform -Force -Recurse
-        } 
+        }
     }
 
     # Build ffmpeg
     Write-Host
     Write-Host "Building FFmpeg..."
     Write-Host
-    
+
     if ($SkipConfigureFFmpeg)
     {
         $ffmpegparam = "-SkipConfigure"
@@ -494,13 +494,13 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
     {
         $addparams += " -SkipBuildLibs"
     }
-        
+
     if ($SkipConfigureFFmpeg)
     {
         $addparams += " -SkipConfigureFFmpeg"
     }
 
-    $skipPkgConfig = "" 
+    $skipPkgConfig = ""
     foreach ($platform in $Platforms) {
         if ($SkipBuildPkgConfigFake)
         {
@@ -508,7 +508,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
         }
         $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -Gpl $Gpl -Encoders $Encoders -Devices $Devices -Programs $Programs -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
         $processes[$platform] = $proc
-    
+
         # only build PkgConfigFake once
         $skipPkgConfig = "-SkipBuildPkgConfigFake"
     }
@@ -539,7 +539,7 @@ else
     foreach ($platform in $Platforms) {
 
         try { Stop-Transcript } catch { }
-    
+
         $logFile = "${PSScriptRoot}\Intermediate\FFmpeg$WindowsTarget\Build_" + $timestamp + "_$platform.log"
 
         try
@@ -567,7 +567,7 @@ else
         finally
         {
             try { Stop-Transcript } catch { }
-    
+
             # Restore orignal environment variables
             foreach ($item in $oldEnv.GetEnumerator())
             {
@@ -581,7 +581,7 @@ else
                 }
             }
         }
-   
+
         # only build PkgConfigFake once
         $BuildPkgConfigFake = $false;
     }
