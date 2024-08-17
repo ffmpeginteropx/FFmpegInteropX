@@ -160,6 +160,10 @@ publish/
 # in these scripts will be unencrypted
 PublishScripts/
 
+# MSBuild config files
+*.user.props
+*.user.targets
+
 # NuGet Packages
 *.nupkg
 *.snupkg
