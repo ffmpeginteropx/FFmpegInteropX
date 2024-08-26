@@ -30,7 +30,7 @@ end_of_line = crlf
 insert_final_newline = false
 
 # XML config files
-[*.{msbuild,props,props.user,targets,ruleset,config,nuspec}]
+[*.{msbuild,props,targets,ruleset,config,nuspec}]
 indent_size = 2
 end_of_line = crlf
 insert_final_newline = false
