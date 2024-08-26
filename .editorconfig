@@ -20,6 +20,13 @@ csharp_style_expression_bodied_constructors = false:silent
 csharp_style_expression_bodied_operators = false:silent
 csharp_indent_labels = one_less_than_current
 
+[.editorconfig]
+end_of_line = lf
+
+# Git files
+[.gitignore]
+end_of_line = lf
+
 [*.sln]
 indent_style = tab
 
@@ -34,7 +41,6 @@ insert_final_newline = false
 indent_size = 2
 end_of_line = crlf
 insert_final_newline = false
-
 
 # Windows Shell scripts
 [*.{cmd,bat,ps1}]
