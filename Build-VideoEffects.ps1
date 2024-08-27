@@ -22,14 +22,14 @@ param(
         10.0.17763.0
         10.0.18362.0
     #>
-    [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
+    [version] $WindowsTargetPlatformVersion = '10.0.22621.0',
 
     [ValidateSet('UWP', 'Desktop')]
     [string] $WindowsTarget = 'UWP',
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
-    
+
     [System.IO.DirectoryInfo] $VSInstallerFolder = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer",
 
     # Set the search criteria for VSWHERE.EXE.
@@ -49,7 +49,7 @@ param(
     [string] $FFmpegInteropXUrl = 'https://github.com/ffmpeginteropx/FFmpegInteropX.git',
 
     [string] $FFmpegInteropXBranch = $(git branch --show-current),
-    
+
     [string] $FFmpegInteropXCommit = $(git --git-dir Libs/ffmpeg/.git rev-parse HEAD)
 )
 
