@@ -1,0 +1,53 @@
+# .github/workflows/build.yml
+name: CI Builds
+
+on:
+  push:
+    branches:
+      - master
+      - winui-build
+  pull_request:
+    branches:
+      - master
+      - winui-build
+
+jobs:
+  build_uwp:
+    name: Build-FFmpegInteropX UWP
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Create Output Folder
+        run: |
+          mkdir Output
+          mkdir Output\NuGet
+
+      - name: Run Build Script
+        shell: powershell
+        run: |
+          ./Build-FFmpegInteropX.ps1 -Platforms x64
+
+  build_desktop:
+    name: Build-FFmpegInteropX Desktop
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Create Output Folder
+        run: |
+          mkdir Output
+          mkdir Output\NuGet
+
+      - name: Run Build Script
+        shell: powershell
+        run: |
+          ./Build-FFmpegInteropX.ps1 -WindowsTarget Desktop -Platforms x64
