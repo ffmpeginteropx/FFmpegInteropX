@@ -131,7 +131,7 @@ class AudioFilter : public IAvFilter
         hr = av_opt_set_q(avSource_ctx, "time_base", inputCodecCtx->time_base, AV_OPT_SEARCH_CHILDREN);
         hr = av_opt_set_int(avSource_ctx, "sample_rate", frame->sample_rate, AV_OPT_SEARCH_CHILDREN);
         hr = av_opt_set(avSource_ctx, "sample_fmt", av_get_sample_fmt_name((AVSampleFormat)frame->format), AV_OPT_SEARCH_CHILDREN);
-        hr = av_opt_set(avSource_ctx, "ch_layout", channel_layout_name, AV_OPT_SEARCH_CHILDREN);
+        hr = av_opt_set(avSource_ctx, "channel_layout", channel_layout_name, AV_OPT_SEARCH_CHILDREN);
 
         /* Now initialize the filter; we pass NULL options, since we have already
         * set all the options above. */
