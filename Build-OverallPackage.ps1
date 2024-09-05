@@ -9,7 +9,7 @@ param(
     # If a version string is specified, a NuGet package will be created.
     [string] $LibPackageVersion,
 
-    [version] $WindowsTargetPlatformVersion = '10.0.22621.0',
+    [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
 
     # FFmpegInteropX NuGet settings
     [string] $FFmpegInteropXUrl = 'https://github.com/ffmpeginteropx/FFmpegInteropX.git',

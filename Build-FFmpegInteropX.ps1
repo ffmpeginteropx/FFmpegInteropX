@@ -22,7 +22,7 @@ param(
         10.0.17763.0
         10.0.18362.0
     #>
-    [version] $WindowsTargetPlatformVersion = '10.0.22621.0',
+    [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
 
     [ValidateSet('UWP', 'Desktop')]
     [string] $WindowsTarget = 'UWP',
