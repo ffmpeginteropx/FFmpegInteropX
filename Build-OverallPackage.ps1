@@ -15,7 +15,7 @@ param(
     [string] $FFmpegInteropXUrl = 'https://github.com/ffmpeginteropx/FFmpegInteropX.git',
 
     [string] $FFmpegInteropXBranch = $(git branch --show-current),
-
+    
     [string] $FFmpegInteropXCommit = $(git --git-dir Libs/ffmpeg/.git rev-parse HEAD)
 )
 
