@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <description>Video effects library (HW accelerated) for Windows UWP Apps</description>
+    <authors>FFmpegInteropX</authors>
+    <readme>docs\README.md</readme>
+    <projectUrl>https://github.com/ffmpeginteropx/FFmpegInteropX</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">Apache-2.0</license>
+    <dependencies>
+      <group targetFramework="uap10.0.17763.0">
+        <dependency id="Win2D.uwp" version="1.26.0" />
+      </group>
+    </dependencies>
+    <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
+  </metadata>
+  <files>
+
+    <file src="..\Output\FFmpegInteropX.VideoEffects\x64\Release_UWP\FFmpegInteropX.VideoEffects.winmd"   target="lib\uap10.0.17763.0" />
+    <file src="..\Output\FFmpegInteropX.VideoEffects\x64\Release_UWP\FFmpegInteropX.VideoEffects.xml"     target="lib\uap10.0.17763.0" />
+
+    <file src="..\Output\FFmpegInteropX.VideoEffects\x86\Release_UWP\FFmpegInteropX.VideoEffects.dll"     target="runtimes\win10-x86\native" />
+    <file src="..\Output\FFmpegInteropX.VideoEffects\x86\Release_UWP\FFmpegInteropX.VideoEffects.pdb"     target="runtimes\win10-x86\native" />
+
+    <file src="..\Output\FFmpegInteropX.VideoEffects\x64\Release_UWP\FFmpegInteropX.VideoEffects.dll"     target="runtimes\win10-x64\native" />
+    <file src="..\Output\FFmpegInteropX.VideoEffects\x64\Release_UWP\FFmpegInteropX.VideoEffects.pdb"     target="runtimes\win10-x64\native" />
+
+    <file src="..\Output\FFmpegInteropX.VideoEffects\ARM64\Release_UWP\FFmpegInteropX.VideoEffects.dll"   target="runtimes\win10-arm64\native" />
+    <file src="..\Output\FFmpegInteropX.VideoEffects\ARM64\Release_UWP\FFmpegInteropX.VideoEffects.pdb"   target="runtimes\win10-arm64\native" />
+
+    <file src="FFmpegInteropX.UWP.VideoEffects.targets"                                  target="build\native"/>
+
+    <file src="..\README.md" target="docs\" />
+    
+  </files>
+</package>

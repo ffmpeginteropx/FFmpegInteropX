@@ -1,22 +1,28 @@
 #pragma once
-#include "BasicVideoEffect.g.h"
+#ifdef UWP
+#include "VideoAdjustmentsEffect.g.h"
+
+#include <shcore.h>
+
+#include <winrt/Windows.Foundation.Collections.h>
+
+#include <winrt/Windows.Media.MediaProperties.h>
+#include <winrt/Windows.Media.Playback.h>
+
 #include <winrt/Microsoft.Graphics.Canvas.h>
 #include <winrt/Microsoft.Graphics.Canvas.Effects.h>
 
-// Note: Remove this static_assert after copying these generated source files to your project.
-// This assertion exists to avoid compiling these generated source files directly.
-//static_assert(false, "Do not compile generated C++/WinRT source files directly");
 
-namespace winrt::FFmpegInteropX::implementation
+namespace winrt::FFmpegInteropX::VideoEffects::implementation
 {
     using namespace Microsoft::Graphics::Canvas;
     using namespace Microsoft::Graphics::Canvas::Effects;
     using namespace Windows::Media::Effects;
     using namespace Windows::Media::MediaProperties;
 
-    struct BasicVideoEffect : BasicVideoEffectT<BasicVideoEffect>
+    struct VideoAdjustmentsEffect : VideoAdjustmentsEffectT<VideoAdjustmentsEffect>
     {
-        BasicVideoEffect() = default;
+        VideoAdjustmentsEffect() = default;
 
         void SetProperties(Windows::Foundation::Collections::IPropertySet const& configuration);
         bool IsReadOnly();
@@ -31,7 +37,7 @@ namespace winrt::FFmpegInteropX::implementation
     private:
         winrt::Windows::Foundation::Collections::IPropertySet inputConfiguration;
         CanvasDevice canvasDevice;
-        winrt::FFmpegInteropX::VideoEffectConfiguration effectConfiguration;
+        winrt::FFmpegInteropX::VideoEffects::VideoAdjustmentsConfiguration effectConfiguration;
 
 
         Effects::ICanvasEffect CreateColorEffect(ICanvasImage source, float c, float b, float s)
@@ -82,9 +88,10 @@ namespace winrt::FFmpegInteropX::implementation
     };
 }
 
-namespace winrt::FFmpegInteropX::factory_implementation
+namespace winrt::FFmpegInteropX::VideoEffects::factory_implementation
 {
-    struct BasicVideoEffect : BasicVideoEffectT<BasicVideoEffect, implementation::BasicVideoEffect>
+    struct VideoAdjustmentsEffect : VideoAdjustmentsEffectT<VideoAdjustmentsEffect, implementation::VideoAdjustmentsEffect>
     {
     };
 }
+#endif // UWP

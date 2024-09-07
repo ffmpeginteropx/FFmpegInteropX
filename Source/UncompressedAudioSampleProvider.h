@@ -34,8 +34,8 @@ public:
         int streamIndex);
     virtual HRESULT CreateBufferFromFrame(IBuffer* pBuffer, IDirect3DSurface* surface, AVFrame* avFrame, int64_t& framePts, int64_t& frameDuration) override;
     winrt::Windows::Media::Core::IMediaStreamDescriptor CreateStreamDescriptor() override;
-    void SetMediaEncodingProperties(AVSampleFormat format, int channels, const uint64_t& channelLayout, int sampleRate, winrt::Windows::Media::MediaProperties::AudioEncodingProperties& encodingProperties);
-    HRESULT CheckFormatChanged(AVSampleFormat format, int channels, UINT64 channelLayout, int sampleRate);
+    void SetMediaEncodingProperties(AVSampleFormat format, const AVChannelLayout& channelLayout, int sampleRate, winrt::Windows::Media::MediaProperties::AudioEncodingProperties& encodingProperties);
+    HRESULT CheckFormatChanged(AVSampleFormat format, const AVChannelLayout& channelLayout, int sampleRate);
     HRESULT UpdateResampler();
 
 
@@ -46,8 +46,9 @@ private:
     SwrContext* m_pSwrCtx = NULL;
     AVSampleFormat inSampleFormat = AVSampleFormat::AV_SAMPLE_FMT_NONE;
     AVSampleFormat outSampleFormat = AVSampleFormat::AV_SAMPLE_FMT_NONE;
-    int inSampleRate = 0, outSampleRate = 0, inChannels = 0, outChannels = 0;
-    UINT64 inChannelLayout = 0, outChannelLayout = 0;
+    int inSampleRate = 0, outSampleRate = 0;
+    AVChannelLayout inChannelLayout{};
+    AVChannelLayout outChannelLayout{};
     int bytesPerSample = 0;
     bool needsUpdateResampler = false;
     bool useResampler = false;

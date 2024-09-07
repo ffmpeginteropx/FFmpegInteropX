@@ -15,38 +15,84 @@
 #include "FormatInfo.h"
 #include "text_encoding_detect.h"
 
-// Note: Remove this static_assert after copying these generated source files to your project.
-// This assertion exists to avoid compiling these generated source files directly.
-//static_assert(false, "Do not compile generated C++/WinRT source files directly");
-
 namespace winrt::FFmpegInteropX::implementation
 {
     using namespace winrt::Windows::Foundation;
     using namespace winrt::Windows::Foundation::Collections;
     using namespace winrt::Windows::Media::Core;
     using namespace winrt::Windows::Media::Playback;
-    using namespace winrt::Windows::UI::Core;
-    using namespace winrt::Windows::UI::Xaml;
-    namespace WFM = winrt::Windows::Foundation::Metadata;
     using namespace winrt::Windows::Storage::Streams;
+
+#ifdef Win32
+    using namespace winrt::Microsoft::UI::Dispatching;
+#else
     using namespace winrt::Windows::System;
+#endif
+
     using namespace TextEncoding;
 
     struct FFmpegMediaSource : FFmpegMediaSourceT<FFmpegMediaSource>
     {
         virtual ~FFmpegMediaSource();
 
+#ifdef Win32
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config);
-
-        ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
+        {
+            return CreateFromStreamInternalAsync(stream, config, windowId);
+        }
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
+        {
+            return CreateFromUriInternalAsync(uri, config, windowId);
+        }
+
+        ///<summary>Creates a FFmpegMediaSource from a file.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
+        {
+            return CreateFromUriInternalAsync(fileName, config, windowId);
+        }
+#endif
+
+
+        ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config)
+        {
+            return CreateFromStreamInternalAsync(stream, config, 0);
+        }
+
+        ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamAsync(IRandomAccessStream stream)
+        {
+            return CreateFromStreamInternalAsync(stream, FFmpegInteropX::MediaSourceConfig(), 0);
+        }
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config)
+        {
+            return CreateFromUriInternalAsync(uri, config, 0);
+        }
+
+        ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
+        {
+            return CreateFromUriInternalAsync(uri, FFmpegInteropX::MediaSourceConfig(), 0);
+        }
+
+#ifndef UWP
+        ///<summary>Creates a FFmpegMediaSource from a file.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName, FFmpegInteropX::MediaSourceConfig config)
+        {
+            return CreateFromUriInternalAsync(fileName, config, 0);
+        }
+
+        ///<summary>Creates a FFmpegMediaSource from a file.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromFileAsync(hstring fileName)
+        {
+            return CreateFromUriInternalAsync(fileName, FFmpegInteropX::MediaSourceConfig(), 0);
+        }
+#endif
 
         ///<summary>Sets the subtitle delay for all subtitle streams. Use negative values to speed them up, positive values to delay them.</summary>
         void SetSubtitleDelay(TimeSpan const& delay);
@@ -66,16 +112,10 @@ namespace winrt::FFmpegInteropX::implementation
         void SetFFmpegVideoFilters(hstring const& videoFilters, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
 
         ///<summary>Disables audio filters.</summary>
-        void DisableAudioEffects();
-
-        ///<summary>Disables audio filters.</summary>
         void ClearFFmpegAudioFilters();
 
         ///<summary>Disables audio filters for the specified audio stream.</summary>
         void ClearFFmpegAudioFilters(winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
-
-        ///<summary>Disables video filters.</summary>
-        void DisableVideoEffects();
 
         ///<summary>Clears video filters.</summary>
         void ClearFFmpegVideoFilters();
@@ -157,27 +197,10 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Gets the MediaPlaybackItem that was created before by using CreateMediaPlaybackItem.</summary>
         MediaPlaybackItem PlaybackItem();
 
-
-        ///<summary>The current subtitle delay used by this instance.</summary>
-        TimeSpan SubtitleDelay();
-
-        ///<summary>Gets or sets the BufferTime of the MediaStreamSource.</summary>
-        ///<remarks>A value of 0 is recommended for local files, streaming sources should use higher values.</remarks>
-        TimeSpan BufferTime();
-        void BufferTime(TimeSpan const& value);
-
         ///<summary>Gets or sets the MediaPlaybackSession associated with this FFmpeg source. Used when FastSeek is enabled.</summary>
         ///<remarks>After playback has started, please assign MediaPlayer.PlaybackSession to this .</remarks>
         MediaPlaybackSession PlaybackSession();
         void PlaybackSession(MediaPlaybackSession const& value);
-
-        ///<summary>Gets the current audio filters</summary>
-        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
-        hstring GetCurrentAudioFilters();
-
-        ///<summary>Gets the current video filters</summary>
-        ///<remarks>Returns null when no filters are applied. The string uses ffmpeg filter notation.</remarks>
-        hstring GetCurrentVideoFilters();
 
         ///<summary>Sets a presentation timestamp delay for the given stream. Audio, video and subtitle synchronisation can be achieved this way. A positive value will cause samples (or subtitles) to be rendered at a later time. A negative value will make rendering come sooner</summary>
         void SetStreamDelay(winrt::FFmpegInteropX::IStreamInfo const& stream, winrt::Windows::Foundation::TimeSpan const& delay);
@@ -187,7 +210,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         void Close();
 
-        FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, DispatcherQueue const& dispatcher);
+        FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, DispatcherQueue const& dispatcher, uint64_t windowId, bool useHdr);
 
     private:
 
@@ -211,15 +234,19 @@ namespace winrt::FFmpegInteropX::implementation
         void OnPresentationModeChanged(MediaPlaybackTimedMetadataTrackList  const& sender, TimedMetadataPresentationModeChangedEventArgs  const& args);
         void InitializePlaybackItem(MediaPlaybackItem  const& playbackitem);
         bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus const& status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
-        static void CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config);
+        static void CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation, bool& useHdr, uint64_t& windowId);
         void CheckExtendDuration(MediaStreamSample sample);
         MediaThumbnailData ExtractThumbnail(AVStream* avStream);
 
         void Close(bool onMediaSourceClosed);
+        static DispatcherQueue GetCurrentDispatcherQueue();
 
     public://internal:
-        static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher);
-        static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, DispatcherQueue  const& dispatcher);
+        static IAsyncOperation<winrt::FFmpegInteropX::FFmpegMediaSource> ReadExternalSubtitleStreamAsync(IRandomAccessStream stream, hstring streamName, winrt::FFmpegInteropX::MediaSourceConfig const& config, VideoStreamDescriptor videoDescriptor, DispatcherQueue dispatcher, uint64_t windowId, bool useHdr);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamInternalAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriInternalAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher, uint64_t windowId, bool useHdr);
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, DispatcherQueue  const& dispatcher, uint64_t windowId, bool useHdr);
         HRESULT Seek(TimeSpan const& position, TimeSpan& actualPosition, bool allowFastSeek);
 
         std::shared_ptr<MediaSampleProvider> VideoSampleProvider()
@@ -237,6 +264,8 @@ namespace winrt::FFmpegInteropX::implementation
         winrt::com_ptr<MediaSourceConfig> config = { nullptr };
         bool isShuttingDown = false;
 
+        std::vector<std::shared_ptr<SubtitleProvider>> subtitleStreamProviders;
+
     private:
 
         winrt::weak_ref<MediaStreamSource> mssWeak = { nullptr };
@@ -252,15 +281,12 @@ namespace winrt::FFmpegInteropX::implementation
 
         std::vector<std::shared_ptr<MediaSampleProvider>> sampleProviders;
         std::vector<std::shared_ptr<MediaSampleProvider>> audioStreams;
-        std::vector<std::shared_ptr<SubtitleProvider>> subtitleStreams;
         std::vector<std::shared_ptr<MediaSampleProvider>> videoStreams;
 
         std::shared_ptr<MediaSampleProvider> currentVideoStream = { nullptr };
         std::shared_ptr<MediaSampleProvider> currentAudioStream = { nullptr };
         FFmpegInteropX::AudioStreamInfo currentAudioStreamInfo = { nullptr };
         FFmpegInteropX::VideoStreamInfo currentVideoStreamInfo = { nullptr };
-        hstring currentAudioEffects{};
-        hstring currentVideoEffects{};
         int thumbnailStreamIndex = 0;
 
         winrt::event_token audioTracksChangedToken{};
@@ -283,7 +309,6 @@ namespace winrt::FFmpegInteropX::implementation
         winrt::event_token sessionPositionEvent{};
 
         TimeSpan mediaDuration{};
-        TimeSpan subtitleDelay{};
 
         AVBufferRef* avHardwareContext = nullptr;
         AVBufferRef* avHardwareContextDefault = nullptr;
@@ -291,6 +316,9 @@ namespace winrt::FFmpegInteropX::implementation
         com_ptr<ID3D11DeviceContext> deviceContext;
         HANDLE deviceHandle = nullptr;
         com_ptr<IMFDXGIDeviceManager> deviceManager;
+
+        uint64_t windowId;
+        bool useHdr;
 
         bool isFirstSeek;
         bool isFirstSeekAfterStreamSwitch = false;
@@ -303,7 +331,6 @@ namespace winrt::FFmpegInteropX::implementation
         TimeSpan lastPosition{ 0 };
         TimeSpan lastSeek{ 0 };
 
-        static DispatcherQueue GetCurrentDispatcher();
         void OnPositionChanged(MediaPlaybackSession const& sender, IInspectable const& args);
     };
 }

@@ -37,7 +37,7 @@ namespace MediaPlayerCPP
         MainPage();
 
         property FFmpegInteropX::MediaSourceConfig^ Config;
-        property FFmpegInteropX::VideoEffectConfiguration^ VideoEffectConfiguration;
+        property FFmpegInteropX::VideoEffects::VideoAdjustmentsConfiguration^ VideoEffectConfiguration;
 
         double GetBufferSizeMB();
         void SetBufferSizeMB(double value);
@@ -68,6 +68,8 @@ namespace MediaPlayerCPP
         Windows::Storage::StorageFile^ currentFile;
         FFmpegInteropX::FFmpegMediaSource^ FFmpegMSS;
         Windows::Foundation::EventRegistrationToken timedMetadataTracksChangedToken;
+        TimeSpan subtitleDelay{ 0 };
+
         void CbEncodings_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e);
         void AddTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
         void RemoveTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
@@ -85,5 +87,7 @@ namespace MediaPlayerCPP
         void OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args);
 
         void StreamDelayManipulation(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e);
+        void ReadSubtitleFileFFmpeg(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+        task<void> ReadSubtitleFileFFmpegImpl();
     };
 }

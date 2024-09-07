@@ -42,7 +42,7 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 - Subtitle support, including external subtitle files
 - Native D3D11 hardware decoding for all major formats:
   - H264, HEVC, AV1, VC1, VP8, VP9, WMV3, MPEG2
-- FFmpeg video and audio effects (special thanks to [mcosmin222](https://github.com/mcosmin222)!)
+- FFmpeg video and audio effects (special thanks to [Brabebhin](https://github.com/brabebhin)!)
 - Super fast GPU-based video postprocessing effects
 - Major performance improvements (zero-copy data handling in all important areas)
 - Frame grabber support

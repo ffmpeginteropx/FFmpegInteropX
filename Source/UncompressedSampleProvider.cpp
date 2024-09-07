@@ -71,7 +71,7 @@ HRESULT UncompressedSampleProvider::CreateNextSampleBuffer(IBuffer* pBuffer, int
             }
         }
 
-        if (!SUCCEEDED(hr) && errorCount++ < m_config.SkipErrors())
+        if (!SUCCEEDED(hr) && errorCount++ < m_config.General().SkipErrors())
         {
             DebugMessage(L"Decode error.\n");
 
@@ -132,7 +132,7 @@ HRESULT UncompressedSampleProvider::GetFrameFromFFmpegDecoder(AVFrame** avFrame,
                 framePts = nextFramePts;
             }
 
-            frameDuration = (*avFrame)->pkt_duration;
+            frameDuration = (*avFrame)->duration;
             nextFramePts = framePts + frameDuration;
 
             hr = S_OK;

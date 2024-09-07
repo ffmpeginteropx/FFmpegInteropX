@@ -7,9 +7,6 @@
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <AppContainerApplication>true</AppContainerApplication>
     <ApplicationType>Windows Store</ApplicationType>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
-    <WindowsTargetPlatformVersion Condition="'$(VisualStudioVersion)' &gt;= '16.0'">10.0</WindowsTargetPlatformVersion>
-    <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
     <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
     <EnableDotNetNativeCompatibleProfile>true</EnableDotNetNativeCompatibleProfile>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
@@ -144,15 +141,18 @@
     <ProjectReference Include="..\..\Source\FFmpegInteropX.vcxproj">
       <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\VideoEffects\FFmpegInteropX.VideoEffects.vcxproj">
+      <Project>{6c4bff5e-7037-4ee8-9c9f-5381c35ba066}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\packages\FFmpegInteropX.FFmpegUWP.5.1.100\build\native\FFmpegInteropX.FFmpegUWP.targets" Condition="Exists('..\..\packages\FFmpegInteropX.FFmpegUWP.5.1.100\build\native\FFmpegInteropX.FFmpegUWP.targets')" />
+    <Import Project="..\..\packages\FFmpegInteropX.UWP.FFmpeg.7.0.100-pre3\build\native\FFmpegInteropX.UWP.FFmpeg.targets" Condition="Exists('..\..\packages\FFmpegInteropX.UWP.FFmpeg.7.0.100-pre3\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\FFmpegInteropX.FFmpegUWP.5.1.100\build\native\FFmpegInteropX.FFmpegUWP.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\FFmpegInteropX.FFmpegUWP.5.1.100\build\native\FFmpegInteropX.FFmpegUWP.targets'))" />
+    <Error Condition="!Exists('..\..\packages\FFmpegInteropX.UWP.FFmpeg.7.0.100-pre3\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\FFmpegInteropX.UWP.FFmpeg.7.0.100-pre3\build\native\FFmpegInteropX.UWP.FFmpeg.targets'))" />
   </Target>
 </Project>

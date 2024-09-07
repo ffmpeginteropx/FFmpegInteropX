@@ -2,9 +2,9 @@ md Output\NuGet
 
 nuget restore FFmpegInteropX.sln
 
-msbuild FFmpegInteropX.sln /m /t:build /p:Configuration=Debug;Platform=x64;AppxBundle=Never /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" || exit
+REM msbuild FFmpegInteropX.sln /m /t:build /p:Configuration=Debug;Platform=x64;AppxBundle=Never /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" || exit
 
-msbuild FFmpegInteropX.sln /m /t:build /p:Configuration=Debug_WinUI;Platform=x64;AppxBundle=Never /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" || exit
+msbuild FFmpegInteropX.sln /m /restore /t:build /p:Configuration=Debug_Desktop /p:Platform=x64 /p:AppxBundle=Never /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" || exit
 
 vstest.console /logger:Appveyor Output\FFmpegInteropX.UnitTests\x64\Debug\FFmpegInteropX.UnitTests.dll || exit
 

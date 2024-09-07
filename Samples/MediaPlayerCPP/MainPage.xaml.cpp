@@ -57,7 +57,7 @@ MainPage::MainPage()
     Splitter->IsPaneOpen = true;
     AutoDetect->IsOn = true;
 
-    VideoEffectConfiguration = ref new FFmpegInteropX::VideoEffectConfiguration();
+    VideoEffectConfiguration = ref new FFmpegInteropX::VideoEffects::VideoAdjustmentsConfiguration();
 
     mediaPlayer = ref new MediaPlayer();
     mediaPlayer->AudioCategory = Windows::Media::Playback::MediaPlayerAudioCategory::Movie;
@@ -70,7 +70,7 @@ MainPage::MainPage()
     cbEncodings->ItemsSource = CharacterEncoding::AllEncodings;
 
     Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);
-    
+
     StreamDelays->AddHandler(UIElement::PointerReleasedEvent, ref new PointerEventHandler(this, &MainPage::StreamDelayManipulation), true);
 }
 
@@ -203,7 +203,7 @@ task<void> MainPage::OpenUriStream(Platform::String^ uri)
     // https://www.ffmpeg.org/ffmpeg-formats.html
     // 
     // If format cannot be detected, try to increase probesize, max_probe_packets and analyzeduration!
-    
+
     // Below are some sample options that you can set to configure RTSP streaming
     //Config->FFmpegOptions->Insert("rtsp_flags", "prefer_tcp");
     Config->FFmpegOptions->Insert("stimeout", 1000000);
@@ -421,7 +421,7 @@ void MediaPlayerCPP::MainPage::OnMediaFailed(Windows::Media::Playback::MediaPlay
         ref new Windows::UI::Core::DispatchedHandler([this, args]
             {
                 auto message = args->ErrorMessage;
-                if ((!message || message->Length() == 0)) 
+                if ((!message || message->Length() == 0))
                 {
                     message = args->ExtendedErrorCode.ToString();
                 }
@@ -445,13 +445,13 @@ void MediaPlayerCPP::MainPage::CbEncodings_SelectionChanged(Platform::Object^ se
 {
     if (cbEncodings->SelectedItem)
     {
-        Config->ExternalSubtitleAnsiEncoding = static_cast<CharacterEncoding^>(cbEncodings->SelectedItem);
+        Config->Subtitles->ExternalSubtitleAnsiEncoding = static_cast<CharacterEncoding^>(cbEncodings->SelectedItem);
     }
 }
 
 void MediaPlayerCPP::MainPage::PassthroughVideo_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
-    Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
+    Config->Video->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 
@@ -477,11 +477,9 @@ void MediaPlayerCPP::MainPage::DelaySubtitles(Platform::Object^ sender, Windows:
 {
     if (FFmpegMSS != nullptr)
     {
-        auto delay = FFmpegMSS->SubtitleDelay.Duration;
-        TimeSpan newDelay;
-        newDelay.Duration = delay + 10000000;
-        FFmpegMSS->SetSubtitleDelay(newDelay);
-        tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
+        subtitleDelay.Duration += 10000000;
+        FFmpegMSS->SetSubtitleDelay(subtitleDelay);
+        tbSubtitleDelay->Text = "Subtitle delay: " + (subtitleDelay.Duration / 10000000).ToString() + "s";
 
     }
 }
@@ -491,11 +489,9 @@ void MediaPlayerCPP::MainPage::QuickenSubtitles(Platform::Object^ sender, Window
 {
     if (FFmpegMSS != nullptr)
     {
-        auto delay = FFmpegMSS->SubtitleDelay.Duration;
-        TimeSpan newDelay;
-        newDelay.Duration = delay - 10000000;
-        FFmpegMSS->SetSubtitleDelay(newDelay);
-        tbSubtitleDelay->Text = "Subtitle delay: " + (newDelay.Duration / 10000000).ToString() + "s";
+        subtitleDelay.Duration -= 10000000;
+        FFmpegMSS->SetSubtitleDelay(subtitleDelay);
+        tbSubtitleDelay->Text = "Subtitle delay: " + (subtitleDelay.Duration / 10000000).ToString() + "s";
     }
 }
 
@@ -532,7 +528,7 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
 void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
 {
     PassthroughVideo->IsEnabled = !AutoDetect->IsOn;
-    Config->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
+    Config->Video->VideoDecoderMode = AutoDetect->IsOn ? VideoDecoderMode::Automatic : PassthroughVideo->IsOn ? VideoDecoderMode::ForceSystemDecoder : VideoDecoderMode::ForceFFmpegSoftwareDecoder;
 }
 
 void MediaPlayerCPP::MainPage::EnableVideoEffects_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
@@ -563,7 +559,7 @@ void MediaPlayerCPP::MainPage::OnKeyDown(Windows::UI::Core::CoreWindow^ sender, 
         return;
     }
 
-    if (args->VirtualKey == Windows::System::VirtualKey::V && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) == Windows::UI::Core::CoreVirtualKeyStates:: None))
+    if (args->VirtualKey == Windows::System::VirtualKey::V && (Window::Current->CoreWindow->GetKeyState(Windows::System::VirtualKey::Control) == Windows::UI::Core::CoreVirtualKeyStates::None))
     {
         auto playbackItem = FFmpegMSS ? FFmpegMSS->PlaybackItem : nullptr;
         if (playbackItem && playbackItem->VideoTracks->Size > 1)
@@ -629,7 +625,7 @@ void MediaPlayerCPP::MainPage::ffmpegVideoFilters_KeyDown(Platform::Object^ send
 {
     if (e->Key == Windows::System::VirtualKey::Enter)
     {
-        Config->FFmpegVideoFilters = ffmpegVideoFilters->Text;
+        Config->Video->FFmpegVideoFilters = ffmpegVideoFilters->Text;
         if (FFmpegMSS)
         {
             if (!cmbVideoStreamEffectSelector->SelectedItem)
@@ -644,7 +640,7 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
 {
     if (e->Key == Windows::System::VirtualKey::Enter)
     {
-        Config->FFmpegAudioFilters = ffmpegAudioFilters->Text;
+        Config->Audio->FFmpegAudioFilters = ffmpegAudioFilters->Text;
         if (FFmpegMSS)
         {
             if (!cmbAudioStreamEffectSelector->SelectedItem)
@@ -656,10 +652,42 @@ void MediaPlayerCPP::MainPage::ffmpegAudioFilters_KeyDown(Platform::Object^ send
 
 double MediaPlayerCPP::MainPage::GetBufferSizeMB()
 {
-    return (double)Config->ReadAheadBufferSize / (1024*1024);
+    return (double)Config->General->ReadAheadBufferSize / (1024 * 1024);
 }
 
 void MediaPlayerCPP::MainPage::SetBufferSizeMB(double value)
 {
-    Config->ReadAheadBufferSize = (long long)(value * (1024 * 1024));
+    Config->General->ReadAheadBufferSize = (long long)(value * (1024 * 1024));
+}
+
+
+void MediaPlayerCPP::MainPage::ReadSubtitleFileFFmpeg(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+    ReadSubtitleFileFFmpegImpl();
+}
+
+task<void> MediaPlayerCPP::MainPage::ReadSubtitleFileFFmpegImpl()
+{
+    try
+    {
+        FileOpenPicker^ filePicker = ref new FileOpenPicker();
+        filePicker->SettingsIdentifier = "SubtitleFile";
+        filePicker->ViewMode = PickerViewMode::Thumbnail;
+        filePicker->SuggestedStartLocation = PickerLocationId::VideosLibrary;
+        filePicker->FileTypeFilter->Append("*");
+
+        // Show file picker so user can select a file
+        auto file = co_await filePicker->PickSingleFileAsync();
+        if (file != nullptr)
+        {
+            // Open StorageFile as IRandomAccessStream to be passed to FFmpegMediaSource
+            auto stream = co_await file->OpenAsync(FileAccessMode::Read);
+            auto subParser = co_await SubtitleParser::ReadSubtitleAsync(stream);
+            DisplayErrorMessage("File contains " + subParser->SubtitleTrack->SubtitleTrack->Cues->Size.ToString() + " cues");
+        }
+    }
+    catch (Exception^ e)
+    {
+        DisplayErrorMessage(e->Message);
+    }
 }

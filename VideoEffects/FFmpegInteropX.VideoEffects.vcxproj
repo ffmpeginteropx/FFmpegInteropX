@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props')" />
+  <PropertyGroup Condition="'$(Configuration)'=='Release_UWP' OR '$(Configuration)'=='Debug_UWP'">
+    <AppType>UWP</AppType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release_Desktop' OR '$(Configuration)'=='Debug_Desktop'">
+    <AppType>Win32</AppType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release_UWP' OR '$(Configuration)'=='Release_Desktop'">
+    <ConfigType>Release</ConfigType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug_UWP' OR '$(Configuration)'=='Debug_Desktop'">
+    <ConfigType>Debug</ConfigType>
+  </PropertyGroup>
+  <Import Project="..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.props" Condition="Exists('..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.props')" />
+  <PropertyGroup Label="Globals">
+    <CppWinRTOptimized>true</CppWinRTOptimized>
+    <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
+    <MinimalCoreWin>true</MinimalCoreWin>
+    <ProjectGuid>{6C4BFF5E-7037-4EE8-9C9F-5381C35BA066}</ProjectGuid>
+    <ProjectName>FFmpegInteropX.VideoEffects</ProjectName>
+    <RootNamespace>FFmpegInteropX.VideoEffects</RootNamespace>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <MinimumVisualStudioVersion>16.0</MinimumVisualStudioVersion>
+    <AppContainerApplication>true</AppContainerApplication>
+    <ApplicationType>Windows Store</ApplicationType>
+    <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
+    <UseWinUI>true</UseWinUI>
+    <CppWinRTModernIDL>true</CppWinRTModernIDL>
+    <FFmpegInteropXBuild>true</FFmpegInteropXBuild>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug_Desktop|ARM">
+      <Configuration>Debug_Desktop</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_Desktop|ARM64">
+      <Configuration>Debug_Desktop</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_Desktop|Win32">
+      <Configuration>Debug_Desktop</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_Desktop|x64">
+      <Configuration>Debug_Desktop</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_UWP|ARM">
+      <Configuration>Debug_UWP</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_UWP|ARM64">
+      <Configuration>Debug_UWP</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_UWP|Win32">
+      <Configuration>Debug_UWP</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_UWP|x64">
+      <Configuration>Debug_UWP</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Desktop|ARM">
+      <Configuration>Release_Desktop</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Desktop|ARM64">
+      <Configuration>Release_Desktop</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Desktop|Win32">
+      <Configuration>Release_Desktop</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Desktop|x64">
+      <Configuration>Release_Desktop</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_UWP|ARM">
+      <Configuration>Release_UWP</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_UWP|ARM64">
+      <Configuration>Release_UWP</Configuration>
+      <Platform>ARM64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_UWP|Win32">
+      <Configuration>Release_UWP</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_UWP|x64">
+      <Configuration>Release_UWP</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <GenerateManifest>false</GenerateManifest>
+    <DesktopCompatible>true</DesktopCompatible>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ConfigType)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ConfigType)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="NuGet">
+    <ResolveNuGetPackages>false</ResolveNuGetPackages>
+  </PropertyGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <IntDir>..\Intermediate\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <OutDir>..\Output\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LibraryVersionNumber Condition="'$(LibraryVersionNumber)'==''">1.0.0.0</LibraryVersionNumber>
+    <LibVersionNum>$(LibraryVersionNumber.Replace('.', ','))</LibVersionNum>
+    <LibVersionStr>\"$(LibraryVersionNumber)\"</LibVersionStr>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>_WINRT_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(ConfigType)'=='Debug'">_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(ConfigType)'=='Release'">NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(AppType);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level4</WarningLevel>
+      <AdditionalUsingDirectories>$(WindowsSDK_WindowsMetadata);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
+      <DisableSpecificWarnings>28204;4635;4634</DisableSpecificWarnings>
+      <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <SDLCheck>false</SDLCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
+      <CompileAsWinRT>false</CompileAsWinRT>
+      <ModuleDefinitionFile>FFmpegInteropX.VideoEffects.def</ModuleDefinitionFile>
+      <AdditionalDependencies>shcore.lib;runtimeobject.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EnableCOMDATFolding Condition="'$(ConfigType)'=='Release'">true</EnableCOMDATFolding>
+      <OptimizeReferences Condition="'$(ConfigType)'=='Release'">true</OptimizeReferences>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>$(AppType);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>LIB_VERSION_NUM=$(LibVersionNum);LIB_VERSION_STR=$(LibVersionStr);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="VideoAdjustmentsEffect.h" />
+    <ClInclude Include="VideoAdjustmentsConfiguration.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="VideoAdjustmentsEffect.cpp" />
+    <ClCompile Include="Generated Files\module.g.cpp" />
+    <ClCompile Include="VideoAdjustmentsConfiguration.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="FFmpegInteropX.VideoEffects.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Build-VideoEffects.ps1" />
+    <None Include="..\Build\FFmpegInteropX.UWP.VideoEffects.nuspec" />
+    <None Include="..\Build\FFmpegInteropX.UWP.VideoEffects.targets" />
+    <None Include="cpp.hint" />
+    <None Include="FFmpegInteropX.VideoEffects.def" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FFmpegInteropX.VideoEffects.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.targets" Condition="Exists('..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.targets')" />
+    <Import Project="..\packages\Win2D.uwp.1.26.0\build\native\Win2D.uwp.targets" Condition="'$(AppType)'=='UWP' AND Exists('..\packages\Win2D.uwp.1.26.0\build\native\Win2D.uwp.targets')" />
+    <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.targets'))" />
+    <Error Condition="!Exists('..\packages\Win2D.uwp.1.26.0\build\native\Win2D.uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Win2D.uwp.1.26.0\build\native\Win2D.uwp.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets'))" />
+  </Target>
+  <Target Name="AfterBuild">
+    <PropertyGroup>
+      <XmlDocFile>$(OutDir)$(TargetName).xml</XmlDocFile>
+      <XmlDoc>$([System.IO.File]::ReadAllText($(XmlDocFile)))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('winrt.' + TargetName + '.implementation',TargetName))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('winrt.hstring','System.String'))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('std.chrono.duration&amp;lt;System.Int64,std.ratio&amp;lt;0x01,0x0989680&amp;gt;&amp;gt;','System.TimeSpan'))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('!System.Runtime.CompilerServices.IsConst*',''))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('!System.Runtime.CompilerServices.IsImplicitlyDereferenced',''))</XmlDoc>
+      <XmlDoc>$(XmlDoc.Replace('winrt.',''))</XmlDoc>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(XmlDocFile)" Lines="$(XmlDoc)" Overwrite="true" Encoding="UTF-8" />
+  </Target>
+</Project>

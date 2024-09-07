@@ -8,6 +8,12 @@ using namespace winrt::Windows::Storage::FileProperties;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Foundation::Metadata;
 
+#ifdef Win32
+using namespace winrt::Microsoft::UI::Dispatching;
+#else
+using namespace winrt::Windows::System;
+#endif
+
 class SubtitleProviderSsaAss : public SubtitleProvider
 {
 public:
@@ -16,7 +22,7 @@ public:
         AVCodecContext* avCodecCtx,
         MediaSourceConfig const& config,
         int index,
-        winrt::Windows::System::DispatcherQueue const& dispatcher,
+        DispatcherQueue const& dispatcher,
         std::shared_ptr<AttachedFileHelper> attachedFileHelper)
         : SubtitleProvider(reader,
             avFormatCtx,
@@ -67,6 +73,7 @@ public:
 
                 if (resy != str.npos && sscanf_s((char*)m_pAvCodecCtx->subtitle_header + resy, "\nPlayResY: %i\n", &h) == 1)
                 {
+                    hasPlayResY = true;
                     height = h;
                 }
 
@@ -129,11 +136,12 @@ public:
 
         AVSubtitle subtitle;
         int gotSubtitle = 0;
+        int layer = 0;
         auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
         if (result > 0 && gotSubtitle && subtitle.num_rects > 0)
         {
-            // ASS Format:    Layer, Start, End,   Style, Name, MarginL, MarginR, MarginV, Effect, Text
-            // Actual Format:        Int??, Int??, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+            // ASS Format:    Layer, Start,     End,   Style, Name, MarginL, MarginR, MarginV, Effect, Text
+            // Actual Format:        ReadOrder, Layer, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             auto str = StringUtils::Utf8ToWString(subtitle.rects[0]->ass);
 
             INT64 startStyle = -1;
@@ -146,7 +154,14 @@ public:
                 auto nextComma = str.find(',', lastComma + 1);
                 if (nextComma != str.npos)
                 {
-                    if (i == 2)
+                    if (i == 1)
+                    {
+                        if (str[nextComma + 1] != ',')
+                        {
+                            layer = parseInt(str.substr(nextComma + 1));
+                        }
+                    }
+                    else if (i == 2)
                     {
                         startStyle = (INT64)nextComma + 1;
                     }
@@ -196,20 +211,43 @@ public:
                 }
             }
 
-            auto cueStyle = !m_config.OverrideSubtitleStyles() && style.get() != nullptr ? style->Style : m_config.SubtitleStyle();
-            auto cueRegion = !m_config.OverrideSubtitleStyles() && style.get() != nullptr ? style->Region : m_config.SubtitleRegion();
-            TimedTextRegion subRegion = nullptr;
+            auto cueStyle = !m_config.Subtitles().OverrideSubtitleStyles() && style.get() != nullptr ? style->Style : m_config.Subtitles().SubtitleStyle();
+            auto cueRegion = !m_config.Subtitles().OverrideSubtitleStyles() && style.get() != nullptr ? style->Region : m_config.Subtitles().SubtitleRegion();
+            auto subRegion = CopyRegion(cueRegion);
 
             if ((marginL > 0 || marginR > 0 || marginV > 0) && width > 0 && height > 0)
             {
-                TimedTextPadding padding;
+                // Multiple caveats here:
+                // 1. For TimedTextPadding, the XAML renderer is mixing up the directions.
+                //    Opposed to the alignment enums where Before/After means Top/Bottom
+                //    it considers Start/End as Top/Bottom, so we need to accommodate.
+                // 2. When non-zero margin values occur in a dialogue line, those values
+                //    only override the individual values from the style not all at once,
+                //    so we need individual checks here.
+                // 3. MarginV is a top margin for top-aligned blocks and a bottom margin for
+                //    bottom-aligned blocks - even though the Word doc tells this for style
+                //    defined margins and otherwise for dialog lines, where it talks about
+                //    bottom only - which is incorrect.
+                //    We set both here and clear the non-applicable one(s) later
+                auto padding = subRegion.Padding();
                 padding.Unit = TimedTextUnit::Percentage;
-                padding.Start = (double)marginL * 100 / width;
-                padding.End = (double)marginR * 100 / width;
-                padding.Before = 0;
-                padding.After = (double)marginV * 100 / height;
 
-                subRegion = CopyRegion(cueRegion);
+                if (marginL > 0)
+                {
+                    padding.Before = (double)marginL * 100 / width;
+                }
+
+                if (marginR > 0)
+                {
+                    padding.After = (double)marginR * 100 / width;
+                }
+
+                if (marginV > 0)
+                {
+                    padding.Start = (double)marginV * 100 / height;
+                    padding.End = (double)marginV * 100 / height;
+                }
+
                 subRegion.Padding(padding);
             }
 
@@ -224,7 +262,6 @@ public:
                 str.erase(str.find_last_not_of(L" \n\r") + 1);
 
                 TimedTextCue cue = TimedTextCue();
-                cue.CueRegion(cueRegion);
                 cue.CueStyle(cueStyle);
 
                 TimedTextLine textLine = TimedTextLine();
@@ -239,7 +276,8 @@ public:
 
                 while (true)
                 {
-                    auto nextEffect = str.find('{');
+                    auto nextEffect = str.find(L"{\\");
+                    ////auto nextEffect = str.find('{');
                     if (nextEffect != str.npos)
                     {
                         auto endEffect = str.find('}', nextEffect);
@@ -293,6 +331,14 @@ public:
                                             subStyle.FontFamily(GetFontFamily(fnName));
                                         }
                                     }
+                                    else if (checkTag(tag, L"fsc"))
+                                    {
+                                        // TODO: \fsc<x or y><percent>	<x or y> x scales horizontally, y scales vertically <percent>
+                                    }
+                                    else if (checkTag(tag, L"fsp"))
+                                    {
+                                        // TODO: \fsp<pixels>		    <pixels> changes the distance between letters. (default: 0)
+                                    }
                                     else if (checkTag(tag, L"fs"))
                                     {
                                         auto size = parseDouble(tag.substr(2));
@@ -300,6 +346,11 @@ public:
                                         {
                                             subStyle.FontSize(GetFontSize(size));
                                         }
+                                    }
+                                    else if (checkTag(tag, L"clip"))
+                                    {
+                                        // TODO: \clip(<x1>, <y1>, <x2>, <y2>)    Clips any drawing outside the rectangle defined by the parameters.
+                                        //       \clip([<scale>,] <drawing commands>) Clipping against drawn shapes.  <scale> has the same meaning as in the case of \p<scale>
                                     }
                                     else if (checkTag(tag, L"c", 2))
                                     {
@@ -339,7 +390,6 @@ public:
                                         // numpad alignment
                                         auto alignment = parseInt(tag.substr(2));
 
-                                        if (!subRegion) subRegion = CopyRegion(cueRegion);
                                         subRegion.DisplayAlignment(GetVerticalAlignment(alignment, true));
                                         subStyle.LineAlignment(GetHorizontalAlignment(alignment, true));
                                         cue.CueStyle(CopyStyle(cueStyle));
@@ -350,7 +400,6 @@ public:
                                         // legacy alignment
                                         auto alignment = parseInt(tag.substr(1));
 
-                                        if (!subRegion) subRegion = CopyRegion(cueRegion);
                                         subRegion.DisplayAlignment(GetVerticalAlignment(alignment, false));
                                         subStyle.LineAlignment(GetHorizontalAlignment(alignment, false));
                                         cue.CueStyle(CopyStyle(cueStyle));
@@ -363,19 +412,39 @@ public:
                                         if (numDigits > 0 && tag.length() > 5 + numDigits)
                                         {
                                             posY = std::stod(tag.substr(5 + numDigits), nullptr);
-                                            if (!subRegion) subRegion = CopyRegion(cueRegion);
                                             hasPosition = true;
                                         }
                                     }
                                     else if (checkTag(tag, L"bord"))
                                     {
                                         auto border = std::stod(tag.substr(4));
-                                        auto outline = subStyle.OutlineThickness();
-                                        outline.Value = border;
-                                        subStyle.OutlineThickness(outline);
+                                        auto borderSize = GetScaledValue(border);
+                                        subStyle.OutlineThickness(borderSize);
+
                                         auto outlineRadius = subStyle.OutlineRadius();
-                                        outlineRadius.Value = border;
-                                        subStyle.OutlineRadius(outlineRadius);
+                                        if (outlineRadius.Value > 0)
+                                        {
+                                            subStyle.OutlineRadius(borderSize);
+                                        }
+                                    }
+                                    else if (tag.compare(L"be1") == 0)
+                                    {
+                                        auto outline = subStyle.OutlineThickness();
+                                        if (outline.Value > 0)
+                                        {
+                                            subStyle.OutlineRadius(outline);
+                                        }
+                                        else
+                                        {
+                                            subStyle.OutlineRadius(GetScaledValue(1.0));
+                                        }
+                                    }
+                                    else if (tag.compare(L"be0") == 0)
+                                    {
+                                        TimedTextDouble radius;
+                                        radius.Unit = TimedTextUnit::Percentage;
+                                        radius.Value = 0;
+                                        subStyle.OutlineRadius(radius);
                                     }
                                     else if (tag.compare(L"b0") == 0)
                                     {
@@ -425,7 +494,8 @@ public:
                                 }
                                 catch (...)
                                 {
-                                    OutputDebugString(L"Failed to parse tag: ");
+                                    std::wstring output = L"Failed to parse tag: " + tag + L"\r\n";
+                                    OutputDebugString(output.c_str());
                                 }
                             }
 
@@ -433,11 +503,6 @@ public:
                             {
                                 double x = min(posX / width, 1);
                                 double y = min(posY / height, 1);
-
-                                TimedTextPadding padding
-                                {
-                                    0, 0, 0, 0, TimedTextUnit::Percentage
-                                };
 
                                 TimedTextSize extent
                                 {
@@ -469,19 +534,69 @@ public:
                                     break;
                                 }
 
+                                // Absolute positioning does not change the width (normally)
+                                // MarginL and MarginR still apply, which we cannot replicate
+                                // in all cases
+                                auto padding1 = subRegion.Padding();
+
                                 switch (subStyle.LineAlignment())
                                 {
                                 case  TimedTextLineAlignment::Start:
                                     pos.X = x * 100;
                                     extent.Width = (1.0 - x) * 100;
+
+                                    // Both margins have an effect, but a left margin here doesn't change
+                                    // the alignment point, so we add the left margin to the right margin
+                                    // and set left to zero.
+                                    padding1.After += padding1.Before;
+                                    padding1.Before = 0;
+
+                                    // Now subtract the reduced width from the padding (which is meant to
+                                    // be applied to a 100% width box)
+                                    padding1.After -= (100 - extent.Width);
+                                    if (padding1.After < 0) {
+                                        // In this case, we cannot replicate proper ass rendering unfortunately
+                                        padding1.After = 0;
+                                    }
                                     break;
                                 case  TimedTextLineAlignment::End:
+                                    pos.X = 0;
                                     extent.Width = x * 100;
+                                    // Both margins have an effect, but a right margin here doesn't change
+                                    // the alignment point, so we add the right margin to the left margin
+                                    // and set it to zero.
+                                    padding1.Before += padding1.After;
+                                    padding1.After = 0;
+
+                                    // Now subtract the reduced width from the padding (which is meant to
+                                    // be applied to a 100% width box)
+                                    padding1.Before -= (100 - extent.Width);
+                                    if (padding1.Before < 0) {
+                                        // In this case, we cannot replicate proper ass rendering unfortunately
+                                        padding1.Before = 0;
+                                    }
                                     break;
                                 case  TimedTextLineAlignment::Center:
                                     size = min(x, 1 - x);
                                     pos.X = (x - size) * 100;
                                     extent.Width = (size * 2) * 100;
+
+                                    // Both margins are effective but differing left and right margins
+                                    // do not change the alignment point (center). So we average both
+                                    // margins and set them to equal values
+                                    {
+                                        auto average = (padding1.Before + padding1.After) / 2;
+
+                                        // Subtract the reduced width from the paddings
+                                        average -= (100 - extent.Width) / 2;
+                                        if (average < 0) {
+                                            // In this case, we cannot replicate proper ass rendering unfortunately
+                                            average = 0;
+                                        }
+
+                                        padding1.Before = average;
+                                        padding1.After = average;
+                                    }
                                     break;
                                 default:
                                     break;
@@ -489,7 +604,10 @@ public:
                                 subRegion.Position(pos);
                                 subRegion.Extent(extent);
 
-                                subRegion.Padding(padding);
+                                // Top and bottom margin are out of the game with absolute positioning
+                                padding1.Start = 0;
+                                padding1.End = 0;
+                                subRegion.Padding(padding1);
                             }
 
                             // strip effect from actual text
@@ -559,13 +677,35 @@ public:
                     subFormat.Length((int)str.size() - subFormat.StartIndex());
                     textLine.Subformats().Append(subFormat);
                 }
-                if (subRegion != nullptr)
-                {
-                    cue.CueRegion(subRegion);
-                }
+
                 auto timedText = StringUtils::WStringToPlatformString(str);
                 if (timedText.size() > 0)
                 {
+                    auto padding = subRegion.Padding();
+
+                    // MarginV is top margin when aligned to the top
+                    // and bottom margin when aligned to the bottom
+                    // it is ignored for vertically centered subtitles
+                    switch (subRegion.DisplayAlignment()) {
+                    case TimedTextDisplayAlignment::Before:
+                        padding.End = 0;
+                        break;
+                    case TimedTextDisplayAlignment::After:
+                        padding.Start = 0;
+                        break;
+                    case TimedTextDisplayAlignment::Center:
+                        padding.Start = 0;
+                        padding.End = 0;
+                        break;
+                    }
+
+                    subRegion.Padding(padding);
+                    subRegion.ZIndex(layer);
+
+                    auto region = GetOrAddCachedRegion(subRegion, layer);
+
+                    cue.CueRegion(region);
+
                     textLine.Text(timedText);
                     cue.Lines().Append(textLine);
                     return cue;
@@ -574,7 +714,7 @@ public:
         }
         else if (result <= 0)
         {
-            OutputDebugString(L"Failed to decode subtitle.");
+            OutputDebugString(L"Failed to decode subtitle.\r\n");
         }
 
         return nullptr;
@@ -601,14 +741,14 @@ public:
                 int bold, italic, underline, strikeout;
                 float scaleX, scaleY, spacing, angle;
                 int borderStyle;
-                float outline;
-                int shadow, alignment;
+                float outline, shadow;
+                int alignment;
                 float marginL, marginR, marginV;
                 int encoding;
 
                 // try with hex colors
                 auto count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-                    "%[^,],%[^,],%f,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
+                    "%[^,],%[^,],%f,&H%x,&H%x,&H%x,&H%x,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%f,%i,%f,%f,%f,%i",
                     name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
                     &size, &color, &secondaryColor, &outlineColor, &backColor,
                     &bold, &italic, &underline, &strikeout,
@@ -620,7 +760,7 @@ public:
                 {
                     // try with decimal colors
                     count = sscanf_s((char*)m_pAvCodecCtx->subtitle_header + stylesV4plus,
-                        "%[^,],%[^,],%f,%i,%i,%i,%i,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%i,%i,%f,%f,%f,%i",
+                        "%[^,],%[^,],%f,%i,%i,%i,%i,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f,%f,%i,%f,%f,%f,%i",
                         name, MAX_STYLE_NAME_CHARS, font, MAX_STYLE_NAME_CHARS,
                         &size, &color, &secondaryColor, &outlineColor, &backColor,
                         &bold, &italic, &underline, &strikeout,
@@ -635,7 +775,7 @@ public:
                     auto horizontalAlignment = GetHorizontalAlignment(alignment, true);
 
                     auto platformColor = ColorFromArgb(color << 8 | color >> 24);
-                    auto platformOutlineColor = ColorFromArgb(outlineColor << 8 | color >> 24);
+                    auto platformOutlineColor = ColorFromArgb(outlineColor << 8 | outlineColor >> 24);
 
                     if (platformColor.A == 0)
                     {
@@ -753,10 +893,10 @@ public:
         padding.Unit = TimedTextUnit::Percentage;
         if (width > 0 && height > 0)
         {
-            padding.Start = (double)marginL * 100 / width;
-            padding.End = (double)marginR * 100 / width;
-            padding.Before = 0;
-            padding.After = (double)marginV * 100 / height;
+            padding.Before = (double)marginL * 100 / width;
+            padding.After = (double)marginR * 100 / width;
+            padding.Start = (double)marginV * 100 / height;
+            padding.End = (double)marginV * 100 / height;
         }
         else
         {
@@ -776,14 +916,11 @@ public:
         SubtitleStyle.FontWeight(bold ? TimedTextWeight::Bold : TimedTextWeight::Normal);
         SubtitleStyle.Foreground(color);
         SubtitleStyle.Background(winrt::Windows::UI::Colors::Transparent()); //ColorFromArgb(backColor);
-        TimedTextDouble outlineRadius;
-        outlineRadius.Unit = TimedTextUnit::Percentage;
-        outlineRadius.Value = outline * 1.4;
-        SubtitleStyle.OutlineRadius(outlineRadius);
-        TimedTextDouble outlineThickness;
-        outlineThickness.Unit = TimedTextUnit::Percentage;
-        outlineThickness.Value = outline * 1.4;
-        SubtitleStyle.OutlineThickness(outlineThickness);
+        TimedTextDouble radius;
+        radius.Unit = TimedTextUnit::Percentage;
+        radius.Value = 0;
+        SubtitleStyle.OutlineRadius(radius);
+        SubtitleStyle.OutlineThickness(GetScaledValue(outline));
         SubtitleStyle.FlowDirection(TimedTextFlowDirection::LeftToRight);
         SubtitleStyle.OutlineColor(outlineColor);
         SubtitleStyle.IsUnderlineEnabled(underline);
@@ -932,7 +1069,7 @@ public:
 
         winrt::hstring result;
 
-        if (m_config.UseEmbeddedSubtitleFonts())
+        if (m_config.Subtitles().UseEmbeddedSubtitleFonts())
         {
             try
             {
@@ -951,7 +1088,7 @@ public:
                             auto fontFamily = std::wstring(title);
                             if (fontFamily.find(str) == 0)
                             {
-                                result = L"ms-appdata:///temp/" + m_config.AttachmentCacheFolderName() + L"/" + attachedFileHelper->InstanceId() + L"/" + attachment->Name() + L"#" + StringUtils::WStringToPlatformString(str);
+                                result = L"ms-appdata:///temp/" + m_config.General().AttachmentCacheFolderName() + L"/" + attachedFileHelper->InstanceId() + L"/" + attachment->Name() + L"#" + StringUtils::WStringToPlatformString(str);
                                 break;
                             }
                         }
@@ -976,8 +1113,34 @@ public:
     TimedTextDouble GetFontSize(double fontSize)
     {
         TimedTextDouble size;
-        size.Unit = TimedTextUnit::Percentage;
-        size.Value = fontSize * 2.7;
+
+        if (hasPlayResY && videoHeight > 0 && height > 0)
+        {
+            size.Unit = TimedTextUnit::Pixels;
+            size.Value = static_cast<double>(videoHeight) / height * fontSize * 0.85;
+        }
+        else
+        {
+            size.Unit = TimedTextUnit::Percentage;
+            size.Value = fontSize * 2.7;
+        }
+
+        return size;
+    }
+
+    TimedTextDouble GetScaledValue(double value)
+    {
+        TimedTextDouble size;
+        size.Unit = TimedTextUnit::Pixels;
+
+        if (hasPlayResY && videoHeight > 0 && height > 0)
+        {
+            size.Value = static_cast<double>(videoHeight) / height * value;
+        }
+        else
+        {
+            size.Value = value;
+        }
 
         return size;
     }
@@ -1007,6 +1170,83 @@ public:
         }
     }
 
+    TimedTextRegion GetOrAddCachedRegion(TimedTextRegion  const& r1, int layer)
+    {
+        UNREFERENCED_PARAMETER(layer);
+        for (const auto &cachedRegion : cachedRegions) {
+
+            auto r2 = cachedRegion;
+
+            if (r1.DisplayAlignment() != r2.DisplayAlignment()) {
+                continue;
+            }
+            if (r1.ZIndex() != r2.ZIndex()) {
+                continue;
+            }
+            if (r1.Background() != r2.Background()) {
+                continue;
+            }
+            if (r1.IsOverflowClipped() != r2.IsOverflowClipped()) {
+                continue;
+            }
+            if (r1.LineHeight() != r2.LineHeight()) {
+                continue;
+            }
+            if (r1.ScrollMode() != r2.ScrollMode()) {
+                continue;
+            }
+            if (r1.WritingMode() != r2.WritingMode()) {
+                continue;
+            }
+            if (!areEqual(r1.Padding(), r2.Padding()))
+            {
+                continue;
+            }
+            if (!areEqual(r1.Extent(), r2.Extent()))
+            {
+                continue;
+            }
+            if (!areEqual(r1.Position(), r2.Position()))
+            {
+                continue;
+            }
+
+            return cachedRegion;
+        }
+
+        const auto newRegion = CopyRegion(r1);
+        cachedRegions.push_back(newRegion);
+
+        return newRegion;
+    }
+
+    static bool areEqual(const TimedTextPoint& p1, const TimedTextPoint& p2)
+    {
+        return p1.Unit == p2.Unit &&
+               areEqual(p1.X, p2.X) &&
+               areEqual(p1.Y, p2.Y);
+    }
+
+    static bool areEqual(const TimedTextSize& s1, const TimedTextSize& s2)
+    {
+        return s1.Unit == s2.Unit &&
+               areEqual(s1.Height, s2.Height) &&
+               areEqual(s1.Width, s2.Width);
+    }
+
+    static bool areEqual(const TimedTextPadding& p1, const TimedTextPadding& p2)
+    {
+        return areEqual(p1.Before, p2.Before) &&
+               areEqual(p1.After, p2.After) &&
+               areEqual(p1.Start, p2.Start) &&
+               areEqual(p1.End, p2.End);
+    }
+
+    static bool areEqual(double a, double b, double epsilon = 1e-3)
+    {
+        return std::abs(a - b) < epsilon;
+    }
+
     // trim from left
     inline std::wstring& ltrim(std::wstring& s, const wchar_t* t = L" \t\n\r\f\v")
     {
@@ -1025,6 +1265,42 @@ public:
     inline std::wstring& trim(std::wstring& s, const wchar_t* t = L" \t\n\r\f\v")
     {
         return ltrim(rtrim(s, t), t);
+    }
+
+    int parseInt(std::wstring const& str)
+    {
+        return std::stoi(str, nullptr, 10);
+    }
+
+    double parseDouble(std::wstring const& str)
+    {
+        return std::stod(str);
+    }
+
+    int parseHexInt(std::wstring const& str)
+    {
+        return std::stoi(str, nullptr, 16);
+    }
+
+    int parseHexOrDecimalInt(std::wstring const& str, size_t offset)
+    {
+        if (offset > 2 && str[offset - 2] == L'H' && str[offset - 1] == L'&')
+        {
+            // Fix for cases where colors are specified like: 3cH&H2A4F5D&
+            offset++;
+        }
+        if (str.length() > offset + 1 && str[offset] == L'H')
+        {
+            return parseHexInt(str.substr(offset + 1));
+        }
+        return parseInt(str.substr(offset));
+    }
+
+    bool checkTag(std::wstring const& str, std::wstring const& prefix, size_t minParamLenth = 1)
+    {
+        return
+            str.size() >= (prefix.size() + minParamLenth) &&
+            str.compare(0, prefix.size(), prefix) == 0;
     }
 
     class SsaStyleDefinition
@@ -1050,6 +1326,7 @@ private:
     int textIndex = 0;
     int width = 0;
     int height = 0;
+    bool hasPlayResY = false;
     double videoAspectRatio = 0.0;
     int videoWidth = 0;
     int videoHeight = 0;
@@ -1057,4 +1334,6 @@ private:
     std::map<winrt::hstring, std::shared_ptr<SsaStyleDefinition>> styles;
     std::map<std::wstring, winrt::hstring> fonts;
     std::shared_ptr<AttachedFileHelper> attachedFileHelper;
+    std::vector<TimedTextRegion> cachedRegions;
+    TimedTextDouble zeroDouble { 0.0, TimedTextUnit::Percentage };
 };

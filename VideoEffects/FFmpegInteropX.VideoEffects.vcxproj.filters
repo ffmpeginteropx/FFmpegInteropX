@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>65247ed4-8bf5-4cae-b754-fa343845bdc7</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="NuGet">
+      <UniqueIdentifier>{6ec5dc49-1ce3-43ae-8a32-385d881df05e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="FFmpegInteropX.VideoEffects.def" />
+    <None Include="cpp.hint" />
+    <None Include="..\Build\FFmpegInteropX.UWP.VideoEffects.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.UWP.VideoEffects.targets">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="VideoAdjustmentsEffect.h" />
+    <ClInclude Include="VideoAdjustmentsConfiguration.h" />
+    <ClInclude Include="resource.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Generated Files\module.g.cpp" />
+    <ClCompile Include="VideoAdjustmentsEffect.cpp" />
+    <ClCompile Include="VideoAdjustmentsConfiguration.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="FFmpegInteropX.VideoEffects.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FFmpegInteropX.VideoEffects.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

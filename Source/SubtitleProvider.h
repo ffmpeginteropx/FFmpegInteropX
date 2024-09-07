@@ -13,6 +13,12 @@ using namespace winrt::Windows::Media::Playback;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Foundation;
 
+#ifdef Win32
+using namespace winrt::Microsoft::UI::Dispatching;
+#else
+using namespace winrt::Windows::System;
+#endif
+
 class SubtitleProvider :
     public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
 {
@@ -27,7 +33,7 @@ public:
         MediaSourceConfig const& config,
         int index,
         TimedMetadataKind const& ptimedMetadataKind,
-        winrt::Windows::System::DispatcherQueue const& pdispatcher)
+        DispatcherQueue const& pdispatcher)
         : CompressedSampleProvider(reader,
             avFormatCtx,
             avCodecCtx,
@@ -46,7 +52,7 @@ public:
         SubtitleTrack = TimedMetadataTrack(Name, Language, timedMetadataKind);
         SubtitleTrack.Label(!Name.empty() ? Name : Language);
 
-        if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
+        if (!IsExternal())
         {
             SubtitleTrack.TrackFailed(weak_handler(this, &SubtitleProvider::OnTrackFailed));
         }
@@ -65,7 +71,7 @@ public:
         auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
 
         streamInfo = SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
-            false, forced, SubtitleTrack, m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser, m_streamIndex);
+            false, forced, SubtitleTrack, IsExternal(), m_streamIndex);
     }
 
     virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio)
@@ -83,84 +89,115 @@ public:
         {
             TimeSpan position = ConvertPosition(packet->pts);
             TimeSpan duration = ConvertDuration(packet->duration);
+            IMediaCue changedCue{ nullptr };
 
             auto cue = CreateCue(packet, &position, &duration);
-            if (cue && position.count() >= 0)
+            if (position.count() >= 0)
             {
+                std::lock_guard lock(mutex);
+
                 // apply subtitle delay
                 position += streamDelay;
                 if (position.count() < 0)
                 {
-                    negativePositionCues.emplace_back(cue, position.count());
+                    if (cue)
+                    {
+                        negativePositionCues.emplace_back(cue, position.count());
+                    }
                     position = std::chrono::seconds(0);
                 }
 
-                // clip previous extended duration cue, if there is one
-                if (lastExtendedDurationCue && m_config.PreventModifiedSubtitleDurationOverlap() &&
-                    lastExtendedDurationCue.StartTime() + lastExtendedDurationCue.Duration() > position)
+                // clip previous extended duration cue, if it did not overlap originally but overlaps now, gap too small
+                if (lastExtendedDurationCue)
                 {
-                    auto diff = position - (lastExtendedDurationCue.StartTime() + lastExtendedDurationCue.Duration());
-                    auto newDuration = lastExtendedDurationCue.Duration() + diff;
-                    if (newDuration.count() > 0)
+                    auto lastStartTime = lastExtendedDurationCue.StartTime();
+                    auto lastDuration = lastExtendedDurationCue.Duration();
+                    auto lastEndTime = lastStartTime + lastDuration;
+                    bool isNewOverlap = m_config.Subtitles().PreventModifiedSubtitleDurationOverlap() &&
+                        lastExtendedDurationCueOriginalEndTime <= position &&
+                        lastEndTime > position;
+                    bool isGapTooSmall = lastEndTime - position < m_config.Subtitles().ModifiedSubtitleDurationGap();
+                    if (isNewOverlap || isGapTooSmall)
                     {
-                        lastExtendedDurationCue.Duration() = newDuration;
-                        if (!m_config.as<implementation::MediaSourceConfig>().get()->IsExternalSubtitleParser)
+                        auto diff = position - (lastExtendedDurationCue.StartTime() + lastExtendedDurationCue.Duration() + m_config.Subtitles().ModifiedSubtitleDurationGap());
+                        auto newDuration = lastExtendedDurationCue.Duration() + diff;
+                        auto originalDuration = lastExtendedDurationCueOriginalEndTime - lastStartTime;
+                        if (newDuration < originalDuration)
                         {
-                            pendingChangedDurationCues.push_back(lastExtendedDurationCue);
+                            newDuration = originalDuration;
                         }
-                    }
-                    else
-                    {
-                        // weird subtitle timings, just leave it as is
+
+                        lastExtendedDurationCue.Duration(newDuration);
+                        auto newEndTime = lastStartTime + newDuration;
+                        if (IsPlayingLive() && newEndTime != position)
+                        {
+                            // add separate update point
+                            AddUpdatePoint(lastExtendedDurationCue.StartTime() + newDuration, lastExtendedDurationCue);
+                        }
+                        else
+                        {
+                            // update along with added cue
+                            changedCue = lastExtendedDurationCue;
+                        }
                     }
                 }
 
                 lastExtendedDurationCue = nullptr;
 
+                // extend duration of current cue if needed
                 if (duration.count() < 0)
                 {
                     duration = TimeSpan(InfiniteDuration);
                 }
-                else
+                else if (duration.count() < InfiniteDuration)
                 {
-                    if (m_config.AdditionalSubtitleDuration().count() != 0)
+                    if (m_config.Subtitles().AdditionalSubtitleDuration().count() != 0)
                     {
-                        duration += m_config.AdditionalSubtitleDuration();
                         lastExtendedDurationCue = cue;
+                        lastExtendedDurationCueOriginalEndTime = position + duration;
+                        duration += m_config.Subtitles().AdditionalSubtitleDuration();
                     }
-                    if (duration < m_config.MinimumSubtitleDuration())
+                    if (duration < m_config.Subtitles().MinimumSubtitleDuration())
                     {
-                        duration = m_config.MinimumSubtitleDuration();
-                        lastExtendedDurationCue = cue;
+                        if (lastExtendedDurationCue != cue)
+                        {
+                            lastExtendedDurationCue = cue;
+                            lastExtendedDurationCueOriginalEndTime = position + duration;
+                        }
+                        duration = m_config.Subtitles().MinimumSubtitleDuration();
                     }
                 }
 
-                cue.StartTime(position);
-                cue.Duration(duration);
-                AddCue(cue);
-
-                if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser)
+                // fixup infinite duration cue
+                if (infiniteDurationCue)
                 {
-                    isPreviousCueInfiniteDuration = duration.count() >= InfiniteDuration;
-                }
-                else
-                {
-                    // fixup infinite duration cues for external subs
-                    if (isPreviousCueInfiniteDuration)
+                    auto newDuration = position - infiniteDurationCue.StartTime();
+                    if (newDuration.count() < 0)
                     {
-                        infiniteDurationCue.Duration(TimeSpan(cue.StartTime() - infiniteDurationCue.StartTime()));
+                        newDuration = TimeSpan{ 0 };
                     }
+                    infiniteDurationCue.Duration(newDuration);
+                    if (IsPlayingLive())
+                    {
+                        changedCue = infiniteDurationCue;
+                    }
+                    infiniteDurationCue = nullptr;
+                }
+
+                if (cue)
+                {
+                    cue.StartTime(position);
+                    cue.Duration(duration);
+                    AddCue(cue, changedCue);
 
                     if (duration.count() >= InfiniteDuration)
                     {
-                        isPreviousCueInfiniteDuration = true;
                         infiniteDurationCue = cue;
                     }
-                    else
-                    {
-                        isPreviousCueInfiniteDuration = false;
-                        infiniteDurationCue = nullptr;
-                    }
+                }
+                else if (changedCue)
+                {
+                    AddUpdatePoint(position, changedCue);
                 }
             }
         }
@@ -176,58 +213,41 @@ public:
         SetSubtitleDelay(newDelay);
     }
 
-    int parseInt(std::wstring const& str)
-    {
-        return std::stoi(str, nullptr, 10);
-    }
-
-    double parseDouble(std::wstring const& str)
-    {
-        return std::stod(str);
-    }
-
-    int parseHexInt(std::wstring const& str)
-    {
-        return std::stoi(str, nullptr, 16);
-    }
-
-    int parseHexOrDecimalInt(std::wstring const& str, size_t offset)
-    {
-        if (str.length() > offset + 1 && str[offset] == L'H')
-        {
-            return parseHexInt(str.substr(offset + 1));
-        }
-        return parseInt(str.substr(offset));
-    }
-
-    bool checkTag(std::wstring const& str, std::wstring const& prefix, size_t minParamLenth = 1)
-    {
-        return
-            str.size() >= (prefix.size() + minParamLenth) &&
-            str.compare(0, prefix.size(), prefix) == 0;
-    }
-
 private:
 
     void SetSubtitleDelay(TimeSpan const& delay)
     {
         std::lock_guard lock(mutex);
-        streamDelay = pendingSubtitleDelay = delay;
-        try
+
+        if (streamDelay != delay)
         {
-            TriggerUpdateCues();
-        }
-        catch (...)
-        {
+            streamDelay = delay;
+            if (SubtitleTrack)
+            {
+                if (IsPlayingLive())
+                {
+                    AddUpdatePoint(TimeSpan{ 0 }, nullptr);
+                }
+                else
+                {
+                    UpdateCuePositions();
+                    actualSubtitleDelay = delay;
+                }
+            }
         }
     }
 
-    void AddCue(IMediaCue const& cue)
+    void AddUpdatePoint(TimeSpan startTime, IMediaCue const& changedCue)
     {
         std::lock_guard lock(mutex);
         try
         {
-            DispatchCueToTrack(cue);
+            if (IsPlayingLive())
+            {
+                EnsureRefTrackInitialized();
+                IMediaCue refCue = winrt::make<ReferenceCue>(startTime, TimeSpan{ InfiniteDuration }, changedCue);
+                referenceTrack.AddCue(refCue);
+            }
         }
         catch (...)
         {
@@ -235,22 +255,25 @@ private:
         }
     }
 
-    void DispatchCueToTrack(IMediaCue const& cue)
+    void AddCue(IMediaCue const& cue, IMediaCue const& changedCue)
     {
-        if (m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser || !IsEnabled())
+        std::lock_guard lock(mutex);
+        try
         {
-            SubtitleTrack.AddCue(cue);
+            if (!IsPlayingLive())
+            {
+                SubtitleTrack.AddCue(cue);
+            }
+            else
+            {
+                EnsureRefTrackInitialized();
+                auto refCue = winrt::make<ReferenceCue>(cue, changedCue);
+                referenceTrack.AddCue(refCue);
+            }
         }
-        else if (isPreviousCueInfiniteDuration)
+        catch (...)
         {
-            IMediaCue refCue = winrt::make<ReferenceCue>(cue);
-            pendingRefCues.push_back(refCue);
-            TriggerUpdateCues();
-        }
-        else
-        {
-            pendingCues.push_back(cue);
-            TriggerUpdateCues();
+            OutputDebugString(L"Failed to add subtitle cue.");
         }
     }
 
@@ -259,151 +282,49 @@ private:
         UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
         try {
-            //remove all previous cues from subtitle track
-            std::vector<IMediaCue> remove;
             auto enteredCue = args.Cue();
-            auto startTime = enteredCue.StartTime();
-            for (auto cue : SubtitleTrack.Cues())
-            {
-                if (cue.StartTime() < startTime)
-                {
-                    remove.push_back(cue);
-                }
-            }
+            auto refCue = enteredCue.as<ReferenceCue>();
 
-            for (auto& cue : remove)
-            {
-                SubtitleTrack.RemoveCue(cue);
-            }
-
-            auto refCue = winrt::get_self<ReferenceCue>(enteredCue);
-            SubtitleTrack.AddCue(refCue->CueRef());
             referenceTrack.RemoveCue(enteredCue);
-        }
-        catch (...)
-        {
-        }
-    }
 
-    void OnCueEntered(TimedMetadataTrack const& sender, MediaCueEventArgs const& args)
-    {
-        UNREFERENCED_PARAMETER(sender);
-        std::lock_guard lock(mutex);
-        try
-        {
-            //cleanup old cues to free memory
-            auto startTime = args.Cue().StartTime();
-            std::vector<IMediaCue> remove;
-            for (auto cue : SubtitleTrack.Cues())
+            auto changedCue = refCue->ChangedCue();
+            if (changedCue)
             {
-                if (cue.StartTime() + cue.Duration() < startTime)
+                SubtitleTrack.RemoveCue(changedCue);
+                SubtitleTrack.AddCue(changedCue);
+            }
+
+            auto addedCue = refCue->AddedCue();
+            if (addedCue)
+            {
+                SubtitleTrack.AddCue(addedCue);
+            }
+
+            if (actualSubtitleDelay != streamDelay)
+            {
+                try
                 {
-                    remove.push_back(cue);
+                    UpdateCuePositions();
                 }
-            }
-
-            for (auto& cue : remove)
-            {
-                SubtitleTrack.RemoveCue(cue);
-            }
-        }
-        catch (...)
-        {
-            OutputDebugString(L"Failed to cleanup old cues.");
-        }
-    }
-
-    void TriggerUpdateCues()
-    {
-        if (dispatcher != nullptr && IsEnabled())
-        {
-            dispatcher.TryEnqueue(weak_handler(this, &SubtitleProvider::StartDispatcherTimer));
-        }
-        else
-        {
-            OnTick(nullptr, nullptr);
-        }
-    }
-
-    void StartDispatcherTimer()
-    {
-        if (timer == nullptr)
-        {
-            timer = dispatcher.CreateTimer();
-            timer.Interval(TimeSpan(10000));
-            timer.Tick(weak_handler(this, &SubtitleProvider::OnTick));
-        }
-        timer.Start();
-    }
-
-    void OnTick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args)
-    {
-        UNREFERENCED_PARAMETER(sender);
-        UNREFERENCED_PARAMETER(args);
-        std::lock_guard lock(mutex);
-
-        try
-        {
-            for (auto& cue : pendingChangedDurationCues)
-            {
-                SubtitleTrack.RemoveCue(cue);
-                SubtitleTrack.AddCue(cue);
-            }
-
-            for (auto& cue : pendingCues)
-            {
-                SubtitleTrack.AddCue(cue);
-            }
-
-            if (pendingRefCues.size() > 0)
-            {
-                EnsureRefTrackInitialized();
-
-                for (auto& cue : pendingRefCues)
+                catch (...)
                 {
-                    referenceTrack.AddCue(cue);
                 }
+                actualSubtitleDelay = streamDelay;
             }
         }
         catch (...)
         {
-            OutputDebugString(L"Failed to add pending subtitle cues.");
-        }
-
-        pendingCues.clear();
-        pendingRefCues.clear();
-        pendingChangedDurationCues.clear();
-
-        if (actualSubtitleDelay != pendingSubtitleDelay)
-        {
-            try
-            {
-                UpdateCuePositions();
-            }
-            catch (...)
-            {
-            }
-            actualSubtitleDelay = pendingSubtitleDelay;
-        }
-
-        if (timer != nullptr)
-        {
-            timer.Stop();
         }
     }
 
     void UpdateCuePositions()
     {
-        auto track = SubtitleTrack;
+        auto& track = SubtitleTrack;
         auto cues = to_vector<IMediaCue>(track.Cues());
-        while (track.Cues().Size() > 0)
-        {
-            track.RemoveCue(track.Cues().GetAt(0));
-        }
 
         std::vector<std::pair<IMediaCue, long long>> newNegativePositionCues;
 
-        for (auto& c : cues)
+        for (const auto& c : cues)
         {
             TimeSpan cStartTime = c.StartTime();
 
@@ -412,7 +333,7 @@ private:
             {
                 for (size_t i = 0; i < negativePositionCues.size(); i++)
                 {
-                    auto element = negativePositionCues.at(i);
+                    auto& element = negativePositionCues.at(i);
                     if (c == element.first)
                     {
                         cStartTime = TimeSpan(element.second);
@@ -422,7 +343,7 @@ private:
             }
 
             TimeSpan originalStartPosition = TimeSpan(cStartTime.count() - streamDelay.count());
-            TimeSpan newStartPosition = TimeSpan(originalStartPosition.count() + pendingSubtitleDelay.count());
+            TimeSpan newStartPosition = TimeSpan(originalStartPosition.count() + actualSubtitleDelay.count());
             //start time cannot be negative.
             if (newStartPosition.count() < 0)
             {
@@ -431,6 +352,12 @@ private:
             }
 
             c.StartTime(newStartPosition);
+        }
+
+        auto activeCues = to_vector<IMediaCue>(track.ActiveCues());
+        for (const auto& c : activeCues)
+        {
+            track.RemoveCue(c);
             track.AddCue(c);
         }
 
@@ -439,26 +366,26 @@ private:
 
     void EnsureRefTrackInitialized()
     {
+        auto playbackItem = PlaybackItemWeak.get();
+        if (!playbackItem) return;
         if (referenceTrack == nullptr)
         {
-            auto playbackItem = PlaybackItemWeak.get();
-            if (playbackItem)
-            {
-                referenceTrack = TimedMetadataTrack(L"ReferenceTrack_" + Name, L"", TimedMetadataKind::Custom);
-                referenceTrack.CueEntered(weak_handler(this, &SubtitleProvider::OnRefCueEntered));
-                playbackItem.TimedMetadataTracksChanged(weak_handler(this, &SubtitleProvider::OnTimedMetadataTracksChanged));
-                playbackItem.Source().ExternalTimedMetadataTracks().Append(referenceTrack);
-            }
+            referenceTrack = TimedMetadataTrack(L"ReferenceTrack_" + Name, L"", TimedMetadataKind::Custom);
+            referenceTrack.CueEntered(weak_handler(this, &SubtitleProvider::OnRefCueEntered));
+            playbackItem.TimedMetadataTracksChanged(weak_handler(this, &SubtitleProvider::OnTimedMetadataTracksChanged));
+            playbackItem.Source().ExternalTimedMetadataTracks().Append(referenceTrack);
         }
     }
 
     void OnTimedMetadataTracksChanged(MediaPlaybackItem const& sender, IVectorChangedEventArgs const& args)
     {
         // enable ref track
+        auto playbackItem = PlaybackItemWeak.get();
+        if (!playbackItem) return;
         if (args.CollectionChange() == CollectionChange::ItemInserted &&
             sender.TimedMetadataTracks().GetAt(args.Index()) == referenceTrack)
         {
-            sender.TimedMetadataTracks().SetPresentationMode(
+            PlaybackItemWeak.get().TimedMetadataTracks().SetPresentationMode(
                 args.Index(), TimedMetadataTrackPresentationMode::Hidden);
         }
     }
@@ -484,27 +411,40 @@ public:
         m_isEnabled = false;
     }
 
+    bool inline IsExternal()
+    {
+        return m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser;
+    }
+
+    bool inline IsPlayingLive()
+    {
+        return !IsExternal() && IsEnabled();
+    }
+
     void ClearSubtitles()
     {
         std::lock_guard lock(mutex);
         try
         {
-            pendingCues.clear();
-            pendingRefCues.clear();
-            isPreviousCueInfiniteDuration = false;
+            infiniteDurationCue = nullptr;
+            lastExtendedDurationCue = nullptr;
             negativePositionCues.clear();
 
             if (referenceTrack != nullptr)
             {
-                while (referenceTrack.Cues().Size() > 0)
+                auto size = referenceTrack.Cues().Size();
+                while (size > 0)
                 {
-                    referenceTrack.RemoveCue(referenceTrack.Cues().GetAt(0));
+                    referenceTrack.RemoveCue(referenceTrack.Cues().GetAt(size - 1));
+                    size = referenceTrack.Cues().Size();
                 }
             }
 
-            while (SubtitleTrack.Cues().Size() > 0)
+            auto size = SubtitleTrack.Cues().Size();
+            while (size > 0)
             {
-                SubtitleTrack.RemoveCue(SubtitleTrack.Cues().GetAt(0));
+                SubtitleTrack.RemoveCue(SubtitleTrack.Cues().GetAt(size - 1));
+                size = SubtitleTrack.Cues().Size();
             }
         }
         catch (...)
@@ -518,18 +458,9 @@ public:
     {
         CompressedSampleProvider::Flush(flushBuffers);
 
-        if (!m_config.as<implementation::MediaSourceConfig>()->IsExternalSubtitleParser && flushBuffers)
+        if (!IsExternal() && flushBuffers)
         {
-            std::lock_guard lock(mutex);
-
-            if (dispatcher)
-            {
-                dispatcher.TryEnqueue(weak_handler(this, &SubtitleProvider::ClearSubtitles));
-            }
-            else
-            {
-                ClearSubtitles();
-            }
+            ClearSubtitles();
         }
     }
 
@@ -539,18 +470,14 @@ protected:
 private:
 
     int cueCount = 0;
-    std::vector<IMediaCue> pendingCues;
-    std::vector<IMediaCue> pendingRefCues;
-    std::vector<IMediaCue> pendingChangedDurationCues;
     TimedMetadataKind timedMetadataKind;
-    winrt::Windows::System::DispatcherQueue dispatcher = { nullptr };
-    winrt::Windows::System::DispatcherQueueTimer timer = { nullptr };
-    TimeSpan pendingSubtitleDelay{};
+    DispatcherQueue dispatcher = { nullptr };
+    DispatcherQueueTimer timer = { nullptr };
     TimeSpan actualSubtitleDelay{};
     std::vector<std::pair<IMediaCue, long long>> negativePositionCues;
-    bool isPreviousCueInfiniteDuration = false;
     IMediaCue infiniteDurationCue = { nullptr };
     IMediaCue lastExtendedDurationCue = { nullptr };
+    TimeSpan lastExtendedDurationCueOriginalEndTime{};
     TimedMetadataTrack referenceTrack = { nullptr };
     const long long InfiniteDuration = ((long long)0xFFFFFFFF) * 10000;
 

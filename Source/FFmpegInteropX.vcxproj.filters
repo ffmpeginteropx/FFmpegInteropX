@@ -48,16 +48,10 @@
     <None Include="..\Build\Start-DevShell.ps1">
       <Filter>Build</Filter>
     </None>
-    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.nuspec">
+    <None Include="..\Build\FFmpegInteropX.UWP.FFmpeg.nuspec">
       <Filter>NuGet</Filter>
     </None>
-    <None Include="..\Build\FFmpegInteropX.FFmpegUWP.targets">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\Build\FFmpegInteropX.nuspec">
-      <Filter>NuGet</Filter>
-    </None>
-    <None Include="..\Build\FFmpegInteropX.targets">
+    <None Include="..\Build\FFmpegInteropX.UWP.FFmpeg.targets">
       <Filter>NuGet</Filter>
     </None>
     <None Include="..\.editorconfig">
@@ -82,6 +76,30 @@
     <None Include="..\AppVeyor_Build.bat">
       <Filter>Build</Filter>
     </None>
+    <None Include="..\Build\FFmpegInteropX.Desktop.Lib.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.Desktop.Lib.targets">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.UWP.Lib.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.UWP.Lib.targets">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.Desktop.FFmpeg.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.Desktop.FFmpeg.targets">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build\FFmpegInteropX.nuspec">
+      <Filter>NuGet</Filter>
+    </None>
+    <None Include="..\Build-OverallPackage.ps1">
+      <Filter>Build</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CodecChecker.h" />
@@ -100,9 +118,6 @@
     </ClInclude>
     <ClInclude Include="AttachedFileHelper.h">
       <Filter>Helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="BasicVideoEffect.h">
-      <Filter>Effects</Filter>
     </ClInclude>
     <ClInclude Include="VideoFilterFactory.h">
       <Filter>Effects</Filter>
@@ -158,9 +173,6 @@
     <ClInclude Include="UncompressedVideoSampleProvider.h">
       <Filter>SampleProviders</Filter>
     </ClInclude>
-    <ClInclude Include="VideoEffectConfiguration.h">
-      <Filter>Effects</Filter>
-    </ClInclude>
     <ClInclude Include="AudioStreamInfo.h">
       <Filter>StreamInfos</Filter>
     </ClInclude>
@@ -215,8 +227,20 @@
     <ClInclude Include="LanguageTagConverter.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="GeneralConfig.h" />
+    <ClInclude Include="SubtitlesConfig.h" />
+    <ClInclude Include="VideoConfig.h" />
+    <ClInclude Include="AudioConfig.h" />
+    <ClInclude Include="ConfigurationCommon.h" />
     <ClInclude Include="text_encoding_detect.h">
       <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="SubtitleParser.h" />
+    <ClInclude Include="PlatformInfo.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -235,9 +259,6 @@
     </ClCompile>
     <ClCompile Include="AttachedFileHelper.cpp">
       <Filter>Helpers</Filter>
-    </ClCompile>
-    <ClCompile Include="BasicVideoEffect.cpp">
-      <Filter>Effects</Filter>
     </ClCompile>
     <ClCompile Include="ReferenceCue.cpp">
       <Filter>Subtitles</Filter>
@@ -275,9 +296,6 @@
     <ClCompile Include="UncompressedVideoSampleProvider.cpp">
       <Filter>SampleProviders</Filter>
     </ClCompile>
-    <ClCompile Include="VideoEffectConfiguration.cpp">
-      <Filter>Effects</Filter>
-    </ClCompile>
     <ClCompile Include="AudioStreamInfo.cpp">
       <Filter>StreamInfos</Filter>
     </ClCompile>
@@ -309,7 +327,15 @@
     <ClCompile Include="LanguageTagConverter.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="GeneralConfig.cpp" />
+    <ClCompile Include="SubtitlesConfig.cpp" />
+    <ClCompile Include="VideoConfig.cpp" />
+    <ClCompile Include="AudioConfig.cpp" />
     <ClCompile Include="text_encoding_detect.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="SubtitleParser.cpp" />
+    <ClCompile Include="PlatformInfo.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
   </ItemGroup>
@@ -318,5 +344,10 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="FFmpegInteropX.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

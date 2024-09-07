@@ -1,10 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows10.0.22000.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.22000.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
-    <Platforms>x64;x86;ARM64;ARM</Platforms>
+    <Platforms>x64;x86;ARM64</Platforms>
     <UseWinUI>true</UseWinUI>
+    <RuntimeIdentifiers>win-x64;win-x86;win-arm64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -14,25 +15,11 @@
   <PropertyGroup>
     <IntDir>..\..\Intermediate\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
     <OutDir>..\..\Output\$(MSBuildProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDirFFmpegInteropX>..\..\Output\FFmpegInteropX\$(PlatformTarget)\$(Configuration)_Desktop\</OutDirFFmpegInteropX>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="MainPage.xaml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="FFmpegInteropX.FFmpegUWP" Version="5.1.100" />
-    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230913002" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.756" />
-    <Manifest Include="$(ApplicationManifest)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\Source\FFmpegInteropX.DotNet.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,17 +28,56 @@
     </Page>
   </ItemGroup>
   
-  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems">
+  <ItemGroup>
+    <PackageReference Include="FFmpegInteropX.Desktop.FFmpeg" Version="7.0.100-pre3" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.7" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240227000" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <Choose>
+    <When Condition="'$(Configuration)'=='Debug'">
+
+      <ItemGroup>
+        <ProjectReference Include="..\..\Source\FFmpegInteropX.vcxproj">
+          <Private>True</Private>
+        </ProjectReference>
+        <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.dll" Link="FFmpegInteropX.dll">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="$(OutDirFFmpegInteropX)FFmpegInteropX.pdb" Link="FFmpegInteropX.pdb">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+      </ItemGroup>
+
+      <PropertyGroup>
+        <CsWinRTIncludes>FFmpegInteropX</CsWinRTIncludes>
+        <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
+        <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+            None
+        </ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+      </PropertyGroup>
+
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <PackageReference Include="FFmpegInteropX.Desktop.Lib" Version="2.0.0-pre7" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+
+  <Target Name="IncludeFFmpegInteropXInRuntimesFolder" BeforeTargets="GetCopyToOutputDirectoryItems" Condition="'$(Configuration)'=='Debug'">
     <ItemGroup>
       <AllItemsFullPathWithTargetPath Include="$(OutDir)FFmpegInteropX.dll">
-        <TargetPath>runtimes\win10-$(Platform)\native\FFmpegInteropX.dll</TargetPath>
+        <TargetPath>runtimes\win-$(Platform)\native\FFmpegInteropX.dll</TargetPath>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </AllItemsFullPathWithTargetPath>
       <AllItemsFullPathWithTargetPath Include="$(OutDir)FFmpegInteropX.pdb">
-        <TargetPath>runtimes\win10-$(Platform)\native\FFmpegInteropX.pdb</TargetPath>
+        <TargetPath>runtimes\win-$(Platform)\native\FFmpegInteropX.pdb</TargetPath>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </AllItemsFullPathWithTargetPath>
     </ItemGroup>
-  </Target>
+  </Target>  
 
 </Project>
