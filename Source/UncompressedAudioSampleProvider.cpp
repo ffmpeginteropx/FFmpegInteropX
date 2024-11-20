@@ -145,11 +145,12 @@ void UncompressedAudioSampleProvider::SetMediaEncodingProperties(AVSampleFormat 
 
     // set encoding properties
     encodingProperties.Subtype(outSampleFormat == AV_SAMPLE_FMT_FLT ? MediaEncodingSubtypes::Float() : MediaEncodingSubtypes::Pcm());
+    encodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value(reportedChannelLayout));
+
     encodingProperties.BitsPerSample(bitsPerSample);
     encodingProperties.SampleRate(outSampleRate);
     encodingProperties.ChannelCount(outChannelLayout.nb_channels);
     encodingProperties.Bitrate(bitsPerSample * outSampleRate * outChannelLayout.nb_channels);
-    encodingProperties.Properties().Insert(MF_MT_AUDIO_CHANNEL_MASK, winrt::box_value(reportedChannelLayout));
 }
 
 HRESULT UncompressedAudioSampleProvider::CheckFormatChanged(AVSampleFormat format, const AVChannelLayout& channelLayout, int sampleRate)
