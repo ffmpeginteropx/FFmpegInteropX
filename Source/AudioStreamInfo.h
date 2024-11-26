@@ -20,11 +20,22 @@ namespace winrt::FFmpegInteropX::implementation
         int64_t Bitrate();
         bool IsDefault();
         int32_t StreamIndex();
+        bool IsActive()
+        {
+            return active;
+        }
+
     public:
         bool SetDefault()
         {
             isDefault = true;
             return isDefault;
+        }
+
+        bool SetIsActive(bool value)
+        {
+            active = value;
+            return active;
         }
 
     private:
@@ -42,6 +53,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         FFmpegInteropX::DecoderEngine decoderEngine;
         int streamIndex = -1;
+        bool active = false;
     };
 }
 namespace winrt::FFmpegInteropX::factory_implementation

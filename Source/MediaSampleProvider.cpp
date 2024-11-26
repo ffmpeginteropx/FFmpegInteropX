@@ -196,7 +196,7 @@ void MediaSampleProvider::InitializeStreamInfo()
             delete[] channelLayoutName;
         }
 
-        streamInfo = AudioStreamInfo(
+        streamInfo = audioStreamInfo = AudioStreamInfo(
             Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
             channels, channelLayout, m_pAvStream->codecpar->sample_rate, bitsPerSample, Decoder(), StreamIndex());
 
@@ -210,7 +210,7 @@ void MediaSampleProvider::InitializeStreamInfo()
         auto bitsPerSample = max(m_pAvStream->codecpar->bits_per_raw_sample, m_pAvStream->codecpar->bits_per_coded_sample);
         auto framesPerSecond = m_pAvStream->avg_frame_rate.num > 0 && m_pAvStream->avg_frame_rate.den > 0 ? av_q2d(m_pAvStream->avg_frame_rate) : 0.0;
 
-        streamInfo = VideoStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
+        streamInfo = videoStreamInfo = VideoStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition, m_pAvStream->codecpar->bit_rate, false,
             m_pAvStream->codecpar->width, m_pAvStream->codecpar->height, videoAspect,
             bitsPerSample, framesPerSecond, HardwareAccelerationStatus(), Decoder(), StreamIndex());
 
@@ -380,6 +380,12 @@ void MediaSampleProvider::EnableStream()
     DebugMessage(L"EnableStream\n");
     m_isEnabled = true;
     m_pAvStream->discard = AVDISCARD_DEFAULT;
+
+    if (audioStreamInfo)
+        audioStreamInfo.as<implementation::AudioStreamInfo>()->SetIsActive(true);
+    if (videoStreamInfo)
+        videoStreamInfo.as<implementation::VideoStreamInfo>()->SetIsActive(true);
+
 }
 
 void MediaSampleProvider::DisableStream()
@@ -387,6 +393,11 @@ void MediaSampleProvider::DisableStream()
     DebugMessage(L"DisableStream\n");
     m_isEnabled = false;
     m_pAvStream->discard = AVDISCARD_ALL;
+
+    if (audioStreamInfo)
+        audioStreamInfo.as<implementation::AudioStreamInfo>()->SetIsActive(false);
+    if (videoStreamInfo)
+        videoStreamInfo.as<implementation::VideoStreamInfo>()->SetIsActive(false);
 }
 
 void MediaSampleProvider::SetCommonVideoEncodingProperties(VideoEncodingProperties const& videoProperties, bool isCompressedFormat)
@@ -481,6 +492,6 @@ void MediaSampleProvider::Detach()
 
 void free_buffer(void* lpVoid)
 {
-    auto buffer = (AVBufferRef *)lpVoid;
+    auto buffer = (AVBufferRef*)lpVoid;
     av_buffer_unref(&buffer);
 }

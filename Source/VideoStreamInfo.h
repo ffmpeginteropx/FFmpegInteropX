@@ -29,7 +29,34 @@ namespace winrt::FFmpegInteropX::implementation
         bool IsDefault();
         int32_t StreamIndex();
 
+        bool IsActive()
+        {
+            return active;
+        }
+
+        bool IsHdr()
+        {
+            return isHdr;
+        }
+
     public:
+        bool SetDefault()
+        {
+            isDefault = true;
+            return isDefault;
+        }
+
+        void SetIsActive(bool value)
+        {
+            active = value;
+        }
+
+        bool SetIsHdr(bool value)
+        {
+            isHdr = value;
+            return isHdr;
+        }
+
         hstring name{};
         hstring language{};
         hstring codecName{};
@@ -46,10 +73,9 @@ namespace winrt::FFmpegInteropX::implementation
         FFmpegInteropX::HardwareDecoderStatus hardwareDecoderStatus;
         FFmpegInteropX::DecoderEngine decoderEngine;
         int streamIndex = -1;
-        void SetDefault()
-        {
-            isDefault = true;
-        }
+    private:
+        bool active = false;
+        bool isHdr = false;
     };
 }
 namespace winrt::FFmpegInteropX::factory_implementation
