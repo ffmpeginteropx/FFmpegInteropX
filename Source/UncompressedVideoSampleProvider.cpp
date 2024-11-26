@@ -132,7 +132,6 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
 
     if (codecPar->color_primaries != AVCOL_PRI_UNSPECIFIED && (codecPar->color_primaries < MFVideoPrimaries_BT2020 || applyHdrColorInfo))
     {
-        hasHdrMetadata = true;
         MFVideoPrimaries videoPrimaries{ MFVideoPrimaries_Unknown };
         switch (codecPar->color_primaries)
         {
@@ -178,8 +177,6 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
 
     if (codecPar->color_trc != AVCOL_TRC_UNSPECIFIED && (codecPar->color_trc < MFVideoTransFunc_2020_const || applyHdrColorInfo))
     {
-        hasHdrMetadata = true;
-
         MFVideoTransferFunction videoTransferFunc{ MFVideoTransFunc_Unknown };
         switch (codecPar->color_trc)
         {
@@ -242,8 +239,6 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
     const AVContentLightMetadata* contentLightMetadata{ reinterpret_cast<const AVContentLightMetadata*>(av_packet_side_data_get(m_pAvStream->codecpar->coded_side_data, m_pAvStream->codecpar->nb_coded_side_data, AV_PKT_DATA_CONTENT_LIGHT_LEVEL)) };
     if (contentLightMetadata != nullptr && applyHdrColorInfo)
     {
-        hasHdrMetadata = true;
-
         properties.Insert(MF_MT_MAX_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxCLL));
         properties.Insert(MF_MT_MAX_FRAME_AVERAGE_LUMINANCE_LEVEL, PropertyValue::CreateUInt32(contentLightMetadata->MaxFALL));
     }
@@ -251,7 +246,6 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
     const AVMasteringDisplayMetadata* masteringDisplayMetadata{ reinterpret_cast<const AVMasteringDisplayMetadata*>(av_packet_side_data_get(m_pAvStream->codecpar->coded_side_data, m_pAvStream->codecpar->nb_coded_side_data, AV_PKT_DATA_MASTERING_DISPLAY_METADATA)) };
     if (masteringDisplayMetadata != nullptr && applyHdrColorInfo)
     {
-        hasHdrMetadata = true;
         if (masteringDisplayMetadata->has_luminance)
         {
             constexpr UINT32 MASTERING_DISP_LUMINANCE_SCALE{ 10000 };
@@ -276,6 +270,9 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
             properties.Insert(MF_MT_CUSTOM_VIDEO_PRIMARIES, PropertyValue::CreateUInt8Array(data));
         }
     }
+
+    hasHdrMetadata = (masteringDisplayMetadata != nullptr && (masteringDisplayMetadata->has_primaries || masteringDisplayMetadata->has_luminance)) || contentLightMetadata != nullptr;
+    isHdrActive = hasHdrMetadata && applyHdrColorInfo;
 
     videoProperties.Properties().Insert(MF_MT_INTERLACE_MODE, winrt::box_value((UINT32)_MFVideoInterlaceMode::MFVideoInterlace_MixedInterlaceOrProgressive));
 
@@ -753,7 +750,7 @@ void UncompressedVideoSampleProvider::CheckFrameSize(AVFrame* avFrame)
             outputHeight = avFrame->height;
             outputFrameWidth = frameWidth;
             outputFrameHeight = frameHeight;
-            
+
             encProp.Width(outputFrameWidth);
             encProp.Height(outputFrameHeight);
 

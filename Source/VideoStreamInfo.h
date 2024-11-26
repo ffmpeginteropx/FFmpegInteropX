@@ -34,9 +34,14 @@ namespace winrt::FFmpegInteropX::implementation
             return active;
         }
 
-        bool IsHdr()
+        bool HasHdrMetadata()
         {
-            return isHdr;
+            return hasHdrMetadata;
+        }
+
+        bool IsHdrActive()
+        {
+            return isHdrActive;
         }
 
     public:
@@ -51,10 +56,16 @@ namespace winrt::FFmpegInteropX::implementation
             active = value;
         }
 
-        bool SetIsHdr(bool value)
+        bool SetHasHdrMetadata(bool value)
         {
-            isHdr = value;
-            return isHdr;
+            hasHdrMetadata = value;
+            return hasHdrMetadata;
+        }
+
+        bool SetIsHdrActive(bool value)
+        {
+            isHdrActive = value;
+            return isHdrActive;
         }
 
         hstring name{};
@@ -75,7 +86,8 @@ namespace winrt::FFmpegInteropX::implementation
         int streamIndex = -1;
     private:
         bool active = false;
-        bool isHdr = false;
+        bool hasHdrMetadata = false;
+        bool isHdrActive = false;
     };
 }
 namespace winrt::FFmpegInteropX::factory_implementation
