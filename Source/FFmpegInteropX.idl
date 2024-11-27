@@ -139,6 +139,8 @@ namespace FFmpegInteropX
         Int32 BitsPerSample{ get; };
 
         DecoderEngine DecoderEngine{ get; };
+
+        Boolean IsActive{ get; };
     };
 
 #ifdef UWP
@@ -178,6 +180,13 @@ namespace FFmpegInteropX
 
         HardwareDecoderStatus HardwareDecoderStatus{ get; };
         DecoderEngine DecoderEngine{ get; };
+        Boolean IsActive{ get; };
+
+        ///<summary>The video has HDR metadata. This value is always false if DecoderEngine is SystemDecoder.</summary>
+        Boolean HasHdrMetadata{ get; };
+
+        ///<summary>HDR is enabled for this stream. This value is always false if DecoderEngine is SystemDecoder.</summary>
+        Boolean IsHdrActive{ get; };
     };
 
 #ifdef UWP

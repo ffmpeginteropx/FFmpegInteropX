@@ -225,7 +225,8 @@ protected:
     DecoderEngine decoder = DecoderEngine::FFmpegSoftwareDecoder;
     winrt::com_ptr<ID3D11Device> device = NULL;
     winrt::com_ptr<ID3D11DeviceContext> deviceContext = NULL;
-
+    AudioStreamInfo audioStreamInfo = NULL;
+    VideoStreamInfo videoStreamInfo = NULL;
 };
 
 // free AVBufferRef*

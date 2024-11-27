@@ -1943,8 +1943,8 @@ namespace winrt::FFmpegInteropX::implementation
             break;
         default:
             break;
+        }
     }
-}
 
     std::shared_ptr<MediaSampleProvider> FFmpegMediaSource::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index)
     {

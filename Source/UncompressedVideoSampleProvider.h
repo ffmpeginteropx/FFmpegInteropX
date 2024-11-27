@@ -82,6 +82,16 @@ public:
         UncompressedSampleProvider::NotifyCreateSource();
     }
 
+    virtual void InitializeStreamInfo() override
+    {
+        MediaSampleProvider::InitializeStreamInfo();
+
+        auto videoStreamInfoImpl = videoStreamInfo.as<implementation::VideoStreamInfo>();
+
+        videoStreamInfoImpl->SetHasHdrMetadata(hasHdrMetadata);
+        videoStreamInfoImpl->SetIsHdrActive(isHdrActive);
+    }
+
 private:
     void SelectOutputFormat();
     HRESULT InitializeScalerIfRequired(AVFrame* avFrame);
@@ -112,5 +122,7 @@ private:
     winrt::Windows::Foundation::IInspectable minLuminance = { nullptr };
     winrt::Windows::Foundation::IInspectable maxLuminance = { nullptr };
     winrt::Windows::Foundation::IInspectable customPrimaries = { nullptr };
+    bool hasHdrMetadata = false;
+    bool isHdrActive = false;
 };
 
