@@ -1,0 +1,16 @@
+[binaries]
+c = 'cl'
+cpp = 'cl'
+ar = 'lib'
+windres = 'rc'
+pkg-config = 'pkg-config.exe'
+
+[built-in options]
+c_args = ['-MD', '-DWINAPI_FAMILY=WINAPI_FAMILY_APP']
+c_link_args = ['/APPCONTAINER', '/LTCG', 'WindowsApp.lib']
+
+[host_machine]
+system = 'windows'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'

@@ -13,7 +13,7 @@ param(
 
         Note. The PlatformToolset will be inferred from this value ('v141', 'v142'...)
     #>
-    [version] $VcVersion = '14.3',
+    [version] $VcVersion = '14.4',
 
     [ValidateSet('UWP', 'Desktop')]
     [string] $WindowsTarget = 'UWP',
@@ -144,6 +144,15 @@ function Build-Platform {
             New-Item -ItemType Directory -Force $build\$_ | Out-Null
             New-Item -ItemType Directory -Force $target\$_ | Out-Null
         }
+
+        #Copy-Item -Force $SolutionDir\Intermediate\pkg-config.exe $SolutionDir\Intermediate\pkg-config
+
+        #Build libass
+        Write-Host ""
+        Write-Host "Building Library libass..."
+        Write-Host ""
+        invoke $BashExe --login -c "cd \$SolutionDir && Libs/build-scripts/build-libass.sh $WindowsTarget $Platform".Replace("\", "/").Replace(":", "")
+        
 
         # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
         $libdefs = @(

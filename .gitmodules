@@ -37,3 +37,6 @@
 [submodule "Libs/openssl"]
 	path = Libs/openssl
 	url = https://github.com/openssl/openssl.git
+[submodule "Libs/libass"]
+	path = Libs/libass
+	url = https://github.com/libass/libass.git
