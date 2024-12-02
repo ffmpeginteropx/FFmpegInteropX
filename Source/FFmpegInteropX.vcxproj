@@ -322,6 +322,7 @@
     <None Include="..\Build\InstallTools.ps1" />
     <None Include="..\Build\Repack-NuGet.ps1" />
     <None Include="..\Build\Start-DevShell.ps1" />
+    <None Include="..\Directory.Build.props" />
     <None Include="..\LICENSE" />
     <None Include="..\README-BUILD.md" />
     <None Include="..\README.md" />

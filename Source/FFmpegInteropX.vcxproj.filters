@@ -100,6 +100,12 @@
     <None Include="..\Build-OverallPackage.ps1">
       <Filter>Build</Filter>
     </None>
+    <None Include="..\Directory.Build.props">
+      <Filter>Build</Filter>
+    </None>
+    <None Include="..\Build-VideoEffects.ps1">
+      <Filter>Build</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CodecChecker.h" />
