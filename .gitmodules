@@ -40,3 +40,6 @@
 [submodule "Libs/libass"]
 	path = Libs/libass
 	url = https://github.com/libass/libass.git
+[submodule "Libs/freetype2"]
+	path = Libs/freetype2
+	url = https://github.com/freetype/freetype.git
