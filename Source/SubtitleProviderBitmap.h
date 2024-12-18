@@ -301,7 +301,7 @@ private:
 
             if (subtitleWidth == 0 && subtitleHeight == 0)
             {
-                OutputDebugString(L"Warning: No subtitle size received. Assuming equal to video size.");
+                OutputDebugString(L"Warning: No subtitle size received. Assuming equal to video size.\n");
                 subtitleWidth = videoWidth;
                 subtitleHeight = videoHeight;
             }
