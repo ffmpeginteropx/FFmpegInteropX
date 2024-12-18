@@ -299,6 +299,13 @@ private:
             subtitleWidth = m_pAvCodecCtx->width;
             subtitleHeight = m_pAvCodecCtx->height;
 
+            if (subtitleWidth == 0 && subtitleHeight == 0)
+            {
+                OutputDebugString(L"Warning: No subtitle size received. Assuming equal to video size.\n");
+                subtitleWidth = videoWidth;
+                subtitleHeight = videoHeight;
+            }
+
             if (subtitleWidth > 0 && subtitleHeight > 0)
             {
                 if (subtitleWidth != videoWidth || subtitleHeight != videoHeight || (videoAspectRatio > 0 && videoAspectRatio != 1))
