@@ -3,7 +3,6 @@
 #include "SubtitleProvider.h"
 #include "AttachedFileHelper.h"
 
-
 using namespace winrt::Windows::Storage::FileProperties;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Foundation::Metadata;

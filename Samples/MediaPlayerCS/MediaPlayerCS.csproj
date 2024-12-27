@@ -154,7 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX.UWP.FFmpeg">
-      <Version>7.0.100-pre3</Version>
+      <Version>7.1.0-libass2</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.9</Version>
