@@ -41,8 +41,6 @@ configureArgs="\
     --enable-libdav1d  \
     --enable-openssl \
     --enable-libass \
-    --enable-libfreetype \
-    --enable-libharfbuzz \
     --enable-hwaccels \
     --enable-d3d11va \
     --disable-dxva2 \

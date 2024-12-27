@@ -137,6 +137,7 @@ function Build-Platform {
     Get-ChildItem $WangBin\install\$Platform | Copy-Item -Destination $build\ -Force -Recurse
     Copy-Item $build\bin\libass.dll $target\bin\
     Copy-Item $build\lib\ass.lib $target\bin\
+    Copy-Item $WangBin\install\$Platform\include\ass $target\include\ -Force -Recurse
         
     if (! $SkipBuildLibs)
     {
