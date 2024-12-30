@@ -63,7 +63,7 @@ public:
             //hasParsedHeaders = true;
             auto str = std::string((char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size);
 
-            if (track != nullptr)
+            if (!track)
             {
                 ass_free_track(track);
             }
@@ -266,12 +266,9 @@ public:
 
     static void messageCallback(int level, const char* fmt, va_list va, void* data)
     {
-        SubtitleProviderLibass* self = static_cast<SubtitleProviderLibass*>(data);
-        if (level > self->logLevel)
         OutputDebugString(L"libass: ");
         char buffer[1024];
         vsnprintf(buffer, sizeof(buffer), fmt, va);
-
      
         std::wstring wideMessage = StringUtils::ConvertStringToWString(buffer);
         OutputDebugString(wideMessage.c_str());
