@@ -710,6 +710,9 @@ namespace FFmpegInteropX
         ///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>
         Boolean AutoSelectForcedSubtitles{ get; set; };
 
+        ///<summary>Enabling or disbaling libass usage</summary>
+        Boolean UseLibassAsSubtitleRenderer{ get; set; };
+
         ///<summary>Use SubtitleRegion and SubtitleStyle from config class, even if custom styles are defined for a subtitle.</summary>
         Boolean OverrideSubtitleStyles{ get; set; };
 

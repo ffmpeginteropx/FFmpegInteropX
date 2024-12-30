@@ -14,6 +14,7 @@
 #include "CodecChecker.h"
 #include "MediaSampleProvider.h"
 #include "SubtitleProviderSsaAss.h"
+#include "SubtitleProviderLibass.h"
 #include "SubtitleProviderBitmap.h"
 #include "ChapterInfo.h"
 #include "FFmpegReader.h"
@@ -813,7 +814,16 @@ namespace winrt::FFmpegInteropX::implementation
                     {
                         if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
                         {
-                            avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, dispatcher, attachedFileHelper));
+                            auto cn = config.as<winrt::FFmpegInteropX::MediaSourceConfig>();
+
+                            if (cn.Subtitles().UseLibassAsSubtitleRenderer())
+                            {
+                                avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderLibass(m_pReader, avFormatCtx, avSubsCodecCtx, cn, index, dispatcher));
+                            }
+                            else
+                            {
+                                avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, cn, index, dispatcher, attachedFileHelper));
+                            }
                         }
                         else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
                         {

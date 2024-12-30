@@ -11,8 +11,8 @@
     <AssemblyName>MediaPlayerCS</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
-    <TargetPlatformVersion>$(WindowsTargetPlatformVersion)</TargetPlatformVersion>
-    <TargetPlatformMinVersion>$(WindowsTargetPlatformMinVersion)</TargetPlatformMinVersion>
+    <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <EnableDotNetNativeCompatibleProfile>true</EnableDotNetNativeCompatibleProfile>
     <FileAlignment>512</FileAlignment>
@@ -170,10 +170,10 @@
           <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
           <Name>FFmpegInteropX</Name>
         </ProjectReference>
-		<ProjectReference Include="..\..\VideoEffects\FFmpegInteropX.VideoEffects.vcxproj">
-		  <Project>{6c4bff5e-7037-4ee8-9c9f-5381c35ba066}</Project>
-		  <Name>FFmpegInteropX.VideoEffects</Name>
-		</ProjectReference>
+        <ProjectReference Include="..\..\VideoEffects\FFmpegInteropX.VideoEffects.vcxproj">
+          <Project>{6c4bff5e-7037-4ee8-9c9f-5381c35ba066}</Project>
+          <Name>FFmpegInteropX.VideoEffects</Name>
+        </ProjectReference>
       </ItemGroup>
     </When>
     <Otherwise>

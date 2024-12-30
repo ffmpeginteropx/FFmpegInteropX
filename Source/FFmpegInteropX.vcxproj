@@ -38,6 +38,8 @@
     <UseWinUI>true</UseWinUI>
     <CppWinRTModernIDL>true</CppWinRTModernIDL>
     <FFmpegInteropXBuild>true</FFmpegInteropXBuild>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <ItemGroup Label="ProjectConfigurations">
@@ -181,7 +183,7 @@
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
       <CompileAsWinRT>false</CompileAsWinRT>
       <ModuleDefinitionFile>FFmpegInteropX.def</ModuleDefinitionFile>
-      <AdditionalDependencies>shcore.lib;runtimeobject.lib;mfuuid.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>shcore.lib;runtimeobject.lib;mfuuid.lib;dxguid.lib;ass.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EnableCOMDATFolding Condition="'$(ConfigType)'=='Release'">true</EnableCOMDATFolding>
       <OptimizeReferences Condition="'$(ConfigType)'=='Release'">true</OptimizeReferences>
     </Link>
@@ -236,6 +238,7 @@
     <ClInclude Include="SubtitleParser.h" />
     <ClInclude Include="SubtitleProvider.h" />
     <ClInclude Include="SubtitleProviderBitmap.h" />
+    <ClInclude Include="SubtitleProviderLibass.h" />
     <ClInclude Include="SubtitleProviderSsaAss.h" />
     <ClInclude Include="SubtitlesConfig.h" />
     <ClInclude Include="SubtitleStreamInfo.h" />
@@ -287,6 +290,7 @@
     <ClCompile Include="ReferenceCue.cpp" />
     <ClCompile Include="SubtitleParser.cpp" />
     <ClCompile Include="SubtitleProvider.cpp" />
+    <ClCompile Include="SubtitleProviderLibass.cpp" />
     <ClCompile Include="SubtitleProviderSsaAss.cpp" />
     <ClCompile Include="SubtitlesConfig.cpp" />
     <ClCompile Include="SubtitleStreamInfo.cpp" />
