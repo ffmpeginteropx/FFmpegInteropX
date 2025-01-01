@@ -45,6 +45,7 @@ namespace winrt::FFmpegInteropX::implementation
     // Flag for ffmpeg global setup
     static bool isRegistered = false;
     std::mutex isRegisteredMutex;
+    SubtitleProviderLibass* libassProvider = nullptr;
 
     FFmpegMediaSource::FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig,
         DispatcherQueue const& dispatcher, uint64_t windowId, bool useHdr)
@@ -818,19 +819,23 @@ namespace winrt::FFmpegInteropX::implementation
 
                             if (cn.Subtitles().UseLibassAsSubtitleRenderer())
                             {
-                                avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderLibass(m_pReader, avFormatCtx, avSubsCodecCtx, cn, index, dispatcher));
+                                libassProvider = new SubtitleProviderLibass(m_pReader, avFormatCtx, avSubsCodecCtx, cn, index, dispatcher);
+                                avSubsStream = std::shared_ptr<SubtitleProvider>(libassProvider);
                             }
                             else
                             {
+                                libassProvider = nullptr;
                                 avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, cn, index, dispatcher, attachedFileHelper));
                             }
                         }
                         else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
                         {
+                            libassProvider = nullptr;
                             avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, dispatcher));
                         }
                         else
                         {
+                            libassProvider = nullptr;
                             hr = E_FAIL;
                         }
                     }
@@ -2418,6 +2423,17 @@ namespace winrt::FFmpegInteropX::implementation
 
         lastPosition = currentPosition;
         currentPosition = sender.Position();
+
+        if (libassProvider != nullptr)
+        {
+            libassProvider->SetPosition(currentPosition);
+        }
+        else
+        {
+            // Failed to cast
+            OutputDebugString(L"Failed to cast to SubtitleProviderLibass.\n");
+        }
+
     }
 
     // Static functions passed to FFmpeg

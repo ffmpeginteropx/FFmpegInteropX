@@ -68,6 +68,10 @@ public:
 
         return S_OK;
     }
+    void SubtitleProviderLibass::SetPosition(winrt::Windows::Foundation::TimeSpan  position)
+    {
+        currentPosition = position;
+    }
     void ParseHeaders()
     {
         if (!hasParsedHeaders)
@@ -534,5 +538,5 @@ private:
     RenderBlendResult m_blendResult;
     SoftwareBitmap dummyBitmap = { nullptr };
     int nextId = 0;
-
+    TimeSpan currentPosition{ 0 };
 };
