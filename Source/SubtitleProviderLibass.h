@@ -88,8 +88,8 @@ public:
                 SetFrameSize(m_pAvCodecCtx->width, m_pAvCodecCtx->height);
 
             // i don't know how to get encoding page, to I just pass NULL
-            track = ass_read_memory(assLibrary, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size, NULL);
-            //track = ass_new_track(assLibrary); 
+            //track = ass_read_memory(assLibrary, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size, NULL);
+            track = ass_new_track(assLibrary); 
             // why checking this?
             // embedded subtitle doesn't have Dialogue: tag since it has chunk
             // extrnal subtitles will load all ass sub using ass_read_memory
@@ -108,7 +108,7 @@ public:
         videoWidth = frameWidth;
         videoHeight = frameHeight;
 
-        SetFrameSize(frameWidth, frameHeight);
+        //SetFrameSize(frameWidth, frameHeight);
     }
 
     virtual IMediaCue CreateCue(AVPacket* packet, winrt::Windows::Foundation::TimeSpan* position, winrt::Windows::Foundation::TimeSpan* duration) override
@@ -118,7 +118,6 @@ public:
         ParseHeaders();
         AVSubtitle subtitle;
         int gotSubtitle = 0;
-        int layer = 0;
         auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
         if (result > 0 && gotSubtitle && subtitle.num_rects > 0)
         {
@@ -126,6 +125,7 @@ public:
             auto str = StringUtils::Utf8ToWString(ass);
 
 
+            int64_t cur = CalculatePosition(&currentPosition);
             int64_t pos = CalculatePosition(position);
             int64_t dur = CalculatePosition(duration);
 
@@ -144,6 +144,12 @@ public:
             auto id = winrt::to_hstring(nextId++);
             ImageCue cue;
             cue.Id(id);
+
+            // rendering subtitle in here cause performance issues a lot
+            //int changes = 0;
+            //auto image = ass_render_frame(assRenderer, track, cur, &changes);
+            //CreateSubtitleImage(cue, image);
+
             return cue;
         }
         // creating 
@@ -266,14 +272,15 @@ public:
         std::lock_guard lock(mutex);
         try
         {
+            
             auto cue = args.Cue().try_as<ImageCue>();
             if (cue)
             {
                 int changes = 1;
-                auto time = CalculatePosition(&cue.StartTime());
+                auto cur = CalculatePosition(&currentPosition);
+                auto start = CalculatePosition(&cue.StartTime());
                 auto duration = CalculatePosition(&cue.Duration());
 
-                time += (duration/2); // lets add few miliseconds to get the next frame
                 // libass: Event at 19002, +294: 53,0,Main,Glasses,0,0,0,,...وانیکا ساما، خواهش میکنم
                 // Start rendering frame at 190020, duration: 2940
                 // Failed to render frame.
@@ -282,12 +289,12 @@ public:
                 // Failed to render frame.
 
                 wchar_t buffer[256];
-                swprintf_s(buffer, L"Start rendering frame at %02d, duration: %02d\r\n",
-                    time, duration);
+                swprintf_s(buffer, L"Start rendering frame at %02d, start:%02d  duration: %02d\r\n",
+                    cur, start, duration);
 
                 OutputDebugString(buffer);
-                // still can't get anything!
-                auto image = ass_render_frame(assRenderer, track, time, &changes);
+                
+                auto image = ass_render_frame(assRenderer, track, cur, 0);
                 CreateSubtitleImage(cue, image);
             }
         }
@@ -316,15 +323,22 @@ public:
 
     void CreateSubtitleImage(ImageCue cue, ASS_Image* img)
     {
-        if (!img && !cue)
+        if (img && cue)
         {
             OutputDebugString(L"Frame rendered.\r\n");
             int width = videoWidth, height = videoHeight, offsetX = 0, offsetY = 0;
             TimedTextSize cueSize{};
             TimedTextPoint cuePosition{};
-            //if (subtitle.num_rects > 0)
+
+            cueSize.Unit = TimedTextUnit::Percentage;
+            cueSize.Width = 100;
+            cueSize.Height = 100;
+
+            cuePosition.Unit = TimedTextUnit::Percentage;
+            cuePosition.X = 100;
+            cuePosition.Y = 100;
+
             auto bitmap = ConvertASSImageToSoftwareBitmap(img, width, height);
-            //auto converted = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8, BitmapAlphaMode::Premultiplied);
             cue.SoftwareBitmap(bitmap);
             cue.Position(cuePosition);
             cue.Extent(cueSize);
@@ -337,6 +351,7 @@ public:
             cue.SoftwareBitmap(GetDummyBitmap());
         }
     }
+
     SoftwareBitmap ConvertASSImageToSoftwareBitmap(ASS_Image* assImage, int width, int height)
     {
         if (width <= 0)
@@ -347,8 +362,8 @@ public:
             throw std::invalid_argument("ASS_Image is null");
         }
 
-        // Create a buffer to hold the blended image (RGBA format)
-        std::vector<uint8_t> buffer(width * height * 4, 0);
+        // Create a buffer to hold the final image (BGRA format)
+        std::vector<uint8_t> pixelData(width * height * 4, 0); // Initialize with zeros for transparent background
 
         // Iterate through the ASS_Image linked list
         for (ASS_Image* img = assImage; img != nullptr; img = img->next)
@@ -356,12 +371,17 @@ public:
             uint8_t* src = img->bitmap;
             int stride = img->stride;
             uint32_t color = img->color;
+
+            //R = (byte)(color & 0xff);
+            //G = (byte)((color >> 8) & 0xff);
+            //B = (byte)((color >> 16) & 0xff);
+            //A = (byte)((color >> 24) & 0xff);
             uint8_t a = (color >> 24) & 0xFF;
             uint8_t r = (color >> 16) & 0xFF;
             uint8_t g = (color >> 8) & 0xFF;
             uint8_t b = color & 0xFF;
 
-            // Alpha blending for each pixel
+            // Process each pixel in the current ASS_Image
             for (int y = 0; y < img->h; ++y)
             {
                 for (int x = 0; x < img->w; ++x)
@@ -369,30 +389,27 @@ public:
                     int srcIndex = y * stride + x;
                     int destIndex = ((img->dst_y + y) * width + (img->dst_x + x)) * 4;
 
-                    // Alpha blending
-                    uint8_t srcAlpha = src[srcIndex] * a / 255;
-                    uint8_t destAlpha = buffer[destIndex + 3];
-                    uint8_t outAlpha = srcAlpha + destAlpha * (255 - srcAlpha) / 255;
+                    uint8_t srcAlpha = (src[srcIndex] * a) / 255; // Scale alpha by the bitmap's alpha channel
 
-                    if (outAlpha > 0) {
-                        buffer[destIndex + 0] = (srcAlpha * r + buffer[destIndex + 0] * destAlpha * (255 - srcAlpha) / 255) / outAlpha;
-                        buffer[destIndex + 1] = (srcAlpha * g + buffer[destIndex + 1] * destAlpha * (255 - srcAlpha) / 255) / outAlpha;
-                        buffer[destIndex + 2] = (srcAlpha * b + buffer[destIndex + 2] * destAlpha * (255 - srcAlpha) / 255) / outAlpha;
-                        buffer[destIndex + 3] = outAlpha;
-                    }
+                    // If alpha is 0, skip blending
+                    if (srcAlpha == 0) continue;
+
+                    pixelData[destIndex + 0] = b;       // Blue
+                    pixelData[destIndex + 1] = g;       // Green
+                    pixelData[destIndex + 2] = r;       // Red
+                    pixelData[destIndex + 3] = srcAlpha; // Alpha
                 }
             }
         }
 
-        // Convert buffer into IBuffer
-        DataWriter dataWriter;
-        dataWriter.WriteBytes(buffer);
-        IBuffer bufferObj = dataWriter.DetachBuffer();
+        // Create a SoftwareBitmap from the pixel data
+        auto buffer = winrt::Windows::Storage::Streams::Buffer(static_cast<uint32_t>(pixelData.size()));
+        memcpy(buffer.data(), pixelData.data(), pixelData.size());
+        buffer.Length(static_cast<uint32_t>(pixelData.size()));
 
-        // Create SoftwareBitmap from buffer
-        BitmapPixelFormat pixelFormat = BitmapPixelFormat::Rgba8;
+        BitmapPixelFormat pixelFormat = BitmapPixelFormat::Bgra8;
         BitmapAlphaMode alphaMode = BitmapAlphaMode::Premultiplied;
-        SoftwareBitmap bitmap = SoftwareBitmap::CreateCopyFromBuffer(bufferObj, pixelFormat, width, height, alphaMode);
+        SoftwareBitmap bitmap = SoftwareBitmap::CreateCopyFromBuffer(buffer, pixelFormat, width, height, alphaMode);
 
         return bitmap;
     }
@@ -423,10 +440,10 @@ public:
 
     void SetFrameSize(int width, int height)
     {
-        videoWidth = width;
-        videoHeight = height;
+  /*      videoWidth = width;
+        videoHeight = height;*/
 
-        if (width > 0 && height > 0)
+       /* if (width > 0 && height > 0)*/
             ass_set_frame_size(assRenderer, width, height);
     }
 
@@ -440,7 +457,6 @@ public:
         ass_free_track(track);
         ass_renderer_done(assRenderer);
         ass_library_done(assLibrary);
-        //buffer_free(&m_blend); // throws exceptions
     }
 
     SoftwareBitmap GetDummyBitmap()
