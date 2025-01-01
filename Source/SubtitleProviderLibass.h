@@ -3,6 +3,8 @@
 #include "SubtitleProvider.h"
 #include "AttachedFileHelper.h"
 #include "ass/ass.h"
+#include "NativeBufferFactory.h"
+#include <winrt/Windows.Graphics.Imaging.h>
 
 using namespace winrt::Windows::Storage::FileProperties;
 using namespace winrt::Windows::Media::Core;
@@ -27,6 +29,7 @@ public:
     double blend_time;
     int dest_x, dest_y, dest_width, dest_height;
     unsigned char* image;
+    int size;
 } RenderBlendResult;
 
 typedef struct {
@@ -113,56 +116,29 @@ public:
 
     virtual IMediaCue CreateCue(AVPacket* packet, winrt::Windows::Foundation::TimeSpan* position, winrt::Windows::Foundation::TimeSpan* duration) override
     {
-        UNREFERENCED_PARAMETER(duration);
-        UNREFERENCED_PARAMETER(position);
         ParseHeaders();
         AVSubtitle subtitle;
+
         int gotSubtitle = 0;
         auto result = avcodec_decode_subtitle2(m_pAvCodecCtx, &subtitle, &gotSubtitle, packet);
         if (result > 0 && gotSubtitle && subtitle.num_rects > 0)
         {
             auto ass = subtitle.rects[0]->ass;
             auto str = StringUtils::Utf8ToWString(ass);
-
-
-            int64_t cur = CalculatePosition(&currentPosition);
-            int64_t pos = CalculatePosition(position);
-            int64_t dur = CalculatePosition(duration);
-
-            wchar_t buffer[256];
-            swprintf_s(buffer, L">>>>>>>Added Pos %02d      dur: %02d\n",
-                pos, dur);
-
-            OutputDebugString(buffer);
-
-            auto data = (char*)ass;
-            auto length = strlen(ass);
-
             // pass the subtitle chunk to libass
-            ass_process_chunk(track, data, length, pos, dur);
-
-            auto id = winrt::to_hstring(nextId++);
-            ImageCue cue;
-            cue.Id(id);
-
-            // rendering subtitle in here cause performance issues a lot
-            //int changes = 0;
-            //auto image = ass_render_frame(assRenderer, track, cur, &changes);
-            //CreateSubtitleImage(cue, image);
-
-            return cue;
+            ass_process_chunk(track, (char*)ass, strlen(ass), position->count(), duration->count());
         }
         // creating 
         return nullptr;
     }
 
 
-    RenderBlendResult* SubtitleProviderLibass::Blend(TimeSpan time, int force)
+    RenderBlendResult* SubtitleProviderLibass::Blend(long long time, int force)
     {
         m_blendResult.blend_time = 0.0;
         m_blendResult.image = NULL;
-        // time in milliseconds
-        ASS_Image* img = ass_render_frame(assRenderer, track, time.count() / 10'000, &m_blendResult.changed);
+
+        ASS_Image* img = ass_render_frame(assRenderer, track, time, &m_blendResult.changed);
         if (img == NULL || (m_blendResult.changed == 0 && !force))
         {
             return &m_blendResult;
@@ -170,8 +146,7 @@ public:
 
         int min_x = img->dst_x, min_y = img->dst_y;
         int max_x = img->dst_x + img->w - 1, max_y = img->dst_y + img->h - 1;
-        ASS_Image* cur;
-        for (cur = img->next; cur != NULL; cur = cur->next)
+        for (auto cur = img->next; cur != NULL; cur = cur->next)
         {
             if (cur->dst_x < min_x) min_x = cur->dst_x;
             if (cur->dst_y < min_y) min_y = cur->dst_y;
@@ -183,7 +158,9 @@ public:
 
         // copied from Subtitle Octapus
         int width = max_x - min_x + 1, height = max_y - min_y + 1;
-        float* buf = (float*)buffer_resize(&m_blend, sizeof(float) * width * height * 4, 0);
+        auto size = sizeof(float) * width * height * 4;
+        float* buf = (float*)buffer_resize(&m_blend, size, 0);
+
         if (buf == NULL)
         {
             OutputDebugString(L"libass: error: cannot allocate buffer for blending");
@@ -192,7 +169,7 @@ public:
 
         memset(buf, 0, sizeof(float) * width * height * 4);
 
-        for (cur = img; cur != NULL; cur = cur->next)
+        for (auto cur = img; cur != NULL; cur = cur->next)
         {
             int curw = cur->w, curh = cur->h;
             if (curw == 0 || curh == 0) continue; // skip empty images
@@ -263,6 +240,7 @@ public:
         m_blendResult.dest_width = width;
         m_blendResult.dest_height = height;
         m_blendResult.image = (unsigned char*)result;
+        m_blendResult.size = size;
         return &m_blendResult;
     }
 
@@ -435,13 +413,12 @@ public:
         }
 
         SetFrameSize(1920, 1080);// default
-        SetFonts(); // set default font
     }
 
     void SetFrameSize(int width, int height)
     {
-  /*      videoWidth = width;
-        videoHeight = height;*/
+        videoWidth = width;
+        videoHeight = height;
 
        /* if (width > 0 && height > 0)*/
             ass_set_frame_size(assRenderer, width, height);
@@ -484,6 +461,7 @@ public:
 
         OutputDebugString(L"\r\n");
     }
+
     void* buffer_resize(buffer_t* buf, int new_size, int keep_content)
     {
         if (buf->size >= new_size)
