@@ -125,13 +125,43 @@ public:
         {
             auto ass = subtitle.rects[0]->ass;
             auto str = StringUtils::Utf8ToWString(ass);
+            if (subtitle.start_display_time > 0)
+            {
+                *position = TimeSpan{ position->count() + (long long)10000 * subtitle.start_display_time };
+            }
+            *duration = TimeSpan{ (long long)10000 * subtitle.end_display_time };
+
+            int64_t cur = CalculatePosition(&currentPosition);
+            int64_t pos = CalculatePosition(position);
+            int64_t dur = CalculatePosition(duration);
+
+            wchar_t buffer[256];
+            swprintf_s(buffer, L">>>>>>>Added Pos %02d      dur: %02d\n",
+                pos, dur);
+
+            OutputDebugString(buffer);
+
+            auto data = (char*)ass;
+            auto length = strlen(ass);
+
             // pass the subtitle chunk to libass
-            ass_process_chunk(track, (char*)ass, strlen(ass), position->count(), duration->count());
+            ass_process_chunk(track, data, length, pos, dur);
+
+            auto id = winrt::to_hstring(nextId++);
+            ImageCue cue;
+            cue.Id(id);
+
+            // rendering subtitle in here cause performance issues a lot
+            //int changes = 0;
+            //auto image = ass_render_frame(assRenderer, track, cur, &changes);
+            //CreateSubtitleImage(cue, image);
+
+            return cue;
         }
-        // creating 
         return nullptr;
     }
 
+    // this will be removed!
 
     RenderBlendResult* SubtitleProviderLibass::Blend(long long time, int force)
     {
@@ -234,7 +264,6 @@ public:
             }
         }
 
-        // return the thing
         m_blendResult.dest_x = min_x;
         m_blendResult.dest_y = min_y;
         m_blendResult.dest_width = width;
@@ -411,8 +440,9 @@ public:
             OutputDebugString(L"ass_renderer_init failed!\r\n");
             return;
         }
-
+        //SetFrameSize(videoHeight, videoWidth);// NO
         SetFrameSize(1920, 1080);// default
+        SetFonts();
     }
 
     void SetFrameSize(int width, int height)
@@ -420,8 +450,8 @@ public:
         videoWidth = width;
         videoHeight = height;
 
-       /* if (width > 0 && height > 0)*/
-            ass_set_frame_size(assRenderer, width, height);
+        /* if (width > 0 && height > 0)*/
+        ass_set_frame_size(assRenderer, width, height);
     }
 
     void SetFonts()
