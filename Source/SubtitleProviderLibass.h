@@ -125,11 +125,13 @@ public:
         {
             auto ass = subtitle.rects[0]->ass;
             auto str = StringUtils::Utf8ToWString(ass);
-            if (subtitle.start_display_time > 0)
-            {
-                *position = TimeSpan{ position->count() + (long long)10000 * subtitle.start_display_time };
-            }
-            *duration = TimeSpan{ (long long)10000 * subtitle.end_display_time };
+
+            // this has bug and doesn't show subtitle
+            //if (subtitle.start_display_time > 0)
+            //{
+            //    *position = TimeSpan{ position->count() + (long long)10000 * subtitle.start_display_time };
+            //}
+            //*duration = TimeSpan{ (long long)10000 * subtitle.end_display_time };
 
             int64_t cur = CalculatePosition(&currentPosition);
             int64_t pos = CalculatePosition(position);
