@@ -7,6 +7,7 @@
 using namespace winrt::Windows::Storage::FileProperties;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Foundation::Metadata;
+using namespace winrt::Windows::Graphics::Imaging;
 
 #ifdef Win32
 using namespace winrt::Microsoft::UI::Dispatching;
@@ -55,7 +56,18 @@ public:
     {
         InitializeLibass();
     }
+    virtual HRESULT Initialize() override
+    {
+        auto hr = SubtitleProvider::Initialize();
 
+        if (SUCCEEDED(hr))
+        {
+            SubtitleTrack.CueEntered(weak_handler(this, &SubtitleProviderLibass::OnCueEntered));
+            SubtitleTrack.CueExited(weak_handler(this, &SubtitleProviderLibass::OnCueExited));
+        }
+
+        return S_OK;
+    }
     void ParseHeaders()
     {
         if (!hasParsedHeaders)
@@ -72,8 +84,8 @@ public:
                 SetFrameSize(m_pAvCodecCtx->width, m_pAvCodecCtx->height);
 
             // i don't know how to get encoding page, to I just pass NULL
-            //track = ass_read_memory(assLibrary, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size, NULL);
-            track = ass_new_track(assLibrary); 
+            track = ass_read_memory(assLibrary, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size, NULL);
+            //track = ass_new_track(assLibrary); 
             // why checking this?
             // embedded subtitle doesn't have Dialogue: tag since it has chunk
             // extrnal subtitles will load all ass sub using ass_read_memory
@@ -108,8 +120,22 @@ public:
         {
             auto ass = subtitle.rects[0]->ass;
             auto str = StringUtils::Utf8ToWString(ass);
+
+
+            int64_t pos = CalculatePosition(position);
+            int64_t dur = CalculatePosition(duration);
+
+            wchar_t buffer[256];
+            swprintf_s(buffer, L">>>>>>>Added Pos %02d      dur: %02d\n",
+                pos, dur);
+
+            OutputDebugString(buffer);
+
+            auto data = (char*)ass;
+            auto length = strlen(ass);
+
             // pass the subtitle chunk to libass
-            ass_process_chunk(track, (char*)ass, strlen(ass), position->count() / 10'0000, duration->count() / 10'0000);
+            ass_process_chunk(track, data, length, pos, dur);
 
             auto id = winrt::to_hstring(nextId++);
             ImageCue cue;
@@ -230,6 +256,143 @@ public:
         return &m_blendResult;
     }
 
+
+    void OnCueEntered(TimedMetadataTrack sender, MediaCueEventArgs args)
+    {
+        std::lock_guard lock(mutex);
+        try
+        {
+            auto cue = args.Cue().try_as<ImageCue>();
+            if (cue)
+            {
+                int changes = 1;
+                auto time = CalculatePosition(&cue.StartTime());
+                auto duration = CalculatePosition(&cue.Duration());
+
+                time += (duration/2); // lets add few miliseconds to get the next frame
+                // libass: Event at 19002, +294: 53,0,Main,Glasses,0,0,0,,...وانیکا ساما، خواهش میکنم
+                // Start rendering frame at 190020, duration: 2940
+                // Failed to render frame.
+                // libass: Event at 19296, +325: 54,0,Main,Halbert,0,0,0,,—صبرکنید، وانیــ
+                // Start rendering frame at 192960, duration: 3250
+                // Failed to render frame.
+
+                wchar_t buffer[256];
+                swprintf_s(buffer, L"Start rendering frame at %02d, duration: %02d\r\n",
+                    time, duration);
+
+                OutputDebugString(buffer);
+                // still can't get anything!
+                auto image = ass_render_frame(assRenderer, track, time, &changes);
+                CreateSubtitleImage(cue, image);
+            }
+        }
+        catch (...)
+        {
+            OutputDebugString(L"Failed to render image cue.");
+        }
+    }
+
+    void OnCueExited(TimedMetadataTrack sender, MediaCueEventArgs args)
+    {
+        std::lock_guard lock(mutex);
+        try
+        {
+            auto cue = args.Cue().try_as<ImageCue>();
+            if (cue)
+            {
+                cue.SoftwareBitmap(GetDummyBitmap());
+            }
+        }
+        catch (...)
+        {
+            OutputDebugString(L"Failed to clear image cue.");
+        }
+    }
+
+    void CreateSubtitleImage(ImageCue cue, ASS_Image* img)
+    {
+        if (!img && !cue)
+        {
+            OutputDebugString(L"Frame rendered.\r\n");
+            int width = videoWidth, height = videoHeight, offsetX = 0, offsetY = 0;
+            TimedTextSize cueSize{};
+            TimedTextPoint cuePosition{};
+            //if (subtitle.num_rects > 0)
+            auto bitmap = ConvertASSImageToSoftwareBitmap(img, width, height);
+            //auto converted = SoftwareBitmap::Convert(bitmap, BitmapPixelFormat::Bgra8, BitmapAlphaMode::Premultiplied);
+            cue.SoftwareBitmap(bitmap);
+            cue.Position(cuePosition);
+            cue.Extent(cueSize);
+
+            OutputDebugString(L"Frame added to cue.\r\n");
+        }
+        else
+        {
+            OutputDebugString(L"Failed to render frame.\r\n");
+            cue.SoftwareBitmap(GetDummyBitmap());
+        }
+    }
+    SoftwareBitmap ConvertASSImageToSoftwareBitmap(ASS_Image* assImage, int width, int height)
+    {
+        if (width <= 0)
+            width = 1920;
+        if (height <= 0)
+            height = 1080;
+        if (!assImage) {
+            throw std::invalid_argument("ASS_Image is null");
+        }
+
+        // Create a buffer to hold the blended image (RGBA format)
+        std::vector<uint8_t> buffer(width * height * 4, 0);
+
+        // Iterate through the ASS_Image linked list
+        for (ASS_Image* img = assImage; img != nullptr; img = img->next)
+        {
+            uint8_t* src = img->bitmap;
+            int stride = img->stride;
+            uint32_t color = img->color;
+            uint8_t a = (color >> 24) & 0xFF;
+            uint8_t r = (color >> 16) & 0xFF;
+            uint8_t g = (color >> 8) & 0xFF;
+            uint8_t b = color & 0xFF;
+
+            // Alpha blending for each pixel
+            for (int y = 0; y < img->h; ++y)
+            {
+                for (int x = 0; x < img->w; ++x)
+                {
+                    int srcIndex = y * stride + x;
+                    int destIndex = ((img->dst_y + y) * width + (img->dst_x + x)) * 4;
+
+                    // Alpha blending
+                    uint8_t srcAlpha = src[srcIndex] * a / 255;
+                    uint8_t destAlpha = buffer[destIndex + 3];
+                    uint8_t outAlpha = srcAlpha + destAlpha * (255 - srcAlpha) / 255;
+
+                    if (outAlpha > 0) {
+                        buffer[destIndex + 0] = (srcAlpha * r + buffer[destIndex + 0] * destAlpha * (255 - srcAlpha) / 255) / outAlpha;
+                        buffer[destIndex + 1] = (srcAlpha * g + buffer[destIndex + 1] * destAlpha * (255 - srcAlpha) / 255) / outAlpha;
+                        buffer[destIndex + 2] = (srcAlpha * b + buffer[destIndex + 2] * destAlpha * (255 - srcAlpha) / 255) / outAlpha;
+                        buffer[destIndex + 3] = outAlpha;
+                    }
+                }
+            }
+        }
+
+        // Convert buffer into IBuffer
+        DataWriter dataWriter;
+        dataWriter.WriteBytes(buffer);
+        IBuffer bufferObj = dataWriter.DetachBuffer();
+
+        // Create SoftwareBitmap from buffer
+        BitmapPixelFormat pixelFormat = BitmapPixelFormat::Rgba8;
+        BitmapAlphaMode alphaMode = BitmapAlphaMode::Premultiplied;
+        SoftwareBitmap bitmap = SoftwareBitmap::CreateCopyFromBuffer(bufferObj, pixelFormat, width, height, alphaMode);
+
+        return bitmap;
+    }
+
     void InitializeLibass()
     {
         assLibrary = ass_library_init();
@@ -267,6 +430,7 @@ public:
     { 
         ass_set_fonts(assRenderer, NULL, "Segoe UI", ASS_FONTPROVIDER_AUTODETECT, nullptr, 0);
     }
+
     void FreeLibass()
     {
         ass_free_track(track);
@@ -275,6 +439,20 @@ public:
         //buffer_free(&m_blend); // throws exceptions
     }
 
+    SoftwareBitmap GetDummyBitmap()
+    {
+        if (!dummyBitmap)
+        {
+            dummyBitmap = SoftwareBitmap(BitmapPixelFormat::Bgra8, 16, 16, BitmapAlphaMode::Premultiplied);
+        }
+
+        return dummyBitmap;
+    }
+
+    int64_t CalculatePosition(TimeSpan *time)
+    {
+        return time->count() / 10'000;
+    }
     static void messageCallback(int level, const char* fmt, va_list va, void* data)
     {
         OutputDebugString(L"libass: ");
@@ -354,6 +532,7 @@ private:
     int minY = 0;
     buffer_t m_blend;
     RenderBlendResult m_blendResult;
+    SoftwareBitmap dummyBitmap = { nullptr };
     int nextId = 0;
 
 };
