@@ -49,7 +49,7 @@ public:
             avCodecCtx,
             config,
             index,
-            TimedMetadataKind::Subtitle,
+            TimedMetadataKind::ImageSubtitle,
             dispatcher
         )
     {
@@ -58,9 +58,9 @@ public:
 
     void ParseHeaders()
     {
-        //if (!hasParsedHeaders)
+        if (!hasParsedHeaders)
         {
-            //hasParsedHeaders = true;
+            hasParsedHeaders = true;
             auto str = std::string((char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size);
 
             if (!track)
@@ -68,16 +68,17 @@ public:
                 ass_free_track(track);
             }
             // is this correct?
-            SetFrameSize(m_pAvCodecCtx->width, m_pAvCodecCtx->height); 
+            if (m_pAvCodecCtx->width > 0 && m_pAvCodecCtx->height > 0)
+                SetFrameSize(m_pAvCodecCtx->width, m_pAvCodecCtx->height);
 
             // i don't know how to get encoding page, to I just pass NULL
-            track = ass_read_memory(assLibrary, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size, NULL);
-
+            //track = ass_read_memory(assLibrary, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size, NULL);
+            track = ass_new_track(assLibrary); 
             // why checking this?
-            // embedded subtitle doesn't have [Events] tag since it has chunk
+            // embedded subtitle doesn't have Dialogue: tag since it has chunk
             // extrnal subtitles will load all ass sub using ass_read_memory
-            auto isEventsAvailable = str.find("[Events]");
-            if (isEventsAvailable == str.npos)
+            //auto isEventsAvailable = str.find("Dialogue:");
+            //if (isEventsAvailable == str.npos)
             {
                 // pass the header to ass to libass
                 ass_process_codec_private(track, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size);
@@ -108,19 +109,24 @@ public:
             auto ass = subtitle.rects[0]->ass;
             auto str = StringUtils::Utf8ToWString(ass);
             // pass the subtitle chunk to libass
-            ass_process_chunk(track, (char*)ass, strlen(ass), position->count(), duration->count());
+            ass_process_chunk(track, (char*)ass, strlen(ass), position->count() / 10'0000, duration->count() / 10'0000);
+
+            auto id = winrt::to_hstring(nextId++);
+            ImageCue cue;
+            cue.Id(id);
+            return cue;
         }
         // creating 
         return nullptr;
     }
 
 
-    RenderBlendResult* SubtitleProviderLibass::Blend(double time, int force)
+    RenderBlendResult* SubtitleProviderLibass::Blend(TimeSpan time, int force)
     {
         m_blendResult.blend_time = 0.0;
         m_blendResult.image = NULL;
-
-        ASS_Image* img = ass_render_frame(assRenderer, track, (int)(time * 1000), &m_blendResult.changed);
+        // time in milliseconds
+        ASS_Image* img = ass_render_frame(assRenderer, track, time.count() / 10'000, &m_blendResult.changed);
         if (img == NULL || (m_blendResult.changed == 0 && !force))
         {
             return &m_blendResult;
@@ -245,6 +251,7 @@ public:
         }
 
         SetFrameSize(1920, 1080);// default
+        SetFonts(); // set default font
     }
 
     void SetFrameSize(int width, int height)
@@ -252,16 +259,20 @@ public:
         videoWidth = width;
         videoHeight = height;
 
-        // videoWidth videoHeight ?
-        ass_set_frame_size(assRenderer, width, height);
+        if (width > 0 && height > 0)
+            ass_set_frame_size(assRenderer, width, height);
     }
 
+    void SetFonts()
+    { 
+        ass_set_fonts(assRenderer, NULL, "Segoe UI", ASS_FONTPROVIDER_AUTODETECT, nullptr, 0);
+    }
     void FreeLibass()
     {
         ass_free_track(track);
         ass_renderer_done(assRenderer);
         ass_library_done(assLibrary);
-        buffer_free(&m_blend);
+        //buffer_free(&m_blend); // throws exceptions
     }
 
     static void messageCallback(int level, const char* fmt, va_list va, void* data)
@@ -343,5 +354,6 @@ private:
     int minY = 0;
     buffer_t m_blend;
     RenderBlendResult m_blendResult;
+    int nextId = 0;
 
 };
