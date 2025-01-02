@@ -357,7 +357,9 @@ public:
         if (height <= 0)
             height = 1080;
         if (!assImage) {
-            throw std::invalid_argument("ASS_Image is null");
+            //throw std::invalid_argument("ASS_Image is null");
+            OutputDebugString(L"ASS_Image is null\n");
+            return GetDummyBitmap();
         }
 
         // Create a buffer to hold the final image (BGRA format)
