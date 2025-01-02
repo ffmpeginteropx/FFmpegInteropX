@@ -12,7 +12,7 @@ using namespace winrt::Windows::UI::Core;
 using namespace winrt::Windows::Media::Playback;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Foundation;
-
+using namespace winrt::Windows::Graphics::Imaging;
 #ifdef Win32
 using namespace winrt::Microsoft::UI::Dispatching;
 #else
@@ -65,6 +65,14 @@ public:
     }
 
 public:
+
+    virtual SoftwareBitmap RenderSubtitles(TimeSpan videoPosition, Size const& renderSize)
+    {
+        //default demo implementation
+        BitmapPixelFormat pixelFormat = BitmapPixelFormat::Bgra8;
+        BitmapAlphaMode alphaMode = BitmapAlphaMode::Premultiplied;
+        return SoftwareBitmap(pixelFormat, renderSize.Width, renderSize.Height, alphaMode);
+    }
 
     virtual void InitializeStreamInfo() override
     {

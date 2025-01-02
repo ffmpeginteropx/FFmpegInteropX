@@ -111,6 +111,15 @@ public:
         videoHeight = frameHeight;
     }
 
+    virtual SoftwareBitmap RenderSubtitles(winrt::Windows::Foundation::TimeSpan videoPosition, Size const& renderSize) override
+    {
+        SetSubtitleSize(renderSize.Width, renderSize.Height);
+        auto start = CalculatePosition(&videoPosition);
+        auto image = ass_render_frame(assRenderer, track, start, 0);
+        auto bitmap = ConvertASSImageToSoftwareBitmap(image, subtitleWidth, subtitleHeight);
+        return bitmap;
+    }
+
     virtual IMediaCue CreateCue(AVPacket* packet, winrt::Windows::Foundation::TimeSpan* position, winrt::Windows::Foundation::TimeSpan* duration) override
     {
         std::lock_guard lock(mutex);

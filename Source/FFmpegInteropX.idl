@@ -566,6 +566,9 @@ namespace FFmpegInteropX
 
         ///<summary>Gets the presentation timestamp delay for the given stream. </summary>
         Windows.Foundation.TimeSpan GetStreamDelay(IStreamInfo stream);
+
+        ///<summary>Renders subtitles from the given stream at the current video position. </summary>
+        Windows.Graphics.Imaging.SoftwareBitmap RenderSubtitles(SubtitleStreamInfo subtitle, Windows.Foundation.TimeSpan currentVideoPosition, Windows.Foundation.Size renderSize);
     };
 
     runtimeclass SubtitleParser : Windows.Foundation.IClosable
