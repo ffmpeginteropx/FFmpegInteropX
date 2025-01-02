@@ -19,7 +19,9 @@ using namespace winrt::Windows::System;
 
 const float MIN_UINT8_CAST = 0.9F / 255;
 const float MAX_UINT8_CAST = 255.9F / 255;
-#define CLAMP_UINT8(value) ((value > MIN_UINT8_CAST) ? ((value < MAX_UINT8_CAST) ? (int)(value * 255) : 255) : 0)
+#define CLAMP_UINT8(value) ((value > MIN_UINT8_CAST) ? ((value < MAX_UINT8_CAST) ? (BYTE)(value * 255) : 255) : 0)
+
+#define CLAMP_BYTE(value) ((value > 0) ? ((value < 255) ? (BYTE)value : (BYTE)255) : (BYTE)0)
 
 
 typedef struct
@@ -357,7 +359,11 @@ public:
         }
 
         // Create a buffer to hold the final image (BGRA format)
-        std::vector<uint8_t> pixelData(width * height * 4, 0); // Initialize with zeros for transparent background
+        auto size = width * height * 4;
+        auto buffer = winrt::Windows::Storage::Streams::Buffer(static_cast<uint32_t>(size));
+        auto pixelData = buffer.data();
+        memset(pixelData, 0, size);// Initialize with zeros for transparent background
+        buffer.Length(static_cast<uint32_t>(size));
 
         // Iterate through the ASS_Image linked list
         for (ASS_Image* img = assImage; img != nullptr; img = img->next)
@@ -366,14 +372,15 @@ public:
             int stride = img->stride;
             uint32_t color = img->color;
 
-            //R = (byte)(color & 0xff);
-            //G = (byte)((color >> 8) & 0xff);
-            //B = (byte)((color >> 16) & 0xff);
-            //A = (byte)((color >> 24) & 0xff);
-            uint8_t a = (color >> 24) & 0xFF;
-            uint8_t r = (color >> 16) & 0xFF;
-            uint8_t g = (color >> 8) & 0xFF;
-            uint8_t b = color & 0xFF;
+            uint8_t a = 255 - color & 0xFF;
+            uint8_t b = (color >> 8) & 0xFF;
+            uint8_t g = (color >> 16) & 0xFF;
+            uint8_t r = (color >> 24) & 0xFF;
+
+            float normalizedAlpha = a / 255.0f;
+
+            // If alpha is 0, skip blending
+            if (a == 0) continue;
 
             // Process each pixel in the current ASS_Image
             for (int y = 0; y < img->h; ++y)
@@ -383,28 +390,23 @@ public:
                     int srcIndex = y * stride + x;
                     int destIndex = ((img->dst_y + y) * width + (img->dst_x + x)) * 4;
 
-                    uint8_t srcAlpha = (src[srcIndex] * a) / 255; // Scale alpha by the bitmap's alpha channel
+                    float srcAlpha = (src[srcIndex] * normalizedAlpha) / 255.0f; // Scale alpha by the bitmap's alpha channel
+                    float invertAlpha = 1.0f - srcAlpha;
 
                     // If alpha is 0, skip blending
                     if (srcAlpha == 0) continue;
 
-                    pixelData[destIndex + 0] = b;       // Blue
-                    pixelData[destIndex + 1] = g;       // Green
-                    pixelData[destIndex + 2] = r;       // Red
-                    pixelData[destIndex + 3] = srcAlpha; // Alpha
+                    pixelData[destIndex + 0] = CLAMP_BYTE(pixelData[destIndex + 0] * invertAlpha + b * srcAlpha);       // Blue
+                    pixelData[destIndex + 1] = CLAMP_BYTE(pixelData[destIndex + 1] * invertAlpha + g * srcAlpha);       // Green
+                    pixelData[destIndex + 2] = CLAMP_BYTE(pixelData[destIndex + 2] * invertAlpha + r * srcAlpha);       // Red
+                    pixelData[destIndex + 3] = CLAMP_BYTE(pixelData[destIndex + 3] * invertAlpha + 255 * srcAlpha);     // Alpha
                 }
             }
         }
 
-        // Create a SoftwareBitmap from the pixel data
-        auto buffer = winrt::Windows::Storage::Streams::Buffer(static_cast<uint32_t>(pixelData.size()));
-        memcpy(buffer.data(), pixelData.data(), pixelData.size());
-        buffer.Length(static_cast<uint32_t>(pixelData.size()));
-
         BitmapPixelFormat pixelFormat = BitmapPixelFormat::Bgra8;
         BitmapAlphaMode alphaMode = BitmapAlphaMode::Premultiplied;
         SoftwareBitmap bitmap = SoftwareBitmap::CreateCopyFromBuffer(buffer, pixelFormat, width, height, alphaMode);
-
         return bitmap;
     }
 
