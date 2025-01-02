@@ -6,7 +6,7 @@ using namespace NativeBuffer;
 
 winrt::Windows::Storage::Streams::IBuffer NativeBufferFactory::CreateNativeBuffer(UINT32 nNumberOfBytes)
 {
-    auto lpBuffer = (byte*)malloc(nNumberOfBytes);
+    auto lpBuffer = (byte*)calloc(nNumberOfBytes, sizeof(byte));
     return CreateNativeBuffer(lpBuffer, nNumberOfBytes, &free, lpBuffer);
 }
 

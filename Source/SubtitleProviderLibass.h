@@ -356,8 +356,14 @@ public:
             throw std::invalid_argument("ASS_Image is null");
         }
 
+        BitmapPixelFormat pixelFormat = BitmapPixelFormat::Bgra8;
+        BitmapAlphaMode alphaMode = BitmapAlphaMode::Premultiplied;
+        SoftwareBitmap bitmap = SoftwareBitmap(pixelFormat, width, height, alphaMode);
+        
+        auto buffer = bitmap.LockBuffer(BitmapBufferAccessMode::ReadWrite);
         // Create a buffer to hold the final image (BGRA format)
-        std::vector<uint8_t> pixelData(width * height * 4, 0); // Initialize with zeros for transparent background
+        auto reference = buffer.CreateReference();
+        auto pixelData = reference.data();
 
         // Iterate through the ASS_Image linked list
         for (ASS_Image* img = assImage; img != nullptr; img = img->next)
@@ -395,16 +401,7 @@ public:
                 }
             }
         }
-
-        // Create a SoftwareBitmap from the pixel data
-        auto buffer = winrt::Windows::Storage::Streams::Buffer(static_cast<uint32_t>(pixelData.size()));
-        memcpy(buffer.data(), pixelData.data(), pixelData.size());
-        buffer.Length(static_cast<uint32_t>(pixelData.size()));
-
-        BitmapPixelFormat pixelFormat = BitmapPixelFormat::Bgra8;
-        BitmapAlphaMode alphaMode = BitmapAlphaMode::Premultiplied;
-        SoftwareBitmap bitmap = SoftwareBitmap::CreateCopyFromBuffer(buffer, pixelFormat, width, height, alphaMode);
-
+       
         return bitmap;
     }
 
