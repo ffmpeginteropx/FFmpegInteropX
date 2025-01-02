@@ -819,7 +819,7 @@ namespace winrt::FFmpegInteropX::implementation
 
                             if (cn.Subtitles().UseLibassAsSubtitleRenderer())
                             {
-                                libassProvider = new SubtitleProviderLibass(m_pReader, avFormatCtx, avSubsCodecCtx, cn, index, dispatcher);
+                                libassProvider = new SubtitleProviderLibass(m_pReader, avFormatCtx, avSubsCodecCtx, cn, index, dispatcher, attachedFileHelper);
                                 avSubsStream = std::shared_ptr<SubtitleProvider>(libassProvider);
                             }
                             else

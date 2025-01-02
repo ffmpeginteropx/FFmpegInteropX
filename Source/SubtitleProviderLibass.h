@@ -49,7 +49,8 @@ public:
         AVCodecContext* avCodecCtx,
         MediaSourceConfig const& config,
         int index,
-        DispatcherQueue const& dispatcher)
+        DispatcherQueue const& dispatcher,
+        std::shared_ptr<AttachedFileHelper> attachedFileHelper)
         : SubtitleProvider(reader,
             avFormatCtx,
             avCodecCtx,
@@ -59,6 +60,7 @@ public:
             dispatcher
         )
     {
+        this->attachedFileHelper = attachedFileHelper;
     }
 
     virtual HRESULT Initialize() override
@@ -89,7 +91,7 @@ public:
 
             // i don't know how to get encoding page, to I just pass NULL
             //track = ass_read_memory(assLibrary, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size, NULL);
-            track = ass_new_track(assLibrary); 
+            track = ass_new_track(assLibrary);
             // why checking this?
             // embedded subtitle doesn't have Dialogue: tag since it has chunk
             // extrnal subtitles will load all ass sub using ass_read_memory
@@ -269,7 +271,7 @@ public:
         std::lock_guard lock(mutex);
         try
         {
-            
+
             auto cue = args.Cue().try_as<ImageCue>();
             if (cue)
             {
@@ -290,7 +292,7 @@ public:
                     cur, start, duration);
 
                 OutputDebugString(buffer);
-                
+
                 auto image = ass_render_frame(assRenderer, track, start, 0);
                 CreateSubtitleImage(cue, image);
             }
@@ -452,9 +454,35 @@ public:
     }
 
     void SetFonts()
-    { 
+    {
+        ExtractFonts();
+        auto fontDirectory = StringUtils::PlatformStringToUtf8String(m_config.General().AttachmentCacheFolderName());
+        ass_set_fonts_dir(assLibrary, fontDirectory.data());
         ass_set_fonts(assRenderer, NULL, "Segoe UI", ASS_FONTPROVIDER_AUTODETECT, nullptr, 0);
     }
+
+
+    void ExtractFonts()
+    {
+        try
+        {
+            if (m_config.Subtitles().UseEmbeddedSubtitleFonts())
+            {
+                for (auto& attachment : attachedFileHelper->AttachedFiles())
+                {
+                    std::wstring mime(attachment->MimeType());
+                    if (mime.find(L"font") != mime.npos)
+                    {
+                         attachedFileHelper->ExtractFileAsync(attachment);
+                    }
+                }
+            }
+        }
+        catch (...)
+        {
+        }
+    }
+
 
     void FreeLibass()
     {
@@ -478,16 +506,17 @@ public:
         return dummyBitmap;
     }
 
-    int64_t CalculatePosition(TimeSpan *time)
+    int64_t CalculatePosition(TimeSpan* time)
     {
         return time->count() / 10'000;
     }
+
     static void messageCallback(int level, const char* fmt, va_list va, void* data)
     {
         OutputDebugString(L"libass: ");
         char buffer[1024];
         vsnprintf(buffer, sizeof(buffer), fmt, va);
-     
+
         std::wstring wideMessage = StringUtils::ConvertStringToWString(buffer);
         OutputDebugString(wideMessage.c_str());
 
@@ -567,4 +596,7 @@ private:
     SoftwareBitmap dummyBitmap = { nullptr };
     int nextId = 0;
     TimeSpan currentPosition{ 0 };
+
+    std::shared_ptr<AttachedFileHelper> attachedFileHelper;
+
 };
