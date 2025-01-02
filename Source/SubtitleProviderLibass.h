@@ -57,8 +57,8 @@ public:
             dispatcher
         )
     {
-        InitializeLibass();
     }
+
     virtual HRESULT Initialize() override
     {
         auto hr = SubtitleProvider::Initialize();
@@ -75,6 +75,7 @@ public:
     {
         currentPosition = position;
     }
+
     void ParseHeaders()
     {
         if (!hasParsedHeaders)
@@ -82,13 +83,7 @@ public:
             hasParsedHeaders = true;
             auto str = std::string((char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size);
 
-            if (!track)
-            {
-                ass_free_track(track);
-            }
-            // is this correct?
-            if (m_pAvCodecCtx->width > 0 && m_pAvCodecCtx->height > 0)
-                SetFrameSize(m_pAvCodecCtx->width, m_pAvCodecCtx->height);
+            InitializeLibass();
 
             // i don't know how to get encoding page, to I just pass NULL
             //track = ass_read_memory(assLibrary, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size, NULL);
@@ -110,12 +105,11 @@ public:
         videoAspectRatio = aspectRatio;
         videoWidth = frameWidth;
         videoHeight = frameHeight;
-
-        //SetFrameSize(frameWidth, frameHeight);
     }
 
     virtual IMediaCue CreateCue(AVPacket* packet, winrt::Windows::Foundation::TimeSpan* position, winrt::Windows::Foundation::TimeSpan* duration) override
     {
+        std::lock_guard lock(mutex);
         ParseHeaders();
         AVSubtitle subtitle;
 
@@ -126,14 +120,6 @@ public:
             auto ass = subtitle.rects[0]->ass;
             auto str = StringUtils::Utf8ToWString(ass);
 
-            // this has bug and doesn't show subtitle
-            //if (subtitle.start_display_time > 0)
-            //{
-            //    *position = TimeSpan{ position->count() + (long long)10000 * subtitle.start_display_time };
-            //}
-            //*duration = TimeSpan{ (long long)10000 * subtitle.end_display_time };
-
-            int64_t cur = CalculatePosition(&currentPosition);
             int64_t pos = CalculatePosition(position);
             int64_t dur = CalculatePosition(duration);
 
@@ -303,7 +289,7 @@ public:
 
                 OutputDebugString(buffer);
                 
-                auto image = ass_render_frame(assRenderer, track, cur, 0);
+                auto image = ass_render_frame(assRenderer, track, start, 0);
                 CreateSubtitleImage(cue, image);
             }
         }
@@ -335,7 +321,6 @@ public:
         if (img && cue)
         {
             OutputDebugString(L"Frame rendered.\r\n");
-            int width = videoWidth, height = videoHeight, offsetX = 0, offsetY = 0;
             TimedTextSize cueSize{};
             TimedTextPoint cuePosition{};
 
@@ -344,10 +329,10 @@ public:
             cueSize.Height = 100;
 
             cuePosition.Unit = TimedTextUnit::Percentage;
-            cuePosition.X = 100;
-            cuePosition.Y = 100;
+            cuePosition.X = 0;
+            cuePosition.Y = 0;
 
-            auto bitmap = ConvertASSImageToSoftwareBitmap(img, width, height);
+            auto bitmap = ConvertASSImageToSoftwareBitmap(img, subtitleWidth, subtitleHeight);
             cue.SoftwareBitmap(bitmap);
             cue.Position(cuePosition);
             cue.Extent(cueSize);
@@ -442,15 +427,23 @@ public:
             OutputDebugString(L"ass_renderer_init failed!\r\n");
             return;
         }
-        //SetFrameSize(videoHeight, videoWidth);// NO
-        SetFrameSize(1920, 1080);// default
+
+        //send native video size, if available
+        if (videoWidth > 0 && videoHeight > 0)
+        {
+            ass_set_storage_size(assRenderer, videoWidth, videoHeight);
+        }
+
+        //TODO add API for setting the subtitle target size
+        SetSubtitleSize(1920, 1080);
+
         SetFonts();
     }
 
-    void SetFrameSize(int width, int height)
+    void SetSubtitleSize(int width, int height)
     {
-        videoWidth = width;
-        videoHeight = height;
+        subtitleWidth = width;
+        subtitleHeight = height;
 
         /* if (width > 0 && height > 0)*/
         ass_set_frame_size(assRenderer, width, height);
@@ -463,9 +456,14 @@ public:
 
     void FreeLibass()
     {
-        ass_free_track(track);
-        ass_renderer_done(assRenderer);
-        ass_library_done(assLibrary);
+        if (track)
+            ass_free_track(track);
+
+        if (assRenderer)
+            ass_renderer_done(assRenderer);
+
+        if (assLibrary)
+            ass_library_done(assLibrary);
     }
 
     SoftwareBitmap GetDummyBitmap()
@@ -554,9 +552,11 @@ private:
     double videoAspectRatio = 0.0;
     int videoWidth = 0;
     int videoHeight = 0;
-    ASS_Library* assLibrary;
-    ASS_Renderer* assRenderer;
-    ASS_Track* track;
+    int subtitleWidth = 1920;
+    int subtitleHeight = 1080;
+    ASS_Library* assLibrary = nullptr;
+    ASS_Renderer* assRenderer = nullptr;
+    ASS_Track* track = nullptr;
     int logLevel = 3;
     int minX = 0;
     int minY = 0;
