@@ -38,6 +38,7 @@ using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media.Imaging;
 
 namespace MediaPlayerCS
 {
@@ -47,6 +48,8 @@ namespace MediaPlayerCS
         private StorageFile currentFile;
         private MediaPlayer mediaPlayer;
         private TimeSpan subtitleDelay;
+
+        DispatcherTimer DispatcherTimer = new DispatcherTimer();
 
         public bool AutoCreatePlaybackItem
         {
@@ -85,6 +88,37 @@ namespace MediaPlayerCS
             CoreWindow.GetForCurrentThread().KeyDown += MainPage_KeyDown;
 
             StreamDelays.AddHandler(Slider.PointerReleasedEvent, new PointerEventHandler(StreamDelayManipulation), true);
+
+            DispatcherTimer.Interval = TimeSpan.FromMilliseconds(250);
+            DispatcherTimer.Tick += DispatcherTimer_Tick;
+
+            mediaPlayer.PlaybackSession.PlaybackStateChanged += PlaybackSession_PlaybackStateChanged;
+        }
+
+        private async void PlaybackSession_PlaybackStateChanged(MediaPlaybackSession sender, object args)
+        {
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
+                if (sender.PlaybackState == MediaPlaybackState.Playing)
+                {
+                    DispatcherTimer.Start();
+                }
+                else DispatcherTimer.Stop();
+            });
+        }
+
+        private async void DispatcherTimer_Tick(object sender, object e)
+        {
+            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0)
+            {
+                var bitmap = FFmpegMSS.RenderSubtitles(FFmpegMSS.SubtitleStreams.FirstOrDefault(), mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(mediaPlayerElement.ActualWidth, mediaPlayerElement.ActualHeight));
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+                 {
+                     var bitmapSource = new SoftwareBitmapSource();
+                     await bitmapSource.SetBitmapAsync(bitmap);
+                     subtitleImage.Source = bitmapSource;
+                 });
+
+            }
         }
 
         private void PlaybackSession_NaturalVideoSizeChanged(MediaPlaybackSession sender, object args)

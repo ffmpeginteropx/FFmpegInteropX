@@ -466,11 +466,17 @@ public:
 
     void SetFonts()
     {
-        ExtractFonts();
-        auto fontFolder = attachedFileHelper->GetInstanceFolder().get();
-        auto fontDirectory = StringUtils::PlatformStringToUtf8String(fontFolder.Path());
-        ass_set_fonts_dir(assLibrary, fontDirectory.data());
-        ass_set_fonts(assRenderer, NULL, "Segoe UI", ASS_FONTPROVIDER_AUTODETECT, nullptr, 0);
+        try {
+            ExtractFonts();
+            /*auto fontFolder = attachedFileHelper->GetInstanceFolder().get();
+            auto fontDirectory = StringUtils::PlatformStringToUtf8String(fontFolder.Path());
+            ass_set_fonts_dir(assLibrary, fontDirectory.data());*/
+            ass_set_fonts(assRenderer, NULL, "Segoe UI", ASS_FONTPROVIDER_AUTODETECT, nullptr, 0);
+        }
+        catch (exception e)
+        {
+            auto x = e.what();
+        }
     }
 
 
@@ -485,7 +491,7 @@ public:
                     std::wstring mime(attachment->MimeType());
                     if (mime.find(L"font") != mime.npos)
                     {
-                         attachedFileHelper->ExtractFileAsync(attachment).get();
+                        attachedFileHelper->ExtractFileAsync(attachment).get();
                     }
                 }
             }

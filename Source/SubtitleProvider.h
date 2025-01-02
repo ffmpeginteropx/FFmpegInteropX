@@ -209,7 +209,7 @@ public:
                 }
             }
         }
-        catch (...)
+        catch (exception ex)
         {
             OutputDebugString(L"Failed to create subtitle cue.");
         }
