@@ -88,6 +88,14 @@ public:
         }
     }
 
+    winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Storage::StorageFolder> GetInstanceFolder()
+    {
+        auto folder = co_await ApplicationData::Current().TemporaryFolder().CreateFolderAsync(
+            config.General().AttachmentCacheFolderName(), CreationCollisionOption::OpenIfExists);
+        auto instanceFolder = co_await folder.CreateFolderAsync(instanceId, CreationCollisionOption::OpenIfExists);
+        co_return instanceFolder;
+    }
+
 private:
     winrt::Windows::Foundation::Collections::IMap<winrt::hstring, winrt::Windows::Storage::StorageFile> extractedFiles{ winrt::single_threaded_map<winrt::hstring, winrt::Windows::Storage::StorageFile>() };
     std::vector<std::shared_ptr<AttachedFile>> attachedFiles;
