@@ -31,6 +31,37 @@
         <local:TimeSpanToDoubleConverter x:Key="TimeSpanToDoubleConverter" />
 
         <local:FloatToDoubleConverter x:Key="FloatToDoubleConverter" />
+
+        <Style TargetType="MediaPlayerElement">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MediaPlayerElement">
+                        <Grid x:Name="LayoutRoot">
+                            <Border Background="Transparent" />
+                            <Image  x:Name="PosterImage"
+                                   Visibility="Collapsed"
+                                   Source="{TemplateBinding PosterSource}"
+                                   Stretch="{TemplateBinding Stretch}" />
+                            <MediaPlayerPresenter x:Name="MediaPlayerPresenter"
+                                                  IsFullWindow="{TemplateBinding IsFullWindow}"
+                                                  Stretch="{TemplateBinding Stretch}"
+                                                  MediaPlayer="{TemplateBinding MediaPlayer}" />
+
+                            <Image x:Name="SubtitleImage" Loaded="SubtitleImage_Loaded"/>
+
+                            <ContentPresenter     x:Name="TransportControlsPresenter"
+                                              Visibility="{TemplateBinding AreTransportControlsEnabled}" />
+                            <Grid x:Name="TimedTextSourcePresenter" />
+
+                        </Grid>
+
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Page.Resources>
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -175,9 +206,8 @@
             <Grid>
                 <!-- Main content -->
                 <MediaPlayerElement x:Name="mediaPlayerElement"
-                        AreTransportControlsEnabled="True"
-                        AutoPlay="True"           />
-                <Image x:Name="subtitleImage"/>
+                                    AreTransportControlsEnabled="True"
+                                    AutoPlay="True"           />
             </Grid>
         </SplitView>
 

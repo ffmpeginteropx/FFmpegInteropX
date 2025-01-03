@@ -48,6 +48,7 @@ namespace MediaPlayerCS
         private StorageFile currentFile;
         private MediaPlayer mediaPlayer;
         private TimeSpan subtitleDelay;
+        private Image subtitleImage;
 
         DispatcherTimer DispatcherTimer = new DispatcherTimer();
 
@@ -113,6 +114,8 @@ namespace MediaPlayerCS
                 var bitmap = FFmpegMSS.RenderSubtitles(FFmpegMSS.SubtitleStreams.FirstOrDefault(), mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(mediaPlayerElement.ActualWidth, mediaPlayerElement.ActualHeight));
                 await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
                  {
+                     if (subtitleImage == null)
+                         return;
                      var bitmapSource = new SoftwareBitmapSource();
                      await bitmapSource.SetBitmapAsync(bitmap);
                      subtitleImage.Source = bitmapSource;
@@ -755,6 +758,10 @@ namespace MediaPlayerCS
             {
                 await DisplayErrorMessage(ex.ToString());
             }
+        }
+        private void SubtitleImage_Loaded(object sender, RoutedEventArgs e)
+        {
+            subtitleImage = sender as Image;
         }
     }
 }
