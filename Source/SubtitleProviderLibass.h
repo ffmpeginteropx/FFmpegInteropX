@@ -113,6 +113,9 @@ public:
 
     virtual SoftwareBitmap RenderSubtitles(winrt::Windows::Foundation::TimeSpan videoPosition, Size const& renderSize) override
     {
+        if (!assRenderer)
+            return GetDummyBitmap();
+
         SetSubtitleSize(renderSize.Width, renderSize.Height);
         auto start = CalculatePosition(&videoPosition);
         auto image = ass_render_frame(assRenderer, track, start, 0);
@@ -460,8 +463,8 @@ public:
         subtitleWidth = width;
         subtitleHeight = height;
 
-        /* if (width > 0 && height > 0)*/
-        ass_set_frame_size(assRenderer, width, height);
+        if (assRenderer)
+            ass_set_frame_size(assRenderer, width, height);
     }
 
     void SetFonts()
