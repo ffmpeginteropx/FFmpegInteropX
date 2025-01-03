@@ -113,6 +113,7 @@ public:
 
     virtual SoftwareBitmap RenderSubtitles(winrt::Windows::Foundation::TimeSpan videoPosition, Size const& renderSize) override
     {
+        std::lock_guard lock(mutex);
         if (!assRenderer)
             return GetDummyBitmap();
 
@@ -470,10 +471,12 @@ public:
     void SetFonts()
     {
         try {
-            ExtractFonts();
-            /*auto fontFolder = attachedFileHelper->GetInstanceFolder().get();
-            auto fontDirectory = StringUtils::PlatformStringToUtf8String(fontFolder.Path());
-            ass_set_fonts_dir(assLibrary, fontDirectory.data());*/
+            if (ExtractFonts())
+            {
+                auto fontFolder = attachedFileHelper->GetInstanceFolder().get();
+                auto fontDirectory = StringUtils::PlatformStringToUtf8String(fontFolder.Path());
+                ass_set_fonts_dir(assLibrary, fontDirectory.data());
+            }
             ass_set_fonts(assRenderer, NULL, "Segoe UI", ASS_FONTPROVIDER_AUTODETECT, nullptr, 0);
         }
         catch (exception e)
@@ -483,8 +486,9 @@ public:
     }
 
 
-    void ExtractFonts()
+    bool ExtractFonts()
     {
+        bool hasFonts = false;
         try
         {
             if (m_config.Subtitles().UseEmbeddedSubtitleFonts())
@@ -495,6 +499,7 @@ public:
                     if (mime.find(L"font") != mime.npos)
                     {
                         attachedFileHelper->ExtractFileAsync(attachment).get();
+                        hasFonts = true;
                     }
                 }
             }
@@ -502,6 +507,7 @@ public:
         catch (...)
         {
         }
+        return hasFonts;
     }
 
 
