@@ -116,6 +116,17 @@
                         <Button Content="Load External Subtitle File (ffmpeg)" Click="LoadSubtitleFileFFmpeg"  Margin="0,20,10,10" />
                         <Button Content="Read External Subtitle File (ffmpeg)" Click="ReadSubtitleFileFFmpeg"  Margin="0,20,10,10" />
                         <Button Content="Load External Subtitle File (winAPI)" Click="LoadSubtitleFile"  Margin="0,20,10,10" />
+                        <ComboBox   PlaceholderText="All" ToolTipService.ToolTip="Subtitle streams" x:Name="cmbSubtitleSelector" Grid.Column="1" SelectionChanged="CmbSubtitleSelector_SelectionChanged">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}"/>
+                                        <TextBlock Text="{Binding StreamIndex}" Margin="10, 0, 10, 0"/>
+                                        <TextBlock Text="{Binding Language}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
 
                         <TextBlock x:Name="tbSubtitleDelay" Text="Subtitle delay: 0s" Margin="0,20,0,5"/>
                         <StackPanel Orientation="Horizontal">

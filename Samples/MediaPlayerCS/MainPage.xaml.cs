@@ -49,7 +49,7 @@ namespace MediaPlayerCS
         private MediaPlayer mediaPlayer;
         private TimeSpan subtitleDelay;
         private Image subtitleImage;
-
+        private SubtitleStreamInfo selectedSubtitleStreamInfo;
         DispatcherTimer DispatcherTimer = new DispatcherTimer();
 
         public bool AutoCreatePlaybackItem
@@ -109,17 +109,18 @@ namespace MediaPlayerCS
 
         private async void DispatcherTimer_Tick(object sender, object e)
         {
-            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0)
+            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo  != null)
             {
-                var bitmap = FFmpegMSS.RenderSubtitles(FFmpegMSS.SubtitleStreams.FirstOrDefault(), mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(mediaPlayerElement.ActualWidth, mediaPlayerElement.ActualHeight));
+                var bitmap = FFmpegMSS.RenderSubtitles(selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(mediaPlayerElement.ActualWidth, mediaPlayerElement.ActualHeight));
                 await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
-                 {
-                     if (subtitleImage == null)
-                         return;
-                     var bitmapSource = new SoftwareBitmapSource();
-                     await bitmapSource.SetBitmapAsync(bitmap);
-                     subtitleImage.Source = bitmapSource;
-                 });
+                {
+                    if (subtitleImage == null)
+                        return;
+                    var bitmapSource = new SoftwareBitmapSource();
+                    await bitmapSource.SetBitmapAsync(bitmap);
+                    subtitleImage.Source = bitmapSource;
+
+                }); ;
 
             }
         }
@@ -633,6 +634,11 @@ namespace MediaPlayerCS
 
                     cmbVideoStreamEffectSelector.ItemsSource = FFmpegMSS.VideoStreams;
 
+                    cmbSubtitleSelector.ItemsSource = FFmpegMSS.SubtitleStreams;
+
+                    if (FFmpegMSS.SubtitleStreams.Count > 0)
+                        cmbSubtitleSelector.SelectedIndex = 0;
+
                     List<IStreamInfo> streams = new List<IStreamInfo>();
                     foreach (var a in FFmpegMSS.AudioStreams)
                     {
@@ -645,6 +651,7 @@ namespace MediaPlayerCS
                     }
 
                     cmbAudioVideoStreamDelays.ItemsSource = streams;
+
                 }));
         }
 
@@ -762,6 +769,31 @@ namespace MediaPlayerCS
         private void SubtitleImage_Loaded(object sender, RoutedEventArgs e)
         {
             subtitleImage = sender as Image;
+        }
+
+        private void CmbSubtitleSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0)
+            {
+                var item = FFmpegMSS.PlaybackItem;
+                if (item != null)
+                {
+                    for (uint i = 0; i < item.TimedMetadataTracks.Count; i++)
+                    {
+                        item.TimedMetadataTracks.SetPresentationMode(i, TimedMetadataTrackPresentationMode.Disabled);
+                    }
+                    if (cmbSubtitleSelector.SelectedIndex != -1) 
+                    {
+                        selectedSubtitleStreamInfo = FFmpegMSS.SubtitleStreams[cmbSubtitleSelector.SelectedIndex];
+                        // let us handle the subs
+                        item.TimedMetadataTracks.SetPresentationMode((uint)cmbSubtitleSelector.SelectedIndex, TimedMetadataTrackPresentationMode.ApplicationPresented);
+                    }
+                    else
+                    {
+                        selectedSubtitleStreamInfo = null;
+                    }
+                }
+            }
         }
     }
 }
