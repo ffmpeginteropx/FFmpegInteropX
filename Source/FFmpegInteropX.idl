@@ -569,6 +569,9 @@ namespace FFmpegInteropX
 
         ///<summary>Renders subtitles from the given stream at the current video position. </summary>
         Windows.Graphics.Imaging.SoftwareBitmap RenderSubtitles(SubtitleStreamInfo subtitle, Windows.Foundation.TimeSpan currentVideoPosition, Windows.Foundation.Size renderSize);
+
+        ///<summary>Renders subtitles from the given stream at the current video position. </summary>
+        Boolean RenderSubtitlesToDirectXSurface(Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface renderTarget, SubtitleStreamInfo subtitle, Windows.Foundation.TimeSpan currentVideoPosition, Windows.Foundation.Size renderSize);
     };
 
     runtimeclass SubtitleParser : Windows.Foundation.IClosable

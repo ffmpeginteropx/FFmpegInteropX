@@ -39,6 +39,10 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.UI.Xaml;
+using Windows.Graphics.Imaging;
+using Windows.UI;
 
 namespace MediaPlayerCS
 {
@@ -51,6 +55,9 @@ namespace MediaPlayerCS
         private Image subtitleImage;
         private SubtitleStreamInfo selectedSubtitleStreamInfo;
         DispatcherTimer DispatcherTimer = new DispatcherTimer();
+        private CanvasImageSource bitmapSource;
+        private CanvasDevice device = CanvasDevice.GetSharedDevice();
+        private CanvasRenderTarget renderTarget;
 
         public bool AutoCreatePlaybackItem
         {
@@ -90,7 +97,7 @@ namespace MediaPlayerCS
 
             StreamDelays.AddHandler(Slider.PointerReleasedEvent, new PointerEventHandler(StreamDelayManipulation), true);
 
-            DispatcherTimer.Interval = TimeSpan.FromMilliseconds(250);
+            DispatcherTimer.Interval = TimeSpan.FromMilliseconds(66);
             DispatcherTimer.Tick += DispatcherTimer_Tick;
 
             mediaPlayer.PlaybackSession.PlaybackStateChanged += PlaybackSession_PlaybackStateChanged;
@@ -98,7 +105,8 @@ namespace MediaPlayerCS
 
         private async void PlaybackSession_PlaybackStateChanged(MediaPlaybackSession sender, object args)
         {
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => {
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
                 if (sender.PlaybackState == MediaPlaybackState.Playing)
                 {
                     DispatcherTimer.Start();
@@ -109,16 +117,32 @@ namespace MediaPlayerCS
 
         private async void DispatcherTimer_Tick(object sender, object e)
         {
-            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo  != null)
+            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo != null)
             {
-                var bitmap = FFmpegMSS.RenderSubtitles(selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(mediaPlayerElement.ActualWidth, mediaPlayerElement.ActualHeight));
+
+                if (renderTarget == null || renderTarget.Size.Width != mediaPlayerElement.ActualWidth || renderTarget.Size.Height != mediaPlayerElement.ActualWidth)
+                {
+                    renderTarget = new CanvasRenderTarget(device, (float)mediaPlayerElement.ActualWidth, (float)mediaPlayerElement.ActualHeight, 96);
+                }
+
+                var surface = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(mediaPlayerElement.ActualWidth, mediaPlayerElement.ActualHeight));
+
+                //var bmp = CanvasBitmap.CreateFromDirect3D11Surface(CanvasDevice.GetSharedDevice(), surface);
+                //var bitmap = FFmpegMSS.RenderSubtitles(selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(mediaPlayerElement.ActualWidth, mediaPlayerElement.ActualHeight));
                 await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
                 {
-                    if (subtitleImage == null)
-                        return;
-                    var bitmapSource = new SoftwareBitmapSource();
-                    await bitmapSource.SetBitmapAsync(bitmap);
+                    if (bitmapSource == null || bitmapSource.Size.Width != mediaPlayerElement.ActualWidth || bitmapSource.Size.Height != mediaPlayerElement.ActualWidth)
+                    {
+                        bitmapSource = new CanvasImageSource(device, (float)mediaPlayerElement.ActualWidth, (float)mediaPlayerElement.ActualHeight, 96);
+                    }
+
                     subtitleImage.Source = bitmapSource;
+
+                    using (var ds = bitmapSource.CreateDrawingSession(Colors.Transparent))
+                    {
+                        if (surface)
+                            ds.DrawImage(renderTarget);
+                    }
 
                 }); ;
 
@@ -137,7 +161,6 @@ namespace MediaPlayerCS
             {
                 FFmpegMSS.SetStreamDelay(streamToDelay, TimeSpan.FromSeconds(StreamDelays.Value));
             }
-
         }
 
         private async void MainPage_KeyDown(CoreWindow sender, KeyEventArgs args)
@@ -769,6 +792,7 @@ namespace MediaPlayerCS
         private void SubtitleImage_Loaded(object sender, RoutedEventArgs e)
         {
             subtitleImage = sender as Image;
+
         }
 
         private void CmbSubtitleSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -782,7 +806,7 @@ namespace MediaPlayerCS
                     {
                         item.TimedMetadataTracks.SetPresentationMode(i, TimedMetadataTrackPresentationMode.Disabled);
                     }
-                    if (cmbSubtitleSelector.SelectedIndex != -1) 
+                    if (cmbSubtitleSelector.SelectedIndex != -1)
                     {
                         selectedSubtitleStreamInfo = FFmpegMSS.SubtitleStreams[cmbSubtitleSelector.SelectedIndex];
                         // let us handle the subs

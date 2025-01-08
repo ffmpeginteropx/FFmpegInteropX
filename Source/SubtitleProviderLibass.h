@@ -5,6 +5,10 @@
 #include "ass/ass.h"
 #include "NativeBufferFactory.h"
 #include <winrt/Windows.Graphics.Imaging.h>
+#include <immintrin.h>
+#include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
+#include "DirectXInteropHelper.h"
+#include <LibassBlenderPixelShaderBlob.h>
 
 using namespace winrt::Windows::Storage::FileProperties;
 using namespace winrt::Windows::Media::Core;
@@ -69,12 +73,22 @@ public:
 
         if (SUCCEEDED(hr))
         {
-            SubtitleTrack.CueEntered(weak_handler(this, &SubtitleProviderLibass::OnCueEntered));
-            SubtitleTrack.CueExited(weak_handler(this, &SubtitleProviderLibass::OnCueExited));
+            //SubtitleTrack.CueEntered(weak_handler(this, &SubtitleProviderLibass::OnCueEntered));
+            //SubtitleTrack.CueExited(weak_handler(this, &SubtitleProviderLibass::OnCueExited));
         }
 
         return S_OK;
     }
+
+    virtual HRESULT SetHardwareDevice(winrt::com_ptr<ID3D11Device> newDevice,
+        winrt::com_ptr<ID3D11DeviceContext> newDeviceContext,
+        AVBufferRef* avHardwareContext) override
+    {
+        device = newDevice;
+        deviceContext = newDeviceContext;
+        return S_OK;
+    };
+
     void SubtitleProviderLibass::SetPosition(winrt::Windows::Foundation::TimeSpan  position)
     {
         currentPosition = position;
@@ -115,13 +129,25 @@ public:
     {
         std::lock_guard lock(mutex);
         if (!assRenderer)
-            return GetDummyBitmap();
+            return nullptr;
 
         SetSubtitleSize(renderSize.Width, renderSize.Height);
         auto start = CalculatePosition(&videoPosition);
         auto image = ass_render_frame(assRenderer, track, start, 0);
         auto bitmap = ConvertASSImageToSoftwareBitmap(image, subtitleWidth, subtitleHeight);
         return bitmap;
+    }
+
+    virtual bool RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan videoPosition, Size const& renderSize) override
+    {
+        std::lock_guard lock(mutex);
+        if (!assRenderer)
+            return false;
+
+        SetSubtitleSize(renderSize.Width, renderSize.Height);
+        auto start = CalculatePosition(&videoPosition);
+        auto image = ass_render_frame(assRenderer, track, start, 0);
+        return ConvertASSImageToSoftwareBitmapDirectXSurface(rendertarget, image, subtitleWidth, subtitleHeight);
     }
 
     virtual IMediaCue CreateCue(AVPacket* packet, winrt::Windows::Foundation::TimeSpan* position, winrt::Windows::Foundation::TimeSpan* duration) override
@@ -168,123 +194,11 @@ public:
 
     // this will be removed!
 
-    RenderBlendResult* SubtitleProviderLibass::Blend(long long time, int force)
-    {
-        m_blendResult.blend_time = 0.0;
-        m_blendResult.image = NULL;
-
-        ASS_Image* img = ass_render_frame(assRenderer, track, time, &m_blendResult.changed);
-        if (img == NULL || (m_blendResult.changed == 0 && !force))
-        {
-            return &m_blendResult;
-        }
-
-        int min_x = img->dst_x, min_y = img->dst_y;
-        int max_x = img->dst_x + img->w - 1, max_y = img->dst_y + img->h - 1;
-        for (auto cur = img->next; cur != NULL; cur = cur->next)
-        {
-            if (cur->dst_x < min_x) min_x = cur->dst_x;
-            if (cur->dst_y < min_y) min_y = cur->dst_y;
-            int right = cur->dst_x + cur->w - 1;
-            int bottom = cur->dst_y + cur->h - 1;
-            if (right > max_x) max_x = right;
-            if (bottom > max_y) max_y = bottom;
-        }
-
-        // copied from Subtitle Octapus
-        int width = max_x - min_x + 1, height = max_y - min_y + 1;
-        auto size = sizeof(float) * width * height * 4;
-        float* buf = (float*)buffer_resize(&m_blend, size, 0);
-
-        if (buf == NULL)
-        {
-            OutputDebugString(L"libass: error: cannot allocate buffer for blending");
-            return &m_blendResult;
-        }
-
-        memset(buf, 0, sizeof(float) * width * height * 4);
-
-        for (auto cur = img; cur != NULL; cur = cur->next)
-        {
-            int curw = cur->w, curh = cur->h;
-            if (curw == 0 || curh == 0) continue; // skip empty images
-            int a = (255 - (cur->color & 0xFF));
-            if (a == 0) continue; // skip transparent images
-
-            int curs = (cur->stride >= curw) ? cur->stride : curw;
-            int curx = cur->dst_x - min_x, cury = cur->dst_y - min_y;
-
-            unsigned char* bitmap = cur->bitmap;
-            float normalized_a = a / 255.0f;
-            float r = ((cur->color >> 24) & 0xFF) / 255.0f;
-            float g = ((cur->color >> 16) & 0xFF) / 255.0f;
-            float b = ((cur->color >> 8) & 0xFF) / 255.0f;
-
-            int buf_line_coord = cury * videoWidth;
-            for (int y = 0, bitmap_offset = 0; y < curh; y++, bitmap_offset += curs, buf_line_coord += videoWidth)
-            {
-                for (int x = 0; x < curw; x++)
-                {
-                    float pix_alpha = bitmap[bitmap_offset + x] * normalized_a / 255.0f;
-                    float inv_alpha = 1.0 - pix_alpha;
-
-                    int buf_coord = (buf_line_coord + curx + x) << 2;
-                    float* buf_r = buf + buf_coord;
-                    float* buf_g = buf + buf_coord + 1;
-                    float* buf_b = buf + buf_coord + 2;
-                    float* buf_a = buf + buf_coord + 3;
-
-                    // do the compositing, pre-multiply image RGB with alpha for current pixel
-                    *buf_a = pix_alpha + *buf_a * inv_alpha;
-                    *buf_r = r * pix_alpha + *buf_r * inv_alpha;
-                    *buf_g = g * pix_alpha + *buf_g * inv_alpha;
-                    *buf_b = b * pix_alpha + *buf_b * inv_alpha;
-                }
-            }
-        }
-
-        // now build the result;
-        // NOTE: we use a "view" over [float,float,float,float] array of pixels,
-        // so we _must_ go left-right top-bottom to not mangle the result
-        unsigned int* result = (unsigned int*)buf;
-        for (int y = 0, buf_line_coord = 0; y < height; y++, buf_line_coord += width)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                unsigned int pixel = 0;
-                int buf_coord = (buf_line_coord + x) << 2;
-                float alpha = buf[buf_coord + 3];
-                if (alpha > MIN_UINT8_CAST)
-                {
-                    // need to un-multiply the result
-                    float value = buf[buf_coord] / alpha;
-                    pixel |= CLAMP_UINT8(value); // R
-                    value = buf[buf_coord + 1] / alpha;
-                    pixel |= CLAMP_UINT8(value) << 8; // G
-                    value = buf[buf_coord + 2] / alpha;
-                    pixel |= CLAMP_UINT8(value) << 16; // B
-                    pixel |= CLAMP_UINT8(alpha) << 24; // A
-                }
-                result[buf_line_coord + x] = pixel;
-            }
-        }
-
-        m_blendResult.dest_x = min_x;
-        m_blendResult.dest_y = min_y;
-        m_blendResult.dest_width = width;
-        m_blendResult.dest_height = height;
-        m_blendResult.image = (unsigned char*)result;
-        m_blendResult.size = size;
-        return &m_blendResult;
-    }
-
-
     void OnCueEntered(TimedMetadataTrack sender, MediaCueEventArgs args)
     {
         std::lock_guard lock(mutex);
         try
         {
-
             auto cue = args.Cue().try_as<ImageCue>();
             if (cue)
             {
@@ -365,14 +279,12 @@ public:
 
     SoftwareBitmap ConvertASSImageToSoftwareBitmap(ASS_Image* assImage, int width, int height)
     {
-        if (width <= 0)
-            width = 1920;
-        if (height <= 0)
-            height = 1080;
+        if (width <= 0 || height <= 0)
+            return nullptr;
         if (!assImage) {
             //throw std::invalid_argument("ASS_Image is null");
             OutputDebugString(L"ASS_Image is null\n");
-            return GetDummyBitmap();
+            return nullptr;
         }
 
         // Create a buffer to hold the final image (BGRA format)
@@ -425,6 +337,91 @@ public:
         BitmapAlphaMode alphaMode = BitmapAlphaMode::Premultiplied;
         SoftwareBitmap bitmap = SoftwareBitmap::CreateCopyFromBuffer(buffer, pixelFormat, width, height, alphaMode);
         return bitmap;
+    }
+
+    bool ConvertASSImageToSoftwareBitmapDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, ASS_Image* assImage, int width, int height)
+    {
+        if (width <= 0 || height <= 0)
+            return false;
+        if (!assImage) {
+            //throw std::invalid_argument("ASS_Image is null");
+            OutputDebugString(L"ASS_Image is null\n");
+            return false;
+        }
+
+        winrt::com_ptr<IDXGISurface> renderTargetDXGI;
+        winrt::com_ptr<ID3D11Texture2D> renderTargetTexture;
+        DirectXInteropHelper::GetDXGISurface(rendertarget, renderTargetDXGI);
+
+        DXGI_SURFACE_DESC targetargetDXGIDesc;
+        renderTargetDXGI->GetDesc(&targetargetDXGIDesc);
+
+        renderTargetTexture = renderTargetDXGI.as<ID3D11Texture2D>();
+        D3D11_TEXTURE2D_DESC desc;
+        renderTargetTexture->GetDesc(&desc);
+
+        winrt::com_ptr<ID3D11Device> targetTextureDevice;
+        winrt::com_ptr<ID3D11DeviceContext> targetTextureDeviceContext;
+        renderTargetTexture->GetDevice(targetTextureDevice.put());
+        targetTextureDevice->GetImmediateContext(targetTextureDeviceContext.put());
+
+        auto size = width * height * 4;
+        auto buffer = NativeBuffer::NativeBufferFactory::CreateZerosNativeBuffer(size);
+        auto pixelData = buffer.data();
+
+        // Iterate through the ASS_Image linked list
+        //should be replaced by shaders or directx math
+        for (ASS_Image* img = assImage; img != nullptr; img = img->next)
+        {
+            uint8_t* src = img->bitmap;
+            int stride = img->stride;
+            uint32_t color = img->color;
+
+            uint8_t a = 255 - color & 0xFF;
+            uint8_t b = (color >> 8) & 0xFF;
+            uint8_t g = (color >> 16) & 0xFF;
+            uint8_t r = (color >> 24) & 0xFF;
+
+            float normalizedAlpha = a / 255.0f;
+
+            // If alpha is 0, skip blending
+            if (a == 0) continue;
+
+            // Process each pixel in the current ASS_Image
+            for (int y = 0; y < img->h; ++y)
+            {
+                for (int x = 0; x < img->w; ++x)
+                {
+                    int srcIndex = y * stride + x;
+                    int destIndex = ((img->dst_y + y) * width + (img->dst_x + x)) * 4;
+
+                    float srcAlpha = (src[srcIndex] * normalizedAlpha) / 255.0f; // Scale alpha by the bitmap's alpha channel
+                    float invertAlpha = 1.0f - srcAlpha;
+
+                    // If alpha is 0, skip blending
+                    if (srcAlpha == 0) continue;
+
+                    pixelData[destIndex + 0] = CLAMP_BYTE(pixelData[destIndex + 0] * invertAlpha + b * srcAlpha);       // Blue
+                    pixelData[destIndex + 1] = CLAMP_BYTE(pixelData[destIndex + 1] * invertAlpha + g * srcAlpha);       // Green
+                    pixelData[destIndex + 2] = CLAMP_BYTE(pixelData[destIndex + 2] * invertAlpha + r * srcAlpha);       // Red
+                    pixelData[destIndex + 3] = CLAMP_BYTE(pixelData[destIndex + 3] * invertAlpha + 255 * srcAlpha);     // Alpha
+                }
+            }
+        }
+
+
+        D3D11_SUBRESOURCE_DATA initData = {};
+        initData.pSysMem = pixelData;
+        initData.SysMemPitch = width * 4;
+        initData.SysMemSlicePitch = 0;
+
+        winrt::com_ptr<ID3D11Texture2D> stagingTexture;
+        winrt::com_ptr<ID3D11ShaderResourceView> srv;       
+
+        DirectXInteropHelper::CreateTextureFromByteArray(targetTextureDevice.get(), pixelData, size, width, height, DXGI_FORMAT_B8G8R8A8_UNORM, stagingTexture.put());
+        targetTextureDeviceContext->CopyResource(renderTargetTexture.get(), stagingTexture.get());
+        targetTextureDeviceContext->Flush();
+        return true;
     }
 
     void InitializeLibass()
@@ -625,5 +622,4 @@ private:
     TimeSpan currentPosition{ 0 };
 
     std::shared_ptr<AttachedFileHelper> attachedFileHelper;
-
 };

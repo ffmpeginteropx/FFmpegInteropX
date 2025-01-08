@@ -342,6 +342,58 @@
   <ItemGroup>
     <ResourceCompile Include="FFmpegInteropX.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="LibassBlenderPixelShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_UWP|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_UWP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM64'">Pixel</ShaderType>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|Win32'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|Win32'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_UWP|Win32'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_UWP|Win32'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|Win32'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|Win32'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|Win32'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|Win32'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM64'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM64'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM64'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM64'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|x64'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|x64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_UWP|x64'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_UWP|x64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|x64'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|x64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|x64'">LibassBlenderPixelShaderBlob</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|x64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
+    </FxCompile>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.targets" Condition="Exists('..\packages\Microsoft.Windows.SDK.BuildTools.10.0.22621.756\build\Microsoft.Windows.SDK.BuildTools.targets')" />
@@ -349,6 +401,7 @@
     <Import Project="..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.targets" Condition="'$(AppType)'=='Win32' AND Exists('..\packages\Microsoft.WindowsAppSDK.1.4.230913002\build\native\Microsoft.WindowsAppSDK.targets')" />
     <Import Project="..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets" Condition="Exists('..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets')" />
     <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets')" />
+    <Import Project="..\packages\directxtk_uwp.2024.10.29.1\build\native\directxtk_uwp.targets" Condition="Exists('..\packages\directxtk_uwp.2024.10.29.1\build\native\directxtk_uwp.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -362,6 +415,7 @@
     <Error Condition="!Exists('..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\$(FFmpegPackageId).$(FFmpegPackageVersion)\build\native\$(FFmpegPackageId).targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.targets'))" />
+    <Error Condition="!Exists('..\packages\directxtk_uwp.2024.10.29.1\build\native\directxtk_uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtk_uwp.2024.10.29.1\build\native\directxtk_uwp.targets'))" />
   </Target>
   <Target Name="AfterBuild">
     <PropertyGroup>

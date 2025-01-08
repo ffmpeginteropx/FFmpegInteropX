@@ -2143,6 +2143,17 @@ namespace winrt::FFmpegInteropX::implementation
                             break;
                         }
                     }
+
+                    for (auto& stream : subtitleStreamProviders)
+                    {
+                        // set device pointers to stream
+                        hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+
+                        if (!SUCCEEDED(hr))
+                        {
+                            break;
+                        }
+                    }
                 }
                 else
                 {

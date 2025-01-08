@@ -74,6 +74,12 @@ public:
         return SoftwareBitmap(pixelFormat, renderSize.Width, renderSize.Height, alphaMode);
     }
 
+    virtual bool RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan videoPosition, Size const& renderSize)
+    {
+        //default demo implementation
+        return false;
+    }
+
     virtual void InitializeStreamInfo() override
     {
         auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
