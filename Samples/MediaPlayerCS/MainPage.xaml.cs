@@ -43,6 +43,7 @@ using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Windows.Graphics.Imaging;
 using Windows.UI;
+using Windows.Graphics.Display;
 
 namespace MediaPlayerCS
 {
@@ -97,7 +98,7 @@ namespace MediaPlayerCS
 
             StreamDelays.AddHandler(Slider.PointerReleasedEvent, new PointerEventHandler(StreamDelayManipulation), true);
 
-            DispatcherTimer.Interval = TimeSpan.FromMilliseconds(66);
+            DispatcherTimer.Interval = TimeSpan.FromMilliseconds(33);
             DispatcherTimer.Tick += DispatcherTimer_Tick;
 
             mediaPlayer.PlaybackSession.PlaybackStateChanged += PlaybackSession_PlaybackStateChanged;
@@ -119,34 +120,39 @@ namespace MediaPlayerCS
         {
             if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo != null)
             {
-
-                if (renderTarget == null || renderTarget.Size.Width != mediaPlayerElement.ActualWidth || renderTarget.Size.Height != mediaPlayerElement.ActualWidth)
+                //TODO move create of CanvasRenderTarget/Source to Loaded and SizeChanged events, don't do it in render loop!
+                //Then we can use normal timer instead of dispatcher timer (plus add locks for access renderTarget)
+                var displayInfo = DisplayInformation.GetForCurrentView();
+                var width = mediaPlayerElement.ActualWidth * displayInfo.RawPixelsPerViewPixel;
+                var height = mediaPlayerElement.ActualHeight * displayInfo.RawPixelsPerViewPixel;
+                if (renderTarget == null || CheckSizeChangedRoundUp(renderTarget.Size, width, height))
                 {
-                    renderTarget = new CanvasRenderTarget(device, (float)mediaPlayerElement.ActualWidth, (float)mediaPlayerElement.ActualHeight, 96);
+                    renderTarget = new CanvasRenderTarget(device, (float)width, (float)height, 96);
+                }
+                if (bitmapSource == null || CheckSizeChanged(bitmapSource.Size, width, height))
+                {
+                    bitmapSource = new CanvasImageSource(device, (float)width, (float)height, 96);
+                    subtitleImage.Source = bitmapSource;
                 }
 
-                var surface = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(mediaPlayerElement.ActualWidth, mediaPlayerElement.ActualHeight));
+                var surfaceChanged = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(mediaPlayerElement.ActualWidth, mediaPlayerElement.ActualHeight));
+                if (!surfaceChanged) return;
 
-                //var bmp = CanvasBitmap.CreateFromDirect3D11Surface(CanvasDevice.GetSharedDevice(), surface);
-                //var bitmap = FFmpegMSS.RenderSubtitles(selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(mediaPlayerElement.ActualWidth, mediaPlayerElement.ActualHeight));
-                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+                using (var ds = bitmapSource.CreateDrawingSession(Colors.Transparent))
                 {
-                    if (bitmapSource == null || bitmapSource.Size.Width != mediaPlayerElement.ActualWidth || bitmapSource.Size.Height != mediaPlayerElement.ActualWidth)
-                    {
-                        bitmapSource = new CanvasImageSource(device, (float)mediaPlayerElement.ActualWidth, (float)mediaPlayerElement.ActualHeight, 96);
-                    }
-
-                    subtitleImage.Source = bitmapSource;
-
-                    using (var ds = bitmapSource.CreateDrawingSession(Colors.Transparent))
-                    {
-                        if (surface)
-                            ds.DrawImage(renderTarget);
-                    }
-
-                }); ;
-
+                    ds.DrawImage(renderTarget);
+                }
             }
+        }
+
+        private bool CheckSizeChanged(Windows.Foundation.Size size, double width, double height)
+        {
+            return Math.Abs(size.Width - width) > 0.1 || Math.Abs(size.Height - height) > 0.1;
+        }
+
+        private bool CheckSizeChangedRoundUp(Windows.Foundation.Size size, double width, double height)
+        {
+            return Math.Abs(size.Width - Math.Ceiling(width)) > 0.1 || Math.Abs(size.Height - Math.Ceiling(height)) > 0.1;
         }
 
         private void PlaybackSession_NaturalVideoSizeChanged(MediaPlaybackSession sender, object args)

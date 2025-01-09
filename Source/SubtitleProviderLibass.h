@@ -144,14 +144,32 @@ public:
         if (!assRenderer)
             return false;
 
-        SetSubtitleSize(renderSize.Width, renderSize.Height);
+        winrt::com_ptr<IDXGISurface> renderTargetDXGI;
+        DirectXInteropHelper::GetDXGISurface(rendertarget, renderTargetDXGI);
+
+        DXGI_SURFACE_DESC desc;
+        renderTargetDXGI->GetDesc(&desc);
+
+        if (desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM)
+        {
+            OutputDebugString(L"Render surface for subtitles is not BGRA8!\n");
+            return false;
+        }
+
+        SetSubtitleSize(desc.Width, desc.Height);
         auto start = CalculatePosition(&videoPosition);
-        auto image = ass_render_frame(assRenderer, track, start, 0);
-        return ConvertASSImageToSoftwareBitmapDirectXSurface(rendertarget, image, subtitleWidth, subtitleHeight);
+        int changes = 0;
+        auto image = ass_render_frame(assRenderer, track, start, &changes);
+        if (!changes)
+            return false;
+
+        return ConvertASSImageToSoftwareBitmapDirectXSurface(renderTargetDXGI, desc, image, subtitleWidth, subtitleHeight);
     }
 
     virtual IMediaCue CreateCue(AVPacket* packet, winrt::Windows::Foundation::TimeSpan* position, winrt::Windows::Foundation::TimeSpan* duration) override
     {
+        if (!IsEnabled()) return nullptr;
+
         std::lock_guard lock(mutex);
         ParseHeaders();
         AVSubtitle subtitle;
@@ -178,16 +196,16 @@ public:
             // pass the subtitle chunk to libass
             ass_process_chunk(track, data, length, pos, dur);
 
-            auto id = winrt::to_hstring(nextId++);
+           /* auto id = winrt::to_hstring(nextId++);
             ImageCue cue;
-            cue.Id(id);
+            cue.Id(id);*/
 
             // rendering subtitle in here cause performance issues a lot
             //int changes = 0;
             //auto image = ass_render_frame(assRenderer, track, cur, &changes);
             //CreateSubtitleImage(cue, image);
 
-            return cue;
+            return nullptr;
         }
         return nullptr;
     }
@@ -339,35 +357,26 @@ public:
         return bitmap;
     }
 
-    bool ConvertASSImageToSoftwareBitmapDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, ASS_Image* assImage, int width, int height)
+    bool ConvertASSImageToSoftwareBitmapDirectXSurface(winrt::com_ptr<IDXGISurface> renderTargetDXGI, DXGI_SURFACE_DESC desc, ASS_Image* assImage, int width, int height)
     {
         if (width <= 0 || height <= 0)
             return false;
+
         if (!assImage) {
             //throw std::invalid_argument("ASS_Image is null");
             OutputDebugString(L"ASS_Image is null\n");
             return false;
         }
 
-        winrt::com_ptr<IDXGISurface> renderTargetDXGI;
         winrt::com_ptr<ID3D11Texture2D> renderTargetTexture;
-        DirectXInteropHelper::GetDXGISurface(rendertarget, renderTargetDXGI);
-
-        DXGI_SURFACE_DESC targetargetDXGIDesc;
-        renderTargetDXGI->GetDesc(&targetargetDXGIDesc);
-
-        renderTargetTexture = renderTargetDXGI.as<ID3D11Texture2D>();
-        D3D11_TEXTURE2D_DESC desc;
-        renderTargetTexture->GetDesc(&desc);
-
         winrt::com_ptr<ID3D11Device> targetTextureDevice;
         winrt::com_ptr<ID3D11DeviceContext> targetTextureDeviceContext;
+        renderTargetTexture = renderTargetDXGI.as<ID3D11Texture2D>();
         renderTargetTexture->GetDevice(targetTextureDevice.put());
         targetTextureDevice->GetImmediateContext(targetTextureDeviceContext.put());
 
-        auto size = width * height * 4;
-        auto buffer = NativeBuffer::NativeBufferFactory::CreateZerosNativeBuffer(size);
         auto pixelData = buffer.data();
+        memset(pixelData, 0, width * height * 4);
 
         // Iterate through the ASS_Image linked list
         //should be replaced by shaders or directx math
@@ -409,18 +418,9 @@ public:
             }
         }
 
+        auto targetResource = renderTargetTexture.as<ID3D11Resource>();
+        targetTextureDeviceContext->UpdateSubresource(targetResource.get(), 0, NULL, pixelData, width * 4, 0);
 
-        D3D11_SUBRESOURCE_DATA initData = {};
-        initData.pSysMem = pixelData;
-        initData.SysMemPitch = width * 4;
-        initData.SysMemSlicePitch = 0;
-
-        winrt::com_ptr<ID3D11Texture2D> stagingTexture;
-        winrt::com_ptr<ID3D11ShaderResourceView> srv;       
-
-        DirectXInteropHelper::CreateTextureFromByteArray(targetTextureDevice.get(), pixelData, size, width, height, DXGI_FORMAT_B8G8R8A8_UNORM, stagingTexture.put());
-        targetTextureDeviceContext->CopyResource(renderTargetTexture.get(), stagingTexture.get());
-        targetTextureDeviceContext->Flush();
         return true;
     }
 
@@ -458,11 +458,17 @@ public:
 
     void SetSubtitleSize(int width, int height)
     {
-        subtitleWidth = width;
-        subtitleHeight = height;
+        if (width != subtitleWidth || height != subtitleHeight)
+        {
+            subtitleWidth = width;
+            subtitleHeight = height;
 
-        if (assRenderer)
-            ass_set_frame_size(assRenderer, width, height);
+            if (assRenderer)
+                ass_set_frame_size(assRenderer, width, height);
+
+            auto size = width * height * 4;
+            buffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(size);
+        }
     }
 
     void SetFonts()
@@ -612,6 +618,7 @@ private:
     ASS_Library* assLibrary = nullptr;
     ASS_Renderer* assRenderer = nullptr;
     ASS_Track* track = nullptr;
+    IBuffer buffer = { nullptr };
     int logLevel = 3;
     int minX = 0;
     int minY = 0;
