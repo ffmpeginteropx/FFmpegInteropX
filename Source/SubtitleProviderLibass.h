@@ -9,6 +9,7 @@
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
 #include "DirectXInteropHelper.h"
 #include <LibassBlenderPixelShaderBlob.h>
+#include <ppl.h>
 
 using namespace winrt::Windows::Storage::FileProperties;
 using namespace winrt::Windows::Media::Core;
@@ -196,14 +197,14 @@ public:
             // pass the subtitle chunk to libass
             ass_process_chunk(track, data, length, pos, dur);
 
-           /* auto id = winrt::to_hstring(nextId++);
-            ImageCue cue;
-            cue.Id(id);*/
+            /* auto id = winrt::to_hstring(nextId++);
+             ImageCue cue;
+             cue.Id(id);*/
 
-            // rendering subtitle in here cause performance issues a lot
-            //int changes = 0;
-            //auto image = ass_render_frame(assRenderer, track, cur, &changes);
-            //CreateSubtitleImage(cue, image);
+             // rendering subtitle in here cause performance issues a lot
+             //int changes = 0;
+             //auto image = ass_render_frame(assRenderer, track, cur, &changes);
+             //CreateSubtitleImage(cue, image);
 
             return nullptr;
         }
@@ -396,9 +397,7 @@ public:
             // If alpha is 0, skip blending
             if (a == 0) continue;
 
-            // Process each pixel in the current ASS_Image
-            for (int y = 0; y < img->h; ++y)
-            {
+            Concurrency::parallel_for(0, img->h, [&](int y) {
                 for (int x = 0; x < img->w; ++x)
                 {
                     int srcIndex = y * stride + x;
@@ -415,7 +414,9 @@ public:
                     pixelData[destIndex + 2] = CLAMP_BYTE(pixelData[destIndex + 2] * invertAlpha + r * srcAlpha);       // Red
                     pixelData[destIndex + 3] = CLAMP_BYTE(pixelData[destIndex + 3] * invertAlpha + 255 * srcAlpha);     // Alpha
                 }
-            }
+                });
+
+           
         }
 
         auto targetResource = renderTargetTexture.as<ID3D11Resource>();
@@ -553,56 +554,7 @@ public:
         OutputDebugString(L"\r\n");
     }
 
-    void* buffer_resize(buffer_t* buf, int new_size, int keep_content)
-    {
-        if (buf->size >= new_size)
-        {
-            if (buf->size >= 1.3 * new_size)
-            {
-                // big reduction request
-                buf->lessen_counter++;
-            }
-            else
-            {
-                buf->lessen_counter = 0;
-            }
-            if (buf->lessen_counter < 10)
-            {
-                // not reducing the buffer yet
-                return buf->buffer;
-            }
-        }
-
-        void* newbuf;
-        if (keep_content)
-        {
-            newbuf = realloc(buf->buffer, new_size);
-        }
-        else
-        {
-            newbuf = malloc(new_size);
-        }
-        if (!newbuf) return NULL;
-
-        if (!keep_content) free(buf->buffer);
-        buf->buffer = newbuf;
-        buf->size = new_size;
-        buf->lessen_counter = 0;
-        return buf->buffer;
-    }
-
-    void buffer_init(buffer_t* buf)
-    {
-        buf->buffer = NULL;
-        buf->size = -1;
-        buf->lessen_counter = 0;
-    }
-
-    void buffer_free(buffer_t* buf)
-    {
-        free(buf->buffer);
-    }
-
+ 
     ~SubtitleProviderLibass()
     {
         FreeLibass();
