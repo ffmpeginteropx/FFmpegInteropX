@@ -38,12 +38,11 @@ using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media.Imaging;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
-using Windows.Graphics.Imaging;
 using Windows.UI;
 using Windows.Graphics.Display;
+using System.Timers;
 
 namespace MediaPlayerCS
 {
@@ -55,7 +54,9 @@ namespace MediaPlayerCS
         private TimeSpan subtitleDelay;
         private Image subtitleImage;
         private SubtitleStreamInfo selectedSubtitleStreamInfo;
-        DispatcherTimer DispatcherTimer = new DispatcherTimer();
+        private Timer subtitleTimer = new Timer();
+        private DispatcherTimer subtitleDispatcherTimer = new DispatcherTimer();
+        private System.Threading.SemaphoreSlim subtitleLock = new System.Threading.SemaphoreSlim(1);
         private CanvasImageSource bitmapSource;
         private CanvasDevice device = CanvasDevice.GetSharedDevice();
         private CanvasRenderTarget renderTarget;
@@ -98,8 +99,11 @@ namespace MediaPlayerCS
 
             StreamDelays.AddHandler(Slider.PointerReleasedEvent, new PointerEventHandler(StreamDelayManipulation), true);
 
-            DispatcherTimer.Interval = TimeSpan.FromMilliseconds(33);
-            DispatcherTimer.Tick += DispatcherTimer_Tick;
+            subtitleTimer.Interval = 33;
+            subtitleTimer.Elapsed += RenderSubtitleTimer_Tick;
+
+            subtitleDispatcherTimer.Interval = TimeSpan.FromMilliseconds(33);
+            subtitleDispatcherTimer.Tick += RenderSubtitleDispatcherTimer_Tick;
 
             mediaPlayer.PlaybackSession.PlaybackStateChanged += PlaybackSession_PlaybackStateChanged;
         }
@@ -110,18 +114,22 @@ namespace MediaPlayerCS
             {
                 if (sender.PlaybackState == MediaPlaybackState.Playing)
                 {
-                    DispatcherTimer.Start();
+                    //subtitleTimer.Start();
+                    subtitleDispatcherTimer.Start();
                 }
-                else DispatcherTimer.Stop();
+                else
+                {
+                    //subtitleTimer.Stop();
+                    subtitleDispatcherTimer.Stop();
+                }
             });
         }
 
-        private async void DispatcherTimer_Tick(object sender, object e)
+        private async void CheckUpdateSubtitleRenderTargets()
         {
-            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo != null)
+            await subtitleLock.WaitAsync();
+            try
             {
-                //TODO move create of CanvasRenderTarget/Source to Loaded and SizeChanged events, don't do it in render loop!
-                //Then we can use normal timer instead of dispatcher timer (plus add locks for access renderTarget)
                 var displayInfo = DisplayInformation.GetForCurrentView();
                 var width = mediaPlayerElement.ActualWidth * displayInfo.RawPixelsPerViewPixel;
                 var height = mediaPlayerElement.ActualHeight * displayInfo.RawPixelsPerViewPixel;
@@ -134,13 +142,57 @@ namespace MediaPlayerCS
                     bitmapSource = new CanvasImageSource(device, (float)width, (float)height, 96);
                     subtitleImage.Source = bitmapSource;
                 }
+            }
+            finally
+            {
+                subtitleLock.Release();
+            }
+        }
 
-                var surfaceChanged = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(mediaPlayerElement.ActualWidth, mediaPlayerElement.ActualHeight));
+        private async void RenderSubtitleDispatcherTimer_Tick(object sender, object e)
+        {
+            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo != null && renderTarget != null)
+            {
+                var surfaceChanged = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(bitmapSource.SizeInPixels.Width, bitmapSource.SizeInPixels.Height));
                 if (!surfaceChanged) return;
 
                 using (var ds = bitmapSource.CreateDrawingSession(Colors.Transparent))
                 {
                     ds.DrawImage(renderTarget);
+                }
+            }
+        }
+
+        // not used currently...
+        private async void RenderSubtitleTimer_Tick(object sender, object e)
+        {
+            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo != null && renderTarget != null)
+            {
+                await subtitleLock.WaitAsync();
+                try
+                {
+                    var surfaceChanged = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(bitmapSource.SizeInPixels.Width, bitmapSource.SizeInPixels.Height));
+                    if (!surfaceChanged) return;
+
+                    await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                    {
+                        try
+                        {
+                            // getting DeviceLost exceptions here for unknown reasons
+                            using (var ds = bitmapSource.CreateDrawingSession(Colors.Transparent))
+                            {
+                                ds.DrawImage(renderTarget);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            var reason = device.GetDeviceLostReason();
+                        }
+                    });
+                }
+                finally
+                {
+                    subtitleLock.Release();
                 }
             }
         }
@@ -795,10 +847,17 @@ namespace MediaPlayerCS
                 await DisplayErrorMessage(ex.ToString());
             }
         }
+
         private void SubtitleImage_Loaded(object sender, RoutedEventArgs e)
         {
             subtitleImage = sender as Image;
+            CheckUpdateSubtitleRenderTargets();
+            SizeChanged += MainPage_SizeChanged;
+        }
 
+        private void MainPage_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            CheckUpdateSubtitleRenderTargets();
         }
 
         private void CmbSubtitleSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
