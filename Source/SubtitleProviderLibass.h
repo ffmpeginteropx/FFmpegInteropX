@@ -185,11 +185,11 @@ public:
             int64_t pos = CalculatePosition(position);
             int64_t dur = CalculatePosition(duration);
 
-            wchar_t buffer[256];
-            swprintf_s(buffer, L">>>>>>>Added Pos %02d      dur: %02d\n",
-                pos, dur);
-
-            OutputDebugString(buffer);
+            // disabled because it slows down the debugger a lot
+            //wchar_t buffer[256];
+            //swprintf_s(buffer, L">>>>>>>Added Pos %02d      dur: %02d\n",
+            //    pos, dur);
+            //OutputDebugString(buffer);
 
             auto data = (char*)ass;
             auto length = strlen(ass);
@@ -369,6 +369,18 @@ public:
             return false;
         }
 
+        //long size = 0;
+        //auto img = assImage;
+        //while (img)
+        //{
+        //    size += img->w * img->h;
+        //    img = img->next;
+        //}
+        //wchar_t buf[256];
+        //swprintf_s(buf, L">>> ASS_Image size: %02d Kb\n",
+        //    size / 1024);
+        //OutputDebugString(buf);
+
         winrt::com_ptr<ID3D11Texture2D> renderTargetTexture;
         winrt::com_ptr<ID3D11Device> targetTextureDevice;
         winrt::com_ptr<ID3D11DeviceContext> targetTextureDeviceContext;
@@ -544,14 +556,18 @@ public:
 
     static void messageCallback(int level, const char* fmt, va_list va, void* data)
     {
-        OutputDebugString(L"libass: ");
-        char buffer[1024];
-        vsnprintf(buffer, sizeof(buffer), fmt, va);
+        // only log info and higher
+        if (level <= 5)
+        {
+            OutputDebugString(L"libass: ");
+            char buffer[1024];
+            vsnprintf(buffer, sizeof(buffer), fmt, va);
 
-        std::wstring wideMessage = StringUtils::ConvertStringToWString(buffer);
-        OutputDebugString(wideMessage.c_str());
+            std::wstring wideMessage = StringUtils::ConvertStringToWString(buffer);
+            OutputDebugString(wideMessage.c_str());
 
-        OutputDebugString(L"\r\n");
+            OutputDebugString(L"\r\n");
+        }
     }
 
  
