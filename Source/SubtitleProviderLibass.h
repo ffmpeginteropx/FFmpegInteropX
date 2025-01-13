@@ -358,6 +358,31 @@ public:
         return bitmap;
     }
 
+
+    D3D11_RECT Merge(D3D11_RECT rect, D3D11_RECT other)
+    {
+        return {
+            min(rect.left, other.left),
+            min(rect.top, other.top),
+            max(rect.right, other.right),
+            max(rect.bottom, other.bottom)
+        };
+    }
+
+    bool Overlaps(D3D11_RECT rect, D3D11_RECT other)
+    {
+        return
+            Contains(rect, other.left, other.top) ||
+            Contains(rect, other.left, other.bottom) ||
+            Contains(rect, other.right, other.top) ||
+            Contains(rect, other.right, other.bottom);
+    }
+
+    bool Contains(D3D11_RECT rect, int x, int y)
+    {
+        return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    }
+
     bool ConvertASSImageToSoftwareBitmapDirectXSurface(winrt::com_ptr<IDXGISurface> renderTargetDXGI, DXGI_SURFACE_DESC desc, ASS_Image* assImage, int width, int height)
     {
         if (width <= 0 || height <= 0)
@@ -427,12 +452,61 @@ public:
                     pixelData[destIndex + 3] = CLAMP_BYTE(pixelData[destIndex + 3] * invertAlpha + 255 * srcAlpha);     // Alpha
                 }
                 });
+        }
 
-           
+        // Get content rects
+        std::vector<D3D11_RECT> rects;
+        auto img = assImage;
+        while (img)
+        {
+            D3D11_RECT img_rect{
+                img->dst_x,
+                img->dst_y,
+                img->dst_x + img->w,
+                img->dst_y + img->h
+            };
+            bool found = false;
+            for (int i=0; i<rects.size(); i++)
+            {
+                auto& rect = rects[i];
+                if (Overlaps(rect, img_rect))
+                {
+                    rects[i] = Merge(rect, img_rect);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                rects.push_back(img_rect);
+            }
+            img = img->next;
         }
 
         auto targetResource = renderTargetTexture.as<ID3D11Resource>();
-        targetTextureDeviceContext->UpdateSubresource(targetResource.get(), 0, NULL, pixelData, width * 4, 0);
+
+        // Clear texture with transparent color
+        winrt::com_ptr<ID3D11RenderTargetView> renderTargetView;
+        auto hr = targetTextureDevice->CreateRenderTargetView(targetResource.get(), NULL, renderTargetView.put());
+        const FLOAT transparent[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        targetTextureDeviceContext->ClearRenderTargetView(renderTargetView.get(), transparent);
+
+        // Paint rects
+        for (auto& rect : rects)
+        {
+            D3D11_BOX box {
+                rect.left,
+                rect.top,
+                0,
+                rect.right,
+                rect.bottom,
+                1
+            };
+            auto dataPtr = pixelData + rect.left * 4 + rect.top * (width * 4);
+            targetTextureDeviceContext->UpdateSubresource(targetResource.get(), 0, &box, dataPtr, width * 4, 0);
+        }
+
+        //targetTextureDeviceContext->UpdateSubresource(targetResource.get(), 0, NULL, pixelData, width * 4, 0);
 
         return true;
     }
