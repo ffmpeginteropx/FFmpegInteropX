@@ -103,7 +103,7 @@ public:
         return bitmap;
     }
 
-    virtual bool RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan videoPosition, Size const& renderSize) override
+    virtual bool RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position) override
     {
         std::lock_guard lock(mutex);
         if (!assRenderer)
@@ -122,7 +122,7 @@ public:
         }
 
         SetSubtitleSize(desc.Width, desc.Height);
-        auto start = CalculatePosition(&videoPosition);
+        auto start = CalculatePosition(&position);
         int changes = 0;
         auto image = ass_render_frame(assRenderer, track, start, &changes);
         if (!changes)

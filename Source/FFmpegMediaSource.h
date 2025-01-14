@@ -225,13 +225,13 @@ namespace winrt::FFmpegInteropX::implementation
             return nullptr;
         }
 
-        bool RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, winrt::FFmpegInteropX::SubtitleStreamInfo const& subtitle, winrt::Windows::Foundation::TimeSpan const& currentVideoPosition, winrt::Windows::Foundation::Size const& renderSize)
+        bool RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, winrt::FFmpegInteropX::SubtitleStreamInfo const& subtitle, winrt::Windows::Foundation::TimeSpan const& position)
         {
             for (auto& subProvider : subtitleStreamProviders)
             {
                 if (subProvider->SubtitleInfo() == subtitle)
                 {
-                    return subProvider->RenderSubtitlesToDirectXSurface(rendertarget, currentVideoPosition, renderSize);
+                    return subProvider->RenderSubtitlesToDirectXSurface(rendertarget, position);
                 }
             }
 

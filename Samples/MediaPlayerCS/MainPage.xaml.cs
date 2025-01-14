@@ -131,8 +131,8 @@ namespace MediaPlayerCS
             try
             {
                 var displayInfo = DisplayInformation.GetForCurrentView();
-                var width = mediaPlayerElement.ActualWidth * displayInfo.RawPixelsPerViewPixel;
-                var height = mediaPlayerElement.ActualHeight * displayInfo.RawPixelsPerViewPixel;
+                var width = Math.Round(mediaPlayerElement.ActualWidth * displayInfo.RawPixelsPerViewPixel);
+                var height = Math.Round(mediaPlayerElement.ActualHeight * displayInfo.RawPixelsPerViewPixel);
                 if (renderTarget == null || CheckSizeChangedRoundUp(renderTarget.Size, width, height))
                 {
                     renderTarget = new CanvasRenderTarget(device, (float)width, (float)height, 96);
@@ -153,7 +153,7 @@ namespace MediaPlayerCS
         {
             if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo != null && renderTarget != null)
             {
-                var surfaceChanged = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(bitmapSource.SizeInPixels.Width, bitmapSource.SizeInPixels.Height));
+                var surfaceChanged = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position);
                 if (!surfaceChanged) return;
 
                 using (var ds = bitmapSource.CreateDrawingSession(Colors.Transparent))
@@ -171,7 +171,7 @@ namespace MediaPlayerCS
                 await subtitleLock.WaitAsync();
                 try
                 {
-                    var surfaceChanged = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, new Windows.Foundation.Size(bitmapSource.SizeInPixels.Width, bitmapSource.SizeInPixels.Height));
+                    var surfaceChanged = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position);
                     if (!surfaceChanged) return;
 
                     await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
