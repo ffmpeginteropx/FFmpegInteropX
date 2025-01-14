@@ -29,23 +29,6 @@ const float MAX_UINT8_CAST = 255.9F / 255;
 #define CLAMP_BYTE(value) ((value > 0) ? ((value < 255) ? (BYTE)value : (BYTE)255) : (BYTE)0)
 
 
-typedef struct
-{
-public:
-    int changed;
-    double blend_time;
-    int dest_x, dest_y, dest_width, dest_height;
-    unsigned char* image;
-    int size;
-} RenderBlendResult;
-
-typedef struct {
-    void* buffer;
-    int size;
-    int lessen_counter;
-} buffer_t;
-
-
 class SubtitleProviderLibass : public SubtitleProvider
 {
 public:
@@ -66,19 +49,6 @@ public:
         )
     {
         this->attachedFileHelper = attachedFileHelper;
-    }
-
-    virtual HRESULT Initialize() override
-    {
-        auto hr = SubtitleProvider::Initialize();
-
-        if (SUCCEEDED(hr))
-        {
-            //SubtitleTrack.CueEntered(weak_handler(this, &SubtitleProviderLibass::OnCueEntered));
-            //SubtitleTrack.CueExited(weak_handler(this, &SubtitleProviderLibass::OnCueExited));
-        }
-
-        return S_OK;
     }
 
     virtual HRESULT SetHardwareDevice(winrt::com_ptr<ID3D11Device> newDevice,
@@ -104,18 +74,12 @@ public:
 
             InitializeLibass();
 
-            // i don't know how to get encoding page, to I just pass NULL
-            //track = ass_read_memory(assLibrary, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size, NULL);
             track = ass_new_track(assLibrary);
             // why checking this?
             // embedded subtitle doesn't have Dialogue: tag since it has chunk
             // extrnal subtitles will load all ass sub using ass_read_memory
-            //auto isEventsAvailable = str.find("Dialogue:");
-            //if (isEventsAvailable == str.npos)
-            {
-                // pass the header to ass to libass
-                ass_process_codec_private(track, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size);
-            }
+            // pass the header to ass to libass
+            ass_process_codec_private(track, (char*)m_pAvCodecCtx->subtitle_header, m_pAvCodecCtx->subtitle_header_size);
         }
     }
 
@@ -185,85 +149,15 @@ public:
             int64_t pos = CalculatePosition(position);
             int64_t dur = CalculatePosition(duration);
 
-            // disabled because it slows down the debugger a lot
-            //wchar_t buffer[256];
-            //swprintf_s(buffer, L">>>>>>>Added Pos %02d      dur: %02d\n",
-            //    pos, dur);
-            //OutputDebugString(buffer);
-
             auto data = (char*)ass;
             auto length = strlen(ass);
 
             // pass the subtitle chunk to libass
             ass_process_chunk(track, data, length, pos, dur);
 
-            /* auto id = winrt::to_hstring(nextId++);
-             ImageCue cue;
-             cue.Id(id);*/
-
-             // rendering subtitle in here cause performance issues a lot
-             //int changes = 0;
-             //auto image = ass_render_frame(assRenderer, track, cur, &changes);
-             //CreateSubtitleImage(cue, image);
-
             return nullptr;
         }
         return nullptr;
-    }
-
-    // this will be removed!
-
-    void OnCueEntered(TimedMetadataTrack sender, MediaCueEventArgs args)
-    {
-        std::lock_guard lock(mutex);
-        try
-        {
-            auto cue = args.Cue().try_as<ImageCue>();
-            if (cue)
-            {
-                int changes = 1;
-                auto cur = CalculatePosition(&currentPosition);
-                auto start = CalculatePosition(&cue.StartTime());
-                auto duration = CalculatePosition(&cue.Duration());
-
-                // libass: Event at 19002, +294: 53,0,Main,Glasses,0,0,0,,...وانیکا ساما، خواهش میکنم
-                // Start rendering frame at 190020, duration: 2940
-                // Failed to render frame.
-                // libass: Event at 19296, +325: 54,0,Main,Halbert,0,0,0,,—صبرکنید، وانیــ
-                // Start rendering frame at 192960, duration: 3250
-                // Failed to render frame.
-
-                wchar_t buffer[256];
-                swprintf_s(buffer, L"Start rendering frame at %02d, start:%02d  duration: %02d\r\n",
-                    cur, start, duration);
-
-                OutputDebugString(buffer);
-
-                auto image = ass_render_frame(assRenderer, track, start, 0);
-                CreateSubtitleImage(cue, image);
-            }
-        }
-        catch (...)
-        {
-            OutputDebugString(L"Failed to render image cue.");
-        }
-    }
-
-    void OnCueExited(TimedMetadataTrack sender, MediaCueEventArgs args)
-    {
-        std::lock_guard lock(mutex);
-        try
-        {
-            auto cue = args.Cue().try_as<ImageCue>();
-            if (cue)
-            {
-                cue.SoftwareBitmap(GetDummyBitmap());
-            }
-        }
-        catch (...)
-        {
-            OutputDebugString(L"Failed to clear image cue.");
-        }
     }
 
     void CreateSubtitleImage(ImageCue cue, ASS_Image* img)
@@ -357,7 +251,6 @@ public:
         SoftwareBitmap bitmap = SoftwareBitmap::CreateCopyFromBuffer(buffer, pixelFormat, width, height, alphaMode);
         return bitmap;
     }
-
 
     D3D11_RECT Merge(D3D11_RECT rect, D3D11_RECT other)
     {
@@ -466,7 +359,7 @@ public:
                 img->dst_y + img->h
             };
             bool found = false;
-            for (int i=0; i<rects.size(); i++)
+            for (int i = 0; i < rects.size(); i++)
             {
                 auto& rect = rects[i];
                 if (Overlaps(rect, img_rect))
@@ -494,7 +387,7 @@ public:
         // Paint rects
         for (auto& rect : rects)
         {
-            D3D11_BOX box {
+            D3D11_BOX box{
                 rect.left,
                 rect.top,
                 0,
@@ -575,7 +468,6 @@ public:
         }
     }
 
-
     bool ExtractFonts()
     {
         bool hasFonts = false;
@@ -600,7 +492,6 @@ public:
         return hasFonts;
     }
 
-
     void FreeLibass()
     {
         if (track)
@@ -623,7 +514,7 @@ public:
         return dummyBitmap;
     }
 
-    int64_t CalculatePosition(TimeSpan* time)
+    static int64_t CalculatePosition(TimeSpan* time)
     {
         return time->count() / 10'000;
     }
@@ -644,7 +535,6 @@ public:
         }
     }
 
- 
     ~SubtitleProviderLibass()
     {
         FreeLibass();
@@ -664,8 +554,6 @@ private:
     int logLevel = 3;
     int minX = 0;
     int minY = 0;
-    buffer_t m_blend;
-    RenderBlendResult m_blendResult;
     SoftwareBitmap dummyBitmap = { nullptr };
     int nextId = 0;
     TimeSpan currentPosition{ 0 };
