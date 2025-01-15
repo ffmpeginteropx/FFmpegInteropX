@@ -175,23 +175,32 @@ public:
         if (width <= 0 || height <= 0)
             return winrt::make_self<implementation::SubtitleRenderResult>(false);
 
-        if (!assImage) {
-            OutputDebugString(L"ASS_Image is null\n");
-            return winrt::make_self<implementation::SubtitleRenderResult>(false);
-        }
-
         winrt::com_ptr<ID3D11Texture2D> renderTargetTexture;
+        winrt::com_ptr<ID3D11Resource> renderTargetResource;
+        winrt::com_ptr<ID3D11RenderTargetView> renderTargetView;
         winrt::com_ptr<ID3D11Device> targetTextureDevice;
         winrt::com_ptr<ID3D11DeviceContext> targetTextureDeviceContext;
         renderTargetTexture = renderTargetDXGI.as<ID3D11Texture2D>();
+        renderTargetResource = renderTargetTexture.as<ID3D11Resource>();
         renderTargetTexture->GetDevice(targetTextureDevice.put());
         targetTextureDevice->GetImmediateContext(targetTextureDeviceContext.put());
+        auto hr = targetTextureDevice->CreateRenderTargetView(renderTargetResource.get(), NULL, renderTargetView.put());
+        if (!SUCCEEDED(hr)) return false;
+
+        // Clear texture with transparent color
+        const FLOAT transparent[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        targetTextureDeviceContext->ClearRenderTargetView(renderTargetView.get(), transparent);
+
+        // If no image is provided, we are done here (empty scene) - this is not an error
+        if (!assImage) {
+            return winrt::make_self<implementation::SubtitleRenderResult>(true);
+        }
 
         auto pixelData = buffer.data();
         memset(pixelData, 0, width * height * 4);
 
         // Iterate through the ASS_Image linked list
-        //should be replaced by shaders or directx math
+        // could be replaced by shaders, directx math or vector intrinsics
         for (ASS_Image* img = assImage; img != nullptr; img = img->next)
         {
             uint8_t* src = img->bitmap;
@@ -257,14 +266,6 @@ public:
             img = img->next;
         }
 
-        auto targetResource = renderTargetTexture.as<ID3D11Resource>();
-
-        // Clear texture with transparent color
-        winrt::com_ptr<ID3D11RenderTargetView> renderTargetView;
-        auto hr = targetTextureDevice->CreateRenderTargetView(targetResource.get(), NULL, renderTargetView.put());
-        const FLOAT transparent[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-        targetTextureDeviceContext->ClearRenderTargetView(renderTargetView.get(), transparent);
-
         // Paint rects
         for (auto& rect : rects)
         {
@@ -277,7 +278,7 @@ public:
                 1
             };
             auto dataPtr = pixelData + rect.left * 4 + rect.top * (width * 4);
-            targetTextureDeviceContext->UpdateSubresource(targetResource.get(), 0, &box, dataPtr, width * 4, 0);
+            targetTextureDeviceContext->UpdateSubresource(renderTargetResource.get(), 0, &box, dataPtr, width * 4, 0);
         }
 
         return winrt::make_self<implementation::SubtitleRenderResult>(true);
