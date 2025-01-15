@@ -8,7 +8,6 @@
 #include <immintrin.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
 #include "DirectXInteropHelper.h"
-#include <LibassBlenderPixelShaderBlob.h>
 #include <ppl.h>
 
 using namespace winrt::Windows::Storage::FileProperties;
@@ -90,24 +89,11 @@ public:
         videoHeight = frameHeight;
     }
 
-    virtual SoftwareBitmap RenderSubtitles(winrt::Windows::Foundation::TimeSpan videoPosition, Size const& renderSize) override
+    virtual winrt::com_ptr<implementation::SubtitleRenderResult>  RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position) override
     {
         std::lock_guard lock(mutex);
         if (!assRenderer)
-            return nullptr;
-
-        SetSubtitleSize(renderSize.Width, renderSize.Height);
-        auto start = CalculatePosition(&videoPosition);
-        auto image = ass_render_frame(assRenderer, track, start, 0);
-        auto bitmap = ConvertASSImageToSoftwareBitmap(image, subtitleWidth, subtitleHeight);
-        return bitmap;
-    }
-
-    virtual bool RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position) override
-    {
-        std::lock_guard lock(mutex);
-        if (!assRenderer)
-            return false;
+            return winrt::make_self<implementation::SubtitleRenderResult>(false);
 
         winrt::com_ptr<IDXGISurface> renderTargetDXGI;
         DirectXInteropHelper::GetDXGISurface(rendertarget, renderTargetDXGI);
@@ -118,7 +104,7 @@ public:
         if (desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM)
         {
             OutputDebugString(L"Render surface for subtitles is not BGRA8!\n");
-            return false;
+            return winrt::make_self<implementation::SubtitleRenderResult>(false);
         }
 
         SetSubtitleSize(desc.Width, desc.Height);
@@ -126,7 +112,7 @@ public:
         int changes = 0;
         auto image = ass_render_frame(assRenderer, track, start, &changes);
         if (!changes)
-            return false;
+            return winrt::make_self<implementation::SubtitleRenderResult>(false);
 
         return ConvertASSImageToSoftwareBitmapDirectXSurface(renderTargetDXGI, desc, image, subtitleWidth, subtitleHeight);
     }
@@ -160,98 +146,6 @@ public:
         return nullptr;
     }
 
-    void CreateSubtitleImage(ImageCue cue, ASS_Image* img)
-    {
-        if (img && cue)
-        {
-            OutputDebugString(L"Frame rendered.\r\n");
-            TimedTextSize cueSize{};
-            TimedTextPoint cuePosition{};
-
-            cueSize.Unit = TimedTextUnit::Percentage;
-            cueSize.Width = 100;
-            cueSize.Height = 100;
-
-            cuePosition.Unit = TimedTextUnit::Percentage;
-            cuePosition.X = 0;
-            cuePosition.Y = 0;
-
-            auto bitmap = ConvertASSImageToSoftwareBitmap(img, subtitleWidth, subtitleHeight);
-            cue.SoftwareBitmap(bitmap);
-            cue.Position(cuePosition);
-            cue.Extent(cueSize);
-
-            OutputDebugString(L"Frame added to cue.\r\n");
-        }
-        else
-        {
-            OutputDebugString(L"Failed to render frame.\r\n");
-            cue.SoftwareBitmap(GetDummyBitmap());
-        }
-    }
-
-    SoftwareBitmap ConvertASSImageToSoftwareBitmap(ASS_Image* assImage, int width, int height)
-    {
-        if (width <= 0 || height <= 0)
-            return nullptr;
-        if (!assImage) {
-            //throw std::invalid_argument("ASS_Image is null");
-            OutputDebugString(L"ASS_Image is null\n");
-            return nullptr;
-        }
-
-        // Create a buffer to hold the final image (BGRA format)
-        auto size = width * height * 4;
-        auto buffer = winrt::Windows::Storage::Streams::Buffer(static_cast<uint32_t>(size));
-        auto pixelData = buffer.data();
-        memset(pixelData, 0, size);// Initialize with zeros for transparent background
-        buffer.Length(static_cast<uint32_t>(size));
-
-        // Iterate through the ASS_Image linked list
-        for (ASS_Image* img = assImage; img != nullptr; img = img->next)
-        {
-            uint8_t* src = img->bitmap;
-            int stride = img->stride;
-            uint32_t color = img->color;
-
-            uint8_t a = 255 - color & 0xFF;
-            uint8_t b = (color >> 8) & 0xFF;
-            uint8_t g = (color >> 16) & 0xFF;
-            uint8_t r = (color >> 24) & 0xFF;
-
-            float normalizedAlpha = a / 255.0f;
-
-            // If alpha is 0, skip blending
-            if (a == 0) continue;
-
-            // Process each pixel in the current ASS_Image
-            for (int y = 0; y < img->h; ++y)
-            {
-                for (int x = 0; x < img->w; ++x)
-                {
-                    int srcIndex = y * stride + x;
-                    int destIndex = ((img->dst_y + y) * width + (img->dst_x + x)) * 4;
-
-                    float srcAlpha = (src[srcIndex] * normalizedAlpha) / 255.0f; // Scale alpha by the bitmap's alpha channel
-                    float invertAlpha = 1.0f - srcAlpha;
-
-                    // If alpha is 0, skip blending
-                    if (srcAlpha == 0) continue;
-
-                    pixelData[destIndex + 0] = CLAMP_BYTE(pixelData[destIndex + 0] * invertAlpha + b * srcAlpha);       // Blue
-                    pixelData[destIndex + 1] = CLAMP_BYTE(pixelData[destIndex + 1] * invertAlpha + g * srcAlpha);       // Green
-                    pixelData[destIndex + 2] = CLAMP_BYTE(pixelData[destIndex + 2] * invertAlpha + r * srcAlpha);       // Red
-                    pixelData[destIndex + 3] = CLAMP_BYTE(pixelData[destIndex + 3] * invertAlpha + 255 * srcAlpha);     // Alpha
-                }
-            }
-        }
-
-        BitmapPixelFormat pixelFormat = BitmapPixelFormat::Bgra8;
-        BitmapAlphaMode alphaMode = BitmapAlphaMode::Premultiplied;
-        SoftwareBitmap bitmap = SoftwareBitmap::CreateCopyFromBuffer(buffer, pixelFormat, width, height, alphaMode);
-        return bitmap;
-    }
-
     D3D11_RECT Merge(D3D11_RECT rect, D3D11_RECT other)
     {
         return {
@@ -276,28 +170,15 @@ public:
         return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
-    bool ConvertASSImageToSoftwareBitmapDirectXSurface(winrt::com_ptr<IDXGISurface> renderTargetDXGI, DXGI_SURFACE_DESC desc, ASS_Image* assImage, int width, int height)
+    winrt::com_ptr<implementation::SubtitleRenderResult> ConvertASSImageToSoftwareBitmapDirectXSurface(winrt::com_ptr<IDXGISurface> renderTargetDXGI, DXGI_SURFACE_DESC desc, ASS_Image* assImage, int width, int height)
     {
         if (width <= 0 || height <= 0)
-            return false;
+            return winrt::make_self<implementation::SubtitleRenderResult>(false);
 
         if (!assImage) {
-            //throw std::invalid_argument("ASS_Image is null");
             OutputDebugString(L"ASS_Image is null\n");
-            return false;
+            return winrt::make_self<implementation::SubtitleRenderResult>(false);
         }
-
-        //long size = 0;
-        //auto img = assImage;
-        //while (img)
-        //{
-        //    size += img->w * img->h;
-        //    img = img->next;
-        //}
-        //wchar_t buf[256];
-        //swprintf_s(buf, L">>> ASS_Image size: %02d Kb\n",
-        //    size / 1024);
-        //OutputDebugString(buf);
 
         winrt::com_ptr<ID3D11Texture2D> renderTargetTexture;
         winrt::com_ptr<ID3D11Device> targetTextureDevice;
@@ -399,9 +280,7 @@ public:
             targetTextureDeviceContext->UpdateSubresource(targetResource.get(), 0, &box, dataPtr, width * 4, 0);
         }
 
-        //targetTextureDeviceContext->UpdateSubresource(targetResource.get(), 0, NULL, pixelData, width * 4, 0);
-
-        return true;
+        return winrt::make_self<implementation::SubtitleRenderResult>(true);
     }
 
     void InitializeLibass()
@@ -430,7 +309,6 @@ public:
             ass_set_storage_size(assRenderer, videoWidth, videoHeight);
         }
 
-        //TODO add API for setting the subtitle target size
         SetSubtitleSize(1920, 1080);
 
         SetFonts();

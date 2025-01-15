@@ -212,33 +212,18 @@ namespace winrt::FFmpegInteropX::implementation
 
         FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, DispatcherQueue const& dispatcher, uint64_t windowId, bool useHdr);
 
-        winrt::Windows::Graphics::Imaging::SoftwareBitmap RenderSubtitles(winrt::FFmpegInteropX::SubtitleStreamInfo const& subtitle, winrt::Windows::Foundation::TimeSpan const& currentVideoPosition, winrt::Windows::Foundation::Size const& renderSize)
+        winrt::FFmpegInteropX::SubtitleRenderResult RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, winrt::FFmpegInteropX::SubtitleStreamInfo const& subtitle, winrt::Windows::Foundation::TimeSpan const& position)
         {
             for (auto& subProvider : subtitleStreamProviders)
             {
                 if (subProvider->SubtitleInfo() == subtitle)
                 {
-                    return subProvider->RenderSubtitles(currentVideoPosition, renderSize);
+                    return subProvider->RenderSubtitlesToDirectXSurface(rendertarget, position).as<winrt::FFmpegInteropX::SubtitleRenderResult>();
                 }
             }
 
-            return nullptr;
+            return winrt::make_self<implementation::SubtitleRenderResult>(false).as<winrt::FFmpegInteropX::SubtitleRenderResult>();
         }
-
-        bool RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, winrt::FFmpegInteropX::SubtitleStreamInfo const& subtitle, winrt::Windows::Foundation::TimeSpan const& position)
-        {
-            for (auto& subProvider : subtitleStreamProviders)
-            {
-                if (subProvider->SubtitleInfo() == subtitle)
-                {
-                    return subProvider->RenderSubtitlesToDirectXSurface(rendertarget, position);
-                }
-            }
-
-            return false;
-        }
-
-
 
     private:
 

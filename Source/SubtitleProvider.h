@@ -6,7 +6,7 @@
 #include "ReferenceCue.h"
 #include "AvCodecContextHelpers.h"
 #include <winrt/FFmpegInteropX.h>
-
+#include "SubtitleRenderResult.h"
 
 using namespace winrt::Windows::UI::Core;
 using namespace winrt::Windows::Media::Playback;
@@ -66,18 +66,9 @@ public:
 
 public:
 
-    virtual SoftwareBitmap RenderSubtitles(TimeSpan videoPosition, Size const& renderSize)
+    virtual winrt::com_ptr<implementation::SubtitleRenderResult> RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position)
     {
-        //default demo implementation
-        BitmapPixelFormat pixelFormat = BitmapPixelFormat::Bgra8;
-        BitmapAlphaMode alphaMode = BitmapAlphaMode::Premultiplied;
-        return SoftwareBitmap(pixelFormat, renderSize.Width, renderSize.Height, alphaMode);
-    }
-
-    virtual bool RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position)
-    {
-        //default demo implementation
-        return false;
+        return winrt::make_self<implementation::SubtitleRenderResult>(false);
     }
 
     virtual void InitializeStreamInfo() override

@@ -153,7 +153,9 @@ namespace MediaPlayerCS
         {
             if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo != null && renderTarget != null)
             {
-                var surfaceChanged = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position);
+                var renderResult = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position);
+                var surfaceChanged = renderResult.Succeeded;
+
                 if (!surfaceChanged) return;
 
                 using (var ds = bitmapSource.CreateDrawingSession(Colors.Transparent))
@@ -171,7 +173,9 @@ namespace MediaPlayerCS
                 await subtitleLock.WaitAsync();
                 try
                 {
-                    var surfaceChanged = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position);
+                    var renderResult = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position);
+                    var surfaceChanged = renderResult.Succeeded;
+
                     if (!surfaceChanged) return;
 
                     await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>

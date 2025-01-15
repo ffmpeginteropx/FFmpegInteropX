@@ -240,6 +240,7 @@
     <ClInclude Include="SubtitleProviderBitmap.h" />
     <ClInclude Include="SubtitleProviderLibass.h" />
     <ClInclude Include="SubtitleProviderSsaAss.h" />
+    <ClInclude Include="SubtitleRenderResult.h" />
     <ClInclude Include="SubtitlesConfig.h" />
     <ClInclude Include="SubtitleStreamInfo.h" />
     <ClInclude Include="TexturePool.h" />
@@ -292,6 +293,7 @@
     <ClCompile Include="SubtitleProvider.cpp" />
     <ClCompile Include="SubtitleProviderLibass.cpp" />
     <ClCompile Include="SubtitleProviderSsaAss.cpp" />
+    <ClCompile Include="SubtitleRenderResult.cpp" />
     <ClCompile Include="SubtitlesConfig.cpp" />
     <ClCompile Include="SubtitleStreamInfo.cpp" />
     <ClCompile Include="text_encoding_detect.cpp" />
@@ -341,58 +343,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="FFmpegInteropX.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="LibassBlenderPixelShader.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_UWP|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_UWP|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM64'">Pixel</ShaderType>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|Win32'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|Win32'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_UWP|Win32'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_UWP|Win32'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|Win32'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|Win32'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|Win32'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|Win32'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM64'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM64'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM64'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM64'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|x64'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|x64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_UWP|x64'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_UWP|x64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|x64'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|x64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|x64'">LibassBlenderPixelShaderBlob</VariableName>
-      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|x64'">LibassBlenderPixelShaderBlob.h</HeaderFileOutput>
-    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
