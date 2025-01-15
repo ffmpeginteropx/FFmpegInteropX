@@ -185,7 +185,7 @@ public:
         renderTargetTexture->GetDevice(targetTextureDevice.put());
         targetTextureDevice->GetImmediateContext(targetTextureDeviceContext.put());
         auto hr = targetTextureDevice->CreateRenderTargetView(renderTargetResource.get(), NULL, renderTargetView.put());
-        if (!SUCCEEDED(hr)) return false;
+        if (!SUCCEEDED(hr)) return winrt::make_self<implementation::SubtitleRenderResult>(false);
 
         // Clear texture with transparent color
         const FLOAT transparent[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
