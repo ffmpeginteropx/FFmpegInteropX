@@ -170,6 +170,61 @@ public:
         return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
+    void Blend(ass_image* assImage, BYTE* pixelData, int width, int height)
+    {
+        // Clear out pixel data
+        memset(pixelData, 0, width * height * 4);
+
+        // TODO check if performance is better by doing blocks of lines vs alternating lines
+        Concurrency::parallel_for(0, (int)threads, [&](int rowNum) {
+            // Iterate through the ASS_Image linked list
+            // could be replaced by shaders, directx math or vector intrinsics
+            for (ASS_Image* img = assImage; img != nullptr; img = img->next)
+            {
+                uint8_t* src = img->bitmap;
+                int stride = img->stride;
+                uint32_t color = img->color;
+
+                uint8_t a = 255 - color & 0xFF;
+                uint8_t b = (color >> 8) & 0xFF;
+                uint8_t g = (color >> 16) & 0xFF;
+                uint8_t r = (color >> 24) & 0xFF;
+
+                float normalizedAlpha = a / 255.0f;
+
+                // If alpha is 0, skip blending
+                if (a == 0) continue;
+
+                int startRow = rowNum - (img->dst_y % threads);
+                if (startRow < img->dst_y)
+                {
+                    startRow += threads;
+                }
+
+                //Concurrency::parallel_for(0, img->h, [&](int y) {
+                for (int y = startRow; y < img->h; y += threads) {
+                    for (int x = 0; x < img->w; ++x)
+                    {
+                        int srcIndex = y * stride + x;
+                        int destIndex = ((img->dst_y + y) * width + (img->dst_x + x)) * 4;
+
+                        float srcAlpha = (src[srcIndex] * normalizedAlpha) / 255.0f; // Scale alpha by the bitmap's alpha channel
+                        float invertAlpha = 1.0f - srcAlpha;
+
+                        // If alpha is 0, skip blending
+                        if (srcAlpha == 0) continue;
+
+                        pixelData[destIndex + 0] = CLAMP_BYTE(pixelData[destIndex + 0] * invertAlpha + b * srcAlpha);       // Blue
+                        pixelData[destIndex + 1] = CLAMP_BYTE(pixelData[destIndex + 1] * invertAlpha + g * srcAlpha);       // Green
+                        pixelData[destIndex + 2] = CLAMP_BYTE(pixelData[destIndex + 2] * invertAlpha + r * srcAlpha);       // Red
+                        pixelData[destIndex + 3] = CLAMP_BYTE(pixelData[destIndex + 3] * invertAlpha + 255 * srcAlpha);     // Alpha
+                    }
+                    //});
+                }
+            }
+            });
+    }
+
     winrt::com_ptr<implementation::SubtitleRenderResult> ConvertASSImageToSoftwareBitmapDirectXSurface(winrt::com_ptr<IDXGISurface> renderTargetDXGI, DXGI_SURFACE_DESC desc, ASS_Image* assImage, int width, int height)
     {
         if (width <= 0 || height <= 0)
@@ -197,45 +252,7 @@ public:
         }
 
         auto pixelData = buffer.data();
-        memset(pixelData, 0, width * height * 4);
-
-        // Iterate through the ASS_Image linked list
-        // could be replaced by shaders, directx math or vector intrinsics
-        for (ASS_Image* img = assImage; img != nullptr; img = img->next)
-        {
-            uint8_t* src = img->bitmap;
-            int stride = img->stride;
-            uint32_t color = img->color;
-
-            uint8_t a = 255 - color & 0xFF;
-            uint8_t b = (color >> 8) & 0xFF;
-            uint8_t g = (color >> 16) & 0xFF;
-            uint8_t r = (color >> 24) & 0xFF;
-
-            float normalizedAlpha = a / 255.0f;
-
-            // If alpha is 0, skip blending
-            if (a == 0) continue;
-
-            Concurrency::parallel_for(0, img->h, [&](int y) {
-                for (int x = 0; x < img->w; ++x)
-                {
-                    int srcIndex = y * stride + x;
-                    int destIndex = ((img->dst_y + y) * width + (img->dst_x + x)) * 4;
-
-                    float srcAlpha = (src[srcIndex] * normalizedAlpha) / 255.0f; // Scale alpha by the bitmap's alpha channel
-                    float invertAlpha = 1.0f - srcAlpha;
-
-                    // If alpha is 0, skip blending
-                    if (srcAlpha == 0) continue;
-
-                    pixelData[destIndex + 0] = CLAMP_BYTE(pixelData[destIndex + 0] * invertAlpha + b * srcAlpha);       // Blue
-                    pixelData[destIndex + 1] = CLAMP_BYTE(pixelData[destIndex + 1] * invertAlpha + g * srcAlpha);       // Green
-                    pixelData[destIndex + 2] = CLAMP_BYTE(pixelData[destIndex + 2] * invertAlpha + r * srcAlpha);       // Red
-                    pixelData[destIndex + 3] = CLAMP_BYTE(pixelData[destIndex + 3] * invertAlpha + 255 * srcAlpha);     // Alpha
-                }
-                });
-        }
+        Blend(assImage, pixelData, width, height);
 
         // Get content rects
         std::vector<D3D11_RECT> rects;
@@ -313,6 +330,13 @@ public:
         SetSubtitleSize(1920, 1080);
 
         SetFonts();
+
+        threads = std::thread::hardware_concurrency();
+        threads /= 4; // don't go too far, overhead increases a lot
+        if (threads < 2)
+        {
+            threads = 2; // at least 2 threads
+        }
     }
 
     void SetSubtitleSize(int width, int height)
@@ -435,6 +459,7 @@ private:
     int minY = 0;
     SoftwareBitmap dummyBitmap = { nullptr };
     int nextId = 0;
+    unsigned threads = 4;
     TimeSpan currentPosition{ 0 };
 
     std::shared_ptr<AttachedFileHelper> attachedFileHelper;
