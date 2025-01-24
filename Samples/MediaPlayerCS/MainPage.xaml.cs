@@ -260,7 +260,6 @@ namespace MediaPlayerCS
             {
                 try
                 {
-                    var t2 = stopwatch.Elapsed;
 
                     if ((uint)swapChain.Size.Width != (uint)swapChainPanel.ActualSize.X || (uint)swapChain.Size.Height != (uint)swapChainPanel.ActualSize.Y)
                         swapChain?.ResizeBuffers(new Windows.Foundation.Size((uint)swapChainPanel.ActualSize.X, (uint)swapChainPanel.ActualSize.Y));
@@ -270,15 +269,19 @@ namespace MediaPlayerCS
                     {
                         using (var swapChainRenderTarget = new CanvasRenderTarget(swapChainDS, swapChain.Size))
                         {
-                            var renderResult = await RenderSubtitleAsync(swapChainRenderTarget);
+                            var renderResult = RenderSubtitle(swapChainRenderTarget);
                             swapChainDS.DrawImage(swapChainRenderTarget);
+                            var t2 = stopwatch.Elapsed;
+
                             swapChain.Present();
+
+                            var t3 = stopwatch.Elapsed;
+                            subPresent += t3 - t2;
+                            subFrames++;
                         }
                     }
 
-                    var t3 = stopwatch.Elapsed;
-                    subPresent += t3 - t2;
-                    subFrames++;
+                    await Task.Delay(5);
                 }
                 catch
                 {
