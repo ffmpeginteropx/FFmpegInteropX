@@ -62,6 +62,7 @@ namespace MediaPlayerCS
         private TimeSpan subPresent;
         private int subFrames;
         private int subErrors;
+        private bool bitmapSourceApplied;
         private CanvasImageSource bitmapSource;
         private CanvasDevice device = CanvasDevice.GetSharedDevice();
         private CanvasRenderTarget renderTarget;
@@ -136,14 +137,11 @@ namespace MediaPlayerCS
             var displayInfo = DisplayInformation.GetForCurrentView();
             var width = Math.Round(mediaPlayerElement.ActualWidth * displayInfo.RawPixelsPerViewPixel);
             var height = Math.Round(mediaPlayerElement.ActualHeight * displayInfo.RawPixelsPerViewPixel);
-            if (renderTarget == null || CheckSizeChangedRoundUp(renderTarget.Size, width, height))
-            {
-                renderTarget = new CanvasRenderTarget(device, (float)width, (float)height, 96);
-            }
             if (bitmapSource == null || CheckSizeChanged(bitmapSource.Size, width, height))
             {
                 bitmapSource = new CanvasImageSource(device, (float)width, (float)height, 96);
-                subtitleImage.Source = bitmapSource;
+                renderTarget = new CanvasRenderTarget(device, (float)width, (float)height, 96);
+                bitmapSourceApplied = false;
             }
         }
 
@@ -215,7 +213,12 @@ namespace MediaPlayerCS
             {
                 try
                 {
-                    var renderResult = await RenderSubtitleAsync(renderTarget);
+                    var target = renderTarget;
+                    var renderResult = await RenderSubtitleAsync(target);
+                    if (target != renderTarget)
+                    {
+                        continue; // target has changed
+                    }
 
                     var t2 = stopwatch.Elapsed;
                     if (renderResult.Succeeded && renderResult.HasChanged)
@@ -228,6 +231,12 @@ namespace MediaPlayerCS
                     var t3 = stopwatch.Elapsed;
                     subPresent += t3 - t2;
                     subFrames++;
+
+                    if (!bitmapSourceApplied)
+                    {
+                        subtitleImage.Source = bitmapSource;
+                        bitmapSourceApplied = true;
+                    }
 
                     // without delay, app crashes?!
                     await Task.Delay(5);
@@ -259,13 +268,19 @@ namespace MediaPlayerCS
                 try
                 {
                     SubtitleRenderResult renderResult;
+                    var target = renderTarget;
                     if (renderTech == SubtitleRenderTech.DispatcherTimerAsync)
                     {
-                        renderResult = await RenderSubtitleAsync(renderTarget);
+                        renderResult = await RenderSubtitleAsync(target);
                     }
                     else
                     {
-                        renderResult = RenderSubtitle(renderTarget);
+                        renderResult = RenderSubtitle(target);
+                    }
+
+                    if (target != renderTarget)
+                    {
+                        return; // target changed
                     }
 
                     var t2 = stopwatch.Elapsed;
@@ -280,6 +295,12 @@ namespace MediaPlayerCS
                     var t3 = stopwatch.Elapsed;
                     subPresent += t3 - t2;
                     subFrames++;
+
+                    if (!bitmapSourceApplied)
+                    {
+                        subtitleImage.Source = bitmapSource;
+                        bitmapSourceApplied = true;
+                    }
                 }
                 catch (Exception)
                 {
@@ -291,11 +312,6 @@ namespace MediaPlayerCS
         private bool CheckSizeChanged(Windows.Foundation.Size size, double width, double height)
         {
             return Math.Abs(size.Width - width) > 0.1 || Math.Abs(size.Height - height) > 0.1;
-        }
-
-        private bool CheckSizeChangedRoundUp(Windows.Foundation.Size size, double width, double height)
-        {
-            return Math.Abs(size.Width - Math.Ceiling(width)) > 0.1 || Math.Abs(size.Height - Math.Ceiling(height)) > 0.1;
         }
 
         private void PlaybackSession_NaturalVideoSizeChanged(MediaPlaybackSession sender, object args)
