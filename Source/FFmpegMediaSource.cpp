@@ -1481,6 +1481,7 @@ namespace winrt::FFmpegInteropX::implementation
         subConfig->Subtitles().MinimumSubtitleDuration(config.Subtitles().MinimumSubtitleDuration());
         subConfig->Subtitles().AdditionalSubtitleDuration(config.Subtitles().AdditionalSubtitleDuration());
         subConfig->Subtitles().PreventModifiedSubtitleDurationOverlap(config.Subtitles().PreventModifiedSubtitleDurationOverlap());
+        subConfig->Subtitles().UseLibassAsSubtitleRenderer(config.Subtitles().UseLibassAsSubtitleRenderer());
 
         if (videoDescriptor)
         {
@@ -1543,7 +1544,8 @@ namespace winrt::FFmpegInteropX::implementation
 
             for (auto& externalSubtitle : externalSubsParser->subtitleStreamProviders)
             {
-                if (externalSubtitle->SubtitleTrack.Cues().Size() > 0)
+                if (externalSubtitle->SubtitleTrack.Cues().Size() > 0 ||
+                    config->Subtitles().UseLibassAsSubtitleRenderer())
                 {
                     // detach stream
                     externalSubtitle->Detach();
