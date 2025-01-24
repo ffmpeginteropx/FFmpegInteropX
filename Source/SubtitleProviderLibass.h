@@ -27,6 +27,23 @@ const float MAX_UINT8_CAST = 255.9F / 255;
 
 #define CLAMP_BYTE(value) ((value > 0) ? ((value < 255) ? (BYTE)value : (BYTE)255) : (BYTE)0)
 
+template<typename Mutex>
+struct anti_lock
+{
+    anti_lock() = default;
+
+    explicit anti_lock(Mutex& mutex)
+        : m_mutex(std::addressof(mutex)) {
+        if (m_mutex) m_mutex->unlock();
+    }
+
+private:
+    struct anti_lock_deleter {
+        void operator()(Mutex* mutex) { mutex->lock(); }
+    };
+
+    std::unique_ptr<Mutex, anti_lock_deleter> m_mutex;
+};
 
 class SubtitleProviderLibass : public SubtitleProvider
 {
@@ -92,8 +109,9 @@ public:
     virtual winrt::com_ptr<implementation::SubtitleRenderResult>  RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position) override
     {
         std::lock_guard lock(mutex);
+
         if (!assRenderer)
-            return winrt::make_self<implementation::SubtitleRenderResult>(false);
+            return winrt::make_self<implementation::SubtitleRenderResult>();
 
         winrt::com_ptr<IDXGISurface> renderTargetDXGI;
         DirectXInteropHelper::GetDXGISurface(rendertarget, renderTargetDXGI);
@@ -104,17 +122,60 @@ public:
         if (desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM)
         {
             OutputDebugString(L"Render surface for subtitles is not BGRA8!\n");
-            return winrt::make_self<implementation::SubtitleRenderResult>(false);
+            return winrt::make_self<implementation::SubtitleRenderResult>();
+        }
+        if (desc.Width == 0 || desc.Height == 0)
+        {
+            OutputDebugString(L"Invalid surface size!\n");
+            return winrt::make_self<implementation::SubtitleRenderResult>();
         }
 
         SetSubtitleSize(desc.Width, desc.Height);
         auto start = CalculatePosition(&position);
         int changes = 0;
-        auto image = ass_render_frame(assRenderer, track, start, &changes);
-        if (!changes)
-            return winrt::make_self<implementation::SubtitleRenderResult>(false);
 
-        return ConvertASSImageToSoftwareBitmapDirectXSurface(renderTargetDXGI, desc, image, subtitleWidth, subtitleHeight);
+        // ass render - if no changes, return immediately!
+        auto assImage = ass_render_frame(assRenderer, track, start, &changes);
+        if (!changes)
+            return winrt::make_self<implementation::SubtitleRenderResult>(true, false);
+
+        // get d3d interfaces
+        winrt::com_ptr<ID3D11Resource> resource;
+        winrt::com_ptr<ID3D11RenderTargetView> renderTargetView;
+        winrt::com_ptr<ID3D11Device> device;
+        winrt::com_ptr<ID3D11DeviceContext> deviceContext;
+        resource = renderTargetDXGI.as<ID3D11Resource>();
+        resource->GetDevice(device.put());
+        device->GetImmediateContext(deviceContext.put());
+        
+        // Create render target view
+        auto hr = device->CreateRenderTargetView(resource.get(), NULL, renderTargetView.put());
+        if (!SUCCEEDED(hr)) return winrt::make_self<implementation::SubtitleRenderResult>();
+
+        // Clear texture with transparent color
+        const FLOAT transparent[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        deviceContext->ClearRenderTargetView(renderTargetView.get(), transparent);
+
+        // If no image is provided, we are done here (empty scene) - this is not an error
+        if (!assImage) {
+            return winrt::make_self<implementation::SubtitleRenderResult>(true, true);
+        }
+
+        // blend ass_image to buffer
+        auto pixelData = buffer.data();
+        Blend(assImage, pixelData, subtitleWidth, subtitleHeight);
+        auto rects = GetContentRects(assImage);
+        auto width = subtitleWidth;
+
+        {
+            // use anti_lock to unlock and allow next ass_render and blend in parallel
+            auto anti_guard = anti_lock(mutex);
+
+            // upload to GPU
+            UploadToTexture(pixelData, width, rects, deviceContext, resource);
+        }
+
+        return winrt::make_self<implementation::SubtitleRenderResult>(true, true);
     }
 
     virtual IMediaCue CreateCue(AVPacket* packet, winrt::Windows::Foundation::TimeSpan* position, winrt::Windows::Foundation::TimeSpan* duration) override
@@ -144,30 +205,6 @@ public:
             return nullptr;
         }
         return nullptr;
-    }
-
-    D3D11_RECT Merge(D3D11_RECT rect, D3D11_RECT other)
-    {
-        return {
-            min(rect.left, other.left),
-            min(rect.top, other.top),
-            max(rect.right, other.right),
-            max(rect.bottom, other.bottom)
-        };
-    }
-
-    bool Overlaps(D3D11_RECT rect, D3D11_RECT other)
-    {
-        return
-            Contains(rect, other.left, other.top) ||
-            Contains(rect, other.left, other.bottom) ||
-            Contains(rect, other.right, other.top) ||
-            Contains(rect, other.right, other.bottom);
-    }
-
-    bool Contains(D3D11_RECT rect, int x, int y)
-    {
-        return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
     void Blend(ass_image* assImage, BYTE* pixelData, int width, int height)
@@ -201,7 +238,6 @@ public:
                     startRow += threads;
                 }
 
-                //Concurrency::parallel_for(0, img->h, [&](int y) {
                 for (int y = startRow; y < img->h; y += threads) {
                     for (int x = 0; x < img->w; ++x)
                     {
@@ -219,42 +255,32 @@ public:
                         pixelData[destIndex + 2] = CLAMP_BYTE(pixelData[destIndex + 2] * invertAlpha + r * srcAlpha);       // Red
                         pixelData[destIndex + 3] = CLAMP_BYTE(pixelData[destIndex + 3] * invertAlpha + 255 * srcAlpha);     // Alpha
                     }
-                    //});
                 }
             }
-            });
+        });
     }
 
-    winrt::com_ptr<implementation::SubtitleRenderResult> ConvertASSImageToSoftwareBitmapDirectXSurface(winrt::com_ptr<IDXGISurface> renderTargetDXGI, DXGI_SURFACE_DESC desc, ASS_Image* assImage, int width, int height)
+    void UploadToTexture(BYTE* pixelData, int linesize, std::vector<D3D11_RECT> rects,
+        winrt::com_ptr<ID3D11DeviceContext> deviceContext, winrt::com_ptr<ID3D11Resource> resource)
     {
-        if (width <= 0 || height <= 0)
-            return winrt::make_self<implementation::SubtitleRenderResult>(false);
-
-        winrt::com_ptr<ID3D11Texture2D> renderTargetTexture;
-        winrt::com_ptr<ID3D11Resource> renderTargetResource;
-        winrt::com_ptr<ID3D11RenderTargetView> renderTargetView;
-        winrt::com_ptr<ID3D11Device> targetTextureDevice;
-        winrt::com_ptr<ID3D11DeviceContext> targetTextureDeviceContext;
-        renderTargetTexture = renderTargetDXGI.as<ID3D11Texture2D>();
-        renderTargetResource = renderTargetTexture.as<ID3D11Resource>();
-        renderTargetTexture->GetDevice(targetTextureDevice.put());
-        targetTextureDevice->GetImmediateContext(targetTextureDeviceContext.put());
-        auto hr = targetTextureDevice->CreateRenderTargetView(renderTargetResource.get(), NULL, renderTargetView.put());
-        if (!SUCCEEDED(hr)) return winrt::make_self<implementation::SubtitleRenderResult>(false);
-
-        // Clear texture with transparent color
-        const FLOAT transparent[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-        targetTextureDeviceContext->ClearRenderTargetView(renderTargetView.get(), transparent);
-
-        // If no image is provided, we are done here (empty scene) - this is not an error
-        if (!assImage) {
-            return winrt::make_self<implementation::SubtitleRenderResult>(true);
+        // Paint rects
+        for (auto& rect : rects)
+        {
+            D3D11_BOX box{
+                rect.left,
+                rect.top,
+                0,
+                rect.right,
+                rect.bottom,
+                1
+            };
+            auto dataPtr = pixelData + rect.left * 4 + rect.top * (linesize * 4);
+            deviceContext->UpdateSubresource(resource.get(), 0, &box, dataPtr, linesize * 4, 0);
         }
+    }
 
-        auto pixelData = buffer.data();
-        Blend(assImage, pixelData, width, height);
-
-        // Get content rects
+    std::vector<D3D11_RECT> GetContentRects(ASS_Image* assImage)
+    {
         std::vector<D3D11_RECT> rects;
         auto img = assImage;
         while (img)
@@ -283,22 +309,27 @@ public:
             img = img->next;
         }
 
-        // Paint rects
-        for (auto& rect : rects)
-        {
-            D3D11_BOX box{
-                rect.left,
-                rect.top,
-                0,
-                rect.right,
-                rect.bottom,
-                1
-            };
-            auto dataPtr = pixelData + rect.left * 4 + rect.top * (width * 4);
-            targetTextureDeviceContext->UpdateSubresource(renderTargetResource.get(), 0, &box, dataPtr, width * 4, 0);
-        }
+        return rects;
+    }
 
-        return winrt::make_self<implementation::SubtitleRenderResult>(true);
+    D3D11_RECT Merge(D3D11_RECT rect, D3D11_RECT other)
+    {
+        return {
+            min(rect.left, other.left),
+            min(rect.top, other.top),
+            max(rect.right, other.right),
+            max(rect.bottom, other.bottom)
+        };
+    }
+
+    bool Overlaps(const D3D11_RECT& rect1, const D3D11_RECT& rect2) {
+        return !(rect1.right <= rect2.left || rect1.left >= rect2.right ||
+            rect1.bottom <= rect2.top || rect1.top >= rect2.bottom);
+    }
+
+    bool Contains(D3D11_RECT rect, int x, int y)
+    {
+        return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
     }
 
     void InitializeLibass()

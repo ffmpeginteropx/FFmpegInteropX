@@ -222,7 +222,7 @@ namespace winrt::FFmpegInteropX::implementation
                 }
             }
 
-            return winrt::make_self<implementation::SubtitleRenderResult>(false).as<winrt::FFmpegInteropX::SubtitleRenderResult>();
+            return winrt::make_self<implementation::SubtitleRenderResult>().as<winrt::FFmpegInteropX::SubtitleRenderResult>();
         }
 
     private:

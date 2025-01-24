@@ -308,6 +308,7 @@ namespace FFmpegInteropX
     runtimeclass SubtitleRenderResult
     {
         Boolean Succeeded {get; };
+        Boolean HasChanged {get; };
     };
 
     static runtimeclass CodecChecker

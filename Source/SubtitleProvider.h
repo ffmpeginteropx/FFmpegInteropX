@@ -68,7 +68,7 @@ public:
 
     virtual winrt::com_ptr<implementation::SubtitleRenderResult> RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position)
     {
-        return winrt::make_self<implementation::SubtitleRenderResult>(false);
+        return winrt::make_self<implementation::SubtitleRenderResult>();
     }
 
     virtual void InitializeStreamInfo() override

@@ -43,6 +43,8 @@ using Microsoft.Graphics.Canvas.UI.Xaml;
 using Windows.UI;
 using Windows.Graphics.Display;
 using System.Timers;
+using System.Diagnostics;
+using System.Threading;
 
 namespace MediaPlayerCS
 {
@@ -54,9 +56,12 @@ namespace MediaPlayerCS
         private TimeSpan subtitleDelay;
         private Image subtitleImage;
         private SubtitleStreamInfo selectedSubtitleStreamInfo;
-        private Timer subtitleTimer = new Timer();
         private DispatcherTimer subtitleDispatcherTimer = new DispatcherTimer();
-        private System.Threading.SemaphoreSlim subtitleLock = new System.Threading.SemaphoreSlim(1);
+        private Stopwatch stopwatch = new Stopwatch();
+        private TimeSpan subRender;
+        private TimeSpan subPresent;
+        private int subFrames;
+        private int subErrors;
         private CanvasImageSource bitmapSource;
         private CanvasDevice device = CanvasDevice.GetSharedDevice();
         private CanvasRenderTarget renderTarget;
@@ -99,9 +104,6 @@ namespace MediaPlayerCS
 
             StreamDelays.AddHandler(Slider.PointerReleasedEvent, new PointerEventHandler(StreamDelayManipulation), true);
 
-            subtitleTimer.Interval = 33;
-            subtitleTimer.Elapsed += RenderSubtitleTimer_Tick;
-
             subtitleDispatcherTimer.Interval = TimeSpan.FromMilliseconds(33);
             subtitleDispatcherTimer.Tick += RenderSubtitleDispatcherTimer_Tick;
 
@@ -110,93 +112,178 @@ namespace MediaPlayerCS
 
         private async void PlaybackSession_PlaybackStateChanged(MediaPlaybackSession sender, object args)
         {
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
             {
                 if (sender.PlaybackState == MediaPlaybackState.Playing)
                 {
-                    //subtitleTimer.Start();
-                    subtitleDispatcherTimer.Start();
+                    if (!isRenderingSubtitles)
+                    {
+                        StartRenderSubtitles();
+                    }
                 }
                 else
                 {
-                    //subtitleTimer.Stop();
-                    subtitleDispatcherTimer.Stop();
+                    if (isRenderingSubtitles)
+                    {
+                        StopRenderSubtitles();
+                    }
                 }
             });
         }
 
         private async void CheckUpdateSubtitleRenderTargets()
         {
-            await subtitleLock.WaitAsync();
-            try
+            var displayInfo = DisplayInformation.GetForCurrentView();
+            var width = Math.Round(mediaPlayerElement.ActualWidth * displayInfo.RawPixelsPerViewPixel);
+            var height = Math.Round(mediaPlayerElement.ActualHeight * displayInfo.RawPixelsPerViewPixel);
+            if (renderTarget == null || CheckSizeChangedRoundUp(renderTarget.Size, width, height))
             {
-                var displayInfo = DisplayInformation.GetForCurrentView();
-                var width = Math.Round(mediaPlayerElement.ActualWidth * displayInfo.RawPixelsPerViewPixel);
-                var height = Math.Round(mediaPlayerElement.ActualHeight * displayInfo.RawPixelsPerViewPixel);
-                if (renderTarget == null || CheckSizeChangedRoundUp(renderTarget.Size, width, height))
+                renderTarget = new CanvasRenderTarget(device, (float)width, (float)height, 96);
+            }
+            if (bitmapSource == null || CheckSizeChanged(bitmapSource.Size, width, height))
+            {
+                bitmapSource = new CanvasImageSource(device, (float)width, (float)height, 96);
+                subtitleImage.Source = bitmapSource;
+            }
+        }
+
+        private enum SubtitleRenderTech
+        {
+            DispatcherTimer,
+            DispatcherTimerAsync,
+            AsyncLoop
+        };
+
+        SubtitleRenderTech renderTech = SubtitleRenderTech.AsyncLoop;
+        bool isRenderingSubtitles;
+        CancellationTokenSource cancelSubtitlesSource = new CancellationTokenSource();
+        Task subtitleLoop = Task.CompletedTask;
+        private void StartRenderSubtitles()
+        {
+            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo != null && renderTarget != null)
+            {
+                subFrames = 0;
+                subErrors = 0;
+                subRender = TimeSpan.Zero;
+                subPresent = TimeSpan.Zero;
+                stopwatch.Restart();
+
+                if (renderTech == SubtitleRenderTech.AsyncLoop)
                 {
-                    renderTarget = new CanvasRenderTarget(device, (float)width, (float)height, 96);
+                    cancelSubtitlesSource = new CancellationTokenSource();
+                    subtitleLoop = SubtitleRenderLoop(cancelSubtitlesSource.Token);
                 }
-                if (bitmapSource == null || CheckSizeChanged(bitmapSource.Size, width, height))
+                else
                 {
-                    bitmapSource = new CanvasImageSource(device, (float)width, (float)height, 96);
-                    subtitleImage.Source = bitmapSource;
+                    subtitleDispatcherTimer.Start();
+                }
+                isRenderingSubtitles = true;
+            }
+        }
+
+        private async void StopRenderSubtitles()
+        {
+            subtitleDispatcherTimer.Stop();
+            cancelSubtitlesSource.Cancel();
+            isRenderingSubtitles = false;
+            if (renderTech == SubtitleRenderTech.AsyncLoop)
+            {
+                await subtitleLoop;
+            }
+
+            var t1 = stopwatch.Elapsed;
+            stopwatch.Stop();
+            subtitleDispatcherTimer.Stop();
+            var fps = subFrames / t1.TotalSeconds;
+            var presentMs = subPresent.TotalMilliseconds / subFrames;
+            var renderMs = subRender.TotalMilliseconds / subFrames;
+            var stats = new (string, string)[]
+            {
+                            ("Frames", subFrames.ToString()),
+                            ("FramesPerSecond", $"{fps:0.00}"),
+                            ("RenderMs", $"{renderMs:0.00}"),
+                            ("PresentMs", $"{presentMs:0.00}"),
+                            ("Errors", $"{subErrors}"),
+            };
+            var message = string.Join("\n", stats.Select(s => $"{s.Item1}: {s.Item2}"));
+            await new MessageDialog(message, "Subtitle Stats").ShowAsync();
+        }
+
+        private async Task SubtitleRenderLoop(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    var renderResult = await RenderSubtitleAsync(renderTarget);
+
+                    var t2 = stopwatch.Elapsed;
+                    if (renderResult.Succeeded && renderResult.HasChanged)
+                    {
+                        using (var ds = bitmapSource.CreateDrawingSession(Colors.Transparent))
+                        {
+                            ds.DrawImage(renderTarget);
+                        }
+                    }
+                    var t3 = stopwatch.Elapsed;
+                    subPresent += t3 - t2;
+                    subFrames++;
+
+                    // without delay, app crashes?!
+                    await Task.Delay(5);
+                }
+                catch
+                {
                 }
             }
-            finally
-            {
-                subtitleLock.Release();
-            }
+        }
+
+        private Task<SubtitleRenderResult> RenderSubtitleAsync(CanvasRenderTarget target)
+        {
+            return Task.Run(() => RenderSubtitle(target));
+        }
+
+        private SubtitleRenderResult RenderSubtitle(CanvasRenderTarget target)
+        {
+            var t1 = stopwatch.Elapsed;
+            var result = FFmpegMSS.RenderSubtitlesToDirectXSurface(target, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position);
+            var t2 = stopwatch.Elapsed;
+            subRender += t2 - t1;
+            return result;
         }
 
         private async void RenderSubtitleDispatcherTimer_Tick(object sender, object e)
         {
             if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo != null && renderTarget != null)
             {
-                var renderResult = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position);
-                var surfaceChanged = renderResult.Succeeded;
-
-                if (!surfaceChanged) return;
-
-                using (var ds = bitmapSource.CreateDrawingSession(Colors.Transparent))
-                {
-                    ds.DrawImage(renderTarget);
-                }
-            }
-        }
-
-        // not used currently...
-        private async void RenderSubtitleTimer_Tick(object sender, object e)
-        {
-            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo != null && renderTarget != null)
-            {
-                await subtitleLock.WaitAsync();
                 try
                 {
-                    var renderResult = FFmpegMSS.RenderSubtitlesToDirectXSurface(renderTarget, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position);
+                    SubtitleRenderResult renderResult;
+                    if (renderTech == SubtitleRenderTech.DispatcherTimerAsync)
+                    {
+                        renderResult = await RenderSubtitleAsync(renderTarget);
+                    }
+                    else
+                    {
+                        renderResult = RenderSubtitle(renderTarget);
+                    }
+
+                    var t2 = stopwatch.Elapsed;
                     var surfaceChanged = renderResult.Succeeded;
 
                     if (!surfaceChanged) return;
 
-                    await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                    using (var ds = bitmapSource.CreateDrawingSession(Colors.Transparent))
                     {
-                        try
-                        {
-                            // getting DeviceLost exceptions here for unknown reasons
-                            using (var ds = bitmapSource.CreateDrawingSession(Colors.Transparent))
-                            {
-                                ds.DrawImage(renderTarget);
-                            }
-                        }
-                        catch (Exception)
-                        {
-                            var reason = device.GetDeviceLostReason();
-                        }
-                    });
+                        ds.DrawImage(renderTarget);
+                    }
+                    var t3 = stopwatch.Elapsed;
+                    subPresent += t3 - t2;
+                    subFrames++;
                 }
-                finally
+                catch (Exception)
                 {
-                    subtitleLock.Release();
+
                 }
             }
         }
