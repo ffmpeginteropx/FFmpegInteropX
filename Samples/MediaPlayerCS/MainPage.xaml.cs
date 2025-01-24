@@ -67,6 +67,9 @@ namespace MediaPlayerCS
         private CanvasDevice device = CanvasDevice.GetSharedDevice();
         private CanvasRenderTarget renderTarget;
 
+        private CanvasSwapChainPanel swapChainPanel;
+        private CanvasSwapChain swapChain;
+
         public bool AutoCreatePlaybackItem
         {
             get;
@@ -156,6 +159,8 @@ namespace MediaPlayerCS
         bool isRenderingSubtitles;
         CancellationTokenSource cancelSubtitlesSource = new CancellationTokenSource();
         Task subtitleLoop = Task.CompletedTask;
+        bool useSwapChain = true;
+
         private void StartRenderSubtitles()
         {
             if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0 && selectedSubtitleStreamInfo != null && renderTarget != null)
@@ -169,7 +174,7 @@ namespace MediaPlayerCS
                 if (renderTech == SubtitleRenderTech.AsyncLoop)
                 {
                     cancelSubtitlesSource = new CancellationTokenSource();
-                    subtitleLoop = SubtitleRenderLoop(cancelSubtitlesSource.Token);
+                    subtitleLoop = useSwapChain ? SubtitleRenderLoopSwapChain(cancelSubtitlesSource.Token) : SubtitleRenderLoop(cancelSubtitlesSource.Token);
                 }
                 else
                 {
@@ -239,7 +244,41 @@ namespace MediaPlayerCS
                     }
 
                     // without delay, app crashes?!
+                    // probably thread context issues?
                     await Task.Delay(5);
+                }
+                catch
+                {
+                }
+            }
+        }
+
+
+        private async Task SubtitleRenderLoopSwapChain(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    var t2 = stopwatch.Elapsed;
+
+                    if ((uint)swapChain.Size.Width != (uint)swapChainPanel.ActualSize.X || (uint)swapChain.Size.Height != (uint)swapChainPanel.ActualSize.Y)
+                        swapChain?.ResizeBuffers(new Windows.Foundation.Size((uint)swapChainPanel.ActualSize.X, (uint)swapChainPanel.ActualSize.Y));
+
+
+                    using (var swapChainDS = swapChain.CreateDrawingSession(Colors.Transparent))
+                    {
+                        using (var swapChainRenderTarget = new CanvasRenderTarget(swapChainDS, swapChain.Size))
+                        {
+                            var renderResult = await RenderSubtitleAsync(swapChainRenderTarget);
+                            swapChainDS.DrawImage(swapChainRenderTarget);
+                            swapChain.Present();
+                        }
+                    }
+
+                    var t3 = stopwatch.Elapsed;
+                    subPresent += t3 - t2;
+                    subFrames++;
                 }
                 catch
                 {
@@ -990,6 +1029,13 @@ namespace MediaPlayerCS
                     }
                 }
             }
+        }
+
+        private void getCanvasSwapChainPanel(object sender, RoutedEventArgs e)
+        {
+            swapChainPanel = sender as CanvasSwapChainPanel;
+            device = CanvasDevice.GetSharedDevice();
+            swapChainPanel.SwapChain = swapChain = new CanvasSwapChain(device, 400, 400, 96, Windows.Graphics.DirectX.DirectXPixelFormat.R8G8B8A8UIntNormalized, 2, CanvasAlphaMode.Premultiplied);
         }
     }
 }

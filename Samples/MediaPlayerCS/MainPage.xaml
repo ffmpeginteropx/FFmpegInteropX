@@ -25,6 +25,7 @@
     xmlns:local="using:MediaPlayerCS"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     mc:Ignorable="d"
     AllowDrop="True" DragEnter="Page_DragEnter" Drop="Page_Drop">
     <Page.Resources>
@@ -51,6 +52,7 @@
                                                   MediaPlayer="{TemplateBinding MediaPlayer}" />
 
                             <Image x:Name="SubtitleImage" Loaded="SubtitleImage_Loaded"/>
+                            <canvas:CanvasSwapChainPanel Loaded="getCanvasSwapChainPanel"></canvas:CanvasSwapChainPanel>
 
                             <ContentPresenter     x:Name="TransportControlsPresenter"
                                               Visibility="{TemplateBinding AreTransportControlsEnabled}" />
