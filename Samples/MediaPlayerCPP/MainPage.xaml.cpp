@@ -504,7 +504,7 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
     }
 
     Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
-        ref new Windows::UI::Core::DispatchedHandler([this]
+        ref new Windows::UI::Core::DispatchedHandler([this, session]
             {
                 tbSubtitleDelay->Text = "Subtitle delay: 0s";
                 cmbAudioStreamEffectSelector->ItemsSource = FFmpegMSS->AudioStreams;
@@ -522,6 +522,11 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
                 }
 
                 cmbAudioVideoStreamDelays->ItemsSource = streams;
+
+                subtitleRenderer = ref new AssSsaRenderer(swapChainPanel, FFmpegMSS, session);
+                subtitleRenderer->SetFrameUpdateInterval(TimeSpan{ 100000 });
+                subtitleRenderer->SetSelectedSubtitle(FFmpegMSS->SubtitleStreams->GetAt(0));
+                subtitleRenderer->Play();
             }));
 }
 

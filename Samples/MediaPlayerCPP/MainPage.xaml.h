@@ -27,6 +27,8 @@
 #include "FloatToDoubleConverter.h"
 #include "TimeSpanToDoubleConverter.h"
 
+using namespace AssSsaRenderElement;
+
 namespace MediaPlayerCPP
 {
     using namespace Concurrency;
@@ -69,6 +71,8 @@ namespace MediaPlayerCPP
         FFmpegInteropX::FFmpegMediaSource^ FFmpegMSS;
         Windows::Foundation::EventRegistrationToken timedMetadataTracksChangedToken;
         TimeSpan subtitleDelay{ 0 };
+        Windows::UI::Xaml::Controls::SwapChainPanel^ swapChainPanel;
+        AssSsaRenderer^ subtitleRenderer;
 
         void CbEncodings_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e);
         void AddTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
@@ -89,5 +93,10 @@ namespace MediaPlayerCPP
         void StreamDelayManipulation(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e);
         void ReadSubtitleFileFFmpeg(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
         task<void> ReadSubtitleFileFFmpegImpl();
+
+        void SwapChainPanel_loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+        {
+            this->swapChainPanel = dynamic_cast<Windows::UI::Xaml::Controls::SwapChainPanel^>(sender);
+        }
     };
 }

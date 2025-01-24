@@ -19,6 +19,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FFmpegInteropX.DotNet", "So
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFmpegInteropX.VideoEffects", "VideoEffects\FFmpegInteropX.VideoEffects.vcxproj", "{6C4BFF5E-7037-4EE8-9C9F-5381C35BA066}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AssSsaRenderElement", "Samples\AssSsaRenderElement\AssSsaRenderElement.vcxproj", "{CBED4D40-9319-4AA3-9616-80144E8083AC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_Desktop|ARM = Debug_Desktop|ARM
@@ -262,6 +264,38 @@ Global
 		{6C4BFF5E-7037-4EE8-9C9F-5381C35BA066}.Release_UWP|x64.Build.0 = Release_UWP|x64
 		{6C4BFF5E-7037-4EE8-9C9F-5381C35BA066}.Release_UWP|x86.ActiveCfg = Release_UWP|Win32
 		{6C4BFF5E-7037-4EE8-9C9F-5381C35BA066}.Release_UWP|x86.Build.0 = Release_UWP|Win32
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_Desktop|ARM.ActiveCfg = Debug|ARM
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_Desktop|ARM.Build.0 = Debug|ARM
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_Desktop|ARM64.ActiveCfg = Debug|ARM64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_Desktop|ARM64.Build.0 = Debug|ARM64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_Desktop|x64.ActiveCfg = Debug|x64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_Desktop|x64.Build.0 = Debug|x64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_Desktop|x86.ActiveCfg = Debug|Win32
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_Desktop|x86.Build.0 = Debug|Win32
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_UWP|ARM.ActiveCfg = Debug|ARM
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_UWP|ARM.Build.0 = Debug|ARM
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_UWP|ARM64.ActiveCfg = Debug|ARM64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_UWP|ARM64.Build.0 = Debug|ARM64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_UWP|x64.ActiveCfg = Debug|x64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_UWP|x64.Build.0 = Debug|x64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_UWP|x86.ActiveCfg = Debug|Win32
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Debug_UWP|x86.Build.0 = Debug|Win32
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_Desktop|ARM.ActiveCfg = Release|ARM
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_Desktop|ARM.Build.0 = Release|ARM
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_Desktop|ARM64.ActiveCfg = Release|ARM64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_Desktop|ARM64.Build.0 = Release|ARM64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_Desktop|x64.ActiveCfg = Release|x64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_Desktop|x64.Build.0 = Release|x64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_Desktop|x86.ActiveCfg = Release|Win32
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_Desktop|x86.Build.0 = Release|Win32
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_UWP|ARM.ActiveCfg = Release|ARM
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_UWP|ARM.Build.0 = Release|ARM
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_UWP|ARM64.ActiveCfg = Release|ARM64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_UWP|ARM64.Build.0 = Release|ARM64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_UWP|x64.ActiveCfg = Release|x64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_UWP|x64.Build.0 = Release|x64
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_UWP|x86.ActiveCfg = Release|Win32
+		{CBED4D40-9319-4AA3-9616-80144E8083AC}.Release_UWP|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
