@@ -188,7 +188,7 @@ namespace MediaPlayerCS
                 }
                 else if (renderTech == SubtitleRenderTech.SwapChain)
                 {
-                    subtitleLoop = SubtitleRenderLoopSwapChain(cancelSubtitlesSource.Token);
+                    subtitleLoop = Task.Run(() => SubtitleRenderLoopSwapChain(cancelSubtitlesSource.Token));
                 }
                 else
                 {
@@ -238,7 +238,7 @@ namespace MediaPlayerCS
                     {
                         continue; // target has changed
                     }
-
+                    
                     var t2 = stopwatch.Elapsed;
                     if (renderResult.Succeeded && renderResult.HasChanged)
                     {
@@ -276,11 +276,14 @@ namespace MediaPlayerCS
                 {
                     if (swapChainSizeChanged)
                     {
-                        var displayInfo = DisplayInformation.GetForCurrentView();
-                        var width = mediaPlayerElement.ActualWidth;
-                        var height = mediaPlayerElement.ActualHeight;
-                        swapChain?.ResizeBuffers((float)width, (float)height, displayInfo.LogicalDpi);
-                        swapChainSizeChanged = false;
+                        await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                        {
+                            var displayInfo = DisplayInformation.GetForCurrentView();
+                            var width = mediaPlayerElement.ActualWidth;
+                            var height = mediaPlayerElement.ActualHeight;
+                            swapChain?.ResizeBuffers((float)width, (float)height, displayInfo.LogicalDpi);
+                            swapChainSizeChanged = false;
+                        });
                     }
 
                     using (var swapChainDS = swapChain.CreateDrawingSession(Colors.Transparent))
