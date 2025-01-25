@@ -269,7 +269,7 @@ namespace MediaPlayerCS
                     {
                         using (var swapChainRenderTarget = new CanvasRenderTarget(swapChainDS, swapChain.Size))
                         {
-                            var renderResult = RenderSubtitle(swapChainRenderTarget);
+                            var renderResult = await RenderSubtitleAsync(swapChainRenderTarget);
                             swapChainDS.DrawImage(swapChainRenderTarget);
                             var t2 = stopwatch.Elapsed;
 
@@ -281,7 +281,6 @@ namespace MediaPlayerCS
                         }
                     }
 
-                    await Task.Delay(5);
                 }
                 catch
                 {
