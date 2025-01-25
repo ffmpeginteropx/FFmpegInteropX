@@ -51,6 +51,7 @@ using namespace Windows::UI::Xaml::Navigation;
 MainPage::MainPage()
 {
     Config = ref new MediaSourceConfig();
+    Config->Subtitles->UseLibassAsSubtitleRenderer = true;
     InitializeComponent();
 
     // Show the control panel on startup so user can start opening media
@@ -522,6 +523,15 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
                 }
 
                 cmbAudioVideoStreamDelays->ItemsSource = streams;
+
+                auto item = FFmpegMSS->PlaybackItem;
+                for (UINT i = 0; i < item->TimedMetadataTracks->Size; i++)
+                {
+                    item->TimedMetadataTracks->SetPresentationMode(i, TimedMetadataTrackPresentationMode::Disabled);
+                }
+
+                item->TimedMetadataTracks->SetPresentationMode(0, TimedMetadataTrackPresentationMode::ApplicationPresented);
+
 
                 subtitleRenderer = ref new AssSsaRenderer(swapChainPanel, FFmpegMSS, session);
                 subtitleRenderer->SetFrameUpdateInterval(TimeSpan{ 100000 });

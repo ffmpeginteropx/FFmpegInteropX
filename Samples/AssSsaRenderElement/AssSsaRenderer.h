@@ -16,7 +16,7 @@ namespace winrt::AssSsaRenderElement::implementation
             this->playbackSession = playbackSession;
             timer = winrt::Windows::UI::Xaml::DispatcherTimer();
             timer.Tick(winrt::Windows::Foundation::EventHandler<winrt::Windows::Foundation::IInspectable>(this, &AssSsaRenderer::OnTick));
-
+            this->mediaSource = mediaSource;
             SwapChainAllocResources(swapChainPannel);
         }
 
@@ -45,15 +45,14 @@ namespace winrt::AssSsaRenderElement::implementation
         void OnTick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args)
         {
             winrt::com_ptr<ID3D11Texture2D> textureBuffer;
-            swapChain->GetBuffer(backBufferIndex, IID_PPV_ARGS(textureBuffer.put()));
+            swapChain->GetBuffer(0, IID_PPV_ARGS(textureBuffer.put()));
 
             winrt::com_ptr< IDXGISurface> dxgiSurface;
             textureBuffer.as(dxgiSurface);
 
             auto direct3DSurface = GetSurface(dxgiSurface);
-            mediaSource.RenderSubtitlesToDirectXSurface(direct3DSurface, subtitle, playbackSession.Position());
+            auto renderedResult = mediaSource.RenderSubtitlesToDirectXSurface(direct3DSurface, subtitle, playbackSession.Position());
 
-            backBufferIndex = (backBufferIndex + 1) % 2;
 
             swapChain->Present(1, 0);
         }
@@ -107,8 +106,8 @@ namespace winrt::AssSsaRenderElement::implementation
 
             DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
 
-            swapChainDesc.Width = 1920; 
-            swapChainDesc.Height = 1080; 
+            swapChainDesc.Width = 480; 
+            swapChainDesc.Height = 480; 
             swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; 
             swapChainDesc.Stereo = false;
             swapChainDesc.SampleDesc.Count = 1; 
@@ -121,9 +120,8 @@ namespace winrt::AssSsaRenderElement::implementation
 
             auto iunkownWindow = (coreWindow).as<IUnknown>();
 
-            hr = dxgiFactory->CreateSwapChainForCoreWindow(
+            hr = dxgiFactory->CreateSwapChainForComposition(
                 device.get(),
-                iunkownWindow.get(),
                 &swapChainDesc,
                 nullptr,
                 swapChain.put()
