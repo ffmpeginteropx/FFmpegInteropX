@@ -69,6 +69,7 @@ namespace MediaPlayerCS
 
         private CanvasSwapChainPanel swapChainPanel;
         private CanvasSwapChain swapChain;
+        private bool swapChainSizeChanged;
 
         public bool AutoCreatePlaybackItem
         {
@@ -140,7 +141,8 @@ namespace MediaPlayerCS
             var displayInfo = DisplayInformation.GetForCurrentView();
             var width = Math.Round(mediaPlayerElement.ActualWidth * displayInfo.RawPixelsPerViewPixel);
             var height = Math.Round(mediaPlayerElement.ActualHeight * displayInfo.RawPixelsPerViewPixel);
-            if (bitmapSource == null || CheckSizeChanged(bitmapSource.Size, width, height))
+            bool sizeChanged = bitmapSource == null || CheckSizeChanged(bitmapSource.Size, width, height);
+            if (sizeChanged)
             {
                 bitmapSource = new CanvasImageSource(device, (float)width, (float)height, 96);
                 renderTarget = new CanvasRenderTarget(device, (float)width, (float)height, 96);
@@ -148,18 +150,26 @@ namespace MediaPlayerCS
             }
         }
 
+        private void CheckUpdateSwapChain()
+        {
+            if (swapChain != null)
+            {
+                swapChainSizeChanged = true;
+            }
+        }
+
         private enum SubtitleRenderTech
         {
             DispatcherTimer,
             DispatcherTimerAsync,
-            AsyncLoop
+            AsyncLoop,
+            SwapChain
         };
 
-        SubtitleRenderTech renderTech = SubtitleRenderTech.AsyncLoop;
+        SubtitleRenderTech renderTech = SubtitleRenderTech.SwapChain;
         bool isRenderingSubtitles;
         CancellationTokenSource cancelSubtitlesSource = new CancellationTokenSource();
         Task subtitleLoop = Task.CompletedTask;
-        bool useSwapChain = true;
 
         private void StartRenderSubtitles()
         {
@@ -174,7 +184,11 @@ namespace MediaPlayerCS
                 if (renderTech == SubtitleRenderTech.AsyncLoop)
                 {
                     cancelSubtitlesSource = new CancellationTokenSource();
-                    subtitleLoop = useSwapChain ? SubtitleRenderLoopSwapChain(cancelSubtitlesSource.Token) : SubtitleRenderLoop(cancelSubtitlesSource.Token);
+                    subtitleLoop = SubtitleRenderLoop(cancelSubtitlesSource.Token);
+                }
+                else if (renderTech == SubtitleRenderTech.SwapChain)
+                {
+                    subtitleLoop = SubtitleRenderLoopSwapChain(cancelSubtitlesSource.Token);
                 }
                 else
                 {
@@ -260,16 +274,21 @@ namespace MediaPlayerCS
             {
                 try
                 {
-
-                    if ((uint)swapChain.Size.Width != (uint)swapChainPanel.ActualSize.X || (uint)swapChain.Size.Height != (uint)swapChainPanel.ActualSize.Y)
-                        swapChain?.ResizeBuffers(new Windows.Foundation.Size((uint)swapChainPanel.ActualSize.X, (uint)swapChainPanel.ActualSize.Y));
-
+                    if (swapChainSizeChanged)
+                    {
+                        var displayInfo = DisplayInformation.GetForCurrentView();
+                        var width = mediaPlayerElement.ActualWidth;
+                        var height = mediaPlayerElement.ActualHeight;
+                        swapChain?.ResizeBuffers((float)width, (float)height, displayInfo.LogicalDpi);
+                        swapChainSizeChanged = false;
+                    }
 
                     using (var swapChainDS = swapChain.CreateDrawingSession(Colors.Transparent))
                     {
                         using (var swapChainRenderTarget = new CanvasRenderTarget(swapChainDS, swapChain.Size))
                         {
                             var renderResult = await RenderSubtitleAsync(swapChainRenderTarget);
+
                             swapChainDS.DrawImage(swapChainRenderTarget);
                             var t2 = stopwatch.Elapsed;
 
@@ -1006,6 +1025,7 @@ namespace MediaPlayerCS
         private void MainPage_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             CheckUpdateSubtitleRenderTargets();
+            CheckUpdateSwapChain();
         }
 
         private void CmbSubtitleSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1037,7 +1057,10 @@ namespace MediaPlayerCS
         {
             swapChainPanel = sender as CanvasSwapChainPanel;
             device = CanvasDevice.GetSharedDevice();
-            swapChainPanel.SwapChain = swapChain = new CanvasSwapChain(device, 400, 400, 96, Windows.Graphics.DirectX.DirectXPixelFormat.R8G8B8A8UIntNormalized, 2, CanvasAlphaMode.Premultiplied);
+            var displayInfo = DisplayInformation.GetForCurrentView();
+            var width = mediaPlayerElement.ActualWidth;
+            var height = mediaPlayerElement.ActualHeight;
+            swapChainPanel.SwapChain = swapChain = new CanvasSwapChain(device, (float)width, (float)height, displayInfo.LogicalDpi, Windows.Graphics.DirectX.DirectXPixelFormat.R8G8B8A8UIntNormalized, 2, CanvasAlphaMode.Premultiplied);
         }
     }
 }
