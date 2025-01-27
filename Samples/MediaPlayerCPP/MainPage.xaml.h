@@ -26,12 +26,14 @@
 #include "MainPage.g.h"
 #include "FloatToDoubleConverter.h"
 #include "TimeSpanToDoubleConverter.h"
+#include "SubtitlePanel.h"
 
 using namespace AssSsaRenderElement;
 
 namespace MediaPlayerCPP
 {
     using namespace Concurrency;
+    using namespace DirectXPanels;
 
     public ref class MainPage sealed
     {
@@ -73,6 +75,7 @@ namespace MediaPlayerCPP
         TimeSpan subtitleDelay{ 0 };
         Windows::UI::Xaml::Controls::SwapChainPanel^ swapChainPanel;
         AssSsaRenderer^ subtitleRenderer;
+        SubtitlePanel^ subtitlePanel;
 
         void CbEncodings_SelectionChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::SelectionChangedEventArgs^ e);
         void AddTestFilter(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
@@ -97,6 +100,10 @@ namespace MediaPlayerCPP
         void SwapChainPanel_loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
         {
             this->swapChainPanel = dynamic_cast<Windows::UI::Xaml::Controls::SwapChainPanel^>(sender);
+        }
+        void SubtitlePanel_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+        {
+            this->subtitlePanel = dynamic_cast<SubtitlePanel^>(sender);
         }
     };
 }

@@ -23,6 +23,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:MediaPlayerCPP"
+    xmlns:panel="using:DirectXPanels"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d" Loaded="Page_Loaded"
@@ -49,7 +50,8 @@
                                                   Stretch="{TemplateBinding Stretch}"
                                                   MediaPlayer="{TemplateBinding MediaPlayer}" />
 
-                            <SwapChainPanel Loaded="SwapChainPanel_loaded"/>
+                            <!--<SwapChainPanel Loaded="SwapChainPanel_loaded"/>-->
+                            <panel:SubtitlePanel Loaded="SubtitlePanel_Loaded" />
 
                             <ContentPresenter     x:Name="TransportControlsPresenter"
                                               Visibility="{TemplateBinding AreTransportControlsEnabled}" />

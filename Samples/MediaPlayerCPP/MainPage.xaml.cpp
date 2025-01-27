@@ -533,10 +533,14 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
                 item->TimedMetadataTracks->SetPresentationMode(0, TimedMetadataTrackPresentationMode::ApplicationPresented);
 
 
-                subtitleRenderer = ref new AssSsaRenderer(swapChainPanel, FFmpegMSS, session);
+                /*subtitleRenderer = ref new AssSsaRenderer(swapChainPanel, FFmpegMSS, session);
                 subtitleRenderer->SetFrameUpdateInterval(TimeSpan{ 100000 });
                 subtitleRenderer->SetSelectedSubtitle(FFmpegMSS->SubtitleStreams->GetAt(0));
-                subtitleRenderer->Play();
+                subtitleRenderer->Play();*/
+
+                subtitlePanel->SetFFmpegMediaSource(FFmpegMSS);
+                subtitlePanel->SetSelectedSubtitleStream(FFmpegMSS->SubtitleStreams->GetAt(0));
+                subtitlePanel->StartRendering();
             }));
 }
 

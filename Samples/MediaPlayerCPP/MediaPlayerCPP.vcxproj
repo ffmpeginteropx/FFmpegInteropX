@@ -86,6 +86,8 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="DirectXHelper.h" />
+    <ClInclude Include="DirectXPanelBase.h" />
     <ClInclude Include="FloatToDoubleConverter.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h">
@@ -94,6 +96,8 @@
     <ClInclude Include="MainPage.xaml.h">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="StepTimer.h" />
+    <ClInclude Include="SubtitlePanel.h" />
     <ClInclude Include="TimeSpanToDoubleConverter.h" />
   </ItemGroup>
   <ItemGroup>
@@ -124,6 +128,7 @@
     <ClCompile Include="App.xaml.cpp">
       <DependentUpon>App.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="DirectXPanelBase.cpp" />
     <ClCompile Include="FloatToDoubleConverter.cpp" />
     <ClCompile Include="MainPage.xaml.cpp">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -138,6 +143,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="SubtitlePanel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Source\FFmpegInteropX.vcxproj">
