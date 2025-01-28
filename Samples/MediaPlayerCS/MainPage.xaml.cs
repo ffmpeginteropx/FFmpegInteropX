@@ -303,6 +303,7 @@ namespace MediaPlayerCS
                         }
                     }
 
+                    swapChain.WaitForVerticalBlank();
                 }
                 catch
                 {
