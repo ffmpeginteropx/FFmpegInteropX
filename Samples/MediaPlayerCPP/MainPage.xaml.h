@@ -91,7 +91,9 @@ namespace MediaPlayerCPP
         void ffmpegVideoFilters_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e);
         void ffmpegAudioFilters_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs^ e);
         void OnMediaOpened(Windows::Media::Playback::MediaPlayer^ sender, Platform::Object^ args);
+        void OnMediaEnded(Windows::Media::Playback::MediaPlayer^ sender, Platform::Object^ args);
         void OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args);
+        task<void> ShowMessageDialog(Platform::String^ message, Platform::String^ title);
 
         void StreamDelayManipulation(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e);
         void ReadSubtitleFileFFmpeg(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);

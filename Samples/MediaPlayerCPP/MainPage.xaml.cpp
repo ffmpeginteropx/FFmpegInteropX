@@ -64,6 +64,7 @@ MainPage::MainPage()
     mediaPlayer->AudioCategory = Windows::Media::Playback::MediaPlayerAudioCategory::Movie;
     mediaPlayer->MediaOpened += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlayer^, Platform::Object^>(this, &MediaPlayerCPP::MainPage::OnMediaOpened);
     mediaPlayer->MediaFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlayer^, Windows::Media::Playback::MediaPlayerFailedEventArgs^>(this, &MediaPlayerCPP::MainPage::OnMediaFailed);
+    mediaPlayer->MediaEnded += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlayer^, Platform::Object^>(this, &MediaPlayerCPP::MainPage::OnMediaEnded);
 
     mediaPlayerElement->SetMediaPlayer(mediaPlayer);
 
@@ -542,6 +543,27 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
                 subtitlePanel->SetSelectedSubtitleStream(FFmpegMSS->SubtitleStreams->GetAt(0));
                 subtitlePanel->StartRendering();
             }));
+}
+
+
+void MediaPlayerCPP::MainPage::OnMediaEnded(Windows::Media::Playback::MediaPlayer^ sender, Platform::Object^ args)
+{
+    auto session = sender->PlaybackSession;
+    auto frames = subtitlePanel->GetFrameCount();
+    auto message =
+        "Frames: " + frames.ToString() + "\n" +
+        "Fps: " + ((int)(frames / (session->NaturalDuration.Duration / 10000000))).ToString() + "\n";
+
+    Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
+        ref new Windows::UI::Core::DispatchedHandler([this, message]
+            {
+                ShowMessageDialog(message, "Subtitle Stats");
+            }));
+}
+
+task<void> MediaPlayerCPP::MainPage::ShowMessageDialog(Platform::String^ message, Platform::String^ title)
+{
+    co_await(ref new MessageDialog(message, title))->ShowAsync();
 }
 
 void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)

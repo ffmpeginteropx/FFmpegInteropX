@@ -84,6 +84,11 @@ namespace DirectXPanels
             m_renderLoopWorker->Cancel();
         }
 
+        long long GetFrameCount()
+        {
+            return m_timer.GetFrameCount();
+        }
+
     protected private:
         virtual void Render() override
         {
