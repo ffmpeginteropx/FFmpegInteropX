@@ -65,7 +65,7 @@ MainPage::MainPage()
     mediaPlayer->MediaOpened += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlayer^, Platform::Object^>(this, &MediaPlayerCPP::MainPage::OnMediaOpened);
     mediaPlayer->MediaFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlayer^, Windows::Media::Playback::MediaPlayerFailedEventArgs^>(this, &MediaPlayerCPP::MainPage::OnMediaFailed);
     mediaPlayer->MediaEnded += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlayer^, Platform::Object^>(this, &MediaPlayerCPP::MainPage::OnMediaEnded);
-
+    mediaPlayer->PlaybackSession->PlaybackStateChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackSession^, Platform::Object^>(this, &MediaPlayerCPP::MainPage::OnPlaybackStateChanged);
     mediaPlayerElement->SetMediaPlayer(mediaPlayer);
 
     // populate character encodings
@@ -74,6 +74,18 @@ MainPage::MainPage()
     Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);
 
     StreamDelays->AddHandler(UIElement::PointerReleasedEvent, ref new PointerEventHandler(this, &MainPage::StreamDelayManipulation), true);
+}
+
+void MediaPlayerCPP::MainPage::OnPlaybackStateChanged(Windows::Media::Playback::MediaPlaybackSession^ sender, Platform::Object^ args)
+{
+    if (sender->PlaybackState == MediaPlaybackState::Playing)
+    {
+        subtitlePanel->StartRendering();
+    }
+    else
+    {
+        subtitlePanel->StopRendering();
+    }
 }
 
 void MediaPlayerCPP::MainPage::StreamDelayManipulation(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e)
@@ -559,6 +571,7 @@ void MediaPlayerCPP::MainPage::OnMediaEnded(Windows::Media::Playback::MediaPlaye
             {
                 ShowMessageDialog(message, "Subtitle Stats");
             }));
+
 }
 
 task<void> MediaPlayerCPP::MainPage::ShowMessageDialog(Platform::String^ message, Platform::String^ title)

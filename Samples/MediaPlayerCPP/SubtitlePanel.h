@@ -81,7 +81,9 @@ namespace DirectXPanels
         void StopRendering()
         {
             // Cancel the asynchronous task and let the render thread exit.
-            m_renderLoopWorker->Cancel();
+
+            if (m_renderLoopWorker)
+                m_renderLoopWorker->Cancel();
         }
 
         long long GetFrameCount()

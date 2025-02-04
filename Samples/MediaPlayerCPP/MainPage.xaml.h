@@ -93,6 +93,8 @@ namespace MediaPlayerCPP
         void OnMediaOpened(Windows::Media::Playback::MediaPlayer^ sender, Platform::Object^ args);
         void OnMediaEnded(Windows::Media::Playback::MediaPlayer^ sender, Platform::Object^ args);
         void OnMediaFailed(Windows::Media::Playback::MediaPlayer^ sender, Windows::Media::Playback::MediaPlayerFailedEventArgs^ args);
+        void OnPlaybackStateChanged(Windows::Media::Playback::MediaPlaybackSession^ sender, Platform::Object^ args);
+
         task<void> ShowMessageDialog(Platform::String^ message, Platform::String^ title);
 
         void StreamDelayManipulation(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e);
