@@ -1,6 +1,8 @@
 #pragma once
 #include "AssSsaRenderer.g.h"
 #include <windows.graphics.directx.direct3d11.interop.h>
+#include "winrt/Microsoft.Graphics.Canvas.h"
+#include "Win2DInteropHelpers.h"
 
 namespace winrt::AssSsaRenderElement::implementation
 {
@@ -14,10 +16,18 @@ namespace winrt::AssSsaRenderElement::implementation
         {
             this->swapChainPanel = swapChainPanel;
             this->playbackSession = playbackSession;
+
             timer = winrt::Windows::UI::Xaml::DispatcherTimer();
             timer.Tick(winrt::Windows::Foundation::EventHandler<winrt::Windows::Foundation::IInspectable>(this, &AssSsaRenderer::OnTick));
             this->mediaSource = mediaSource;
-            SwapChainAllocResources(swapChainPannel);
+
+            SwapChainAllocResources(swapChainPannel,
+                swapChainPanel.ActualWidth(),
+                swapChainPanel.ActualHeight(),
+                96,
+                winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
+                2,
+                canvasSwapChain);
         }
 
         void SetFrameUpdateInterval(winrt::Windows::Foundation::TimeSpan const& interval)
@@ -44,17 +54,47 @@ namespace winrt::AssSsaRenderElement::implementation
 
         void OnTick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args)
         {
-            winrt::com_ptr<ID3D11Texture2D> textureBuffer;
-            swapChain->GetBuffer(0, IID_PPV_ARGS(textureBuffer.put()));
 
-            winrt::com_ptr< IDXGISurface> dxgiSurface;
-            textureBuffer.as(dxgiSurface);
+        }
 
-            auto direct3DSurface = GetSurface(dxgiSurface);
-            auto renderedResult = mediaSource.RenderSubtitlesToDirectXSurface(direct3DSurface, subtitle, playbackSession.Position());
+        void RenderSubtitleFrame(winrt::Windows::Media::Playback::MediaPlayer const& player,
+            uint32_t width,
+            uint32_t height,
+            uint32_t dpi,
+            winrt::Windows::Graphics::DirectX::DirectXPixelFormat const& pixelFormat)
+        {
+            try {
+                auto canvasDevice = CanvasDevice::GetSharedDevice();
+                if (canvasSwapChain.Device().IsDeviceLost())
+                {
+                    SwapChainAllocResources(this->swapChainPanel, width, height, dpi, pixelFormat, 2, canvasSwapChain);
+                }
+
+                if (canvasSwapChain.Format() != pixelFormat || (uint32_t)canvasSwapChain.Size().Width != (uint32_t)width || (uint32_t)canvasSwapChain.Size().Height != (uint32_t)height || (uint32_t)canvasSwapChain.Dpi() != (uint32_t)dpi)
+                {
+                    canvasSwapChain.ResizeBuffers(width, height, dpi, pixelFormat, 2);
+                }
+                {
+                    CanvasDrawingSession outputDrawingSession = canvasSwapChain.CreateDrawingSession(winrt::Windows::UI::Colors::Transparent());
+
+                    renderingTarget = CanvasRenderTarget(outputDrawingSession, width, height, dpi, pixelFormat, CanvasAlphaMode::Premultiplied);
 
 
-            swapChain->Present(1, 0);
+                    mediaSource.RenderSubtitlesToDirectXSurface(renderingTarget, mediaSource.SubtitleStreams().GetAt(0), playbackSession.Position());
+
+                    winrt::com_ptr<IDXGISurface> dxgiRenderTarget;
+                    auto hr = GetDXGISurface(renderingTarget, dxgiRenderTarget);
+
+                    auto bitmap = DXGISurface2CanvasBitmap(canvasDevice, dxgiRenderTarget.get());
+
+                    outputDrawingSession.DrawImage(bitmap);
+                    canvasSwapChain.Present();
+                }
+            }
+            catch (...)
+            {
+
+            }
         }
 
         winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface GetSurface(const winrt::com_ptr<IDXGISurface>& source)
@@ -66,84 +106,7 @@ namespace winrt::AssSsaRenderElement::implementation
             return result;
         }
 
-        HRESULT SwapChainResizeBuffers(UINT bufferCount, UINT width, UINT heigh)
-        {
-            return swapChain->ResizeBuffers(bufferCount, width, heigh, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
-        }
-
-        /// <summary>
-        /// Used on first run or when device is lost
-        /// </summary>
-        /// <param name="swapChainPannel"></param>
-        /// <returns></returns>
-        HRESULT SwapChainAllocResources(winrt::Windows::UI::Xaml::Controls::SwapChainPanel const& swapChainPannel)
-        {
-            auto coreWindow = winrt::Windows::UI::Core::CoreWindow::GetForCurrentThread();
-
-            UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-
-#ifdef _DEBUG
-            creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-
-            HRESULT hr = D3D11CreateDevice(
-                nullptr,
-                D3D_DRIVER_TYPE_HARDWARE,
-                nullptr,
-                creationFlags,
-                nullptr,
-                0,
-                D3D11_SDK_VERSION,
-                device.put(),
-                nullptr,
-                deviceContext.put()
-            );
-
-            device.as(dxgiDevice);
-            hr = dxgiDevice->GetAdapter(dxgiAdapter.put());
-
-            dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.put()));
-
-            DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-
-            swapChainDesc.Width = 480; 
-            swapChainDesc.Height = 480; 
-            swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; 
-            swapChainDesc.Stereo = false;
-            swapChainDesc.SampleDesc.Count = 1; 
-            swapChainDesc.SampleDesc.Quality = 0;
-            swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-            swapChainDesc.BufferCount = 2; 
-            swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-            swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL; 
-            swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-
-            auto iunkownWindow = (coreWindow).as<IUnknown>();
-
-            hr = dxgiFactory->CreateSwapChainForComposition(
-                device.get(),
-                &swapChainDesc,
-                nullptr,
-                swapChain.put()
-            );
-
-            com_ptr<ISwapChainPanelNative> swapChainNative;
-            swapChainPanel.as(swapChainNative);
-
-
-            swapChainNative->SetSwapChain(swapChain.get());
-
-            return hr;
-        }
-
-        winrt::com_ptr<IDXGIFactory2> dxgiFactory;
-
-        winrt::com_ptr<IDXGIDevice> dxgiDevice;
-        winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
-
-        winrt::com_ptr<ID3D11Device> device;
-        winrt::com_ptr<ID3D11DeviceContext> deviceContext;
-        winrt::com_ptr<IDXGISwapChain1> swapChain;
+        winrt::Microsoft::Graphics::Canvas::CanvasSwapChain canvasSwapChain = { nullptr };
 
         winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapChainPanel;
         winrt::Windows::Media::Playback::MediaPlaybackSession playbackSession = { nullptr };
@@ -153,6 +116,8 @@ namespace winrt::AssSsaRenderElement::implementation
 
         winrt::FFmpegInteropX::FFmpegMediaSource mediaSource = { nullptr };
         winrt::FFmpegInteropX::SubtitleStreamInfo subtitle = { nullptr };
+
+        winrt::Microsoft::Graphics::Canvas::CanvasRenderTarget renderingTarget = { nullptr };
     };
 }
 namespace winrt::AssSsaRenderElement::factory_implementation

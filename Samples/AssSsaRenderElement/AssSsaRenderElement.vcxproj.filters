@@ -11,13 +11,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="Class.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="AssSsaRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="AssSsaRenderer.h" />
+    <ClInclude Include="Win2DInteropHelpers.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="AssSsaRenderElement.def" />
