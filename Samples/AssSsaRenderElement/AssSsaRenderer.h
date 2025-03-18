@@ -3,6 +3,7 @@
 #include <windows.graphics.directx.direct3d11.interop.h>
 #include "winrt/Microsoft.Graphics.Canvas.h"
 #include "Win2DInteropHelpers.h"
+#include <winrt/FFmpegInteropX.h>
 
 namespace winrt::AssSsaRenderElement::implementation
 {
@@ -10,54 +11,31 @@ namespace winrt::AssSsaRenderElement::implementation
     {
         AssSsaRenderer() = default;
 
-        AssSsaRenderer(winrt::Windows::UI::Xaml::Controls::SwapChainPanel const& swapChainPannel,
-            winrt::FFmpegInteropX::FFmpegMediaSource const& mediaSource,
-            winrt::Windows::Media::Playback::MediaPlaybackSession const& playbackSession)
+        AssSsaRenderer(winrt::Windows::UI::Xaml::Controls::SwapChainPanel const& swapChainPannel)
         {
             this->swapChainPanel = swapChainPanel;
-            this->playbackSession = playbackSession;
-
-            timer = winrt::Windows::UI::Xaml::DispatcherTimer();
-            timer.Tick(winrt::Windows::Foundation::EventHandler<winrt::Windows::Foundation::IInspectable>(this, &AssSsaRenderer::OnTick));
-            this->mediaSource = mediaSource;
 
             SwapChainAllocResources(swapChainPannel,
-                swapChainPanel.ActualWidth(),
-                swapChainPanel.ActualHeight(),
+                480,
+                480,
                 96,
                 winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
                 2,
                 canvasSwapChain);
         }
 
-        void SetFrameUpdateInterval(winrt::Windows::Foundation::TimeSpan const& interval)
+        void RenderSubtitleFrame(winrt::FFmpegInteropX::FFmpegMediaSource const& mediaSource,
+            uint32_t width,
+            uint32_t height,
+            winrt::Windows::Media::Playback::MediaPlaybackSession const& playbackSession)
         {
-            timer.Interval(interval);
-        }
-
-        void Play()
-        {
-            timer.Start();
-        }
-
-        void Pause()
-        {
-            timer.Stop();
-        }
-
-        void SetSelectedSubtitle(winrt::FFmpegInteropX::SubtitleStreamInfo const& subtitle)
-        {
-            this->subtitle = subtitle;
+            RenderSubtitleFrameInternal(mediaSource, playbackSession, width, height, 96, winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized);
         }
 
     private:
 
-        void OnTick(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::Foundation::IInspectable const& args)
-        {
-
-        }
-
-        void RenderSubtitleFrame(winrt::Windows::Media::Playback::MediaPlayer const& player,
+        void RenderSubtitleFrameInternal(winrt::FFmpegInteropX::FFmpegMediaSource const& mediaSource,
+            winrt::Windows::Media::Playback::MediaPlaybackSession const& playbackSession,
             uint32_t width,
             uint32_t height,
             uint32_t dpi,
@@ -78,7 +56,6 @@ namespace winrt::AssSsaRenderElement::implementation
                     CanvasDrawingSession outputDrawingSession = canvasSwapChain.CreateDrawingSession(winrt::Windows::UI::Colors::Transparent());
 
                     renderingTarget = CanvasRenderTarget(outputDrawingSession, width, height, dpi, pixelFormat, CanvasAlphaMode::Premultiplied);
-
 
                     mediaSource.RenderSubtitlesToDirectXSurface(renderingTarget, mediaSource.SubtitleStreams().GetAt(0), playbackSession.Position());
 
@@ -109,12 +86,9 @@ namespace winrt::AssSsaRenderElement::implementation
         winrt::Microsoft::Graphics::Canvas::CanvasSwapChain canvasSwapChain = { nullptr };
 
         winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapChainPanel;
-        winrt::Windows::Media::Playback::MediaPlaybackSession playbackSession = { nullptr };
 
-        winrt::Windows::UI::Xaml::DispatcherTimer timer;
         int backBufferIndex = 0;
 
-        winrt::FFmpegInteropX::FFmpegMediaSource mediaSource = { nullptr };
         winrt::FFmpegInteropX::SubtitleStreamInfo subtitle = { nullptr };
 
         winrt::Microsoft::Graphics::Canvas::CanvasRenderTarget renderingTarget = { nullptr };

@@ -105,6 +105,7 @@ namespace MediaPlayerCPP
         {
             this->swapChainPanel = dynamic_cast<Windows::UI::Xaml::Controls::SwapChainPanel^>(sender);
         }
+
         void SubtitlePanel_Loaded(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
         {
             this->subtitlePanel = dynamic_cast<SubtitlePanel^>(sender);

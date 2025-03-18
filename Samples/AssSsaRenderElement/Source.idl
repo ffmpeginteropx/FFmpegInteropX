@@ -3,14 +3,11 @@ namespace AssSsaRenderElement
     [default_interface]
     runtimeclass AssSsaRenderer
     {
-        AssSsaRenderer(Windows.UI.Xaml.Controls.SwapChainPanel swapChainPannel, FFmpegInteropX.FFmpegMediaSource mediaSource, Windows.Media.Playback.MediaPlaybackSession playbackSession);
+        AssSsaRenderer(Windows.UI.Xaml.Controls.SwapChainPanel swapChainPannel);
 
-        void Play();
-
-        void Pause();
-
-        void SetFrameUpdateInterval(Windows.Foundation.TimeSpan interval);
-
-        void SetSelectedSubtitle(FFmpegInteropX.SubtitleStreamInfo subtitle);
+        void RenderSubtitleFrame(FFmpegInteropX.FFmpegMediaSource mediaSource,
+            UInt32 width,
+            UInt32 height,
+            Windows.Media.Playback.MediaPlaybackSession playbackSession);
     }
 }

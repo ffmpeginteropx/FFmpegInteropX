@@ -50,8 +50,8 @@
                                                   Stretch="{TemplateBinding Stretch}"
                                                   MediaPlayer="{TemplateBinding MediaPlayer}" />
 
-                            <!--<SwapChainPanel Loaded="SwapChainPanel_loaded"/>-->
                             <panel:SubtitlePanel Loaded="SubtitlePanel_Loaded" />
+                            <SwapChainPanel Loaded="SwapChainPanel_loaded"/>
 
                             <ContentPresenter     x:Name="TransportControlsPresenter"
                                               Visibility="{TemplateBinding AreTransportControlsEnabled}" />

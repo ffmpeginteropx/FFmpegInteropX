@@ -45,6 +45,7 @@ using Windows.Graphics.Display;
 using System.Timers;
 using System.Diagnostics;
 using System.Threading;
+using AssSsaRenderElement;
 
 namespace MediaPlayerCS
 {
@@ -70,6 +71,7 @@ namespace MediaPlayerCS
         private CanvasSwapChainPanel swapChainPanel;
         private CanvasSwapChain swapChain;
         private bool swapChainSizeChanged;
+        AssSsaRenderer win2DZeroCopyRenderer;
 
         public bool AutoCreatePlaybackItem
         {
@@ -163,10 +165,11 @@ namespace MediaPlayerCS
             DispatcherTimer,
             DispatcherTimerAsync,
             AsyncLoop,
-            SwapChain
+            SwapChain,
+            Win2DZeroCopy
         };
 
-        SubtitleRenderTech renderTech = SubtitleRenderTech.SwapChain;
+        SubtitleRenderTech renderTech = SubtitleRenderTech.Win2DZeroCopy;
         bool isRenderingSubtitles;
         CancellationTokenSource cancelSubtitlesSource = new CancellationTokenSource();
         Task subtitleLoop = Task.CompletedTask;
@@ -190,11 +193,36 @@ namespace MediaPlayerCS
                 {
                     subtitleLoop = Task.Run(() => SubtitleRenderLoopSwapChain(cancelSubtitlesSource.Token));
                 }
+                else if (renderTech == SubtitleRenderTech.Win2DZeroCopy)
+                {
+                    subtitleLoop = Task.Run(() => SubtitleRenderLoopWin2DSwapChain(cancelSubtitlesSource.Token));
+                }
                 else
                 {
                     subtitleDispatcherTimer.Start();
                 }
                 isRenderingSubtitles = true;
+            }
+        }
+
+        private async Task SubtitleRenderLoopWin2DSwapChain(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                uint width = 0, height = 0;
+                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                {
+                    var displayInfo = DisplayInformation.GetForCurrentView();
+                    width = Convert.ToUInt32(mediaPlayerElement.ActualWidth);
+                    height = Convert.ToUInt32(mediaPlayerElement.ActualHeight);
+                });
+                var t2 = stopwatch.Elapsed;
+
+                win2DZeroCopyRenderer.RenderSubtitleFrame(FFmpegMSS, width, height, mediaPlayer.PlaybackSession);
+
+                var t3 = stopwatch.Elapsed;
+                subPresent += t3 - t2;
+                subFrames++;
             }
         }
 
@@ -238,7 +266,7 @@ namespace MediaPlayerCS
                     {
                         continue; // target has changed
                     }
-                    
+
                     var t2 = stopwatch.Elapsed;
                     if (renderResult.Succeeded && renderResult.HasChanged)
                     {
@@ -1065,6 +1093,7 @@ namespace MediaPlayerCS
             var width = mediaPlayerElement.ActualWidth;
             var height = mediaPlayerElement.ActualHeight;
             swapChainPanel.SwapChain = swapChain = new CanvasSwapChain(device, (float)width, (float)height, displayInfo.LogicalDpi, Windows.Graphics.DirectX.DirectXPixelFormat.R8G8B8A8UIntNormalized, 2, CanvasAlphaMode.Premultiplied);
+            win2DZeroCopyRenderer = new AssSsaRenderer(swapChainPanel);
         }
     }
 }

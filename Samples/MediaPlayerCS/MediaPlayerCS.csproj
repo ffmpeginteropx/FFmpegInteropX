@@ -166,6 +166,12 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AssSsaRenderElement\AssSsaRenderElement.vcxproj">
+      <Project>{cbed4d40-9319-4aa3-9616-80144e8083ac}</Project>
+      <Name>AssSsaRenderElement</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Choose>
     <When Condition="'$(Configuration)'=='Debug'">
       <ItemGroup>
