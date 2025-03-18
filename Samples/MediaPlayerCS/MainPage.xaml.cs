@@ -169,7 +169,7 @@ namespace MediaPlayerCS
             Win2DZeroCopy
         };
 
-        SubtitleRenderTech renderTech = SubtitleRenderTech.Win2DZeroCopy;
+        SubtitleRenderTech renderTech = SubtitleRenderTech.SwapChain;
         bool isRenderingSubtitles;
         CancellationTokenSource cancelSubtitlesSource = new CancellationTokenSource();
         Task subtitleLoop = Task.CompletedTask;
@@ -1093,7 +1093,8 @@ namespace MediaPlayerCS
             var width = mediaPlayerElement.ActualWidth;
             var height = mediaPlayerElement.ActualHeight;
             swapChainPanel.SwapChain = swapChain = new CanvasSwapChain(device, (float)width, (float)height, displayInfo.LogicalDpi, Windows.Graphics.DirectX.DirectXPixelFormat.R8G8B8A8UIntNormalized, 2, CanvasAlphaMode.Premultiplied);
-            win2DZeroCopyRenderer = new AssSsaRenderer(swapChainPanel);
+            if (renderTech == SubtitleRenderTech.Win2DZeroCopy)
+                win2DZeroCopyRenderer = new AssSsaRenderer(swapChainPanel);
         }
     }
 }
