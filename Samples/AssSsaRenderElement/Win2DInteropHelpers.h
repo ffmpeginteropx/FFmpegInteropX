@@ -64,15 +64,11 @@ namespace winrt::AssSsaRenderElement::implementation
         check_hresult(pDevice->CreateDeviceContext(D2D1_DEVICE_CONTEXT_OPTIONS_NONE, pContext.put()));
 
         com_ptr<ID2D1Bitmap1> bitmap;
-        D2D1_BITMAP_PROPERTIES1 bitmapProperties = {};
 
         DXGI_SURFACE_DESC dxgiDesc;
         dxgiSurface->GetDesc(&dxgiDesc);
 
-        auto bla = bitmap.put();
-
         pContext->CreateBitmapFromDxgiSurface(dxgiSurface, nullptr, bitmap.put());
-
 
         com_ptr<::IInspectable> pInspectable{ nullptr };
         auto factory = winrt::get_activation_factory<CanvasDevice, abi::ICanvasFactoryNative>(); //abi::ICanvasFactoryNative is the activation factory for the CanvasDevice class
