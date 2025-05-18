@@ -71,12 +71,19 @@ public:
         return winrt::make_self<implementation::SubtitleRenderResult>();
     }
 
+    virtual bool CanRenderSubtitles()
+    {
+        return false;
+    }
+
     virtual void InitializeStreamInfo() override
     {
         auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
 
         streamInfo = SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
             false, forced, SubtitleTrack, IsExternal(), m_streamIndex);
+
+        streamInfo.as<implementation::SubtitleStreamInfo>()->Renderable(CanRenderSubtitles());
     }
 
     virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio)

@@ -67,6 +67,11 @@ public:
         this->attachedFileHelper = attachedFileHelper;
     }
 
+    virtual bool CanRenderSubtitles() override
+    {
+        return true;
+    }
+
     virtual HRESULT SetHardwareDevice(winrt::com_ptr<ID3D11Device> newDevice,
         winrt::com_ptr<ID3D11DeviceContext> newDeviceContext,
         AVBufferRef* avHardwareContext) override
@@ -147,7 +152,7 @@ public:
         resource = renderTargetDXGI.as<ID3D11Resource>();
         resource->GetDevice(device.put());
         device->GetImmediateContext(deviceContext.put());
-        
+
         // Create render target view
         auto hr = device->CreateRenderTargetView(resource.get(), NULL, renderTargetView.put());
         if (!SUCCEEDED(hr)) return winrt::make_self<implementation::SubtitleRenderResult>();
@@ -257,7 +262,7 @@ public:
                     }
                 }
             }
-        });
+            });
     }
 
     void UploadToTexture(BYTE* pixelData, int linesize, std::vector<D3D11_RECT> rects,

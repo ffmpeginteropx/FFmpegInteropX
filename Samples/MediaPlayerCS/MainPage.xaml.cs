@@ -85,6 +85,45 @@ namespace MediaPlayerCS
             set;
         }
 
+        private MediaPlaybackItem currentPlaybackItem;
+        private MediaPlaybackItem CurrentPlaybackItem
+        {
+            get => currentPlaybackItem;
+            set
+            {
+                if (currentPlaybackItem != null)
+                {
+                    currentPlaybackItem.TimedMetadataTracks.PresentationModeChanged -= TimedMetadataTracks_PresentationModeChanged;
+                }
+                currentPlaybackItem = value;
+                if (currentPlaybackItem != null)
+                {
+                    currentPlaybackItem.TimedMetadataTracks.PresentationModeChanged += TimedMetadataTracks_PresentationModeChanged;
+                }
+            }
+        }
+
+        private void TimedMetadataTracks_PresentationModeChanged(MediaPlaybackTimedMetadataTrackList sender, TimedMetadataPresentationModeChangedEventArgs args)
+        {
+            //if we can render those subtitles, the presentation mode must be set to ApplicationPresented
+            if (args.NewPresentationMode == TimedMetadataTrackPresentationMode.PlatformPresented)
+            {
+                var subInfo = FFmpegMSS.SubtitleStreams.FirstOrDefault(x => x.SubtitleTrack == args.Track);
+                if (subInfo != null && subInfo.Renderable)
+                {
+                    for (uint i = 0; i < sender.Count; i++)
+                    {
+                        if (sender[(int)i] == subInfo.SubtitleTrack)
+                        {
+                            sender.SetPresentationMode(i, TimedMetadataTrackPresentationMode.ApplicationPresented);
+                            selectedSubtitleStreamInfo = subInfo;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         public MainPage()
         {
             Config = new MediaSourceConfig();
@@ -905,7 +944,11 @@ namespace MediaPlayerCS
             if (session != null && FFmpegMSS != null)
             {
                 FFmpegMSS.PlaybackSession = session;
+                
             }
+
+            CurrentPlaybackItem = FFmpegMSS.PlaybackItem;
+
             await CoreApplication.MainView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(
                 () =>
                 {
@@ -913,12 +956,7 @@ namespace MediaPlayerCS
                     cmbAudioStreamEffectSelector.ItemsSource = FFmpegMSS.AudioStreams;
 
                     cmbVideoStreamEffectSelector.ItemsSource = FFmpegMSS.VideoStreams;
-
-                    cmbSubtitleSelector.ItemsSource = FFmpegMSS.SubtitleStreams;
-
-                    if (FFmpegMSS.SubtitleStreams.Count > 0)
-                        cmbSubtitleSelector.SelectedIndex = 0;
-
+                                
                     List<IStreamInfo> streams = new List<IStreamInfo>();
                     foreach (var a in FFmpegMSS.AudioStreams)
                     {
@@ -931,7 +969,6 @@ namespace MediaPlayerCS
                     }
 
                     cmbAudioVideoStreamDelays.ItemsSource = streams;
-
                 }));
         }
 
@@ -1058,32 +1095,7 @@ namespace MediaPlayerCS
         {
             CheckUpdateSubtitleRenderTargets();
             CheckUpdateSwapChain();
-        }
-
-        private void CmbSubtitleSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (FFmpegMSS != null && FFmpegMSS.SubtitleStreams.Count > 0)
-            {
-                var item = FFmpegMSS.PlaybackItem;
-                if (item != null)
-                {
-                    for (uint i = 0; i < item.TimedMetadataTracks.Count; i++)
-                    {
-                        item.TimedMetadataTracks.SetPresentationMode(i, TimedMetadataTrackPresentationMode.Disabled);
-                    }
-                    if (cmbSubtitleSelector.SelectedIndex != -1)
-                    {
-                        selectedSubtitleStreamInfo = FFmpegMSS.SubtitleStreams[cmbSubtitleSelector.SelectedIndex];
-                        // let us handle the subs
-                        item.TimedMetadataTracks.SetPresentationMode((uint)cmbSubtitleSelector.SelectedIndex, TimedMetadataTrackPresentationMode.ApplicationPresented);
-                    }
-                    else
-                    {
-                        selectedSubtitleStreamInfo = null;
-                    }
-                }
-            }
-        }
+        }        
 
         private void getCanvasSwapChainPanel(object sender, RoutedEventArgs e)
         {

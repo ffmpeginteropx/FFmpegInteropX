@@ -209,6 +209,8 @@ namespace FFmpegInteropX
         Boolean IsForced{ get; };
 
         Windows.Media.Core.TimedMetadataTrack SubtitleTrack{ get; };
+
+        Boolean Renderable{ get; };
     }
 
 #ifdef UWP
@@ -575,6 +577,7 @@ namespace FFmpegInteropX
 
         ///<summary>Renders subtitles from the given stream at the current video position. </summary>
         SubtitleRenderResult RenderSubtitlesToDirectXSurface(Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface renderTarget, SubtitleStreamInfo subtitle, Windows.Foundation.TimeSpan position);
+        
     };
 
     runtimeclass SubtitleParser : Windows.Foundation.IClosable
