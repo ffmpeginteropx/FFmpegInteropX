@@ -944,10 +944,20 @@ namespace MediaPlayerCS
             if (session != null && FFmpegMSS != null)
             {
                 FFmpegMSS.PlaybackSession = session;
-                
+
             }
 
             CurrentPlaybackItem = FFmpegMSS.PlaybackItem;
+            var renderableSub = FFmpegMSS.SubtitleStreams.FirstOrDefault(x => x.Renderable);
+            selectedSubtitleStreamInfo = renderableSub;
+            for (int i = 0; i < CurrentPlaybackItem.TimedMetadataTracks.Count; i++)
+            {
+                if (renderableSub.SubtitleTrack == CurrentPlaybackItem.TimedMetadataTracks[i])
+                {
+                    CurrentPlaybackItem.TimedMetadataTracks.SetPresentationMode((uint)i, TimedMetadataTrackPresentationMode.ApplicationPresented);
+                    break;
+                }
+            }
 
             await CoreApplication.MainView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, new DispatchedHandler(
                 () =>
@@ -956,7 +966,7 @@ namespace MediaPlayerCS
                     cmbAudioStreamEffectSelector.ItemsSource = FFmpegMSS.AudioStreams;
 
                     cmbVideoStreamEffectSelector.ItemsSource = FFmpegMSS.VideoStreams;
-                                
+
                     List<IStreamInfo> streams = new List<IStreamInfo>();
                     foreach (var a in FFmpegMSS.AudioStreams)
                     {
@@ -1095,7 +1105,7 @@ namespace MediaPlayerCS
         {
             CheckUpdateSubtitleRenderTargets();
             CheckUpdateSwapChain();
-        }        
+        }
 
         private void getCanvasSwapChainPanel(object sender, RoutedEventArgs e)
         {
