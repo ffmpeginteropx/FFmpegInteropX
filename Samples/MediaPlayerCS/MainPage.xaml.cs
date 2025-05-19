@@ -950,12 +950,15 @@ namespace MediaPlayerCS
             CurrentPlaybackItem = FFmpegMSS.PlaybackItem;
             var renderableSub = FFmpegMSS.SubtitleStreams.FirstOrDefault(x => x.Renderable);
             selectedSubtitleStreamInfo = renderableSub;
-            for (int i = 0; i < CurrentPlaybackItem.TimedMetadataTracks.Count; i++)
+            if (renderableSub != null)
             {
-                if (renderableSub.SubtitleTrack == CurrentPlaybackItem.TimedMetadataTracks[i])
+                for (int i = 0; i < CurrentPlaybackItem.TimedMetadataTracks.Count; i++)
                 {
-                    CurrentPlaybackItem.TimedMetadataTracks.SetPresentationMode((uint)i, TimedMetadataTrackPresentationMode.ApplicationPresented);
-                    break;
+                    if (renderableSub.SubtitleTrack == CurrentPlaybackItem.TimedMetadataTracks[i])
+                    {
+                        CurrentPlaybackItem.TimedMetadataTracks.SetPresentationMode((uint)i, TimedMetadataTrackPresentationMode.ApplicationPresented);
+                        break;
+                    }
                 }
             }
 
