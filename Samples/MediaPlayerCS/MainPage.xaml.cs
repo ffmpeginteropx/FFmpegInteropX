@@ -127,7 +127,7 @@ namespace MediaPlayerCS
         public MainPage()
         {
             Config = new MediaSourceConfig();
-            Config.Subtitles.UseLibassAsSubtitleRenderer = true;
+            //Config.Subtitles.UseLibassAsSubtitleRenderer = true;
             this.InitializeComponent();
 
             // Show the control panel on startup so user can start opening media
@@ -222,10 +222,10 @@ namespace MediaPlayerCS
                 subRender = TimeSpan.Zero;
                 subPresent = TimeSpan.Zero;
                 stopwatch.Restart();
+                cancelSubtitlesSource = new CancellationTokenSource();
 
                 if (renderTech == SubtitleRenderTech.AsyncLoop)
                 {
-                    cancelSubtitlesSource = new CancellationTokenSource();
                     subtitleLoop = SubtitleRenderLoop(cancelSubtitlesSource.Token);
                 }
                 else if (renderTech == SubtitleRenderTech.SwapChain)

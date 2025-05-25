@@ -81,11 +81,6 @@ public:
         return S_OK;
     };
 
-    void SubtitleProviderLibass::SetPosition(winrt::Windows::Foundation::TimeSpan  position)
-    {
-        currentPosition = position;
-    }
-
     void ParseHeaders()
     {
         if (!hasParsedHeaders)
@@ -496,7 +491,6 @@ private:
     SoftwareBitmap dummyBitmap = { nullptr };
     int nextId = 0;
     unsigned threads = 4;
-    TimeSpan currentPosition{ 0 };
 
     std::shared_ptr<AttachedFileHelper> attachedFileHelper;
 };
