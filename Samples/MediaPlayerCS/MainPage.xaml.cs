@@ -127,7 +127,7 @@ namespace MediaPlayerCS
         public MainPage()
         {
             Config = new MediaSourceConfig();
-            //Config.Subtitles.UseLibassAsSubtitleRenderer = true;
+            Config.Subtitles.UseLibassAsSubtitleRenderer = true;
             this.InitializeComponent();
 
             // Show the control panel on startup so user can start opening media

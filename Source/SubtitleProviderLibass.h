@@ -133,11 +133,13 @@ public:
         SetSubtitleSize(desc.Width, desc.Height);
         auto start = CalculatePosition(&position);
         int changes = 0;
-
-        // ass render - if no changes, return immediately!
+        
         auto assImage = ass_render_frame(assRenderer, track, start, &changes);
         if (!changes)
-            return winrt::make_self<implementation::SubtitleRenderResult>(true, false);
+        {
+            //if there were no changes, we still need to render, as we can make no assumptions about the input surface!
+            OutputDebugString(L"Subtitle frame is same as previous!\n");
+        }
 
         // get d3d interfaces
         winrt::com_ptr<ID3D11Resource> resource;
@@ -158,7 +160,7 @@ public:
 
         // If no image is provided, we are done here (empty scene) - this is not an error
         if (!assImage) {
-            return winrt::make_self<implementation::SubtitleRenderResult>(true, true);
+            return winrt::make_self<implementation::SubtitleRenderResult>(true, changes != 0);
         }
 
         // blend ass_image to buffer
@@ -175,7 +177,7 @@ public:
             UploadToTexture(pixelData, width, rects, deviceContext, resource);
         }
 
-        return winrt::make_self<implementation::SubtitleRenderResult>(true, true);
+        return winrt::make_self<implementation::SubtitleRenderResult>(true, changes != 0);
     }
 
     virtual IMediaCue CreateCue(AVPacket* packet, winrt::Windows::Foundation::TimeSpan* position, winrt::Windows::Foundation::TimeSpan* duration) override
@@ -218,6 +220,10 @@ public:
             // could be replaced by shaders, directx math or vector intrinsics
             for (ASS_Image* img = assImage; img != nullptr; img = img->next)
             {
+                /*
+                TODO: we actually need a test case for this.
+                if (!img->w || !img->h) continue; // we shouldn't render this image according to docs*/
+
                 uint8_t* src = img->bitmap;
                 int stride = img->stride;
                 uint32_t color = img->color;
