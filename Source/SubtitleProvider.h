@@ -493,6 +493,13 @@ private:
     TimedMetadataTrack referenceTrack = { nullptr };
     const long long InfiniteDuration = ((long long)0xFFFFFFFF) * 10000;
 
+public:
+    static bool CodecContextIsSsaAss(AVCodecContext* m_pAvCodecCtx)
+    {
+        return m_pAvCodecCtx->codec_id == AV_CODEC_ID_ASS ||
+            m_pAvCodecCtx->codec_id == AV_CODEC_ID_SSA;
+    }
+
 };
 
 
