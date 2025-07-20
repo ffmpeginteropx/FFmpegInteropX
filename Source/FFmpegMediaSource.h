@@ -210,7 +210,7 @@ namespace winrt::FFmpegInteropX::implementation
 
         void Close();
 
-        FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, DispatcherQueue const& dispatcher, uint64_t windowId, bool useHdr);
+        FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, uint64_t windowId, bool useHdr);
 
     private:
 
@@ -236,21 +236,21 @@ namespace winrt::FFmpegInteropX::implementation
         bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus const& status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
         static void CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation, bool& useHdr, uint64_t& windowId);
 #ifdef Win32
-        static void Win32CheckHdr(uint64_t& windowId, bool& useHdr);
+        static bool Win32CheckHdr(uint64_t& windowId);
 #endif
-        static void UwpCheckUseHdr(uint64_t& windowId, bool& useHdr);
+        static bool UwpCheckUseHdr(uint64_t& windowId);
         void CheckExtendDuration(MediaStreamSample sample);
         MediaThumbnailData ExtractThumbnail(AVStream* avStream);
 
         void Close(bool onMediaSourceClosed);
-        static DispatcherQueue GetCurrentDispatcherQueue();
+        static bool IsOnUIThread();
 
     public://internal:
         static IAsyncOperation<winrt::FFmpegInteropX::FFmpegMediaSource> ReadExternalSubtitleStreamAsync(IRandomAccessStream stream, hstring streamName, winrt::FFmpegInteropX::MediaSourceConfig const& config, VideoStreamDescriptor videoDescriptor, DispatcherQueue dispatcher, uint64_t windowId, bool useHdr);
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamInternalAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriInternalAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
-        static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, DispatcherQueue  const& dispatcher, uint64_t windowId, bool useHdr);
-        static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, DispatcherQueue  const& dispatcher, uint64_t windowId, bool useHdr);
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, uint64_t windowId, bool useHdr);
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, uint64_t windowId, bool useHdr);
         HRESULT Seek(TimeSpan const& position, TimeSpan& actualPosition, bool allowFastSeek);
 
         std::shared_ptr<MediaSampleProvider> VideoSampleProvider()
@@ -308,7 +308,6 @@ namespace winrt::FFmpegInteropX::implementation
         MediaThumbnailData thumbnailData = nullptr;
 
         std::recursive_mutex mutex;
-        DispatcherQueue dispatcher = { nullptr };
         winrt::weak_ref<MediaPlaybackSession> sessionWeak = { nullptr };
         winrt::event_token sessionPositionEvent{};
 
