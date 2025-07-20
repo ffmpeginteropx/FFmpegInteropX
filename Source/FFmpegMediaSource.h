@@ -235,6 +235,10 @@ namespace winrt::FFmpegInteropX::implementation
         void InitializePlaybackItem(MediaPlaybackItem  const& playbackitem);
         bool CheckUseHardwareAcceleration(AVCodecContext* avCodecCtx, HardwareAccelerationStatus const& status, HardwareDecoderStatus& hardwareDecoderStatus, int maxProfile, int maxLevel);
         static void CheckUseHdr(winrt::com_ptr<MediaSourceConfig> const& config, bool checkDisplayInformation, bool& useHdr, uint64_t& windowId);
+#ifdef Win32
+        static void Win32CheckHdr(uint64_t& windowId, bool& useHdr);
+#endif
+        static void UwpCheckUseHdr(uint64_t& windowId, bool& useHdr);
         void CheckExtendDuration(MediaStreamSample sample);
         MediaThumbnailData ExtractThumbnail(AVStream* avStream);
 

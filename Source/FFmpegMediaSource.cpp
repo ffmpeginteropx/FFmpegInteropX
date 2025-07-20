@@ -1893,47 +1893,16 @@ namespace winrt::FFmpegInteropX::implementation
                 try
                 {
 #ifdef Win32
-                    if (windowId)
+                    if (PlatformInfo::IsWinUI())
                     {
-                        Microsoft::UI::WindowId id{ windowId };
-                        auto displayInfo = Microsoft::Graphics::Display::DisplayInformation::CreateForWindowId(id);
-                        if (displayInfo)
-                        {
-                            auto colorInfo = displayInfo.GetAdvancedColorInfo();
-                            if (colorInfo.CurrentAdvancedColorKind() == Microsoft::Graphics::Display::DisplayAdvancedColorKind::HighDynamicRange)
-                            {
-                                useHdr = true;
-                            }
-                        }
-                    }
-#else // UWP
-                    UNREFERENCED_PARAMETER(windowId);
-
-                    if (PlatformInfo::IsXbox())
-                    {
-                        // HdmiDisplayInformation is xbox only, DisplayInformation is non-xbox only, each being null in the other case
-                        auto hdmiDisplayInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
-                        if (hdmiDisplayInfo)
-                        {
-                            auto currentDisplayMode = hdmiDisplayInfo.GetCurrentDisplayMode();
-                            if (currentDisplayMode && currentDisplayMode.ColorSpace() == Windows::Graphics::Display::Core::HdmiDisplayColorSpace::BT2020)
-                            {
-                                useHdr = true;
-                            }
-                        }
+                        Win32CheckHdr(windowId, useHdr);
                     }
                     else
                     {
-                        auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
-                        if (displayInfo)
-                        {
-                            auto colorInfo = displayInfo.GetAdvancedColorInfo();
-                            if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
-                            {
-                                useHdr = true;
-                            }
-                        }
+                        UwpCheckUseHdr(windowId, useHdr);
                     }
+#else // UWP
+                    UwpCheckUseHdr(windowId, useHdr);
 #endif // Win32
                 }
                 catch (...)
@@ -1943,6 +1912,59 @@ namespace winrt::FFmpegInteropX::implementation
             break;
         default:
             break;
+        }
+    }
+   
+#ifdef Win32
+
+    void FFmpegMediaSource::Win32CheckHdr(uint64_t& windowId, bool& useHdr)
+    {
+        if (windowId)
+        {
+            Microsoft::UI::WindowId id{ windowId };
+            auto displayInfo = Microsoft::Graphics::Display::DisplayInformation::CreateForWindowId(id);
+            if (displayInfo)
+            {
+                auto colorInfo = displayInfo.GetAdvancedColorInfo();
+                if (colorInfo.CurrentAdvancedColorKind() == Microsoft::Graphics::Display::DisplayAdvancedColorKind::HighDynamicRange)
+                {
+                    useHdr = true;
+                }
+            }
+        }
+    }
+
+#endif //Win32
+
+
+    void FFmpegMediaSource::UwpCheckUseHdr(uint64_t& windowId, bool& useHdr)
+    {
+        UNREFERENCED_PARAMETER(windowId);
+
+        if (PlatformInfo::IsXbox())
+        {
+            // HdmiDisplayInformation is xbox only, DisplayInformation is non-xbox only, each being null in the other case
+            auto hdmiDisplayInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
+            if (hdmiDisplayInfo)
+            {
+                auto currentDisplayMode = hdmiDisplayInfo.GetCurrentDisplayMode();
+                if (currentDisplayMode && currentDisplayMode.ColorSpace() == Windows::Graphics::Display::Core::HdmiDisplayColorSpace::BT2020)
+                {
+                    useHdr = true;
+                }
+            }
+        }
+        else
+        {
+            auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
+            if (displayInfo)
+            {
+                auto colorInfo = displayInfo.GetAdvancedColorInfo();
+                if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
+                {
+                    useHdr = true;
+                }
+            }
         }
     }
 
