@@ -46,10 +46,9 @@ namespace winrt::FFmpegInteropX::implementation
     std::mutex isRegisteredMutex;
 
     FFmpegMediaSource::FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig,
-        DispatcherQueue const& dispatcher, uint64_t windowId, bool useHdr)
+         uint64_t windowId, bool useHdr)
         : config(interopConfig)
         , isFirstSeek(true)
-        , dispatcher(dispatcher)
         , windowId(windowId)
         , useHdr(useHdr)
     {
@@ -87,11 +86,10 @@ namespace winrt::FFmpegInteropX::implementation
     winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromStream(
         IRandomAccessStream const& stream,
         winrt::com_ptr<MediaSourceConfig> const& config,
-        DispatcherQueue const& dispatcher,
         uint64_t windowId,
         bool useHdr)
     {
-        auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher, windowId, useHdr);
+        auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, windowId, useHdr);
         auto hr = interopMSS->CreateMediaStreamSource(stream);
         if (!SUCCEEDED(hr))
         {
@@ -103,11 +101,10 @@ namespace winrt::FFmpegInteropX::implementation
     winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(
         hstring const& uri,
         winrt::com_ptr<MediaSourceConfig> const& config,
-        DispatcherQueue const& dispatcher,
         uint64_t windowId,
         bool useHdr)
     {
-        auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, dispatcher, windowId, useHdr);
+        auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, windowId, useHdr);
         auto hr = interopMSS->CreateMediaStreamSource(uri);
         if (!SUCCEEDED(hr))
         {
@@ -357,12 +354,11 @@ namespace winrt::FFmpegInteropX::implementation
         IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
     {
         winrt::apartment_context caller; // Capture calling context.
-        auto dispatcher = GetCurrentDispatcherQueue();
         auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
         bool useHdr = false;
-        CheckUseHdr(configImpl, dispatcher != nullptr, useHdr, windowId);
+        CheckUseHdr(configImpl, IsOnUIThread(), useHdr, windowId);
         co_await winrt::resume_background();
-        auto result = CreateFromStream(stream, configImpl, dispatcher, windowId, useHdr);
+        auto result = CreateFromStream(stream, configImpl, windowId, useHdr);
         co_await caller;
         co_return result.as<FFmpegInteropX::FFmpegMediaSource>();
     }
@@ -371,26 +367,25 @@ namespace winrt::FFmpegInteropX::implementation
         hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
     {
         winrt::apartment_context caller; // Capture calling context.
-        auto dispatcher = GetCurrentDispatcherQueue();
         auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
         bool useHdr = false;
-        CheckUseHdr(configImpl, dispatcher != nullptr, useHdr, windowId);
+        CheckUseHdr(configImpl, IsOnUIThread(), useHdr, windowId);
         co_await winrt::resume_background();
-        auto result = CreateFromUri(uri, configImpl, dispatcher, windowId, useHdr);
+        auto result = CreateFromUri(uri, configImpl, windowId, useHdr);
         co_await caller;
         co_return result.as<FFmpegInteropX::FFmpegMediaSource>();
     }
 
-    DispatcherQueue FFmpegMediaSource::GetCurrentDispatcherQueue()
+    bool FFmpegMediaSource::IsOnUIThread()
     {
 #ifdef Win32
         if (PlatformInfo::IsWinUI())
         {
-            return DispatcherQueue::GetForCurrentThread();
+            return DispatcherQueue::GetForCurrentThread() != nullptr;
         }
-        return nullptr;
+        return winrt::Windows::System::DispatcherQueue::GetForCurrentThread() != nullptr;
 #else
-        return DispatcherQueue::GetForCurrentThread();
+        return DispatcherQueue::GetForCurrentThread() != nullptr;
 #endif
     }
 
@@ -813,11 +808,11 @@ namespace winrt::FFmpegInteropX::implementation
                     {
                         if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
                         {
-                            avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, dispatcher, attachedFileHelper));
+                            avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, attachedFileHelper));
                         }
                         else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
                         {
-                            avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, dispatcher));
+                            avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderBitmap(m_pReader, avFormatCtx, avSubsCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index));
                         }
                         else
                         {
@@ -1474,7 +1469,7 @@ namespace winrt::FFmpegInteropX::implementation
             subConfig->AdditionalFFmpegSubtitleOptions.Insert(L"subfps",
                 winrt::box_value(winrt::to_hstring(videoDescriptor.EncodingProperties().FrameRate().Numerator()) + L"/" + winrt::to_hstring(videoDescriptor.EncodingProperties().FrameRate().Denominator())));
         }
-        auto externalSubsParser = FFmpegMediaSource::CreateFromStream(stream, subConfig, dispatcher, windowId, useHdr);
+        auto externalSubsParser = FFmpegMediaSource::CreateFromStream(stream, subConfig, windowId, useHdr);
 
         if (externalSubsParser->SubtitleStreams().Size() > 0)
         {
@@ -1509,7 +1504,7 @@ namespace winrt::FFmpegInteropX::implementation
         co_await winrt::resume_background();
         auto videoDescriptor = currentVideoStream ? (currentVideoStream->StreamDescriptor()).as<VideoStreamDescriptor>() : nullptr;
 
-        auto externalSubsParser = (co_await ReadExternalSubtitleStreamAsync(stream, streamName, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), videoDescriptor, dispatcher, windowId, useHdr)).as<winrt::FFmpegInteropX::implementation::FFmpegMediaSource>();
+        auto externalSubsParser = (co_await ReadExternalSubtitleStreamAsync(stream, streamName, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), videoDescriptor, nullptr, windowId, useHdr)).as<winrt::FFmpegInteropX::implementation::FFmpegMediaSource>();
 
         Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> result;
         {
@@ -1893,47 +1888,16 @@ namespace winrt::FFmpegInteropX::implementation
                 try
                 {
 #ifdef Win32
-                    if (windowId)
+                    if (PlatformInfo::IsWinUI())
                     {
-                        Microsoft::UI::WindowId id{ windowId };
-                        auto displayInfo = Microsoft::Graphics::Display::DisplayInformation::CreateForWindowId(id);
-                        if (displayInfo)
-                        {
-                            auto colorInfo = displayInfo.GetAdvancedColorInfo();
-                            if (colorInfo.CurrentAdvancedColorKind() == Microsoft::Graphics::Display::DisplayAdvancedColorKind::HighDynamicRange)
-                            {
-                                useHdr = true;
-                            }
-                        }
-                    }
-#else // UWP
-                    UNREFERENCED_PARAMETER(windowId);
-
-                    if (PlatformInfo::IsXbox())
-                    {
-                        // HdmiDisplayInformation is xbox only, DisplayInformation is non-xbox only, each being null in the other case
-                        auto hdmiDisplayInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
-                        if (hdmiDisplayInfo)
-                        {
-                            auto currentDisplayMode = hdmiDisplayInfo.GetCurrentDisplayMode();
-                            if (currentDisplayMode && currentDisplayMode.ColorSpace() == Windows::Graphics::Display::Core::HdmiDisplayColorSpace::BT2020)
-                            {
-                                useHdr = true;
-                            }
-                        }
+                        useHdr = Win32CheckHdr(windowId);
                     }
                     else
                     {
-                        auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
-                        if (displayInfo)
-                        {
-                            auto colorInfo = displayInfo.GetAdvancedColorInfo();
-                            if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
-                            {
-                                useHdr = true;
-                            }
-                        }
+                        useHdr = UwpCheckUseHdr(windowId);
                     }
+#else // UWP
+                    useHdr = UwpCheckUseHdr(windowId);
 #endif // Win32
                 }
                 catch (...)
@@ -1944,6 +1908,63 @@ namespace winrt::FFmpegInteropX::implementation
         default:
             break;
         }
+    }
+
+#ifdef Win32
+
+    bool FFmpegMediaSource::Win32CheckHdr(uint64_t& windowId)
+    {
+        if (windowId)
+        {
+            Microsoft::UI::WindowId id{ windowId };
+            auto displayInfo = Microsoft::Graphics::Display::DisplayInformation::CreateForWindowId(id);
+            if (displayInfo)
+            {
+                auto colorInfo = displayInfo.GetAdvancedColorInfo();
+                if (colorInfo.CurrentAdvancedColorKind() == Microsoft::Graphics::Display::DisplayAdvancedColorKind::HighDynamicRange)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+#endif //Win32
+
+
+    bool FFmpegMediaSource::UwpCheckUseHdr(uint64_t& windowId)
+    {
+        UNREFERENCED_PARAMETER(windowId);
+
+        if (PlatformInfo::IsXbox())
+        {
+            // HdmiDisplayInformation is xbox only, DisplayInformation is non-xbox only, each being null in the other case
+            auto hdmiDisplayInfo = Windows::Graphics::Display::Core::HdmiDisplayInformation::GetForCurrentView();
+            if (hdmiDisplayInfo)
+            {
+                auto currentDisplayMode = hdmiDisplayInfo.GetCurrentDisplayMode();
+                if (currentDisplayMode && currentDisplayMode.ColorSpace() == Windows::Graphics::Display::Core::HdmiDisplayColorSpace::BT2020)
+                {
+                    return true;
+                }
+            }
+        }
+        else
+        {
+            auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
+            if (displayInfo)
+            {
+                auto colorInfo = displayInfo.GetAdvancedColorInfo();
+                if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     std::shared_ptr<MediaSampleProvider> FFmpegMediaSource::CreateVideoSampleProvider(AVStream* avStream, AVCodecContext* avVideoCodecCtx, int index)

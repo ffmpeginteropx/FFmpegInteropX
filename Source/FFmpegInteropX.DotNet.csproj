@@ -24,6 +24,10 @@
   <PropertyGroup>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <CsWinRTGenerateAotProjection>true</CsWinRTGenerateAotProjection>
+  </PropertyGroup>
   
   <PropertyGroup>
     <DefaultItemExcludes>**\*;*.*</DefaultItemExcludes>
@@ -34,7 +38,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.0.3" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
   </ItemGroup>
 
   <Choose>

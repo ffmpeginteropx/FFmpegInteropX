@@ -20,9 +20,8 @@ public:
         AVFormatContext* avFormatCtx,
         AVCodecContext* avCodecCtx,
         MediaSourceConfig const& config,
-        int index,
-        DispatcherQueue const& dispatcher)
-        : SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::ImageSubtitle, dispatcher)
+        int index)
+        : SubtitleProvider(reader, avFormatCtx, avCodecCtx, config, index, TimedMetadataKind::ImageSubtitle)
     {
     }
 
