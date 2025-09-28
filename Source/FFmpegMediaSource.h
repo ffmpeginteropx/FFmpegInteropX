@@ -212,13 +212,13 @@ namespace winrt::FFmpegInteropX::implementation
 
         FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, uint64_t windowId, bool useHdr);
 
-        winrt::FFmpegInteropX::SubtitleRenderResult RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, winrt::FFmpegInteropX::SubtitleStreamInfo const& subtitle, winrt::Windows::Foundation::TimeSpan const& position)
+        winrt::FFmpegInteropX::SubtitleRenderResult RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, winrt::FFmpegInteropX::SubtitleStreamInfo const& subtitle, winrt::Windows::Foundation::TimeSpan const& position, bool forceRender)
         {
             for (auto& subProvider : subtitleStreamProviders)
             {
                 if (subProvider->SubtitleInfo() == subtitle)
                 {
-                    return subProvider->RenderSubtitlesToDirectXSurface(rendertarget, position).as<winrt::FFmpegInteropX::SubtitleRenderResult>();
+                    return subProvider->RenderSubtitlesToDirectXSurface(rendertarget, position, forceRender).as<winrt::FFmpegInteropX::SubtitleRenderResult>();
                 }
             }
 

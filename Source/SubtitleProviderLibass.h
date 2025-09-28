@@ -15,12 +15,6 @@ using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Foundation::Metadata;
 using namespace winrt::Windows::Graphics::Imaging;
 
-#ifdef Win32
-using namespace winrt::Microsoft::UI::Dispatching;
-#else
-using namespace winrt::Windows::System;
-#endif
-
 const float MIN_UINT8_CAST = 0.9F / 255;
 const float MAX_UINT8_CAST = 255.9F / 255;
 #define CLAMP_UINT8(value) ((value > MIN_UINT8_CAST) ? ((value < MAX_UINT8_CAST) ? (BYTE)(value * 255) : 255) : 0)
@@ -104,7 +98,7 @@ public:
         videoHeight = frameHeight;
     }
 
-    virtual winrt::com_ptr<implementation::SubtitleRenderResult>  RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position) override
+    virtual winrt::com_ptr<implementation::SubtitleRenderResult>  RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position, bool forceRender) override
     {
         std::lock_guard lock(mutex);
 
@@ -133,10 +127,11 @@ public:
         int changes = 0;
         
         auto assImage = ass_render_frame(assRenderer, track, start, &changes);
-        if (!changes)
+        if (!changes && !forceRender)
         {
-            //if there were no changes, we still need to render, as we can make no assumptions about the input surface!
+            //if no changes and the caller didn't request a force render, then nothing left to do.
             OutputDebugString(L"Subtitle frame is same as previous!\n");
+            return winrt::make_self<implementation::SubtitleRenderResult>(true, false);
         }
 
         // get d3d interfaces

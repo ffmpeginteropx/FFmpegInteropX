@@ -13,11 +13,6 @@ using namespace winrt::Windows::Media::Playback;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Graphics::Imaging;
-#ifdef Win32
-using namespace winrt::Microsoft::UI::Dispatching;
-#else
-using namespace winrt::Windows::System;
-#endif
 
 class SubtitleProvider :
     public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
@@ -64,7 +59,7 @@ public:
 
 public:
 
-    virtual winrt::com_ptr<implementation::SubtitleRenderResult> RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position)
+    virtual winrt::com_ptr<implementation::SubtitleRenderResult> RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position, bool forceRender)
     {
         return winrt::make_self<implementation::SubtitleRenderResult>();
     }

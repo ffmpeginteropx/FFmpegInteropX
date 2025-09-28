@@ -386,7 +386,7 @@ namespace MediaPlayerCS
         private SubtitleRenderResult RenderSubtitle(CanvasRenderTarget target)
         {
             var t1 = stopwatch.Elapsed;
-            var result = FFmpegMSS.RenderSubtitlesToDirectXSurface(target, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position);
+            var result = FFmpegMSS.RenderSubtitlesToDirectXSurface(target, selectedSubtitleStreamInfo, mediaPlayer.PlaybackSession.Position, true);
             var t2 = stopwatch.Elapsed;
             subRender += t2 - t1;
             return result;

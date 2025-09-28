@@ -103,7 +103,7 @@ namespace DirectXPanels
             m_d3dContext->ClearRenderTargetView(renderTargetView.Get(), color);*/
 
             auto dxSurface = GetSurface(m_surface);
-            source->RenderSubtitlesToDirectXSurface(dxSurface, stream, session->Position);
+            source->RenderSubtitlesToDirectXSurface(dxSurface, stream, session->Position, true);
 
             Present();
         }

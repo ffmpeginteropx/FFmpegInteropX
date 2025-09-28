@@ -57,7 +57,7 @@ namespace winrt::AssSsaRenderElement::implementation
 
                     renderingTarget = CanvasRenderTarget(outputDrawingSession, width, height, dpi, pixelFormat, CanvasAlphaMode::Premultiplied);
 
-                    mediaSource.RenderSubtitlesToDirectXSurface(renderingTarget, mediaSource.SubtitleStreams().GetAt(0), playbackSession.Position());
+                    mediaSource.RenderSubtitlesToDirectXSurface(renderingTarget, mediaSource.SubtitleStreams().GetAt(0), playbackSession.Position(), true);
 
                     winrt::com_ptr<IDXGISurface> dxgiRenderTarget;
                     auto hr = GetDXGISurface(renderingTarget, dxgiRenderTarget);
