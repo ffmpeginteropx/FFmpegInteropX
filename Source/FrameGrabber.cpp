@@ -14,7 +14,7 @@ namespace winrt::FFmpegInteropX::implementation
         config->IsFrameGrabber = true;
         config->Video().VideoDecoderMode(VideoDecoderMode::ForceFFmpegSoftwareDecoder);
 
-        auto result = FFmpegMediaSource::CreateFromStream(stream, config, nullptr, 0, false);
+        auto result = FFmpegMediaSource::CreateFromStream(stream, config,  0, false);
         if (result == nullptr)
         {
             throw_hresult(E_FAIL);// ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
@@ -36,7 +36,7 @@ namespace winrt::FFmpegInteropX::implementation
         config->IsFrameGrabber = true;
         config->Video().VideoDecoderMode(VideoDecoderMode::ForceFFmpegSoftwareDecoder);
 
-        auto result = FFmpegMediaSource::CreateFromUri(uri, config, nullptr, 0, false);
+        auto result = FFmpegMediaSource::CreateFromUri(uri, config,  0, false);
         if (result == nullptr)
         {
             throw_hresult(E_FAIL);

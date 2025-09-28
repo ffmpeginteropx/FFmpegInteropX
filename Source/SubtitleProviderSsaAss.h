@@ -21,15 +21,14 @@ public:
         AVCodecContext* avCodecCtx,
         MediaSourceConfig const& config,
         int index,
-        DispatcherQueue const& dispatcher,
         std::shared_ptr<AttachedFileHelper> attachedFileHelper)
-        : SubtitleProvider(reader,
+        : SubtitleProvider(
+            reader,
             avFormatCtx,
             avCodecCtx,
             config,
             index,
-            TimedMetadataKind::Subtitle,
-            dispatcher
+            TimedMetadataKind::Subtitle
         )
     {
         this->attachedFileHelper = attachedFileHelper;

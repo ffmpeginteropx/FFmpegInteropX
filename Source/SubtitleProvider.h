@@ -32,15 +32,13 @@ public:
         AVCodecContext* avCodecCtx,
         MediaSourceConfig const& config,
         int index,
-        TimedMetadataKind const& ptimedMetadataKind,
-        DispatcherQueue const& pdispatcher)
+        TimedMetadataKind const& ptimedMetadataKind)
         : CompressedSampleProvider(reader,
             avFormatCtx,
             avCodecCtx,
             config,
             index,
             HardwareDecoderStatus::Unknown),
-        dispatcher(pdispatcher),
         timedMetadataKind(ptimedMetadataKind)
     {
     }
@@ -483,8 +481,6 @@ private:
 
     int cueCount = 0;
     TimedMetadataKind timedMetadataKind;
-    DispatcherQueue dispatcher = { nullptr };
-    DispatcherQueueTimer timer = { nullptr };
     TimeSpan actualSubtitleDelay{};
     std::vector<std::pair<IMediaCue, long long>> negativePositionCues;
     IMediaCue infiniteDurationCue = { nullptr };

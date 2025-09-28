@@ -21,6 +21,7 @@ param(
 
 
 nuget pack .\Build\FFmpegInteropX.nuspec `
-    -Properties "id=FFmpegInteropX;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;winsdk=$WindowsTargetPlatformVersion;libversion=$LibPackageVersion;ffmpegversion=$FFmpegPackageVersion;NoWarn=NU5128" `
+    -Properties "id=FFmpegInteropX;repositoryUrl=$FFmpegInteropXUrl;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformVersion;libversion=$LibPackageVersion;ffmpegversion=$FFmpegPackageVersion;NoWarn=NU5128" `
     -Version $NugetPackageVersion `
-    -OutputDirectory "${PSScriptRoot}\Output\NuGet"
+    -OutputDirectory "${PSScriptRoot}\Output\NuGet" `
+	
