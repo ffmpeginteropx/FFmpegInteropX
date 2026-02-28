@@ -53,6 +53,19 @@ public:
         filter = nullptr;
     }
 
+    HRESULT SendFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments)
+    {
+        if (filter)
+        {
+            return filter->SendCommand(target, command, arguments);
+        }
+        else
+        {
+            // no filter assigned
+            return AVERROR(EINVAL);
+        }
+    }
+
     winrt::hstring GetCurrentFilters()
     {
         return currentFFmpegFilters;

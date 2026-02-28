@@ -384,6 +384,7 @@ public:
         const winrt::com_ptr<IMFDXGIDeviceManager>& deviceManager,
         HANDLE* outDeviceHandle)
     {
+        UNREFERENCED_PARAMETER(sender);
         winrt::com_ptr<ID3D11Device> device;
         winrt::com_ptr<ID3D11DeviceContext> deviceContext;
         winrt::com_ptr<ID3D11VideoDevice> videoDevice;

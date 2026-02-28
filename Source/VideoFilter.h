@@ -228,6 +228,26 @@ public:
         return hr;
     }
 
+    HRESULT SendCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) override
+    {
+        HRESULT hr;
+        if (!isInitialized)
+        {
+            // not initialized
+            hr = AVERROR(EINVAL);
+        }
+        else
+        {
+            auto trg = StringUtils::PlatformStringToUtf8String(target);
+            auto cmd = StringUtils::PlatformStringToUtf8String(command);
+            auto arg = StringUtils::PlatformStringToUtf8String(arguments);
+
+            hr = avfilter_graph_send_command(graph, trg.c_str(), cmd.c_str(), arg.c_str(), 0, 0, 0);
+        }
+
+        return hr;
+    }
+
     bool IsInitialized() override
     {
         return isInitialized;

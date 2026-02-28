@@ -490,6 +490,19 @@ namespace FFmpegInteropX
         ///<summary>Gets video filters for the specified video stream.</summary>
         String GetFFmpegVideoFilters(VideoStreamInfo videoStream);
 
+        ///<summary>Sends a command to audio filters on all audio streams.</summary>
+        void SendFFmpegAudioFilterCommand(String target, String command, String arguments);
+
+        ///<summary>Sends a command to audio filters on the specified audio stream.</summary>
+        void SendFFmpegAudioFilterCommand(String target, String command, String arguments, AudioStreamInfo audioStream);
+
+        ///<summary>Sends a command to video filters on all video streams.</summary>
+        void SendFFmpegVideoFilterCommand(String target, String command, String arguments);
+
+        ///<summary>Sends a command to video filters on the specified video stream.</summary>
+        void SendFFmpegVideoFilterCommand(String target, String command, String arguments, VideoStreamInfo videoStream);
+
+
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
         MediaThumbnailData ExtractThumbnail();
 

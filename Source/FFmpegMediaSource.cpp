@@ -1248,6 +1248,69 @@ namespace winrt::FFmpegInteropX::implementation
         return hstring{};
     }
 
+    ///<summary>Sends a command to audio filters on all audio streams.</summary>
+    void FFmpegMediaSource::SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments)
+    {
+        std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+        for (int i = 0; i < audioStreams.size(); i++)
+        {
+            audioStreams.at(i)->SendFFmpegFilterCommand(target, command, arguments);
+        }
+    }
+
+    ///<summary>Sends a command to audio filters on the specified audio stream.</summary>
+    void FFmpegMediaSource::SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::AudioStreamInfo const& audioStream)
+    {
+        std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+        for (int i = 0; i < audioStreams.size(); i++)
+        {
+            if (audioStreams.at(i)->VideoInfo() == audioStream)
+            {
+                audioStreams.at(i)->SendFFmpegFilterCommand(target, command, arguments);
+            }
+        }
+    }
+
+    ///<summary>Sends a command to video filters on all video streams.</summary>
+    void FFmpegMediaSource::SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments)
+    {
+        std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+        for (int i = 0; i < videoStreams.size(); i++)
+        {
+            videoStreams.at(i)->SendFFmpegFilterCommand(target, command, arguments);
+        }
+    }
+
+    ///<summary>Sends a command to video filters on the specified video stream.</summary>
+    void FFmpegMediaSource::SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
+    {
+        std::lock_guard lock(mutex);
+        if (isClosed)
+        {
+            return;
+        }
+        for (int i = 0; i < videoStreams.size(); i++)
+        {
+            if (videoStreams.at(i)->VideoInfo() == videoStream)
+            {
+                videoStreams.at(i)->SendFFmpegFilterCommand(target, command, arguments);
+            }
+        }
+    }
+
+
     FFmpegInteropX::MediaThumbnailData FFmpegMediaSource::ExtractThumbnail()
     {
         std::lock_guard lock(mutex);

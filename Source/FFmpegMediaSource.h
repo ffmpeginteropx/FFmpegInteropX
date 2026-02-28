@@ -129,6 +129,19 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Gets video filters for the specified video stream.</summary>
         hstring GetFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
 
+        ///<summary>Sends a command to audio filters on all audio streams.</summary>
+        void SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments);
+
+        ///<summary>Sends a command to audio filters on the specified audio stream.</summary>
+        void SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
+
+        ///<summary>Sends a command to video filters on all video streams.</summary>
+        void SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments);
+
+        ///<summary>Sends a command to video filters on the specified video stream.</summary>
+        void SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
+
+
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
         FFmpegInteropX::MediaThumbnailData ExtractThumbnail();
 
