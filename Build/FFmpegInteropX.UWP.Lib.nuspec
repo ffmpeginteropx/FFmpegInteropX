@@ -16,17 +16,17 @@
   </metadata>
   <files>
 
-    <file src="..\Output\FFmpegInteropX\x64\Release_UWP\FFmpegInteropX.winmd"   target="lib\uap10" />
-    <file src="..\Output\FFmpegInteropX\x64\Release_UWP\FFmpegInteropX.xml"     target="lib\uap10" />
+    <file src="..\Output\FFmpegInteropX\x64\$configuration$_UWP\FFmpegInteropX.winmd"   target="lib\uap10" />
+    <file src="..\Output\FFmpegInteropX\x64\$configuration$_UWP\FFmpegInteropX.xml"     target="lib\uap10" />
 
-    <file src="..\Output\FFmpegInteropX\x86\Release_UWP\FFmpegInteropX.dll"     target="runtimes\win10-x86\native" />
-    <file src="..\Output\FFmpegInteropX\x86\Release_UWP\FFmpegInteropX.pdb"     target="runtimes\win10-x86\native" />
+    <file src="..\Output\FFmpegInteropX\x86\$configuration$_UWP\FFmpegInteropX.dll"     target="runtimes\win10-x86\native" />
+    <file src="..\Output\FFmpegInteropX\x86\$configuration$_UWP\FFmpegInteropX.pdb"     target="runtimes\win10-x86\native" />
 
-    <file src="..\Output\FFmpegInteropX\x64\Release_UWP\FFmpegInteropX.dll"     target="runtimes\win10-x64\native" />
-    <file src="..\Output\FFmpegInteropX\x64\Release_UWP\FFmpegInteropX.pdb"     target="runtimes\win10-x64\native" />
+    <file src="..\Output\FFmpegInteropX\x64\$configuration$_UWP\FFmpegInteropX.dll"     target="runtimes\win10-x64\native" />
+    <file src="..\Output\FFmpegInteropX\x64\$configuration$_UWP\FFmpegInteropX.pdb"     target="runtimes\win10-x64\native" />
 
-    <file src="..\Output\FFmpegInteropX\ARM64\Release_UWP\FFmpegInteropX.dll"   target="runtimes\win10-arm64\native" />
-    <file src="..\Output\FFmpegInteropX\ARM64\Release_UWP\FFmpegInteropX.pdb"   target="runtimes\win10-arm64\native" />
+    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_UWP\FFmpegInteropX.dll"   target="runtimes\win10-arm64\native" />
+    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_UWP\FFmpegInteropX.pdb"   target="runtimes\win10-arm64\native" />
 
     <file src="FFmpegInteropX.UWP.Lib.targets"                                  target="build\native"/>
 
