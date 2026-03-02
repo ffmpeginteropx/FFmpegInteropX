@@ -1,4 +1,4 @@
-﻿param
+param
 (
   [Parameter(mandatory=$true)][string] $File,
   [Parameter(mandatory=$false)][string] $OutputDirectory = $null,
@@ -41,6 +41,11 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 Remove-Item -Force -Recurse $folder\package
 Remove-Item -Force -Recurse $folder\_rels
 Remove-Item -Force -LiteralPath $folder\[Content_Types].xml
+
+if (Test-Path $folder\.signature.p7s)
+{
+    Remove-Item -Force -LiteralPath $folder\.signature.p7s
+}
 
 $nuspec = Get-Item $folder\*.nuspec
 
