@@ -357,6 +357,9 @@ namespace FFmpegInteropX
         /// <summary>Creates a new FrameGrabber from the specified stream.</summary>
         static Windows.Foundation.IAsyncOperation<FrameGrabber> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream);
 
+        /// <summary>Creates a new FrameGrabber from the specified input stream.</summary>
+        static Windows.Foundation.IAsyncOperation<FrameGrabber> CreateFromInputStreamAsync(Windows.Storage.Streams.IInputStream stream);
+
         /// <summary>Creates a new FrameGrabber from the specified uri.</summary>
         static Windows.Foundation.IAsyncOperation<FrameGrabber> CreateFromUriAsync(String uri);
 
@@ -427,6 +430,9 @@ namespace FFmpegInteropX
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream, MediaSourceConfig config, UInt64 windowId);
 
+        ///<summary>Creates a FFmpegMediaSource from a input stream.</summary>
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromInputStreamAsync(Windows.Storage.Streams.IInputStream stream, MediaSourceConfig config, UInt64 windowId);
+
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromUriAsync(String uri, MediaSourceConfig config, UInt64 windowId);
 
@@ -440,6 +446,12 @@ namespace FFmpegInteropX
 
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream);
+
+        ///<summary>Creates a FFmpegMediaSource from a input stream.</summary>
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromInputStreamAsync(Windows.Storage.Streams.IInputStream stream, MediaSourceConfig config);
+
+        ///<summary>Creates a FFmpegMediaSource from a input stream.</summary>
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromInputStreamAsync(Windows.Storage.Streams.IInputStream stream);
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromUriAsync(String uri, MediaSourceConfig config);

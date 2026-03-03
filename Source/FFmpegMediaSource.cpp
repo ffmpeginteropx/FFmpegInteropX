@@ -1,13 +1,11 @@
 #include "pch.h"
 #include "FFmpegMediaSource.h"
 #include "LanguageTagConverter.h"
+#include "winrt/impl/Windows.Storage.Streams.0.h"
 #include "FFmpegMediaSource.g.cpp"
-#include "winrt/Windows.ApplicationModel.Core.h"
 #include "D3D11VideoSampleProvider.h"
 #include "H264AVCSampleProvider.h"
 #include "UncompressedAudioSampleProvider.h"
-#include "UncompressedFrameProvider.h"
-#include "UncompressedSampleProvider.h"
 #include "UncompressedVideoSampleProvider.h"
 #include "HEVCSampleProvider.h"
 #include "NALPacketSampleProvider.h"
@@ -15,7 +13,6 @@
 #include "MediaSampleProvider.h"
 #include "SubtitleProviderSsaAss.h"
 #include "SubtitleProviderBitmap.h"
-#include "ChapterInfo.h"
 #include "FFmpegReader.h"
 #include "PlatformInfo.h"
 
@@ -38,6 +35,7 @@ namespace winrt::FFmpegInteropX::implementation
 
     // Static functions passed to FFmpeg
     static int FileStreamRead(void* ptr, uint8_t* buf, int bufSize);
+    static int InputStreamRead(void* ptr, uint8_t* buf, int bufSize);
     static int64_t FileStreamSeek(void* ptr, int64_t pos, int whence);
     static int IsShuttingDown(void* ptr);
 
@@ -98,6 +96,21 @@ namespace winrt::FFmpegInteropX::implementation
         return interopMSS;
     }
 
+    winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromInputStream(
+        IInputStream const& stream,
+        winrt::com_ptr<MediaSourceConfig> const& config,
+        uint64_t windowId,
+        bool useHdr)
+    {
+        auto interopMSS = winrt::make_self<FFmpegMediaSource>(config, windowId, useHdr);
+        auto hr = interopMSS->CreateMediaStreamSource(stream);
+        if (!SUCCEEDED(hr))
+        {
+            throw_hresult(hr);
+        }
+        return interopMSS;
+    }
+
     winrt::com_ptr<FFmpegMediaSource> FFmpegMediaSource::CreateFromUri(
         hstring const& uri,
         winrt::com_ptr<MediaSourceConfig> const& config,
@@ -145,6 +158,96 @@ namespace winrt::FFmpegInteropX::implementation
         if (SUCCEEDED(hr))
         {
             avIOCtx = avio_alloc_context(fileStreamBuffer, config->General().FileStreamReadSize(), 0, (void*)winrt::get_abi(this), FileStreamRead, 0, FileStreamSeek);
+            if (avIOCtx == nullptr)
+            {
+                av_free(fileStreamBuffer);
+                hr = E_OUTOFMEMORY;
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            avFormatCtx = avformat_alloc_context();
+            if (avFormatCtx == nullptr)
+            {
+                hr = E_OUTOFMEMORY;
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            // Populate AVDictionary avDict based on PropertySet ffmpegOptions. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
+            hr = ParseOptions(config->FFmpegOptions());
+        }
+
+
+        if (SUCCEEDED(hr))
+        {
+            // Populate AVDictionary avDict based on additional ffmpegOptions. List of options can be found in https://www.ffmpeg.org/ffmpeg-protocols.html
+            hr = ParseOptions(config->AdditionalFFmpegSubtitleOptions);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            // Register callback for fast dispose
+            avFormatCtx->interrupt_callback.callback = IsShuttingDown;
+            avFormatCtx->interrupt_callback.opaque = this;
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            avFormatCtx->pb = avIOCtx;
+            avFormatCtx->flags |= AVFMT_FLAG_CUSTOM_IO;
+            // Open media file using custom IO setup above instead of using file name. Opening a file using file name will invoke fopen C API call that only have
+            // access within the app installation directory and appdata folder. Custom IO allows access to file selected using FilePicker dialog.
+            if (avformat_open_input(&avFormatCtx, "", NULL, &avDict) < 0)
+            {
+                hr = E_FAIL; // Error opening file
+            }
+
+            // avDict is not NULL only when there is an issue with the given ffmpegOptions such as invalid key, value type etc. Iterate through it to see which one is causing the issue.
+            if (avDict != nullptr)
+            {
+                DebugMessage(L"Invalid FFmpeg option(s)");
+                av_dict_free(&avDict);
+
+                avDict = nullptr;
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            hr = InitFFmpegContext();
+        }
+
+        return hr;
+    }
+
+    HRESULT FFmpegMediaSource::CreateMediaStreamSource(IInputStream const& stream)
+    {
+        HRESULT hr = S_OK;
+        if (!stream)
+        {
+            hr = E_INVALIDARG;
+        }
+
+        inputStream = stream;
+
+        unsigned char* fileStreamBuffer = NULL;
+        if (SUCCEEDED(hr))
+        {
+            // Setup FFmpeg custom IO to access file as stream. This is necessary when accessing any file outside of app installation directory and appdata folder.
+            // Credit to Philipp Sch http://www.codeproject.com/Tips/489450/Creating-Custom-FFmpeg-IO-Context
+            fileStreamBuffer = (unsigned char*)av_malloc(config->General().FileStreamReadSize());
+            if (fileStreamBuffer == nullptr)
+            {
+                hr = E_OUTOFMEMORY;
+            }
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            avIOCtx = avio_alloc_context(fileStreamBuffer, config->General().FileStreamReadSize(), 0, (void*)winrt::get_abi(this), InputStreamRead, 0, 0);
             if (avIOCtx == nullptr)
             {
                 av_free(fileStreamBuffer);
@@ -359,6 +462,19 @@ namespace winrt::FFmpegInteropX::implementation
         CheckUseHdr(configImpl, IsOnUIThread(), useHdr, windowId);
         co_await winrt::resume_background();
         auto result = CreateFromStream(stream, configImpl, windowId, useHdr);
+        co_await caller;
+        co_return result.as<FFmpegInteropX::FFmpegMediaSource>();
+    }
+
+    IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromInputStreamInternalAsync(
+        IInputStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
+    {
+        winrt::apartment_context caller; // Capture calling context.
+        auto configImpl = config.as<winrt::FFmpegInteropX::implementation::MediaSourceConfig>();
+        bool useHdr = false;
+        CheckUseHdr(configImpl, IsOnUIThread(), useHdr, windowId);
+        co_await winrt::resume_background();
+        auto result = CreateFromInputStream(stream, configImpl, windowId, useHdr);
         co_await caller;
         co_return result.as<FFmpegInteropX::FFmpegMediaSource>();
     }
@@ -2593,6 +2709,54 @@ namespace winrt::FFmpegInteropX::implementation
             return out.QuadPart; // Return the new position:
         }
     }
+
+
+    // Static functions passed to FFmpeg
+    static int InputStreamRead(void* ptr, uint8_t* buf, int bufSize)
+    {
+        FFmpegMediaSource* mss = reinterpret_cast<FFmpegMediaSource*>(ptr);
+        ULONG bytesRead = 0;
+        auto buffer = NativeBuffer::NativeBufferFactory::CreateNativeBuffer(buf, bufSize);
+        auto readFunction = mss->inputStream.ReadAsync(buffer, bufSize, InputStreamOptions::None);
+        auto resultBuffer = readFunction.get();
+
+        // The buffer returned by ReadAsync may not be the same as the one we passed in. In that case, we need to copy the data to our original buffer.
+        if (resultBuffer != buffer)
+        {
+            auto resultData = resultBuffer.data();
+            auto resultSize = resultBuffer.Length();
+            if (resultSize > (ULONG)bufSize)
+            {
+                return -1;
+            }
+            memcpy(buf, resultData, resultSize);
+        }
+        bytesRead = resultBuffer.Length();
+
+        // If we succeed but don't have any bytes, assume end of file
+        if (bytesRead == 0)
+        {
+            return AVERROR_EOF;  // Let FFmpeg know that we have reached eof
+        }
+
+        // Check encoding in case of external subtitle parser
+        if (!mss->streamEncodingChecked && mss->config->IsExternalSubtitleParser && !mss->config->Subtitles().ExternalSubtitleEncoding())
+        {
+            // first check BOM
+            auto encoding = TextEncodingDetect::CheckBOM(buf, bytesRead);
+            if (encoding == TextEncodingDetect::None)
+            {
+                TextEncodingDetect detect;
+                encoding = detect.DetectEncoding(buf, bytesRead);
+            }
+
+            mss->streamEncoding = encoding;
+            mss->streamEncodingChecked = true;
+        }
+
+        return bytesRead;
+    }
+
 
     static int IsShuttingDown(void* ptr)
     {
