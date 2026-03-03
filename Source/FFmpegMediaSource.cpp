@@ -12,6 +12,7 @@
 #include "CodecChecker.h"
 #include "MediaSampleProvider.h"
 #include "SubtitleProviderSsaAss.h"
+#include "SubtitleProviderLibass.h"
 #include "SubtitleProviderBitmap.h"
 #include "FFmpegReader.h"
 #include "PlatformInfo.h"
@@ -924,7 +925,17 @@ namespace winrt::FFmpegInteropX::implementation
                     {
                         if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_TEXT_SUB) == AV_CODEC_PROP_TEXT_SUB)
                         {
-                            avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, attachedFileHelper));
+                            auto cn = config.as<winrt::FFmpegInteropX::MediaSourceConfig>();
+
+                            if (SubtitleProvider::CodecContextIsSsaAss(avSubsCodecCtx))
+                            {
+                                auto libassProvider = new SubtitleProviderLibass(m_pReader, avFormatCtx, avSubsCodecCtx, cn, index, attachedFileHelper);
+                                avSubsStream = std::shared_ptr<SubtitleProvider>(libassProvider);
+                            }
+                            else
+                            {
+                                avSubsStream = std::shared_ptr<SubtitleProvider>(new SubtitleProviderSsaAss(m_pReader, avFormatCtx, avSubsCodecCtx, cn, index, attachedFileHelper));
+                            }
                         }
                         else if ((avSubsCodecCtx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) == AV_CODEC_PROP_BITMAP_SUB)
                         {
@@ -1577,6 +1588,7 @@ namespace winrt::FFmpegInteropX::implementation
         subConfig->Subtitles().MinimumSubtitleDuration(config.Subtitles().MinimumSubtitleDuration());
         subConfig->Subtitles().AdditionalSubtitleDuration(config.Subtitles().AdditionalSubtitleDuration());
         subConfig->Subtitles().PreventModifiedSubtitleDurationOverlap(config.Subtitles().PreventModifiedSubtitleDurationOverlap());
+       // subConfig->Subtitles().UseLibassAsSubtitleRenderer(config.Subtitles().UseLibassAsSubtitleRenderer());
 
         if (videoDescriptor)
         {
@@ -2256,6 +2268,17 @@ namespace winrt::FFmpegInteropX::implementation
                 {
                     // assign device and context
                     for (auto& stream : videoStreams)
+                    {
+                        // set device pointers to stream
+                        hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+
+                        if (!SUCCEEDED(hr))
+                        {
+                            break;
+                        }
+                    }
+
+                    for (auto& stream : subtitleStreamProviders)
                     {
                         // set device pointers to stream
                         hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);

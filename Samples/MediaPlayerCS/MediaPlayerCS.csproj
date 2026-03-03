@@ -11,8 +11,8 @@
     <AssemblyName>MediaPlayerCS</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
-    <TargetPlatformVersion>$(WindowsTargetPlatformVersion)</TargetPlatformVersion>
-    <TargetPlatformMinVersion>$(WindowsTargetPlatformMinVersion)</TargetPlatformMinVersion>
+    <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <EnableDotNetNativeCompatibleProfile>true</EnableDotNetNativeCompatibleProfile>
     <FileAlignment>512</FileAlignment>
@@ -154,14 +154,23 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX.UWP.FFmpeg">
-      <Version>7.0.100-pre3</Version>
+      <Version>7.1.0-libass2</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.9</Version>
     </PackageReference>
+    <PackageReference Include="Win2D.uwp">
+      <Version>1.28.1</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AssSsaRenderElement\AssSsaRenderElement.vcxproj">
+      <Project>{cbed4d40-9319-4aa3-9616-80144e8083ac}</Project>
+      <Name>AssSsaRenderElement</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(Configuration)'=='Debug'">
@@ -170,10 +179,10 @@
           <Project>{9cfa3b3e-b7af-4629-84e2-c962c5b046b1}</Project>
           <Name>FFmpegInteropX</Name>
         </ProjectReference>
-		<ProjectReference Include="..\..\VideoEffects\FFmpegInteropX.VideoEffects.vcxproj">
-		  <Project>{6c4bff5e-7037-4ee8-9c9f-5381c35ba066}</Project>
-		  <Name>FFmpegInteropX.VideoEffects</Name>
-		</ProjectReference>
+        <ProjectReference Include="..\..\VideoEffects\FFmpegInteropX.VideoEffects.vcxproj">
+          <Project>{6c4bff5e-7037-4ee8-9c9f-5381c35ba066}</Project>
+          <Name>FFmpegInteropX.VideoEffects</Name>
+        </ProjectReference>
       </ItemGroup>
     </When>
     <Otherwise>

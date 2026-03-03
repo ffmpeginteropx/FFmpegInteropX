@@ -31,6 +31,21 @@ namespace winrt::FFmpegInteropX::implementation
             return isDefault;
         }
         int streamIndex = -1;
+
+        
+        bool Renderable()
+        {
+            return renderable;
+        }
+
+        /*private*/
+        void Renderable(bool value)
+        {
+            renderable = value;
+        }
+
+    private:
+        bool renderable = false;
     };
 }
 namespace winrt::FFmpegInteropX::factory_implementation

@@ -224,6 +224,19 @@ namespace winrt::FFmpegInteropX::implementation
 
         FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig, uint64_t windowId, bool useHdr);
 
+        winrt::FFmpegInteropX::SubtitleRenderResult RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, winrt::FFmpegInteropX::SubtitleStreamInfo const& subtitle, winrt::Windows::Foundation::TimeSpan const& position, bool forceRender)
+        {
+            for (auto& subProvider : subtitleStreamProviders)
+            {
+                if (subProvider->SubtitleInfo() == subtitle)
+                {
+                    return subProvider->RenderSubtitlesToDirectXSurface(rendertarget, position, forceRender).as<winrt::FFmpegInteropX::SubtitleRenderResult>();
+                }
+            }
+
+            return winrt::make_self<implementation::SubtitleRenderResult>().as<winrt::FFmpegInteropX::SubtitleRenderResult>();
+        }
+
     private:
 
         HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);
@@ -257,6 +270,8 @@ namespace winrt::FFmpegInteropX::implementation
 
         void Close(bool onMediaSourceClosed);
         static bool IsOnUIThread();
+
+
 
     public://internal:
         static IAsyncOperation<winrt::FFmpegInteropX::FFmpegMediaSource> ReadExternalSubtitleStreamAsync(IRandomAccessStream stream, hstring streamName, winrt::FFmpegInteropX::MediaSourceConfig const& config, VideoStreamDescriptor videoDescriptor, DispatcherQueue dispatcher, uint64_t windowId, bool useHdr);

@@ -10,10 +10,15 @@ param(
         14.16
         14.16.27023
         14.23.27820
-
-        Note. The PlatformToolset will be inferred from this value ('v141', 'v142'...)
     #>
-    [version] $VcVersion = '14.3',
+    [version] $VcVersion = '14.4',
+
+    <#
+        Example values:
+        v141
+        v142
+    #>
+    [string] $PlatformToolset = 'v143',
 
     <#
         Example values:
@@ -124,10 +129,6 @@ $ErrorActionPreference = "Stop"
 
 Write-Host "Visual Studio Installation folder: [$vsLatestPath]"
 
-# 14.16.27023 => v141
-$platformToolSet = "v$($VcVersion.Major)$("$($VcVersion.Minor)"[0])"
-Write-Host "Platform Toolset: [$platformToolSet]"
-
 # Export full current PATH from environment into MSYS2
 $env:MSYS2_PATH_TYPE = 'inherit'
 
@@ -175,7 +176,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
             continue;
         }
 
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" -LibraryVersionNumber $LibraryVersionNumber $addparams"
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -VcVersion $VcVersion -PlatformToolset $PlatformToolset -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" -LibraryVersionNumber $LibraryVersionNumber $addparams"
         $processes[$platform] = $proc
     }
 
@@ -214,7 +215,7 @@ else
             Build-Platform `
                 -SolutionDir "${PSScriptRoot}\" `
                 -Platform $platform `
-                -PlatformToolset $platformToolSet `
+                -PlatformToolset $PlatformToolset `
                 -VsLatestPath $vsLatestPath `
                 -LibraryVersionNumber $LibraryVersionNumber
         }

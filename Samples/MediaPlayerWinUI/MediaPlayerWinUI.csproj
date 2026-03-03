@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.22000.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.26100.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <WindowsSdkPackageVersion>10.0.22621.38</WindowsSdkPackageVersion>
     <Platforms>x64;x86;ARM64</Platforms>
     <UseWinUI>true</UseWinUI>
     <RuntimeIdentifiers>win-x64;win-x86;win-arm64</RuntimeIdentifiers>
@@ -29,7 +30,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="FFmpegInteropX.Desktop.FFmpeg" Version="7.0.100-pre3" />
+    <PackageReference Include="FFmpegInteropX.Desktop.FFmpeg" Version="7.1.0-libass2" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.240227000" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />

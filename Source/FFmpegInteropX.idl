@@ -209,6 +209,8 @@ namespace FFmpegInteropX
         Boolean IsForced{ get; };
 
         Windows.Media.Core.TimedMetadataTrack SubtitleTrack{ get; };
+
+        Boolean Renderable{ get; };
     }
 
 #ifdef UWP
@@ -303,6 +305,12 @@ namespace FFmpegInteropX
         UInt32 DisplayHeight{ get; };
 
         Double DisplayAspectRatio{ get; };
+    };
+
+    runtimeclass SubtitleRenderResult
+    {
+        Boolean Succeeded {get; };
+        Boolean HasChanged {get; };
     };
 
     static runtimeclass CodecChecker
@@ -578,6 +586,10 @@ namespace FFmpegInteropX
 
         ///<summary>Gets the presentation timestamp delay for the given stream. </summary>
         Windows.Foundation.TimeSpan GetStreamDelay(IStreamInfo stream);
+
+        ///<summary>Renders subtitles from the given stream at the current video position. </summary>
+        SubtitleRenderResult RenderSubtitlesToDirectXSurface(Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface renderTarget, SubtitleStreamInfo subtitle, Windows.Foundation.TimeSpan position, Boolean forceRender);
+        
     };
 
     runtimeclass SubtitleParser : Windows.Foundation.IClosable
@@ -721,6 +733,9 @@ namespace FFmpegInteropX
     {
         ///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>
         Boolean AutoSelectForcedSubtitles{ get; set; };
+
+        ///<summary>Enabling or disbaling libass usage</summary>
+        Boolean UseLibassAsSubtitleRenderer{ get; set; };
 
         ///<summary>Use SubtitleRegion and SubtitleStyle from config class, even if custom styles are defined for a subtitle.</summary>
         Boolean OverrideSubtitleStyles{ get; set; };

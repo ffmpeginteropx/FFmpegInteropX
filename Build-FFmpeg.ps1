@@ -2,7 +2,7 @@ param(
 
     [ValidateSet('x86', 'x64', 'ARM', 'ARM64')]
     [string[]] $Platforms = ('x86', 'x64', 'ARM64'),
-
+    
     <#
         Example values:
         14.1
@@ -13,7 +13,14 @@ param(
 
         Note. The PlatformToolset will be inferred from this value ('v141', 'v142'...)
     #>
-    [version] $VcVersion = '14.3',
+    [version] $VcVersion = '14.4',
+
+    <#
+        Example values:
+        v141
+        v142
+    #>
+    [string] $PlatformToolset = 'v143',
 
     [ValidateSet('UWP', 'Desktop')]
     [string] $WindowsTarget = 'UWP',
@@ -117,10 +124,20 @@ function Build-Platform {
 
     New-Item -ItemType Directory -Force $SolutionDir\Intermediate\FFmpeg$WindowsTarget\$Platform -OutVariable build | Out-Null
     New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform -OutVariable target | Out-Null
+    New-Item -ItemType Directory -Force $SolutionDir\Output\FFmpeg$WindowsTarget\$Platform\bin | Out-Null
     
     $env:LIB += ";$build\lib"
     $env:INCLUDE += ";$build\include"
-    $env:Path += ";$SolutionDir\Libs\gas-preprocessor"	
+    $env:INCLUDE += ";$build\include\harfbuzz"
+    $env:INCLUDE += ";$build\include\freetype2"
+    $env:Path += ";$SolutionDir\Libs\gas-preprocessor"
+
+    # Copy wang-bin
+    Write-Host Copying wang-bin pre-built binaries...
+    Get-ChildItem $WangBin\install\$Platform | Copy-Item -Destination $build\ -Force -Recurse
+    Copy-Item $build\bin\libass.dll $target\bin\
+    Copy-Item $build\lib\ass.lib $target\bin\
+    Copy-Item $WangBin\install\$Platform\include\ass $target\include\ -Force -Recurse
         
     if (! $SkipBuildLibs)
     {
@@ -457,10 +474,6 @@ if (!$vsLatestPath){
 
 Write-Host "Visual Studio Installation folder: [$vsLatestPath]"
 
-# 14.16.27023 => v141
-$platformToolSet = "v$($VcVersion.Major)$("$($VcVersion.Minor)"[0])"
-Write-Host "Platform Toolset: [$platformToolSet]"
-
 # Export full current PATH from environment into MSYS2
 $env:MSYS2_PATH_TYPE = 'inherit'
 
@@ -475,6 +488,40 @@ if ($NugetPackageVersion)
     {
         Write-Error "nuget.exe not found."
     }
+}
+
+# Check for 7z.exe
+$7z = @(cmd /c "where.exe 7z.exe 2>nul")[0]
+if (-not $7z) {
+    $7z = "$Env:ProgramFiles\7-zip\7z.exe"
+    if (-not (Test-Path $7z)) {
+        Write-Error "7z.exe not found."
+    }
+}
+
+$IntDir = "${PSScriptRoot}\Intermediate\FFmpeg$WindowsTarget"
+$WangBin  = "$IntDir\wang-bin"
+if (-not (Test-Path "$WangBin\install")) {
+
+    Write-Host
+    Write-Host Downloading wang-bin binaries...
+    Write-Host
+
+    $WangTmp = "$IntDir\wang-tmp"
+    New-Item -ItemType Directory -Force $WangTmp
+    New-Item -ItemType Directory -Force $WangBin
+    Get-ChildItem $WangTmp | Remove-Item -Force -Recurse
+    Get-ChildItem $WangBin | Remove-Item -Force -Recurse
+    if ($WindowsTarget = "UWP") {
+        $url = "https://nightly.link/wang-bin/devpkgs/workflows/build/main/devpkgs-vs2022-uwp-Release.zip"
+    } else {
+        $url = "https://nightly.link/wang-bin/devpkgs/workflows/build/main/devpkgs-vs2022-windows-desktop-Release.zip"
+    }
+    & curl.exe -L -o $WangTmp\temp.zip $url
+    & $7z x $WangTmp\temp.zip "-o$WangTmp" -y
+    $file = Get-ChildItem $WangTmp -Filter "*.7z"
+    & $7z x $file.FullName "-o$WangTmp" -y
+    Move-Item "$WangTmp\install" "$WangBin\install"
 }
 
 $start = Get-Date
@@ -506,7 +553,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
         {
             $skip
         }
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -Gpl $Gpl -Encoders $Encoders -Devices $Devices -Programs $Programs -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -PlatformToolset $PlatformToolset -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -Gpl $Gpl -Encoders $Encoders -Devices $Devices -Programs $Programs -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
         $processes[$platform] = $proc
     
         # only build PkgConfigFake once
@@ -550,7 +597,7 @@ else
                 -Configuration 'Release' `
                 -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
                 -VcVersion $VcVersion `
-                -PlatformToolset $platformToolSet `
+                -PlatformToolset $PlatformToolSet `
                 -VsLatestPath $vsLatestPath `
                 -BashExe $BashExe `
                 -LogFileName $logFile `
