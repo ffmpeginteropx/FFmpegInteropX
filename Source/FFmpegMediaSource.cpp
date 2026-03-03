@@ -1388,7 +1388,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
         for (int i = 0; i < audioStreams.size(); i++)
         {
-            if (audioStreams.at(i)->VideoInfo() == audioStream)
+            if (audioStreams.at(i)->AudioInfo() == audioStream)
             {
                 audioStreams.at(i)->SendFFmpegFilterCommand(target, command, arguments);
             }
