@@ -11,6 +11,9 @@
     <license type="expression">LGPL-2.1-or-later AND Zlib AND MIT</license>
     <dependencies>
       <group targetFramework="uap10.0" />
+      <group targetFramework="net9.0-windows$winsdk$">
+        <dependency id="Microsoft.Windows.CsWinRT" version="2.0" />
+      </group>
     </dependencies>
     <repository type="git" url="$repositoryUrl$" commit="$repositoryCommit$" />
   </metadata>

@@ -11,6 +11,9 @@
     <license type="expression">Apache-2.0</license>
     <dependencies>
       <group targetFramework="uap10.0.17763.0" />
+      <group targetFramework="net6.0-windows$winsdk$">
+        <dependency id="Microsoft.Windows.CsWinRT" version="2.0" />
+      </group>
     </dependencies>
     <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
   </metadata>
