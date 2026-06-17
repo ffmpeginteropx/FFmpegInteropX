@@ -157,7 +157,7 @@
       <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
       <DisableSpecificWarnings>28204;4635;4634</DisableSpecificWarnings>
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <SDLCheck>false</SDLCheck>
       <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM'">stdc17</LanguageStandard_C>
       <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM'">stdc17</LanguageStandard_C>

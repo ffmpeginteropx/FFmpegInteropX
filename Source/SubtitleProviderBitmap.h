@@ -131,6 +131,7 @@ private:
 
     void OnCueEntered(TimedMetadataTrack sender, MediaCueEventArgs args)
     {
+        UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
         try
         {
@@ -156,6 +157,7 @@ private:
 
     void OnCueExited(TimedMetadataTrack sender, MediaCueEventArgs args)
     {
+        UNREFERENCED_PARAMETER(sender);
         std::lock_guard lock(mutex);
         try
         {
