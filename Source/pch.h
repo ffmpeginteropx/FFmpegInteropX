@@ -90,7 +90,7 @@ extern "C"
 template<class T>
 std::vector<T> inline to_vector(IVector<T> input)
 {
-    return to_vector(input.GetView())
+    return to_vector(input.GetView());
 }
 
 template<class T>
