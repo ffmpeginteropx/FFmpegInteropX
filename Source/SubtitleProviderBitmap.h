@@ -6,12 +6,6 @@
 using namespace winrt::Windows::Graphics::Imaging;
 using namespace winrt::Windows::Media::Core;
 
-#ifdef Win32
-using namespace winrt::Microsoft::UI::Dispatching;
-#else
-using namespace winrt::Windows::System;
-#endif
-
 class SubtitleProviderBitmap : public SubtitleProvider
 {
 
