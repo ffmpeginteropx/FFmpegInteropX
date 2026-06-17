@@ -204,11 +204,11 @@ namespace winrt::FFmpegInteropX::implementation
                             {
                                 hardwareAccelerationH264.IsAvailable = true;
                                 hardwareAccelerationH264.MaxResolution = CheckResolution(profile, videoDevice);
-                                hardwareAccelerationH264.AppendProfile(FF_PROFILE_H264_BASELINE);
-                                hardwareAccelerationH264.AppendProfile(FF_PROFILE_H264_CONSTRAINED_BASELINE);
-                                hardwareAccelerationH264.AppendProfile(FF_PROFILE_H264_EXTENDED);
-                                hardwareAccelerationH264.AppendProfile(FF_PROFILE_H264_MAIN);
-                                hardwareAccelerationH264.AppendProfile(FF_PROFILE_H264_HIGH);
+                                hardwareAccelerationH264.AppendProfile(AV_PROFILE_H264_BASELINE);
+                                hardwareAccelerationH264.AppendProfile(AV_PROFILE_H264_CONSTRAINED_BASELINE);
+                                hardwareAccelerationH264.AppendProfile(AV_PROFILE_H264_EXTENDED);
+                                hardwareAccelerationH264.AppendProfile(AV_PROFILE_H264_MAIN);
+                                hardwareAccelerationH264.AppendProfile(AV_PROFILE_H264_HIGH);
                             }
                             continue;
                         }
@@ -223,11 +223,11 @@ namespace winrt::FFmpegInteropX::implementation
 
                             if (profile == D3D11_DECODER_PROFILE_HEVC_VLD_MAIN)
                             {
-                                hardwareAccelerationHEVC.AppendProfile(FF_PROFILE_HEVC_MAIN, resolution);
+                                hardwareAccelerationHEVC.AppendProfile(AV_PROFILE_HEVC_MAIN, resolution);
                             }
                             else
                             {
-                                hardwareAccelerationHEVC.AppendProfile(FF_PROFILE_HEVC_MAIN_10, resolution);
+                                hardwareAccelerationHEVC.AppendProfile(AV_PROFILE_HEVC_MAIN_10, resolution);
                             }
                             continue;
                         }
@@ -238,8 +238,8 @@ namespace winrt::FFmpegInteropX::implementation
                             if (!hardwareAccelerationMPEG2.IsAvailable)
                             {
                                 hardwareAccelerationMPEG2.IsAvailable = true;
-                                hardwareAccelerationMPEG2.AppendProfile(FF_PROFILE_MPEG2_MAIN);
-                                hardwareAccelerationMPEG2.AppendProfile(FF_PROFILE_MPEG2_SIMPLE);
+                                hardwareAccelerationMPEG2.AppendProfile(AV_PROFILE_MPEG2_MAIN);
+                                hardwareAccelerationMPEG2.AppendProfile(AV_PROFILE_MPEG2_SIMPLE);
                             }
 
                             auto resolution = CheckResolution(profile, videoDevice);
@@ -270,11 +270,11 @@ namespace winrt::FFmpegInteropX::implementation
 
                             if (profile == D3D11_DECODER_PROFILE_VP9_VLD_PROFILE0)
                             {
-                                hardwareAccelerationVP9.AppendProfile(FF_PROFILE_VP9_0, resolution);
+                                hardwareAccelerationVP9.AppendProfile(AV_PROFILE_VP9_0, resolution);
                             }
                             else
                             {
-                                hardwareAccelerationVP9.AppendProfile(FF_PROFILE_VP9_2, resolution);
+                                hardwareAccelerationVP9.AppendProfile(AV_PROFILE_VP9_2, resolution);
                             }
                             continue;
                         }

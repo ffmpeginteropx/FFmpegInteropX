@@ -2037,7 +2037,7 @@ namespace winrt::FFmpegInteropX::implementation
             }
             else
             {
-                encodingProperties = AudioEncodingProperties::CreateAac(avAudioCodecCtx->profile == FF_PROFILE_AAC_HE || avAudioCodecCtx->profile == FF_PROFILE_AAC_HE_V2 ? avAudioCodecCtx->sample_rate / 2 : avAudioCodecCtx->sample_rate, avAudioCodecCtx->ch_layout.nb_channels, (unsigned int)avAudioCodecCtx->bit_rate);
+                encodingProperties = AudioEncodingProperties::CreateAac(avAudioCodecCtx->profile == AV_PROFILE_AAC_HE || avAudioCodecCtx->profile == AV_PROFILE_AAC_HE_V2 ? avAudioCodecCtx->sample_rate / 2 : avAudioCodecCtx->sample_rate, avAudioCodecCtx->ch_layout.nb_channels, (unsigned int)avAudioCodecCtx->bit_rate);
             }
             audioSampleProvider = std::shared_ptr<MediaSampleProvider>(new CompressedSampleProvider(m_pReader, avFormatCtx, avAudioCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, encodingProperties, HardwareDecoderStatus::Unknown));
         }

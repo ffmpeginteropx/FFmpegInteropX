@@ -709,14 +709,14 @@ namespace FFmpegInteropX
         ///<summary>The HDR color support mode. Default is Automatic.</summary>
         HdrSupport HdrSupport{ get; set; };
 
-        ///<summary>Max profile allowed for H264 system decoder. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
+        ///<summary>Max profile allowed for H264 system decoder. Default: High Profile (100). See AV_PROFILE_H264_* values.</summary>
         Int32 SystemDecoderH264MaxProfile{ get; set; };
 
         ///<summary>Max level allowed for H264 system decoder. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
         ///<remarks>Most H264 HW decoders only support Level 4.1, so this is the default.</remarks>
         Int32 SystemDecoderH264MaxLevel{ get; set; };
 
-        ///<summary>Max profile allowed for HEVC system decoder. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
+        ///<summary>Max profile allowed for HEVC system decoder. Default: High10 Profile (2). See AV_PROFILE_HEVC_* values.</summary>
         Int32 SystemDecoderHEVCMaxProfile{ get; set; };
 
         ///<summary>Max level allowed for HEVC system decoder. Default: Disabled (-1).</summary>
