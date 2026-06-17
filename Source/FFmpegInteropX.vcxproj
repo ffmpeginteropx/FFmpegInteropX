@@ -111,7 +111,7 @@
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <GenerateManifest>false</GenerateManifest>
-    <DesktopCompatible Condition="'$(AppType)'=='Win32'">true"</DesktopCompatible>
+    <DesktopCompatible Condition="'$(AppType)'=='Win32'">true</DesktopCompatible>
   </PropertyGroup>
   <PropertyGroup Condition="'$(ConfigType)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
