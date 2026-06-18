@@ -11,7 +11,7 @@
     <license type="expression">Apache-2.0</license>
     <dependencies>
       <group targetFramework="net6.0-windows$winsdk$">
-        <dependency id="Microsoft.Windows.CsWinRT" version="2.0" />
+        <dependency id="Microsoft.Windows.CsWinRT" version="2.2.0" />
       </group>
       <group targetFramework="native" />
     </dependencies>
