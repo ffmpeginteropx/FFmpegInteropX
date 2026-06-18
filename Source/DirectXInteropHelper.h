@@ -8,4 +8,6 @@ public:
     static HRESULT GetDXGISurface(const IDirect3DSurface& source, winrt::com_ptr<IDXGISurface>& dxgiSurface);
     static HRESULT GetDeviceFromStreamSource(const winrt::com_ptr<IMFDXGIDeviceManager>& deviceManager, winrt::com_ptr<ID3D11Device> &outDevice, winrt::com_ptr<ID3D11DeviceContext>& outDeviceContext, winrt::com_ptr<ID3D11VideoDevice>& outVideoDevice, HANDLE* outDeviceHandle);
     static HRESULT GetDeviceManagerFromStreamSource(const winrt::Windows::Media::Core::MediaStreamSource& source, winrt::com_ptr<IMFDXGIDeviceManager>& deviceManager);
+    static bool CheckConnectedMonitorsForHDR();
+
 };

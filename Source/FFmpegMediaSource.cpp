@@ -43,7 +43,7 @@ namespace winrt::FFmpegInteropX::implementation
     std::mutex isRegisteredMutex;
 
     FFmpegMediaSource::FFmpegMediaSource(winrt::com_ptr<MediaSourceConfig> const& interopConfig,
-         uint64_t windowId, bool useHdr)
+        uint64_t windowId, bool useHdr)
         : config(interopConfig)
         , isFirstSeek(true)
         , windowId(windowId)
@@ -2009,18 +2009,7 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 try
                 {
-#ifdef Win32
-                    if (PlatformInfo::IsWinUI())
-                    {
-                        useHdr = Win32CheckHdr(windowId);
-                    }
-                    else
-                    {
-                        useHdr = UwpCheckUseHdr(windowId);
-                    }
-#else // UWP
                     useHdr = UwpCheckUseHdr(windowId);
-#endif // Win32
                 }
                 catch (...)
                 {
@@ -2032,32 +2021,9 @@ namespace winrt::FFmpegInteropX::implementation
         }
     }
 
-#ifdef Win32
-
-    bool FFmpegMediaSource::Win32CheckHdr(uint64_t& windowId)
-    {
-        if (windowId)
-        {
-            Microsoft::UI::WindowId id{ windowId };
-            auto displayInfo = Microsoft::Graphics::Display::DisplayInformation::CreateForWindowId(id);
-            if (displayInfo)
-            {
-                auto colorInfo = displayInfo.GetAdvancedColorInfo();
-                if (colorInfo.CurrentAdvancedColorKind() == Microsoft::Graphics::Display::DisplayAdvancedColorKind::HighDynamicRange)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-#endif //Win32
-
-
     bool FFmpegMediaSource::UwpCheckUseHdr(uint64_t& windowId)
     {
+
         UNREFERENCED_PARAMETER(windowId);
 
         if (PlatformInfo::IsXbox())
@@ -2075,15 +2041,8 @@ namespace winrt::FFmpegInteropX::implementation
         }
         else
         {
-            auto displayInfo = Windows::Graphics::Display::DisplayInformation::GetForCurrentView();
-            if (displayInfo)
-            {
-                auto colorInfo = displayInfo.GetAdvancedColorInfo();
-                if (colorInfo.CurrentAdvancedColorKind() == Windows::Graphics::Display::AdvancedColorKind::HighDynamicRange)
-                {
-                    return true;
-                }
-            }
+            return DirectXInteropHelper::CheckConnectedMonitorsForHDR();
+
         }
 
         return false;
