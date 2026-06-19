@@ -91,7 +91,7 @@ function Build-Platform {
 
     if ($lastexitcode -ne 0) { throw "Failed to build library FFmpegInteropX.vcxproj." }
 
-    if ($Platform -eq "x64" -and $WindowsTarget -ne "UWP")
+    if ($Platform -eq "x64")
     {
         MSBuild.exe $SolutionDir\FFmpegInteropX.sln `
             /restore `

@@ -11,13 +11,16 @@
     <license type="expression">Apache-2.0</license>
     <dependencies>
       <group targetFramework="uap10.0.17763.0" />
-      <group targetFramework="net6.0-windows$winsdk$">
+      <group targetFramework="net9.0-windows$winsdk$">
         <dependency id="Microsoft.Windows.CsWinRT" version="2.2.0" />
       </group>
     </dependencies>
     <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
   </metadata>
   <files>
+
+    <file src="..\Output\FFmpegInteropX.DotNet\Release\FFmpegInteropX.DotNet.dll"   target="lib\net9.0-windows$winsdk$" />
+    <file src="..\Output\FFmpegInteropX.DotNet\Release\FFmpegInteropX.xml"          target="lib\net9.0-windows$winsdk$" />
 
     <file src="..\Output\FFmpegInteropX\x64\Release_UWP\FFmpegInteropX.winmd"   target="lib\uap10" />
     <file src="..\Output\FFmpegInteropX\x64\Release_UWP\FFmpegInteropX.xml"     target="lib\uap10" />
