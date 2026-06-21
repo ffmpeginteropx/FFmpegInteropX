@@ -87,7 +87,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri)
         {
             return CreateFromUriInternalAsync(uri, FFmpegInteropX::MediaSourceConfig(), 0);
         }

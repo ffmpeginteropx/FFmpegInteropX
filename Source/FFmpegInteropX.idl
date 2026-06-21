@@ -176,7 +176,7 @@ namespace FFmpegInteropX
         /// This must be set before calling CreatePlaybackItem().
         /// Setting this can cause A/V desync, since it will only affect this stream.
         /// </remarks>
-        Double FramesPerSecondOverride{ get; };
+        Double FramesPerSecondOverride{ get; set; };
 
         HardwareDecoderStatus HardwareDecoderStatus{ get; };
         DecoderEngine DecoderEngine{ get; };
@@ -622,7 +622,6 @@ namespace FFmpegInteropX
         void SetStreamDelay(Windows.Foundation.TimeSpan delay);
      }   
 
-    [default_interface]
 #ifdef UWP
     [bindable]
 #endif
@@ -648,7 +647,7 @@ namespace FFmpegInteropX
     };
 
 
- runtimeclass AudioConfig
+    runtimeclass AudioConfig
     {
          ///<summary>Use system decoder for MP3 decoding.</summary>
          ///<remarks>This could allow hardware decoding on some platforms (e.g. Hololens). Not recommended for PC.</remarks>
