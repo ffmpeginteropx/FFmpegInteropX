@@ -20,7 +20,6 @@
 #include <winrt/Microsoft.Graphics.Display.h>
 #include <winrt/Microsoft.UI.Xaml.h>
 #include <winrt/Microsoft.UI.Windowing.h>
-#include <winrt/Microsoft.UI.Interop.h>
 #include <winuser.h>
 #else
 #endif
@@ -824,6 +823,13 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         mss.BufferTime(TimeSpan{ 0 });
+
+        //support playback rate
+        auto maxSupportedPlaybackRate = config->General().MaxSupportedPlaybackRate();
+        if (maxSupportedPlaybackRate > 1.0)
+        {
+            mss.MaxSupportedPlaybackRate(winrt::box_value(maxSupportedPlaybackRate).as<Windows::Foundation::IReference<double>>());
+        }
 
         if (mediaDuration.count() > 0)
         {
