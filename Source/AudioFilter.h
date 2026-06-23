@@ -35,6 +35,8 @@ class AudioFilter : public IAvFilter
     bool isInitialized = false;
     char channel_layout_name[256];
 
+    char command_response[1024];
+
     HRESULT InitFilterGraph(AVFrame* frame)
     {
         //init graph
@@ -215,14 +217,13 @@ public:
         return hr;
     }
 
-
-    HRESULT SendCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) override
+    winrt::hstring SendCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) override
     {
         HRESULT hr;
         if (!isInitialized)
         {
             // not initialized
-            hr = AVERROR(EINVAL);
+            return L"ERR_FILTER_NOT_INITIALIZED";
         }
         else
         {
@@ -230,10 +231,16 @@ public:
             auto cmd = StringUtils::PlatformStringToUtf8String(command);
             auto arg = StringUtils::PlatformStringToUtf8String(arguments);
 
-            hr = avfilter_graph_send_command(graph, trg.c_str(), cmd.c_str(), arg.c_str(), 0, 0, 0);
+            hr = avfilter_graph_send_command(graph, trg.c_str(), cmd.c_str(), arg.c_str(), command_response, sizeof(command_response), 0);
+
+            if (hr < 0)
+            {
+                // command failed
+                return L"ERR_COMMAND_FAILED";
+            }
         }
 
-        return hr;
+        return StringUtils::Utf8ToPlatformString(command_response);
     }
 
     bool IsInitialized() override

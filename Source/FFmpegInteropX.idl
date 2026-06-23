@@ -503,16 +503,20 @@ namespace FFmpegInteropX
         String GetFFmpegVideoFilters(VideoStreamInfo videoStream);
 
         ///<summary>Sends a command to audio filters on all audio streams.</summary>
-        void SendFFmpegAudioFilterCommand(String target, String command, String arguments);
+        ///<returns>The result from the filter command. If multiple audio streams are enabled, the result from the first stream that returns a non-error result will be returned.</returns>
+        String SendFFmpegAudioFilterCommand(String target, String command, String arguments);
 
         ///<summary>Sends a command to audio filters on the specified audio stream.</summary>
-        void SendFFmpegAudioFilterCommand(String target, String command, String arguments, AudioStreamInfo audioStream);
+        ///<returns>The result from the filter command.</returns>
+        String SendFFmpegAudioFilterCommand(String target, String command, String arguments, AudioStreamInfo audioStream);
 
         ///<summary>Sends a command to video filters on all video streams.</summary>
-        void SendFFmpegVideoFilterCommand(String target, String command, String arguments);
+        ///<returns>The result from the filter command. If multiple video streams are enabled, the result from the first stream that returns a non-error result will be returned.</returns>
+        String SendFFmpegVideoFilterCommand(String target, String command, String arguments);
 
         ///<summary>Sends a command to video filters on the specified video stream.</summary>
-        void SendFFmpegVideoFilterCommand(String target, String command, String arguments, VideoStreamInfo videoStream);
+        ///<returns>The result from the filter command.</returns>
+        String SendFFmpegVideoFilterCommand(String target, String command, String arguments, VideoStreamInfo videoStream);
 
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>

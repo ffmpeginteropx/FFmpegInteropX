@@ -116,7 +116,7 @@ public:
     virtual void SetFFmpegFilters(winrt::hstring ffmpegFilters) { UNREFERENCED_PARAMETER(ffmpegFilters); };// override for setting effects in sample providers
     virtual void ClearFFmpegFilters() {};//override for disabling filters in sample providers;
     virtual winrt::hstring GetFFmpegFilters() { return winrt::hstring{}; }//override to get the current ffmpeg filters
-    virtual HRESULT SendFFmpegFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) { UNREFERENCED_PARAMETER(target); UNREFERENCED_PARAMETER(command); UNREFERENCED_PARAMETER(arguments);  return E_FAIL; }; // override for sending command to ffmpeg filters
+    virtual winrt::hstring SendFFmpegFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) { UNREFERENCED_PARAMETER(target); UNREFERENCED_PARAMETER(command); UNREFERENCED_PARAMETER(arguments);  return L"ERR_NOT_IMPLEMENTED"; }; // override for sending command to ffmpeg filters
     virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& videoEncodingProperties, bool isCompressedFormat);
     virtual void Detach();
 

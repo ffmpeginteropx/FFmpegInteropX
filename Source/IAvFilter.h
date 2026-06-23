@@ -15,7 +15,7 @@ public:
 
     virtual HRESULT GetFrame(AVFrame* frame) = 0;
 
-    virtual HRESULT SendCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) = 0;
+    virtual winrt::hstring SendCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) = 0;
 
     virtual bool IsInitialized() = 0;
 };
