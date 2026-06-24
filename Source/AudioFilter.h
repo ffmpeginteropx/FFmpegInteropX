@@ -143,7 +143,7 @@ class AudioFilter : public IAvFilter
         AVSink = avfilter_get_by_name("abuffersink");
         if (!AVSink)
         {
-            fprintf(stderr, "Could not find the abuffersink filter.\n");
+            fprintf(stderr, "Could not find the buffersink filter.\n");
             return AVERROR_FILTER_NOT_FOUND;
         }
 
@@ -217,13 +217,13 @@ public:
         return hr;
     }
 
-    winrt::hstring SendCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) override
+    FilterCommandResult SendCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) override
     {
         HRESULT hr;
         if (!isInitialized)
         {
             // not initialized
-            return L"ERR_FILTER_NOT_INITIALIZED";
+            return FilterCommandResult(false, L"Filter not initialized");
         }
         else
         {
@@ -236,11 +236,11 @@ public:
             if (hr < 0)
             {
                 // command failed
-                return L"ERR_COMMAND_FAILED";
+                return FilterCommandResult(false, L"Command failed");
             }
         }
 
-        return StringUtils::Utf8ToPlatformString(command_response);
+        return  FilterCommandResult(true, StringUtils::Utf8ToPlatformString(command_response));
     }
 
     bool IsInitialized() override

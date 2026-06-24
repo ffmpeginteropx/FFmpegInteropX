@@ -1,5 +1,6 @@
 #pragma once
 #include "winrt/base.h"
+#include "FilterCommandResult.h"
 
 extern "C"
 {
@@ -15,7 +16,7 @@ public:
 
     virtual HRESULT GetFrame(AVFrame* frame) = 0;
 
-    virtual winrt::hstring SendCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) = 0;
+    virtual FilterCommandResult SendCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) = 0;
 
     virtual bool IsInitialized() = 0;
 };

@@ -142,16 +142,16 @@ namespace winrt::FFmpegInteropX::implementation
         hstring GetFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
 
         ///<summary>Sends a command to audio filters on all audio streams.</summary>
-        winrt::hstring SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments);
+        FFmpegInteropX::FilterCommandResult SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments);
 
         ///<summary>Sends a command to audio filters on the specified audio stream.</summary>
-        winrt::hstring SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
+        FFmpegInteropX::FilterCommandResult SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
 
         ///<summary>Sends a command to video filters on all video streams.</summary>
-        winrt::hstring SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments);
+        FFmpegInteropX::FilterCommandResult SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments);
 
         ///<summary>Sends a command to video filters on the specified video stream.</summary>
-        winrt::hstring SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
+        FFmpegInteropX::FilterCommandResult SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
 
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>

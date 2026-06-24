@@ -53,7 +53,7 @@ public:
         filter = nullptr;
     }
 
-    winrt::hstring SendFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments)
+    FilterCommandResult SendFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments)
     {
         if (filter)
         {
@@ -62,7 +62,7 @@ public:
         else
         {
             // no filter assigned
-            return L"ERR_NO_FILTER_ASSIGNED";
+            return FilterCommandResult(false, L"No filter assigned");
         }
     }
 

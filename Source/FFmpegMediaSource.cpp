@@ -1372,25 +1372,24 @@ namespace winrt::FFmpegInteropX::implementation
 
     ///<summary>Sends a command to audio filters on all enabled audio streams.</summary>
     ///<returns>The result from the filter command. If multiple audio streams are enabled, the result from the first stream that returns a non-error result will be returned.</returns>
-    winrt::hstring FFmpegMediaSource::SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments)
+    FFmpegInteropX::FilterCommandResult FFmpegMediaSource::SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments)
     {
         std::lock_guard lock(mutex);
         if (isClosed)
         {
-            return L"ERR_CLOSED";
+            return FFmpegInteropX::FilterCommandResult(false, L"Closed");
         }
-        hstring result = L"ERR_STREAM_DISABLED";
+        bool hasResult = false;
+        auto result = FFmpegInteropX::FilterCommandResult(false, audioStreams.size() > 0 ? L"No enabled streams" : L"No streams");
         for (int i = 0; i < audioStreams.size(); i++)
         {
             if (audioStreams.at(i)->IsEnabled())
             {
                 auto res = audioStreams.at(i)->SendFFmpegFilterCommand(target, command, arguments);
-                if (!res.empty())
+                if (!hasResult || (res.Succeeded() && !result.Succeeded()))
                 {
-                    if (result.starts_with(L"ERR_"))
-                    {
-                        result = res;
-                    }
+                    result = res;
+                    hasResult = true;
                 }
             }
         }
@@ -1399,12 +1398,12 @@ namespace winrt::FFmpegInteropX::implementation
 
     ///<summary>Sends a command to audio filters on the specified audio stream.</summary>
     ///<returns>The result from the filter command.</returns>
-    winrt::hstring FFmpegMediaSource::SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::AudioStreamInfo const& audioStream)
+    FFmpegInteropX::FilterCommandResult FFmpegMediaSource::SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::AudioStreamInfo const& audioStream)
     {
         std::lock_guard lock(mutex);
         if (isClosed)
         {
-            return L"ERR_CLOSED";
+            return FFmpegInteropX::FilterCommandResult(false, L"Closed");
         }
         for (int i = 0; i < audioStreams.size(); i++)
         {
@@ -1412,38 +1411,37 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 if (audioStreams.at(i)->IsEnabled())
                 {
-                    return audioStreams.at(i)->SendFFmpegFilterCommand(target, command, arguments);
+                    return audioStreams.at(i)->SendFFmpegFilterCommand(target, command, arguments).as<FFmpegInteropX::FilterCommandResult>();
                 }
                 else
                 {
-                    return L"ERR_STREAM_DISABLED";
+                    return FFmpegInteropX::FilterCommandResult(false, L"Stream disabled");
                 }
             }
         }
-        return L"ERR_STREAM_NOT_FOUND";
+        return FFmpegInteropX::FilterCommandResult(false, L"Stream not found");
     }
 
     ///<summary>Sends a command to video filters on all enabled video streams.</summary>
     ///<returns>The result from the filter command. If multiple video streams are enabled, the result from the first stream that returns a non-error result will be returned.</returns>
-    winrt::hstring FFmpegMediaSource::SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments)
+    FFmpegInteropX::FilterCommandResult FFmpegMediaSource::SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments)
     {
         std::lock_guard lock(mutex);
         if (isClosed)
         {
-            return L"ERR_CLOSED";
+            return FFmpegInteropX::FilterCommandResult(false, L"Closed");
         }
-        hstring result = L"ERR_STREAM_DISABLED";
+        bool hasResult = false;
+        auto result = FFmpegInteropX::FilterCommandResult(false, videoStreams.size() > 0 ? L"No enabled streams" : L"No streams");
         for (int i = 0; i < videoStreams.size(); i++)
         {
             if (videoStreams.at(i)->IsEnabled())
             {
                 auto res = videoStreams.at(i)->SendFFmpegFilterCommand(target, command, arguments);
-                if (!res.empty())
+                if (!hasResult || (res.Succeeded() && !result.Succeeded()))
                 {
-                    if (result.starts_with(L"ERR_"))
-                    {
-                        result = res;
-                    }
+                    result = res;
+                    hasResult = true;
                 }
             }
         }
@@ -1452,12 +1450,12 @@ namespace winrt::FFmpegInteropX::implementation
 
     ///<summary>Sends a command to video filters on the specified video stream.</summary>
     ///<returns>The result from the filter command.</returns>
-    winrt::hstring FFmpegMediaSource::SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
+    FFmpegInteropX::FilterCommandResult FFmpegMediaSource::SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream)
     {
         std::lock_guard lock(mutex);
         if (isClosed)
         {
-            return L"ERR_CLOSED";
+            return FFmpegInteropX::FilterCommandResult(false, L"Closed");
         }
         for (int i = 0; i < videoStreams.size(); i++)
         {
@@ -1469,11 +1467,11 @@ namespace winrt::FFmpegInteropX::implementation
                 }
                 else
                 {
-                    return L"ERR_STREAM_DISABLED";
+                    return FFmpegInteropX::FilterCommandResult(false, L"Stream disabled");
                 }
             }
         }
-        return L"ERR_STREAM_NOT_FOUND";
+        return FFmpegInteropX::FilterCommandResult(false, L"Stream not found");
     }
 
 

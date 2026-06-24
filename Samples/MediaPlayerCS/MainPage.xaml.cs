@@ -674,12 +674,20 @@ namespace MediaPlayerCS
             }
         }
 
-        private void ffmpegAudioFilters_LostFocus(object sender, RoutedEventArgs e)
+        private async Task ffmpegAudioFilters_LostFocus(object sender, RoutedEventArgs e)
         {
             Config.Audio.FFmpegAudioFilters = ffmpegAudioFilters.Text;
             if (cmbAudioStreamEffectSelector.SelectedItem == null)
                 FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text);
             else FFmpegMSS?.SetFFmpegAudioFilters(ffmpegAudioFilters.Text, (AudioStreamInfo)cmbAudioStreamEffectSelector.SelectedItem);
+
+            //if (ffmpegAudioFilters.Text.Contains("volume"))
+            //{
+            //    await Task.Delay(500);
+            //    var result = FFmpegMSS?.SendFFmpegAudioFilterCommand("volume", "volume", "1.0");
+            //    await Task.Delay(500);
+            //    result = FFmpegMSS?.SendFFmpegAudioFilterCommand("volume", "volume", "0.5");
+            //}
         }
 
         private double GetBufferSizeMB()

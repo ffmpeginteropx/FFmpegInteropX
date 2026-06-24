@@ -62,7 +62,7 @@ public:
         return frameProvider->GetCurrentFilters();
     }
 
-    winrt::hstring SendFFmpegFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) override
+    FilterCommandResult SendFFmpegFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) override
     {
         return frameProvider->SendFilterCommand(target, command, arguments);
     };
