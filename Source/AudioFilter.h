@@ -240,7 +240,7 @@ public:
             }
         }
 
-        return  FilterCommandResult(true, StringUtils::Utf8ToPlatformString(command_response));
+        return FilterCommandResult(true, StringUtils::Utf8ToPlatformString(command_response));
     }
 
     bool IsInitialized() override

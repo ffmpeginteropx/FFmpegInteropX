@@ -1411,7 +1411,7 @@ namespace winrt::FFmpegInteropX::implementation
             {
                 if (audioStreams.at(i)->IsEnabled())
                 {
-                    return audioStreams.at(i)->SendFFmpegFilterCommand(target, command, arguments).as<FFmpegInteropX::FilterCommandResult>();
+                    return audioStreams.at(i)->SendFFmpegFilterCommand(target, command, arguments);
                 }
                 else
                 {
