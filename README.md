@@ -43,6 +43,7 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 - Native D3D11 hardware decoding for all major formats:
   - H264, HEVC, AV1, VC1, VP8, VP9, WMV3, MPEG2
 - FFmpeg video and audio effects (special thanks to [Brabebhin](https://github.com/brabebhin)!)
+- FFmpeg filter commands, to change filter parameters during playback
 - Super fast GPU-based video postprocessing effects
 - Major performance improvements (zero-copy data handling in all important areas)
 - Frame grabber support
@@ -149,6 +150,37 @@ You can also add external subtitle files by using `FFmpegMediaSource.AddExternal
 Some external text subtitle files are stored with ANSI encoding instead of UTF8 (which is required by ffmpeg). FFmpegInterop can do an automatic conversion to UTF8. This is enabled by default in the config class and will use the system's active codepage by default. You can change the behavior by changing `AutoCorrectAnsiSubtitles` and `AnsiSubtitleEncoding` parameters in the config class. Codepage 0 is the system's active codepage.
 
 Note: If your app uses multiple windows using CoreApplication.CreateNewView(), then you must create the FFmpegMediaSource object on the thread of the window where the video is to be shown. Otherwise, subtitles will flicker.
+
+## FFmpeg filters
+
+You can assign ffmpeg video and audio filters to the FFmpegMediaSource object. This allows you to apply effects like color correction, sharpening, deinterlacing, audio equalizer, etc.
+
+Use `FFmpegMediaSource.SetFFmpegVideoFilters()` and `FFmpegMediaSource.SetFFmpegAudioFilters()` to assign filters. The filter string is the same as used in ffmpeg command line. See the [ffmpeg filters documentation](https://ffmpeg.org/ffmpeg-filters.html) for more information. You can assign the same filter definition to all streams of the type (video or audio), or you can also pass a specific stream where the filter shall be applied.
+
+
+## FFmpeg filter commands
+
+It is also possible to send commands to filters, to change parameters during playback. The benefit of using commands is that this can be done during playback, without re-creating the filter graph. Many filters buffer some data, so if you re-create a filter with different parameters, this will often cause some dropping of data, resulting in audible clicks and timestamp issues. By changing parameters using commands, the filter graph remains intact and playback continues seamlessly without issues.
+
+Use `FFmpegMediaSource.SendFFmpegAudioFilterCommand()` or `FFmpegMediaSource.SendFFmpegVideoFilterCommand()` for this. Pass the filter name, the command name (or property name) and the new value.
+
+Note: Many - but not all - filter properties can be changed during playback. To find out which properties can be changed using commands, run `ffmpeg.exe -h filter=<name>`. Only properties which have the "T" flag in the help output can be changed using commands. Some filters have additional commands, which are described in the corresponding [ffmpeg filters documentation](https://ffmpeg.org/ffmpeg-filters.html). Commands can return a string result.
+
+Additional note: Commands can only be sent after playback of the stream has started!
+
+Example:
+```
+var src = await FFmpegMediaSource.CreateFromUriAsync(uri);
+
+// Assign audio filters to the source (volume pre-amp and equalizer)
+src.SetFFmpegAudioFilters("volume=volume=0.5,equalizer=f=1000:t=h:width=200:g=-10");
+
+// Change the volume during playback to 1.0 (100%)
+src.SendFFmpegAudioFilterCommand("volume", "volume", "1.0");
+
+// Change the equalizer gain to +5dB
+src.SendFFmpegAudioFilterCommand("equalizer", "g", "5");
+```
 
 #### Version History:
 - [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.2

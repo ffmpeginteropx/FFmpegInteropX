@@ -159,22 +159,7 @@
       <GenerateXMLDocumentationFiles>true</GenerateXMLDocumentationFiles>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <SDLCheck>false</SDLCheck>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|ARM64'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|ARM64'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|ARM64'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Release_UWP|ARM64'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|Win32'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|Win32'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|Win32'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Release_UWP|Win32'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Debug_Desktop|x64'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Debug_UWP|x64'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Release_Desktop|x64'">stdc17</LanguageStandard_C>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='Release_UWP|x64'">stdc17</LanguageStandard_C>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -213,6 +198,7 @@
     <ClInclude Include="FFmpegMediaSource.h" />
     <ClInclude Include="FFmpegReader.h" />
     <ClInclude Include="FFmpegUtils.h" />
+    <ClInclude Include="FilterCommandResult.h" />
     <ClInclude Include="FormatInfo.h" />
     <ClInclude Include="FrameGrabber.h" />
     <ClInclude Include="GeneralConfig.h" />
@@ -268,6 +254,7 @@
     <ClCompile Include="FFmpegMediaSource.cpp" />
     <ClCompile Include="FFmpegReader.cpp" />
     <ClCompile Include="FFmpegUtils.cpp" />
+    <ClCompile Include="FilterCommandResult.cpp" />
     <ClCompile Include="FormatInfo.cpp" />
     <ClCompile Include="FrameGrabber.cpp" />
     <ClCompile Include="GeneralConfig.cpp" />
