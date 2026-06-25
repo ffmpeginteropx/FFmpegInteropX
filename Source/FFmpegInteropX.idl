@@ -261,6 +261,20 @@ namespace FFmpegInteropX
         static CharacterEncoding UTF8{ get; };
     };
 
+#ifdef UWP
+    [bindable]
+#endif
+    runtimeclass FilterCommandResult
+    {
+        FilterCommandResult(Boolean succeeded, String result);
+
+        ///<summary>Indicates whether the command was successfully executed.</summary>
+        Boolean Succeeded{ get; };
+
+        ///<summary>Gets the result of the command. In case of errors, this contains an error string.</summary>
+        String Result{ get; };
+    };
+
     runtimeclass CodecRequiredEventArgs
     {
         CodecRequiredEventArgs(CodecRequiredReason reason, String codecName, String storeExtensionName, String productId);
@@ -501,6 +515,23 @@ namespace FFmpegInteropX
 
         ///<summary>Gets video filters for the specified video stream.</summary>
         String GetFFmpegVideoFilters(VideoStreamInfo videoStream);
+
+        ///<summary>Sends a command to audio filters on all audio streams.</summary>
+        ///<returns>The result from the filter command. If multiple audio streams are enabled, the result from the first stream that returns a non-error result will be returned.</returns>
+        FilterCommandResult SendFFmpegAudioFilterCommand(String target, String command, String arguments);
+
+        ///<summary>Sends a command to audio filters on the specified audio stream.</summary>
+        ///<returns>The result from the filter command.</returns>
+        FilterCommandResult SendFFmpegAudioFilterCommand(String target, String command, String arguments, AudioStreamInfo audioStream);
+
+        ///<summary>Sends a command to video filters on all video streams.</summary>
+        ///<returns>The result from the filter command. If multiple video streams are enabled, the result from the first stream that returns a non-error result will be returned.</returns>
+        FilterCommandResult SendFFmpegVideoFilterCommand(String target, String command, String arguments);
+
+        ///<summary>Sends a command to video filters on the specified video stream.</summary>
+        ///<returns>The result from the filter command.</returns>
+        FilterCommandResult SendFFmpegVideoFilterCommand(String target, String command, String arguments, VideoStreamInfo videoStream);
+
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
         MediaThumbnailData ExtractThumbnail();
