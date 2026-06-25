@@ -19,8 +19,8 @@
   </metadata>
   <files>
   
-    <file src="..\Output\FFmpegInteropX.DotNet\$configuration$\FFmpegInteropX.DotNet.dll"   target="lib\net6.0-windows$winsdk$" />
-    <file src="..\Output\FFmpegInteropX.DotNet\$configuration$\FFmpegInteropX.xml"          target="lib\net6.0-windows$winsdk$" />
+    <file src="..\Output\FFmpegInteropX.DotNet\$configuration$_Desktop\FFmpegInteropX.DotNet.dll"   target="lib\net6.0-windows$winsdk$" />
+    <file src="..\Output\FFmpegInteropX.DotNet\$configuration$_Desktop\FFmpegInteropX.xml"          target="lib\net6.0-windows$winsdk$" />
     
     <file src="..\Output\FFmpegInteropX\x86\$configuration$_Desktop\FFmpegInteropX.dll"     target="runtimes\win-x86\native" />
     <file src="..\Output\FFmpegInteropX\x86\$configuration$_Desktop\FFmpegInteropX.pdb"     target="runtimes\win-x86\native" />
@@ -32,10 +32,10 @@
     <file src="..\Output\FFmpegInteropX\x64\$configuration$_Desktop\FFmpegInteropX.winmd"   target="runtimes\win-x64\native" />
     <file src="..\Output\FFmpegInteropX\x64\$configuration$_Desktop\FFmpegInteropX.xml"     target="runtimes\win-x64\native" />
 
-    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_Desktop\FFmpegInteropX.dll"     target="runtimes\win-arm64\native" />
-    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_Desktop\FFmpegInteropX.pdb"     target="runtimes\win-arm64\native" />
-    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_Desktop\FFmpegInteropX.winmd"   target="runtimes\win-arm64\native" />
-    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_Desktop\FFmpegInteropX.xml"     target="runtimes\win-arm64\native" />
+    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_Desktop\FFmpegInteropX.dll"   target="runtimes\win-arm64\native" />
+    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_Desktop\FFmpegInteropX.pdb"   target="runtimes\win-arm64\native" />
+    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_Desktop\FFmpegInteropX.winmd" target="runtimes\win-arm64\native" />
+    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_Desktop\FFmpegInteropX.xml"   target="runtimes\win-arm64\native" />
 
     <file src="FFmpegInteropX.Desktop.Lib.targets"                                  target="build\native"/>
 
