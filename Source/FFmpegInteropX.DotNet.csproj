@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platform>AnyCPU</Platform>
-    <Configurations>Debug;Release</Configurations>
+    <Configurations>Debug;Release;Debug_UWP;Release_UWP;Debug_Desktop;Release_Desktop</Configurations>
   </PropertyGroup>
 
   <PropertyGroup>

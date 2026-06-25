@@ -1,6 +1,7 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.3.32505.426
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.7.11911.148 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MediaPlayerCPP", "Samples\MediaPlayerCPP\MediaPlayerCPP.vcxproj", "{9C0EB7EC-6FED-46E7-9CC9-F36132050AA1}"
 EndProject
@@ -214,38 +215,38 @@ Global
 		{A2090993-F4FF-4C76-BCE1-6EF7905F0EA1}.Release_UWP|ARM64.ActiveCfg = Release|ARM64
 		{A2090993-F4FF-4C76-BCE1-6EF7905F0EA1}.Release_UWP|x64.ActiveCfg = Release|x64
 		{A2090993-F4FF-4C76-BCE1-6EF7905F0EA1}.Release_UWP|x86.ActiveCfg = Release|x86
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|ARM.ActiveCfg = Debug|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|ARM.Build.0 = Debug|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|ARM64.ActiveCfg = Debug|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|ARM64.Build.0 = Debug|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|x64.ActiveCfg = Debug|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|x64.Build.0 = Debug|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|x86.ActiveCfg = Debug|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|x86.Build.0 = Debug|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|ARM.ActiveCfg = Debug_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|ARM.Build.0 = Debug_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|ARM64.ActiveCfg = Debug_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|ARM64.Build.0 = Debug_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|x64.ActiveCfg = Debug_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|x64.Build.0 = Debug_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|x86.ActiveCfg = Debug_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_Desktop|x86.Build.0 = Debug_Desktop|Any CPU
 		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_UWP|ARM.ActiveCfg = Debug|Any CPU
 		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_UWP|ARM.Build.0 = Debug|Any CPU
 		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_UWP|ARM64.ActiveCfg = Debug|Any CPU
 		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_UWP|ARM64.Build.0 = Debug|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_UWP|x64.ActiveCfg = Debug|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_UWP|x64.Build.0 = Debug|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_UWP|x64.ActiveCfg = Debug_UWP|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_UWP|x64.Build.0 = Debug_UWP|Any CPU
 		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_UWP|x86.ActiveCfg = Debug|Any CPU
 		{188F4D30-E01F-4FCC-A349-B371221252F4}.Debug_UWP|x86.Build.0 = Debug|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|ARM.ActiveCfg = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|ARM.Build.0 = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|ARM64.ActiveCfg = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|ARM64.Build.0 = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|x64.ActiveCfg = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|x64.Build.0 = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|x86.ActiveCfg = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|x86.Build.0 = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|ARM.ActiveCfg = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|ARM.Build.0 = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|ARM64.ActiveCfg = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|ARM64.Build.0 = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|x64.ActiveCfg = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|x64.Build.0 = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|x86.ActiveCfg = Release|Any CPU
-		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|x86.Build.0 = Release|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|ARM.ActiveCfg = Release_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|ARM.Build.0 = Release_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|ARM64.ActiveCfg = Release_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|ARM64.Build.0 = Release_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|x64.ActiveCfg = Release_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|x64.Build.0 = Release_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|x86.ActiveCfg = Release_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_Desktop|x86.Build.0 = Release_Desktop|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|ARM.ActiveCfg = Release_UWP|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|ARM.Build.0 = Release_UWP|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|ARM64.ActiveCfg = Release_UWP|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|ARM64.Build.0 = Release_UWP|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|x64.ActiveCfg = Release_UWP|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|x64.Build.0 = Release_UWP|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|x86.ActiveCfg = Release_UWP|Any CPU
+		{188F4D30-E01F-4FCC-A349-B371221252F4}.Release_UWP|x86.Build.0 = Release_UWP|Any CPU
 		{6C4BFF5E-7037-4EE8-9C9F-5381C35BA066}.Debug_Desktop|ARM.ActiveCfg = Debug_Desktop|ARM
 		{6C4BFF5E-7037-4EE8-9C9F-5381C35BA066}.Debug_Desktop|ARM64.ActiveCfg = Debug_Desktop|ARM64
 		{6C4BFF5E-7037-4EE8-9C9F-5381C35BA066}.Debug_Desktop|x64.ActiveCfg = Debug_Desktop|x64
