@@ -11,22 +11,28 @@
     <license type="expression">Apache-2.0</license>
     <dependencies>
       <group targetFramework="uap10.0.17763.0" />
+      <group targetFramework="net6.0-windows$winsdk$">
+        <dependency id="Microsoft.Windows.CsWinRT" version="2.2.0" />
+      </group>
     </dependencies>
     <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />
   </metadata>
   <files>
 
+    <file src="..\Output\FFmpegInteropX.DotNet\$configuration$_UWP\FFmpegInteropX.DotNet.dll"   target="lib\net6.0-windows$winsdk$" />
+    <file src="..\Output\FFmpegInteropX.DotNet\$configuration$_UWP\FFmpegInteropX.xml"          target="lib\net6.0-windows$winsdk$\FFmpegInteropX.DotNet.xml" />
+
     <file src="..\Output\FFmpegInteropX\x64\$configuration$_UWP\FFmpegInteropX.winmd"   target="lib\uap10" />
     <file src="..\Output\FFmpegInteropX\x64\$configuration$_UWP\FFmpegInteropX.xml"     target="lib\uap10" />
 
-    <file src="..\Output\FFmpegInteropX\x86\$configuration$_UWP\FFmpegInteropX.dll"     target="runtimes\win10-x86\native" />
-    <file src="..\Output\FFmpegInteropX\x86\$configuration$_UWP\FFmpegInteropX.pdb"     target="runtimes\win10-x86\native" />
+    <file src="..\Output\FFmpegInteropX\x86\$configuration$_UWP\FFmpegInteropX.dll"     target="runtimes\win-x86\native" />
+    <file src="..\Output\FFmpegInteropX\x86\$configuration$_UWP\FFmpegInteropX.pdb"     target="runtimes\win-x86\native" />
 
-    <file src="..\Output\FFmpegInteropX\x64\$configuration$_UWP\FFmpegInteropX.dll"     target="runtimes\win10-x64\native" />
-    <file src="..\Output\FFmpegInteropX\x64\$configuration$_UWP\FFmpegInteropX.pdb"     target="runtimes\win10-x64\native" />
+    <file src="..\Output\FFmpegInteropX\x64\$configuration$_UWP\FFmpegInteropX.dll"     target="runtimes\win-x64\native" />
+    <file src="..\Output\FFmpegInteropX\x64\$configuration$_UWP\FFmpegInteropX.pdb"     target="runtimes\win-x64\native" />
 
-    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_UWP\FFmpegInteropX.dll"   target="runtimes\win10-arm64\native" />
-    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_UWP\FFmpegInteropX.pdb"   target="runtimes\win10-arm64\native" />
+    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_UWP\FFmpegInteropX.dll"   target="runtimes\win-arm64\native" />
+    <file src="..\Output\FFmpegInteropX\ARM64\$configuration$_UWP\FFmpegInteropX.pdb"   target="runtimes\win-arm64\native" />
 
     <file src="FFmpegInteropX.UWP.Lib.targets"                                  target="build\native"/>
 

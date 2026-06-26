@@ -18,10 +18,6 @@
 
 #ifdef Win32
 #include <winrt/Microsoft.Graphics.Display.h>
-#include <winrt/Microsoft.UI.Xaml.h>
-#include <winrt/Microsoft.UI.Windowing.h>
-#include <winuser.h>
-#else
 #endif
 
 void free_buffer(void* lpVoid);
@@ -1667,7 +1663,6 @@ namespace winrt::FFmpegInteropX::implementation
         hstring streamName,
         winrt::FFmpegInteropX::MediaSourceConfig const& config,
         VideoStreamDescriptor videoDescriptor,
-        DispatcherQueue dispatcher,
         uint64_t windowId,
         bool useHdr)
     {
@@ -1731,7 +1726,7 @@ namespace winrt::FFmpegInteropX::implementation
         co_await winrt::resume_background();
         auto videoDescriptor = currentVideoStream ? (currentVideoStream->StreamDescriptor()).as<VideoStreamDescriptor>() : nullptr;
 
-        auto externalSubsParser = (co_await ReadExternalSubtitleStreamAsync(stream, streamName, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), videoDescriptor, nullptr, windowId, useHdr)).as<winrt::FFmpegInteropX::implementation::FFmpegMediaSource>();
+        auto externalSubsParser = (co_await ReadExternalSubtitleStreamAsync(stream, streamName, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), videoDescriptor, windowId, useHdr)).as<winrt::FFmpegInteropX::implementation::FFmpegMediaSource>();
 
         Collections::IVectorView<FFmpegInteropX::SubtitleStreamInfo> result;
         {

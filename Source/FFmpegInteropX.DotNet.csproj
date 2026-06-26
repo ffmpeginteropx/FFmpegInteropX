@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platform>AnyCPU</Platform>
-    <Configurations>Debug;Release</Configurations>
+    <Configurations>Debug_UWP;Release_UWP;Debug_Desktop;Release_Desktop</Configurations>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -40,14 +40,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
   </ItemGroup>
-
-  <Choose>
-    <When Condition="'$(Configuration)'=='Release_WinUI' Or '$(Configuration)'=='Debug_WinUI'">
-      <ItemGroup>
-        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230913002" />
-      </ItemGroup>
-    </When>
-  </Choose>
   
   <ItemGroup>
     <ProjectReference Include="FFmpegInteropX.vcxproj">
