@@ -51,7 +51,7 @@ winrt::Windows::Media::Core::IMediaStreamDescriptor UncompressedAudioSampleProvi
     auto sampleRate = m_pAvCodecCtx->sample_rate;
 
     auto channelLayout = m_pAvCodecCtx->ch_layout;
-    if (m_pAvCodecCtx->profile == FF_PROFILE_AAC_HE_V2 && channelLayout.nb_channels == 1)
+    if (m_pAvCodecCtx->profile == AV_PROFILE_AAC_HE_V2 && channelLayout.nb_channels == 1)
     {
         channelLayout.nb_channels = 2;
         channelLayout.order = AV_CHANNEL_ORDER_NATIVE;
