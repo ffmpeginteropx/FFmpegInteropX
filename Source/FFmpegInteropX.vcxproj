@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props')" />
   <PropertyGroup Condition="'$(Configuration)'=='Release_UWP' OR '$(Configuration)'=='Debug_UWP'">
@@ -306,6 +306,7 @@
     <None Include="..\Build\FFmpegInteropX.pfx" />
     <None Include="..\Build\FFmpegInteropX.UWP.Lib.nuspec" />
     <None Include="..\Build\FFmpegInteropX.UWP.Lib.targets" />
+    <None Include="..\Build\FFmpegInteropX.UWP.nuspec" />
     <None Include="..\Build\InstallTools.ps1" />
     <None Include="..\Build\Repack-NuGet.ps1" />
     <None Include="..\Build\Start-DevShell.ps1" />
