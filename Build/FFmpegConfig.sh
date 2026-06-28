@@ -73,7 +73,7 @@ ldflags=""
 
 if [ "$variant" == "UWP" ]; then
 
-    ldflags="$ldflags -APPCONTAINER WindowsApp.lib"
+    ldflags="$ldflags -APPCONTAINER WindowsApp.lib dxguid.lib"
 
     cflags="\
         $cflags \
@@ -84,7 +84,7 @@ fi
 
 if [ "$variant" == "Desktop" ]; then
 
-    ldflags="$ldflags -APPCONTAINER:NO -MACHINE:$platform Ws2_32.lib Advapi32.lib User32.lib"
+    ldflags="$ldflags -APPCONTAINER:NO -MACHINE:$platform Ws2_32.lib Advapi32.lib User32.lib dxguid.lib"
 
     if [ "$sharedOrStatic" = "shared" ]; then
         cflags="$cflags -D_WINDLL"
