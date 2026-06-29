@@ -10,7 +10,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">Apache-2.0</license>
     <dependencies>
-      <group targetFramework="uap10.0.17763.0">
+      <group targetFramework="uap$winsdk$">
         <dependency id="FFmpegInteropX.UWP.Lib" version="$libversion$" />
         <dependency id="FFmpegInteropX.UWP.FFmpeg" version="$ffmpegversion$" />
       </group>

@@ -27,6 +27,15 @@ param(
     #>
     [version] $WindowsTargetPlatformVersion = '10.0.26100.0',
 
+    <#
+        Example values:
+        8.1
+        10.0.15063.0
+        10.0.17763.0
+        10.0.18362.0
+    #>
+    [version] $WindowsTargetPlatformMinVersion = '10.0.17763.0',
+
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
     
@@ -184,6 +193,7 @@ function Build-Platform {
                 /p:Configuration=$configurationName `
                 /p:Platform=$Platform `
                 /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+                /p:WindowsTargetPlatformMinVersion=$WindowsTargetPlatformMinVersion `
                 /p:PlatformToolset=$PlatformToolset `
                 /p:ForceImportBeforeCppTargets=$SolutionDir\Libs\build-scripts\LibOverrides.props `
                 /p:useenv=true
@@ -508,7 +518,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
         {
             $skip
         }
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -Gpl $Gpl -Encoders $Encoders -Devices $Devices -Programs $Programs -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformMinVersion -WindowsTargetPlatformMinVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -Gpl $Gpl -Encoders $Encoders -Devices $Devices -Programs $Programs -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
         $processes[$platform] = $proc
     
         # only build PkgConfigFake once
@@ -592,7 +602,7 @@ else
 if ($success -and $NugetPackageVersion)
 {
     nuget pack .\Build\FFmpegInteropX.$WindowsTarget.FFmpeg.nuspec `
-        -Properties "id=FFmpegInteropX.$WindowsTarget.FFmpeg;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;winsdk=$WindowsTargetPlatformVersion;NoWarn=NU5128" `
+        -Properties "id=FFmpegInteropX.$WindowsTarget.FFmpeg;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;winsdk=$WindowsTargetPlatformMinVersion;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat symbols.nupkg `
         -OutputDirectory "${PSScriptRoot}\Output\NuGet"

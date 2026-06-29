@@ -22,7 +22,16 @@ param(
         10.0.17763.0
         10.0.18362.0
     #>
-    [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
+    [version] $WindowsTargetPlatformVersion = '10.0.26100.0',
+    
+    <#
+        Example values:
+        8.1
+        10.0.15063.0
+        10.0.17763.0
+        10.0.18362.0
+    #>
+    [version] $WindowsTargetPlatformMinVersion = '10.0.17763.0',
 
     [ValidateSet('UWP', 'Desktop')]
     [string] $WindowsTarget = 'UWP',
@@ -86,6 +95,7 @@ function Build-Platform {
         /p:Configuration=${Configuration}_${WindowsTarget} `
         /p:Platform=$Platform `
         /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+        /p:WindowsTargetPlatformMinVersion=$WindowsTargetPlatformMinVersion `
         /p:PlatformToolset=$PlatformToolset,
         /p:LibraryVersionNumber=$LibraryVersionNumber
 
@@ -158,7 +168,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
             continue;
         }
 
-        $proc = Start-Process -PassThru powershell "-File .\Build-VideoEffects.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" -LibraryVersionNumber $LibraryVersionNumber $addparams"
+        $proc = Start-Process -PassThru powershell "-File .\Build-VideoEffects.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" -LibraryVersionNumber $LibraryVersionNumber $addparams"
         $processes[$platform] = $proc
     }
 
@@ -228,7 +238,7 @@ else
 if ($success -and $NugetPackageVersion)
 {
     nuget pack .\Build\FFmpegInteropX.$WindowsTarget.VideoEffects.nuspec `
-        -Properties "id=FFmpegInteropX.$WindowsTarget.VideoEffects;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformVersion;NoWarn=NU5128" `
+        -Properties "id=FFmpegInteropX.$WindowsTarget.VideoEffects;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformMinVersion;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -Symbols -SymbolPackageFormat symbols.nupkg `
         -OutputDirectory "Output\NuGet"

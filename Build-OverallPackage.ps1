@@ -1,18 +1,18 @@
 param(
 
-    # If a version string is specified, a NuGet package will be created.
+    # The version number of the overall NuGet package to create.
     [string] $NugetPackageVersion,
 
-    # If a version string is specified, a NuGet package will be created.
+    # The referenced FFmpeg NuGet package version to use in the overall NuGet package.
     [string] $FFmpegPackageVersion,
 
-    # If a version string is specified, a NuGet package will be created.
+    # The referenced FFmpegInteropX library version to use in the overall NuGet package.
     [string] $LibPackageVersion,
 
     [ValidateSet('UWP', 'Desktop')]
     [string[]] $WindowsTargets = ('Desktop', 'UWP'),
 
-    [version] $WindowsTargetPlatformVersion = '10.0.22000.0',
+    [version] $WindowsTargetPlatformMinVersion = '10.0.17763.0',
 
     # FFmpegInteropX NuGet settings
     [string] $FFmpegInteropXUrl = 'https://github.com/ffmpeginteropx/FFmpegInteropX.git',
@@ -24,14 +24,14 @@ param(
 
 if ($WindowsTargets -contains 'Desktop') {
     nuget pack .\Build\FFmpegInteropX.nuspec `
-        -Properties "id=FFmpegInteropX;repositoryUrl=$FFmpegInteropXUrl;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformVersion;libversion=$LibPackageVersion;ffmpegversion=$FFmpegPackageVersion;NoWarn=NU5128" `
+        -Properties "id=FFmpegInteropX;repositoryUrl=$FFmpegInteropXUrl;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformMinVersion;libversion=$LibPackageVersion;ffmpegversion=$FFmpegPackageVersion;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -OutputDirectory "${PSScriptRoot}\Output\NuGet" `
 }
 
 if ($WindowsTargets -contains 'UWP') {
     nuget pack .\Build\FFmpegInteropX.UWP.nuspec `
-        -Properties "id=FFmpegInteropX.UWP;repositoryUrl=$FFmpegInteropXUrl;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformVersion;libversion=$LibPackageVersion;ffmpegversion=$FFmpegPackageVersion;NoWarn=NU5128" `
+        -Properties "id=FFmpegInteropX.UWP;repositoryUrl=$FFmpegInteropXUrl;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformMinVersion;libversion=$LibPackageVersion;ffmpegversion=$FFmpegPackageVersion;NoWarn=NU5128" `
         -Version $NugetPackageVersion `
         -OutputDirectory "${PSScriptRoot}\Output\NuGet" `
 }
