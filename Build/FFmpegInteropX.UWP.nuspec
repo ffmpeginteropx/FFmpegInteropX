@@ -3,7 +3,7 @@
   <metadata>
     <id>$id$</id>
     <version>$version$</version>
-    <description>FFmpeg decoding library for Windows Apps (UWP/WinUI/Desktop)</description>
+    <description>FFmpeg decoding library for Windows Apps (UWP Classic and UWP .Net9+)</description>
     <authors>FFmpegInteropX</authors>
     <readme>docs\README.md</readme>
     <projectUrl>https://github.com/ffmpeginteropx/FFmpegInteropX</projectUrl>
@@ -15,12 +15,12 @@
         <dependency id="FFmpegInteropX.UWP.FFmpeg" version="$ffmpegversion$" />
       </group>
       <group targetFramework="net6.0-windows$winsdk$">
-        <dependency id="FFmpegInteropX.Desktop.Lib" version="$libversion$" />
-        <dependency id="FFmpegInteropX.Desktop.FFmpeg" version="$ffmpegversion$" />
+        <dependency id="FFmpegInteropX.UWP.Lib" version="$libversion$" />
+        <dependency id="FFmpegInteropX.UWP.FFmpeg" version="$ffmpegversion$" />
       </group>
       <group targetFramework="native">
-        <dependency id="FFmpegInteropX.Desktop.Lib" version="$libversion$" />
-        <dependency id="FFmpegInteropX.Desktop.FFmpeg" version="$ffmpegversion$" />
+        <dependency id="FFmpegInteropX.UWP.Lib" version="$libversion$" />
+        <dependency id="FFmpegInteropX.UWP.FFmpeg" version="$ffmpegversion$" />
       </group>
     </dependencies>
     <repository type="git" url="$repositoryUrl$" branch="$repositoryBranch$" commit="$repositoryCommit$" />

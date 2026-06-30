@@ -248,6 +248,7 @@
     <ClInclude Include="resource.h">
       <Filter>Resources</Filter>
     </ClInclude>
+    <ClInclude Include="FilterCommandResult.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -344,6 +345,7 @@
     <ClCompile Include="PlatformInfo.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
+    <ClCompile Include="FilterCommandResult.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />
