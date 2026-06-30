@@ -153,7 +153,6 @@ function Build-Platform {
 
         ('lib', 'licenses', 'include') | ForEach-Object {
             New-Item -ItemType Directory -Force $build\$_ | Out-Null
-            New-Item -ItemType Directory -Force $target\$_ | Out-Null
         }
 
         # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
@@ -518,7 +517,7 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
         {
             $skip
         }
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformMinVersion -WindowsTargetPlatformMinVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -Gpl $Gpl -Encoders $Encoders -Devices $Devices -Programs $Programs -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
+        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -Gpl $Gpl -Encoders $Encoders -Devices $Devices -Programs $Programs -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
         $processes[$platform] = $proc
     
         # only build PkgConfigFake once

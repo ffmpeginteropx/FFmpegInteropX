@@ -24,6 +24,7 @@ outDir="$DIR/Output/$folderName/$platform"
 #Main
 echo "Make $variant $platform $sharedOrStatic $gpl-glp $encoders-encoders $devices-encoders $programs-programs" $8
 mkdir -p $intDir
+mkdir -p $outDir
 cd $intDir
 
 configureArgs="\
@@ -73,6 +74,8 @@ ldflags=""
 
 if [ "$variant" == "UWP" ]; then
 
+    configureArgs="$configureArgs --disable-filter=gfxcapture"
+
     ldflags="$ldflags -APPCONTAINER WindowsApp.lib dxguid.lib"
 
     cflags="\
@@ -116,14 +119,23 @@ cflags="$cflags -wd\"4267\" -wd\"4133\" -wd\"4334\" -wd\"4101\" "
 configureArgs="\
     $configureArgs \
     --extra-cflags='$cflags' \
+    --extra-cxxflags='$cflags' \
     --extra-ldflags='$ldflags'
 "
 
+# Perform configure (unless skipped)
 if [ "$9" != "-SkipConfigure" ]; then
     eval $DIR/Libs/ffmpeg/configure $configureArgs || exit 1
 fi
 
+# Perform the build
 make -j$(nproc) || exit
+
+# Clean output directory before install
+rm -r $outDir/*
+mkdir $outDir/licenses
+
+# Install files
 make install || exit
 
 exit 0
