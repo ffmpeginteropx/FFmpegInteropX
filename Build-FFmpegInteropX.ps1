@@ -23,7 +23,7 @@ param(
         10.0.18362.0
     #>
     [version] $WindowsTargetPlatformVersion = '10.0.26100.0',
-    
+
     <#
         Example values:
         8.1
@@ -33,8 +33,8 @@ param(
     #>
     [version] $WindowsTargetPlatformMinVersion = '10.0.17763.0',
 
-    [ValidateSet('UWP', 'Desktop')]
-    [string] $WindowsTarget = 'UWP',
+    [ValidateSet('Desktop', 'UWP')]
+    [string[]] $WindowsTargets = @('Desktop', 'UWP'),
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
@@ -48,6 +48,8 @@ param(
 
     [switch] $AllowParallelBuilds,
 
+    [switch] $SkipNugetRestore,
+
     # If a version string is specified, a NuGet package will be created.
     [string] $NugetPackageVersion = $null,
 
@@ -59,13 +61,14 @@ param(
 
     [string] $FFmpegInteropXBranch = $(git branch --show-current),
     
-    [string] $FFmpegInteropXCommit = $(git --git-dir Libs/ffmpeg/.git rev-parse HEAD)
+    [string] $FFmpegInteropXCommit = $(git rev-parse HEAD)
 )
 
 function Build-Platform {
     param (
         [System.IO.DirectoryInfo] $SolutionDir,
         [string] $Platform,
+        [string] $WindowsTarget,
         [string] $PlatformToolset,
         [string] $VsLatestPath,
         [version] $LibraryVersionNumber
@@ -74,7 +77,7 @@ function Build-Platform {
     $PSBoundParameters | Out-String
 
     Write-Host
-    Write-Host "Building FFmpegInteropX for Windows 10 ${Platform}..."
+    Write-Host "Building FFmpegInteropX for Windows $WindowsTarget ${Platform}..."
     Write-Host
 
     # Load environment from VCVARS.
@@ -152,10 +155,13 @@ foreach ($item in Get-ChildItem env:)
 $start = Get-Date
 $success = 1
 
-# Restore nuget packets for solution
-nuget.exe restore ${PSScriptRoot}\FFmpegInteropX.sln
+if (!$SkipNugetRestore)
+{
+    # Restore nuget packets for solution
+    nuget.exe restore ${PSScriptRoot}\FFmpegInteropX.sln
+    if ($lastexitcode -ne 0) { throw "Failed to restore NuGet packages." }
+}
 
-if ($lastexitcode -ne 0) { throw "Failed to restore NuGet packages." }
 
 if ($NugetPackageVersion -and !$LibraryVersionNumber) {
     $versionPart = ($NugetPackageVersion -Split '-')[0];
@@ -173,80 +179,91 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
 {
     $processes = @{}
 
-    $addparams = ""
+    $addparams = "-SkipNugetRestore"
     if ($ClearBuildFolders)
     {
         $addparams += " -ClearBuildFolders"
     }
 
-    foreach ($platform in $Platforms) {
-        # WinUI does not support ARM
-        if ($WindowsTarget -eq "Desktop" -and $platform -eq "ARM")
-        {
-            continue;
-        }
+    foreach ($WindowsTarget in $WindowsTargets)
+    {
+        foreach ($platform in $Platforms) {
+            # WinUI does not support ARM
+            if ($WindowsTarget -eq "Desktop" -and $platform -eq "ARM")
+            {
+                continue;
+            }
 
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" -LibraryVersionNumber $LibraryVersionNumber $addparams"
-        $processes[$platform] = $proc
+            $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -WindowsTargets $WindowsTarget -VcVersion $VcVersion -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""$FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" -LibraryVersionNumber $LibraryVersionNumber $addparams"
+            $processes["${WindowsTarget}_$platform"] = $proc
+        }
     }
 
-    foreach ($platform in $Platforms) {
-        # WinUI does not support ARM
-        if ($WindowsTarget -eq "Desktop" -and $platform -eq "ARM")
+    foreach ($WindowsTarget in $WindowsTargets)
+    {
+        foreach ($platform in $Platforms)
         {
-            continue;
-        }
+            # WinUI does not support ARM
+            if ($WindowsTarget -eq "Desktop" -and $platform -eq "ARM")
+            {
+                continue;
+            }
 
-        $processes[$platform].WaitForExit();
-        $result = $processes[$platform].ExitCode;
-        if ($result -eq 0)
-        {
-            Write-Host "Build for $platform succeeded!"
-        }
-        else
-        {
-            Write-Host "Build for $platform failed with ErrorCode: $result"
-            $success = 0
+            $processes["${WindowsTarget}_$platform"].WaitForExit();
+            $result = $processes["${WindowsTarget}_$platform"].ExitCode;
+            if ($result -eq 0)
+            {
+                Write-Host "Build for $WindowsTarget $platform succeeded!"
+            }
+            else
+            {
+                Write-Host "Build for $WindowsTarget $platform failed with ErrorCode: $result"
+                $success = 0
+            }
         }
     }
 }
 else
 {
-    foreach ($platform in $Platforms) {
-
-        # WinUI does not support ARM
-        if ($WindowsTarget -eq "Desktop" -and $platform -eq "ARM")
+    foreach ($WindowsTarget in $WindowsTargets)
+    {
+        foreach ($platform in $Platforms)
         {
-            continue;
-        }
-
-        try
-        {
-            Build-Platform `
-                -SolutionDir "${PSScriptRoot}\" `
-                -Platform $platform `
-                -PlatformToolset $platformToolSet `
-                -VsLatestPath $vsLatestPath `
-                -LibraryVersionNumber $LibraryVersionNumber
-        }
-        catch
-        {
-            Write-Warning "Error occured: $PSItem"
-            $success = 0
-            Break
-        }
-        finally
-        {
-            # Restore orignal environment variables
-            foreach ($item in $oldEnv.GetEnumerator())
+            # WinUI does not support ARM
+            if ($WindowsTarget -eq "Desktop" -and $platform -eq "ARM")
             {
-                Set-Item -Path env:"$($item.Name)" -Value $item.Value
+                continue;
             }
-            foreach ($item in Get-ChildItem env:)
+
+            try
             {
-                if (!$oldEnv.ContainsKey($item.Name))
+                Build-Platform `
+                    -SolutionDir "${PSScriptRoot}\" `
+                    -Platform $platform `
+                    -WindowsTarget $WindowsTarget `
+                    -PlatformToolset $platformToolSet `
+                    -VsLatestPath $vsLatestPath `
+                    -LibraryVersionNumber $LibraryVersionNumber
+            }
+            catch
+            {
+                Write-Warning "Error occured: $PSItem"
+                $success = 0
+                Break
+            }
+            finally
+            {
+                # Restore orignal environment variables
+                foreach ($item in $oldEnv.GetEnumerator())
                 {
-                     Remove-Item -Path env:"$($item.Name)"
+                    Set-Item -Path env:"$($item.Name)" -Value $item.Value
+                }
+                foreach ($item in Get-ChildItem env:)
+                {
+                    if (!$oldEnv.ContainsKey($item.Name))
+                    {
+                         Remove-Item -Path env:"$($item.Name)"
+                    }
                 }
             }
         }
@@ -255,11 +272,14 @@ else
 
 if ($success -and $NugetPackageVersion)
 {
-    nuget pack .\Build\FFmpegInteropX.$WindowsTarget.Lib.nuspec `
-        -Properties "id=FFmpegInteropX.$WindowsTarget.Lib;configuration=$Configuration;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformMinVersion;NoWarn=NU5128" `
-        -Version $NugetPackageVersion `
-        -Symbols -SymbolPackageFormat symbols.nupkg `
-        -OutputDirectory "Output\NuGet"
+    foreach ($WindowsTarget in $WindowsTargets)
+    {
+        nuget pack .\Build\FFmpegInteropX.$WindowsTarget.Lib.nuspec `
+            -Properties "id=FFmpegInteropX.$WindowsTarget.Lib;configuration=$Configuration;repositoryUrl=$FFmpegInteropXUrl;repositoryBranch=$FFmpegInteropXBranch;repositoryCommit=$FFmpegInteropXCommit;winsdk=$WindowsTargetPlatformMinVersion;NoWarn=NU5128" `
+            -Version $NugetPackageVersion `
+            -Symbols -SymbolPackageFormat symbols.nupkg `
+            -OutputDirectory "Output\NuGet"
+    }
 }
 
 Write-Host
