@@ -61,6 +61,68 @@ param(
 
 )
 
+
+function Test-Package-Local {
+    param (
+        [Parameter(Mandatory=$true, Position=0)]
+        [string] $PackageName,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string] $PackageVersion
+    )
+
+    return Test-Path(".\Output\NuGet\$PackageName.$PackageVersion.nupkg")
+}
+
+function Test-Package-Online {
+    param (
+        [Parameter(Mandatory=$true, Position=0)]
+        [string] $PackageName,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string] $PackageVersion
+    )
+
+    Write-Host "Checking online for $PackageName $PackageVersion..."
+
+    Write-Host "dotnet package search $PackageName --exact-match --prerelease --format json --source $NuGetPackageSource | ConvertFrom-Json"
+    $res = dotnet package search $PackageName --exact-match --prerelease --format json --source $NuGetPackageSource | ConvertFrom-Json
+    $package = $res.searchResult[0].packages | Where-Object { $_.version -eq $PackageVersion }
+
+    if ($package) {
+        Write-Host "Package found!"
+        return $true
+    } else {
+        Write-Host "Package not found!"
+        return $false
+    }
+}
+
+function Invoke() {
+    # A handy way to run a command, and automatically throw an error if the
+    # exit code is non-zero.
+
+    if ($args.Count -eq 0) {
+        throw "Must supply some arguments."
+    }
+
+    $command = $args[0]
+    $commandArgs = @()
+    if ($args.Count -gt 1) {
+        $commandArgs = $args[1..($args.Count - 1)]
+    }
+
+    $old = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+
+    & $command $commandArgs | Out-Default
+    $result = $LASTEXITCODE
+
+    $ErrorActionPreference = $old
+
+    if ($result -ne 0) {
+        throw "$command $commandArgs exited with code $result.`r`nOriginal command line:`r`n$command $commandArgs"
+    }
+}
+
 if (!$LibraryVersionNumber)
 {
     # Get LibraryVersionNumber from LibraryPackageNumber (remove prerelease suffix if present, add .0 if missing)
@@ -85,6 +147,7 @@ if (!$OverallPackageVersion)
     $OverallPackageVersion = "$libPart.$revisionPart$revisionEnd$prereleasePart"
 }
 
+$start = Get-Date
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 
 Write-Host
@@ -117,48 +180,61 @@ $OverallPackages = @(
     ".\Output\NuGet\FFmpegInteropX.UWP.$OverallPackageVersion.nupkg"
 )
 
-if ((!(Test-Path $LibPackages[0])) -or (!(Test-Path $LibPackages[1])))
-{
-    Write-Host
-    Write-Host "Building FFmpegInteropX Lib..."
-    Write-Host
+$PushPackages = @()
 
-    .\Build-FFmpegInteropX.ps1 `
-        -VcVersion $VcVersion `
-        -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
-        -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion `
-        -VcVersion $VcVersion `
-        -LibraryVersionNumber $LibraryVersionNumber `
-        -NugetPackageVersion $LibPackageVersion `
-        -ClearBuildFolders:$ClearBuildFolders `
-        -AllowParallelBuilds:$AllowParallelBuilds
-    
-    if ((!(Test-Path $LibPackages[0])) -or (!(Test-Path $LibPackages[1])))
+if ((!(Test-Package-Local -PackageName "FFmpegInteropX.Desktop.Lib" -PackageVersion $LibPackageVersion)) -or (!(Test-Package-Local -PackageName "FFmpegInteropX.UWP.Lib" -PackageVersion $LibPackageVersion)))
+{
+    if ((!(Test-Package-Online -PackageName "FFmpegInteropX.Desktop.Lib" -PackageVersion $LibPackageVersion)) -or (!(Test-Package-Online -PackageName "FFmpegInteropX.UWP.Lib" -PackageVersion $LibPackageVersion)))
     {
-        Write-Warning "Failed to build FFmpegInteropX Lib..."
-        Exit 1
+        Write-Host
+        Write-Host "Building FFmpegInteropX Lib..."
+        Write-Host
+
+        .\Build-FFmpegInteropX.ps1 `
+            -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
+            -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion `
+            -VcVersion $VcVersion `
+            -LibraryVersionNumber $LibraryVersionNumber `
+            -NugetPackageVersion $LibPackageVersion `
+            -ClearBuildFolders:$ClearBuildFolders `
+            -AllowParallelBuilds:$AllowParallelBuilds
+
+        $PushPackages += $LibPackages[0]
+        $PushPackages += $LibPackages[1]
     }
 }
-
-if ((!(Test-Path $FFmpegPackages[0])) -or (!(Test-Path $FFmpegPackages[1])))
+else
 {
-    Write-Host
-    Write-Host "Building FFmpegInteropX FFmpeg..."
-    Write-Host
+    $PushPackages += $LibPackages[0]
+    $PushPackages += $LibPackages[1]
+}
 
-    .\Build-FFmpeg.ps1 `
-        -VcVersion $VcVersion `
-        -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
-        -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion `
-        -NugetPackageVersion $FFmpegPackageVersion `
-        -ClearBuildFolders:$ClearBuildFolders `
-        -AllowParallelBuilds:$AllowParallelBuilds
-
-    if ((!(Test-Path $FFmpegPackages[0])) -or (!(Test-Path $FFmpegPackages[1])))
+if ((!(Test-Package-Local -PackageName "FFmpegInteropX.Desktop.FFmpeg" -PackageVersion $FFmpegPackageVersion)) -or (!(Test-Package-Local -PackageName "FFmpegInteropX.UWP.FFmpeg" -PackageVersion $FFmpegPackageVersion)))
+{
+    if ((!(Test-Package-Online -PackageName "FFmpegInteropX.Desktop.FFmpeg" -PackageVersion $FFmpegPackageVersion)) -or (!(Test-Package-Online -PackageName "FFmpegInteropX.UWP.FFmpeg" -PackageVersion $FFmpegPackageVersion)))
     {
-        Write-Warning "Failed to build FFmpegInteropX FFmpeg."
-        Exit 1
-    }
+        Write-Host
+        Write-Host "Building FFmpegInteropX FFmpeg..."
+        Write-Host
+
+        .\Build-FFmpeg.ps1 `
+            -VcVersion $VcVersion `
+            -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
+            -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion `
+            -NugetPackageVersion $FFmpegPackageVersion `
+            -ClearBuildFolders:$ClearBuildFolders `
+            -AllowParallelBuilds:$AllowParallelBuilds `
+            -SkipConfigureFFmpeg:$SkipConfigureFFmpeg `
+            -SkipBuildLibs:$SkipBuildLibs
+
+        $PushPackages += $FFmpegPackages[0]
+        $PushPackages += $FFmpegPackages[1]
+   }
+}
+else
+{
+    $PushPackages += $FFmpegPackages[0]
+    $PushPackages += $FFmpegPackages[1]
 }
 
 if ((!(Test-Path $OverallPackages[0])) -or (!(Test-Path $OverallPackages[1])))
@@ -172,13 +248,10 @@ if ((!(Test-Path $OverallPackages[0])) -or (!(Test-Path $OverallPackages[1])))
         -FFmpegPackageVersion $FFmpegPackageVersion `
         -LibPackageVersion $LibPackageVersion `
         -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion
-
-    if ((!(Test-Path $OverallPackages[0])) -or (!(Test-Path $OverallPackages[1])))
-    {
-        Write-Warning "Failed to build overall FFmpegInteropX NuGet packages."
-        Exit 1
-    }
 }
+
+$PushPackages += $OverallPackages[0]
+$PushPackages += $OverallPackages[1]
 
 Write-Host
 Read-Host -Prompt "Press 'Return' to publish packages to NuGet"
@@ -187,31 +260,14 @@ Write-Host
 Write-Host "Pushing to NuGet..."
 Write-Host
 
-nuget push $LibPackages[0] -Source $NuGetPackageSource -SkipDuplicate
-if ($lastexitcode -ne 0) { throw "Failed to publish package!" }
-nuget push $LibPackages[1] -Source $NuGetPackageSource -SkipDuplicate
-if ($lastexitcode -ne 0) { throw "Failed to publish package!" }
-nuget push $FFmpegPackages[0] -Source $NuGetPackageSource -SkipDuplicate
-if ($lastexitcode -ne 0) { throw "Failed to publish package!" }
-nuget push $FFmpegPackages[1] -Source $NuGetPackageSource -SkipDuplicate
-if ($lastexitcode -ne 0) { throw "Failed to publish package!" }
-nuget push $OverallPackages[0] -Source $NuGetPackageSource -SkipDuplicate
-if ($lastexitcode -ne 0) { throw "Failed to publish package!" }
-nuget push $OverallPackages[1] -Source $NuGetPackageSource -SkipDuplicate
-if ($lastexitcode -ne 0) { throw "Failed to publish package!" }
+foreach ($package in $PushPackages)
+{
+    Write-Host "Pushing $package..."
+    Invoke nuget push $package -Source $NuGetPackageSource -SkipDuplicate
+}
 
 Write-Host
 Write-Host 'Time elapsed'
 Write-Host ('{0}' -f ((Get-Date) - $start))
 Write-Host
-
-if ($success)
-{
-    Write-Host 'Release succeeded!'
-
-}
-else
-{
-    Write-Warning 'Release failed!'
-    Exit 1
-}
+Write-Host 'Release succeeded!'
