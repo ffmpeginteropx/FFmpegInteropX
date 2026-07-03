@@ -46,7 +46,7 @@ param(
 
     [switch] $ClearBuildFolders,
 
-    [switch] $AllowParallelBuilds,
+    [switch] $DisableParallelBuilds,
 
     # If a version string is specified, a NuGet package will be created.
     [string] $NugetPackageVersion = $null,
@@ -151,7 +151,7 @@ if (!$LibraryVersionNumber)
 
 Write-Host "LibraryVersionNumber: $LibraryVersionNumber"
 
-if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
+if (!($DisableParallelBuilds) -and (Platforms.Count -gt 1))
 {
     $processes = @{}
 

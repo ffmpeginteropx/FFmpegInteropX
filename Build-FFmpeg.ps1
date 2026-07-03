@@ -72,7 +72,7 @@ param(
 
     [string] $FFmpegCommit = $(git --git-dir $PSScriptRoot/Libs/ffmpeg/.git rev-parse HEAD),
 
-    [switch] $AllowParallelBuilds,
+    [switch] $DisableParallelBuilds,
 
     [switch] $SkipBuildPkgConfigFake,
     
@@ -489,7 +489,7 @@ if ($NugetPackageVersion)
 $start = Get-Date
 $success = 1
 
-if ($AllowParallelBuilds -and ($Platforms.Count * $WindowsTargets.Count -gt 1))
+if (!($DisableParallelBuilds) -and ($Platforms.Count * $WindowsTargets.Count -gt 1))
 {
     $processes = @{}
     $clear = ""

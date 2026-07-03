@@ -53,7 +53,7 @@ param(
 
     [switch] $ClearBuildFolders,
 
-    [switch] $AllowParallelBuilds,
+    [switch] $DisableParallelBuilds,
     
     [switch] $SkipBuildLibs,
     
@@ -61,6 +61,7 @@ param(
 
 )
 
+$PushPackages = [System.Collections.Generic.List[string]]::new()
 
 function Test-Package-Local {
     param (
@@ -81,19 +82,55 @@ function Test-Package-Online {
         [string] $PackageVersion
     )
 
-    Write-Host "Checking online for $PackageName $PackageVersion..."
-
-    Write-Host "dotnet package search $PackageName --exact-match --prerelease --format json --source $NuGetPackageSource | ConvertFrom-Json"
     $res = dotnet package search $PackageName --exact-match --prerelease --format json --source $NuGetPackageSource | ConvertFrom-Json
     $package = $res.searchResult[0].packages | Where-Object { $_.version -eq $PackageVersion }
 
     if ($package) {
-        Write-Host "Package found!"
         return $true
     } else {
-        Write-Host "Package not found!"
         return $false
     }
+}
+
+function Test-Package {
+    param (
+        [Parameter(Mandatory=$true, Position=0)]
+        [string] $PackagePostfix,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string] $PackageVersion,
+        [Parameter(Position=2)]
+        [string] $PackagePrefix = "FFmpegInteropX",
+        [Parameter(Position=3)]
+        [array] $WindowsTargets = @("Desktop", "UWP")
+    )
+
+    $NeedPush = @()
+    $NeedBuild = $false
+
+    foreach ($target in $WindowsTargets) {
+        $packageName = "$PackagePrefix.$target.$PackagePostfix"
+
+        Write-Host
+        Write-Host "Checking for package: $packageName $PackageVersion..."
+
+        if (Test-Package-Online -PackageName $packageName -PackageVersion $PackageVersion) {
+            Write-Host "Online package found: $packageName $PackageVersion"
+        } elseif (Test-Package-Local -PackageName $packageName -PackageVersion $PackageVersion) {
+            Write-Host "Local package found: $packageName $PackageVersion"
+            $NeedPush += $packageName
+        } else {
+            Write-Host "Package needs to be built: $packageName $PackageVersion"
+            $NeedPush += $packageName
+            $NeedBuild = $true
+        }
+    }
+
+    foreach ($package in $NeedPush) {
+        Write-Host "Package to push: $package.$PackageVersion"
+        $PushPackages.Add(".\Output\NuGet\$package.$PackageVersion.nupkg")
+    }
+
+    return $NeedBuild
 }
 
 function Invoke() {
@@ -164,78 +201,43 @@ Write-Host
 # Stop on all PowerShell command errors
 $ErrorActionPreference = "Stop"
 
+if (Test-Package "Lib" $LibPackageVersion)
+{
+    Write-Host
+    Write-Host "Building FFmpegInteropX Lib..."
+    Write-Host
 
-$LibPackages = @(
-    ".\Output\NuGet\FFmpegInteropX.Desktop.Lib.$LibPackageVersion.nupkg"
-    ".\Output\NuGet\FFmpegInteropX.UWP.Lib.$LibPackageVersion.nupkg"
-)
+    .\Build-FFmpegInteropX.ps1 `
+        -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
+        -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion `
+        -VcVersion $VcVersion `
+        -LibraryVersionNumber $LibraryVersionNumber `
+        -NugetPackageVersion $LibPackageVersion `
+        -ClearBuildFolders:$ClearBuildFolders `
+        -DisableParallelBuilds:$DisableParallelBuilds
+}
 
-$FFmpegPackages = @(
-    ".\Output\NuGet\FFmpegInteropX.Desktop.FFmpeg.$FFmpegPackageVersion.nupkg"
-    ".\Output\NuGet\FFmpegInteropX.UWP.FFmpeg.$FFmpegPackageVersion.nupkg"
-)
+if (Test-Package "FFmpeg" $FFmpegPackageVersion)
+{
+    Write-Host
+    Write-Host "Building FFmpegInteropX FFmpeg..."
+    Write-Host
+
+    .\Build-FFmpeg.ps1 `
+        -VcVersion $VcVersion `
+        -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
+        -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion `
+        -NugetPackageVersion $FFmpegPackageVersion `
+        -ClearBuildFolders:$ClearBuildFolders `
+        -DisableParallelBuilds:$DisableParallelBuilds `
+        -SkipConfigureFFmpeg:$SkipConfigureFFmpeg `
+        -SkipBuildLibs:$SkipBuildLibs
+}
 
 $OverallPackages = @(
-    ".\Output\NuGet\FFmpegInteropX.$OverallPackageVersion.nupkg"
+    ".\Output\NuGet\FFmpegInteropX.$OverallPackageVersion.nupkg",
     ".\Output\NuGet\FFmpegInteropX.UWP.$OverallPackageVersion.nupkg"
 )
-
-$PushPackages = @()
-
-if ((!(Test-Package-Local -PackageName "FFmpegInteropX.Desktop.Lib" -PackageVersion $LibPackageVersion)) -or (!(Test-Package-Local -PackageName "FFmpegInteropX.UWP.Lib" -PackageVersion $LibPackageVersion)))
-{
-    if ((!(Test-Package-Online -PackageName "FFmpegInteropX.Desktop.Lib" -PackageVersion $LibPackageVersion)) -or (!(Test-Package-Online -PackageName "FFmpegInteropX.UWP.Lib" -PackageVersion $LibPackageVersion)))
-    {
-        Write-Host
-        Write-Host "Building FFmpegInteropX Lib..."
-        Write-Host
-
-        .\Build-FFmpegInteropX.ps1 `
-            -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
-            -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion `
-            -VcVersion $VcVersion `
-            -LibraryVersionNumber $LibraryVersionNumber `
-            -NugetPackageVersion $LibPackageVersion `
-            -ClearBuildFolders:$ClearBuildFolders `
-            -AllowParallelBuilds:$AllowParallelBuilds
-
-        $PushPackages += $LibPackages[0]
-        $PushPackages += $LibPackages[1]
-    }
-}
-else
-{
-    $PushPackages += $LibPackages[0]
-    $PushPackages += $LibPackages[1]
-}
-
-if ((!(Test-Package-Local -PackageName "FFmpegInteropX.Desktop.FFmpeg" -PackageVersion $FFmpegPackageVersion)) -or (!(Test-Package-Local -PackageName "FFmpegInteropX.UWP.FFmpeg" -PackageVersion $FFmpegPackageVersion)))
-{
-    if ((!(Test-Package-Online -PackageName "FFmpegInteropX.Desktop.FFmpeg" -PackageVersion $FFmpegPackageVersion)) -or (!(Test-Package-Online -PackageName "FFmpegInteropX.UWP.FFmpeg" -PackageVersion $FFmpegPackageVersion)))
-    {
-        Write-Host
-        Write-Host "Building FFmpegInteropX FFmpeg..."
-        Write-Host
-
-        .\Build-FFmpeg.ps1 `
-            -VcVersion $VcVersion `
-            -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
-            -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion `
-            -NugetPackageVersion $FFmpegPackageVersion `
-            -ClearBuildFolders:$ClearBuildFolders `
-            -AllowParallelBuilds:$AllowParallelBuilds `
-            -SkipConfigureFFmpeg:$SkipConfigureFFmpeg `
-            -SkipBuildLibs:$SkipBuildLibs
-
-        $PushPackages += $FFmpegPackages[0]
-        $PushPackages += $FFmpegPackages[1]
-   }
-}
-else
-{
-    $PushPackages += $FFmpegPackages[0]
-    $PushPackages += $FFmpegPackages[1]
-}
 
 if ((!(Test-Path $OverallPackages[0])) -or (!(Test-Path $OverallPackages[1])))
 {
@@ -250,8 +252,16 @@ if ((!(Test-Path $OverallPackages[0])) -or (!(Test-Path $OverallPackages[1])))
         -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion
 }
 
-$PushPackages += $OverallPackages[0]
-$PushPackages += $OverallPackages[1]
+$PushPackages.Add($OverallPackages[0])
+$PushPackages.Add($OverallPackages[1])
+
+Write-Host
+Write-Host "Packages to push:"
+
+foreach ($package in $PushPackages)
+{
+    Write-Host " - $package"
+}
 
 Write-Host
 Read-Host -Prompt "Press 'Return' to publish packages to NuGet"

@@ -46,7 +46,7 @@ param(
 
     [switch] $ClearBuildFolders,
 
-    [switch] $AllowParallelBuilds,
+    [switch] $DisableParallelBuilds,
 
     [switch] $SkipNugetRestore,
 
@@ -175,7 +175,7 @@ if (!$LibraryVersionNumber)
 
 Write-Host "LibraryVersionNumber: $LibraryVersionNumber"
 
-if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
+if (!($DisableParallelBuilds) -and ($Platforms.Count * $WindowsTargets.Count -gt 1))
 {
     $processes = @{}
 
