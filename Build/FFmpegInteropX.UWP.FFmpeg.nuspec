@@ -10,7 +10,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">LGPL-2.1-or-later AND Zlib AND MIT</license>
     <dependencies>
-      <group targetFramework="uap10.0" />
+      <group targetFramework="uap$winsdk$" />
       <group targetFramework="net6.0-windows$winsdk$" />
     </dependencies>
     <repository type="git" url="$repositoryUrl$" commit="$repositoryCommit$" />

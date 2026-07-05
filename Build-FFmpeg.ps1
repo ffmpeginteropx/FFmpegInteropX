@@ -15,8 +15,8 @@ param(
     #>
     [version] $VcVersion = '14.5',
 
-    [ValidateSet('UWP', 'Desktop')]
-    [string] $WindowsTarget = 'UWP',
+    [ValidateSet('Desktop', 'UWP')]
+    [string[]] $WindowsTargets = ('Desktop', 'UWP'),
 
     <#
         Example values:
@@ -26,6 +26,15 @@ param(
         10.0.18362.0
     #>
     [version] $WindowsTargetPlatformVersion = '10.0.26100.0',
+
+    <#
+        Example values:
+        8.1
+        10.0.15063.0
+        10.0.17763.0
+        10.0.18362.0
+    #>
+    [version] $WindowsTargetPlatformMinVersion = '10.0.17763.0',
 
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
@@ -63,7 +72,7 @@ param(
 
     [string] $FFmpegCommit = $(git --git-dir $PSScriptRoot/Libs/ffmpeg/.git rev-parse HEAD),
 
-    [switch] $AllowParallelBuilds,
+    [switch] $DisableParallelBuilds,
 
     [switch] $SkipBuildPkgConfigFake,
     
@@ -77,9 +86,7 @@ function Build-Platform {
     param (
         [System.IO.DirectoryInfo] $SolutionDir,
         [string] $Platform,
-        [string] $Configuration,
-        [version] $WindowsTargetPlatformVersion,
-        [version] $VcVersion,
+        [string] $WindowsTarget,
         [string] $PlatformToolset,
         [string] $VsLatestPath,
         [string] $BashExe = 'C:\msys64\usr\bin\bash.exe',
@@ -104,7 +111,7 @@ function Build-Platform {
     }
 
     Write-Host
-    Write-Host "Building FFmpeg for Windows 10 ($WindowsTarget) ${Platform} ${Gpl}-gpl ${Encoders}-encoders ${Devices}-devices ${Programs}-programs ..."
+    Write-Host "Building FFmpeg for Windows ($WindowsTarget) ${Platform} ${Gpl}-gpl ${Encoders}-encoders ${Devices}-devices ${Programs}-programs ..."
     Write-Host
 
     # Load environment from VCVARS.
@@ -120,7 +127,9 @@ function Build-Platform {
     
     $env:LIB += ";$build\lib"
     $env:INCLUDE += ";$build\include"
-    $env:Path += ";$SolutionDir\Libs\gas-preprocessor"	
+    $env:Path += ";$SolutionDir\Libs\gas-preprocessor"
+
+    Write-Host "LIB: $env:LIB"
         
     if (! $SkipBuildLibs)
     {
@@ -142,7 +151,6 @@ function Build-Platform {
 
         ('lib', 'licenses', 'include') | ForEach-Object {
             New-Item -ItemType Directory -Force $build\$_ | Out-Null
-            New-Item -ItemType Directory -Force $target\$_ | Out-Null
         }
 
         # library definitions: <FolderName>, <ProjectName>, <FFmpegTargetName> 
@@ -182,6 +190,7 @@ function Build-Platform {
                 /p:Configuration=$configurationName `
                 /p:Platform=$Platform `
                 /p:WindowsTargetPlatformVersion=$WindowsTargetPlatformVersion `
+                /p:WindowsTargetPlatformMinVersion=$WindowsTargetPlatformMinVersion `
                 /p:PlatformToolset=$PlatformToolset `
                 /p:ForceImportBeforeCppTargets=$SolutionDir\Libs\build-scripts\LibOverrides.props `
                 /p:useenv=true
@@ -480,7 +489,7 @@ if ($NugetPackageVersion)
 $start = Get-Date
 $success = 1
 
-if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
+if (!($DisableParallelBuilds) -and ($Platforms.Count * $WindowsTargets.Count -gt 1))
 {
     $processes = @{}
     $clear = ""
@@ -500,30 +509,39 @@ if ($AllowParallelBuilds -and $Platforms.Count -gt 1)
         $addparams += " -SkipConfigureFFmpeg"
     }
 
-    $skipPkgConfig = "" 
-    foreach ($platform in $Platforms) {
-        if ($SkipBuildPkgConfigFake)
-        {
-            $skip
-        }
-        $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -VcVersion $VcVersion -WindowsTarget $WindowsTarget -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -Gpl $Gpl -Encoders $Encoders -Devices $Devices -Programs $Programs -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
-        $processes[$platform] = $proc
-    
-        # only build PkgConfigFake once
+    $skipPkgConfig = ""
+    if ($SkipBuildPkgConfigFake)
+    {
         $skipPkgConfig = "-SkipBuildPkgConfigFake"
     }
 
-    foreach ($platform in $Platforms) {
-        $processes[$platform].WaitForExit();
-        $result = $processes[$platform].ExitCode;
-        if ($result -eq 0)
+    foreach ($WindowsTarget in $WindowsTargets)
+    {
+        foreach ($platform in $Platforms)
         {
-            Write-Host "Build for $platform succeeded!"
+            $proc = Start-Process -PassThru powershell "-File .\Build-FFmpeg.ps1 -Platforms $platform -WindowsTargets $WindowsTarget -VcVersion $VcVersion -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion -Configuration $Configuration -SharedOrStatic $SharedOrStatic -Gpl $Gpl -Encoders $Encoders -Devices $Devices -Programs $Programs -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -BashExe ""$BashExe"" $clear -FFmpegUrl $FFmpegUrl -FFmpegCommit $FFmpegCommit $skipPkgConfig $addparams"
+            $processes["${WindowsTarget}_$platform"] = $proc
+    
+            # only build PkgConfigFake once
+            $skipPkgConfig = "-SkipBuildPkgConfigFake"
         }
-        else
+    }
+
+    foreach ($WindowsTarget in $WindowsTargets)
+    {
+        foreach ($platform in $Platforms)
         {
-            Write-Host "Build for $platform failed with ErrorCode: $result"
-            $success = 0
+            $processes["${WindowsTarget}_$platform"].WaitForExit();
+            $result = $processes["${WindowsTarget}_$platform"].ExitCode;
+            if ($result -eq 0)
+            {
+                Write-Host "Build for $WindowsTarget $platform succeeded!"
+            }
+            else
+            {
+                Write-Host "Build for $WindowsTarget $platform failed with ErrorCode: $result"
+                $success = 0
+            }
         }
     }
 }
@@ -536,64 +554,68 @@ else
         $oldEnv.Add($item.Name, $item.Value);
     }
 
-    foreach ($platform in $Platforms) {
+    foreach ($WindowsTarget in $WindowsTargets)
+    {
+        foreach ($platform in $Platforms) {
 
-        try { Stop-Transcript } catch { }
-    
-        $logFile = "${PSScriptRoot}\Intermediate\FFmpeg$WindowsTarget\Build_" + $timestamp + "_$platform.log"
-
-        try
-        {
-            Build-Platform `
-                -SolutionDir "${PSScriptRoot}\" `
-                -Platform $platform `
-                -Configuration 'Release' `
-                -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion `
-                -VcVersion $VcVersion `
-                -PlatformToolset $platformToolSet `
-                -VsLatestPath $vsLatestPath `
-                -BashExe $BashExe `
-                -LogFileName $logFile `
-                -SkipBuildPkgConfigFake $SkipBuildPkgConfigFake `
-                -SkipBuildLibs $SkipBuildLibs `
-                -SkipConfigureFFmpeg $SkipConfigureFFmpeg
-        }
-        catch
-        {
-            Write-Warning "Error occured: $PSItem"
-            $success = 0
-            Break
-        }
-        finally
-        {
             try { Stop-Transcript } catch { }
     
-            # Restore orignal environment variables
-            foreach ($item in $oldEnv.GetEnumerator())
+            $logFile = "${PSScriptRoot}\Intermediate\FFmpeg$WindowsTarget\Build_" + $timestamp + "_$platform.log"
+
+            try
             {
-                Set-Item -Path env:"$($item.Name)" -Value $item.Value
+                Build-Platform `
+                    -SolutionDir "${PSScriptRoot}\" `
+                    -Platform $platform `
+                    -WindowsTarget $WindowsTarget `
+                    -PlatformToolset $platformToolSet `
+                    -VsLatestPath $vsLatestPath `
+                    -BashExe $BashExe `
+                    -LogFileName $logFile `
+                    -SkipBuildPkgConfigFake $SkipBuildPkgConfigFake `
+                    -SkipBuildLibs $SkipBuildLibs `
+                    -SkipConfigureFFmpeg $SkipConfigureFFmpeg
             }
-            foreach ($item in Get-ChildItem env:)
+            catch
             {
-                if (!$oldEnv.ContainsKey($item.Name))
+                Write-Warning "Error occured: $PSItem"
+                $success = 0
+                Break
+            }
+            finally
+            {
+                try { Stop-Transcript } catch { }
+    
+                # Restore orignal environment variables
+                foreach ($item in $oldEnv.GetEnumerator())
                 {
-                     Remove-Item -Path env:"$($item.Name)"
+                    Set-Item -Path env:"$($item.Name)" -Value $item.Value
+                }
+                foreach ($item in Get-ChildItem env:)
+                {
+                    if (!$oldEnv.ContainsKey($item.Name))
+                    {
+                         Remove-Item -Path env:"$($item.Name)"
+                    }
                 }
             }
-        }
    
-        # only build PkgConfigFake once
-        $BuildPkgConfigFake = $false;
+            # only build PkgConfigFake once
+            $BuildPkgConfigFake = $false;
+        }
     }
 }
 
 if ($success -and $NugetPackageVersion)
 {
-    nuget pack .\Build\FFmpegInteropX.$WindowsTarget.FFmpeg.nuspec `
-        -Properties "id=FFmpegInteropX.$WindowsTarget.FFmpeg;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;winsdk=$WindowsTargetPlatformVersion;NoWarn=NU5128" `
-        -Version $NugetPackageVersion `
-        -Symbols -SymbolPackageFormat symbols.nupkg `
-        -OutputDirectory "${PSScriptRoot}\Output\NuGet"
+    foreach ($WindowsTarget in $WindowsTargets)
+    {
+        nuget pack .\Build\FFmpegInteropX.$WindowsTarget.FFmpeg.nuspec `
+            -Properties "id=FFmpegInteropX.$WindowsTarget.FFmpeg;repositoryUrl=$FFmpegUrl;repositoryCommit=$FFmpegCommit;winsdk=$WindowsTargetPlatformMinVersion;NoWarn=NU5128" `
+            -Version $NugetPackageVersion `
+            -Symbols -SymbolPackageFormat symbols.nupkg `
+            -OutputDirectory "${PSScriptRoot}\Output\NuGet"
+    }
 }
 
 Write-Host

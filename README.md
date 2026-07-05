@@ -4,35 +4,10 @@
 
 ## Welcome to FFmpegInteropX
 
-FFmpegInteropX is an open-source project that aims to provide an easy way to use **FFmpeg** as a decoder library in **Windows 10/11 UWP Apps**. This allows you to decode a lot of formats that are not natively supported on Windows 10/11. Please note that only decoding is supported currently, we provide no encoding or transcoding support.
+FFmpegInteropX is an open-source project that aims to provide an easy way to use **FFmpeg** as a decoder library in **Windows 10/11 Apps (UWP, WinUI, Desktop)**. This allows you to decode a lot of formats that are not natively supported on Windows 10/11. The lib can be used as a source for MediaPlayer, but it also provides a FrameGrabber class. Please note that only decoding is supported currently, we provide no encoding or transcoding support at this time.
 
-FFmpegInteropX is a much **improved fork** of the original [Microsoft project](git://github.com/Microsoft/FFmpegInterop).
+FFmpegInteropX was originally based on the [Microsoft project](git://github.com/Microsoft/FFmpegInterop), but was heavily improved and later more or less completely re-written as C++/WinRT code.
 
-#### Latest Releases:
-- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX):
-  - 1.0.0
-    - Renamed namespaces and classes
-    - Removed deprecated APIs and code cleanup
-  - 0.9.4
-    - Support for HDR video!
-  - 0.9.3
-    - Support for AV1 hardware and software decoding
-    - Dynamic detection of AV1 hardware decoding capabilities
-- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 
-  - 5.1.100
-    - FFmpeg 5.1.1 build for UWP platform
-    - Includes unofficial "init_threads" option to speedup DASH stream loading
-  - 5.0.0
-    - FFmpeg 5.0.0 build for UWP platform
-  - 4.4.100
-    - FFmpeg 4.4.1 build for UWP platform
-    - Added AV1 hardware decoder
-    - Added dav1d library for AV1 software decoding
-    - Added openssl 3.0.1 for secure streaming support (e.g. https, rtmps)
-    - Build system improvements:
-      - Added dockerfile for building inside container (experimental)
-      - Automatic download and installation of all dependencies (both dockerfile and local build)
-      - Support for building all target platforms in parallel
 
 ### Some of the important improvements, compared to original version:
 
@@ -62,25 +37,40 @@ FFmpegInteropX is a much **improved fork** of the original [Microsoft project](g
 
 ## How to work with FFmpegInteropX
 
-We have switched from manual builds to providing NuGet packages. There are two packages: 
+We have switched from manual builds to providing NuGet packages. There are two top-level packages: 
 
 - [**FFmpegInteropX**](https://www.nuget.org/packages/FFmpegInteropX)
-  - The library itself, referenced by app project files
-  - Has a dependency on FFmpegInteropX.FFmpegUWP, which contains the actual FFmpeg build
+  - This is the normal top-level package.
+  - It references the lib and the ffmpeg build, based on project type (either UWP or desktop version).
+  - Can be used in:
+    - Windows desktop apps (WinUI3, other/no UI, console)
+    - UWP apps (.NET Native)
+    - UWP with .NET 9 and higher (partly supported):
+      This will reference the normal desktop version of the lib and ffmpeg build, not the UWP version. This works on the PC, but it is recommended to use the FFmpegInteropX.UWP(https://www.nuget.org/packages/FFmpegInteropX.UWP) package instead. On XBOX you definitely must use FFmpegInteropX.UWP(https://www.nuget.org/packages/FFmpegInteropX.UWP) for .NET9 and higher!
 
-- [**FFmpegInteropX.FFmpegUWP**](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP)
-  - Our official FFmpeg build for the UWP platform
-  - Customized and tested for use with FFmpegInteropX
-  - Includes FFFmpeg dll files, libs, includes and license files
-  - Two purposes:
-    - Provide runtime dependencies (dlls) for apps
-    - Provide build dependencies for our library
+- [**FFmpegInteropX.UWP**](https://www.nuget.org/packages/FFmpegInteropX.UWP)
+  - This references the UWP version of the lib and ffmpeg
+  - Works with UWP apps (.NET Native) and UWP with .NET 9 and higher (on XBOX, you must use this package for .NET9 and higher!)
 
-The easiest way to work with FFmpegInteropX is to add both NuGet packages to your app. This allows full usage of all features, without checking out the repo or installing build tools.
+These are the lower level packages, which are referenced by the top-level packages:
+
+- [**FFmpegInteropX.Desktop.Lib**](https://www.nuget.org/packages/FFmpegInteropX.UWP.Lib)
+  - The Desktop lib package
+
+- [**FFmpegInteropX.Desktop.FFmpeg**](https://www.nuget.org/packages/FFmpegInteropX.UWP.FFmpeg)
+  - The Desktop ffmpeg package
+
+- [**FFmpegInteropX.UWP.Lib**](https://www.nuget.org/packages/FFmpegInteropX.UWP.Lib)
+  - The UWP lib package
+
+- [**FFmpegInteropX.UWP.FFmpeg**](https://www.nuget.org/packages/FFmpegInteropX.UWP.FFmpeg)
+  - The UWP ffmpeg package
+
+Directly using the lower level packages would allow you to e.g. use only our lib, but provide your own ffmpeg build with it.
 
 **Advanced users and library developers:** If you want to be able to debug into FFmpegInteropX right from your app, or to work on the library, you need to clone this repository. Instead of adding the FFmpegInteropX NuGet package to your app, you can directly add the `Source\FFmpegInteropX.vcxproj` project file to your app solution (it does not matter where the FFmpegInteropX folder is located). Then in your main app project, add a reference to the FFmpegInteropX project. Now you have all the sources directly in your app solution and can debug and enhance the lib.
 
-**Full blown:** If needed, you can even supply your own custom FFmpeg build to replace our FFmpegInteropX.FFmpegUWP NuGet package.
+**Full blown:** If needed, you can even supply your own custom FFmpeg build to replace our FFmpeg NuGet package.
 
 Check out the [build instructions](README-BUILD.md) if you want to manually build FFmpgeInteropX or FFmpeg itself.
 
@@ -182,21 +172,46 @@ src.SendFFmpegAudioFilterCommand("volume", "volume", "1.0");
 src.SendFFmpegAudioFilterCommand("equalizer", "g", "5");
 ```
 
-#### Version History:
-- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX): 0.9.2
-  - Native D3D11 hardware acceleration!!
-  - FFmpeg video filters
-  - Fast seeking to keyframes
-  - Stereo downmix option
-  - Improved support for image file formats
-- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP): 4.3.100
-  - FFmpeg 4.3.1 build for UWP platform
-  - D3D11 hardware acceleration enabled
+#### Version History (older versions, not provided in GitHub releases):
+- [FFmpegInteropX](https://www.nuget.org/packages/FFmpegInteropX):
+  - 1.0.0
+    - Renamed namespaces and classes
+    - Removed deprecated APIs and code cleanup
+  - 0.9.4
+    - Support for HDR video!
+  - 0.9.3
+    - Support for AV1 hardware and software decoding
+    - Dynamic detection of AV1 hardware decoding capabilities
+  - 0.9.2
+    - Native D3D11 hardware acceleration!!
+    - FFmpeg video filters
+    - Fast seeking to keyframes
+    - Stereo downmix option
+    - Improved support for image file formats
+- [FFmpegInteropX.FFmpegUWP](https://www.nuget.org/packages/FFmpegInteropX.FFmpegUWP):
+  - 5.1.100
+    - FFmpeg 5.1.1 build for UWP platform
+    - Includes unofficial "init_threads" option to speedup DASH stream loading
+  - 5.0.0
+    - FFmpeg 5.0.0 build for UWP platform
+  - 4.4.100
+    - FFmpeg 4.4.1 build for UWP platform
+    - Added AV1 hardware decoder
+    - Added dav1d library for AV1 software decoding
+    - Added openssl 3.0.1 for secure streaming support (e.g. https, rtmps)
+    - Build system improvements:
+      - Added dockerfile for building inside container (experimental)
+      - Automatic download and installation of all dependencies (both dockerfile and local build)
+      - Support for building all target platforms in parallel
+  - 4.3.100
+    - FFmpeg 4.3.1 build for UWP platform
+    - D3D11 hardware acceleration enabled
 
 ## Credits / major contributors
 
 - [lukasf](https://github.com/lukasf)
-- [mcosmin222](https://github.com/mcosmin222)
+- [Brabebhin](https://github.com/brabebhin)
+- [softworkz](https://github.com/softworkz)
 - [MouriNaruto](https://github.com/MouriNaruto)
 - [JunielKatarn](https://github.com/JunielKatarn)
 
