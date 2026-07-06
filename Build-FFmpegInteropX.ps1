@@ -177,16 +177,16 @@ Write-Host "LibraryVersionNumber: $LibraryVersionNumber"
 
 if (!($DisableParallelBuilds) -and ($Platforms.Count * $WindowsTargets.Count -gt 1))
 {
-    $processes = @{}
-
-    $addparams = "-SkipNugetRestore"
-    if ($ClearBuildFolders)
-    {
-        $addparams += " -ClearBuildFolders"
-    }
-
     foreach ($WindowsTarget in $WindowsTargets)
     {
+        $processes = @{}
+
+        $addparams = "-SkipNugetRestore"
+        if ($ClearBuildFolders)
+        {
+            $addparams += " -ClearBuildFolders"
+        }
+
         foreach ($platform in $Platforms) {
             # WinUI does not support ARM
             if ($WindowsTarget -eq "Desktop" -and $platform -eq "ARM")
@@ -195,12 +195,9 @@ if (!($DisableParallelBuilds) -and ($Platforms.Count * $WindowsTargets.Count -gt
             }
 
             $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -WindowsTargets $WindowsTarget -VcVersion $VcVersion -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""$FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" -LibraryVersionNumber $LibraryVersionNumber $addparams"
-            $processes["${WindowsTarget}_$platform"] = $proc
+            $processes[$platform] = $proc
         }
-    }
 
-    foreach ($WindowsTarget in $WindowsTargets)
-    {
         foreach ($platform in $Platforms)
         {
             # WinUI does not support ARM
@@ -209,8 +206,8 @@ if (!($DisableParallelBuilds) -and ($Platforms.Count * $WindowsTargets.Count -gt
                 continue;
             }
 
-            $processes["${WindowsTarget}_$platform"].WaitForExit();
-            $result = $processes["${WindowsTarget}_$platform"].ExitCode;
+            $processes[$platform].WaitForExit();
+            $result = $processes[$platform].ExitCode;
             if ($result -eq 0)
             {
                 Write-Host "Build for $WindowsTarget $platform succeeded!"
