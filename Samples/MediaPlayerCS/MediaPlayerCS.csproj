@@ -154,7 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX.UWP.FFmpeg">
-      <Version>7.1.0-libass2</Version>
+      <Version>$(FFmpegPackageVersion)</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.9</Version>
@@ -187,8 +187,8 @@
     </When>
     <Otherwise>
       <ItemGroup>
-        <PackageReference Include="FFmpegInteropX.UWP.Lib" Version="2.0.0-pre7" />
-        <PackageReference Include="FFmpegInteropX.UWP.VideoEffects" Version="2.0.0-pre7" />
+        <PackageReference Include="FFmpegInteropX.UWP.Lib" Version="$(FFmpegInteropXPackageVersion)" />
+        <PackageReference Include="FFmpegInteropX.UWP.VideoEffects" Version="2.0.0" />
       </ItemGroup>
     </Otherwise>
   </Choose>

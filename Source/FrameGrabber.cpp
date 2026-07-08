@@ -14,7 +14,28 @@ namespace winrt::FFmpegInteropX::implementation
         config->IsFrameGrabber = true;
         config->Video().VideoDecoderMode(VideoDecoderMode::ForceFFmpegSoftwareDecoder);
 
-        auto result = FFmpegMediaSource::CreateFromStream(stream, config,  0, false);
+        auto result = FFmpegMediaSource::CreateFromStream(stream, config, 0, false);
+        if (result == nullptr)
+        {
+            throw_hresult(E_FAIL);// ref new Exception(E_FAIL, "Could not create MediaStreamSource.");
+        }
+        if (result->VideoSampleProvider() == nullptr)
+        {
+            throw_hresult(E_INVALIDARG); //S "No video stream found in file (or no suitable decoder available).");
+        }
+        co_await caller;
+        co_return winrt::make<FrameGrabber>(result);
+    }
+
+    IAsyncOperation<FFmpegInteropX::FrameGrabber> FrameGrabber::CreateFromInputStreamAsync(Windows::Storage::Streams::IInputStream stream)
+    {
+        winrt::apartment_context caller; // Capture calling context.
+        co_await winrt::resume_background();
+        auto config = winrt::make_self<MediaSourceConfig>();
+        config->IsFrameGrabber = true;
+        config->Video().VideoDecoderMode(VideoDecoderMode::ForceFFmpegSoftwareDecoder);
+
+        auto result = FFmpegMediaSource::CreateFromInputStream(stream, config, 0, false);
         if (result == nullptr)
         {
             throw_hresult(E_FAIL);// ref new Exception(E_FAIL, "Could not create MediaStreamSource.");

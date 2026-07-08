@@ -3,16 +3,10 @@
 #include "pch.h"
 #include "MediaSampleProvider.h"
 #include "SubtitleProvider.h"
-#include "AttachedFile.h"
 #include "AttachedFileHelper.h"
 #include "MediaSourceConfig.h"
 #include "CodecChecker.h"
 #include "MediaMetadata.h"
-#include "AudioStreamInfo.h"
-#include "VideoStreamInfo.h"
-#include "SubtitleStreamInfo.h"
-#include "ChapterInfo.h"
-#include "FormatInfo.h"
 #include "text_encoding_detect.h"
 
 namespace winrt::FFmpegInteropX::implementation
@@ -42,6 +36,12 @@ namespace winrt::FFmpegInteropX::implementation
             return CreateFromStreamInternalAsync(stream, config, windowId);
         }
 
+        ///<summary>Creates a FFmpegMediaSource from a input stream.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromInputStreamAsync(IInputStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
+        {
+            return CreateFromInputStreamInternalAsync(stream, config, windowId);
+        }
+
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId)
         {
@@ -68,6 +68,18 @@ namespace winrt::FFmpegInteropX::implementation
             return CreateFromStreamInternalAsync(stream, FFmpegInteropX::MediaSourceConfig(), 0);
         }
 
+        ///<summary>Creates a FFmpegMediaSource from a input stream.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromInputStreamAsync(IInputStream stream, FFmpegInteropX::MediaSourceConfig config)
+        {
+            return CreateFromInputStreamInternalAsync(stream, config, 0);
+        }
+
+        ///<summary>Creates a FFmpegMediaSource from a input stream.</summary>
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromInputStreamAsync(IInputStream stream)
+        {
+            return CreateFromInputStreamInternalAsync(stream, FFmpegInteropX::MediaSourceConfig(), 0);
+        }
+
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config)
         {
@@ -75,7 +87,7 @@ namespace winrt::FFmpegInteropX::implementation
         }
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
-        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> FFmpegMediaSource::CreateFromUriAsync(hstring uri)
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriAsync(hstring uri)
         {
             return CreateFromUriInternalAsync(uri, FFmpegInteropX::MediaSourceConfig(), 0);
         }
@@ -128,6 +140,19 @@ namespace winrt::FFmpegInteropX::implementation
 
         ///<summary>Gets video filters for the specified video stream.</summary>
         hstring GetFFmpegVideoFilters(winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
+
+        ///<summary>Sends a command to audio filters on all audio streams.</summary>
+        FFmpegInteropX::FilterCommandResult SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments);
+
+        ///<summary>Sends a command to audio filters on the specified audio stream.</summary>
+        FFmpegInteropX::FilterCommandResult SendFFmpegAudioFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::AudioStreamInfo const& audioStream);
+
+        ///<summary>Sends a command to video filters on all video streams.</summary>
+        FFmpegInteropX::FilterCommandResult SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments);
+
+        ///<summary>Sends a command to video filters on the specified video stream.</summary>
+        FFmpegInteropX::FilterCommandResult SendFFmpegVideoFilterCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments, winrt::FFmpegInteropX::VideoStreamInfo const& videoStream);
+
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
         FFmpegInteropX::MediaThumbnailData ExtractThumbnail();
@@ -228,6 +253,7 @@ namespace winrt::FFmpegInteropX::implementation
     private:
 
         HRESULT CreateMediaStreamSource(IRandomAccessStream const& stream);
+        HRESULT CreateMediaStreamSource(IInputStream const& stream);
         HRESULT CreateMediaStreamSource(hstring const& uri);
         HRESULT InitFFmpegContext();
         MediaStreamSource CreateMediaStreamSource();
@@ -261,10 +287,12 @@ namespace winrt::FFmpegInteropX::implementation
 
 
     public://internal:
-        static IAsyncOperation<winrt::FFmpegInteropX::FFmpegMediaSource> ReadExternalSubtitleStreamAsync(IRandomAccessStream stream, hstring streamName, winrt::FFmpegInteropX::MediaSourceConfig const& config, VideoStreamDescriptor videoDescriptor, DispatcherQueue dispatcher, uint64_t windowId, bool useHdr);
+        static IAsyncOperation<winrt::FFmpegInteropX::FFmpegMediaSource> ReadExternalSubtitleStreamAsync(IRandomAccessStream stream, hstring streamName, winrt::FFmpegInteropX::MediaSourceConfig const& config, VideoStreamDescriptor videoDescriptor, uint64_t windowId, bool useHdr);
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromStreamInternalAsync(IRandomAccessStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
+        static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromInputStreamInternalAsync(IInputStream stream, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
         static IAsyncOperation<FFmpegInteropX::FFmpegMediaSource> CreateFromUriInternalAsync(hstring uri, FFmpegInteropX::MediaSourceConfig config, uint64_t windowId);
         static winrt::com_ptr<FFmpegMediaSource> CreateFromStream(IRandomAccessStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, uint64_t windowId, bool useHdr);
+        static winrt::com_ptr<FFmpegMediaSource> CreateFromInputStream(IInputStream const& stream, winrt::com_ptr<MediaSourceConfig> const& config, uint64_t windowId, bool useHdr);
         static winrt::com_ptr<FFmpegMediaSource> CreateFromUri(hstring  const& uri, winrt::com_ptr<MediaSourceConfig>  const& config, uint64_t windowId, bool useHdr);
         HRESULT Seek(TimeSpan const& position, TimeSpan& actualPosition, bool allowFastSeek);
 
@@ -278,6 +306,7 @@ namespace winrt::FFmpegInteropX::implementation
         AVIOContext* avIOCtx = nullptr;
         AVFormatContext* avFormatCtx = nullptr;
         winrt::com_ptr<IStream> fileStreamData = { nullptr };
+        IInputStream inputStream = { nullptr };
         TextEncodingDetect::Encoding streamEncoding = TextEncodingDetect::None;
         bool streamEncodingChecked = false;
         winrt::com_ptr<MediaSourceConfig> config = { nullptr };

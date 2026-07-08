@@ -20,6 +20,9 @@ namespace winrt::FFmpegInteropX::implementation
         /// <summary>Creates a new FrameGrabber from the specified stream.</summary>
         static IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromStreamAsync(Windows::Storage::Streams::IRandomAccessStream stream);
 
+        /// <summary>Creates a new FrameGrabber from the specified input stream.</summary>
+        static IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromInputStreamAsync(Windows::Storage::Streams::IInputStream stream);
+
         /// <summary>Creates a new FrameGrabber from the specified uri.</summary>
         static IAsyncOperation<FFmpegInteropX::FrameGrabber> CreateFromUriAsync(hstring uri);
 

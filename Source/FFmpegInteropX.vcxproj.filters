@@ -251,6 +251,7 @@
     <ClInclude Include="SubtitleProviderLibass.h">
       <Filter>Subtitles</Filter>
     </ClInclude>
+    <ClInclude Include="FilterCommandResult.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodecChecker.cpp" />
@@ -350,6 +351,7 @@
     <ClCompile Include="SubtitleProviderLibass.cpp">
       <Filter>Subtitles</Filter>
     </ClCompile>
+    <ClCompile Include="FilterCommandResult.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="FFmpegInteropX.idl" />

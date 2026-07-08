@@ -1,12 +1,7 @@
 #pragma once
 #include "pch.h"
-#include <inttypes.h>
-#include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include "IAvFilter.h"
-#include "AvCodecContextHelpers.h"
-#include <sstream>
 
 extern "C"
 {
@@ -17,7 +12,6 @@ extern "C"
 #include "libavfilter/buffersink.h"
 #include "libavfilter/buffersrc.h"
 #include <libavfilter/avfilter.h>
-#include <libswresample/swresample.h>
 }
 
 
@@ -40,6 +34,8 @@ class AudioFilter : public IAvFilter
     winrt::hstring filterDefinition{};
     bool isInitialized = false;
     char channel_layout_name[256];
+
+    char command_response[1024];
 
     HRESULT InitFilterGraph(AVFrame* frame)
     {
@@ -109,7 +105,10 @@ class AudioFilter : public IAvFilter
         auto layout = frame->ch_layout.order == AV_CHANNEL_ORDER_NATIVE && frame->ch_layout.u.mask ?
             frame->ch_layout : inputCodecCtx->ch_layout;
 
-        av_channel_layout_describe(&layout, channel_layout_name, sizeof(channel_layout_name));
+        hr = av_channel_layout_describe(&layout, channel_layout_name, sizeof(channel_layout_name));
+        if (hr < 0) {
+            return hr;
+        }
 
         /* Create the abuffer filter;
         * it will be used for feeding the data into the graph. */
@@ -144,7 +143,7 @@ class AudioFilter : public IAvFilter
         AVSink = avfilter_get_by_name("abuffersink");
         if (!AVSink)
         {
-            fprintf(stderr, "Could not find the abuffersink filter.\n");
+            fprintf(stderr, "Could not find the buffersink filter.\n");
             return AVERROR_FILTER_NOT_FOUND;
         }
 
@@ -216,6 +215,32 @@ public:
         }
 
         return hr;
+    }
+
+    FilterCommandResult SendCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) override
+    {
+        HRESULT hr;
+        if (!isInitialized)
+        {
+            // not initialized
+            return FilterCommandResult(false, L"Filter not initialized");
+        }
+        else
+        {
+            auto trg = StringUtils::PlatformStringToUtf8String(target);
+            auto cmd = StringUtils::PlatformStringToUtf8String(command);
+            auto arg = StringUtils::PlatformStringToUtf8String(arguments);
+
+            hr = avfilter_graph_send_command(graph, trg.c_str(), cmd.c_str(), arg.c_str(), command_response, sizeof(command_response), 0);
+
+            if (hr < 0)
+            {
+                // command failed
+                return FilterCommandResult(false, L"Command failed");
+            }
+        }
+
+        return FilterCommandResult(true, StringUtils::Utf8ToPlatformString(command_response));
     }
 
     bool IsInitialized() override

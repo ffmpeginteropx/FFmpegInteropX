@@ -9,9 +9,9 @@
     <ApplicationType>Windows Store</ApplicationType>
     <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
     <EnableDotNetNativeCompatibleProfile>true</EnableDotNetNativeCompatibleProfile>
-    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
-    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
-    <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
+    <PlatformToolset>v143</PlatformToolset>
+    <WindowsTargetPlatformVersion>$(WindowsTargetPlatformVersion)</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>$(WindowsTargetPlatformMinVersion)</WindowsTargetPlatformMinVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <ItemGroup Label="ProjectConfigurations">
@@ -134,14 +134,7 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SubtitlePanel.cpp" />
   </ItemGroup>
@@ -158,14 +151,14 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\packages\FFmpegInteropX.UWP.FFmpeg.7.1.0-libass2\build\native\FFmpegInteropX.UWP.FFmpeg.targets" Condition="Exists('..\..\packages\FFmpegInteropX.UWP.FFmpeg.7.1.0-libass2\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" />
+    <Import Project="..\..\packages\FFmpegInteropX.UWP.FFmpeg.$(FFmpegPackageVersion)\build\native\FFmpegInteropX.UWP.FFmpeg.targets" Condition="Exists('..\..\packages\FFmpegInteropX.UWP.FFmpeg.$(FFmpegPackageVersion)\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" />
     <Import Project="..\..\packages\Win2D.uwp.1.28.2\build\native\Win2D.uwp.targets" Condition="Exists('..\..\packages\Win2D.uwp.1.28.2\build\native\Win2D.uwp.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\FFmpegInteropX.UWP.FFmpeg.7.1.0-libass2\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\FFmpegInteropX.UWP.FFmpeg.7.1.0-libass2\build\native\FFmpegInteropX.UWP.FFmpeg.targets'))" />
+    <Error Condition="!Exists('..\..\packages\FFmpegInteropX.UWP.FFmpeg.$(FFmpegPackageVersion)\build\native\FFmpegInteropX.UWP.FFmpeg.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\FFmpegInteropX.UWP.FFmpeg.$(FFmpegPackageVersion)\build\native\FFmpegInteropX.UWP.FFmpeg.targets'))" />
     <Error Condition="!Exists('..\..\packages\Win2D.uwp.1.28.2\build\native\Win2D.uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Win2D.uwp.1.28.2\build\native\Win2D.uwp.targets'))" />
   </Target>
 </Project>

@@ -176,7 +176,7 @@ namespace FFmpegInteropX
         /// This must be set before calling CreatePlaybackItem().
         /// Setting this can cause A/V desync, since it will only affect this stream.
         /// </remarks>
-        Double FramesPerSecondOverride{ get; };
+        Double FramesPerSecondOverride{ get; set; };
 
         HardwareDecoderStatus HardwareDecoderStatus{ get; };
         DecoderEngine DecoderEngine{ get; };
@@ -261,6 +261,20 @@ namespace FFmpegInteropX
         static CharacterEncoding SystemLocale{ get; };
         static CharacterEncoding ASCII{ get; };
         static CharacterEncoding UTF8{ get; };
+    };
+
+#ifdef UWP
+    [bindable]
+#endif
+    runtimeclass FilterCommandResult
+    {
+        FilterCommandResult(Boolean succeeded, String result);
+
+        ///<summary>Indicates whether the command was successfully executed.</summary>
+        Boolean Succeeded{ get; };
+
+        ///<summary>Gets the result of the command. In case of errors, this contains an error string.</summary>
+        String Result{ get; };
     };
 
     runtimeclass CodecRequiredEventArgs
@@ -365,6 +379,9 @@ namespace FFmpegInteropX
         /// <summary>Creates a new FrameGrabber from the specified stream.</summary>
         static Windows.Foundation.IAsyncOperation<FrameGrabber> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream);
 
+        /// <summary>Creates a new FrameGrabber from the specified input stream.</summary>
+        static Windows.Foundation.IAsyncOperation<FrameGrabber> CreateFromInputStreamAsync(Windows.Storage.Streams.IInputStream stream);
+
         /// <summary>Creates a new FrameGrabber from the specified uri.</summary>
         static Windows.Foundation.IAsyncOperation<FrameGrabber> CreateFromUriAsync(String uri);
 
@@ -435,6 +452,9 @@ namespace FFmpegInteropX
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream, MediaSourceConfig config, UInt64 windowId);
 
+        ///<summary>Creates a FFmpegMediaSource from a input stream.</summary>
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromInputStreamAsync(Windows.Storage.Streams.IInputStream stream, MediaSourceConfig config, UInt64 windowId);
+
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromUriAsync(String uri, MediaSourceConfig config, UInt64 windowId);
 
@@ -448,6 +468,12 @@ namespace FFmpegInteropX
 
         ///<summary>Creates a FFmpegMediaSource from a stream.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromStreamAsync(Windows.Storage.Streams.IRandomAccessStream stream);
+
+        ///<summary>Creates a FFmpegMediaSource from a input stream.</summary>
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromInputStreamAsync(Windows.Storage.Streams.IInputStream stream, MediaSourceConfig config);
+
+        ///<summary>Creates a FFmpegMediaSource from a input stream.</summary>
+        static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromInputStreamAsync(Windows.Storage.Streams.IInputStream stream);
 
         ///<summary>Creates a FFmpegMediaSource from a Uri.</summary>
         static Windows.Foundation.IAsyncOperation<FFmpegMediaSource> CreateFromUriAsync(String uri, MediaSourceConfig config);
@@ -497,6 +523,23 @@ namespace FFmpegInteropX
 
         ///<summary>Gets video filters for the specified video stream.</summary>
         String GetFFmpegVideoFilters(VideoStreamInfo videoStream);
+
+        ///<summary>Sends a command to audio filters on all audio streams.</summary>
+        ///<returns>The result from the filter command. If multiple audio streams are enabled, the result from the first stream that returns a non-error result will be returned.</returns>
+        FilterCommandResult SendFFmpegAudioFilterCommand(String target, String command, String arguments);
+
+        ///<summary>Sends a command to audio filters on the specified audio stream.</summary>
+        ///<returns>The result from the filter command.</returns>
+        FilterCommandResult SendFFmpegAudioFilterCommand(String target, String command, String arguments, AudioStreamInfo audioStream);
+
+        ///<summary>Sends a command to video filters on all video streams.</summary>
+        ///<returns>The result from the filter command. If multiple video streams are enabled, the result from the first stream that returns a non-error result will be returned.</returns>
+        FilterCommandResult SendFFmpegVideoFilterCommand(String target, String command, String arguments);
+
+        ///<summary>Sends a command to video filters on the specified video stream.</summary>
+        ///<returns>The result from the filter command.</returns>
+        FilterCommandResult SendFFmpegVideoFilterCommand(String target, String command, String arguments, VideoStreamInfo videoStream);
+
 
         ///<summary>Extracts an embedded thumbnail, if one is available (see HasThumbnail).</summary>
         MediaThumbnailData ExtractThumbnail();
@@ -622,7 +665,6 @@ namespace FFmpegInteropX
         void SetStreamDelay(Windows.Foundation.TimeSpan delay);
      }   
 
-    [default_interface]
 #ifdef UWP
     [bindable]
 #endif
@@ -648,7 +690,7 @@ namespace FFmpegInteropX
     };
 
 
- runtimeclass AudioConfig
+    runtimeclass AudioConfig
     {
          ///<summary>Use system decoder for MP3 decoding.</summary>
          ///<remarks>This could allow hardware decoding on some platforms (e.g. Hololens). Not recommended for PC.</remarks>
@@ -679,14 +721,14 @@ namespace FFmpegInteropX
         ///<summary>The HDR color support mode. Default is Automatic.</summary>
         HdrSupport HdrSupport{ get; set; };
 
-        ///<summary>Max profile allowed for H264 system decoder. Default: High Profile (100). See FF_PROFILE_H264_* values.</summary>
+        ///<summary>Max profile allowed for H264 system decoder. Default: High Profile (100). See AV_PROFILE_H264_* values.</summary>
         Int32 SystemDecoderH264MaxProfile{ get; set; };
 
         ///<summary>Max level allowed for H264 system decoder. Default: Level 4.1 (41). Use -1 to disable level check.</summary>
         ///<remarks>Most H264 HW decoders only support Level 4.1, so this is the default.</remarks>
         Int32 SystemDecoderH264MaxLevel{ get; set; };
 
-        ///<summary>Max profile allowed for HEVC system decoder. Default: High10 Profile (2). See FF_PROFILE_HEVC_* values.</summary>
+        ///<summary>Max profile allowed for HEVC system decoder. Default: High10 Profile (2). See AV_PROFILE_HEVC_* values.</summary>
         Int32 SystemDecoderHEVCMaxProfile{ get; set; };
 
         ///<summary>Max level allowed for HEVC system decoder. Default: Disabled (-1).</summary>

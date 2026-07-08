@@ -15,12 +15,12 @@ class AvCodecContextHelpers
 public:
     static int GetNBChannels(AVCodecContext* avCodecCtx)
     {
-        return avCodecCtx->profile == FF_PROFILE_AAC_HE_V2 && avCodecCtx->ch_layout.nb_channels == 1 ? 2 : avCodecCtx->ch_layout.nb_channels;
+        return avCodecCtx->profile == AV_PROFILE_AAC_HE_V2 && avCodecCtx->ch_layout.nb_channels == 1 ? 2 : avCodecCtx->ch_layout.nb_channels;
     }
 
     static UINT64 GetChannelLayout(AVCodecContext* avCodecCtx)
     {
-        if (avCodecCtx->profile == FF_PROFILE_AAC_HE_V2 && avCodecCtx->ch_layout.nb_channels == 1)
+        if (avCodecCtx->profile == AV_PROFILE_AAC_HE_V2 && avCodecCtx->ch_layout.nb_channels == 1)
         {
             return AV_CH_LAYOUT_STEREO;
         }

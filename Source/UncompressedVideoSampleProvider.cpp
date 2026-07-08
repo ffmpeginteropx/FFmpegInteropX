@@ -130,7 +130,8 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
 
     using namespace winrt::Windows::Graphics::Display;
 
-    if (codecPar->color_primaries != AVCOL_PRI_UNSPECIFIED && (codecPar->color_primaries < MFVideoPrimaries_BT2020 || applyHdrColorInfo))
+    bool hasHdrVideoPrimaries = false;
+    if (codecPar->color_primaries != AVCOL_PRI_UNSPECIFIED)
     {
         MFVideoPrimaries videoPrimaries{ MFVideoPrimaries_Unknown };
         switch (codecPar->color_primaries)
@@ -172,10 +173,18 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
             break;
         }
 
-        properties.Insert(MF_MT_VIDEO_PRIMARIES, PropertyValue::CreateUInt32(videoPrimaries));
+        if (videoPrimaries != MFVideoPrimaries_Unknown)
+        {
+            hasHdrVideoPrimaries = videoPrimaries >= MFVideoPrimaries_BT2020;
+            if (!hasHdrVideoPrimaries || applyHdrColorInfo)
+            {
+                properties.Insert(MF_MT_VIDEO_PRIMARIES, PropertyValue::CreateUInt32(videoPrimaries));
+            }
+        }
     }
 
-    if (codecPar->color_trc != AVCOL_TRC_UNSPECIFIED && (codecPar->color_trc < MFVideoTransFunc_2020_const || applyHdrColorInfo))
+    bool hasHdrVideoTransferFunction = false;
+    if (codecPar->color_trc != AVCOL_TRC_UNSPECIFIED)
     {
         MFVideoTransferFunction videoTransferFunc{ MFVideoTransFunc_Unknown };
         switch (codecPar->color_trc)
@@ -227,7 +236,14 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
             break;
         }
 
-        properties.Insert(MF_MT_TRANSFER_FUNCTION, PropertyValue::CreateUInt32(videoTransferFunc));
+        if (videoTransferFunc != MFVideoTransFunc_Unknown)
+        {
+            hasHdrVideoTransferFunction = videoTransferFunc >= MFVideoTransFunc_2020_const;
+            if (!hasHdrVideoTransferFunction || applyHdrColorInfo)
+            {
+                properties.Insert(MF_MT_TRANSFER_FUNCTION, PropertyValue::CreateUInt32(videoTransferFunc));
+            }
+        }
     }
 
     if (codecPar->color_range != AVCOL_RANGE_UNSPECIFIED)
@@ -271,7 +287,7 @@ IMediaStreamDescriptor UncompressedVideoSampleProvider::CreateStreamDescriptor()
         }
     }
 
-    hasHdrMetadata = (masteringDisplayMetadata != nullptr && (masteringDisplayMetadata->has_primaries || masteringDisplayMetadata->has_luminance)) || contentLightMetadata != nullptr || codecPar->color_primaries >= MFVideoPrimaries_BT2020 || codecPar->color_trc >= MFVideoTransFunc_2020_const;
+    hasHdrMetadata = (masteringDisplayMetadata != nullptr && (masteringDisplayMetadata->has_primaries || masteringDisplayMetadata->has_luminance)) || contentLightMetadata != nullptr || hasHdrVideoPrimaries || hasHdrVideoTransferFunction;
     isHdrActive = hasHdrMetadata && applyHdrColorInfo;
 
     videoProperties.Properties().Insert(MF_MT_INTERLACE_MODE, winrt::box_value((UINT32)_MFVideoInterlaceMode::MFVideoInterlace_MixedInterlaceOrProgressive));

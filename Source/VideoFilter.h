@@ -45,6 +45,8 @@ class VideoFilter : public IAvFilter
     int width = 0;
     int height = 0;
 
+    char command_response[1024];
+
     HRESULT AllocGraph()
     {
         if (graph)
@@ -101,7 +103,7 @@ class VideoFilter : public IAvFilter
     {
         AVSink = avfilter_get_by_name("buffersink");
         if (!AVSink) {
-            fprintf(stderr, "Could not find the abuffersink filter.\n");
+            fprintf(stderr, "Could not find the buffersink filter.\n");
             return AVERROR_FILTER_NOT_FOUND;
         }
 
@@ -226,6 +228,32 @@ public:
         }
 
         return hr;
+    }
+
+    FilterCommandResult SendCommand(winrt::hstring target, winrt::hstring command, winrt::hstring arguments) override
+    {
+        HRESULT hr;
+        if (!isInitialized)
+        {
+            // not initialized
+            return FilterCommandResult(false, L"Filter not initialized");
+        }
+        else
+        {
+            auto trg = StringUtils::PlatformStringToUtf8String(target);
+            auto cmd = StringUtils::PlatformStringToUtf8String(command);
+            auto arg = StringUtils::PlatformStringToUtf8String(arguments);
+
+            hr = avfilter_graph_send_command(graph, trg.c_str(), cmd.c_str(), arg.c_str(), command_response, sizeof(command_response), 0);
+
+            if (hr < 0)
+            {
+                // command failed
+                return FilterCommandResult(false, L"Command failed");
+            }
+        }
+
+        return FilterCommandResult(true, StringUtils::Utf8ToPlatformString(command_response));
     }
 
     bool IsInitialized() override
