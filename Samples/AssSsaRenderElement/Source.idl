@@ -1,0 +1,13 @@
+namespace AssSsaRenderElement
+{
+    [default_interface]
+    runtimeclass AssSsaRenderer
+    {
+        AssSsaRenderer(Windows.UI.Xaml.Controls.SwapChainPanel swapChainPannel);
+
+        void RenderSubtitleFrame(FFmpegInteropX.FFmpegMediaSource mediaSource,
+            UInt32 width,
+            UInt32 height,
+            Windows.Media.Playback.MediaPlaybackSession playbackSession);
+    }
+}

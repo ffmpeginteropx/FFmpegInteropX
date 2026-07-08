@@ -248,6 +248,9 @@
     <ClInclude Include="resource.h">
       <Filter>Resources</Filter>
     </ClInclude>
+    <ClInclude Include="SubtitleProviderLibass.h">
+      <Filter>Subtitles</Filter>
+    </ClInclude>
     <ClInclude Include="FilterCommandResult.h" />
   </ItemGroup>
   <ItemGroup>
@@ -344,6 +347,9 @@
     <ClCompile Include="SubtitleParser.cpp" />
     <ClCompile Include="PlatformInfo.cpp">
       <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="SubtitleProviderLibass.cpp">
+      <Filter>Subtitles</Filter>
     </ClCompile>
     <ClCompile Include="FilterCommandResult.cpp" />
   </ItemGroup>

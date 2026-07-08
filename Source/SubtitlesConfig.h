@@ -16,6 +16,9 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Automatically select subtitles when they have the 'forced' flag set.</summary>
         PROPERTY(AutoSelectForcedSubtitles, bool, true);
 
+        ///<summary>Enabling or disbaling libass</summary>
+        PROPERTY(UseLibassAsSubtitleRenderer, bool, false);
+
         ///<summary>Use SubtitleRegion and SubtitleStyle from config class, even if custom styles are defined for a subtitle.</summary>
         PROPERTY(OverrideSubtitleStyles, bool, false);
 

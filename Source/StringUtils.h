@@ -43,6 +43,16 @@ public:
         return std::string("");
     }
 
+
+    static std::wstring ConvertStringToWString(const std::string& str)
+    {
+        if (str.empty())
+            return L"";
+        int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), nullptr, 0);
+        std::wstring wideStr(size_needed, 0);
+        MultiByteToWideChar(CP_UTF8, 0, str.c_str(), (int)str.size(), &wideStr[0], size_needed);
+        return wideStr;
+    }
     inline static winrt::hstring ToString(winrt::Windows::Foundation::IInspectable inspectable)
     {
         auto valHstring = inspectable.try_as<winrt::hstring>();

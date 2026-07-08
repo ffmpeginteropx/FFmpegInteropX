@@ -31,7 +31,20 @@ public:
     }
 
     std::vector<std::shared_ptr<AttachedFile>> AttachedFiles() { return attachedFiles; }
-    winrt::hstring InstanceId() { return instanceId; }
+    winrt::hstring InstanceId()
+    {
+        if (this->instanceId.empty())
+        {
+            GUID gdn;
+            auto hr = CoCreateGuid(&gdn);
+            if (FAILED(hr))
+            {
+                winrt::throw_hresult(hr);
+            }
+            instanceId = winrt::to_hstring(winrt::guid(gdn));
+        }
+        return instanceId;
+    }
 
     void AddAttachedFile(std::shared_ptr<AttachedFile> const& file)
     {
@@ -47,20 +60,9 @@ public:
         }
         else
         {
-            if (this->instanceId.empty())
-            {
-                GUID gdn;
-                auto hr = CoCreateGuid(&gdn);
-                if (FAILED(hr))
-                {
-                    winrt::throw_hresult(hr);
-                }
-                instanceId = winrt::to_hstring(winrt::guid(gdn));
-            }
-
             auto folder = co_await ApplicationData::Current().TemporaryFolder().CreateFolderAsync(
                 config.General().AttachmentCacheFolderName(), CreationCollisionOption::OpenIfExists);
-            auto instanceFolder = co_await folder.CreateFolderAsync(instanceId, CreationCollisionOption::OpenIfExists);
+            auto instanceFolder = co_await folder.CreateFolderAsync(InstanceId(), CreationCollisionOption::OpenIfExists);
             file = (co_await instanceFolder.CreateFileAsync(attachment->Name(), CreationCollisionOption::ReplaceExisting));
             co_await FileIO::WriteBufferAsync(file, attachment->GetBuffer());
 
@@ -86,6 +88,14 @@ public:
         {
             OutputDebugString(L"Failed to cleanup temp files.");
         }
+    }
+
+    winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Storage::StorageFolder> GetInstanceFolder()
+    {
+        auto folder = co_await ApplicationData::Current().TemporaryFolder().CreateFolderAsync(
+            config.General().AttachmentCacheFolderName(), CreationCollisionOption::OpenIfExists);
+        auto instanceFolder = co_await folder.CreateFolderAsync(InstanceId(), CreationCollisionOption::OpenIfExists);
+        co_return instanceFolder;
     }
 
 private:
