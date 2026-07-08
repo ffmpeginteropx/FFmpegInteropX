@@ -139,9 +139,6 @@ function Build-Platform {
     # Copy wang-bin
     Write-Host Copying wang-bin pre-built binaries...
     Get-ChildItem $WangBin\install\$Platform | Copy-Item -Destination $build\ -Force -Recurse
-    Copy-Item $build\bin\libass.dll $target\bin\
-    Copy-Item $build\lib\ass.lib $target\bin\
-    Copy-Item $WangBin\install\$Platform\include\ass $target\include\ -Force -Recurse
         
     if (! $SkipBuildLibs)
     {
@@ -369,6 +366,11 @@ function Build-Platform {
 
     # Copy PDBs to built binaries dir
     Get-ChildItem -Recurse -Include '*.pdb' $build\int\ffmpeg\ | Copy-Item -Destination $target\bin\ -Force
+
+    # Copy ass libs and includes
+    Copy-Item $build\bin\libass.dll $target\bin\
+    Copy-Item $build\lib\ass.lib $target\bin\
+    Copy-Item $WangBin\install\$Platform\include\ass $target\include\ -Force -Recurse
 
     # Copy license files
     if ($Gpl -eq "enable") {
