@@ -3,8 +3,8 @@
   <PropertyGroup>
     <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)' == ''">10.0.26100.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformMinVersion Condition="'$(WindowsTargetPlatformMinVersion)' == ''">10.0.17763.0</WindowsTargetPlatformMinVersion>
-    <FFmpegPackageVersion Condition="'$(FFmpegPackageVersion)'==''">8.1.2-pre01</FFmpegPackageVersion>
-    <FFmpegInteropXPackageVersion Condition="'$(FFmpegInteropXPackageVersion)'==''">2.1.0-pre10</FFmpegInteropXPackageVersion>
+    <FFmpegPackageVersion Condition="'$(FFmpegPackageVersion)'==''">8.1.2-libass02</FFmpegPackageVersion>
+    <FFmpegInteropXPackageVersion Condition="'$(FFmpegInteropXPackageVersion)'==''">2.1.0</FFmpegInteropXPackageVersion>
   </PropertyGroup>
 
   <!-- User overrides -->
