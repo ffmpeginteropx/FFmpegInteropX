@@ -125,6 +125,7 @@ configureArgs="\
 
 # Perform configure (unless skipped)
 if [ "$9" != "-SkipConfigure" ]; then
+    rm -r $intDir/*
     eval $DIR/Libs/ffmpeg/configure $configureArgs || exit 1
 fi
 

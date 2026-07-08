@@ -46,11 +46,15 @@ We have switched from manual builds to providing NuGet packages. There are two t
     - Windows desktop apps (WinUI3, other/no UI, console)
     - UWP apps (.NET Native)
     - UWP with .NET 9 and higher (partly supported):
-      This will reference the normal desktop version of the lib and ffmpeg build, not the UWP version. This works on the PC, but it is recommended to use the FFmpegInteropX.UWP(https://www.nuget.org/packages/FFmpegInteropX.UWP) package instead. On XBOX you definitely must use FFmpegInteropX.UWP(https://www.nuget.org/packages/FFmpegInteropX.UWP) for .NET9 and higher!
+      This will reference the normal desktop version of the lib and ffmpeg build,
+      not the UWP version. This works on the PC, but it is recommended to use the
+      [FFmpegInteropX.UWP](https://www.nuget.org/packages/FFmpegInteropX.UWP) package instead.
+      On XBOX you definitely must use [FFmpegInteropX.UWP](https://www.nuget.org/packages/FFmpegInteropX.UWP) for .NET9 and higher!
 
 - [**FFmpegInteropX.UWP**](https://www.nuget.org/packages/FFmpegInteropX.UWP)
   - This references the UWP version of the lib and ffmpeg
-  - Works with UWP apps (.NET Native) and UWP with .NET 9 and higher (on XBOX, you must use this package for .NET9 and higher!)
+  - Works with UWP apps (.NET Native) and UWP with .NET 9 and higher
+    (on XBOX, you must use this package for .NET9 and higher!)
 
 These are the lower level packages, which are referenced by the top-level packages:
 
