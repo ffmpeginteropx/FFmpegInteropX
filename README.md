@@ -8,6 +8,17 @@ FFmpegInteropX is an open-source project that aims to provide an easy way to use
 
 FFmpegInteropX was originally based on the [Microsoft project](git://github.com/Microsoft/FFmpegInterop), but was heavily improved and later more or less completely re-written as C++/WinRT code.
 
+## Latest Packages
+
+| Package                        |      Version      |
+| ------------------------------ | ----------------- |
+| FFmpegInteropX                 | [![NuGet version (FFmpegInteropX)](https://img.shields.io/nuget/v/FFmpegInteropX.svg)](https://www.nuget.org/packages/FFmpegInteropX/) |
+| FFmpegInteropX.UWP                 | [![NuGet version (FFmpegInteropX.UWP)](https://img.shields.io/nuget/v/FFmpegInteropX.UWP.svg)](https://www.nuget.org/packages/FFmpegInteropX.UWP/) |
+| FFmpegInteropX.Desktop.Lib                 | [![NuGet version (FFmpegInteropX.Desktop.Lib)](https://img.shields.io/nuget/v/FFmpegInteropX.Desktop.Lib.svg)](https://www.nuget.org/packages/FFmpegInteropX.Desktop.Lib/) |
+| FFmpegInteropX.Desktop.FFmpeg                 | [![NuGet version (FFmpegInteropX.Desktop.FFmpeg)](https://img.shields.io/nuget/v/FFmpegInteropX.Desktop.FFmpeg.svg)](https://www.nuget.org/packages/FFmpegInteropX.Desktop.FFmpeg/) |
+| FFmpegInteropX.UWP.Lib                 | [![NuGet version (FFmpegInteropX.UWP.Lib)](https://img.shields.io/nuget/v/FFmpegInteropX.UWP.Lib.svg)](https://www.nuget.org/packages/FFmpegInteropX.UWP.Lib/) |
+| FFmpegInteropX.UWP.FFmpeg                 | [![NuGet version (FFmpegInteropX.UWP.FFmpeg)](https://img.shields.io/nuget/v/FFmpegInteropX.UWP.FFmpeg.svg)](https://www.nuget.org/packages/FFmpegInteropX.UWP.FFmpeg/) |
+ 
 
 ### Some of the important improvements, compared to original version:
 
@@ -58,10 +69,10 @@ We have switched from manual builds to providing NuGet packages. There are two t
 
 These are the lower level packages, which are referenced by the top-level packages:
 
-- [**FFmpegInteropX.Desktop.Lib**](https://www.nuget.org/packages/FFmpegInteropX.UWP.Lib)
+- [**FFmpegInteropX.Desktop.Lib**](https://www.nuget.org/packages/FFmpegInteropX.Desktop.Lib)
   - The Desktop lib package
 
-- [**FFmpegInteropX.Desktop.FFmpeg**](https://www.nuget.org/packages/FFmpegInteropX.UWP.FFmpeg)
+- [**FFmpegInteropX.Desktop.FFmpeg**](https://www.nuget.org/packages/FFmpegInteropX.Desktop.FFmpeg)
   - The Desktop ffmpeg package
 
 - [**FFmpegInteropX.UWP.Lib**](https://www.nuget.org/packages/FFmpegInteropX.UWP.Lib)
