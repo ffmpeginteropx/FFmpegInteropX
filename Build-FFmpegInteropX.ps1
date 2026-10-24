@@ -10,11 +10,16 @@ param(
         14.16
         14.16.27023
         14.23.27820
-
-        Note. The PlatformToolset will be inferred from this value ('v141', 'v142'...)
     #>
     [version] $VcVersion = '14.5',
-    
+
+    <#
+        Example values:
+        v141
+        v142
+    #>
+    [string] $PlatformToolset = 'v145',
+
     <#
         Example values:
         8.1
@@ -69,7 +74,6 @@ function Build-Platform {
         [System.IO.DirectoryInfo] $SolutionDir,
         [string] $Platform,
         [string] $WindowsTarget,
-        [string] $PlatformToolset,
         [string] $VsLatestPath,
         [version] $LibraryVersionNumber
     )
@@ -138,10 +142,6 @@ $ErrorActionPreference = "Stop"
 
 Write-Host "Visual Studio Installation folder: [$vsLatestPath]"
 
-# 14.16.27023 => v141
-$platformToolSet = "v$($VcVersion.Major)$("$($VcVersion.Minor)"[0])"
-Write-Host "Platform Toolset: [$platformToolSet]"
-
 # Export full current PATH from environment into MSYS2
 $env:MSYS2_PATH_TYPE = 'inherit'
 
@@ -194,7 +194,7 @@ if (!($DisableParallelBuilds) -and ($Platforms.Count * $WindowsTargets.Count -gt
                 continue;
             }
 
-            $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -WindowsTargets $WindowsTarget -VcVersion $VcVersion -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""$FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" -LibraryVersionNumber $LibraryVersionNumber $addparams"
+            $proc = Start-Process -PassThru powershell "-File .\Build-FFmpegInteropX.ps1 -Platforms $platform -WindowsTargets $WindowsTarget -VcVersion $VcVersion -PlatformToolset $PlatformToolset -WindowsTargetPlatformVersion $WindowsTargetPlatformVersion -WindowsTargetPlatformMinVersion $WindowsTargetPlatformMinVersion -Configuration $Configuration -VSInstallerFolder ""$VSInstallerFolder"" -VsWhereCriteria ""$VsWhereCriteria"" -FFmpegInteropXUrl ""$FFmpegInteropXUrl"" -FFmpegInteropXBranch ""$FFmpegInteropXBranch"" -FFmpegInteropXCommit ""$FFmpegInteropXCommit"" -LibraryVersionNumber $LibraryVersionNumber $addparams"
             $processes[$platform] = $proc
         }
 
@@ -238,7 +238,6 @@ else
                     -SolutionDir "${PSScriptRoot}\" `
                     -Platform $platform `
                     -WindowsTarget $WindowsTarget `
-                    -PlatformToolset $platformToolSet `
                     -VsLatestPath $vsLatestPath `
                     -LibraryVersionNumber $LibraryVersionNumber
             }

@@ -23,6 +23,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:MediaPlayerCPP"
+    xmlns:panel="using:DirectXPanels"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d" Loaded="Page_Loaded"
@@ -30,6 +31,39 @@
     <Page.Resources>
         <local:FloatToDoubleConverter x:Key="FloatToDoubleConverter" />
         <local:TimeSpanToDoubleConverter x:Key="TimeSpanToDoubleConverter" />
+
+        <Style TargetType="MediaPlayerElement">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MediaPlayerElement">
+                        <Grid x:Name="LayoutRoot">
+                            <Border Background="Transparent" />
+                            <Image  x:Name="PosterImage"
+                                   Visibility="Collapsed"
+                                   Source="{TemplateBinding PosterSource}"
+                                   Stretch="{TemplateBinding Stretch}" />
+                            <MediaPlayerPresenter x:Name="MediaPlayerPresenter"
+                                                  IsFullWindow="{TemplateBinding IsFullWindow}"
+                                                  Stretch="{TemplateBinding Stretch}"
+                                                  MediaPlayer="{TemplateBinding MediaPlayer}" />
+
+                            <panel:SubtitlePanel Loaded="SubtitlePanel_Loaded" />
+                            <SwapChainPanel Loaded="SwapChainPanel_loaded"/>
+
+                            <ContentPresenter     x:Name="TransportControlsPresenter"
+                                              Visibility="{TemplateBinding AreTransportControlsEnabled}" />
+                            <Grid x:Name="TimedTextSourcePresenter" />
+
+                        </Grid>
+
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </Page.Resources>
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">

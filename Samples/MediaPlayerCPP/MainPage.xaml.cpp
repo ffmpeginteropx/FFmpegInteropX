@@ -51,6 +51,7 @@ using namespace Windows::UI::Xaml::Navigation;
 MainPage::MainPage()
 {
     Config = ref new MediaSourceConfig();
+    Config->Subtitles->UseLibassAsSubtitleRenderer = true;
     InitializeComponent();
 
     // Show the control panel on startup so user can start opening media
@@ -63,7 +64,8 @@ MainPage::MainPage()
     mediaPlayer->AudioCategory = Windows::Media::Playback::MediaPlayerAudioCategory::Movie;
     mediaPlayer->MediaOpened += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlayer^, Platform::Object^>(this, &MediaPlayerCPP::MainPage::OnMediaOpened);
     mediaPlayer->MediaFailed += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlayer^, Windows::Media::Playback::MediaPlayerFailedEventArgs^>(this, &MediaPlayerCPP::MainPage::OnMediaFailed);
-
+    mediaPlayer->MediaEnded += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlayer^, Platform::Object^>(this, &MediaPlayerCPP::MainPage::OnMediaEnded);
+    mediaPlayer->PlaybackSession->PlaybackStateChanged += ref new Windows::Foundation::TypedEventHandler<Windows::Media::Playback::MediaPlaybackSession^, Platform::Object^>(this, &MediaPlayerCPP::MainPage::OnPlaybackStateChanged);
     mediaPlayerElement->SetMediaPlayer(mediaPlayer);
 
     // populate character encodings
@@ -72,6 +74,18 @@ MainPage::MainPage()
     Windows::UI::Core::CoreWindow::GetForCurrentThread()->KeyDown += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow^, Windows::UI::Core::KeyEventArgs^>(this, &MediaPlayerCPP::MainPage::OnKeyDown);
 
     StreamDelays->AddHandler(UIElement::PointerReleasedEvent, ref new PointerEventHandler(this, &MainPage::StreamDelayManipulation), true);
+}
+
+void MediaPlayerCPP::MainPage::OnPlaybackStateChanged(Windows::Media::Playback::MediaPlaybackSession^ sender, Platform::Object^ args)
+{
+    if (sender->PlaybackState == MediaPlaybackState::Playing)
+    {
+        subtitlePanel->StartRendering();
+    }
+    else
+    {
+        subtitlePanel->StopRendering();
+    }
 }
 
 void MediaPlayerCPP::MainPage::StreamDelayManipulation(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e)
@@ -504,7 +518,7 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
     }
 
     Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
-        ref new Windows::UI::Core::DispatchedHandler([this]
+        ref new Windows::UI::Core::DispatchedHandler([this, session]
             {
                 tbSubtitleDelay->Text = "Subtitle delay: 0s";
                 cmbAudioStreamEffectSelector->ItemsSource = FFmpegMSS->AudioStreams;
@@ -522,7 +536,47 @@ void MediaPlayerCPP::MainPage::OnMediaOpened(Windows::Media::Playback::MediaPlay
                 }
 
                 cmbAudioVideoStreamDelays->ItemsSource = streams;
+
+                auto item = FFmpegMSS->PlaybackItem;
+                for (UINT i = 0; i < item->TimedMetadataTracks->Size; i++)
+                {
+                    item->TimedMetadataTracks->SetPresentationMode(i, TimedMetadataTrackPresentationMode::Disabled);
+                }
+
+                item->TimedMetadataTracks->SetPresentationMode(0, TimedMetadataTrackPresentationMode::ApplicationPresented);
+
+
+                /*subtitleRenderer = ref new AssSsaRenderer(swapChainPanel, FFmpegMSS, session);
+                subtitleRenderer->SetFrameUpdateInterval(TimeSpan{ 100000 });
+                subtitleRenderer->SetSelectedSubtitle(FFmpegMSS->SubtitleStreams->GetAt(0));
+                subtitleRenderer->Play();*/
+
+                subtitlePanel->SetFFmpegMediaSource(FFmpegMSS);
+                subtitlePanel->SetSelectedSubtitleStream(FFmpegMSS->SubtitleStreams->GetAt(0));
+                subtitlePanel->StartRendering();
             }));
+}
+
+
+void MediaPlayerCPP::MainPage::OnMediaEnded(Windows::Media::Playback::MediaPlayer^ sender, Platform::Object^ args)
+{
+    auto session = sender->PlaybackSession;
+    auto frames = subtitlePanel->GetFrameCount();
+    auto message =
+        "Frames: " + frames.ToString() + "\n" +
+        "Fps: " + ((int)(frames / (session->NaturalDuration.Duration / 10000000))).ToString() + "\n";
+
+    Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(Windows::UI::Core::CoreDispatcherPriority::Normal,
+        ref new Windows::UI::Core::DispatchedHandler([this, message]
+            {
+                ShowMessageDialog(message, "Subtitle Stats");
+            }));
+
+}
+
+task<void> MediaPlayerCPP::MainPage::ShowMessageDialog(Platform::String^ message, Platform::String^ title)
+{
+    co_await(ref new MessageDialog(message, title))->ShowAsync();
 }
 
 void MediaPlayerCPP::MainPage::AutoDetect_Toggled(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
