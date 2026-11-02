@@ -155,6 +155,9 @@
     <ClInclude Include="D3D11VideoSampleProvider.h">
       <Filter>SampleProviders</Filter>
     </ClInclude>
+    <ClInclude Include="D3D12VideoSampleProvider.h">
+      <Filter>SampleProviders</Filter>
+    </ClInclude>
     <ClInclude Include="H264AVCSampleProvider.h">
       <Filter>SampleProviders</Filter>
     </ClInclude>

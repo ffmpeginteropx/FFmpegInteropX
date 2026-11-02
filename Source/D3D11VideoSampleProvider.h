@@ -208,11 +208,31 @@ public:
         trackedSamples.clear();
     }
 
-    virtual HRESULT SetHardwareDevice(winrt::com_ptr<ID3D11Device> newDevice,
-        winrt::com_ptr<ID3D11DeviceContext> newDeviceContext,
-        AVBufferRef* avHardwareContext) override
+    virtual HRESULT SetHardwareDevice(AVBufferRef* avHardwareContextD3D11, AVBufferRef* avHardwareContextD3D12) override
     {
+        UNREFERENCED_PARAMETER(avHardwareContextD3D12);
         HRESULT hr = S_OK;
+
+        if (!avHardwareContextD3D11)
+        {
+            return E_INVALIDARG;
+        }
+
+        auto dataBuffer = (AVHWDeviceContext*)avHardwareContextD3D11->data;
+        if (dataBuffer->type != AV_HWDEVICE_TYPE_D3D11VA)
+        {
+            return E_INVALIDARG;
+        }
+        auto internalDirectXHwContext = (AVD3D11VADeviceContext*)dataBuffer->hwctx;
+        if (!internalDirectXHwContext->device || !internalDirectXHwContext->device_context)
+        {
+            return E_FAIL;
+        }
+
+        winrt::com_ptr<ID3D11Device> newDevice;
+        winrt::com_ptr<ID3D11DeviceContext> newDeviceContext;
+        newDevice.copy_from(internalDirectXHwContext->device);
+        newDeviceContext.copy_from(internalDirectXHwContext->device_context);
 
         bool isCompatible = false;
         hr = CheckHWAccelerationCompatible(newDevice, isCompatible);
@@ -232,12 +252,12 @@ public:
 
                 if (needsReinit)
                 {
-                    hr = UpdateCodecContext(hwCodec, avHardwareContext);
+                    hr = UpdateCodecContext(hwCodec, avHardwareContextD3D11);
                 }
-                else if (!m_pAvCodecCtx->hw_device_ctx || m_pAvCodecCtx->hw_device_ctx->data != avHardwareContext->data)
+                else if (!m_pAvCodecCtx->hw_device_ctx || m_pAvCodecCtx->hw_device_ctx->data != avHardwareContextD3D11->data)
                 {
                     av_buffer_unref(&m_pAvCodecCtx->hw_device_ctx);
-                    m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContext);
+                    m_pAvCodecCtx->hw_device_ctx = av_buffer_ref(avHardwareContextD3D11);
                 }
             }
             else
@@ -377,21 +397,17 @@ public:
         return hr;
     }
 
-    static HRESULT InitializeHardwareDeviceContext(MediaStreamSource sender,
+    static HRESULT InitializeHardwareDeviceContext(
         AVBufferRef* avHardwareContext,
-        winrt::com_ptr<ID3D11Device>& outDevice,
-        winrt::com_ptr<ID3D11DeviceContext>& outDeviceContext,
         const winrt::com_ptr<IMFDXGIDeviceManager>& deviceManager,
         HANDLE* outDeviceHandle)
     {
-        UNREFERENCED_PARAMETER(sender);
-
         winrt::com_ptr<ID3D11Device> device;
         winrt::com_ptr<ID3D11DeviceContext> deviceContext;
         winrt::com_ptr<ID3D11VideoDevice> videoDevice;
         winrt::com_ptr<ID3D11VideoContext> videoContext;
 
-        HRESULT hr = DirectXInteropHelper::GetDeviceFromStreamSource(deviceManager, device, deviceContext, videoDevice, outDeviceHandle);
+        HRESULT hr = DirectXInteropHelper::GetD3D11DeviceFromStreamSource(deviceManager, device, deviceContext, videoDevice, outDeviceHandle);
 
         if (SUCCEEDED(hr)) hr = deviceContext->QueryInterface(videoContext.put());
 
@@ -431,9 +447,7 @@ public:
 
         if (SUCCEEDED(hr))
         {
-            // addref and hand out pointers
-            outDevice = device;
-            outDeviceContext = deviceContext;
+            return S_OK;
         }
 
         return hr;
