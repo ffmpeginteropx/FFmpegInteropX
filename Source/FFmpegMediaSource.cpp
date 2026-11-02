@@ -4,6 +4,7 @@
 #include "winrt/impl/Windows.Storage.Streams.0.h"
 #include "FFmpegMediaSource.g.cpp"
 #include "D3D11VideoSampleProvider.h"
+#include "D3D12VideoSampleProvider.h"
 #include "H264AVCSampleProvider.h"
 #include "UncompressedAudioSampleProvider.h"
 #include "UncompressedVideoSampleProvider.h"
@@ -46,10 +47,10 @@ namespace winrt::FFmpegInteropX::implementation
         , useHdr(useHdr)
     {
         avDict = NULL;
-        avHardwareContext = NULL;
-        avHardwareContextDefault = NULL;
-        device = NULL;
-        deviceContext = NULL;
+        avHardwareContextD3D11 = NULL;
+        avHardwareContextD3D12 = NULL;
+        avHardwareContextDefaultD3D11 = NULL;
+        avHardwareContextDefaultD3D12 = NULL;
         deviceHandle = NULL;
         deviceManager = NULL;
 
@@ -506,47 +507,6 @@ namespace winrt::FFmpegInteropX::implementation
         return desc->flags & AV_PIX_FMT_FLAG_HWACCEL;
     }
 
-    static AVPixelFormat get_format(struct AVCodecContext* s, const enum AVPixelFormat* fmt)
-    {
-        AVPixelFormat result_sw = (AVPixelFormat)-1;
-        AVPixelFormat result_hw = (AVPixelFormat)-1;
-        AVPixelFormat format;
-        int index = 0;
-        do
-        {
-            format = fmt[index++];
-
-            //		
-            if (format != -1)
-            {
-                if (s->hw_device_ctx && format == AV_PIX_FMT_D3D11)
-                {
-                    // we only support D3D11 HW format (not D3D11_VLD)
-                    result_hw = format;
-                }
-                else if (result_sw == -1 && !is_hwaccel_pix_fmt(format))
-                {
-                    // take first non hw accelerated format
-                    result_sw = format;
-                }
-                else if (format == AV_PIX_FMT_NV12 && result_sw != AV_PIX_FMT_YUVA420P)
-                {
-                    // switch SW format to NV12 if available, unless this is an alpha channel file
-                    result_sw = format;
-                }
-            }
-        } while (format != -1);
-
-
-        if (result_hw != -1)
-        {
-            return result_hw;
-        }
-        else
-        {
-            return result_sw;
-        }
-    }
 
     HRESULT FFmpegMediaSource::InitFFmpegContext()
     {
@@ -1075,80 +1035,100 @@ namespace winrt::FFmpegInteropX::implementation
             // create and assign HW device context, if supported and requested
             if (SUCCEEDED(hr) && config->Video().VideoDecoderMode() == VideoDecoderMode::Automatic)
             {
+                const AVCodecHWConfig* d3d12Config = nullptr;
+                const AVCodecHWConfig* d3d11Config = nullptr;
                 int i = 0;
-                while (SUCCEEDED(hr))
+                while (true)
                 {
                     auto hwConfig = avcodec_get_hw_config(avVideoCodec, i++);
-                    if (hwConfig)
-                    {
-                        if (hwConfig->pix_fmt == AV_PIX_FMT_D3D11 && hwConfig->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
-                        {
-                            AVBufferRef* hwContext = NULL;
-                            if (!avHardwareContext)
-                            {
-                                avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
-                            }
-
-                            if (!avHardwareContext)
-                            {
-                                hr = E_FAIL;
-                            }
-
-                            if (avVideoCodecCtx->codec_id == AV_CODEC_ID_VC1 || avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3)
-                            {
-                                // workaround for VC1 and WMV3: use default device context, later replace with actual MSS device context
-                                if (!avHardwareContextDefault)
-                                {
-                                    if (SUCCEEDED(hr))
-                                    {
-                                        hr = av_hwdevice_ctx_create(&avHardwareContextDefault, AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA, NULL, NULL, 0);
-                                    }
-
-                                    if (SUCCEEDED(hr))
-                                    {
-                                        hr = av_hwdevice_ctx_init(avHardwareContextDefault);
-                                    }
-
-                                    if (FAILED(hr) && avHardwareContextDefault)
-                                    {
-                                        av_buffer_unref(&avHardwareContextDefault);
-                                    }
-                                }
-
-                                if (SUCCEEDED(hr))
-                                {
-                                    hwContext = avHardwareContextDefault;
-                                }
-                            }
-                            else
-                            {
-                                if (SUCCEEDED(hr))
-                                {
-                                    hwContext = avHardwareContext;
-                                }
-                            }
-
-                            if (hwContext)
-                            {
-                                avVideoCodecCtx->hw_device_ctx = av_buffer_ref(hwContext);
-                            }
-                            else
-                            {
-                                hr = E_OUTOFMEMORY;
-                            }
-                            break;
-                        }
-                    }
-                    else
+                    if (!hwConfig)
                     {
                         break;
+                    }
+
+                    if (!(hwConfig->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX))
+                    {
+                        continue;
+                    }
+
+                    if (hwConfig->pix_fmt == AV_PIX_FMT_D3D12 && hwConfig->device_type == AV_HWDEVICE_TYPE_D3D12VA && !d3d12Config)
+                    {
+                        d3d12Config = hwConfig;
+                    }
+                    else if (hwConfig->pix_fmt == AV_PIX_FMT_D3D11 && hwConfig->device_type == AV_HWDEVICE_TYPE_D3D11VA && !d3d11Config)
+                    {
+                        d3d11Config = hwConfig;
+                    }
+                }
+
+                auto selectedHwConfig = d3d12Config ? d3d12Config : d3d11Config;
+                if (selectedHwConfig)
+                {
+                    auto hwDeviceType = selectedHwConfig->device_type;
+                    auto& hardwareContext = hwDeviceType == AV_HWDEVICE_TYPE_D3D12VA ? avHardwareContextD3D12 : avHardwareContextD3D11;
+                    AVBufferRef* hwContext = NULL;
+                    if (!hardwareContext)
+                    {
+                        hardwareContext = av_hwdevice_ctx_alloc(hwDeviceType);
+                    }
+
+                    if (!hardwareContext)
+                    {
+                        hr = E_FAIL;
+                    }
+
+                    if (SUCCEEDED(hr) && hwDeviceType == AV_HWDEVICE_TYPE_D3D12VA && !avHardwareContextD3D11)
+                    {
+                        avHardwareContextD3D11 = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_D3D11VA);
+                        if (!avHardwareContextD3D11)
+                        {
+                            hr = E_FAIL;
+                        }
+                    }
+
+                    if (SUCCEEDED(hr) &&
+                        (avVideoCodecCtx->codec_id == AV_CODEC_ID_VC1 || avVideoCodecCtx->codec_id == AV_CODEC_ID_WMV3))
+                    {
+                        // workaround for VC1 and WMV3: use default device context, later replace with actual MSS device context
+                        auto& defaultHardwareContext = hwDeviceType == AV_HWDEVICE_TYPE_D3D12VA ? avHardwareContextDefaultD3D12 : avHardwareContextDefaultD3D11;
+                        if (!defaultHardwareContext)
+                        {
+                            hr = av_hwdevice_ctx_create(&defaultHardwareContext, hwDeviceType, NULL, NULL, 0);
+                            if (SUCCEEDED(hr))
+                            {
+                                hr = av_hwdevice_ctx_init(defaultHardwareContext);
+                            }
+
+                            if (FAILED(hr) && defaultHardwareContext)
+                            {
+                                av_buffer_unref(&defaultHardwareContext);
+                            }
+                        }
+
+                        if (SUCCEEDED(hr))
+                        {
+                            hwContext = defaultHardwareContext;
+                        }
+                    }
+                    else if (SUCCEEDED(hr))
+                    {
+                        hwContext = hardwareContext;
+                    }
+
+                    if (SUCCEEDED(hr) && hwContext)
+                    {
+                        avVideoCodecCtx->hw_device_ctx = av_buffer_ref(hwContext);
+                    }
+                    else if (SUCCEEDED(hr))
+                    {
+                        hr = E_OUTOFMEMORY;
                     }
                 }
             }
 
             if (SUCCEEDED(hr))
             {
-                avVideoCodecCtx->get_format = &get_format;
+                avVideoCodecCtx->get_format = &FFmpegUtils::get_format;
 
                 // initialize the stream parameters with demuxer information
                 hr = avcodec_parameters_to_context(avVideoCodecCtx, avStream->codecpar);
@@ -2000,13 +1980,21 @@ namespace winrt::FFmpegInteropX::implementation
             av_dict_free(&avDict);
         }
 
-        if (avHardwareContext)
+        if (avHardwareContextD3D11)
         {
-            av_buffer_unref(&avHardwareContext);
+            av_buffer_unref(&avHardwareContextD3D11);
         }
-        if (avHardwareContextDefault)
+        if (avHardwareContextD3D12)
         {
-            av_buffer_unref(&avHardwareContextDefault);
+            av_buffer_unref(&avHardwareContextD3D12);
+        }
+        if (avHardwareContextDefaultD3D11)
+        {
+            av_buffer_unref(&avHardwareContextDefaultD3D11);
+        }
+        if (avHardwareContextDefaultD3D12)
+        {
+            av_buffer_unref(&avHardwareContextDefaultD3D12);
         }
 
         if (deviceHandle && deviceManager)
@@ -2014,8 +2002,6 @@ namespace winrt::FFmpegInteropX::implementation
             deviceManager->CloseDeviceHandle(deviceHandle);
         }
 
-        device = nullptr;
-        deviceContext = nullptr;
         deviceManager = nullptr;
 
         PlaybackSession(nullptr);
@@ -2283,7 +2269,14 @@ namespace winrt::FFmpegInteropX::implementation
         else if (avVideoCodecCtx->hw_device_ctx)
         {
             hardwareDecoderStatus = HardwareDecoderStatus::Available;
-            videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new D3D11VideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, hardwareDecoderStatus, useHdr));
+            if (((AVHWDeviceContext*)avVideoCodecCtx->hw_device_ctx->data)->type == AV_HWDEVICE_TYPE_D3D12VA)
+            {
+                videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new D3D12VideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, hardwareDecoderStatus, useHdr));
+            }
+            else
+            {
+                videoSampleProvider = std::shared_ptr<MediaSampleProvider>(new D3D11VideoSampleProvider(m_pReader, avFormatCtx, avVideoCodecCtx, config.as<winrt::FFmpegInteropX::MediaSourceConfig>(), index, hardwareDecoderStatus, useHdr));
+            }
         }
         else
         {
@@ -2352,11 +2345,17 @@ namespace winrt::FFmpegInteropX::implementation
 
         try
         {
-            if (isFirstSeek && avHardwareContext)
+            if (isFirstSeek && (avHardwareContextD3D11 || avHardwareContextD3D12))
             {
                 HRESULT hr = DirectXInteropHelper::GetDeviceManagerFromStreamSource(sender, deviceManager);
-                if (SUCCEEDED(hr))
-                    hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(sender, avHardwareContext, device, deviceContext, deviceManager, &deviceHandle);
+                if (SUCCEEDED(hr) && avHardwareContextD3D11)
+                {
+                    hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(avHardwareContextD3D11, deviceManager, &deviceHandle);
+                }
+                if (SUCCEEDED(hr) && avHardwareContextD3D12)
+                {
+                    hr = D3D12VideoSampleProvider::InitializeHardwareDeviceContext(avHardwareContextD3D12, deviceManager);
+                }
 
                 if (SUCCEEDED(hr))
                 {
@@ -2364,7 +2363,7 @@ namespace winrt::FFmpegInteropX::implementation
                     for (auto& stream : videoStreams)
                     {
                         // set device pointers to stream
-                        hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+                        hr = stream->SetHardwareDevice(avHardwareContextD3D11, avHardwareContextD3D12);
 
                         if (!SUCCEEDED(hr))
                         {
@@ -2379,9 +2378,8 @@ namespace winrt::FFmpegInteropX::implementation
                     {
                         stream->FreeHardwareDevice();
                     }
-                    av_buffer_unref(&avHardwareContext);
-                    device = nullptr;
-                    deviceContext = nullptr;
+                    av_buffer_unref(&avHardwareContextD3D11);
+                    av_buffer_unref(&avHardwareContextD3D12);
                 }
             }
 
@@ -2485,35 +2483,51 @@ namespace winrt::FFmpegInteropX::implementation
             hasDeviceChanged = hr == MF_E_DXGI_NEW_VIDEO_DEVICE;
         }
 
-        if (hasDeviceChanged && avHardwareContext)
+        if (hasDeviceChanged && (avHardwareContextD3D11 || avHardwareContextD3D12))
         {
             hr = S_OK;
-            av_buffer_unref(&avHardwareContext);
-            device = nullptr;
-            deviceContext = nullptr;
+            bool recreateD3D11 = avHardwareContextD3D11 != nullptr;
+            bool recreateD3D12 = avHardwareContextD3D12 != nullptr;
+            av_buffer_unref(&avHardwareContextD3D11);
+            av_buffer_unref(&avHardwareContextD3D12);
 
             if (deviceHandle && deviceManager)
+            {
                 deviceManager->CloseDeviceHandle(deviceHandle);
+                deviceHandle = nullptr;
+            }
 
-            avHardwareContext = av_hwdevice_ctx_alloc(AVHWDeviceType::AV_HWDEVICE_TYPE_D3D11VA);
-
-            if (!avHardwareContext)
+            if (recreateD3D11)
             {
-                hr = E_OUTOFMEMORY;
+                avHardwareContextD3D11 = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_D3D11VA);
+                if (!avHardwareContextD3D11)
+                {
+                    hr = E_OUTOFMEMORY;
+                }
+            }
+            if (SUCCEEDED(hr) && recreateD3D12)
+            {
+                avHardwareContextD3D12 = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_D3D12VA);
+                if (!avHardwareContextD3D12)
+                {
+                    hr = E_OUTOFMEMORY;
+                }
+            }
+
+            if (SUCCEEDED(hr) && avHardwareContextD3D11)
+            {
+                hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(avHardwareContextD3D11, deviceManager, &deviceHandle);
+            }
+            if (SUCCEEDED(hr) && avHardwareContextD3D12)
+            {
+                hr = D3D12VideoSampleProvider::InitializeHardwareDeviceContext(avHardwareContextD3D12, deviceManager);
             }
 
             if (SUCCEEDED(hr))
             {
-                hr = D3D11VideoSampleProvider::InitializeHardwareDeviceContext(mss, avHardwareContext, device, deviceContext, deviceManager, &deviceHandle);
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                // assign device and context
                 for (auto& stream : videoStreams)
                 {
-                    // set device pointers to stream
-                    hr = stream->SetHardwareDevice(device, deviceContext, avHardwareContext);
+                    hr = stream->SetHardwareDevice(avHardwareContextD3D11, avHardwareContextD3D12);
 
                     if (!SUCCEEDED(hr))
                     {

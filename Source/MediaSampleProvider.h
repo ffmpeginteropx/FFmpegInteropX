@@ -120,13 +120,10 @@ public:
     virtual void SetCommonVideoEncodingProperties(winrt::Windows::Media::MediaProperties::VideoEncodingProperties const& videoEncodingProperties, bool isCompressedFormat);
     virtual void Detach();
 
-    virtual HRESULT SetHardwareDevice(winrt::com_ptr<ID3D11Device> newDevice,
-        winrt::com_ptr<ID3D11DeviceContext> newDeviceContext,
-        AVBufferRef* avHardwareContext)
+    virtual HRESULT SetHardwareDevice(AVBufferRef* avHardwareContextD3D11, AVBufferRef* avHardwareContextD3D12)
     {
-        UNREFERENCED_PARAMETER(newDevice);
-        UNREFERENCED_PARAMETER(newDeviceContext);
-        UNREFERENCED_PARAMETER(avHardwareContext);
+        UNREFERENCED_PARAMETER(avHardwareContextD3D11);
+        UNREFERENCED_PARAMETER(avHardwareContextD3D12);
         return S_OK;
     };
 

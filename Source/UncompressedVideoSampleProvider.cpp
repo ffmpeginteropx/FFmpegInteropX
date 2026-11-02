@@ -55,7 +55,7 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
         outputMediaSubtype = MediaEncodingSubtypes::Bgra8();
     }
     else if (m_config.Video().VideoOutputAllowIyuv() && (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P || m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P)
-        && m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1 && decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
+        && m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1 && decoder != DecoderEngine::FFmpegD3D11HardwareDecoder && decoder != DecoderEngine::FFmpegD3D12HardwareDecoder)
     {
         // if format is yuv and yuv is allowed and codec supports direct buffer decoding, use yuv
         m_OutputPixelFormat = m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P ? AV_PIX_FMT_YUVJ420P : AV_PIX_FMT_YUV420P;
