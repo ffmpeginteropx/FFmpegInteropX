@@ -8,6 +8,9 @@
       <UniqueIdentifier>0bb4a647-f146-47f5-aa40-3e282b14193d</UniqueIdentifier>
       <Extensions>bmp;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
     </Filter>
+    <Filter Include="Panel">
+      <UniqueIdentifier>{ff38407b-fc69-4839-b05b-a862a71f6c0e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml" />
@@ -17,6 +20,12 @@
     <ClCompile Include="MainPage.xaml.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="FloatToDoubleConverter.cpp" />
+    <ClCompile Include="DirectXPanelBase.cpp">
+      <Filter>Panel</Filter>
+    </ClCompile>
+    <ClCompile Include="SubtitlePanel.cpp">
+      <Filter>Panel</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -24,6 +33,16 @@
     <ClInclude Include="MainPage.xaml.h" />
     <ClInclude Include="FloatToDoubleConverter.h" />
     <ClInclude Include="TimeSpanToDoubleConverter.h" />
+    <ClInclude Include="DirectXPanelBase.h">
+      <Filter>Panel</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectXHelper.h">
+      <Filter>Panel</Filter>
+    </ClInclude>
+    <ClInclude Include="SubtitlePanel.h">
+      <Filter>Panel</Filter>
+    </ClInclude>
+    <ClInclude Include="StepTimer.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">

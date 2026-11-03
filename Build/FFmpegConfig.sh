@@ -41,6 +41,7 @@ configureArgs="\
     --enable-iconv \
     --enable-libdav1d  \
     --enable-openssl \
+    --enable-libass \
     --enable-hwaccels \
     --enable-d3d11va \
     --disable-dxva2 \

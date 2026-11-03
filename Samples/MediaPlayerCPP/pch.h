@@ -1,4 +1,4 @@
-﻿//*****************************************************************************
+//*****************************************************************************
 //
 //	Copyright 2015 Microsoft Corporation
 //
@@ -26,5 +26,10 @@
 #include <collection.h>
 #include <ppltasks.h>
 #include <pplawait.h>
+
+#include <dxgi.h>
+#include <dxgi1_4.h>
+#include <d3d11.h>
+#include <d3d11_4.h>
 
 #include "App.xaml.h"

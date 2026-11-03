@@ -159,9 +159,18 @@
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.9</Version>
     </PackageReference>
+    <PackageReference Include="Win2D.uwp">
+      <Version>1.28.1</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AssSsaRenderElement\AssSsaRenderElement.vcxproj">
+      <Project>{cbed4d40-9319-4aa3-9616-80144e8083ac}</Project>
+      <Name>AssSsaRenderElement</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(Configuration)'=='Debug'">

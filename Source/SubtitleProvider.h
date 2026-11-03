@@ -6,12 +6,13 @@
 #include "ReferenceCue.h"
 #include "AvCodecContextHelpers.h"
 #include <winrt/FFmpegInteropX.h>
-
+#include "SubtitleRenderResult.h"
 
 using namespace winrt::Windows::UI::Core;
 using namespace winrt::Windows::Media::Playback;
 using namespace winrt::Windows::Media::Core;
 using namespace winrt::Windows::Foundation;
+using namespace winrt::Windows::Graphics::Imaging;
 
 class SubtitleProvider :
     public CompressedSampleProvider, public std::enable_shared_from_this<SubtitleProvider>
@@ -58,12 +59,24 @@ public:
 
 public:
 
+    virtual winrt::com_ptr<implementation::SubtitleRenderResult> RenderSubtitlesToDirectXSurface(winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DSurface rendertarget, TimeSpan position, bool forceRender)
+    {
+        return winrt::make_self<implementation::SubtitleRenderResult>();
+    }
+
+    virtual bool CanRenderSubtitles()
+    {
+        return false;
+    }
+
     virtual void InitializeStreamInfo() override
     {
         auto forced = (m_pAvStream->disposition & AV_DISPOSITION_FORCED) == AV_DISPOSITION_FORCED;
 
         streamInfo = SubtitleStreamInfo(Name, Language, CodecName, (StreamDisposition)m_pAvStream->disposition,
             false, forced, SubtitleTrack, IsExternal(), m_streamIndex);
+
+        streamInfo.as<implementation::SubtitleStreamInfo>()->Renderable(CanRenderSubtitles());
     }
 
     virtual void NotifyVideoFrameSize(int width, int height, double aspectRatio)
@@ -193,7 +206,7 @@ public:
                 }
             }
         }
-        catch (...)
+        catch (exception ex)
         {
             OutputDebugString(L"Failed to create subtitle cue.");
         }
@@ -470,6 +483,13 @@ private:
     TimeSpan lastExtendedDurationCueOriginalEndTime{};
     TimedMetadataTrack referenceTrack = { nullptr };
     const long long InfiniteDuration = ((long long)0xFFFFFFFF) * 10000;
+
+public:
+    static bool CodecContextIsSsaAss(AVCodecContext* m_pAvCodecCtx)
+    {
+        return m_pAvCodecCtx->codec_id == AV_CODEC_ID_ASS ||
+            m_pAvCodecCtx->codec_id == AV_CODEC_ID_SSA;
+    }
 
 };
 

@@ -28,3 +28,9 @@ winrt::Windows::Storage::Streams::IBuffer NativeBufferFactory::CreateNativeBuffe
 
     return buffer;
 }
+
+winrt::Windows::Storage::Streams::IBuffer NativeBufferFactory::CreateZerosNativeBuffer(UINT32 nNumberOfBytes)
+{
+    auto lpBuffer = (byte*)calloc(nNumberOfBytes, sizeof(byte));
+    return CreateNativeBuffer(lpBuffer, nNumberOfBytes, &free, lpBuffer);
+}
