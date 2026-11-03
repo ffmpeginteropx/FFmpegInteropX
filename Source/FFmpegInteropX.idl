@@ -730,6 +730,12 @@ namespace FFmpegInteropX
         ///<summary>Allow video output in 10bit formats.</summary>
         Boolean VideoOutputAllow10bit{ get; set; };
 
+        ///<summary>Allow video output in 16bit formats.</summary>
+        Boolean VideoOutputAllow16bit{ get; set; };
+
+        ///<summary>Allow video output in 444 yuv subsampling formats.</summary>
+        Boolean VideoOutputAllow444{ get; set; };
+
         ///<summary>Allow video output in BGRA format - required for video transparency.</summary>
         Boolean VideoOutputAllowBgra8{ get; set; };
 
