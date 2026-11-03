@@ -357,8 +357,6 @@ public:
             ass_set_storage_size(assRenderer, videoWidth, videoHeight);
         }
 
-        SetSubtitleSize(1920, 1080);
-
         SetFonts();
 
         threads = std::thread::hardware_concurrency();
@@ -478,8 +476,8 @@ private:
     double videoAspectRatio = 0.0;
     int videoWidth = 0;
     int videoHeight = 0;
-    int subtitleWidth = 1920;
-    int subtitleHeight = 1080;
+    int subtitleWidth = 0;
+    int subtitleHeight = 0;
     ASS_Library* assLibrary = nullptr;
     ASS_Renderer* assRenderer = nullptr;
     ASS_Track* track = nullptr;
