@@ -520,7 +520,7 @@ foreach ($WindowsTarget in $WindowsTargets)
         New-Item -ItemType Directory -Force $WangBin
         Get-ChildItem $WangTmp | Remove-Item -Force -Recurse
         Get-ChildItem $WangBin | Remove-Item -Force -Recurse
-        if ($WindowsTarget = "UWP") {
+        if ($WindowsTarget -eq "UWP") {
             $url = "https://nightly.link/wang-bin/devpkgs/workflows/build/main/devpkgs-vs2026-uwp-Release.zip"
         } else {
             $url = "https://nightly.link/wang-bin/devpkgs/workflows/build/main/devpkgs-vs2026-windows-desktop-Release.zip"
