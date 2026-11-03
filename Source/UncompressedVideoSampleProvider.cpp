@@ -58,13 +58,50 @@ void UncompressedVideoSampleProvider::SelectOutputFormat()
         && m_pAvCodecCtx->codec->capabilities & AV_CODEC_CAP_DR1 && decoder != DecoderEngine::FFmpegD3D11HardwareDecoder)
     {
         // if format is yuv and yuv is allowed and codec supports direct buffer decoding, use yuv
-        m_OutputPixelFormat = m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ420P ? AV_PIX_FMT_YUVJ420P : AV_PIX_FMT_YUV420P;
+        m_OutputPixelFormat = m_pAvCodecCtx->pix_fmt;
         outputMediaSubtype = MediaEncodingSubtypes::Iyuv();
     }
-    else if (m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P10LE && m_config.Video().VideoOutputAllow10bit())
+    else if ((m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P16LE ||
+              m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P14LE ||
+              m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P12LE ||
+              m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV444P12LE)
+        && m_config.Video().VideoOutputAllow16bit())
     {
+        // 12-16 bit when 16 bit output is allowed:
+        // 12, 14 and 16 bit formats are all mapped to 16 bit output, they are identical in memory layout (just zero padded)
+        // 444 is not supported in 12-16 bit, since MF only accepts planar and ffmpeg does not have any planar 444 12 - 16 bit.
+        m_OutputPixelFormat = m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV444P12LE ? AV_PIX_FMT_YUV420P12LE : m_pAvCodecCtx->pix_fmt;
+        outputMediaSubtype = winrt::to_hstring(MFVideoFormat_P016);
+    }
+    else if ((m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV444P10LE ||
+              m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV444P12LE)
+        && m_config.Video().VideoOutputAllow10bit()
+        && m_config.Video().VideoOutputAllow444())
+    {
+        // 10 bit and 12 bit 444 formats when 444 allowed:
+        // There is a 10 bit 444 format in MF, but no 12 bit 444 format. So we convert 12 bit 444 to 10 bit 444.
+        m_OutputPixelFormat = AV_PIX_FMT_X2BGR10LE;
+        outputMediaSubtype = winrt::to_hstring(MFVideoFormat_A2R10G10B10);
+    }
+    else if ((m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P10LE ||
+              m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV444P10LE ||
+              m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P16LE ||
+              m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P14LE ||
+              m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV420P12LE ||
+              m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV444P12LE)
+        && m_config.Video().VideoOutputAllow10bit())
+    {
+        // 10-16 bit 420/444 formats are all mapped to 10 bit 420 output, unless higher output was allowed
         m_OutputPixelFormat = AV_PIX_FMT_P010LE;
         outputMediaSubtype = winrt::to_hstring(MFVideoFormat_P010);
+    }
+    else if ((m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUV444P ||
+              m_pAvCodecCtx->pix_fmt == AV_PIX_FMT_YUVJ444P)
+        && m_config.Video().VideoOutputAllow444())
+    {
+        // 8 bit 444 formats are mapped to 444 output, if allowed.
+        m_OutputPixelFormat = AV_PIX_FMT_VUYA;
+        outputMediaSubtype = winrt::to_hstring(MFVideoFormat_AYUV);
     }
     else if (m_config.Video().VideoOutputAllowNv12())
     {

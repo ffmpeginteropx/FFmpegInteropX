@@ -37,6 +37,12 @@ namespace winrt::FFmpegInteropX::implementation
         ///<summary>Allow video output in 10bit formats.</summary>
         PROPERTY(VideoOutputAllow10bit, bool, true);
 
+        ///<summary>Allow video output in 16bit formats.</summary>
+        PROPERTY(VideoOutputAllow16bit, bool, false);
+
+        ///<summary>Allow video output in 444 chroma subsampling formats.</summary>
+        PROPERTY(VideoOutputAllow444, bool, false);
+
         ///<summary>Allow video output in BGRA format - required for video transparency.</summary>
         PROPERTY(VideoOutputAllowBgra8, bool, false);
 
