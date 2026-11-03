@@ -929,7 +929,7 @@ namespace winrt::FFmpegInteropX::implementation
                         {
                             auto cn = config.as<winrt::FFmpegInteropX::MediaSourceConfig>();
 
-                            if (SubtitleProvider::CodecContextIsSsaAss(avSubsCodecCtx))
+                            if (SubtitleProvider::CodecContextIsSsaAss(avSubsCodecCtx) && cn.Subtitles().UseLibassAsSubtitleRenderer())
                             {
                                 auto libassProvider = new SubtitleProviderLibass(m_pReader, avFormatCtx, avSubsCodecCtx, cn, index, attachedFileHelper);
                                 avSubsStream = std::shared_ptr<SubtitleProvider>(libassProvider);
@@ -1694,7 +1694,7 @@ namespace winrt::FFmpegInteropX::implementation
         subConfig->Subtitles().MinimumSubtitleDuration(config.Subtitles().MinimumSubtitleDuration());
         subConfig->Subtitles().AdditionalSubtitleDuration(config.Subtitles().AdditionalSubtitleDuration());
         subConfig->Subtitles().PreventModifiedSubtitleDurationOverlap(config.Subtitles().PreventModifiedSubtitleDurationOverlap());
-       // subConfig->Subtitles().UseLibassAsSubtitleRenderer(config.Subtitles().UseLibassAsSubtitleRenderer());
+        subConfig->Subtitles().UseLibassAsSubtitleRenderer(config.Subtitles().UseLibassAsSubtitleRenderer());
 
         if (videoDescriptor)
         {
