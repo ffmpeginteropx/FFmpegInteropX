@@ -1925,15 +1925,13 @@ namespace winrt::FFmpegInteropX::implementation
 
     void FFmpegMediaSource::Close()
     {
-        isShuttingDown = true;
-
         Close(false);
     }
 
     void FFmpegMediaSource::Close(bool onMediaSourceClosed)
     {
+        isShuttingDown = true;
         std::lock_guard lock(mutex);
-
 
         if (onMediaSourceClosed)
         {
@@ -1967,6 +1965,8 @@ namespace winrt::FFmpegInteropX::implementation
             playbackItem.TimedMetadataTracks().PresentationModeChanged(subtitlePresentationModeChangedToken);
             playbackItemWeak = nullptr;
         }
+
+        PlaybackSession(nullptr);
 
         // Clear our data
         currentAudioStream = nullptr;
@@ -2017,8 +2017,6 @@ namespace winrt::FFmpegInteropX::implementation
         device = nullptr;
         deviceContext = nullptr;
         deviceManager = nullptr;
-
-        PlaybackSession(nullptr);
 
         isClosed = true;
     }
@@ -2644,13 +2642,19 @@ namespace winrt::FFmpegInteropX::implementation
         UNREFERENCED_PARAMETER(sender);
         UNREFERENCED_PARAMETER(args);
         std::lock_guard lock(mutex);
-        if (isClosed)
+        if (isClosed || isShuttingDown)
         {
             return;
         }
 
-        lastPosition = currentPosition;
-        currentPosition = sender.Position();
+        try
+        {
+            lastPosition = currentPosition;
+            currentPosition = sender.Position();
+        }
+        catch (...)
+        {
+        }
     }
 
     // Static functions passed to FFmpeg
