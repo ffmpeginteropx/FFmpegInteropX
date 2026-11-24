@@ -82,20 +82,23 @@ public:
                 //cast the AVframe to texture 2D
                 auto decodedTexture = reinterpret_cast<ID3D11Texture2D*>(avFrame->data[0]);
                 winrt::com_ptr<ID3D11Texture2D> renderTexture;
-                //happy path:decoding and rendering on same GPU
+
+                //get render texture from pool
                 {
                     std::lock_guard lock(samplesMutex);
                     hr = texturePool->GetCopyTexture(decodedTexture, renderTexture);
                 }
-                deviceContext->CopySubresourceRegion(renderTexture.get(), 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
-                deviceContext->Flush();
 
-                //create a IDXGISurface from the shared texture
-                auto finalSurface = renderTexture.as<IDXGISurface>();
-
-                //get the IDirect3DSurface pointer
                 if (SUCCEEDED(hr))
                 {
+                    // copy the decoded texture to the render texture
+                    deviceContext->CopySubresourceRegion(renderTexture.get(), 0, 0, 0, 0, decodedTexture, (UINT)(unsigned long long)avFrame->data[1], NULL);
+                    deviceContext->Flush();
+
+                    //create a IDXGISurface from the shared texture
+                    auto finalSurface = renderTexture.as<IDXGISurface>();
+
+                    //get the IDirect3DSurface pointer
                     *surface = DirectXInteropHelper::GetSurface(finalSurface);
                 }
 
@@ -168,7 +171,7 @@ public:
         winrt::com_ptr<IDXGISurface> surface;
         HRESULT hr = DirectXInteropHelper::GetDXGISurface(sample.Direct3D11Surface(), surface);
 
-        if (SUCCEEDED(hr))
+        if (SUCCEEDED(hr) && texturePool)
         {
             auto texture = surface.as<ID3D11Texture2D>();
             texturePool->ReturnTexture(texture);
@@ -257,13 +260,23 @@ public:
             }
         }
 
+        // release texture pool and tracked samples if device changed
         {
             std::lock_guard lock(samplesMutex);
             texturePool.reset();
             texturePool = nullptr;
-        }
 
-        ReleaseTrackedSamples();
+            for (auto& entry : trackedSamples)
+            {
+                // detach Processed event and release native interface
+                auto sampleNative = entry.first;
+                auto sample = sampleNative.as<MediaStreamSample>();
+
+                sample.Processed(entry.second);
+            }
+
+            trackedSamples.clear();
+        }
 
         return hr;
     }
