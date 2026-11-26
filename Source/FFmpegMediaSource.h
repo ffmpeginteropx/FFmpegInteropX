@@ -342,10 +342,10 @@ namespace winrt::FFmpegInteropX::implementation
 
         TimeSpan mediaDuration{};
 
-        AVBufferRef* avHardwareContext = nullptr;
-        AVBufferRef* avHardwareContextDefault = nullptr;
-        com_ptr<ID3D11Device> device;
-        com_ptr<ID3D11DeviceContext> deviceContext;
+        AVBufferRef* avHardwareContextD3D11 = nullptr;
+        AVBufferRef* avHardwareContextD3D12 = nullptr;
+        AVBufferRef* avHardwareContextDefaultD3D11 = nullptr;
+        AVBufferRef* avHardwareContextDefaultD3D12 = nullptr;
         HANDLE deviceHandle = nullptr;
         com_ptr<IMFDXGIDeviceManager> deviceManager;
 

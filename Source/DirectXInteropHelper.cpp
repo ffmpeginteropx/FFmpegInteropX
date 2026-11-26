@@ -33,7 +33,7 @@ HRESULT DirectXInteropHelper::GetDeviceManagerFromStreamSource(const winrt::Wind
     return hr;
 }
 
-HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(
+HRESULT DirectXInteropHelper::GetD3D11DeviceFromStreamSource(
     const winrt::com_ptr<IMFDXGIDeviceManager>& deviceManager,
     winrt::com_ptr<ID3D11Device>& outDevice,
     winrt::com_ptr<ID3D11DeviceContext>& outDeviceContext,
@@ -54,6 +54,44 @@ HRESULT DirectXInteropHelper::GetDeviceFromStreamSource(
         outDevice = nullptr;
         outDeviceContext = nullptr;
         outVideoDevice = nullptr;
+    }
+
+    return hr;
+}
+
+HRESULT DirectXInteropHelper::GetD3D12DeviceFromStreamSource(
+    const winrt::com_ptr<IMFDXGIDeviceManager>& deviceManager,
+    winrt::com_ptr<ID3D12Device>& outDevice)
+{
+    HANDLE deviceHandle = nullptr;
+    winrt::com_ptr<ID3D11Device> d3d11Device;
+    HRESULT hr = deviceManager->OpenDeviceHandle(&deviceHandle);
+    if (SUCCEEDED(hr))
+    {
+        hr = deviceManager->GetVideoService(deviceHandle, IID_ID3D11Device, d3d11Device.put_void());
+    }
+
+    winrt::com_ptr<IDXGIDevice> dxgiDevice;
+    winrt::com_ptr<IDXGIAdapter> adapter;
+    if (SUCCEEDED(hr))
+    {
+        dxgiDevice = d3d11Device.try_as<IDXGIDevice>();
+        hr = dxgiDevice ? dxgiDevice->GetAdapter(adapter.put()) : E_NOINTERFACE;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), outDevice.put_void());
+    }
+
+    if (deviceHandle)
+    {
+        deviceManager->CloseDeviceHandle(deviceHandle);
+    }
+
+    if (FAILED(hr))
+    {
+        outDevice = nullptr;
     }
 
     return hr;

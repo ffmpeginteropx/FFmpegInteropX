@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.2.0.230524.4\build\native\Microsoft.Windows.CppWinRT.props')" />
   <PropertyGroup Condition="'$(Configuration)'=='Release_UWP' OR '$(Configuration)'=='Debug_UWP'">
@@ -165,7 +165,7 @@
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
       <CompileAsWinRT>false</CompileAsWinRT>
       <ModuleDefinitionFile>FFmpegInteropX.def</ModuleDefinitionFile>
-      <AdditionalDependencies>shcore.lib;runtimeobject.lib;mfuuid.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>shcore.lib;runtimeobject.lib;mfuuid.lib;dxguid.lib;d3d11.lib;d3d12.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EnableCOMDATFolding Condition="'$(ConfigType)'=='Release'">true</EnableCOMDATFolding>
       <OptimizeReferences Condition="'$(ConfigType)'=='Release'">true</OptimizeReferences>
     </Link>
@@ -192,6 +192,7 @@
     <ClInclude Include="CompressedSampleProvider.h" />
     <ClInclude Include="ConfigurationCommon.h" />
     <ClInclude Include="D3D11VideoSampleProvider.h" />
+    <ClInclude Include="D3D12VideoSampleProvider.h" />
     <ClInclude Include="DirectXInteropHelper.h" />
     <ClInclude Include="FFmpegInteropLogging.h" />
     <ClInclude Include="FFmpegMediaSource.h" />

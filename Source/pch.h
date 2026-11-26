@@ -1,5 +1,8 @@
 #pragma once
 #include <unknwn.h>
+#include <d3d11.h>
+#include <d3d12.h>
+#include <d3d11on12.h>
 #include <shcore.h>
 #include <memory>
 
@@ -39,7 +42,7 @@
 #pragma pop_macro("TRY")
 #pragma pop_macro("GetCurrentTime")
 
-#include <d3d11.h>
+#include <d3d11_1.h>
 #include <windows.graphics.directx.direct3d11.interop.h>
 
 #include <mfapi.h>
@@ -68,6 +71,7 @@ extern "C"
 #include <libavutil/imgutils.h>
 #include <libavutil/opt.h>
 #include <libavutil/hwcontext_d3d11va.h>
+#include <libavutil/hwcontext_d3d12va.h>
 }
 
 #pragma warning(default : 4244)

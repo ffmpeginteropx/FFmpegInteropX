@@ -43,6 +43,7 @@ configureArgs="\
     --enable-openssl \
     --enable-hwaccels \
     --enable-d3d11va \
+    --enable-d3d12va \
     --disable-dxva2 \
     --${gpl}-gpl \
     --${gpl}-version3 \

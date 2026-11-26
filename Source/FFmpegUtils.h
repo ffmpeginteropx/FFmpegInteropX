@@ -7,6 +7,7 @@ public:
     {
         AVPixelFormat result_sw = (AVPixelFormat)-1;
         AVPixelFormat result_hw = (AVPixelFormat)-1;
+        auto hwDeviceType = s->hw_device_ctx ? ((AVHWDeviceContext*)s->hw_device_ctx->data)->type : AV_HWDEVICE_TYPE_NONE;
         AVPixelFormat format;
         int index = 0;
         do
@@ -16,9 +17,12 @@ public:
             //		
             if (format != -1)
             {
-                if (s->hw_device_ctx && format == AV_PIX_FMT_D3D11)
+                if (hwDeviceType == AV_HWDEVICE_TYPE_D3D12VA && format == AV_PIX_FMT_D3D12)
                 {
-                    // we only support D3D11 HW format (not D3D11_VLD)
+                    result_hw = format;
+                }
+                else if (hwDeviceType == AV_HWDEVICE_TYPE_D3D11VA && format == AV_PIX_FMT_D3D11)
+                {
                     result_hw = format;
                 }
                 else if (result_sw == -1 && !is_hwaccel_pix_fmt(format))

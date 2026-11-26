@@ -23,7 +23,8 @@ namespace FFmpegInteropX
     {
         SystemDecoder,
         FFmpegSoftwareDecoder,
-        FFmpegD3D11HardwareDecoder
+        FFmpegD3D11HardwareDecoder,
+        FFmpegD3D12HardwareDecoder
     };
 
     enum CodecRequiredReason
