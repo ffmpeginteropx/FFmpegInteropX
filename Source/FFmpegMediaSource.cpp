@@ -835,13 +835,12 @@ namespace winrt::FFmpegInteropX::implementation
 
         mssWeak = mss;
 
-        // using strong reference here would create circle references, since we store MSS and MediaPlaybackItem here.
-        startingRequestedToken = mss.Starting({ get_weak(), &FFmpegMediaSource::OnStarting });
-        sampleRequestedToken = mss.SampleRequested({ get_weak(), &FFmpegMediaSource::OnSampleRequested });
-        switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_weak(), &FFmpegMediaSource::OnSwitchStreamsRequested });
-
-
-
+        // Using strong reference here to keep our instance alive as long as playback is active.
+        // To avoid circular references, we store MSS and MediaPlaybackItem only as weak references.
+        startingRequestedToken = mss.Starting({ get_strong(), &FFmpegMediaSource::OnStarting });
+        sampleRequestedToken = mss.SampleRequested({ get_strong(), &FFmpegMediaSource::OnSampleRequested });
+        switchStreamRequestedToken = mss.SwitchStreamsRequested({ get_strong(), &FFmpegMediaSource::OnSwitchStreamsRequested });
+        closeToken = mss.Closed({ get_strong(), &FFmpegMediaSource::MediaStreamSourceClosed });
 
         return mss;
     }
